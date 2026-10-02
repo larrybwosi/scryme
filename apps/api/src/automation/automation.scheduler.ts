@@ -39,6 +39,7 @@ export class AutomationScheduler {
             ],
           },
           include: {
+            product: true,
             variantStocks: true,
           },
           take: 50,
@@ -56,7 +57,8 @@ export class AutomationScheduler {
               key: def.key,
               inputs: {
                 productId: variant.id,
-                productName: variant.name || "Product Variant",
+                productName: variant.product?.name || variant.name || "Product",
+                variantName: variant.name,
                 currentStock,
                 threshold,
               },

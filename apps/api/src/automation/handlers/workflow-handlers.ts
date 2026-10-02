@@ -144,18 +144,36 @@ export class WorkflowHandlers {
     const threshold = ctx.definitionConfig?.threshold ?? ctx.payload?.threshold ?? 10;
     const notificationEmail = ctx.definitionConfig?.notificationEmail ?? ctx.payload?.notificationEmail ?? "";
     const productId = ctx.payload?.productId;
-    const productName = ctx.payload?.productName || ctx.payload?.variantName || "Product";
-    const currentStock = ctx.payload?.currentStock ?? 0;
+    const rawProductName = ctx.payload?.productName || "";
+    const rawVariantName = ctx.payload?.variantName || "";
 
+    const isDefaultVariant = !rawVariantName || rawVariantName.trim().toLowerCase() === "default";
+
+    let displayName = rawProductName;
+    if (!displayName) {
+      displayName = isDefaultVariant ? "Product" : rawVariantName.trim();
+    } else if (!isDefaultVariant) {
+      const trimmedVariant = rawVariantName.trim();
+      if (rawProductName.toLowerCase().endsWith(trimmedVariant.toLowerCase())) {
+        displayName = rawProductName;
+      } else {
+        displayName = `${rawProductName} - ${trimmedVariant}`;
+      }
+    }
+
+    const currentStock = ctx.payload?.currentStock ?? 0;
     const isLowStock = currentStock < threshold;
 
-    this.logger.log(`[LowStockAlert] ${productName} (${productId}): stock ${currentStock}, threshold ${threshold}. Alert triggered: ${isLowStock}`);
+    this.logger.log(`[LowStockAlert] ${displayName}: stock ${currentStock}, threshold ${threshold}. Alert triggered: ${isLowStock}`);
 
     let scrymeSent = false;
     let emailSent = false;
 
     if (isLowStock) {
-      const alertMsg = `⚠️ **Low Stock Alert Report**\nProduct: **${productName}** (ID: \`${productId || 'N/A'}\`)\nCurrent Stock: **${currentStock}** (Threshold: ${threshold})`;
+      const alertMsg = `⚠️ **Low Stock Alert Report**\n\n` +
+        `• **Item:** ${displayName}\n` +
+        `• **Current Stock:** **${currentStock}**\n` +
+        `• **Threshold:** **${threshold}**`;
 
       const actions: ScrymeChatAction[] = [
         {
@@ -163,14 +181,14 @@ export class WorkflowHandlers {
           label: "⚡ Quick Restock",
           type: "button",
           style: "primary",
-          value: JSON.stringify({ action: "restock_now", productId, productName, currentStock, threshold }),
+          value: JSON.stringify({ action: "restock_now", productId, productName: displayName, currentStock, threshold }),
         },
         {
           id: `reorder_${productId || "item"}`,
           label: "📦 Reorder from Supplier",
           type: "button",
           style: "secondary",
-          value: JSON.stringify({ action: "reorder_supplier", productId, productName }),
+          value: JSON.stringify({ action: "reorder_supplier", productId, productName: displayName }),
         },
         {
           id: `view_${productId || "item"}`,
@@ -182,12 +200,11 @@ export class WorkflowHandlers {
       ];
 
       const customReport = createReportMessage({
-        title: `Low Stock Warning: ${productName}`,
+        title: `Low Stock Warning: ${displayName}`,
         reportId: `low_stock_${productId || "item"}_${Date.now()}`,
-        summary: `Stock count (${currentStock}) is below threshold (${threshold}). Immediate replenishment recommended.`,
+        summary: `Stock count (${currentStock}) is below minimum threshold (${threshold}). Immediate replenishment recommended.`,
         metrics: [
-          { label: "Item Name", value: productName },
-          { label: "Product ID", value: productId || "N/A" },
+          { label: "Item Name", value: displayName },
           { label: "Current Quantity", value: String(currentStock) },
           { label: "Minimum Threshold", value: String(threshold) },
           { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
@@ -204,18 +221,18 @@ export class WorkflowHandlers {
       if (notificationEmail) {
         const emailHtml = `
           <h2>Low Stock Alert</h2>
-          <p>The inventory level for <strong>${productName}</strong> has dropped below the critical threshold.</p>
+          <p>The inventory level for <strong>${displayName}</strong> has dropped below the critical threshold.</p>
           <ul>
+            <li><strong>Item Name:</strong> ${displayName}</li>
             <li><strong>Current Stock:</strong> ${currentStock}</li>
             <li><strong>Threshold:</strong> ${threshold}</li>
-            <li><strong>Product ID:</strong> ${productId || "N/A"}</li>
           </ul>
         `;
         emailSent = await this.dispatchWorkflowEmail(
           notificationEmail,
-          `⚠️ Low Stock Alert: ${productName}`,
+          `⚠️ Low Stock Alert: ${displayName}`,
           emailHtml,
-          `Low Stock Alert: ${productName}\nCurrent Stock: ${currentStock} (Threshold: ${threshold})`,
+          `Low Stock Alert: ${displayName}\nCurrent Stock: ${currentStock} (Threshold: ${threshold})`,
         );
       }
     }
@@ -227,7 +244,7 @@ export class WorkflowHandlers {
       emailSent,
       details: {
         productId,
-        productName,
+        productName: displayName,
         currentStock,
         threshold,
         notificationEmail,
@@ -322,7 +339,9 @@ export class WorkflowHandlers {
 
     this.logger.log(`[DailySalesReport] Compiling report for org ${ctx.organizationId}: ${totalSales} sales, ${currency} ${totalRevenue}`);
 
-    const reportMsg = `📊 **Daily Sales Report Summary**\nTotal Orders: **${totalSales}**\nTotal Revenue: **${currency} ${totalRevenue}**`;
+    const reportMsg = `📊 **Daily Sales Report Summary**\n\n` +
+      `• **Total Orders:** ${totalSales}\n` +
+      `• **Total Revenue:** ${currency} ${totalRevenue}`;
 
     const salesActions: ScrymeChatAction[] = [
       {
@@ -395,7 +414,9 @@ export class WorkflowHandlers {
     const recipients = ctx.definitionConfig?.recipients ?? ctx.payload?.recipients ?? [];
     this.logger.log(`[StockMovementReport] Dispatching stock movement report for org ${ctx.organizationId}`);
 
-    const reportMsg = `📦 **Weekly Stock Movement Summary**\nWeekly stock audit report compiled for workspace members.`;
+    const reportMsg = `📦 **Weekly Stock Movement Summary**\n\n` +
+      `• **Audit Period:** Past 7 Days\n` +
+      `• **Status:** Audit Complete`;
 
     const movementActions: ScrymeChatAction[] = [
       {
@@ -477,7 +498,9 @@ export class WorkflowHandlers {
       payload: webhookData,
     });
 
-    const reportMsg = `🔗 **Outgoing Webhook Workflow Executed**\nEndpoint: \`${targetUrl}\`\nExecution ID: \`${ctx.executionId}\``;
+    const reportMsg = `🔗 **Outgoing Webhook Workflow Executed**\n\n` +
+      `• **Endpoint:** \`${targetUrl}\`\n` +
+      `• **Execution ID:** \`${ctx.executionId}\``;
     const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "system_alerts", reportMsg);
 
     return {
@@ -490,7 +513,9 @@ export class WorkflowHandlers {
     this.logger.log(`[GenericEvent] Processed payload for job ${ctx.jobId}`);
 
     const eventType = ctx.payload?.eventType || "GENERIC_EVENT";
-    const reportMsg = `📋 **Workflow Event Report**\nEvent Type: **${eventType}**\nExecution ID: \`${ctx.executionId}\``;
+    const reportMsg = `📋 **Workflow Event Report**\n\n` +
+      `• **Event Type:** **${eventType}**\n` +
+      `• **Execution ID:** \`${ctx.executionId}\``;
     const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "system_alerts", reportMsg);
 
     return {

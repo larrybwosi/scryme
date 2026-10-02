@@ -27,7 +27,7 @@ describe("WorkflowHandlers", () => {
   });
 
   describe("lowstock_alert", () => {
-    it("should trigger low stock alert, send ScrymeChat report & email when stock is below threshold", async () => {
+    it("should trigger low stock alert using product and variant name without product ID", async () => {
       mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
         isActive: true,
         workspaceSlug: "scryme-corp",
@@ -43,19 +43,61 @@ describe("WorkflowHandlers", () => {
         executionId: "exec_1",
         jobId: "job_1",
         definitionConfig: { threshold: 10, notificationEmail: "inventory@example.com" },
-        payload: { productId: "prod_99", productName: "Widget X", currentStock: 3 },
+        payload: { productId: "prod_99", productName: "Widget X", variantName: "Large", currentStock: 3 },
       });
 
       expect(result.success).toBe(true);
       expect(result.alertTriggered).toBe(true);
       expect(result.scrymeNotificationSent).toBe(true);
       expect(result.emailSent).toBe(true);
+      expect(result.details.productName).toBe("Widget X - Large");
 
       expect(sendScrymeSpy).toHaveBeenCalledWith(
         "scryme-corp",
         "inventory-alerts",
-        expect.objectContaining({ content: expect.stringContaining("Widget X") }),
+        expect.objectContaining({
+          content: expect.stringContaining("Widget X - Large"),
+        }),
       );
+
+      const messageContent = sendScrymeSpy.mock.calls[0][2].content;
+      expect(messageContent).not.toContain("prod_99");
+      expect(messageContent).not.toContain("ID:");
+    });
+
+    it("should omit variant name if variantName is 'default' (case insensitive)", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        isActive: true,
+        workspaceSlug: "scryme-corp",
+        channelMappings: {
+          stock_alerts: "inventory-alerts",
+        },
+      });
+
+      const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
+
+      const result = await handlers.executeHandler("lowstock_alert", {
+        organizationId: "org_1",
+        executionId: "exec_1",
+        jobId: "job_1",
+        definitionConfig: { threshold: 10 },
+        payload: { productId: "prod_100", productName: "Artisan Bread", variantName: "Default", currentStock: 2 },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.details.productName).toBe("Artisan Bread");
+
+      expect(sendScrymeSpy).toHaveBeenCalledWith(
+        "scryme-corp",
+        "inventory-alerts",
+        expect.objectContaining({
+          content: expect.stringContaining("Artisan Bread"),
+        }),
+      );
+
+      const messageContent = sendScrymeSpy.mock.calls[0][2].content;
+      expect(messageContent).not.toContain("Default");
+      expect(messageContent).not.toContain("prod_100");
     });
   });
 
