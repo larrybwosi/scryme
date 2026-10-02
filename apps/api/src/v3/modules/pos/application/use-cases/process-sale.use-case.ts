@@ -113,12 +113,12 @@ export class ProcessSaleUseCase {
         const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
         const txnStatus = isPreorder ? "PREORDER" : (dto.status || "COMPLETED");
         const totalPaidAmount = paymentsList.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
-        const paymentStatus = isPreorder
-          ? "PREORDER"
-          : totalPaidAmount >= total
+        const paymentStatus = totalPaidAmount >= total
           ? "PAID"
           : totalPaidAmount > 0
           ? "PARTIALLY_PAID"
+          : dto.paymentStatus && ["PENDING", "UNPAID"].includes(dto.paymentStatus)
+          ? dto.paymentStatus
           : "UNPAID";
 
         const t = await tx.transaction.create({

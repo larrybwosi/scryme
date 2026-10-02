@@ -349,4 +349,107 @@ describe("ProcessSaleUseCase", () => {
       ],
     });
   });
+
+  it("should process a PREORDER sale with no payment and assign paymentStatus UNPAID and status PREORDER", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_1",
+        number: data.number,
+        status: data.status,
+        paymentStatus: data.paymentStatus,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PREORDER",
+          paymentStatus: "UNPAID",
+        }),
+      }),
+    );
+    expect(result.status).toBe("PREORDER");
+  });
+
+  it("should process a PREORDER sale with deposit/partial payment and assign paymentStatus PARTIALLY_PAID", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [{ method: "CASH", amount: 40 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_2",
+        number: data.number,
+        status: data.status,
+        paymentStatus: data.paymentStatus,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PREORDER",
+          paymentStatus: "PARTIALLY_PAID",
+          totalPaid: 40,
+        }),
+      }),
+    );
+    expect(result.status).toBe("PREORDER");
+  });
 });
