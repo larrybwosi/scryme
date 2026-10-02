@@ -778,3 +778,132 @@ export async function updateMemberCustomRoles(
   revalidatePath(`/staff/${memberId}`);
   return { success: true };
 }
+
+export async function getMemberBakeryStatus(memberId: string): Promise<{
+  success: boolean;
+  isBaker?: boolean;
+  baker?: any;
+  error?: string;
+}> {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  try {
+    const settings = await db.bakerySettings.findUnique({
+      where: { organizationId: session.organizationId },
+      include: {
+        bakers: {
+          where: { memberId },
+        },
+      },
+    });
+
+    const baker = settings?.bakers?.[0] || null;
+    return {
+      success: true,
+      isBaker: !!baker,
+      baker,
+    };
+  } catch (error: any) {
+    console.error("Error fetching member bakery status:", error);
+    return { success: false, error: error.message };
+  }
+}
+
+export async function addMemberToBakeryStaff(
+  memberId: string,
+  specialties: string[] = [],
+): Promise<{ success: boolean; baker?: any; error?: string }> {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    // Ensure member belongs to organization
+    const member = await db.member.findFirst({
+      where: { id: memberId, organizationId: session.organizationId, deletedAt: null },
+    });
+
+    if (!member) {
+      return { success: false, error: "Member not found in organization" };
+    }
+
+    // Ensure BakerySettings exists for active organization
+    let settings = await db.bakerySettings.findUnique({
+      where: { organizationId: session.organizationId },
+    });
+
+    if (!settings) {
+      settings = await db.bakerySettings.create({
+        data: { organizationId: session.organizationId },
+      });
+    }
+
+    // Upsert or create BakeryBaker
+    const baker = await db.bakeryBaker.upsert({
+      where: {
+        bakerySettingsId_memberId: {
+          bakerySettingsId: settings.id,
+          memberId,
+        },
+      },
+      update: {
+        isActive: true,
+        specialties,
+      },
+      create: {
+        bakerySettingsId: settings.id,
+        memberId,
+        specialties,
+        isActive: true,
+      },
+    });
+
+    revalidatePath("/staff");
+    revalidatePath(`/staff/${memberId}`);
+    return { success: true, baker };
+  } catch (error: any) {
+    console.error("Error adding member to production staff:", error);
+    return { success: false, error: error.message || "Failed to add production staff" };
+  }
+}
+
+export async function removeMemberFromBakeryStaff(
+  memberId: string,
+): Promise<{ success: boolean; error?: string }> {
+  const session = await getServerAuth();
+  if (!session || !session.organizationId) {
+    return { success: false, error: "Unauthorized" };
+  }
+
+  const permission = await checkStaffManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const settings = await db.bakerySettings.findUnique({
+      where: { organizationId: session.organizationId },
+    });
+
+    if (settings) {
+      await db.bakeryBaker.deleteMany({
+        where: {
+          bakerySettingsId: settings.id,
+          memberId,
+        },
+      });
+    }
+
+    revalidatePath("/staff");
+    revalidatePath(`/staff/${memberId}`);
+    return { success: true };
+  } catch (error: any) {
+    console.error("Error removing member from production staff:", error);
+    return { success: false, error: error.message || "Failed to remove production staff" };
+  }
+}
