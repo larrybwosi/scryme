@@ -247,6 +247,30 @@ export class ProcessSaleDto {
   @IsOptional()
   taxIds?: string[];
 
+  @ApiPropertyOptional({ example: "Jane Doe", description: "Optional customer name" })
+  @IsString()
+  @IsOptional()
+  customerName?: string;
+
+  @ApiPropertyOptional({ example: "jane@example.com", description: "Optional customer email" })
+  @IsString()
+  @IsOptional()
+  customerEmail?: string;
+
+  @ApiPropertyOptional({ example: true, description: "Whether to save as permanent customer" })
+  @IsBoolean()
+  @IsOptional()
+  saveAsCustomer?: boolean;
+
+  @ApiPropertyOptional({ example: "PREORDER", description: "Optional transaction status" })
+  @IsString()
+  @IsOptional()
+  status?: string;
+
+  @ApiPropertyOptional({ description: "Optional transaction metadata" })
+  @IsOptional()
+  metadata?: any;
+
   @ApiPropertyOptional({ example: "John Doe", description: "Optional cashier name" })
   @IsString()
   @IsOptional()
