@@ -1,7 +1,7 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WebhookDispatcherService } from "../webhook-dispatcher.service";
-import { ScrymeChatApiClient } from "@repo/chat";
+import { ScrymeChatApiClient, ScrymeChatAction, createReportMessage, CustomMessage } from "@repo/chat";
 import { sendEmail } from "@repo/shared/services/email";
 
 export interface WorkflowJobHandlerContext {
@@ -26,6 +26,11 @@ export class WorkflowHandlers {
     organizationId: string,
     channelKeyOrSlug: string,
     messageContent: string,
+    options?: {
+      actions?: ScrymeChatAction[];
+      customMessage?: CustomMessage;
+      metadata?: Record<string, any>;
+    },
   ): Promise<boolean> {
     try {
       const config = await (this.prisma.client as any).scrymeConfiguration.findUnique({
@@ -36,11 +41,18 @@ export class WorkflowHandlers {
         const mappings = (config.channelMappings as Record<string, string>) || {};
         const targetChannel = mappings[channelKeyOrSlug] || channelKeyOrSlug || "alerts";
 
+        const payload = {
+          content: messageContent,
+          actions: options?.actions,
+          customMessage: options?.customMessage,
+          metadata: options?.metadata,
+        };
+
         try {
           await this.scrymeClient.sendMessage(
             config.workspaceSlug,
             targetChannel,
-            { content: messageContent },
+            payload,
           );
           this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to channel ${targetChannel}`);
           return true;
@@ -51,7 +63,7 @@ export class WorkflowHandlers {
               await this.scrymeClient.sendMessage(
                 config.workspaceSlug,
                 "alerts",
-                { content: messageContent },
+                payload,
               );
               this.logger.log(`Dispatched ScrymeChat report/info for org ${organizationId} to fallback channel 'alerts'`);
               return true;
@@ -144,7 +156,54 @@ export class WorkflowHandlers {
 
     if (isLowStock) {
       const alertMsg = `⚠️ **Low Stock Alert Report**\nProduct: **${productName}** (ID: \`${productId || 'N/A'}\`)\nCurrent Stock: **${currentStock}** (Threshold: ${threshold})`;
-      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", alertMsg);
+
+      const actions: ScrymeChatAction[] = [
+        {
+          id: `restock_${productId || "item"}`,
+          label: "⚡ Quick Restock",
+          type: "button",
+          style: "primary",
+          value: JSON.stringify({ action: "restock_now", productId, productName, currentStock, threshold }),
+        },
+        {
+          id: `reorder_${productId || "item"}`,
+          label: "📦 Reorder from Supplier",
+          type: "button",
+          style: "secondary",
+          value: JSON.stringify({ action: "reorder_supplier", productId, productName }),
+        },
+        {
+          id: `view_${productId || "item"}`,
+          label: "🔍 View Details",
+          type: "button",
+          style: "secondary",
+          value: JSON.stringify({ action: "view_product", productId }),
+        },
+      ];
+
+      const customReport = createReportMessage({
+        title: `Low Stock Warning: ${productName}`,
+        summary: `Stock count (${currentStock}) is below threshold (${threshold}). Immediate replenishment recommended.`,
+        theme: "amber",
+        sections: [
+          {
+            title: "Inventory Breakdown",
+            metrics: [
+              { label: "Item Name", value: productName },
+              { label: "Product ID", value: productId || "N/A" },
+              { label: "Current Quantity", value: String(currentStock) },
+              { label: "Minimum Threshold", value: String(threshold) },
+              { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
+            ],
+          },
+        ],
+      });
+
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", alertMsg, {
+        actions,
+        customMessage: customReport,
+        metadata: { productId, currentStock, threshold, alertType: "LOW_STOCK" },
+      });
 
       if (notificationEmail) {
         const emailHtml = `
@@ -190,7 +249,45 @@ export class WorkflowHandlers {
     this.logger.log(`[CustomerOnboarding] Processing onboarding for ${customerEmail} (ID: ${customerId})`);
 
     const onboardingMsg = `🎉 **Customer Onboarding Report**\nNew Customer Onboarded: **${customerName}** (${customerEmail || 'N/A'})\nCustomer ID: \`${customerId || 'N/A'}\``;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "crm_alerts", onboardingMsg);
+    const onboardingActions: ScrymeChatAction[] = [
+      {
+        id: `view_customer_${customerId || "new"}`,
+        label: "👤 View Customer CRM",
+        type: "button",
+        style: "primary",
+        value: JSON.stringify({ action: "view_customer", customerId, customerEmail }),
+      },
+      {
+        id: `send_offer_${customerId || "new"}`,
+        label: "🏷️ Send Welcome Offer",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "send_welcome_offer", customerId, customerEmail }),
+      },
+    ];
+
+    const onboardingReport = createReportMessage({
+      title: `New Customer Onboarded: ${customerName}`,
+      summary: `A new customer profile has been activated and integrated into the CRM database.`,
+      theme: "emerald",
+      sections: [
+        {
+          title: "Customer Profile Details",
+          metrics: [
+            { label: "Customer Name", value: customerName },
+            { label: "Email Address", value: customerEmail || "N/A" },
+            { label: "Customer ID", value: customerId || "N/A" },
+            { label: "Onboarded At", value: new Date().toLocaleDateString() },
+          ],
+        },
+      ],
+    });
+
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "crm_alerts", onboardingMsg, {
+      actions: onboardingActions,
+      customMessage: onboardingReport,
+      metadata: { customerId, customerEmail, reportType: "CUSTOMER_ONBOARDING" },
+    });
 
     let emailSent = false;
     if (sendWelcomeEmail && customerEmail) {
@@ -234,7 +331,46 @@ export class WorkflowHandlers {
     this.logger.log(`[DailySalesReport] Compiling report for org ${ctx.organizationId}: ${totalSales} sales, ${currency} ${totalRevenue}`);
 
     const reportMsg = `📊 **Daily Sales Report Summary**\nTotal Orders: **${totalSales}**\nTotal Revenue: **${currency} ${totalRevenue}**`;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "sales_alerts", reportMsg);
+
+    const salesActions: ScrymeChatAction[] = [
+      {
+        id: `analytics_${Date.now()}`,
+        label: "📈 View Analytics Dashboard",
+        type: "button",
+        style: "primary",
+        value: JSON.stringify({ action: "view_sales_analytics", organizationId: ctx.organizationId }),
+      },
+      {
+        id: `export_csv_${Date.now()}`,
+        label: "📥 Export Transactions CSV",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "export_sales_csv", organizationId: ctx.organizationId }),
+      },
+    ];
+
+    const salesReport = createReportMessage({
+      title: `Daily Financial Performance Report`,
+      summary: `Performance summary for ${new Date().toLocaleDateString()}: ${totalSales} processed orders generating ${currency} ${totalRevenue}.`,
+      theme: "indigo",
+      sections: [
+        {
+          title: "Revenue & Volume Overview",
+          metrics: [
+            { label: "Total Orders", value: String(totalSales) },
+            { label: "Total Revenue", value: `${currency} ${totalRevenue}` },
+            { label: "Average Order Value", value: totalSales > 0 ? `${currency} ${(totalRevenue / totalSales).toFixed(2)}` : `${currency} 0.00` },
+            { label: "Report Date", value: new Date().toLocaleDateString() },
+          ],
+        },
+      ],
+    });
+
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "sales_alerts", reportMsg, {
+      actions: salesActions,
+      customMessage: salesReport,
+      metadata: { totalSales, totalRevenue, currency, reportType: "DAILY_SALES" },
+    });
 
     const emailHtml = `
       <h2>Daily Sales Summary Report</h2>
@@ -272,7 +408,46 @@ export class WorkflowHandlers {
     this.logger.log(`[StockMovementReport] Dispatching stock movement report for org ${ctx.organizationId}`);
 
     const reportMsg = `📦 **Weekly Stock Movement Summary**\nWeekly stock audit report compiled for workspace members.`;
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", reportMsg);
+
+    const movementActions: ScrymeChatAction[] = [
+      {
+        id: `audit_log_${Date.now()}`,
+        label: "📋 Review Stock Movement Log",
+        type: "button",
+        style: "primary",
+        value: JSON.stringify({ action: "view_stock_log", organizationId: ctx.organizationId }),
+      },
+      {
+        id: `reconcile_${Date.now()}`,
+        label: "⚖️ Reconcile Discrepancies",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "reconcile_stock", organizationId: ctx.organizationId }),
+      },
+    ];
+
+    const movementReport = createReportMessage({
+      title: "Weekly Inventory Movement Audit",
+      summary: "Itemized audit summary of stock receptions, transfers, adjustments, and batch movements.",
+      theme: "sky",
+      sections: [
+        {
+          title: "Audit Parameters",
+          metrics: [
+            { label: "Audit Period", value: "Past 7 Days" },
+            { label: "Recipients Count", value: String(Array.isArray(recipients) ? recipients.length : 0) },
+            { label: "Status", value: "Audit Complete" },
+            { label: "Compiled At", value: new Date().toLocaleDateString() },
+          ],
+        },
+      ],
+    });
+
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", reportMsg, {
+      actions: movementActions,
+      customMessage: movementReport,
+      metadata: { reportType: "STOCK_MOVEMENT" },
+    });
 
     let emailSent = false;
     if (recipients.length > 0) {

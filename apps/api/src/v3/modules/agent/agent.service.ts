@@ -1,5 +1,5 @@
 import { Injectable, Logger } from "@nestjs/common";
-import { ScrymeChatApiClient } from "@repo/chat";
+import { ScrymeChatApiClient, createApprovalMessage, ScrymeChatAction } from "@repo/chat";
 import { SendAgentMessageDto, RequestAgentApprovalDto, HandleAgentApprovalCallbackDto } from "./dto/agent.dto";
 
 @Injectable()
@@ -19,28 +19,48 @@ export class AgentService {
     this.logger.log(`Creating HITL approval request action=${dto.action} org=${orgSlug}`);
 
     const approvalId = `approval_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-    const content = `⚠️ **Approval Required: ${dto.action}**\n\n${dto.details}\n\n*Requested by: ${dto.requestedBy || "Hermes Agent"}*`;
+    const content = `⚠️ **Approval Required: ${dto.action}**
 
-    const actions = [
+${dto.details}
+
+*Requested by: ${dto.requestedBy || "Hermes Agent"}*`;
+
+    const actions: ScrymeChatAction[] = [
       {
         id: `approve_${approvalId}`,
-        label: "Approve Action",
-        type: "button" as const,
-        style: "primary" as const,
+        label: "✅ Approve Action",
+        type: "button",
+        style: "primary",
         value: JSON.stringify({ approvalId, decision: "APPROVED", orgSlug, action: dto.action }),
       },
       {
+        id: `reorder_${approvalId}`,
+        label: "📦 Quick Restock / Reorder",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ approvalId, decision: "REORDER_SUPPLIER", orgSlug, action: dto.action }),
+      },
+      {
         id: `decline_${approvalId}`,
-        label: "Decline",
-        type: "button" as const,
-        style: "danger" as const,
+        label: "❌ Decline Request",
+        type: "button",
+        style: "danger",
         value: JSON.stringify({ approvalId, decision: "DECLINED", orgSlug, action: dto.action }),
       },
     ];
 
+    const customMessage = createApprovalMessage({
+      title: `Approval Request: ${dto.action}`,
+      description: dto.details,
+      approvalId,
+      requesterName: dto.requestedBy || "Hermes Agent",
+      theme: "indigo",
+    });
+
     return this.chatClient.sendMessage(orgSlug, dto.channel, {
       content,
       actions,
+      customMessage,
       metadata: { approvalId, action: dto.action, status: "PENDING" },
     });
   }
