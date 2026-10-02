@@ -1,19 +1,71 @@
 // fallow-ignore-next-line unused-files
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@repo/ui/components/ui/card';
 import { Button } from '@repo/ui/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@repo/ui/components/ui/table';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { Truck, CheckCircle, AlertCircle, MapPin } from 'lucide-react';
-import { useQuery } from '@tanstack/react-query';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogFooter } from '@repo/ui/components/ui/dialog';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
+import { Truck, MapPin, Loader2, CheckCircle2 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import sdk from '@/lib/sdk';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
+import { toast } from 'sonner';
 
 export function DeliveryTracker() {
+  const queryClient = useQueryClient();
+  const [reconcilingDelivery, setReconcilingDelivery] = useState<any>(null);
+
+  const [status, setStatus] = useState('DELIVERED');
+  const [recipientName, setRecipientName] = useState('');
+  const [notes, setNotes] = useState('');
+
   const { data: deliveries, isLoading } = useQuery({
     queryKey: ['active-deliveries'],
-    queryFn: () => sdk.client.get('/bakery/deliveries/active')
+    queryFn: () => sdk.client.get('/deliveries/active'),
   });
+
+  const reconcileMutation = useMutation({
+    mutationFn: (data: any) => sdk.client.post('/deliveries/reconcile', data),
+    onSuccess: () => {
+      toast.success('Delivery reconciled successfully');
+      queryClient.invalidateQueries({ queryKey: ['active-deliveries'] });
+      setReconcilingDelivery(null);
+      resetForm();
+    },
+    onError: (err: any) => {
+      toast.error(err?.message || 'Failed to reconcile delivery');
+    },
+  });
+
+  const resetForm = () => {
+    setStatus('DELIVERED');
+    setRecipientName('');
+    setNotes('');
+  };
+
+  const handleOpenReconcile = (delivery: any) => {
+    resetForm();
+    setReconcilingDelivery(delivery);
+  };
+
+  const handleReconcileSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reconcilingDelivery) return;
+
+    reconcileMutation.mutate({
+      fulfillmentId: reconcilingDelivery.id,
+      status,
+      notes,
+      pod: recipientName
+        ? {
+            recipientName,
+          }
+        : undefined,
+    });
+  };
 
   if (isLoading) return <Skeleton className="h-[400px] w-full" />;
 
@@ -52,25 +104,34 @@ export function DeliveryTracker() {
               {(deliveries as any[])?.map((delivery) => (
                 <TableRow key={delivery.id}>
                   <TableCell className="font-mono font-bold">
-                    #{delivery.transaction.number}
+                    #{delivery.transaction?.number || delivery.id.slice(-6)}
                   </TableCell>
                   <TableCell>
                     <div className="flex flex-col">
-                      <span className="font-medium">{delivery.transaction.deliveryPartner?.name || 'In-house'}</span>
-                      <span className="text-xs text-muted-foreground">{delivery.driver?.name}</span>
+                      <span className="font-medium">
+                        {delivery.transaction?.deliveryPartner?.name || 'In-house'}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {delivery.driver?.name || 'Unassigned Driver'}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell>
                     <div className="flex items-center gap-1 text-xs">
                       <MapPin className="h-3 w-3 text-muted-foreground" />
-                      {delivery.transaction.customer?.name || 'Guest'}
+                      {delivery.transaction?.customer?.name || 'Guest'}
                     </div>
                   </TableCell>
                   <TableCell>
                     <Badge>{delivery.status}</Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button size="sm" variant="outline" className="h-8">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8"
+                      onClick={() => handleOpenReconcile(delivery)}
+                    >
                       Reconcile
                     </Button>
                   </TableCell>
@@ -87,6 +148,71 @@ export function DeliveryTracker() {
           </Table>
         </CardContent>
       </Card>
+
+      {/* Reconcile Delivery Dialog */}
+      <Dialog
+        open={!!reconcilingDelivery}
+        onOpenChange={(open) => !open && setReconcilingDelivery(null)}
+      >
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reconcile Delivery Shipment</DialogTitle>
+            <DialogDescription>
+              Submit final delivery status and Proof of Delivery (POD) for Order #
+              {reconcilingDelivery?.transaction?.number || reconcilingDelivery?.id.slice(-6)}.
+            </DialogDescription>
+          </DialogHeader>
+
+          <form onSubmit={handleReconcileSubmit} className="space-y-4 py-2">
+            <div>
+              <Label className="text-xs font-semibold">Delivery Outcome Status</Label>
+              <Select value={status} onValueChange={setStatus}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="DELIVERED">Delivered (Success)</SelectItem>
+                  <SelectItem value="FAILED">Delivery Failed</SelectItem>
+                  <SelectItem value="RETURNED">Package Returned</SelectItem>
+                  <SelectItem value="CANCELLED">Order Cancelled</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Recipient Name / Signature Reference</Label>
+              <Input
+                placeholder="Name of person who signed / accepted delivery"
+                value={recipientName}
+                onChange={(e) => setRecipientName(e.target.value)}
+              />
+            </div>
+
+            <div>
+              <Label className="text-xs font-semibold">Reconciliation Notes</Label>
+              <Input
+                placeholder="Optional delivery notes or incident report"
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+              />
+            </div>
+
+            <DialogFooter className="pt-2">
+              <Button type="button" variant="outline" onClick={() => setReconcilingDelivery(null)}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={reconcileMutation.isPending}>
+                {reconcileMutation.isPending ? (
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                ) : (
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                )}
+                Submit Reconciliation
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
