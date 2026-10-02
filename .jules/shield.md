@@ -29,3 +29,7 @@
 ## 2026-09-30 - User Owner Scoping in OAuth Clients and API Keys
 **Learning:** `OAuthClient` and `Apikey` models lack composite unique constraints on `[id, userId]`. Standard Prisma `update` and `delete` calls ignore non-unique `userId` conditions in `where` clauses at runtime. In user-owned developer features, relying solely on pre-checks leaves potential race or bypass exposure.
 **Action:** Always use `updateMany({ where: { id, userId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, userId } })` for database-level user owner scoping on auth resource mutations.
+
+## 2026-10-02 - Custom Role Mutation Tenant Isolation
+**Learning:** In `RoleManagementUseCase`, `CustomRole` lacks a composite unique constraint on `[id, organizationId]`. Using standard `customRole.update` or `customRole.delete` with `{ where: { id } }` ignores non-unique tenant parameters at database execution time.
+**Action:** Use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, organizationId } })` to enforce database-level multi-tenant isolation during custom role mutations.

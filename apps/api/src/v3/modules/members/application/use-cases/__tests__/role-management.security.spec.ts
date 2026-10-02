@@ -12,6 +12,9 @@ describe("RoleManagementUseCase Security", () => {
     client: {
       customRole: {
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
+        updateMany: vi.fn(),
+        deleteMany: vi.fn(),
         update: vi.fn(),
         delete: vi.fn(),
         create: vi.fn(),
@@ -47,15 +50,16 @@ describe("RoleManagementUseCase Security", () => {
       const organizationId = "org1";
       const roleId = "role-from-org2";
 
-      // Simulate that the role is not found in org1
-      mockPrisma.client.customRole.findFirst.mockResolvedValue(null);
+      // Simulate that updateMany affects 0 records in org1
+      mockPrisma.client.customRole.updateMany.mockResolvedValue({ count: 0 });
 
       await expect(
         useCase.updateCustomRole(organizationId, roleId, { name: "New Name" }, "actor1")
       ).rejects.toThrow(NotFoundException);
 
-      expect(mockPrisma.client.customRole.findFirst).toHaveBeenCalledWith({
-        where: { id: roleId, organizationId }
+      expect(mockPrisma.client.customRole.updateMany).toHaveBeenCalledWith({
+        where: { id: roleId, organizationId },
+        data: expect.objectContaining({ name: "New Name" }),
       });
     });
 
@@ -64,12 +68,12 @@ describe("RoleManagementUseCase Security", () => {
       const roleId = "role1";
       const mockRole = { id: roleId, organizationId, name: "Role 1", isSystemRole: false };
 
-      mockPrisma.client.customRole.findFirst.mockResolvedValue(mockRole);
-      mockPrisma.client.customRole.update.mockResolvedValue({ ...mockRole, isSystemRole: true });
+      mockPrisma.client.customRole.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.client.customRole.findFirstOrThrow.mockResolvedValue(mockRole);
 
       await useCase.updateCustomRole(organizationId, roleId, { isSystemRole: true } as any, "actor1");
 
-      const updateCall = mockPrisma.client.customRole.update.mock.calls[0][0];
+      const updateCall = mockPrisma.client.customRole.updateMany.mock.calls[0][0];
       expect(updateCall.data.isSystemRole).toBeUndefined();
     });
   });
@@ -84,6 +88,22 @@ describe("RoleManagementUseCase Security", () => {
       await expect(
         useCase.deleteCustomRole(organizationId, roleId, "actor1")
       ).rejects.toThrow(NotFoundException);
+    });
+
+    it("should use deleteMany with organizationId for tenant isolation", async () => {
+      const organizationId = "org1";
+      const roleId = "role1";
+      const mockRole = { id: roleId, organizationId, name: "Custom Role" };
+
+      mockPrisma.client.customRole.findFirst.mockResolvedValue(mockRole);
+      mockPrisma.client.customRole.deleteMany.mockResolvedValue({ count: 1 });
+
+      const result = await useCase.deleteCustomRole(organizationId, roleId, "actor1");
+
+      expect(result).toEqual(mockRole);
+      expect(mockPrisma.client.customRole.deleteMany).toHaveBeenCalledWith({
+        where: { id: roleId, organizationId },
+      });
     });
   });
 
