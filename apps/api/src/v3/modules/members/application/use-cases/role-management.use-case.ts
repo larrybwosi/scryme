@@ -94,24 +94,27 @@ export class RoleManagementUseCase {
     dto: UpdateCustomRoleDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Find-then-update pattern for multi-tenant isolation.
-    const currentRole = await this.prisma.client.customRole.findFirst({
-      where: { id, organizationId },
-    });
-
-    if (!currentRole) throw new NotFoundException("Custom role not found");
-
     // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
     const { name, description, permissions, isActive } = dto;
 
-    const role = await this.prisma.client.customRole.update({
-      where: { id: currentRole.id },
+    // SECURITY (Sentinel): BOLA Defense-in-depth: CustomRole lacks a composite unique index on
+    // [id, organizationId]. Using updateMany enforces database-level multi-tenant scoping.
+    const updateResult = await this.prisma.client.customRole.updateMany({
+      where: { id, organizationId },
       data: {
         name,
         description,
         permissions,
         isActive,
       },
+    });
+
+    if (updateResult.count === 0) {
+      throw new NotFoundException("Custom role not found");
+    }
+
+    const role = await this.prisma.client.customRole.findFirstOrThrow({
+      where: { id, organizationId },
     });
 
     await this.prisma.client.auditLog.create({
@@ -129,16 +132,22 @@ export class RoleManagementUseCase {
   }
 
   async deleteCustomRole(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Find-then-delete pattern for multi-tenant isolation.
+    // SECURITY (Sentinel): Verify role exists within the tenant before deletion.
     const currentRole = await this.prisma.client.customRole.findFirst({
       where: { id, organizationId },
     });
 
     if (!currentRole) throw new NotFoundException("Custom role not found");
 
-    const role = await this.prisma.client.customRole.delete({
-      where: { id: currentRole.id },
+    // SECURITY (Sentinel): BOLA Defense-in-depth: CustomRole lacks a composite unique index on
+    // [id, organizationId]. Using deleteMany enforces database-level multi-tenant scoping.
+    const deleteResult = await this.prisma.client.customRole.deleteMany({
+      where: { id, organizationId },
     });
+
+    if (deleteResult.count === 0) {
+      throw new NotFoundException("Custom role not found");
+    }
 
     await this.prisma.client.auditLog.create({
       data: {
@@ -146,12 +155,12 @@ export class RoleManagementUseCase {
         memberId: actorId,
         action: AuditLogAction.DELETE,
         entityType: AuditEntityType.ROLE,
-        entityId: role.id,
-        description: `Deleted custom role: ${role.name}`,
+        entityId: currentRole.id,
+        description: `Deleted custom role: ${currentRole.name}`,
       },
     });
 
-    return role;
+    return currentRole;
   }
 
   // --- Permission Sets ---
