@@ -310,13 +310,27 @@ export function CustomOrderDialog() {
           </div>
         </div>
 
-        <DialogFooter className="gap-2 pt-2">
-          <Button variant="outline" onClick={() => setCustomOrderDialogOpen(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleProceed} className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
-            <ShoppingBag className="w-4 h-4" /> Collect Deposit ({currency} {depositAmount.toLocaleString()})
-          </Button>
+        <DialogFooter className="gap-2 pt-2 sm:justify-between">
+          {currentOrder.metadata?.isCustomOrder ? (
+            <Button
+              variant="destructive"
+              onClick={() => {
+                usePosStore.getState().cancelPreOrder();
+                toast.info('Pre-order cancelled. Switched to normal sale mode.');
+                setCustomOrderDialogOpen(false);
+              }}
+            >
+              Cancel Pre-Order
+            </Button>
+          ) : <div />}
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={() => setCustomOrderDialogOpen(false)}>
+              Close
+            </Button>
+            <Button onClick={handleProceed} className="gap-1.5 bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+              <ShoppingBag className="w-4 h-4" /> Collect Deposit ({currency} {depositAmount.toLocaleString()})
+            </Button>
+          </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>

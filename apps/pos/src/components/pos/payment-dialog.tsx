@@ -1292,7 +1292,7 @@ const PaymentModal = ({
               </div>
               <PaymentProgress paid={totalPaid} total={totalPayable} />
               {isCustomPreorder && (
-                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs space-y-1">
+                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs space-y-2">
                   <div className="flex justify-between items-center font-bold text-amber-900 dark:text-amber-200">
                     <span className="flex items-center gap-1.5">
                       <Sparkles className="w-4 h-4 text-amber-500" /> Pre-Order Deposit Collection
@@ -1303,6 +1303,19 @@ const PaymentModal = ({
                     Collecting deposit of <strong>{formatCurrency(totalPayable)}</strong>.
                     Remaining balance of <strong>{formatCurrency(Math.max(0, fullOrderTotal - totalPayable))}</strong> will be due at completion.
                   </p>
+                  <div className="pt-1 border-t border-amber-200 dark:border-amber-800/80 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[11px] px-2 text-amber-900 dark:text-amber-200 hover:bg-amber-200/60 dark:hover:bg-amber-900/60 font-medium"
+                      onClick={() => {
+                        usePosStore.getState().cancelPreOrder();
+                        toast.info('Switched to normal full sale');
+                      }}
+                    >
+                      Switch to Normal Sale
+                    </Button>
+                  </div>
                 </div>
               )}
             </div>

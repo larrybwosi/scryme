@@ -77,4 +77,31 @@ describe('Cart Component', () => {
     expect(screen.getByText('16.00')).toBeInTheDocument(); // Tax amount
     expect(screen.getByText('100.00')).toBeInTheDocument(); // Subtotal amount
   });
+
+
+  it('displays pre-order banner and allows exiting pre-order mode', () => {
+    usePosStore.setState(state => ({
+      currentOrder: {
+        ...state.currentOrder,
+        metadata: {
+          isCustomOrder: true,
+          dueDate: '2025-12-25',
+          dueTime: '14:00',
+          depositAmount: 50,
+        },
+      },
+    }));
+
+    render(<Cart />);
+
+    expect(screen.getByText('Pre-Order Mode Active')).toBeInTheDocument();
+    expect(screen.getByText('Due: 2025-12-25 14:00')).toBeInTheDocument();
+
+    const exitBtn = screen.getByRole('button', { name: /Exit Pre-Order/i });
+    expect(exitBtn).toBeInTheDocument();
+
+    usePosStore.getState().cancelPreOrder();
+
+    expect(usePosStore.getState().currentOrder.metadata?.isCustomOrder).toBeUndefined();
+  });
 });
