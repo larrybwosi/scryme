@@ -20,6 +20,7 @@ export class CreateRecipeIngredientDto {
 
   @ApiProperty({ description: "Quantity required" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 
   @ApiPropertyOptional({ description: "System unit ID" })
@@ -56,6 +57,7 @@ export class CreateRecipeDto {
 
   @ApiProperty({ description: "Yield quantity" })
   @IsNumber()
+  @Type(() => Number)
   yieldQuantity!: number;
 
   @ApiPropertyOptional({ description: "System unit ID" })
@@ -71,6 +73,7 @@ export class CreateRecipeDto {
   @ApiPropertyOptional({ description: "Cost price" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   costPrice?: number;
 
   @ApiPropertyOptional({ description: "Recipe description" })
@@ -81,16 +84,19 @@ export class CreateRecipeDto {
   @ApiPropertyOptional({ description: "Preparation time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   prepTime?: number;
 
   @ApiPropertyOptional({ description: "Bake time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   bakeTime?: number;
 
   @ApiPropertyOptional({ description: "Total time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   totalTime?: number;
 
   @ApiPropertyOptional({ description: "Recipe difficulty" })
@@ -101,6 +107,7 @@ export class CreateRecipeDto {
   @ApiPropertyOptional({ description: "Baking temperature in Celsius" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   temperatureCelsius?: number;
 
   @ApiPropertyOptional({ description: "Serving size" })
@@ -156,6 +163,7 @@ export class UpdateRecipeDto {
   @ApiPropertyOptional({ description: "Yield quantity" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   yieldQuantity?: number;
 
   @ApiPropertyOptional({ description: "System unit ID" })
@@ -171,6 +179,7 @@ export class UpdateRecipeDto {
   @ApiPropertyOptional({ description: "Cost price" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   costPrice?: number;
 
   @ApiPropertyOptional({ description: "Recipe description" })
@@ -181,16 +190,19 @@ export class UpdateRecipeDto {
   @ApiPropertyOptional({ description: "Prep time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   prepTime?: number;
 
   @ApiPropertyOptional({ description: "Bake time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   bakeTime?: number;
 
   @ApiPropertyOptional({ description: "Total time in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   totalTime?: number;
 
   @ApiPropertyOptional({ description: "Recipe difficulty" })
@@ -201,6 +213,7 @@ export class UpdateRecipeDto {
   @ApiPropertyOptional({ description: "Baking temperature in Celsius" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   temperatureCelsius?: number;
 
   @ApiPropertyOptional({ description: "Serving size" })
@@ -246,6 +259,7 @@ export class CreateBatchDto {
 
   @ApiProperty({ description: "Planned quantity" })
   @IsNumber()
+  @Type(() => Number)
   plannedQuantity!: number;
 
   @ApiPropertyOptional({ description: "System unit ID" })
@@ -261,6 +275,7 @@ export class CreateBatchDto {
   @ApiPropertyOptional({ description: "Recipe multiplier", default: 1.0 })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   recipeMultiplier?: number;
 
   @ApiPropertyOptional({ description: "Lead baker ID" })
@@ -316,19 +331,23 @@ export class UpdateBatchDto {
   @IsOptional()
   @IsString()
   orgUnitId?: string;
+
   @ApiPropertyOptional({ description: "Planned quantity" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   plannedQuantity?: number;
 
   @ApiPropertyOptional({ description: "Actual quantity" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   actualQuantity?: number;
 
   @ApiPropertyOptional({ description: "Recipe multiplier" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   recipeMultiplier?: number;
 
   @ApiPropertyOptional({ description: "Lead baker ID" })
@@ -372,17 +391,20 @@ export class IngredientConsumptionItemDto {
 
   @ApiProperty({ description: "Consumed quantity" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 }
 
 export class CompleteBatchDto {
   @ApiProperty({ description: "Actual quantity produced" })
   @IsNumber()
+  @Type(() => Number)
   actualQuantity!: number;
 
   @ApiPropertyOptional({ description: "Waste quantity" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   wasteQuantity?: number;
 
   @ApiPropertyOptional({ description: "Waste reason" })
@@ -420,6 +442,7 @@ export class CreateTemplateDto {
 
   @ApiProperty({ description: "Default quantity" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 
   @ApiPropertyOptional({ description: "System unit ID" })
@@ -435,11 +458,13 @@ export class CreateTemplateDto {
   @ApiPropertyOptional({ description: "Recipe multiplier", default: 1.0 })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   recipeMultiplier?: number;
 
   @ApiPropertyOptional({ description: "Estimated duration in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   duration?: number;
 
   @ApiPropertyOptional({ description: "Lead baker ID" })
@@ -460,6 +485,7 @@ export class CreateTemplateDto {
   @ApiPropertyOptional({ description: "Shelf life in days" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   shelfLifeDays?: number;
 }
 
@@ -473,6 +499,7 @@ export class UpdateTemplateDto {
   @IsOptional()
   @IsString()
   orgUnitId?: string;
+
   @ApiPropertyOptional({ description: "Template name" })
   @IsOptional()
   @IsString()
@@ -481,16 +508,19 @@ export class UpdateTemplateDto {
   @ApiPropertyOptional({ description: "Quantity" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   quantity?: number;
 
   @ApiPropertyOptional({ description: "Recipe multiplier" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   recipeMultiplier?: number;
 
   @ApiPropertyOptional({ description: "Duration in minutes" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   duration?: number;
 
   @ApiPropertyOptional({ description: "Lead baker ID" })
@@ -511,6 +541,7 @@ export class UpdateTemplateDto {
   @ApiPropertyOptional({ description: "Shelf life in days" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   shelfLifeDays?: number;
 }
 
@@ -557,6 +588,7 @@ export class UpdateProductionSettingsDto {
   @ApiPropertyOptional({ description: "Expiry warning days", default: 3 })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   expiryWarningDays?: number;
 
   @ApiPropertyOptional({ description: "Auth mode" })
@@ -606,6 +638,16 @@ export class AddBakerDto {
   @IsNotEmpty()
   memberId!: string;
 
+  @ApiPropertyOptional({ description: "Baker role" })
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @ApiPropertyOptional({ description: "Whether this baker is default for shifts" })
+  @IsOptional()
+  @IsBoolean()
+  isDefault?: boolean;
+
   @ApiPropertyOptional({ description: "Baker specialties", type: [String] })
   @IsOptional()
   @IsArray()
@@ -619,6 +661,16 @@ export class AddBakerDto {
 }
 
 export class UpdateBakerDto {
+  @ApiPropertyOptional({ description: "Baker role" })
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @ApiPropertyOptional({ description: "Whether this baker is default for shifts" })
+  @IsOptional()
+  @IsBoolean()
+  isDefault?: boolean;
+
   @ApiPropertyOptional({ description: "Baker specialties", type: [String] })
   @IsOptional()
   @IsArray()
@@ -639,10 +691,12 @@ export class ReceiveIngredientLineDto {
 
   @ApiProperty({ description: "Quantity received" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 
   @ApiProperty({ description: "Unit cost" })
   @IsNumber()
+  @Type(() => Number)
   unitCost!: number;
 
   @ApiPropertyOptional({ description: "Supplier ID" })
@@ -708,16 +762,19 @@ export class CreateIngredientDto {
   @ApiPropertyOptional({ description: "Buying price" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   buyingPrice?: number;
 
   @ApiPropertyOptional({ description: "Reorder point" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   reorderPoint?: number;
 
   @ApiPropertyOptional({ description: "Reorder level" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   reorderLevel?: number;
 
   @ApiPropertyOptional({ description: "Base unit ID" })
@@ -765,16 +822,19 @@ export class UpdateIngredientDto {
   @ApiPropertyOptional({ description: "Buying price" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   buyingPrice?: number;
 
   @ApiPropertyOptional({ description: "Reorder point" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   reorderPoint?: number;
 
   @ApiPropertyOptional({ description: "Reorder level" })
   @IsOptional()
   @IsNumber()
+  @Type(() => Number)
   reorderLevel?: number;
 
   @ApiPropertyOptional({ description: "Base unit ID" })
@@ -860,6 +920,7 @@ export class DispatchStagedBatchDto {
 
   @ApiProperty({ description: "Quantity to dispatch to Front Office" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 
   @ApiPropertyOptional({ description: "Optional notes" })
@@ -871,6 +932,7 @@ export class DispatchStagedBatchDto {
 export class DisposeStagedStockDto {
   @ApiProperty({ description: "Quantity to dispose/waste" })
   @IsNumber()
+  @Type(() => Number)
   quantity!: number;
 
   @ApiPropertyOptional({ description: "Reason for disposal" })

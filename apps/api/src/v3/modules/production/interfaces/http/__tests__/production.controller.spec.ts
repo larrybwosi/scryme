@@ -149,6 +149,30 @@ describe("ProductionController (V3)", () => {
       expect(productionService.getBakers).toHaveBeenCalledWith("org_123");
       expect(result).toEqual(mockBakers);
     });
+
+    it("should call productionService.addBaker with organizationId and body", async () => {
+      const mockBaker = { id: "b1", memberId: "m1", role: "LEAD_BAKER", isDefault: true };
+      const body = { memberId: "m1", role: "LEAD_BAKER", isDefault: true };
+      vi.mocked(productionService.addBaker).mockResolvedValue(mockBaker as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const result = await controller.addBaker(mockCtx, body as any);
+
+      expect(productionService.addBaker).toHaveBeenCalledWith("org_123", body);
+      expect(result).toEqual(mockBaker);
+    });
+
+    it("should call productionService.updateBaker with organizationId, id, and body", async () => {
+      const mockBaker = { id: "b1", role: "HEAD_PASTRY_CHEF", isDefault: false };
+      const body = { role: "HEAD_PASTRY_CHEF", isDefault: false };
+      vi.mocked(productionService.updateBaker).mockResolvedValue(mockBaker as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const result = await controller.updateBaker(mockCtx, "b1", body as any);
+
+      expect(productionService.updateBaker).toHaveBeenCalledWith("org_123", "b1", body);
+      expect(result).toEqual(mockBaker);
+    });
   });
 
   describe("category & settings endpoints", () => {

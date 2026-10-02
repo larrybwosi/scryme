@@ -374,14 +374,14 @@ export default function BatchManager() {
 
       await createBatchMutation.mutateAsync({
         recipeId: data.recipeId,
-        plannedQuantity: data.quantity,
+        plannedQuantity: Number(data.quantity),
         systemUnitId: recipe.systemUnitId,
         orgUnitId: recipe.orgUnitId,
         date: scheduledDate,
         time: format(scheduledDate, "HH:mm"),
         leadBakerId: data.leadBakerId === "none" ? undefined : data.leadBakerId,
         assistantBakerIds: data.assistantBakerIds || [],
-        recipeMultiplier: data.multiplier || 1.0,
+        recipeMultiplier: Number(data.multiplier || 1.0),
         notes: data.notes || `Smart Provision run for ${recipe.name}`,
       } as any);
       toast.success("Production run scheduled");
