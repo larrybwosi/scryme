@@ -3,18 +3,8 @@
 > tasks@10.1.32 dev /app/apps/tasks
 > vite
 
-7:22:17 AM [vite] warning: `esbuild` option was specified by "vite:react-babel" plugin. This option is deprecated, please use `oxc` instead.
-`optimizeDeps.rollupOptions` / `ssr.optimizeDeps.rollupOptions` is deprecated. Use `optimizeDeps.rolldownOptions` instead. Note that this option may be set by a plugin. Set VITE_DEPRECATION_TRACE=1 to see where it is called.
-[vite:react-babel] We recommend switching to `@vitejs/plugin-react-oxc` for improved performance. More information at https://vite.dev/rolldown
-
-  VITE v8.2.2  ready in 1016 ms
-
-  ➜  Local:   http://localhost:5002/
-  ➜  Network: use --host to expose
-[33mWarning: Invalid input options (1 issue found)
-- For the "jsx". Invalid key: Expected never but received "jsx". [0m
-[33mWarning: Invalid input options (1 issue found)
-- For the "jsx". Invalid key: Expected never but received "jsx". [0m
+sh: 1: vite: not found
 /app/apps/tasks:
  ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  tasks@10.1.32 dev: `vite`
-Exit status 143
+spawn ENOENT
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

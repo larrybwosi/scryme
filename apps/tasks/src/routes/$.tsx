@@ -1,6 +1,7 @@
 import { createFileRoute, useLocation } from '@tanstack/react-router';
 import Layout from '../components/Layout';
 import ProjectsPage from '../pages/ProjectsPage';
+import ProjectDetailPage from '../pages/ProjectDetailPage';
 import ClientsPage from '../pages/ClientsPage';
 import TeamsPage from '../pages/TeamsPage';
 import ActivityPage from '../pages/ActivityPage';
@@ -17,6 +18,13 @@ function SplatRouteComponent() {
   const path = location.pathname.toLowerCase();
 
   const renderContent = () => {
+    if (path.startsWith('/projects/')) {
+      const parts = path.split('/projects/')[1]?.split('/');
+      const slug = parts && parts[0] ? parts[0] : '';
+      if (slug) {
+        return <ProjectDetailPage slug={slug} />;
+      }
+    }
     if (path.startsWith('/projects')) return <ProjectsPage />;
     if (path.startsWith('/clients')) return <ClientsPage />;
     if (path.startsWith('/teams')) return <TeamsPage />;
