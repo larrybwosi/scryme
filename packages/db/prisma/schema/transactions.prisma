@@ -17,6 +17,7 @@ enum TransactionChannel {
 }
 
 enum TransactionStatus {
+  PREORDER // Recorded custom order / deposit placed for future pickup or delivery
   DRAFT
   PENDING_CONFIRMATION
   CONFIRMED

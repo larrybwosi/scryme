@@ -6,6 +6,7 @@ import {
 import { z } from "zod";
 
 export enum OrderTransactionStatus {
+  PREORDER = "PREORDER",
   PENDING_CONFIRMATION = "PENDING_CONFIRMATION",
   CONFIRMED = "CONFIRMED",
   DRAFT = "DRAFT",
