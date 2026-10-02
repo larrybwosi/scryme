@@ -15,11 +15,11 @@ import { Checkbox } from '@repo/ui/components/ui/checkbox';
 import { Separator } from '@repo/ui/components/ui/separator';
 import { Sparkles, Calendar, User, FileText, ShoppingBag } from 'lucide-react';
 import { usePosStore } from '@/store/store';
-import { useUIStore } from '@/store/ui-store';
+import { useUiStore } from '@/store/ui-store';
 import { toast } from 'sonner';
 
 export function CustomOrderDialog() {
-  const { customOrderDialogOpen, setCustomOrderDialogOpen, setPaymentDialogOpen } = useUIStore();
+  const { customOrderDialogOpen, setCustomOrderDialogOpen, setPaymentDialogOpen } = useUiStore();
   const { currentOrder, setCustomer, setOrderType } = usePosStore();
 
   const [customerName, setCustomerName] = useState('');
