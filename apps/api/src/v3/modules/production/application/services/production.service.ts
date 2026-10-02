@@ -1836,7 +1836,7 @@ export class ProductionService {
   }
 
   async addBaker(organizationId: string, data: AddBakerDto) {
-    const { memberId, specialties, isActive } = data;
+    const { memberId, specialties, isActive, isDefault } = data;
 
     const member = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId },
@@ -1848,7 +1848,7 @@ export class ProductionService {
 
     const settings = await this.getSettings(organizationId);
 
-    return this.prisma.client.bakeryBaker.create({
+    const baker = await this.prisma.client.bakeryBaker.create({
       data: {
         memberId,
         specialties: specialties || [],
@@ -1856,6 +1856,15 @@ export class ProductionService {
         bakerySettingsId: settings.id,
       },
     });
+
+    if (isDefault) {
+      await this.prisma.client.bakerySettings.update({
+        where: { id: settings.id },
+        data: { defaultBakerId: baker.id },
+      });
+    }
+
+    return baker;
   }
 
   async updateBaker(organizationId: string, id: string, data: UpdateBakerDto) {
@@ -1864,15 +1873,32 @@ export class ProductionService {
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
-    const { specialties, isActive } = data;
+    const { specialties, isActive, isDefault } = data;
 
-    return this.prisma.client.bakeryBaker.update({
+    const updatedBaker = await this.prisma.client.bakeryBaker.update({
       where: { id },
       data: {
         specialties,
         isActive,
       },
     });
+
+    if (isDefault !== undefined) {
+      const settings = await this.getSettings(organizationId);
+      if (isDefault) {
+        await this.prisma.client.bakerySettings.update({
+          where: { id: settings.id },
+          data: { defaultBakerId: id },
+        });
+      } else if (settings.defaultBakerId === id) {
+        await this.prisma.client.bakerySettings.update({
+          where: { id: settings.id },
+          data: { defaultBakerId: null },
+        });
+      }
+    }
+
+    return updatedBaker;
   }
 
   async removeBaker(organizationId: string, id: string) {
