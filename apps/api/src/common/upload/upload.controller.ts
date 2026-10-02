@@ -3,26 +3,39 @@ import {
   Post,
   Req,
   Res,
+  UseGuards,
   BadRequestException,
   ForbiddenException,
 } from "@nestjs/common";
 import { storageService, StorageCoreService } from "@repo/shared/storage";
 import { v7 as uuidv7 } from "uuid";
 import { PrismaService } from "../../prisma/prisma.service";
+import { V3AuthGuard } from "../../v3/common/guards/v3-auth.guard";
+import { MultiTenancyGuard } from "../../v3/common/guards/multi-tenancy.guard";
 
 @Controller()
 export class UploadController {
   constructor(private readonly prisma: PrismaService) {}
 
-  @Post(["upload", "v2/upload"])
+  @Post(["upload", "v2/upload", "v3/upload", ":orgSlug/upload", "v3/:orgSlug/upload"])
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
   async uploadFile(@Req() req: any, @Res() res: any) {
     const data = await req.file();
     if (!data) {
       throw new BadRequestException("No file provided");
     }
 
-    const organizationId = req.v2Context?.organizationId || req.organization?.id || req.user?.organizationId;
-    const memberId = req.v2Context?.memberId || req.member?.id || req.user?.memberId;
+    const organizationId =
+      req.v3Context?.organizationId ||
+      req.organization?.id ||
+      req.v2Context?.organizationId ||
+      req.user?.organizationId;
+
+    const memberId =
+      req.v3Context?.memberId ||
+      req.v2Context?.memberId ||
+      req.member?.id ||
+      req.user?.memberId;
 
     if (!organizationId) {
       throw new BadRequestException("Organization context missing");
