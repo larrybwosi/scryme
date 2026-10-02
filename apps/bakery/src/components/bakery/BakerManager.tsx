@@ -7,12 +7,21 @@ import { Separator } from '@repo/ui/components/ui/separator';
 import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
-import { BakeryBaker, BatchStatus } from '@/types/bakery';
-import { Plus, Edit, Mail, User, CheckCircle, Clock, Calendar, Star, ShieldCheck, Search, Crown, Award, UserCheck, CalendarDays, ArrowRightLeft, Users } from 'lucide-react';
-import { useBakerySettingsManagement } from '@/hooks/bakery';
+import { BakeryBaker, BatchStatus, FormattedBatch } from '@/types/bakery';
+import { Plus, Edit, Mail, User, CheckCircle, Clock, Calendar, Star, ShieldCheck, Search, Crown, CalendarDays, Users } from 'lucide-react';
+import { useBakerySettingsManagement, useBatches } from '@/hooks/bakery';
 import OperatorFormDialog, { BAKER_ROLES } from '@/components/bakery/BakerForm';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+
+interface DynamicShift {
+  id: string;
+  title: string;
+  time: string;
+  leadBaker: string;
+  status: string;
+  activeBakers: number;
+}
 
 export default function BakerManager() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -22,13 +31,15 @@ export default function BakerManager() {
   const [activeTab, setActiveTab] = useState('directory');
 
   const { bakers, isLoading: settingsLoading, error: settingsError } = useBakerySettingsManagement();
+  const { data: batchesResponse } = useBatches();
+  const batches: FormattedBatch[] = batchesResponse?.data || [];
 
   const filteredBakers = bakers?.filter(
-    baker => {
+    (baker: BakeryBaker) => {
       const matchesSearch =
         baker?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         baker?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        baker?.specialties?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
+        baker?.specialties?.some((s: string) => s.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesRole = roleFilter === 'ALL' || baker?.role === roleFilter;
 
@@ -47,11 +58,11 @@ export default function BakerManager() {
   };
 
   const getBakerStats = (baker: BakeryBaker) => {
-    const bakerBatches = (baker as any).batches || [];
+    const bakerBatches: FormattedBatch[] = (baker as any).batches || batches.filter((b: FormattedBatch) => b.leadBaker?.id === baker.id || (b as any).assignedBakerId === baker.id) || [];
     const totalBatches = bakerBatches.length;
-    const completedBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.COMPLETED).length;
-    const activeBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.IN_PROGRESS).length;
-    const plannedBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.PLANNED).length;
+    const completedBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.COMPLETED).length;
+    const activeBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.IN_PROGRESS).length;
+    const plannedBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.PLANNED).length;
 
     return { totalBatches, completedBatches, activeBatches, plannedBatches };
   };
@@ -124,12 +135,35 @@ export default function BakerManager() {
     );
   }
 
-  // Sample Shift Schedules for Overview
-  const sampleShifts = [
-    { id: '1', title: 'Early Morning Bake (Sourdough & Breads)', time: '04:00 AM - 12:00 PM', leadBaker: bakers?.[0]?.name || 'Lead Baker', status: 'In Progress', activeBakers: 3 },
-    { id: '2', title: 'Mid-Day Pastry & Lamination', time: '09:00 AM - 05:00 PM', leadBaker: bakers?.[1]?.name || 'Head Pastry Chef', status: 'Scheduled', activeBakers: 2 },
-    { id: '3', title: 'Evening Prep & Proofing', time: '04:00 PM - 12:00 AM', leadBaker: bakers?.[2]?.name || 'Line Baker', status: 'Scheduled', activeBakers: 2 },
-  ];
+  // Derive dynamic production shift rosters from real bakers and real batches
+  const realLeadBakers = bakers?.filter((b: BakeryBaker) => b.role === 'LEAD_BAKER' || (b as any).isDefault) || [];
+  const activeBatchesList = batches.filter((b: FormattedBatch) => b.status === BatchStatus.IN_PROGRESS || b.status === BatchStatus.PLANNED);
+
+  const dynamicShifts: DynamicShift[] = activeBatchesList.length > 0
+    ? activeBatchesList.map((batch: FormattedBatch, idx: number) => {
+        const assignedId = batch.leadBaker?.id || (batch as any).assignedBakerId;
+        const lead = bakers?.find((b: BakeryBaker) => b.id === assignedId)?.name || batch.leadBaker?.name || realLeadBakers[idx % (realLeadBakers.length || 1)]?.name || bakers?.[0]?.name || 'Unassigned Lead';
+        return {
+          id: batch.id || `shift-${idx}`,
+          title: `${batch.recipe?.name || batch.name || 'Production Batch'} (#${batch.batchNumber || batch.id.slice(0, 6)})`,
+          time: batch.scheduledStartAt ? new Date(batch.scheduledStartAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Flexible Shift',
+          leadBaker: lead,
+          status: batch.status === BatchStatus.IN_PROGRESS ? 'In Progress' : 'Scheduled',
+          activeBakers: bakers?.filter((b: BakeryBaker) => b.isActive).length || 1,
+        };
+      })
+    : bakers && bakers.length > 0
+    ? [
+        {
+          id: 'shift-default',
+          title: 'Primary Production Shift',
+          time: 'Standard Operating Hours',
+          leadBaker: realLeadBakers[0]?.name || bakers[0]?.name || 'Lead Baker',
+          status: 'Active Duty',
+          activeBakers: bakers.filter((b: BakeryBaker) => b.isActive).length,
+        },
+      ]
+    : [];
 
   return (
     <div className="space-y-6">
@@ -194,7 +228,7 @@ export default function BakerManager() {
 
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredBakers?.map(baker => {
+            {filteredBakers?.map((baker: BakeryBaker) => {
               const stats = getBakerStats(baker);
               const isDefault = (baker as any).isDefault;
 
@@ -354,7 +388,7 @@ export default function BakerManager() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">3 Active Shifts</div>
+                <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">{dynamicShifts.length} Active Shift{dynamicShifts.length !== 1 ? 's' : ''}</div>
                 <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
                   All production slots assigned with Lead Bakers.
                 </p>
@@ -369,7 +403,7 @@ export default function BakerManager() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">
-                  {bakers?.filter(b => b.role === 'LEAD_BAKER' || (b as any).isDefault).length || 1} Lead Bakers
+                  {bakers?.filter((b: BakeryBaker) => b.role === 'LEAD_BAKER' || (b as any).isDefault).length || 0} Lead Bakers
                 </div>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                   Authorized to lead batch execution and recipe scaling.
@@ -408,7 +442,7 @@ export default function BakerManager() {
               </div>
             </CardHeader>
             <CardContent className="p-0 divide-y divide-slate-100 dark:divide-slate-800">
-              {sampleShifts.map(shift => (
+              {dynamicShifts.map((shift: DynamicShift) => (
                 <div key={shift.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
@@ -428,11 +462,16 @@ export default function BakerManager() {
                   </div>
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-slate-500 font-medium">
-                      {shift.activeBakers} Bakers On Duty
+                      {shift.activeBakers} Baker{shift.activeBakers !== 1 ? 's' : ''} On Duty
                     </span>
                   </div>
                 </div>
               ))}
+              {dynamicShifts.length === 0 && (
+                <div className="p-8 text-center text-sm text-slate-500">
+                  No active shifts or batches scheduled at this time.
+                </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
