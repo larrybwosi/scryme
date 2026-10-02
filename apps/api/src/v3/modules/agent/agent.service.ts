@@ -52,9 +52,14 @@ ${dto.details}
     const customMessage = createApprovalMessage({
       title: `Approval Request: ${dto.action}`,
       description: dto.details,
-      approvalId,
-      requesterName: dto.requestedBy || "Hermes Agent",
-      theme: "indigo",
+      callbackId: approvalId,
+      fields: [
+        { label: "Requested Action", value: dto.action },
+        { label: "Requested By", value: dto.requestedBy || "Hermes Agent" },
+        { label: "Organization", value: orgSlug },
+      ],
+      priority: "high",
+      theme: { accentColor: "#6366f1", borderColor: "#e0e7ff", backgroundColor: "#eef2ff" },
     });
 
     return this.chatClient.sendMessage(orgSlug, dto.channel, {

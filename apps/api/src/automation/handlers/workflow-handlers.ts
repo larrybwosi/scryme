@@ -183,20 +183,16 @@ export class WorkflowHandlers {
 
       const customReport = createReportMessage({
         title: `Low Stock Warning: ${productName}`,
+        reportId: `low_stock_${productId || "item"}_${Date.now()}`,
         summary: `Stock count (${currentStock}) is below threshold (${threshold}). Immediate replenishment recommended.`,
-        theme: "amber",
-        sections: [
-          {
-            title: "Inventory Breakdown",
-            metrics: [
-              { label: "Item Name", value: productName },
-              { label: "Product ID", value: productId || "N/A" },
-              { label: "Current Quantity", value: String(currentStock) },
-              { label: "Minimum Threshold", value: String(threshold) },
-              { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
-            ],
-          },
+        metrics: [
+          { label: "Item Name", value: productName },
+          { label: "Product ID", value: productId || "N/A" },
+          { label: "Current Quantity", value: String(currentStock) },
+          { label: "Minimum Threshold", value: String(threshold) },
+          { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
         ],
+        theme: { accentColor: "#f59e0b", borderColor: "#fef3c7", backgroundColor: "#fffbeb" },
       });
 
       scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", alertMsg, {
@@ -268,19 +264,15 @@ export class WorkflowHandlers {
 
     const onboardingReport = createReportMessage({
       title: `New Customer Onboarded: ${customerName}`,
+      reportId: `onboarding_${customerId || "new"}_${Date.now()}`,
       summary: `A new customer profile has been activated and integrated into the CRM database.`,
-      theme: "emerald",
-      sections: [
-        {
-          title: "Customer Profile Details",
-          metrics: [
-            { label: "Customer Name", value: customerName },
-            { label: "Email Address", value: customerEmail || "N/A" },
-            { label: "Customer ID", value: customerId || "N/A" },
-            { label: "Onboarded At", value: new Date().toLocaleDateString() },
-          ],
-        },
+      metrics: [
+        { label: "Customer Name", value: customerName },
+        { label: "Email Address", value: customerEmail || "N/A" },
+        { label: "Customer ID", value: customerId || "N/A" },
+        { label: "Onboarded At", value: new Date().toLocaleDateString() },
       ],
+      theme: { accentColor: "#10b981", borderColor: "#d1fae5", backgroundColor: "#ecfdf5" },
     });
 
     const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "crm_alerts", onboardingMsg, {
@@ -351,19 +343,15 @@ export class WorkflowHandlers {
 
     const salesReport = createReportMessage({
       title: `Daily Financial Performance Report`,
+      reportId: `daily_sales_${ctx.organizationId}_${Date.now()}`,
       summary: `Performance summary for ${new Date().toLocaleDateString()}: ${totalSales} processed orders generating ${currency} ${totalRevenue}.`,
-      theme: "indigo",
-      sections: [
-        {
-          title: "Revenue & Volume Overview",
-          metrics: [
-            { label: "Total Orders", value: String(totalSales) },
-            { label: "Total Revenue", value: `${currency} ${totalRevenue}` },
-            { label: "Average Order Value", value: totalSales > 0 ? `${currency} ${(totalRevenue / totalSales).toFixed(2)}` : `${currency} 0.00` },
-            { label: "Report Date", value: new Date().toLocaleDateString() },
-          ],
-        },
+      metrics: [
+        { label: "Total Orders", value: String(totalSales) },
+        { label: "Total Revenue", value: `${currency} ${totalRevenue}` },
+        { label: "Average Order Value", value: totalSales > 0 ? `${currency} ${(totalRevenue / totalSales).toFixed(2)}` : `${currency} 0.00` },
+        { label: "Report Date", value: new Date().toLocaleDateString() },
       ],
+      theme: { accentColor: "#6366f1", borderColor: "#e0e7ff", backgroundColor: "#eef2ff" },
     });
 
     const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "sales_alerts", reportMsg, {
@@ -428,19 +416,15 @@ export class WorkflowHandlers {
 
     const movementReport = createReportMessage({
       title: "Weekly Inventory Movement Audit",
+      reportId: `stock_movement_${ctx.organizationId}_${Date.now()}`,
       summary: "Itemized audit summary of stock receptions, transfers, adjustments, and batch movements.",
-      theme: "sky",
-      sections: [
-        {
-          title: "Audit Parameters",
-          metrics: [
-            { label: "Audit Period", value: "Past 7 Days" },
-            { label: "Recipients Count", value: String(Array.isArray(recipients) ? recipients.length : 0) },
-            { label: "Status", value: "Audit Complete" },
-            { label: "Compiled At", value: new Date().toLocaleDateString() },
-          ],
-        },
+      metrics: [
+        { label: "Audit Period", value: "Past 7 Days" },
+        { label: "Recipients Count", value: String(Array.isArray(recipients) ? recipients.length : 0) },
+        { label: "Status", value: "Audit Complete" },
+        { label: "Compiled At", value: new Date().toLocaleDateString() },
       ],
+      theme: { accentColor: "#0284c7", borderColor: "#e0f2fe", backgroundColor: "#f0f9ff" },
     });
 
     const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", reportMsg, {
