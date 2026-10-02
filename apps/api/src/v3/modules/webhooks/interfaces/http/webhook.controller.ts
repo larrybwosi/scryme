@@ -39,7 +39,7 @@ import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 Webhooks")
 @ApiBearerAuth()
-@Controller([":orgSlug/webhooks", "v3/:orgSlug/webhooks"])
+@Controller(":orgSlug/webhooks")
 @ApiParam({ name: "orgSlug", type: "string" })
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)

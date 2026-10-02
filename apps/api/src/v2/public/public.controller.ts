@@ -4,7 +4,7 @@ import { PublicService } from "./public.service";
 import { AllowPublic } from "../../common/decorators/auth.decorator";
 
 @ApiTags("Public")
-@Controller(["public", "api/public"])
+@Controller("public")
 export class PublicController {
   constructor(private readonly publicService: PublicService) {}
 

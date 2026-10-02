@@ -18,7 +18,7 @@ import { type V2ApiContext } from "@repo/shared/api/v2";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ScrymeApprovalService } from "./scryme-approval.service";
 
-@Controller("v2/scryme")
+@Controller("scryme")
 export class ScrymeController {
   constructor(
     private readonly scrymeService: ScrymeService,
