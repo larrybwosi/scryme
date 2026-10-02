@@ -9,6 +9,7 @@ import posthog from 'posthog-js';
 // Types for API mutations
 interface CheckInResponse {
   member: Member;
+  token?: string;
   restoredSession: boolean;
 }
 
@@ -56,7 +57,7 @@ export function useAuth() {
         return;
       }
 
-      setMemberSession(data.member, data.restoredSession);
+      setMemberSession(data.member, data.restoredSession, data.token);
 
       posthog.identify(data.member.id, {
         name: data.member.name,
@@ -129,7 +130,7 @@ export function useAuth() {
 
   return {
     currentMember,
-    memberToken: null,
+    memberToken: (currentMember as any)?.token || null,
     isRestoredSession,
     isAuthenticated,
     checkIn,

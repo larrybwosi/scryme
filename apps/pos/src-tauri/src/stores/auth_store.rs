@@ -381,6 +381,7 @@ pub fn parse_login_response(text: &str) -> Result<ServerLoginResponsePayload, St
 #[serde(rename_all = "camelCase")]
 pub struct CheckInResult {
     pub member: MemberProfile,
+    pub token: String,
     pub restored_session: bool,
 }
 
@@ -593,6 +594,7 @@ pub async fn login_member(
 
     Ok(CheckInResult {
         member: payload.member,
+        token: payload.token,
         restored_session: payload.restored_session,
     })
 }
@@ -718,19 +720,28 @@ pub async fn authenticated_api_request(
 pub async fn restore_member_session(
     state: State<'_, AuthState>,
     member: MemberProfile,
+    token: Option<String>,
 ) -> Result<(), String> {
-    // NOTE: This was previously used to restore a single session from frontend.
-    // In multi-session, we might need a token too, but let's see.
-    // For now, if it's called, we ensure it's in sessions (though it might lack a token if not careful)
-    let sessions = state.sessions.lock().map_err(|_| "Lock error")?;
-    if !sessions.contains_key(&member.id) {
-        // We don't have the token here, which is a problem for build_request.
-        // Usually, restore_member_session is called when frontend already has the session.
-        // If frontend has it, it should have been logged in or properly restored.
+    let member_id = member.id.clone();
+    let token_val = token.unwrap_or_default();
+
+    {
+        let mut sessions = state.sessions.lock().map_err(|_| "Lock error")?;
+        if !token_val.is_empty() {
+            sessions.insert(
+                member_id.clone(),
+                Session {
+                    token: token_val,
+                    user: member.clone(),
+                },
+            );
+        } else if let Some(existing) = sessions.get_mut(&member_id) {
+            existing.user = member.clone();
+        }
     }
 
     let mut active_id = state.active_member_id.lock().map_err(|_| "Lock error")?;
-    *active_id = Some(member.id);
+    *active_id = Some(member_id);
 
     Ok(())
 }
