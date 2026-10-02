@@ -18,7 +18,7 @@ import { AllowPublic } from "@/v3/common/decorators/auth.decorator";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 
 @ApiTags("V3 CRM WhatsApp")
-@Controller(["v3/webhooks/whatsapp", "api/v3/webhooks/whatsapp"])
+@Controller("webhooks/whatsapp")
 @UseInterceptors(StandardResponseInterceptor)
 export class WhatsappPublicWebhookController {
   constructor(private readonly service: WhatsappService) {}
@@ -47,7 +47,7 @@ export class WhatsappPublicWebhookController {
 
 @ApiTags("V3 CRM WhatsApp")
 @ApiBearerAuth()
-@Controller([":orgSlug/crm/communication", "v3/:orgSlug/crm/communication", "api/v3/:orgSlug/crm/communication"])
+@Controller(":orgSlug/crm/communication")
 @ApiParam({ name: "orgSlug", type: "string" })
 @UseInterceptors(StandardResponseInterceptor)
 @UseGuards(V3AuthGuard)

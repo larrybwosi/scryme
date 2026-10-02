@@ -23,7 +23,7 @@ import { storageService } from "@repo/shared/storage";
 import { PosReleaseService } from "./pos-release.service";
 
 @ApiTags("Public")
-@Controller(["public", "api/public"])
+@Controller("public")
 export class BinariesController {
   private readonly logger = new Logger(BinariesController.name);
   private cache: { data: any; timestamp: number } | null = null;

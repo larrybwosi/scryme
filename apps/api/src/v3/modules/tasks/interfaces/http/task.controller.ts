@@ -29,7 +29,7 @@ import {
 @ApiTags('V3 Enterprise Tasks')
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, PermissionsGuard)
-@Controller([':orgSlug/tasks', 'v3/:orgSlug/tasks', 'tasks'])
+@Controller([':orgSlug/tasks', 'tasks'])
 export class TaskController {
   constructor(private readonly taskUseCase: TaskUseCase) {}
 

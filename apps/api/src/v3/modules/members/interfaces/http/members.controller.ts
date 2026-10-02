@@ -42,7 +42,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
-@Controller([":orgSlug/members", "v3/:orgSlug/members", "members"])
+@Controller([":orgSlug/members", "members"])
 @ApiParam({ name: "orgSlug", type: "string" })
 export class MembersController {
   constructor(
