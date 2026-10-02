@@ -140,15 +140,35 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       fi
     fi
 
-    # Check if database is ready by executing a simple SELECT 1
-    until DATABASE_URL="$target_url" echo "SELECT 1;" | DATABASE_URL="$target_url" $PRISMA_BIN db execute --stdin > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
-      sleep 2
+    LAST_ERR=""
+    until
+      ERR_OUTPUT=$(DATABASE_URL="$target_url" CUSTOMER_DB="$target_url" echo "SELECT 1;" | DATABASE_URL="$target_url" CUSTOMER_DB="$target_url" $PRISMA_BIN db execute --stdin 2>&1)
+    do
       COUNT=$((COUNT + 1))
-      echo "Retry $COUNT/$MAX_RETRIES: $db_label not yet available..."
+      LAST_ERR=$(echo "$ERR_OUTPUT" | tr "\n" " " | sed "s/  */ /g")
+
+      # Check if error indicates database does not exist
+      if echo "$ERR_OUTPUT" | grep -qiE "database \".*\" does not exist|does not exist"; then
+        DB_NAME=$(echo "$target_url" | sed -nE "s|^.*://[^/]+/([^?#/]+).*|\1|p")
+        BASE_URL=$(echo "$target_url" | sed -E "s|^(.*://[^/]+/)[^?#/]+(.*)|\1postgres\2|")
+
+        if [ -n "$DB_NAME" ] && [ "$DB_NAME" != "postgres" ]; then
+          echo "Database '$DB_NAME' does not exist on target server. Attempting auto-creation..."
+          CREATE_OUTPUT=$(DATABASE_URL="$BASE_URL" CUSTOMER_DB="$BASE_URL" echo "CREATE DATABASE \"$DB_NAME\";" | DATABASE_URL="$BASE_URL" CUSTOMER_DB="$BASE_URL" $PRISMA_BIN db execute --stdin 2>&1 || true)
+          echo "Database creation output: $CREATE_OUTPUT"
+        fi
+      fi
+
+      if [ $COUNT -eq $MAX_RETRIES ]; then
+        break
+      fi
+
+      echo "Retry $COUNT/$MAX_RETRIES: $db_label not yet available... [Last error: ${LAST_ERR:-connection pending}]"
+      sleep 2
     done
 
     if [ $COUNT -eq $MAX_RETRIES ]; then
-      echo "❌ $db_label is not ready after $MAX_RETRIES retries."
+      echo "❌ $db_label is not ready after $MAX_RETRIES retries. Last error: $LAST_ERR"
       return 1
     fi
     echo "✅ $db_label is ready!"

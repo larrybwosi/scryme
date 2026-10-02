@@ -40,7 +40,7 @@ services:
       - scryme-network
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${CUSTOMER_DB_NAME:-customer_db} -q"]
+        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
       interval: 30s
       timeout: 5s
       retries: 3
