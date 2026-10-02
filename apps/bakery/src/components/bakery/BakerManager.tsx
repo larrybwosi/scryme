@@ -7,12 +7,21 @@ import { Separator } from '@repo/ui/components/ui/separator';
 import { Avatar, AvatarFallback } from '@repo/ui/components/ui/avatar';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
-import { BakeryBaker, BatchStatus } from '@/types/bakery';
+import { BakeryBaker, BatchStatus, FormattedBatch } from '@/types/bakery';
 import { Plus, Edit, Mail, User, CheckCircle, Clock, Calendar, Star, ShieldCheck, Search, Crown, CalendarDays, Users } from 'lucide-react';
 import { useBakerySettingsManagement, useBatches } from '@/hooks/bakery';
 import OperatorFormDialog, { BAKER_ROLES } from '@/components/bakery/BakerForm';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { cn } from '@/lib/utils';
+
+interface DynamicShift {
+  id: string;
+  title: string;
+  time: string;
+  leadBaker: string;
+  status: string;
+  activeBakers: number;
+}
 
 export default function BakerManager() {
   const [isFormOpen, setIsFormOpen] = useState(false);
@@ -22,14 +31,15 @@ export default function BakerManager() {
   const [activeTab, setActiveTab] = useState('directory');
 
   const { bakers, isLoading: settingsLoading, error: settingsError } = useBakerySettingsManagement();
-  const { data: batches } = useBatches();
+  const { data: batchesResponse } = useBatches();
+  const batches: FormattedBatch[] = batchesResponse?.data || [];
 
   const filteredBakers = bakers?.filter(
-    baker => {
+    (baker: BakeryBaker) => {
       const matchesSearch =
         baker?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         baker?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        baker?.specialties?.some(s => s.toLowerCase().includes(searchTerm.toLowerCase()));
+        baker?.specialties?.some((s: string) => s.toLowerCase().includes(searchTerm.toLowerCase()));
 
       const matchesRole = roleFilter === 'ALL' || baker?.role === roleFilter;
 
@@ -48,11 +58,11 @@ export default function BakerManager() {
   };
 
   const getBakerStats = (baker: BakeryBaker) => {
-    const bakerBatches = (baker as any).batches || batches?.filter(b => b.assignedBakerId === baker.id) || [];
+    const bakerBatches: FormattedBatch[] = (baker as any).batches || batches.filter((b: FormattedBatch) => b.assignedBakerId === baker.id) || [];
     const totalBatches = bakerBatches.length;
-    const completedBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.COMPLETED).length;
-    const activeBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.IN_PROGRESS).length;
-    const plannedBatches = bakerBatches.filter((b: any) => b.status === BatchStatus.PLANNED).length;
+    const completedBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.COMPLETED).length;
+    const activeBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.IN_PROGRESS).length;
+    const plannedBatches = bakerBatches.filter((b: FormattedBatch) => b.status === BatchStatus.PLANNED).length;
 
     return { totalBatches, completedBatches, activeBatches, plannedBatches };
   };
@@ -126,19 +136,19 @@ export default function BakerManager() {
   }
 
   // Derive dynamic production shift rosters from real bakers and real batches
-  const realLeadBakers = bakers?.filter(b => b.role === 'LEAD_BAKER' || (b as any).isDefault) || [];
-  const activeBatchesList = batches?.filter(b => b.status === BatchStatus.IN_PROGRESS || b.status === BatchStatus.PLANNED) || [];
+  const realLeadBakers = bakers?.filter((b: BakeryBaker) => b.role === 'LEAD_BAKER' || (b as any).isDefault) || [];
+  const activeBatchesList = batches.filter((b: FormattedBatch) => b.status === BatchStatus.IN_PROGRESS || b.status === BatchStatus.PLANNED);
 
-  const dynamicShifts = activeBatchesList.length > 0
-    ? activeBatchesList.map((batch, idx) => {
-        const lead = bakers?.find(b => b.id === batch.assignedBakerId)?.name || realLeadBakers[idx % (realLeadBakers.length || 1)]?.name || bakers?.[0]?.name || 'Unassigned Lead';
+  const dynamicShifts: DynamicShift[] = activeBatchesList.length > 0
+    ? activeBatchesList.map((batch: FormattedBatch, idx: number) => {
+        const lead = bakers?.find((b: BakeryBaker) => b.id === batch.assignedBakerId)?.name || realLeadBakers[idx % (realLeadBakers.length || 1)]?.name || bakers?.[0]?.name || 'Unassigned Lead';
         return {
           id: batch.id || `shift-${idx}`,
           title: `${batch.recipeName || 'Production Batch'} (#${batch.code || batch.id.slice(0, 6)})`,
           time: batch.plannedStartTime ? new Date(batch.plannedStartTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : 'Flexible Shift',
           leadBaker: lead,
           status: batch.status === BatchStatus.IN_PROGRESS ? 'In Progress' : 'Scheduled',
-          activeBakers: bakers?.filter(b => b.isActive).length || 1,
+          activeBakers: bakers?.filter((b: BakeryBaker) => b.isActive).length || 1,
         };
       })
     : bakers && bakers.length > 0
@@ -149,7 +159,7 @@ export default function BakerManager() {
           time: 'Standard Operating Hours',
           leadBaker: realLeadBakers[0]?.name || bakers[0]?.name || 'Lead Baker',
           status: 'Active Duty',
-          activeBakers: bakers.filter(b => b.isActive).length,
+          activeBakers: bakers.filter((b: BakeryBaker) => b.isActive).length,
         },
       ]
     : [];
@@ -217,7 +227,7 @@ export default function BakerManager() {
 
           {/* Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-            {filteredBakers?.map(baker => {
+            {filteredBakers?.map((baker: BakeryBaker) => {
               const stats = getBakerStats(baker);
               const isDefault = (baker as any).isDefault;
 
@@ -392,7 +402,7 @@ export default function BakerManager() {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold text-amber-900 dark:text-amber-100">
-                  {bakers?.filter(b => b.role === 'LEAD_BAKER' || (b as any).isDefault).length || 0} Lead Bakers
+                  {bakers?.filter((b: BakeryBaker) => b.role === 'LEAD_BAKER' || (b as any).isDefault).length || 0} Lead Bakers
                 </div>
                 <p className="text-xs text-amber-700 dark:text-amber-300 mt-1">
                   Authorized to lead batch execution and recipe scaling.
@@ -431,7 +441,7 @@ export default function BakerManager() {
               </div>
             </CardHeader>
             <CardContent className="p-0 divide-y divide-slate-100 dark:divide-slate-800">
-              {dynamicShifts.map(shift => (
+              {dynamicShifts.map((shift: DynamicShift) => (
                 <div key={shift.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-slate-50/50 dark:hover:bg-slate-900/30 transition-colors">
                   <div className="space-y-1">
                     <div className="flex items-center gap-2">
