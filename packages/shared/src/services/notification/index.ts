@@ -1,3 +1,33 @@
+export const DEFAULT_TEMPLATES: Record<
+  string,
+  { subject: string; content: string }
+> = {
+  DELIVERY_OTP: {
+    subject: "Delivery OTP for Order #{{orderNumber}}",
+    content: "Your delivery verification code for order #{{orderNumber}} is {{otp}}.",
+  },
+  BOOKING_OTP: {
+    subject: "Your Booking Verification Code",
+    content: "Your booking verification code is {{code}}.",
+  },
+  SERVICE_OTP: {
+    subject: "Your Verification Code",
+    content: "Your verification code is {{code}}.",
+  },
+  BOOKING_CONFIRMATION: {
+    subject: "Booking Confirmation",
+    content: "Your booking for {{serviceName}} on {{date}} has been confirmed.",
+  },
+  BOOKING_REMINDER: {
+    subject: "Booking Reminder",
+    content: "Reminder: You have an upcoming booking for {{serviceName}} on {{date}}.",
+  },
+  AUTOMATED_INVOICE: {
+    subject: "Invoice for Order #{{orderNumber}}",
+    content: "Thank you for your business. Your invoice details for order #{{orderNumber}} are ready.",
+  },
+};
+
 import Handlebars from "handlebars";
 import { db, NotificationDispatch } from "@repo/db";
 import axios from "axios";
@@ -51,8 +81,8 @@ export class NotificationEngine {
       channels = ["SCRYME", ...channels];
     }
 
-    // 1. Fetch template
-    const template = await db.notificationTemplate.findUnique({
+    // 1. Fetch template or auto-upsert default template if missing
+    let template = await db.notificationTemplate.findUnique({
       where: {
         organizationId_name: {
           organizationId,
@@ -62,9 +92,26 @@ export class NotificationEngine {
     });
 
     if (!template) {
-      throw new Error(
-        `Template ${templateName} not found for organization ${organizationId}`,
-      );
+      const defaultTemplate = DEFAULT_TEMPLATES[templateName] || {
+        subject: `${templateName} Notification`,
+        content: `Notification for ${templateName}`,
+      };
+
+      template = await db.notificationTemplate.upsert({
+        where: {
+          organizationId_name: {
+            organizationId,
+            name: templateName,
+          },
+        },
+        update: {},
+        create: {
+          organizationId,
+          name: templateName,
+          subject: defaultTemplate.subject,
+          content: defaultTemplate.content,
+        },
+      });
     }
 
     // 2. Resolve Recipients
