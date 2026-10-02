@@ -1,67 +1,25 @@
 import React, { useState, useEffect } from 'react';
 import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@repo/ui/components/ui/card';
 import { Switch } from '@repo/ui/components/ui/switch';
 import { toast } from 'sonner';
-import { tauriInvoke } from '@/lib/tauri-bridge';
 import { useOrganization } from '@/lib/providers/organization-context';
 import { useBakerySettingsManagement } from '@/hooks/bakery';
-import { Loader2, Settings, Server, PackageCheck } from 'lucide-react';
+import { resetBakeryDevice } from '@/utils/reset';
+import { Loader2, Settings, PackageCheck, RotateCcw, AlertTriangle } from 'lucide-react';
 
 export default function SettingsPage() {
   useOrganization();
   const { settings, updateSettingsAsync, isUpdating } = useBakerySettingsManagement();
 
-  const [formData, setFormData] = useState({
-    apiUrl: 'https://api.scryme.tech',
-    apiKey: '',
-  });
-
   const [enableStaging, setEnableStaging] = useState(false);
-
-  useEffect(() => {
-    tauriInvoke<any>('get_device_config')
-      .then((config) => {
-        if (config) {
-          setFormData({
-            apiUrl: config.base_url || 'https://api.scryme.tech',
-            apiKey: config.device_key || '',
-          });
-        }
-      })
-      .catch((err) => console.error('Failed to load device config', err));
-  }, []);
+  const [isResetting, setIsResetting] = useState(false);
 
   useEffect(() => {
     if (settings) {
       setEnableStaging(!!settings.enableProductionStaging);
     }
   }, [settings]);
-
-  const handleSaveApi = async (e: React.FormEvent) => {
-    e.preventDefault();
-    try {
-      await tauriInvoke('update_bakery_api_url', { apiUrl: formData.apiUrl });
-      localStorage.setItem('bakery_api_url', formData.apiUrl);
-      toast.success('API Settings saved successfully');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to save API settings');
-    }
-  };
-
-  const handleTestConnection = async () => {
-    try {
-      const isOk = await tauriInvoke<boolean>('validate_api_endpoint', { apiUrl: formData.apiUrl });
-      if (isOk) {
-        toast.success('Connection successful');
-      } else {
-        toast.error('Could not connect to API endpoint');
-      }
-    } catch (err: any) {
-      toast.error(err?.message || 'Connection test failed');
-    }
-  };
 
   const handleToggleStaging = async (checked: boolean) => {
     setEnableStaging(checked);
@@ -75,6 +33,22 @@ export default function SettingsPage() {
     } catch (err: any) {
       setEnableStaging(!checked);
       toast.error(err?.message || 'Failed to update staging setting');
+    }
+  };
+
+  const handleResetDevice = async () => {
+    if (
+      window.confirm(
+        'Are you sure you want to reset this device? This will clear all local session credentials, stored configuration, and returning the app to initial setup.'
+      )
+    ) {
+      setIsResetting(true);
+      try {
+        await resetBakeryDevice();
+      } catch (error: any) {
+        toast.error(error?.message || 'Failed to reset device');
+        setIsResetting(false);
+      }
     }
   };
 
@@ -118,43 +92,49 @@ export default function SettingsPage() {
         </CardContent>
       </Card>
 
-      {/* API Configuration */}
-      <Card>
+      {/* Device Management */}
+      <Card className="border-destructive/30">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base">
-            <Server className="h-5 w-5 text-primary" />
-            API Configuration
+          <CardTitle className="flex items-center gap-2 text-base text-destructive">
+            <RotateCcw className="h-5 w-5" />
+            Device Management
           </CardTitle>
+          <CardDescription>
+            Manage device registration and local state. Resetting the device disconnects it from your bakery location.
+          </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSaveApi} className="space-y-4">
-            <div>
-              <label className="text-sm font-medium">Server API URL</label>
-              <Input
-                type="url"
-                value={formData.apiUrl}
-                onChange={(e) => setFormData({ ...formData, apiUrl: e.target.value })}
-                placeholder="https://api.scryme.tech"
-                required
-              />
+        <CardContent className="space-y-4">
+          <div className="p-4 border border-destructive/20 rounded-lg bg-destructive/5 space-y-3">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
+              <div>
+                <h4 className="text-sm font-semibold text-foreground">Reset Device Provisioning</h4>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Clears the local credentials, API tokens, and device provisioning keys stored on this device. You will need to re-pair the device via your organization setup code.
+                </p>
+              </div>
             </div>
-            <div>
-              <label className="text-sm font-medium">Device Key</label>
-              <Input
-                type="password"
-                value={formData.apiKey}
-                onChange={(e) => setFormData({ ...formData, apiKey: e.target.value })}
-                placeholder="Device API Key"
-                readOnly
-              />
-            </div>
-            <div className="flex space-x-2">
-              <Button type="submit">Save API Settings</Button>
-              <Button type="button" variant="outline" onClick={handleTestConnection}>
-                Test Connection
+            <div className="pt-2 flex justify-end">
+              <Button
+                variant="destructive"
+                onClick={handleResetDevice}
+                disabled={isResetting}
+                className="gap-2"
+              >
+                {isResetting ? (
+                  <>
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Resetting Device...
+                  </>
+                ) : (
+                  <>
+                    <RotateCcw className="h-4 w-4" />
+                    Reset Device
+                  </>
+                )}
               </Button>
             </div>
-          </form>
+          </div>
         </CardContent>
       </Card>
     </div>

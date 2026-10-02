@@ -27,7 +27,6 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
   const isEditMode = !!baker;
   const [selectedMemberId, setSelectedMemberId] = useState('');
   const [selectedRole, setSelectedRole] = useState('LEAD_BAKER');
-  const [pin, setPin] = useState('');
   const [specialtiesInput, setSpecialtiesInput] = useState('');
   const [isDefault, setIsDefault] = useState(false);
 
@@ -40,13 +39,11 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
       if (isEditMode && baker) {
         setSelectedMemberId(baker.memberId || '');
         setSelectedRole(baker.role || 'LEAD_BAKER');
-        setPin((baker as any).pin || '');
         setSpecialtiesInput(baker.specialties?.join(', ') || '');
         setIsDefault((baker as any).isDefault || false);
       } else {
         setSelectedMemberId('');
         setSelectedRole('LEAD_BAKER');
-        setPin('');
         setSpecialtiesInput('');
         setIsDefault(false);
       }
@@ -73,7 +70,6 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
       memberId: selectedMemberId,
       role: selectedRole,
       specialties: specialtiesArray,
-      pin,
       isDefault,
       isActive: baker?.isActive ?? true,
     };
@@ -187,39 +183,21 @@ export default function OperatorFormDialog({ open, onOpenChange, baker }: Operat
           {/* Section 3: Additional Parameters */}
           <div className="space-y-4 pt-3 border-t border-slate-100 dark:border-slate-800">
             <Label className="text-xs font-semibold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
-              <Settings className="h-3.5 w-3.5" /> Execution & Terminal Credentials
+              <Settings className="h-3.5 w-3.5" /> Execution & Operational Parameters
             </Label>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label htmlFor="pin" className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  Terminal Access PIN
-                </Label>
-                <Input
-                  id="pin"
-                  type="password"
-                  maxLength={20}
-                  placeholder="••••••••"
-                  value={pin}
-                  onChange={e => setPin(e.target.value)}
-                  disabled={!selectedMemberId || isSubmitting}
-                  className="h-9 border-slate-200 dark:border-slate-800 font-mono tracking-widest text-xs"
-                />
-              </div>
-
-              <div className="space-y-1.5">
-                <Label htmlFor="specialties" className="text-xs text-slate-700 dark:text-slate-300 font-medium">
-                  Specialties (comma-separated)
-                </Label>
-                <Input
-                  id="specialties"
-                  placeholder="Sourdough, Pastry, Lamination"
-                  value={specialtiesInput}
-                  onChange={e => setSpecialtiesInput(e.target.value)}
-                  disabled={!selectedMemberId || isSubmitting}
-                  className="h-9 border-slate-200 dark:border-slate-800 text-xs"
-                />
-              </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="specialties" className="text-xs text-slate-700 dark:text-slate-300 font-medium">
+                Specialties (comma-separated)
+              </Label>
+              <Input
+                id="specialties"
+                placeholder="Sourdough, Pastry, Lamination"
+                value={specialtiesInput}
+                onChange={e => setSpecialtiesInput(e.target.value)}
+                disabled={!selectedMemberId || isSubmitting}
+                className="h-9 border-slate-200 dark:border-slate-800 text-xs"
+              />
             </div>
 
             {/* Dynamic Tag Preview */}
