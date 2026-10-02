@@ -636,6 +636,7 @@ interface PosStore {
   removeItemFromOrder: (productId: string, variantId: string, unitId: string) => void;
   setProducts: (products: Product[]) => void;
   resetOrder: () => void;
+  cancelPreOrder: () => void;
   resetStore: () => void;
   completeOrder: (paymentMethod: string, discountAmount: number) => Promise<void>;
   updateOrderStatus: (orderId: string, status: OrderStatus) => void;
@@ -1422,6 +1423,29 @@ export const usePosStore = create<PosStore>()(
             loyaltyPoints: 0,
           },
         });
+      },
+
+      cancelPreOrder: () => {
+        const {
+          isCustomOrder,
+          depositAmount,
+          dueDate,
+          dueTime,
+          scheduledAt,
+          itemSpecs,
+          inscription,
+          customizationNotes,
+          saveAsCustomer,
+          customerEmail,
+          remainingBalance,
+          ...remainingMetadata
+        } = get().currentOrder.metadata || {};
+        set((state) => ({
+          currentOrder: {
+            ...state.currentOrder,
+            metadata: remainingMetadata,
+          },
+        }));
       },
 
       completeOrder: async (paymentMethod, discountAmount) => {

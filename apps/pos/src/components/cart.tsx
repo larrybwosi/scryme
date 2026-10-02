@@ -89,6 +89,7 @@ export function Cart() {
   const removeItemFromOrder = usePosStore(state => state.removeItemFromOrder);
   const updateItemInOrder = usePosStore(state => state.updateItemInOrder);
   const resetOrder = usePosStore(state => state.resetOrder);
+  const cancelPreOrder = usePosStore(state => state.cancelPreOrder);
 
   // --- Hold Sale Store Hooks ---
   const heldOrders = usePosStore(state => state.heldOrders);
@@ -410,6 +411,34 @@ export function Cart() {
                 <PanelRightClose className="h-5 w-5" />
               </Button>
             </div>
+
+            {/* Pre-Order Active Banner */}
+            {currentOrder.metadata?.isCustomOrder && (
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-md p-2.5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 min-w-0">
+                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div className="truncate">
+                    <p className="font-bold text-xs leading-none">Pre-Order Mode Active</p>
+                    {currentOrder.metadata?.dueDate && (
+                      <p className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5 truncate">
+                        Due: {currentOrder.metadata.dueDate} {currentOrder.metadata.dueTime || ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] px-2 text-amber-800 border-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-100 dark:border-amber-700 dark:hover:bg-amber-800 shrink-0 font-semibold"
+                  onClick={() => {
+                    cancelPreOrder();
+                    toast.info('Switched to normal sale mode');
+                  }}
+                >
+                  Exit Pre-Order
+                </Button>
+              </div>
+            )}
 
             {/* Customer & Type Selectors */}
             <div className="grid grid-cols-5 gap-2">
