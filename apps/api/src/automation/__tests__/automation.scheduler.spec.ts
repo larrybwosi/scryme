@@ -30,13 +30,13 @@ describe("AutomationScheduler", () => {
   });
 
   describe("handleLowStockCronCheck", () => {
-    it("should query active low stock definitions and trigger workflow for low stock variants", async () => {
+    it("should query active low stock definitions and trigger workflow for low stock variants with product & variant name", async () => {
       mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
         { id: "def_1", key: "lowstock_alert", organizationId: "org_1", config: { threshold: 5 } },
       ]);
 
       mockPrisma.client.productVariant.findMany.mockResolvedValue([
-        { id: "var_10", name: "Flour 1kg", variantStocks: [{ currentStock: 2 }] },
+        { id: "var_10", name: "1kg", product: { name: "Flour" }, variantStocks: [{ currentStock: 2 }] },
       ]);
 
       await scheduler.handleLowStockCronCheck();
@@ -50,6 +50,7 @@ describe("AutomationScheduler", () => {
           ],
         },
         include: {
+          product: true,
           variantStocks: true,
         },
         take: 50,
@@ -59,7 +60,8 @@ describe("AutomationScheduler", () => {
         key: "lowstock_alert",
         inputs: {
           productId: "var_10",
-          productName: "Flour 1kg",
+          productName: "Flour",
+          variantName: "1kg",
           currentStock: 2,
           threshold: 5,
         },
@@ -74,12 +76,14 @@ describe("AutomationScheduler", () => {
       mockPrisma.client.productVariant.findMany.mockResolvedValue([
         {
           id: "var_11",
-          name: "Sugar 1kg",
+          name: "1kg",
+          product: { name: "Sugar" },
           variantStocks: [{ currentStock: 3 }, { currentStock: 4 }],
         },
         {
           id: "var_12",
-          name: "Salt 1kg",
+          name: "1kg",
+          product: { name: "Salt" },
           variantStocks: [{ currentStock: 8 }, { currentStock: 5 }],
         },
       ]);
@@ -91,7 +95,8 @@ describe("AutomationScheduler", () => {
         key: "lowstock_alert",
         inputs: {
           productId: "var_11",
-          productName: "Sugar 1kg",
+          productName: "Sugar",
+          variantName: "1kg",
           currentStock: 7,
           threshold: 10,
         },
