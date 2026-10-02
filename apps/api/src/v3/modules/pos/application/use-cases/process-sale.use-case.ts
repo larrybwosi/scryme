@@ -98,16 +98,36 @@ export class ProcessSaleUseCase {
           sub += serviceItemsToCreate.reduce((s: number, si: any) => s + si.lineTotal, 0);
         }
 
-        const cId = await this.getC(tx, orgId, dto.customerPhone);
+        const cId = await this.getC(
+          tx,
+          orgId,
+          dto.customerPhone,
+          dto.customerEmail,
+          dto.customerName,
+          dto.saveAsCustomer,
+          dto.customerId,
+        );
         const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
+
+        const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
+        const txnStatus = isPreorder ? "PREORDER" : (dto.status || "COMPLETED");
+        const totalPaidAmount = paymentsList.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+        const paymentStatus = isPreorder
+          ? "PREORDER"
+          : totalPaidAmount >= total
+          ? "PAID"
+          : totalPaidAmount > 0
+          ? "PARTIALLY_PAID"
+          : "UNPAID";
 
         const t = await tx.transaction.create({
           data: {
             number: `V3-POS-${Date.now()}`,
             type: "POS_SALE",
-            status: "COMPLETED",
-            paymentStatus: "PAID",
+            status: txnStatus as any,
+            paymentStatus: paymentStatus as any,
+            totalPaid: totalPaidAmount,
             organizationId: orgId,
             memberId: mId,
             locationId: locId,
@@ -119,6 +139,7 @@ export class ProcessSaleUseCase {
             baseCurrencyTotal: total,
             currencyCode: "KES",
             notes: dto.notes,
+            metadata: dto.metadata || undefined,
             items: hasProducts ? { create: items } : undefined,
             serviceItems: hasServices ? { create: serviceItemsToCreate } : undefined,
             payments: paymentsList.length > 0
@@ -182,7 +203,7 @@ export class ProcessSaleUseCase {
     return {
       ...transaction,
       finalTotal: total,
-      status: "COMPLETED",
+      status: transaction.status,
       complianceData,
     };
   }
@@ -229,15 +250,49 @@ export class ProcessSaleUseCase {
     });
   }
 
-  private async getC(tx: any, orgId: string, phone?: string) {
-    if (!phone) return undefined;
-    const c = await tx.customer.findFirst({
-      where: { organizationId: orgId, phone },
-      select: { id: true },
-    });
-    if (c) return c.id;
+  private async getC(
+    tx: any,
+    orgId: string,
+    phone?: string,
+    email?: string,
+    name?: string,
+    saveAsCustomer?: boolean,
+    explicitCustomerId?: string,
+  ) {
+    if (
+      explicitCustomerId &&
+      explicitCustomerId !== "temp-custom-customer" &&
+      !explicitCustomerId.startsWith("temp-")
+    ) {
+      const existing = await tx.customer.findFirst({
+        where: { id: explicitCustomerId, organizationId: orgId },
+        select: { id: true },
+      });
+      if (existing) return existing.id;
+    }
+
+    if (!phone && !email && !name) return undefined;
+
+    const orConditions: any[] = [];
+    if (phone && phone.trim()) orConditions.push({ phone: phone.trim() });
+    if (email && email.trim()) orConditions.push({ email: email.trim() });
+
+    if (orConditions.length > 0) {
+      const c = await tx.customer.findFirst({
+        where: { organizationId: orgId, OR: orConditions },
+        select: { id: true },
+      });
+      if (c) return c.id;
+    }
+
+    const customerName = name && name.trim() ? name.trim() : "POS Customer";
     const nc = await tx.customer.create({
-      data: { organizationId: orgId, phone, name: "POS Customer" },
+      data: {
+        organizationId: orgId,
+        phone: phone && phone.trim() ? phone.trim() : undefined,
+        email: email && email.trim() ? email.trim() : undefined,
+        name: customerName,
+      },
       select: { id: true },
     });
     return nc.id;

@@ -1,8 +1,4 @@
-'use client';
-
-import { useState } from 'react';
-import { usePosStore } from '@/store/store';
-import { useUiStore } from '@/store/ui-store';
+import React, { useState, useEffect } from 'react';
 import {
   Dialog,
   DialogContent,
@@ -17,44 +13,66 @@ import { Label } from '@repo/ui/components/ui/label';
 import { Textarea } from '@repo/ui/components/ui/textarea';
 import { Checkbox } from '@repo/ui/components/ui/checkbox';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { Calendar, Clock, User, Phone, Mail, FileText, ShoppingBag, Sparkles } from 'lucide-react';
+import { Sparkles, Calendar, User, FileText, ShoppingBag } from 'lucide-react';
+import { usePosStore } from '@/store/store';
+import { useUiStore } from '@/store/ui-store';
 import { toast } from 'sonner';
 
 export function CustomOrderDialog() {
   const { customOrderDialogOpen, setCustomOrderDialogOpen, setPaymentDialogOpen } = useUiStore();
-  const currentOrder = usePosStore(state => state.currentOrder);
-  const setCustomer = usePosStore(state => state.setCustomer);
-  const setOrderType = usePosStore(state => state.setOrderType);
-  const currency = usePosStore(state => state.settings.currency) || 'KSH';
+  const { currentOrder, setCustomer, setOrderType } = usePosStore();
 
-  const [customerName, setCustomerName] = useState(currentOrder.customerName || '');
-  const [customerPhone, setCustomerPhone] = useState(currentOrder.customerPhone || '');
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
   const [customerEmail, setCustomerEmail] = useState('');
   const [saveAsCustomer, setSaveAsCustomer] = useState(true);
 
-  // Customization & Due Schedule
-  const todayStr = new Date().toISOString().split('T')[0];
-  const [dueDate, setDueDate] = useState(todayStr);
+  const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('14:00');
-  const [cakeFlavor, setCakeFlavor] = useState('');
+
+  const [itemSpecs, setItemSpecs] = useState('');
   const [inscription, setInscription] = useState('');
   const [customizationNotes, setCustomizationNotes] = useState('');
 
-  // Deposit
-  const total = currentOrder.items.reduce((sum, item) => {
-    return sum + (item.selectedUnit?.price ?? 0) * item.quantity;
-  }, 0);
-  const [depositAmount, setDepositAmount] = useState<number>(Math.round(total * 0.5));
+  const [depositAmount, setDepositAmount] = useState<number>(0);
 
-  const itemsCount = currentOrder.items.length;
+  const itemsCount = currentOrder.items.reduce((acc, i) => acc + i.quantity, 0);
+  const total = currentOrder.items.reduce((acc, i) => {
+    const itemPrice = i.selectedUnit?.price ?? 0;
+    return acc + itemPrice * i.quantity;
+  }, 0);
+  const currency = 'KES';
+
+  // Initialize values when dialog opens or cart items change
+  useEffect(() => {
+    if (customOrderDialogOpen) {
+      setCustomerName(currentOrder.customerName || '');
+      setCustomerPhone(currentOrder.customerPhone || '');
+      setCustomerEmail(currentOrder.metadata?.customerEmail || '');
+
+      // Default due date to tomorrow if not set
+      if (!dueDate) {
+        const tomorrow = new Date();
+        tomorrow.setDate(tomorrow.getDate() + 1);
+        setDueDate(tomorrow.toISOString().split('T')[0]);
+      }
+
+      // Default deposit to 50% or full if total is small
+      if (depositAmount === 0 && total > 0) {
+        setDepositAmount(Math.round(total * 0.5));
+      }
+    }
+  }, [customOrderDialogOpen, total]);
+
+  const todayStr = new Date().toISOString().split('T')[0];
 
   const handleProceed = () => {
     if (!customerName.trim()) {
-      toast.error('Customer name is required for custom orders');
+      toast.error('Customer name is required');
       return;
     }
     if (!customerPhone.trim()) {
-      toast.error('Customer phone number is required for pickup coordination');
+      toast.error('Customer phone number is required');
       return;
     }
     if (!dueDate || !dueTime) {
@@ -91,12 +109,13 @@ export function CustomOrderDialog() {
           dueDate,
           dueTime,
           scheduledAt: `${dueDate}T${dueTime}:00`,
-          cakeFlavor,
+          itemSpecs,
           inscription,
           customizationNotes,
           saveAsCustomer,
           customerEmail,
           depositAmount: Math.min(depositAmount, total),
+          remainingBalance: Math.max(0, total - Math.min(depositAmount, total)),
         },
       },
     }));
@@ -115,10 +134,10 @@ export function CustomOrderDialog() {
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg">
             <Sparkles className="w-5 h-5 text-amber-500" />
-            Custom Customer Order (Cake / Pre-order)
+            Custom Customer Order (Pre-order)
           </DialogTitle>
           <DialogDescription>
-            Record customer details, customization specifications, pickup schedule, and deposit amount.
+            Record customer details, customization specifications, schedule, and deposit amount.
           </DialogDescription>
         </DialogHeader>
 
@@ -218,28 +237,28 @@ export function CustomOrderDialog() {
           {/* --- Section 3: Customization Specifications --- */}
           <div className="space-y-3 bg-muted/40 p-3 rounded-lg border">
             <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5" /> Order Customizations & Inscription
+              <FileText className="w-3.5 h-3.5" /> Order Customizations & Specifications
             </h4>
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
-                <Label htmlFor="cake-flavor" className="text-xs">
-                  Flavor / Tier Specs
+                <Label htmlFor="item-specs" className="text-xs">
+                  Item Specifications / Variants
                 </Label>
                 <Input
-                  id="cake-flavor"
-                  placeholder="e.g. Red Velvet, 2-Tier, Vanilla Filling"
-                  value={cakeFlavor}
-                  onChange={e => setCakeFlavor(e.target.value)}
+                  id="item-specs"
+                  placeholder="e.g. Size, Color, Custom Options"
+                  value={itemSpecs}
+                  onChange={e => setItemSpecs(e.target.value)}
                   className="h-9 text-xs"
                 />
               </div>
               <div className="space-y-1">
                 <Label htmlFor="inscription" className="text-xs">
-                  Writing / Inscription on Cake
+                  Custom Marking / Inscription
                 </Label>
                 <Input
                   id="inscription"
-                  placeholder='e.g. "Happy 30th Birthday Sarah!"'
+                  placeholder='e.g. Engraving, Custom text or label'
                   value={inscription}
                   onChange={e => setInscription(e.target.value)}
                   className="h-9 text-xs"
@@ -248,11 +267,11 @@ export function CustomOrderDialog() {
             </div>
             <div className="space-y-1">
               <Label htmlFor="custom-notes" className="text-xs">
-                Design & Decoration Notes
+                Design & Customization Notes
               </Label>
               <Textarea
                 id="custom-notes"
-                placeholder="Specific color themes, reference images, dietary requests (e.g., eggless, nut-free)..."
+                placeholder="Specific instructions, reference details, special handling..."
                 value={customizationNotes}
                 onChange={e => setCustomizationNotes(e.target.value)}
                 rows={2}

@@ -28,6 +28,7 @@ import {
   Tag,
   Clock,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
@@ -325,14 +326,19 @@ const PaymentModal = ({
     setEditableDiscount(discount);
   }, [discount]);
 
+  const currentOrder = usePosStore(state => state.currentOrder);
+  const isCustomPreorder = Boolean(currentOrder.metadata?.isCustomOrder);
+  const customDeposit = Number(currentOrder.metadata?.depositAmount) || 0;
+
   // ── Calculations ──
-  const { totalPayable, priceBeforeTax, calculatedTax } = useMemo(() => {
+  const { totalPayable, priceBeforeTax, calculatedTax, fullOrderTotal } = useMemo(() => {
     const total = Math.max(0, subtotal - editableDiscount);
     const rate = Number(taxRate) || 0;
     const taxableAmount = total / (1 + rate);
     const taxAmount = total - taxableAmount;
-    return { totalPayable: total, priceBeforeTax: taxableAmount, calculatedTax: taxAmount };
-  }, [subtotal, editableDiscount, taxRate]);
+    const targetPayable = isCustomPreorder && customDeposit > 0 ? Math.min(customDeposit, total) : total;
+    return { totalPayable: targetPayable, priceBeforeTax: taxableAmount, calculatedTax: taxAmount, fullOrderTotal: total };
+  }, [subtotal, editableDiscount, taxRate, isCustomPreorder, customDeposit]);
 
   const totalPaid = useMemo(() => currentPayments.reduce((sum, p) => sum + p.amount, 0), [currentPayments]);
   const remainingBalance = useMemo(() => Math.max(0, totalPayable - totalPaid), [totalPayable, totalPaid]);
@@ -639,10 +645,14 @@ const PaymentModal = ({
           },
         ];
 
+    const currentOrderState = usePosStore.getState().currentOrder;
+    const isCustomOrder = Boolean(currentOrderState.metadata?.isCustomOrder);
+
     const payload: any = {
       ...getCommonPayloadFields(),
       paymentMethod: primaryMethod,
-      paymentStatus: PaymentStatus.COMPLETED,
+      paymentStatus: isCustomOrder ? PaymentStatus.PENDING : PaymentStatus.COMPLETED,
+      status: isCustomOrder ? "PREORDER" : "COMPLETED",
       amountReceived: totalPaid > 0 ? totalPaid : totalPayable,
       change: changeDue,
       payments: paymentsToSubmit,
@@ -1281,6 +1291,20 @@ const PaymentModal = ({
                 )}
               </div>
               <PaymentProgress paid={totalPaid} total={totalPayable} />
+              {isCustomPreorder && (
+                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs space-y-1">
+                  <div className="flex justify-between items-center font-bold text-amber-900 dark:text-amber-200">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-500" /> Pre-Order Deposit Collection
+                    </span>
+                    <span>Order Value: {formatCurrency(fullOrderTotal)}</span>
+                  </div>
+                  <p className="text-amber-800 dark:text-amber-300 text-[11px]">
+                    Collecting deposit of <strong>{formatCurrency(totalPayable)}</strong>.
+                    Remaining balance of <strong>{formatCurrency(Math.max(0, fullOrderTotal - totalPayable))}</strong> will be due at completion.
+                  </p>
+                </div>
+              )}
             </div>
 
             {/* Payment list */}
@@ -1349,10 +1373,23 @@ const PaymentModal = ({
                     <span className="tabular-nums">{formatCurrency(calculatedTax)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center font-bold pt-1 border-t">
-                  <span>Total</span>
-                  <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
-                </div>
+                {isCustomPreorder ? (
+                  <>
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Full Order Value</span>
+                      <span className="tabular-nums font-medium">{formatCurrency(fullOrderTotal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-bold pt-1 border-t text-amber-700 dark:text-amber-400">
+                      <span>Deposit Amount Due</span>
+                      <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center font-bold pt-1 border-t">
+                    <span>Total</span>
+                    <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
+                  </div>
+                )}
                 {totalPaid > 0 && (
                   <div className="flex justify-between items-center text-sm text-emerald-600 dark:text-emerald-400">
                     <span>Paid</span>
