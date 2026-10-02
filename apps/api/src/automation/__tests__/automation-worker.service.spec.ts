@@ -4,8 +4,10 @@ import { WorkflowHandlers } from "../handlers/workflow-handlers";
 
 // Mock the ScrymeChatApiClient
 const mockSendMessage = vi.fn().mockResolvedValue({ success: true });
-vi.mock("@repo/chat", () => {
+vi.mock("@repo/chat", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/chat")>();
   return {
+    ...actual,
     ScrymeChatApiClient: class {
       sendMessage = mockSendMessage;
     },
