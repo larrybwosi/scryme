@@ -17,10 +17,11 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@repo/ui/components/ui/dialog';
-import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle, Sparkles } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
+import { CustomOrderDialog } from '@/components/pos/custom-order-dialog';
 import { CustomerSelector } from '@/components/customer-selector';
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/ui/toggle-group';
 import { AgeVerificationDialog } from '@/components/age-verification-dialog';
@@ -47,7 +48,8 @@ export function Cart() {
   const {
     paymentDialogOpen, setPaymentDialogOpen,
     holdOrderDialogOpen, setHoldOrderDialogOpen,
-    prescriptionDialogOpen, setPrescriptionDialogOpen
+    prescriptionDialogOpen, setPrescriptionDialogOpen,
+    setCustomOrderDialogOpen
   } = useUiStore();
 
   const [ageVerificationOpen, setAgeVerificationOpen] = useState(false);
@@ -693,7 +695,18 @@ export function Cart() {
             </div>
 
             {/* Main Actions */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-1.5">
+              <Button
+                variant="outline"
+                className="col-span-1 h-12 flex-col gap-0.5 border-amber-200 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100"
+                onClick={() => setCustomOrderDialogOpen(true)}
+                disabled={currentOrder.items.length === 0}
+                title="Custom Order / Pre-order with Deposit"
+              >
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span className="text-[9px] font-bold uppercase">Custom</span>
+              </Button>
+
               {businessConfig.type === 'pharmacy' && (
                 <Button
                   variant="outline"
@@ -703,7 +716,7 @@ export function Cart() {
                   title="Prescription"
                 >
                   <ReceiptText className="w-4 h-4" />
-                  <span className="text-[10px] font-medium">RX</span>
+                  <span className="text-[9px] font-bold">RX</span>
                 </Button>
               )}
 
@@ -719,7 +732,7 @@ export function Cart() {
                         aria-label={`Hold Order (${modifier}+S)`}
                       >
                         <Pause className="w-4 h-4" />
-                        <span className="text-[10px] font-medium">Hold</span>
+                        <span className="text-[9px] font-bold">Hold</span>
                         <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">S</Kbd>
                       </Button>
                     </TooltipTrigger>
@@ -743,7 +756,7 @@ export function Cart() {
                   ) : (
                     <Printer className="w-4 h-4" />
                   )}
-                  <span className="text-[10px] font-medium">Bill</span>
+                  <span className="text-[9px] font-bold">Bill</span>
                 </Button>
               )}
 
@@ -753,8 +766,7 @@ export function Cart() {
                     <Button
                       className={cn(
                         'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
-                        (enableHoldSale && import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-3' :
-                        (enableHoldSale || import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-4' : 'col-span-5'
+                        businessConfig.type === 'pharmacy' ? 'col-span-3' : 'col-span-4'
                       )}
                       onClick={handleConfirmPayment}
                       disabled={currentOrder.items.length === 0}
@@ -790,6 +802,8 @@ export function Cart() {
       </div>
 
       {/* --- Dialogs --- */}
+      <CustomOrderDialog />
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>

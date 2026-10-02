@@ -390,6 +390,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="DRAFT">Draft</SelectItem>
+            <SelectItem value="PREORDER">Pre-Order</SelectItem>
             <SelectItem value="PENDING_CONFIRMATION">
               Pending Confirmation
             </SelectItem>
