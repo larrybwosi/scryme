@@ -155,23 +155,35 @@ export class BookingService {
     }
 
     if ((!dto.resourceIds || dto.resourceIds.length === 0) && service.resources?.length) {
-      for (const candidate of service.resources) {
-        const conflict = await this.prisma.client.serviceBooking.findFirst({
-          where: {
-            organizationId: orgId,
-            status: { in: [BookingStatus.REQUESTED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
-            scheduledStartTime: { lt: totalEndTime },
-            scheduledEndTime: { gt: totalStartTime },
-            resources: { some: { resourceId: candidate.resourceId } },
+      // ⚡ Bolt Optimization: Batch fetch overlapping bookings across all candidate resources in a single database query
+      // instead of executing sequential findFirst calls inside a loop.
+      const candidateResourceIds = service.resources.map(r => r.resourceId);
+      const busyBookings = await this.prisma.client.serviceBooking.findMany({
+        where: {
+          organizationId: orgId,
+          status: { in: [BookingStatus.REQUESTED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+          scheduledStartTime: { lt: totalEndTime },
+          scheduledEndTime: { gt: totalStartTime },
+          resources: { some: { resourceId: { in: candidateResourceIds } } },
+        },
+        select: {
+          resources: {
+            select: { resourceId: true },
           },
-          select: { id: true },
-        });
-        if (!conflict) {
-          dto.resourceIds = [candidate.resourceId];
-          break;
-        }
-      }
-      if (!dto.resourceIds?.length) {
+        },
+      });
+
+      const busyResourceIds = new Set(
+        busyBookings.flatMap(b => b.resources.map(r => r.resourceId))
+      );
+
+      const availableCandidate = service.resources.find(
+        r => !busyResourceIds.has(r.resourceId)
+      );
+
+      if (availableCandidate) {
+        dto.resourceIds = [availableCandidate.resourceId];
+      } else {
         throw new ConflictException("No required service resource is available");
       }
     }
@@ -218,31 +230,28 @@ export class BookingService {
       );
     }
 
-    // Concurrently validate resource booking overlaps
+    // ⚡ Bolt Optimization: Validate resource booking overlaps using a single batched database query.
+    // Replaces mapping over dto.resourceIds with individual findFirst queries with one findMany query.
     if (dto.resourceIds && dto.resourceIds.length > 0) {
-      const overlaps = await Promise.all(
-        dto.resourceIds.map(async (resourceId) => {
-          const overlap = await this.prisma.client.serviceBooking.findFirst({
-            where: {
-              organizationId: orgId,
-              resources: { some: { resourceId: resourceId } },
-              status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
-              OR: [
-                {
-                  scheduledStartTime: { lt: totalEndTime },
-                  scheduledEndTime: { gt: totalStartTime },
-                }
-              ],
-            }
-          });
-          return { resourceId, overlap };
-        })
-      );
+      const conflictingBooking = await this.prisma.client.serviceBooking.findFirst({
+        where: {
+          organizationId: orgId,
+          resources: { some: { resourceId: { in: dto.resourceIds } } },
+          status: { in: [BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS] },
+          scheduledStartTime: { lt: totalEndTime },
+          scheduledEndTime: { gt: totalStartTime },
+        },
+        select: {
+          resources: {
+            where: { resourceId: { in: dto.resourceIds } },
+            select: { resourceId: true },
+          },
+        },
+      });
 
-      for (const { resourceId, overlap } of overlaps) {
-        if (overlap) {
-          throw new BadRequestException(`Resource ${resourceId} is already booked for this time (including buffers)`);
-        }
+      if (conflictingBooking && conflictingBooking.resources.length > 0) {
+        const blockedResourceId = conflictingBooking.resources[0].resourceId;
+        throw new BadRequestException(`Resource ${blockedResourceId} is already booked for this time (including buffers)`);
       }
     }
 
