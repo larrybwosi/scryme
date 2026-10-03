@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
 import { generateDocumentToken } from "@repo/shared/api/v2";
+import { getResolvedApiUrl } from "@/lib/utils";
 
 export async function GET(
   req: NextRequest,
@@ -29,8 +30,7 @@ export async function GET(
   try {
     const token = generateDocumentToken("packing-list", id, auth.organizationId);
 
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
     const fetchUrl = `${apiUrl}/api/v2/public/documents/packing-list/${id}?token=${token}`;
 
     const response = await fetch(fetchUrl);
