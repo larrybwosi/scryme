@@ -33,3 +33,7 @@
 ## 2026-10-02 - Custom Role Mutation Tenant Isolation
 **Learning:** In `RoleManagementUseCase`, `CustomRole` lacks a composite unique constraint on `[id, organizationId]`. Using standard `customRole.update` or `customRole.delete` with `{ where: { id } }` ignores non-unique tenant parameters at database execution time.
 **Action:** Use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, organizationId } })` to enforce database-level multi-tenant isolation during custom role mutations.
+
+## 2026-10-05 - Multi-Tenant Scoping and Atomic State Check in Invitation Revocation
+**Learning:** `Invitation` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `invitation.update({ where: { id } })` ignores `organizationId` at runtime. Using `updateMany({ where: { id, organizationId, status: PENDING }, data: { status: DECLINED } })` guarantees database-level multi-tenant isolation and prevents invalid state transitions.
+**Action:** Always use `updateMany({ where: { id, organizationId, status: InvitationStatus.PENDING }, data })` followed by `findFirstOrThrow` for database-level multi-tenant and state-aware invitation mutations.

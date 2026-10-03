@@ -134,16 +134,21 @@ export class InvitationUseCase {
   }
 
   async revokeInvitation(organizationId: string, id: string, actorId: string) {
-    const invitation = await this.prisma.client.invitation.findFirst({
+    // THREAT MODEL / MITIGATION (Sentinel):
+    // IDOR/BOLA Protection: Invitation model lacks a composite unique constraint on [id, organizationId].
+    // Using standard invitation.update({ where: { id } }) ignores organizationId at runtime in Prisma.
+    // updateMany strictly enforces multi-tenant organization ownership and pending status at database execution level.
+    const updateResult = await this.prisma.client.invitation.updateMany({
       where: { id, organizationId, status: InvitationStatus.PENDING },
+      data: { status: InvitationStatus.DECLINED },
     });
 
-    if (!invitation)
+    if (updateResult.count === 0) {
       throw new NotFoundException("Pending invitation not found");
+    }
 
-    const updated = await this.prisma.client.invitation.update({
-      where: { id },
-      data: { status: InvitationStatus.DECLINED },
+    const updated = await this.prisma.client.invitation.findFirstOrThrow({
+      where: { id, organizationId },
     });
 
     await this.prisma.client.auditLog.create({
@@ -153,7 +158,7 @@ export class InvitationUseCase {
         action: AuditLogAction.DELETE,
         entityType: AuditEntityType.MEMBER,
         entityId: updated.id,
-        description: `Revoked invitation for ${invitation.email}`,
+        description: `Revoked invitation for ${updated.email}`,
       },
     });
 
@@ -211,8 +216,9 @@ export class InvitationUseCase {
     }
 
     if (invitation.expiresAt < new Date()) {
-      await this.prisma.client.invitation.update({
-        where: { id: invitation.id },
+      // SECURITY (Sentinel): Scoped updateMany to ensure state transition is atomic and scoped
+      await this.prisma.client.invitation.updateMany({
+        where: { id: invitation.id, status: InvitationStatus.PENDING },
         data: { status: InvitationStatus.EXPIRED },
       });
       throw new BadRequestException("Invitation has expired");
@@ -251,9 +257,9 @@ export class InvitationUseCase {
         },
       });
 
-      // Update invitation status
-      await tx.invitation.update({
-        where: { id: invitation.id },
+      // SECURITY (Sentinel): Scoped updateMany for atomic PENDING -> ACCEPTED state transition
+      await tx.invitation.updateMany({
+        where: { id: invitation.id, status: InvitationStatus.PENDING },
         data: { status: InvitationStatus.ACCEPTED },
       });
 

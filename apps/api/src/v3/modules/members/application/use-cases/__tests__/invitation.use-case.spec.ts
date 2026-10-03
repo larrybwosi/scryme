@@ -3,7 +3,7 @@ import { InvitationUseCase } from "../invitation.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { InvitationStatus, MemberRole } from "@repo/db";
-import { BadRequestException, ForbiddenException } from "@nestjs/common";
+import { BadRequestException, ForbiddenException, NotFoundException } from "@nestjs/common";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 vi.mock("@repo/shared/server", () => ({
@@ -24,9 +24,11 @@ describe("InvitationUseCase", () => {
         count: vi.fn(),
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         findUnique: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
       member: {
         findFirst: vi.fn(),
@@ -80,8 +82,8 @@ describe("InvitationUseCase", () => {
       const result = await useCase.acceptInvitation(dto, userId);
 
       expect(mockPrisma.client.member.create).toHaveBeenCalled();
-      expect(mockPrisma.client.invitation.update).toHaveBeenCalledWith({
-        where: { id: "inv-1" },
+      expect(mockPrisma.client.invitation.updateMany).toHaveBeenCalledWith({
+        where: { id: "inv-1", status: InvitationStatus.PENDING },
         data: { status: InvitationStatus.ACCEPTED },
       });
     });
@@ -132,6 +134,50 @@ describe("InvitationUseCase", () => {
         BadRequestException,
       );
       expect(mockPrisma.client.member.create).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("revokeInvitation", () => {
+    it("should revoke invitation successfully using updateMany scoped to organizationId", async () => {
+      const orgId = "org-1";
+      const invId = "inv-123";
+      const actorId = "actor-456";
+
+      mockPrisma.client.invitation.updateMany.mockResolvedValue({ count: 1 });
+      mockPrisma.client.invitation.findFirstOrThrow.mockResolvedValue({
+        id: invId,
+        email: "target@example.com",
+        organizationId: orgId,
+        status: InvitationStatus.DECLINED,
+      });
+
+      const result = await useCase.revokeInvitation(orgId, invId, actorId);
+
+      expect(mockPrisma.client.invitation.updateMany).toHaveBeenCalledWith({
+        where: { id: invId, organizationId: orgId, status: InvitationStatus.PENDING },
+        data: { status: InvitationStatus.DECLINED },
+      });
+      expect(mockPrisma.client.invitation.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: invId, organizationId: orgId },
+      });
+      expect(result.status).toBe(InvitationStatus.DECLINED);
+    });
+
+    it("should throw NotFoundException if invitation does not exist or belongs to another organization", async () => {
+      const orgId = "org-1";
+      const invId = "inv-foreign";
+      const actorId = "actor-456";
+
+      mockPrisma.client.invitation.updateMany.mockResolvedValue({ count: 0 });
+
+      await expect(useCase.revokeInvitation(orgId, invId, actorId)).rejects.toThrow(
+        NotFoundException,
+      );
+
+      expect(mockPrisma.client.invitation.updateMany).toHaveBeenCalledWith({
+        where: { id: invId, organizationId: orgId, status: InvitationStatus.PENDING },
+        data: { status: InvitationStatus.DECLINED },
+      });
     });
   });
 
