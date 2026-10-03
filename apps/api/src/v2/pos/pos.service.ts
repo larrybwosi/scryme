@@ -469,7 +469,6 @@ export class PosService {
     };
   }
 
-  }
 
   async getInventory(ctx: V2ApiContext, query: any) {
     return this.inventoryService.getInventory(ctx, query);
