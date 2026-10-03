@@ -54,13 +54,11 @@ describe("AndroidUseCase", () => {
         name: "Test Org",
         slug: "test-org",
         logo: null,
-        timeZone: "UTC",
       });
 
       mockPrisma.client.member.findUnique.mockResolvedValue({
         id: "mem-1",
         role: "ADMIN",
-        organization: { id: "org-1", name: "Test Org", slug: "test-org" },
         user: { id: "usr-1", email: "test@scryme.com", name: "Test Staff", image: null },
       });
 
@@ -72,7 +70,7 @@ describe("AndroidUseCase", () => {
       ]);
 
       mockPrisma.client.inventoryLocation.findMany.mockResolvedValue([
-        { id: "loc-1", name: "Main Location", slug: "main", isPrimary: true },
+        { id: "loc-1", name: "Main Location", code: "MAIN", isDefault: true },
       ]);
 
       const result = await useCase.getMe(v3Context, user);
@@ -101,13 +99,14 @@ describe("AndroidUseCase", () => {
       mockPrisma.client.member.findFirst.mockResolvedValue({
         id: "mem-2",
         role: "OWNER",
-        organization: {
-          id: "org-2",
-          name: "Org Two",
-          slug: "org-two",
-          logo: null,
-          timeZone: "Africa/Nairobi",
-        },
+        organizationId: "org-2",
+      });
+
+      mockPrisma.client.organization.findUnique.mockResolvedValue({
+        id: "org-2",
+        name: "Org Two",
+        slug: "org-two",
+        logo: null,
       });
 
       mockPrisma.client.user.update.mockResolvedValue({ id: "usr-1", activeOrganizationId: "org-2" });
@@ -166,8 +165,8 @@ describe("AndroidUseCase", () => {
       const v3Context = { organizationId: "org-1" };
 
       mockPrisma.client.transaction.aggregate.mockResolvedValue({
-        _sum: { totalAmount: 1500.5 },
-        _count: { id: 12 },
+        _sum: { totalPaid: 1500.5 },
+        _count: { _all: 12 },
       });
       mockPrisma.client.productVariantStock.count.mockResolvedValue(3);
       mockPrisma.client.customer.count.mockResolvedValue(42);

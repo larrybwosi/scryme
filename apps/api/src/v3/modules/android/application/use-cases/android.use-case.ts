@@ -16,7 +16,6 @@ export class AndroidUseCase {
         name: true,
         slug: true,
         logo: true,
-        timeZone: true,
       },
     });
 
@@ -31,13 +30,6 @@ export class AndroidUseCase {
         select: {
           id: true,
           role: true,
-          organization: {
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-            },
-          },
           user: {
             select: {
               id: true,
@@ -87,8 +79,8 @@ export class AndroidUseCase {
       select: {
         id: true,
         name: true,
-        slug: true,
-        isPrimary: true,
+        code: true,
+        isDefault: true,
       },
     });
 
@@ -123,21 +115,23 @@ export class AndroidUseCase {
       select: {
         id: true,
         role: true,
-        organization: {
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            logo: true,
-            timeZone: true,
-          },
-        },
+        organizationId: true,
       },
     });
 
     if (!member) {
       throw new ForbiddenException("You are not an active member of this organization");
     }
+
+    const targetOrg = await this.prisma.client.organization.findUnique({
+      where: { id: dto.organizationId },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        logo: true,
+      },
+    });
 
     // Update user's activeOrganizationId in database
     await this.prisma.client.user.update({
@@ -147,7 +141,7 @@ export class AndroidUseCase {
 
     return {
       success: true,
-      activeOrganization: member.organization,
+      activeOrganization: targetOrg,
       member: {
         id: member.id,
         role: member.role,
@@ -158,16 +152,16 @@ export class AndroidUseCase {
   async registerDevice(v3Context: any, dto: RegisterDeviceDto) {
     const { organizationId, memberId } = v3Context;
 
-    // Find location for device registry or primary location fallback
-    const primaryLocation = await this.prisma.client.inventoryLocation.findFirst({
-      where: { organizationId, isPrimary: true },
+    // Find default or fallback location for device registry
+    const defaultLocation = await this.prisma.client.inventoryLocation.findFirst({
+      where: { organizationId, isDefault: true },
       select: { id: true },
     }) || await this.prisma.client.inventoryLocation.findFirst({
       where: { organizationId },
       select: { id: true },
     });
 
-    if (!primaryLocation) {
+    if (!defaultLocation) {
       throw new NotFoundException("No location found for organization");
     }
 
@@ -206,7 +200,7 @@ export class AndroidUseCase {
           serialNumber: dto.deviceId,
           deviceName: dto.modelName || `Android Device (${dto.deviceId.slice(0, 8)})`,
           organizationId,
-          locationId: primaryLocation.id,
+          locationId: defaultLocation.id,
           deviceType: "MOBILE_POS",
           status: "ACTIVE",
           metadata: {
@@ -249,8 +243,8 @@ export class AndroidUseCase {
             createdAt: { gte: todayStart },
             status: "COMPLETED",
           },
-          _sum: { totalAmount: true },
-          _count: { id: true },
+          _sum: { totalPaid: true },
+          _count: { _all: true },
         }),
         this.prisma.client.productVariantStock.count({
           where: {
@@ -265,8 +259,8 @@ export class AndroidUseCase {
 
     return {
       todaySales: {
-        totalAmount: salesAggregate._sum.totalAmount || 0,
-        transactionCount: salesAggregate._count.id || 0,
+        totalAmount: Number(salesAggregate._sum.totalPaid || 0),
+        transactionCount: salesAggregate._count._all || 0,
       },
       lowStockCount,
       totalCustomers,
