@@ -17,20 +17,20 @@ describe("AndroidUseCase", () => {
           findMany: vi.fn(),
           findFirst: vi.fn(),
         },
-        location: {
+        inventoryLocation: {
           findMany: vi.fn(),
+          findFirst: vi.fn(),
         },
         user: {
           update: vi.fn(),
         },
         deviceRegistry: {
-          upsert: vi.fn(),
+          findFirst: vi.fn(),
+          create: vi.fn(),
+          update: vi.fn(),
         },
-        saleTransaction: {
+        transaction: {
           aggregate: vi.fn(),
-        },
-        order: {
-          count: vi.fn(),
         },
         productVariantStock: {
           count: vi.fn(),
@@ -54,13 +54,13 @@ describe("AndroidUseCase", () => {
         name: "Test Org",
         slug: "test-org",
         logo: null,
-        currency: "USD",
         timeZone: "UTC",
       });
 
       mockPrisma.client.member.findUnique.mockResolvedValue({
         id: "mem-1",
         role: "ADMIN",
+        organization: { id: "org-1", name: "Test Org", slug: "test-org" },
         user: { id: "usr-1", email: "test@scryme.com", name: "Test Staff", image: null },
       });
 
@@ -71,7 +71,7 @@ describe("AndroidUseCase", () => {
         },
       ]);
 
-      mockPrisma.client.location.findMany.mockResolvedValue([
+      mockPrisma.client.inventoryLocation.findMany.mockResolvedValue([
         { id: "loc-1", name: "Main Location", slug: "main", isPrimary: true },
       ]);
 
@@ -106,7 +106,6 @@ describe("AndroidUseCase", () => {
           name: "Org Two",
           slug: "org-two",
           logo: null,
-          currency: "KES",
           timeZone: "Africa/Nairobi",
         },
       });
@@ -133,7 +132,7 @@ describe("AndroidUseCase", () => {
   });
 
   describe("registerDevice", () => {
-    it("should upsert device registry for android app", async () => {
+    it("should create device registry for new android app device", async () => {
       const v3Context = { organizationId: "org-1", memberId: "mem-1" };
       const dto = {
         deviceId: "android-hardware-123",
@@ -143,12 +142,14 @@ describe("AndroidUseCase", () => {
         pushToken: "fcm-token-abc",
       };
 
-      mockPrisma.client.deviceRegistry.upsert.mockResolvedValue({
+      mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "loc-1" });
+      mockPrisma.client.deviceRegistry.findFirst.mockResolvedValue(null);
+      mockPrisma.client.deviceRegistry.create.mockResolvedValue({
         id: "dev-reg-1",
         serialNumber: "android-hardware-123",
         deviceName: "Pixel 8 Pro",
         status: "ACTIVE",
-        appVersion: "2.1.0",
+        metadata: { appVersion: "2.1.0" },
         lastSeenAt: new Date(),
       });
 
@@ -156,7 +157,7 @@ describe("AndroidUseCase", () => {
 
       expect(result.success).toBe(true);
       expect(result.device.deviceId).toBe("android-hardware-123");
-      expect(mockPrisma.client.deviceRegistry.upsert).toHaveBeenCalled();
+      expect(mockPrisma.client.deviceRegistry.create).toHaveBeenCalled();
     });
   });
 
@@ -164,11 +165,10 @@ describe("AndroidUseCase", () => {
     it("should return aggregated operational dashboard stats", async () => {
       const v3Context = { organizationId: "org-1" };
 
-      mockPrisma.client.saleTransaction.aggregate.mockResolvedValue({
+      mockPrisma.client.transaction.aggregate.mockResolvedValue({
         _sum: { totalAmount: 1500.5 },
         _count: { id: 12 },
       });
-      mockPrisma.client.order.count.mockResolvedValue(5);
       mockPrisma.client.productVariantStock.count.mockResolvedValue(3);
       mockPrisma.client.customer.count.mockResolvedValue(42);
 
@@ -176,7 +176,6 @@ describe("AndroidUseCase", () => {
 
       expect(result.todaySales.totalAmount).toBe(1500.5);
       expect(result.todaySales.transactionCount).toBe(12);
-      expect(result.pendingOrdersCount).toBe(5);
       expect(result.lowStockCount).toBe(3);
       expect(result.totalCustomers).toBe(42);
     });

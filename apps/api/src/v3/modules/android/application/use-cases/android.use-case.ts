@@ -16,7 +16,6 @@ export class AndroidUseCase {
         name: true,
         slug: true,
         logo: true,
-        currency: true,
         timeZone: true,
       },
     });
@@ -32,6 +31,13 @@ export class AndroidUseCase {
         select: {
           id: true,
           role: true,
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+            },
+          },
           user: {
             select: {
               id: true,
@@ -75,8 +81,8 @@ export class AndroidUseCase {
       }));
     }
 
-    // Fetch organization locations accessible to android devices
-    const locations = await this.prisma.client.location.findMany({
+    // Fetch organization inventory locations accessible to android devices
+    const locations = await this.prisma.client.inventoryLocation.findMany({
       where: { organizationId },
       select: {
         id: true,
@@ -123,7 +129,6 @@ export class AndroidUseCase {
             name: true,
             slug: true,
             logo: true,
-            currency: true,
             timeZone: true,
           },
         },
@@ -153,48 +158,78 @@ export class AndroidUseCase {
   async registerDevice(v3Context: any, dto: RegisterDeviceDto) {
     const { organizationId, memberId } = v3Context;
 
-    // Register or update DeviceRegistry for Android app
-    const registry = await this.prisma.client.deviceRegistry.upsert({
+    // Find location for device registry or primary location fallback
+    const primaryLocation = await this.prisma.client.inventoryLocation.findFirst({
+      where: { organizationId, isPrimary: true },
+      select: { id: true },
+    }) || await this.prisma.client.inventoryLocation.findFirst({
+      where: { organizationId },
+      select: { id: true },
+    });
+
+    if (!primaryLocation) {
+      throw new NotFoundException("No location found for organization");
+    }
+
+    // Find existing device by id or serialNumber
+    const existingDevice = await this.prisma.client.deviceRegistry.findFirst({
       where: {
-        serialNumber: dto.deviceId,
-      },
-      create: {
-        serialNumber: dto.deviceId,
-        deviceName: dto.modelName || `Android Device (${dto.deviceId.slice(0, 8)})`,
+        OR: [
+          { id: dto.deviceId },
+          { serialNumber: dto.deviceId },
+        ],
         organizationId,
-        deviceType: "ANDROID_APP",
-        status: "ACTIVE",
-        appVersion: dto.appVersion || "1.0.0",
-        metadata: {
-          osVersion: dto.osVersion,
-          pushToken: dto.pushToken,
-          registeredByMemberId: memberId,
-          ...(dto.metadata || {}),
-        },
-      },
-      update: {
-        organizationId,
-        deviceName: dto.modelName || undefined,
-        status: "ACTIVE",
-        appVersion: dto.appVersion || undefined,
-        lastSeenAt: new Date(),
-        metadata: {
-          osVersion: dto.osVersion,
-          pushToken: dto.pushToken,
-          updatedByMemberId: memberId,
-          ...(dto.metadata || {}),
-        },
       },
     });
+
+    let registry;
+    if (existingDevice) {
+      registry = await this.prisma.client.deviceRegistry.update({
+        where: { id: existingDevice.id },
+        data: {
+          deviceName: dto.modelName || existingDevice.deviceName,
+          status: "ACTIVE",
+          lastSeenAt: new Date(),
+          metadata: {
+            ...(existingDevice.metadata as object || {}),
+            appVersion: dto.appVersion,
+            osVersion: dto.osVersion,
+            pushToken: dto.pushToken,
+            updatedByMemberId: memberId,
+            ...(dto.metadata || {}),
+          },
+        },
+      });
+    } else {
+      registry = await this.prisma.client.deviceRegistry.create({
+        data: {
+          serialNumber: dto.deviceId,
+          deviceName: dto.modelName || `Android Device (${dto.deviceId.slice(0, 8)})`,
+          organizationId,
+          locationId: primaryLocation.id,
+          deviceType: "MOBILE_POS",
+          status: "ACTIVE",
+          metadata: {
+            appVersion: dto.appVersion,
+            osVersion: dto.osVersion,
+            pushToken: dto.pushToken,
+            registeredByMemberId: memberId,
+            ...(dto.metadata || {}),
+          },
+        },
+      });
+    }
+
+    const metadata = (registry.metadata as Record<string, any>) || {};
 
     return {
       success: true,
       device: {
         id: registry.id,
-        deviceId: registry.serialNumber,
+        deviceId: registry.serialNumber || registry.id,
         deviceName: registry.deviceName,
         status: registry.status,
-        appVersion: registry.appVersion,
+        appVersion: metadata.appVersion || dto.appVersion || "1.0.0",
         lastSeenAt: registry.lastSeenAt,
       },
     };
@@ -206,21 +241,16 @@ export class AndroidUseCase {
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
 
-    const [salesAggregate, pendingOrdersCount, lowStockCount, totalCustomers] =
+    const [salesAggregate, lowStockCount, totalCustomers] =
       await Promise.all([
-        this.prisma.client.saleTransaction.aggregate({
+        this.prisma.client.transaction.aggregate({
           where: {
             organizationId,
             createdAt: { gte: todayStart },
+            status: "COMPLETED",
           },
           _sum: { totalAmount: true },
           _count: { id: true },
-        }),
-        this.prisma.client.order.count({
-          where: {
-            organizationId,
-            status: { in: ["PENDING", "PROCESSING", "CONFIRMED"] },
-          },
         }),
         this.prisma.client.productVariantStock.count({
           where: {
@@ -238,7 +268,6 @@ export class AndroidUseCase {
         totalAmount: salesAggregate._sum.totalAmount || 0,
         transactionCount: salesAggregate._count.id || 0,
       },
-      pendingOrdersCount,
       lowStockCount,
       totalCustomers,
     };
