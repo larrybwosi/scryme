@@ -109,8 +109,14 @@ export class V3RealtimeGateway
         const apiKeyStr = token;
         const clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
         try {
-          const clientObj = await this.prisma.client.v3ApiClient.findUnique({
-            where: { clientId },
+          const clientObj = await this.prisma.client.v3ApiClient.findFirst({
+            where: {
+              OR: [
+                { clientId },
+                { id: clientId },
+                { apiKey: apiKeyStr },
+              ],
+            },
             include: { organization: true },
           });
           if (clientObj && clientObj.isActive) {

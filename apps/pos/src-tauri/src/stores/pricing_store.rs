@@ -347,7 +347,7 @@ async fn check_list_and_resolve(
     if let Some(from) = valid_from { if from.as_str() > now { return None; } }
     if let Some(to) = valid_to { if to.as_str() < now { return None; } }
 
-    let item_query = "SELECT price FROM price_items WHERE price_list_id = ?1 AND variant_id = ?2 AND (selling_unit_id = ?3 OR (selling_unit_id IS NULL AND ?4 = 1))";
+    let item_query = "SELECT price FROM price_items WHERE price_list_id = ?1 AND variant_id = ?2 AND (selling_unit_id = ?3 OR (selling_unit_id IS NULL AND ?4 = 1) OR selling_unit_id IS NULL) ORDER BY min_quantity ASC";
     if let Ok(Some(item_row)) = sqlx::query(item_query)
         .bind(&id)
         .bind(variant_id)
