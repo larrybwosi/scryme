@@ -15,10 +15,136 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
 
 
+/// struct for typed errors of method [`p_os_ably_auth`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsAblyAuthError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_ably_auth_context`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsAblyAuthContextError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_adjust_stock`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsAdjustStockError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_cancel_stock_request`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCancelStockRequestError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_check_out`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCheckOutError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_create_customer`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCreateCustomerError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_create_inventory_request`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCreateInventoryRequestError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_create_order`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCreateOrderError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_create_stock_request`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCreateStockRequestError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_create_stock_transfer`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsCreateStockTransferError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_dispatch_delivery`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsDispatchDeliveryError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_attendance_status`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetAttendanceStatusError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_customers_delta`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetCustomersDeltaError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_drivers`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetDriversError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_incoming`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetIncomingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_inventory`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetInventoryError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_locations`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetLocationsError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`p_os_get_me`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum POsGetMeError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_packing_list`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetPackingListError {
     UnknownValue(serde_json::Value),
 }
 
@@ -36,10 +162,59 @@ pub enum POsGetPettyCashTransactionsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`p_os_get_pricing`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetPricingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_products`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetProductsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_sale_by_id`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetSaleByIdError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_sales_history`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetSalesHistoryError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`p_os_get_transactions`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum POsGetTransactionsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_get_waybill`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsGetWaybillError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_list_inventory_requests`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsListInventoryRequestsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_list_stock_requests`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsListStockRequestsError {
     UnknownValue(serde_json::Value),
 }
 
@@ -48,6 +223,13 @@ pub enum POsGetTransactionsError {
 #[serde(untagged)]
 pub enum POsLoginError {
     Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_process_inventory`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsProcessInventoryError {
     UnknownValue(serde_json::Value),
 }
 
@@ -67,10 +249,59 @@ pub enum POsProvisionError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`p_os_receive_purchase`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsReceivePurchaseError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_receive_transfer`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsReceiveTransferError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_reconcile_delivery`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsReconcileDeliveryError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_record_payment`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsRecordPaymentError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_register_barcode`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsRegisterBarcodeError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`p_os_register_petty_cash`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum POsRegisterPettyCashError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_scan_transaction`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsScanTransactionError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_scan_transactions_alias`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsScanTransactionsAliasError {
     UnknownValue(serde_json::Value),
 }
 
@@ -81,6 +312,512 @@ pub enum POsSyncError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`p_os_sync_pricing`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsSyncPricingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`p_os_sync_shifts`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum POsSyncShiftsError {
+    UnknownValue(serde_json::Value),
+}
+
+
+pub async fn p_os_ably_auth(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsAblyAuthError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/ably-auth", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsAblyAuthError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_ably_auth_context(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsAblyAuthContextError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/ably-auth/context", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsAblyAuthContextError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_adjust_stock(configuration: &configuration::Configuration, org_slug: &str, pos_adjust_stock_dto: models::PosAdjustStockDto) -> Result<(), Error<POsAdjustStockError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_adjust_stock_dto = pos_adjust_stock_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_adjust_stock_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsAdjustStockError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_cancel_stock_request(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsCancelStockRequestError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/stock-requests/{id}/cancel", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCancelStockRequestError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_check_out(configuration: &configuration::Configuration, org_slug: &str, pos_check_out_dto: models::PosCheckOutDto) -> Result<(), Error<POsCheckOutError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_check_out_dto = pos_check_out_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/check-out", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_check_out_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCheckOutError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_create_customer(configuration: &configuration::Configuration, org_slug: &str, pos_create_customer_dto: models::PosCreateCustomerDto) -> Result<(), Error<POsCreateCustomerError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_create_customer_dto = pos_create_customer_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/customers", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_create_customer_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCreateCustomerError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_create_inventory_request(configuration: &configuration::Configuration, org_slug: &str, pos_create_stock_request_dto: models::PosCreateStockRequestDto) -> Result<(), Error<POsCreateInventoryRequestError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_create_stock_request_dto = pos_create_stock_request_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_create_stock_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCreateInventoryRequestError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_create_order(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsCreateOrderError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/orders", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCreateOrderError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_create_stock_request(configuration: &configuration::Configuration, org_slug: &str, pos_create_stock_request_dto: models::PosCreateStockRequestDto) -> Result<(), Error<POsCreateStockRequestError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_create_stock_request_dto = pos_create_stock_request_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/stock-requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_create_stock_request_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCreateStockRequestError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_create_stock_transfer(configuration: &configuration::Configuration, org_slug: &str, pos_create_stock_transfer_dto: models::PosCreateStockTransferDto) -> Result<(), Error<POsCreateStockTransferError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_create_stock_transfer_dto = pos_create_stock_transfer_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/transfers", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_create_stock_transfer_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsCreateStockTransferError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_dispatch_delivery(configuration: &configuration::Configuration, transaction_id: &str, org_slug: &str, pos_dispatch_delivery_dto: models::PosDispatchDeliveryDto) -> Result<(), Error<POsDispatchDeliveryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_transaction_id = transaction_id;
+    let p_path_org_slug = org_slug;
+    let p_body_pos_dispatch_delivery_dto = pos_dispatch_delivery_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/deliveries/dispatch", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    req_builder = req_builder.query(&[("transactionId", &p_query_transaction_id.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_dispatch_delivery_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsDispatchDeliveryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_attendance_status(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetAttendanceStatusError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/attendance/status", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetAttendanceStatusError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_customers_delta(configuration: &configuration::Configuration, last_sync: &str, org_slug: &str) -> Result<(), Error<POsGetCustomersDeltaError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_last_sync = last_sync;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/customers", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("lastSync", &p_query_last_sync.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetCustomersDeltaError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_drivers(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetDriversError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/drivers", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetDriversError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_incoming(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetIncomingError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/incoming", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetIncomingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_inventory(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetInventoryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetInventoryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_locations(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetLocationsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/locations", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetLocationsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
 
 pub async fn p_os_get_me(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetMeError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -106,6 +843,35 @@ pub async fn p_os_get_me(configuration: &configuration::Configuration, org_slug:
     } else {
         let content = resp.text().await?;
         let entity: Option<POsGetMeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_packing_list(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsGetPackingListError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/packing-list/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetPackingListError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -168,6 +934,121 @@ pub async fn p_os_get_petty_cash_transactions(configuration: &configuration::Con
     }
 }
 
+pub async fn p_os_get_pricing(configuration: &configuration::Configuration, last_sync: &str, org_slug: &str) -> Result<(), Error<POsGetPricingError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_last_sync = last_sync;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/pricing", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("lastSync", &p_query_last_sync.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetPricingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_products(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetProductsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetProductsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_sale_by_id(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsGetSaleByIdError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/sale/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetSaleByIdError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_sales_history(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetSalesHistoryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/sale", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetSalesHistoryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn p_os_get_transactions(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsGetTransactionsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
@@ -192,6 +1073,91 @@ pub async fn p_os_get_transactions(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<POsGetTransactionsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_get_waybill(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsGetWaybillError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/waybill/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsGetWaybillError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_list_inventory_requests(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsListInventoryRequestsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsListInventoryRequestsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_list_stock_requests(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsListStockRequestsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/stock-requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsListStockRequestsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -234,14 +1200,46 @@ pub async fn p_os_login(configuration: &configuration::Configuration, org_slug: 
     }
 }
 
-pub async fn p_os_process_sale(configuration: &configuration::Configuration, org_slug: &str, process_sale_dto: models::ProcessSaleDto) -> Result<(), Error<POsProcessSaleError>> {
+pub async fn p_os_process_inventory(configuration: &configuration::Configuration, org_slug: &str, pos_adjust_stock_dto: models::PosAdjustStockDto) -> Result<(), Error<POsProcessInventoryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_adjust_stock_dto = pos_adjust_stock_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/process", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_adjust_stock_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsProcessInventoryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_process_sale(configuration: &configuration::Configuration, location_id: &str, org_slug: &str, process_sale_dto: models::ProcessSaleDto) -> Result<(), Error<POsProcessSaleError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_location_id = location_id;
     let p_path_org_slug = org_slug;
     let p_body_process_sale_dto = process_sale_dto;
 
     let uri_str = format!("{}/v3/{orgSlug}/pos/sale", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
+    req_builder = req_builder.query(&[("locationId", &p_query_location_id.to_string())]);
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -302,6 +1300,152 @@ pub async fn p_os_provision(configuration: &configuration::Configuration, org_sl
     }
 }
 
+pub async fn p_os_receive_purchase(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsReceivePurchaseError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/purchases/{id}/receive", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsReceivePurchaseError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_receive_transfer(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<POsReceiveTransferError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/transfers/{id}/receive", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsReceiveTransferError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_reconcile_delivery(configuration: &configuration::Configuration, org_slug: &str, pos_reconcile_delivery_dto: models::PosReconcileDeliveryDto) -> Result<(), Error<POsReconcileDeliveryError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_reconcile_delivery_dto = pos_reconcile_delivery_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/deliveries/reconcile-pod", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_reconcile_delivery_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsReconcileDeliveryError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_record_payment(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsRecordPaymentError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/sale/payments", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsRecordPaymentError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_register_barcode(configuration: &configuration::Configuration, org_slug: &str, pos_register_barcode_dto: models::PosRegisterBarcodeDto) -> Result<(), Error<POsRegisterBarcodeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_register_barcode_dto = pos_register_barcode_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/inventory/barcode", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_register_barcode_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsRegisterBarcodeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn p_os_register_petty_cash(configuration: &configuration::Configuration, org_slug: &str, register_petty_cash_dto: models::RegisterPettyCashDto) -> Result<(), Error<POsRegisterPettyCashError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
@@ -328,6 +1472,62 @@ pub async fn p_os_register_petty_cash(configuration: &configuration::Configurati
     } else {
         let content = resp.text().await?;
         let entity: Option<POsRegisterPettyCashError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_scan_transaction(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsScanTransactionError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/transaction/scan", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsScanTransactionError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_scan_transactions_alias(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<POsScanTransactionsAliasError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/transactions/scan", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsScanTransactionsAliasError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -360,3 +1560,62 @@ pub async fn p_os_sync(configuration: &configuration::Configuration, org_slug: &
     }
 }
 
+pub async fn p_os_sync_pricing(configuration: &configuration::Configuration, last_sync: &str, org_slug: &str) -> Result<(), Error<POsSyncPricingError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_last_sync = last_sync;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/pricing/sync", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("lastSync", &p_query_last_sync.to_string())]);
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsSyncPricingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn p_os_sync_shifts(configuration: &configuration::Configuration, org_slug: &str, pos_shift_sync_dto: models::PosShiftSyncDto) -> Result<(), Error<POsSyncShiftsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_pos_shift_sync_dto = pos_shift_sync_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/pos/shifts/sync", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_pos_shift_sync_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<POsSyncShiftsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}

@@ -24,10 +24,26 @@ pub enum CatalogCreateProductError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_create_product_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogCreateProduct0Error {
+    Status400(models::ApiErrorResponseDto),
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_create_review`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CatalogCreateReviewError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_create_review_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogCreateReview0Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -38,10 +54,25 @@ pub enum CatalogDeleteReviewError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_delete_review_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogDeleteReview0Error {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_get_price_change_requests`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CatalogGetPriceChangeRequestsError {
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_get_price_change_requests_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetPriceChangeRequests0Error {
     Status401(models::ApiErrorResponseDto),
     UnknownValue(serde_json::Value),
 }
@@ -54,6 +85,30 @@ pub enum CatalogGetProductError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_get_product_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetProduct0Error {
+    Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_get_product_variants`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetProductVariantsError {
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_get_product_variants_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetProductVariants0Error {
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_get_products`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -62,10 +117,26 @@ pub enum CatalogGetProductsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_get_products_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetProducts0Error {
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_get_services`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CatalogGetServicesError {
+    Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_get_services_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogGetServices0Error {
     Status401(models::ApiErrorResponseDto),
     UnknownValue(serde_json::Value),
 }
@@ -80,6 +151,16 @@ pub enum CatalogReviewPriceChangeRequestError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_review_price_change_request_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogReviewPriceChangeRequest0Error {
+    Status400(models::ApiErrorResponseDto),
+    Status401(models::ApiErrorResponseDto),
+    Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_update_product`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -88,10 +169,25 @@ pub enum CatalogUpdateProductError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_update_product_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogUpdateProduct0Error {
+    Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`catalog_update_review`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum CatalogUpdateReviewError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`catalog_update_review_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogUpdateReview0Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -105,14 +201,24 @@ pub enum CatalogUpdateSupplierVariantError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`catalog_update_supplier_variant_0`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum CatalogUpdateSupplierVariant0Error {
+    Status400(models::ApiErrorResponseDto),
+    Status401(models::ApiErrorResponseDto),
+    Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
 
 /// Registers a new physical product under the organization's catalog. Supports setting name, description, SKU, and base catalog price.
-pub async fn catalog_create_product(configuration: &configuration::Configuration, org_slug: &str, create_product_dto: models::CreateProductDto) -> Result<models::ProductResponseDto, Error<CatalogCreateProductError>> {
+pub async fn catalog_create_product(configuration: &configuration::Configuration, create_product_dto: models::CreateProductDto, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogCreateProductError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_org_slug = org_slug;
     let p_body_create_product_dto = create_product_dto;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -148,14 +254,56 @@ pub async fn catalog_create_product(configuration: &configuration::Configuration
     }
 }
 
+/// Registers a new physical product under the organization's catalog. Supports setting name, description, SKU, and base catalog price.
+pub async fn catalog_create_product_0(configuration: &configuration::Configuration, create_product_dto: models::CreateProductDto, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogCreateProduct0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_create_product_dto = create_product_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_create_product_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProductResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProductResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogCreateProduct0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Creates a product review. Dynamically falls back to v3Context customerId if body customerId is omitted.
-pub async fn catalog_create_review(configuration: &configuration::Configuration, product_id: &str, org_slug: &str, create_product_review_dto: models::CreateProductReviewDto) -> Result<models::ProductReviewResponseDto, Error<CatalogCreateReviewError>> {
+pub async fn catalog_create_review(configuration: &configuration::Configuration, product_id: &str, create_product_review_dto: models::CreateProductReviewDto, org_slug: Option<&str>) -> Result<models::ProductReviewResponseDto, Error<CatalogCreateReviewError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_product_id = product_id;
-    let p_path_org_slug = org_slug;
     let p_body_create_product_review_dto = create_product_review_dto;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{productId}/reviews", configuration.base_path, productId=crate::apis::urlencode(p_path_product_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{productId}/reviews", configuration.base_path, productId=crate::apis::urlencode(p_path_product_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -191,14 +339,57 @@ pub async fn catalog_create_review(configuration: &configuration::Configuration,
     }
 }
 
+/// Creates a product review. Dynamically falls back to v3Context customerId if body customerId is omitted.
+pub async fn catalog_create_review_0(configuration: &configuration::Configuration, product_id: &str, create_product_review_dto: models::CreateProductReviewDto, org_slug: Option<&str>) -> Result<models::ProductReviewResponseDto, Error<CatalogCreateReview0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_product_id = product_id;
+    let p_body_create_product_review_dto = create_product_review_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/products/{productId}/reviews", configuration.base_path, productId=crate::apis::urlencode(p_path_product_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_create_product_review_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProductReviewResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProductReviewResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogCreateReview0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Deletes a review by its ID. Enforces tenant isolation and ownership or admin permission checks.
-pub async fn catalog_delete_review(configuration: &configuration::Configuration, review_id: &str, org_slug: &str, customer_id: Option<&str>) -> Result<(), Error<CatalogDeleteReviewError>> {
+pub async fn catalog_delete_review(configuration: &configuration::Configuration, review_id: &str, customer_id: Option<&str>, org_slug: Option<&str>) -> Result<(), Error<CatalogDeleteReviewError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_review_id = review_id;
-    let p_path_org_slug = org_slug;
     let p_query_customer_id = customer_id;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref param_value) = p_query_customer_id {
@@ -225,15 +416,49 @@ pub async fn catalog_delete_review(configuration: &configuration::Configuration,
     }
 }
 
-/// Returns a paginated list of catalog price adjustments requiring review. Utilizes highly optimized targeted selects to load variants, products, base pricing tables, and audit details with minimal DB network payload.
-pub async fn catalog_get_price_change_requests(configuration: &configuration::Configuration, org_slug: &str, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>) -> Result<(), Error<CatalogGetPriceChangeRequestsError>> {
+/// Deletes a review by its ID. Enforces tenant isolation and ownership or admin permission checks.
+pub async fn catalog_delete_review_0(configuration: &configuration::Configuration, review_id: &str, customer_id: Option<&str>, org_slug: Option<&str>) -> Result<(), Error<CatalogDeleteReview0Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_review_id = review_id;
+    let p_query_customer_id = customer_id;
     let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref param_value) = p_query_customer_id {
+        req_builder = req_builder.query(&[("customerId", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogDeleteReview0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Returns a paginated list of catalog price adjustments requiring review. Utilizes highly optimized targeted selects to load variants, products, base pricing tables, and audit details with minimal DB network payload.
+pub async fn catalog_get_price_change_requests(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<(), Error<CatalogGetPriceChangeRequestsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
     let p_query_offset = offset;
     let p_query_limit = limit;
     let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/price-change-requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/price-change-requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_offset {
@@ -266,13 +491,54 @@ pub async fn catalog_get_price_change_requests(configuration: &configuration::Co
     }
 }
 
+/// Returns a paginated list of catalog price adjustments requiring review. Utilizes highly optimized targeted selects to load variants, products, base pricing tables, and audit details with minimal DB network payload.
+pub async fn catalog_get_price_change_requests_0(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<(), Error<CatalogGetPriceChangeRequests0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_offset = offset;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/price-change-requests", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_offset {
+        req_builder = req_builder.query(&[("offset", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetPriceChangeRequests0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Retrieves a single product by its unique database identifier or SEO slug.
-pub async fn catalog_get_product(configuration: &configuration::Configuration, id_or_slug: &str, org_slug: &str) -> Result<models::ProductResponseDto, Error<CatalogGetProductError>> {
+pub async fn catalog_get_product(configuration: &configuration::Configuration, id_or_slug: &str, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogGetProductError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id_or_slug = id_or_slug;
     let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{idOrSlug}", configuration.base_path, idOrSlug=crate::apis::urlencode(p_path_id_or_slug), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{idOrSlug}", configuration.base_path, idOrSlug=crate::apis::urlencode(p_path_id_or_slug), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -307,15 +573,194 @@ pub async fn catalog_get_product(configuration: &configuration::Configuration, i
     }
 }
 
-/// Retrieves a paginated list of all physical catalog products registered under the organization, complete with their first-level variants, cost history, pricing tables, categories, and images.
-pub async fn catalog_get_products(configuration: &configuration::Configuration, org_slug: &str, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>) -> Result<Vec<models::ProductResponseDto>, Error<CatalogGetProductsError>> {
+/// Retrieves a single product by its unique database identifier or SEO slug.
+pub async fn catalog_get_product_0(configuration: &configuration::Configuration, id_or_slug: &str, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogGetProduct0Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id_or_slug = id_or_slug;
     let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/products/{idOrSlug}", configuration.base_path, idOrSlug=crate::apis::urlencode(p_path_id_or_slug), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProductResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProductResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetProduct0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Retrieves a paginated list of product variants with optional filtering by type, category, search, active status, and location stock details.
+pub async fn catalog_get_product_variants(configuration: &configuration::Configuration, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, search: Option<&str>, category_id: Option<&str>, location_id: Option<&str>, product_type: Option<&str>, is_active: Option<bool>, include_location: Option<bool>, org_slug: Option<&str>) -> Result<(), Error<CatalogGetProductVariantsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_page = page;
+    let p_query_limit = limit;
+    let p_query_sort_by = sort_by;
+    let p_query_sort_order = sort_order;
+    let p_query_search = search;
+    let p_query_category_id = category_id;
+    let p_query_location_id = location_id;
+    let p_query_product_type = product_type;
+    let p_query_is_active = is_active;
+    let p_query_include_location = include_location;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/variants", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_page {
+        req_builder = req_builder.query(&[("page", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_by {
+        req_builder = req_builder.query(&[("sortBy", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_order {
+        req_builder = req_builder.query(&[("sortOrder", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_search {
+        req_builder = req_builder.query(&[("search", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_category_id {
+        req_builder = req_builder.query(&[("categoryId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_location_id {
+        req_builder = req_builder.query(&[("locationId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_product_type {
+        req_builder = req_builder.query(&[("productType", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_active {
+        req_builder = req_builder.query(&[("isActive", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_include_location {
+        req_builder = req_builder.query(&[("includeLocation", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetProductVariantsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Retrieves a paginated list of product variants with optional filtering by type, category, search, active status, and location stock details.
+pub async fn catalog_get_product_variants_0(configuration: &configuration::Configuration, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, search: Option<&str>, category_id: Option<&str>, location_id: Option<&str>, product_type: Option<&str>, is_active: Option<bool>, include_location: Option<bool>, org_slug: Option<&str>) -> Result<(), Error<CatalogGetProductVariants0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_page = page;
+    let p_query_limit = limit;
+    let p_query_sort_by = sort_by;
+    let p_query_sort_order = sort_order;
+    let p_query_search = search;
+    let p_query_category_id = category_id;
+    let p_query_location_id = location_id;
+    let p_query_product_type = product_type;
+    let p_query_is_active = is_active;
+    let p_query_include_location = include_location;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/variants", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_page {
+        req_builder = req_builder.query(&[("page", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_by {
+        req_builder = req_builder.query(&[("sortBy", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_order {
+        req_builder = req_builder.query(&[("sortOrder", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_search {
+        req_builder = req_builder.query(&[("search", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_category_id {
+        req_builder = req_builder.query(&[("categoryId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_location_id {
+        req_builder = req_builder.query(&[("locationId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_product_type {
+        req_builder = req_builder.query(&[("productType", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_active {
+        req_builder = req_builder.query(&[("isActive", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_include_location {
+        req_builder = req_builder.query(&[("includeLocation", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetProductVariants0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Retrieves a paginated list of all physical catalog products registered under the organization, complete with their first-level variants, cost history, pricing tables, categories, and images.
+pub async fn catalog_get_products(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<Vec<models::ProductResponseDto>, Error<CatalogGetProductsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
     let p_query_offset = offset;
     let p_query_limit = limit;
     let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_offset {
@@ -359,15 +804,67 @@ pub async fn catalog_get_products(configuration: &configuration::Configuration, 
     }
 }
 
-/// Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.
-pub async fn catalog_get_services(configuration: &configuration::Configuration, org_slug: &str, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>) -> Result<Vec<models::ServiceCatalogResponseDto>, Error<CatalogGetServicesError>> {
+/// Retrieves a paginated list of all physical catalog products registered under the organization, complete with their first-level variants, cost history, pricing tables, categories, and images.
+pub async fn catalog_get_products_0(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<Vec<models::ProductResponseDto>, Error<CatalogGetProducts0Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_org_slug = org_slug;
     let p_query_offset = offset;
     let p_query_limit = limit;
     let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/services", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/catalog/products", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_offset {
+        req_builder = req_builder.query(&[("offset", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::ProductResponseDto&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::ProductResponseDto&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetProducts0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+/// Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.
+pub async fn catalog_get_services(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<Vec<models::ServiceCatalogResponseDto>, Error<CatalogGetServicesError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_offset = offset;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/services", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_offset {
@@ -411,14 +908,66 @@ pub async fn catalog_get_services(configuration: &configuration::Configuration, 
     }
 }
 
+/// Retrieves a unified paginated catalog of all services belonging to the organization. Loads categories, pricing details, duration metrics, active statuses, and custom field structures seamlessly.
+pub async fn catalog_get_services_0(configuration: &configuration::Configuration, offset: Option<f64>, limit: Option<f64>, cursor: Option<&str>, org_slug: Option<&str>) -> Result<Vec<models::ServiceCatalogResponseDto>, Error<CatalogGetServices0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_offset = offset;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/services", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_offset {
+        req_builder = req_builder.query(&[("offset", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::ServiceCatalogResponseDto&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::ServiceCatalogResponseDto&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogGetServices0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Reviews and applies a price change request. If approved, the target price list item is updated instantly, dispatching updates to connected POS and digital channels. If rejected, stores rejection rationale for audit logs.
-pub async fn catalog_review_price_change_request(configuration: &configuration::Configuration, id: &str, org_slug: &str, review_price_change_dto: models::ReviewPriceChangeDto) -> Result<(), Error<CatalogReviewPriceChangeRequestError>> {
+pub async fn catalog_review_price_change_request(configuration: &configuration::Configuration, id: &str, review_price_change_dto: models::ReviewPriceChangeDto, org_slug: Option<&str>) -> Result<(), Error<CatalogReviewPriceChangeRequestError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
     let p_body_review_price_change_dto = review_price_change_dto;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/price-change-requests/{id}/review", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/price-change-requests/{id}/review", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -443,13 +992,45 @@ pub async fn catalog_review_price_change_request(configuration: &configuration::
     }
 }
 
-pub async fn catalog_update_product(configuration: &configuration::Configuration, id: &str, org_slug: &str, update_product_dto: models::UpdateProductDto) -> Result<models::ProductResponseDto, Error<CatalogUpdateProductError>> {
+/// Reviews and applies a price change request. If approved, the target price list item is updated instantly, dispatching updates to connected POS and digital channels. If rejected, stores rejection rationale for audit logs.
+pub async fn catalog_review_price_change_request_0(configuration: &configuration::Configuration, id: &str, review_price_change_dto: models::ReviewPriceChangeDto, org_slug: Option<&str>) -> Result<(), Error<CatalogReviewPriceChangeRequest0Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
+    let p_body_review_price_change_dto = review_price_change_dto;
     let p_path_org_slug = org_slug;
-    let p_body_update_product_dto = update_product_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/catalog/price-change-requests/{id}/review", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_review_price_change_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogReviewPriceChangeRequest0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn catalog_update_product(configuration: &configuration::Configuration, id: &str, update_product_dto: models::UpdateProductDto, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogUpdateProductError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_update_product_dto = update_product_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/products/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -485,14 +1066,56 @@ pub async fn catalog_update_product(configuration: &configuration::Configuration
     }
 }
 
+pub async fn catalog_update_product_0(configuration: &configuration::Configuration, id: &str, update_product_dto: models::UpdateProductDto, org_slug: Option<&str>) -> Result<models::ProductResponseDto, Error<CatalogUpdateProduct0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_update_product_dto = update_product_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/products/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_product_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProductResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProductResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogUpdateProduct0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Updates rating or comment on a review. Enforces tenant isolation and ownership restrictions.
-pub async fn catalog_update_review(configuration: &configuration::Configuration, review_id: &str, org_slug: &str, update_product_review_dto: models::UpdateProductReviewDto) -> Result<models::ProductReviewResponseDto, Error<CatalogUpdateReviewError>> {
+pub async fn catalog_update_review(configuration: &configuration::Configuration, review_id: &str, update_product_review_dto: models::UpdateProductReviewDto, org_slug: Option<&str>) -> Result<models::ProductReviewResponseDto, Error<CatalogUpdateReviewError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_review_id = review_id;
-    let p_path_org_slug = org_slug;
     let p_body_update_product_review_dto = update_product_review_dto;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -528,15 +1151,58 @@ pub async fn catalog_update_review(configuration: &configuration::Configuration,
     }
 }
 
+/// Updates rating or comment on a review. Enforces tenant isolation and ownership restrictions.
+pub async fn catalog_update_review_0(configuration: &configuration::Configuration, review_id: &str, update_product_review_dto: models::UpdateProductReviewDto, org_slug: Option<&str>) -> Result<models::ProductReviewResponseDto, Error<CatalogUpdateReview0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_review_id = review_id;
+    let p_body_update_product_review_dto = update_product_review_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/reviews/{reviewId}", configuration.base_path, reviewId=crate::apis::urlencode(p_path_review_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_product_review_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::ProductReviewResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::ProductReviewResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogUpdateReview0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Updates specific partner-supplier specifications for a product variant (such as cost price, preferred flag, or lead times) and automatically recalibrates retail price structures accordingly. Prevents unauthorized IDOR by validating variant-supplier tenancy.
-pub async fn catalog_update_supplier_variant(configuration: &configuration::Configuration, supplier_id: &str, variant_id: &str, org_slug: &str, update_supplier_product_dto: models::UpdateSupplierProductDto) -> Result<(), Error<CatalogUpdateSupplierVariantError>> {
+pub async fn catalog_update_supplier_variant(configuration: &configuration::Configuration, supplier_id: &str, variant_id: &str, update_supplier_product_dto: models::UpdateSupplierProductDto, org_slug: Option<&str>) -> Result<(), Error<CatalogUpdateSupplierVariantError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_supplier_id = supplier_id;
     let p_path_variant_id = variant_id;
-    let p_path_org_slug = org_slug;
     let p_body_update_supplier_product_dto = update_supplier_product_dto;
+    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}", configuration.base_path, supplierId=crate::apis::urlencode(p_path_supplier_id), variantId=crate::apis::urlencode(p_path_variant_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId}", configuration.base_path, supplierId=crate::apis::urlencode(p_path_supplier_id), variantId=crate::apis::urlencode(p_path_variant_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -561,3 +1227,35 @@ pub async fn catalog_update_supplier_variant(configuration: &configuration::Conf
     }
 }
 
+/// Updates specific partner-supplier specifications for a product variant (such as cost price, preferred flag, or lead times) and automatically recalibrates retail price structures accordingly. Prevents unauthorized IDOR by validating variant-supplier tenancy.
+pub async fn catalog_update_supplier_variant_0(configuration: &configuration::Configuration, supplier_id: &str, variant_id: &str, update_supplier_product_dto: models::UpdateSupplierProductDto, org_slug: Option<&str>) -> Result<(), Error<CatalogUpdateSupplierVariant0Error>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_supplier_id = supplier_id;
+    let p_path_variant_id = variant_id;
+    let p_body_update_supplier_product_dto = update_supplier_product_dto;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/catalog/suppliers/{supplierId}/variants/{variantId}", configuration.base_path, supplierId=crate::apis::urlencode(p_path_supplier_id), variantId=crate::apis::urlencode(p_path_variant_id), orgSlug=crate::apis::urlencode(p_path_org_slug.unwrap()));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_supplier_product_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<CatalogUpdateSupplierVariant0Error> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}

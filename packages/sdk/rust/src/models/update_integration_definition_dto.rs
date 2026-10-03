@@ -52,6 +52,8 @@ impl UpdateIntegrationDefinitionDto {
 /// Category of integration
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum Category {
+    #[serde(rename = "MONITORING")]
+    Monitoring,
     #[serde(rename = "E_COMMERCE")]
     ECommerce,
     #[serde(rename = "ACCOUNTING")]
@@ -70,12 +72,14 @@ pub enum Category {
 
 impl Default for Category {
     fn default() -> Category {
-        Self::ECommerce
+        Self::Monitoring
     }
 }
 /// Auth type of integration
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Ord, PartialOrd, Hash, Serialize, Deserialize)]
 pub enum AuthType {
+    #[serde(rename = "WEBHOOK_SECRET")]
+    WebhookSecret,
     #[serde(rename = "API_KEY")]
     ApiKey,
     #[serde(rename = "OAUTH2")]
@@ -86,7 +90,7 @@ pub enum AuthType {
 
 impl Default for AuthType {
     fn default() -> AuthType {
-        Self::ApiKey
+        Self::WebhookSecret
     }
 }
 

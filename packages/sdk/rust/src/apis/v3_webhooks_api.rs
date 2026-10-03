@@ -23,6 +23,13 @@ pub enum WebhooksCreateError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`webhooks_create_incoming_endpoint`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksCreateIncomingEndpointError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`webhooks_delete`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -30,10 +37,59 @@ pub enum WebhooksDeleteError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`webhooks_delete_incoming_endpoint`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksDeleteIncomingEndpointError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_get_logs`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksGetLogsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_get_subscription_logs`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksGetSubscriptionLogsError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`webhooks_list`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum WebhooksListError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_list_incoming_endpoints`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksListIncomingEndpointsError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_redeliver_log`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksRedeliverLogError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_test_dispatch`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksTestDispatchError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`webhooks_update`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum WebhooksUpdateError {
     UnknownValue(serde_json::Value),
 }
 
@@ -79,6 +135,36 @@ pub async fn webhooks_create(configuration: &configuration::Configuration, org_s
     }
 }
 
+pub async fn webhooks_create_incoming_endpoint(configuration: &configuration::Configuration, org_slug: &str, create_incoming_webhook_dto: models::CreateIncomingWebhookDto) -> Result<(), Error<WebhooksCreateIncomingEndpointError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+    let p_body_create_incoming_webhook_dto = create_incoming_webhook_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/incoming", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_create_incoming_webhook_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksCreateIncomingEndpointError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 pub async fn webhooks_delete(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<WebhooksDeleteError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
@@ -104,6 +190,92 @@ pub async fn webhooks_delete(configuration: &configuration::Configuration, id: &
     } else {
         let content = resp.text().await?;
         let entity: Option<WebhooksDeleteError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_delete_incoming_endpoint(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<WebhooksDeleteIncomingEndpointError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/incoming/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksDeleteIncomingEndpointError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_get_logs(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<WebhooksGetLogsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/logs", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksGetLogsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_get_subscription_logs(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<WebhooksGetSubscriptionLogsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/{id}/logs", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksGetSubscriptionLogsError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -147,3 +319,121 @@ pub async fn webhooks_list(configuration: &configuration::Configuration, org_slu
     }
 }
 
+pub async fn webhooks_list_incoming_endpoints(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<WebhooksListIncomingEndpointsError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/incoming", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksListIncomingEndpointsError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_redeliver_log(configuration: &configuration::Configuration, log_id: &str, org_slug: &str) -> Result<(), Error<WebhooksRedeliverLogError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_log_id = log_id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/logs/{logId}/redeliver", configuration.base_path, logId=crate::apis::urlencode(p_path_log_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksRedeliverLogError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_test_dispatch(configuration: &configuration::Configuration, id: &str, org_slug: &str, test_webhook_dto: models::TestWebhookDto) -> Result<(), Error<WebhooksTestDispatchError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+    let p_body_test_webhook_dto = test_webhook_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/{id}/test", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_test_webhook_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksTestDispatchError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn webhooks_update(configuration: &configuration::Configuration, id: &str, org_slug: &str, update_webhook_dto: models::UpdateWebhookDto) -> Result<(), Error<WebhooksUpdateError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+    let p_body_update_webhook_dto = update_webhook_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/webhooks/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_webhook_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<WebhooksUpdateError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}

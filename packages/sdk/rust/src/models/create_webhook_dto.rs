@@ -19,6 +19,8 @@ pub struct CreateWebhookDto {
     pub url: String,
     #[serde(rename = "events")]
     pub events: Vec<String>,
+    #[serde(rename = "headers", skip_serializing_if = "Option::is_none")]
+    pub headers: Option<serde_json::Value>,
 }
 
 impl CreateWebhookDto {
@@ -27,6 +29,7 @@ impl CreateWebhookDto {
             name,
             url,
             events,
+            headers: None,
         }
     }
 }
