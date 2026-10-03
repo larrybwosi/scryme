@@ -40,15 +40,26 @@ export default function RealtimeInitializer() {
     }
   }, [reconnect, isAuthInitialized, isConfigured, currentMember?.id]);
 
-  // ── Presence management ────────────────────────────────────────────────────
+    // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isConfigured || !currentLocation?.id || !currentMember) return;
+    if (!isConfigured || !currentMember || !organizationId) return;
 
     if (socketClient && socketClient.connected) {
-        socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
+      if (currentLocation?.id) {
+        socketClient.emit("join", { channel: `presence:${currentLocation.id}` });
+      }
+      const orgChannel = `presence:org:${organizationId}`;
+      socketClient.emit("presence:enter", {
+        channel: orgChannel,
+        metadata: {
+          app: "pos",
+          memberId: currentMember.id,
+          locationId: currentLocation?.id,
+          timestamp: Date.now(),
+        },
+      });
     }
-
-  }, [socketClient, currentLocation?.id, currentMember, isConfigured]);
+  }, [socketClient, organizationId, currentLocation?.id, currentMember, isConfigured]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
   useEffect(() => {
