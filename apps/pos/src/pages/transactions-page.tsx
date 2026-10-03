@@ -379,10 +379,11 @@ export function TransactionsPage() {
           return false;
         }
       }
+      const isPreorder = t.status === 'preorder' || t.status === 'PREORDER';
       const isDispatched = t.status === 'dispatched';
       const isUnpaid = t.status === 'pending' || t.status === 'partially_paid';
       const hasBalance = t.paidAmount < t.totalAmount;
-      return isDispatched || isUnpaid || hasBalance;
+      return isPreorder || isDispatched || isUnpaid || hasBalance;
     });
   }, [transactions, dateFilter]);
 

@@ -8,9 +8,10 @@ import { Card, CardHeader, CardTitle, CardContent } from "@repo/ui/components/ui
 interface ActionsCardProps {
   transaction: any;
   onStatusUpdate: (status: string) => Promise<void>;
+  onRecordPaymentClick?: () => void;
 }
 
-export function ActionsCard({ transaction, onStatusUpdate }: ActionsCardProps) {
+export function ActionsCard({ transaction, onStatusUpdate, onRecordPaymentClick }: ActionsCardProps) {
   // POS_SALE might not need regular status flows, or we can handle them gracefully.
   const isPosSale = transaction.type === "POS_SALE";
   const currentStatus = transaction.status;
@@ -30,8 +31,27 @@ export function ActionsCard({ transaction, onStatusUpdate }: ActionsCardProps) {
             : "Move this order to the next stage, or cancel it. Only the actions available for the current status are shown."}
         </div>
 
-        {!isPosSale && (
+        {(currentStatus === "PREORDER" || !isPosSale) && (
           <div className="space-y-2 pt-2">
+            {currentStatus === "PREORDER" && (
+              <>
+                <Button
+                  className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white rounded-none shadow mb-2"
+                  onClick={() => onStatusUpdate("COMPLETED")}
+                >
+                  Convert Preorder to Completed Order
+                </Button>
+                {transaction.paymentStatus !== "PAID" && onRecordPaymentClick && (
+                  <Button
+                    variant="outline"
+                    className="w-full h-10 text-xs font-bold uppercase tracking-wider border-border hover:bg-muted rounded-none mb-2"
+                    onClick={onRecordPaymentClick}
+                  >
+                    Record Payment
+                  </Button>
+                )}
+              </>
+            )}
             {currentStatus === "PENDING_CONFIRMATION" && (
               <Button
                 className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 rounded-none shadow"

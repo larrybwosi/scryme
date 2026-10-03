@@ -443,7 +443,7 @@ export function TransactionDetailClient({
             </div>
           </Card>
 
-          <ActionsCard transaction={transaction} onStatusUpdate={handleStatusUpdate} />
+          <ActionsCard transaction={transaction} onStatusUpdate={handleStatusUpdate} onRecordPaymentClick={() => setIsPaymentModalOpen(true)} />
 
           <CustomerCard transaction={transaction} />
 
@@ -453,6 +453,7 @@ export function TransactionDetailClient({
             transaction={transaction}
             onNotesUpdated={fetchTransaction}
             formatCurrency={formatCurrency}
+            onRecordPaymentClick={() => setIsPaymentModalOpen(true)}
           />
         </div>
       </div>

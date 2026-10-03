@@ -25,12 +25,14 @@ interface PreorderCardProps {
   transaction: any;
   onNotesUpdated?: () => void;
   formatCurrency?: (amount: number) => string;
+  onRecordPaymentClick?: () => void;
 }
 
 export function PreorderCard({
   transaction,
   onNotesUpdated,
   formatCurrency,
+  onRecordPaymentClick,
 }: PreorderCardProps) {
   const metadata = transaction?.metadata || {};
   const isPreorder =
@@ -168,6 +170,15 @@ export function PreorderCard({
               </span>
             </div>
           </div>
+        )}
+
+        {isPreorder && remainingBalance > 0 && onRecordPaymentClick && (
+          <Button
+            onClick={onRecordPaymentClick}
+            className="w-full h-9 text-xs font-bold uppercase tracking-wider bg-amber-600 hover:bg-amber-700 text-white rounded-none gap-1.5 shadow-sm"
+          >
+            <DollarSign className="w-3.5 h-3.5" /> Record Payment / Add Deposit
+          </Button>
         )}
 
         {/* General Transaction Notes & Edit Control */}

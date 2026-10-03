@@ -469,12 +469,17 @@ export async function addPayment(
     paymentStatus = "PAID";
   }
 
+  const updateData: any = {
+    totalPaid,
+    paymentStatus,
+  };
+  if (transaction.status === "PREORDER" && totalPaid.gte(transaction.finalTotal)) {
+    updateData.status = "COMPLETED";
+  }
+
   await db.transaction.update({
     where: { id: transactionId },
-    data: {
-      totalPaid,
-      paymentStatus,
-    },
+    data: updateData,
   });
 
   // Generation of invoice and receipt on payment via API delegation
