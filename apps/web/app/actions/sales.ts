@@ -16,6 +16,7 @@ import {
   Prisma,
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
+import { getResolvedApiUrl } from "@/lib/utils";
 
 async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
@@ -463,8 +464,7 @@ export async function addPayment(
   // Generation of invoice and receipt on payment via API delegation
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const invoiceToken = generateDocumentToken(
       "invoice",
@@ -547,8 +547,7 @@ export async function generateDocumentAction(
 
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const token = generateDocumentToken(
       type,
@@ -600,8 +599,7 @@ export async function generatePublicLinkAction(
 
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const token = generateDocumentToken(
       type,
