@@ -472,4 +472,120 @@ describe("ProcessSaleUseCase", () => {
     );
     expect(result.status).toBe("PREORDER");
   });
+
+  it("should set transaction type to SALES_ORDER for preorders/custom orders", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      metadata: { isCustomOrder: true },
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [{ method: "CASH", amount: 50 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_3",
+        number: data.number,
+        type: data.type,
+        status: data.status,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "SALES_ORDER",
+          status: "PREORDER",
+        }),
+      }),
+    );
+  });
+
+  it("should auto-create a new customer when saveAsCustomer option is checked", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 50 }],
+      payments: [{ method: "CASH", amount: 50 }],
+      customerName: "Jane Doe",
+      customerPhone: "+254712345678",
+      customerEmail: "jane@example.com",
+      saveAsCustomer: true,
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 50,
+        buyingPrice: 20,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.customer.findFirst.mockResolvedValue(null);
+    prisma.client.customer.create.mockResolvedValue({ id: "new_cust_123" });
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_cust_1",
+        number: data.number,
+        customerId: data.customerId,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    await useCase.execute(ctx, dto);
+
+    expect(prisma.client.customer.create).toHaveBeenCalledWith({
+      data: {
+        organizationId: "org_1",
+        phone: "+254712345678",
+        email: "jane@example.com",
+        name: "Jane Doe",
+      },
+      select: { id: true },
+    });
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          customerId: "new_cust_123",
+        }),
+      }),
+    );
+  });
+
 });

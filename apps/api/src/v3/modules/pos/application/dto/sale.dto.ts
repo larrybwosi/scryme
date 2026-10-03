@@ -267,6 +267,11 @@ export class ProcessSaleDto {
   @IsOptional()
   status?: string;
 
+  @ApiPropertyOptional({ example: "SALES_ORDER", description: "Optional transaction type (e.g. POS_SALE, SALES_ORDER)" })
+  @IsString()
+  @IsOptional()
+  type?: string;
+
   @ApiPropertyOptional({ description: "Optional transaction metadata" })
   @IsOptional()
   metadata?: any;
