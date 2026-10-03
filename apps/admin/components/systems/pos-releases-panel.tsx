@@ -15,6 +15,8 @@ import {
   Copy,
   Check,
   PackageCheck,
+  ShieldCheck,
+  Activity,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@repo/ui/components/ui/button";
@@ -32,10 +34,14 @@ import {
   updatePosReleaseSettings,
   deletePosReleaseBinary,
   triggerGithubReleaseSync,
+  testGithubAppConnection,
 } from "@/app/actions/pos-releases";
 
 interface PosReleasesPanelProps {
   settings: {
+    appId?: string;
+    clientId?: string;
+    clientSecret?: string;
     webhookSecret: string;
     owner: string;
     repo: string;
@@ -63,6 +69,7 @@ export function PosReleasesPanel({
   const [settings, setSettings] = useState(initialSettings);
   const [isSavingSettings, setIsSavingSettings] = useState(false);
   const [isSyncing, setIsSyncing] = useState(false);
+  const [isTesting, setIsTesting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [copiedWebhookUrl, setCopiedWebhookUrl] = useState(false);
 
@@ -73,12 +80,28 @@ export function PosReleasesPanel({
     setIsSavingSettings(true);
     try {
       await updatePosReleaseSettings(settings);
-      toast.success("POS Release & GitHub Webhook configuration updated");
+      toast.success("POS Release & GitHub App configuration updated");
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || "Failed to update configuration");
     } finally {
       setIsSavingSettings(false);
+    }
+  }
+
+  async function handleTestConnection() {
+    setIsTesting(true);
+    try {
+      const res = await testGithubAppConnection();
+      if (res.success) {
+        toast.success(res.message);
+      } else {
+        toast.error(res.message);
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to test GitHub connection");
+    } finally {
+      setIsTesting(false);
     }
   }
 
@@ -127,10 +150,10 @@ export function PosReleasesPanel({
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Server className="size-4 text-primary" /> GitHub Webhook Integration Endpoint
+            <Server className="size-4 text-primary" /> GitHub App / Repository Webhook Integration
           </CardTitle>
           <CardDescription>
-            Configure this webhook URL in your GitHub repository settings under Settings &gt; Webhooks. Set Content type to <code>application/json</code> and trigger on <code>Release</code> events.
+            Configure this webhook URL in your GitHub App or Repository settings under Settings &gt; Webhooks. Set Content type to <code>application/json</code> and subscribe to <code>Release</code> and <code>Pushes / Tag Creation</code> events. When a new tag or release is published, Scryme automatically fetches and updates the latest POS version in RustFS.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -155,18 +178,49 @@ export function PosReleasesPanel({
         </CardContent>
       </Card>
 
-      {/* GitHub Repository & Webhook Settings */}
+      {/* GitHub App & Webhook Settings */}
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Github className="size-4 text-purple-500" /> GitHub Repository & Webhook Secret Configuration
+            <Github className="size-4 text-purple-500" /> GitHub App & Webhook Secret Configuration
           </CardTitle>
           <CardDescription>
-            Provide your GitHub repository details and webhook secret to authenticate release events and automatically download built POS binaries to RustFS.
+            Provide your GitHub App authorization parameters, repository details, and webhook secret to authenticate release events and synchronize binaries.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="github-app-id">GitHub App ID (Optional)</Label>
+              <Input
+                id="github-app-id"
+                value={settings.appId || ""}
+                onChange={(e) => setSettings({ ...settings, appId: e.target.value })}
+                placeholder="e.g. 123456"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="github-client-id">Client ID (Optional)</Label>
+              <Input
+                id="github-client-id"
+                value={settings.clientId || ""}
+                onChange={(e) => setSettings({ ...settings, clientId: e.target.value })}
+                placeholder="Iv1.xxxxxx"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <Label htmlFor="github-client-secret">Client Secret (Optional)</Label>
+              <Input
+                id="github-client-secret"
+                type="password"
+                value={settings.clientSecret || ""}
+                onChange={(e) => setSettings({ ...settings, clientSecret: e.target.value })}
+                placeholder="GitHub OAuth / App Client Secret"
+              />
+            </div>
+
             <div className="flex flex-col gap-2">
               <Label htmlFor="github-owner">GitHub Owner / Org</Label>
               <Input
@@ -198,18 +252,33 @@ export function PosReleasesPanel({
               />
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="github-token">GitHub Personal Access Token (Optional)</Label>
+            <div className="col-span-1 md:col-span-2 flex flex-col gap-2">
+              <Label htmlFor="github-token">Personal Access Token / Installation Token</Label>
               <Input
                 id="github-token"
                 type="password"
                 value={settings.token}
                 onChange={(e) => setSettings({ ...settings, token: e.target.value })}
-                placeholder="ghp_... for private release downloads"
+                placeholder="ghp_... or ghs_... for authenticating release downloads"
               />
             </div>
 
-            <div className="col-span-1 md:col-span-2 flex justify-end gap-3 mt-2">
+            <div className="col-span-1 md:col-span-2 flex flex-wrap justify-end gap-3 mt-2">
+              <Button
+                type="button"
+                variant="outline"
+                disabled={isTesting}
+                onClick={handleTestConnection}
+                className="gap-2"
+              >
+                {isTesting ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <ShieldCheck className="size-4 text-purple-500" />
+                )}
+                Test GitHub Authorization
+              </Button>
+
               <Button
                 type="button"
                 variant="outline"
@@ -222,7 +291,7 @@ export function PosReleasesPanel({
                 ) : (
                   <RefreshCw className="size-4 text-primary" />
                 )}
-                Sync Release Binaries Now
+                Sync Latest Version Now
               </Button>
 
               <Button type="submit" disabled={isSavingSettings} className="gap-2">
