@@ -884,6 +884,15 @@ pub async fn get_locations_command(
     Ok(data)
 }
 
+
+#[tauri::command]
+pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> Result<(), String> {
+    {
+        let mut override_guard = state
+            .base_url_override
+            .lock()
+            .map_err(|_| "Lock error on override")?;
+        *override_guard = Some(base_url.clone());
     }
 
     // Also update device_config if it exists so it's persisted on next save

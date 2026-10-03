@@ -247,30 +247,6 @@ export class PosController {
     return this.getTransactionsUseCase.execute(ctx, query);
   }
 
-                },
-              };
-            }
-          } catch {
-            // Token parsing fallback
-          }
-          return {
-            data: {
-              tokenRequest: { token: cleanToken },
-              metadata: { paymentChannel: "public" },
-            },
-          };
-        }
-      }
-    }
-
-    return {
-      data: {
-        tokenRequest: { token: "socket-io-realtime" },
-        metadata: { paymentChannel: "public" },
-      },
-    };
-  }
-
   @Get("sale/:id")
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
@@ -384,7 +360,6 @@ export class PosController {
   ) {
     return this.posService.scanTransaction(ctx as any, code);
   }
-
 
   @Get("inventory")
   @UseGuards(V3AuthGuard, MultiTenancyGuard)

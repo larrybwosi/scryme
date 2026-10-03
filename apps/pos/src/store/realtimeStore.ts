@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 import type { Socket } from 'socket.io-client';
 import { invoke } from '@tauri-apps/api/core';
-import { useAuthStore } from './authStore';
+import { useAuthStore } from './pos-auth-store';
 import { getApiEndpoint } from '../lib/api-config';
 
 type RealtimeConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'suspended' | 'failed' | 'closed';
