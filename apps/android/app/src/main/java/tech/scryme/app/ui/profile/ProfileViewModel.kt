@@ -53,7 +53,7 @@ class ProfileViewModel @Inject constructor(
         viewModelScope.launch {
             val orgSlug = sessionManager.getOrgSlug() ?: return@launch
             val memberId = sessionManager.getMemberId() ?: return@launch
-            val result = profileRepository.updateDutyStatus(orgSlug, memberId, status)
+            val result = profileRepository.updateMemberStatus(orgSlug, memberId, status)
             result.fold(
                 onSuccess = { loadProfile() },
                 onFailure = { error ->
