@@ -68,6 +68,9 @@ export function TransactionRow({
 
   const getStatusColor = (status: string) => {
     switch (status) {
+      case "preorder":
+      case "PREORDER":
+        return "bg-gradient-to-r from-purple-500 to-indigo-600 text-white border-0";
       case 'dispatched':
         return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white border-0';
       case 'pending':

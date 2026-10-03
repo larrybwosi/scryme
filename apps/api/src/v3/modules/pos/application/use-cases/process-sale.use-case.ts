@@ -128,8 +128,8 @@ export class ProcessSaleUseCase {
 
         const t = await tx.transaction.create({
           data: {
-            number: `V3-POS-${Date.now()}`,
-            type: txnType as any,
+            number: dto.number || dto.orderNumber || `POS-${Date.now()}`,
+            type: txnType as any || "POS_SALE",
             status: txnStatus as any,
             paymentStatus: paymentStatus as any,
             totalPaid: totalPaidAmount,
