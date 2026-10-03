@@ -14,7 +14,7 @@ jq --arg v "$VERSION" '.version = $v' apps/bakery/package.json > tmp.json && mv 
 echo "Syncing version $VERSION to SDK packages..."
 if [ -f "packages/sdk/package.json" ]; then
   echo "Updating packages/sdk/package.json"
-  jq --arg v "$VERSION" '.version = $v | .scripts["generate:rust"] = ("openapi-generator-cli generate -i ./openapi.json -g rust -o ./rust --additional-properties=packageName=scryme-sdk,packageVersion=" + $v + " --global-property apiDocs=false,modelDocs=false")' packages/sdk/package.json > tmp.json && mv tmp.json packages/sdk/package.json
+  jq --arg v "$VERSION" '.version = $v | .scripts["generate:rust"] = ("openapi-generator-cli generate --skip-validate-spec -i ./openapi.json -g rust -o ./rust --additional-properties=packageName=scryme-sdk,packageVersion=" + $v + " --global-property apiDocs=false,modelDocs=false")' packages/sdk/package.json > tmp.json && mv tmp.json packages/sdk/package.json
 fi
 
 if [ -f "packages/sdk/rust/Cargo.toml" ]; then

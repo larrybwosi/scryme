@@ -16,20 +16,40 @@ pub struct SaleItemDto {
     /// Product variant ID
     #[serde(rename = "variantId")]
     pub variant_id: String,
+    /// Optional product ID
+    #[serde(rename = "productId", skip_serializing_if = "Option::is_none")]
+    pub product_id: Option<String>,
+    /// Optional product name
+    #[serde(rename = "productName", skip_serializing_if = "Option::is_none")]
+    pub product_name: Option<String>,
+    /// Optional variant name
+    #[serde(rename = "variantName", skip_serializing_if = "Option::is_none")]
+    pub variant_name: Option<String>,
+    /// Optional selling unit ID
+    #[serde(rename = "sellingUnitId", skip_serializing_if = "Option::is_none")]
+    pub selling_unit_id: Option<String>,
+    /// Optional selling unit name
+    #[serde(rename = "sellingUnitName", skip_serializing_if = "Option::is_none")]
+    pub selling_unit_name: Option<String>,
     /// Quantity of the variant purchased
     #[serde(rename = "quantity")]
     pub quantity: f64,
-    /// Client provided price (validated against DB)
-    #[serde(rename = "unitPrice")]
-    pub unit_price: f64,
+    /// Client provided price (validated against DB or defaults to variant retail price)
+    #[serde(rename = "unitPrice", skip_serializing_if = "Option::is_none")]
+    pub unit_price: Option<f64>,
 }
 
 impl SaleItemDto {
-    pub fn new(variant_id: String, quantity: f64, unit_price: f64) -> SaleItemDto {
+    pub fn new(variant_id: String, quantity: f64) -> SaleItemDto {
         SaleItemDto {
             variant_id,
+            product_id: None,
+            product_name: None,
+            variant_name: None,
+            selling_unit_id: None,
+            selling_unit_name: None,
             quantity,
-            unit_price,
+            unit_price: None,
         }
     }
 }

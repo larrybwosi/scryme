@@ -22,6 +22,9 @@ pub struct SalePaymentDto {
     /// Optional gateway transaction reference or check number
     #[serde(rename = "reference", skip_serializing_if = "Option::is_none")]
     pub reference: Option<String>,
+    /// Optional payment metadata
+    #[serde(rename = "meta", skip_serializing_if = "Option::is_none")]
+    pub meta: Option<serde_json::Value>,
 }
 
 impl SalePaymentDto {
@@ -30,6 +33,7 @@ impl SalePaymentDto {
             method,
             amount,
             reference: None,
+            meta: None,
         }
     }
 }

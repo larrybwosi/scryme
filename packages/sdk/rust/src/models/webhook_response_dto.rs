@@ -23,16 +23,19 @@ pub struct WebhookResponseDto {
     pub events: Vec<String>,
     #[serde(rename = "secret")]
     pub secret: String,
+    #[serde(rename = "isActive")]
+    pub is_active: bool,
 }
 
 impl WebhookResponseDto {
-    pub fn new(id: String, name: String, url: String, events: Vec<String>, secret: String) -> WebhookResponseDto {
+    pub fn new(id: String, name: String, url: String, events: Vec<String>, secret: String, is_active: bool) -> WebhookResponseDto {
         WebhookResponseDto {
             id,
             name,
             url,
             events,
             secret,
+            is_active,
         }
     }
 }

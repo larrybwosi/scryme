@@ -15,64 +15,120 @@ use crate::{apis::ResponseContent, models};
 use super::{Error, configuration, ContentType};
 
 
-/// struct for typed errors of method [`members_controller_admin_check_out`]
+/// struct for typed errors of method [`members_controller_admin_check_out_left_square_bracket_0_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerAdminCheckOutError {
+pub enum MembersControllerAdminCheckOutLeftSquareBracket0RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_create_member`]
+/// struct for typed errors of method [`members_controller_admin_check_out_left_square_bracket_1_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerCreateMemberError {
+pub enum MembersControllerAdminCheckOutLeftSquareBracket1RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_delete_member`]
+/// struct for typed errors of method [`members_controller_create_member_left_square_bracket_0_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerDeleteMemberError {
+pub enum MembersControllerCreateMemberLeftSquareBracket0RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_get_member`]
+/// struct for typed errors of method [`members_controller_create_member_left_square_bracket_1_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerGetMemberError {
+pub enum MembersControllerCreateMemberLeftSquareBracket1RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_get_member_activity`]
+/// struct for typed errors of method [`members_controller_delete_member_left_square_bracket_0_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerGetMemberActivityError {
+pub enum MembersControllerDeleteMemberLeftSquareBracket0RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_get_members`]
+/// struct for typed errors of method [`members_controller_delete_member_left_square_bracket_1_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerGetMembersError {
+pub enum MembersControllerDeleteMemberLeftSquareBracket1RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_update_member`]
+/// struct for typed errors of method [`members_controller_get_member_activity_left_square_bracket_0_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerUpdateMemberError {
+pub enum MembersControllerGetMemberActivityLeftSquareBracket0RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`members_controller_update_status`]
+/// struct for typed errors of method [`members_controller_get_member_activity_left_square_bracket_1_right_square_bracket`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum MembersControllerUpdateStatusError {
+pub enum MembersControllerGetMemberActivityLeftSquareBracket1RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_get_member_left_square_bracket_0_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerGetMemberLeftSquareBracket0RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_get_member_left_square_bracket_1_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerGetMemberLeftSquareBracket1RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_get_members_left_square_bracket_0_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerGetMembersLeftSquareBracket0RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_get_members_left_square_bracket_1_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerGetMembersLeftSquareBracket1RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_update_member_left_square_bracket_0_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerUpdateMemberLeftSquareBracket0RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_update_member_left_square_bracket_1_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerUpdateMemberLeftSquareBracket1RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_update_status_left_square_bracket_0_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerUpdateStatusLeftSquareBracket0RightSquareBracketError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`members_controller_update_status_left_square_bracket_1_right_square_bracket`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum MembersControllerUpdateStatusLeftSquareBracket1RightSquareBracketError {
     UnknownValue(serde_json::Value),
 }
 
 
-pub async fn members_controller_admin_check_out(configuration: &configuration::Configuration, member_id: &str, org_slug: &str, check_out_dto: models::CheckOutDto) -> Result<(), Error<MembersControllerAdminCheckOutError>> {
+pub async fn members_controller_admin_check_out_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, member_id: &str, org_slug: &str, check_out_dto: models::CheckOutDto) -> Result<(), Error<MembersControllerAdminCheckOutLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_member_id = member_id;
     let p_path_org_slug = org_slug;
@@ -98,12 +154,42 @@ pub async fn members_controller_admin_check_out(configuration: &configuration::C
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerAdminCheckOutError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerAdminCheckOutLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_create_member(configuration: &configuration::Configuration, org_slug: &str, create_member_dto: models::CreateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerCreateMemberError>> {
+pub async fn members_controller_admin_check_out_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, member_id: &str, check_out_dto: models::CheckOutDto) -> Result<(), Error<MembersControllerAdminCheckOutLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_member_id = member_id;
+    let p_body_check_out_dto = check_out_dto;
+
+    let uri_str = format!("{}/v3/members/{memberId}/attendance/check-out", configuration.base_path, memberId=crate::apis::urlencode(p_path_member_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_check_out_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerAdminCheckOutLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_create_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, create_member_dto: models::CreateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerCreateMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
     let p_body_create_member_dto = create_member_dto;
@@ -139,12 +225,52 @@ pub async fn members_controller_create_member(configuration: &configuration::Con
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerCreateMemberError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerCreateMemberLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_delete_member(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerDeleteMemberError>> {
+pub async fn members_controller_create_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, create_member_dto: models::CreateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerCreateMemberLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_body_create_member_dto = create_member_dto;
+
+    let uri_str = format!("{}/v3/members", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_create_member_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MemberResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MemberResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerCreateMemberLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_delete_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerDeleteMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
     let p_path_org_slug = org_slug;
@@ -168,12 +294,97 @@ pub async fn members_controller_delete_member(configuration: &configuration::Con
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerDeleteMemberError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerDeleteMemberLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_get_member(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<models::MemberResponseDto, Error<MembersControllerGetMemberError>> {
+pub async fn members_controller_delete_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerDeleteMemberLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerDeleteMemberLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_get_member_activity_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerGetMemberActivityLeftSquareBracket0RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/members/{id}/activity", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerGetMemberActivityLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_get_member_activity_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerGetMemberActivityLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/members/{id}/activity", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerGetMemberActivityLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_get_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<models::MemberResponseDto, Error<MembersControllerGetMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
     let p_path_org_slug = org_slug;
@@ -208,17 +419,16 @@ pub async fn members_controller_get_member(configuration: &configuration::Config
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerGetMemberError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerGetMemberLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_get_member_activity(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerGetMemberActivityError>> {
+pub async fn members_controller_get_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<models::MemberResponseDto, Error<MembersControllerGetMemberLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/{orgSlug}/members/{id}/activity", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -232,17 +442,28 @@ pub async fn members_controller_get_member_activity(configuration: &configuratio
     let resp = configuration.client.execute(req).await?;
 
     let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
 
     if !status.is_client_error() && !status.is_server_error() {
-        Ok(())
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MemberResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MemberResponseDto`")))),
+        }
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerGetMemberActivityError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerGetMemberLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_get_members(configuration: &configuration::Configuration, org_slug: &str, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersError>> {
+pub async fn members_controller_get_members_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_org_slug = org_slug;
     let p_query_page = page;
@@ -320,12 +541,94 @@ pub async fn members_controller_get_members(configuration: &configuration::Confi
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerGetMembersError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerGetMembersLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_update_member(configuration: &configuration::Configuration, id: &str, org_slug: &str, update_member_dto: models::UpdateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerUpdateMemberError>> {
+pub async fn members_controller_get_members_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_page = page;
+    let p_query_limit = limit;
+    let p_query_sort_by = sort_by;
+    let p_query_sort_order = sort_order;
+    let p_query_role = role;
+    let p_query_membership_status = membership_status;
+    let p_query_is_active = is_active;
+    let p_query_department_id = department_id;
+    let p_query_search = search;
+    let p_query_status = status;
+    let p_query_is_checked_in = is_checked_in;
+
+    let uri_str = format!("{}/v3/members", configuration.base_path);
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref param_value) = p_query_page {
+        req_builder = req_builder.query(&[("page", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_by {
+        req_builder = req_builder.query(&[("sortBy", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_sort_order {
+        req_builder = req_builder.query(&[("sortOrder", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_role {
+        req_builder = req_builder.query(&[("role", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_membership_status {
+        req_builder = req_builder.query(&[("membershipStatus", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_active {
+        req_builder = req_builder.query(&[("isActive", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_department_id {
+        req_builder = req_builder.query(&[("departmentId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_search {
+        req_builder = req_builder.query(&[("search", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = req_builder.query(&[("status", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_is_checked_in {
+        req_builder = req_builder.query(&[("isCheckedIn", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `Vec&lt;models::MemberResponseDto&gt;`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `Vec&lt;models::MemberResponseDto&gt;`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerGetMembersLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_update_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str, update_member_dto: models::UpdateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerUpdateMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
     let p_path_org_slug = org_slug;
@@ -362,12 +665,53 @@ pub async fn members_controller_update_member(configuration: &configuration::Con
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerUpdateMemberError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerUpdateMemberLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn members_controller_update_status(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerUpdateStatusError>> {
+pub async fn members_controller_update_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, update_member_dto: models::UpdateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerUpdateMemberLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_body_update_member_dto = update_member_dto;
+
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_update_member_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+    let content_type = resp
+        .headers()
+        .get("content-type")
+        .and_then(|v| v.to_str().ok())
+        .unwrap_or("application/octet-stream");
+    let content_type = super::ContentType::from(content_type);
+
+    if !status.is_client_error() && !status.is_server_error() {
+        let content = resp.text().await?;
+        match content_type {
+            ContentType::Json => serde_json::from_str(&content).map_err(Error::from),
+            ContentType::Text => return Err(Error::from(serde_json::Error::custom("Received `text/plain` content type response that cannot be converted to `models::MemberResponseDto`"))),
+            ContentType::Unsupported(unknown_type) => return Err(Error::from(serde_json::Error::custom(format!("Received `{unknown_type}` content type response that cannot be converted to `models::MemberResponseDto`")))),
+        }
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerUpdateMemberLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_update_status_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerUpdateStatusLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
     let p_path_org_slug = org_slug;
@@ -391,7 +735,35 @@ pub async fn members_controller_update_status(configuration: &configuration::Con
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<MembersControllerUpdateStatusError> = serde_json::from_str(&content).ok();
+        let entity: Option<MembersControllerUpdateStatusLeftSquareBracket0RightSquareBracketError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn members_controller_update_status_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerUpdateStatusLeftSquareBracket1RightSquareBracketError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+
+    let uri_str = format!("{}/v3/members/{id}/status", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<MembersControllerUpdateStatusLeftSquareBracket1RightSquareBracketError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
