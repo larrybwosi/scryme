@@ -198,8 +198,13 @@ export class V3RealtimeGateway
 
     if (!context) return false;
 
-    // Presence channel check (e.g., presence:locationId)
+    // Presence channel check (e.g., presence:locationId, presence:org:orgId)
     if (channel.startsWith("presence:")) {
+      const parts = channel.split(":");
+      if (parts[1] === "org" && parts[2]) {
+        const targetOrg = parts[2];
+        return targetOrg === context.organizationId || targetOrg === context.orgSlug;
+      }
       return true;
     }
 
