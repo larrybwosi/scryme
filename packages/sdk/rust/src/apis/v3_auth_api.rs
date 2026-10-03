@@ -36,17 +36,17 @@ pub enum AuthCreateOAuthClientError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_create_o_auth_client_0`]
+/// struct for typed errors of method [`auth_create_o_auth_client_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthCreateOAuthClient0Error {
+pub enum AuthCreateOAuthClientAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_create_o_auth_client_1`]
+/// struct for typed errors of method [`auth_create_o_auth_client_alt3`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthCreateOAuthClient1Error {
+pub enum AuthCreateOAuthClientAlt3Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -64,10 +64,10 @@ pub enum AuthDeleteOAuthClientError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_delete_o_auth_client_0`]
+/// struct for typed errors of method [`auth_delete_o_auth_client_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthDeleteOAuthClient0Error {
+pub enum AuthDeleteOAuthClientAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -86,10 +86,10 @@ pub enum AuthGetOAuthClientError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_get_o_auth_client_0`]
+/// struct for typed errors of method [`auth_get_o_auth_client_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthGetOAuthClient0Error {
+pub enum AuthGetOAuthClientAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -107,17 +107,17 @@ pub enum AuthListOAuthClientsError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_list_o_auth_clients_0`]
+/// struct for typed errors of method [`auth_list_o_auth_clients_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthListOAuthClients0Error {
+pub enum AuthListOAuthClientsAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_list_o_auth_clients_1`]
+/// struct for typed errors of method [`auth_list_o_auth_clients_alt3`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthListOAuthClients1Error {
+pub enum AuthListOAuthClientsAlt3Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -128,17 +128,17 @@ pub enum AuthRotateOAuthClientSecretError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_rotate_o_auth_client_secret_0`]
+/// struct for typed errors of method [`auth_rotate_o_auth_client_secret_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthRotateOAuthClientSecret0Error {
+pub enum AuthRotateOAuthClientSecretAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_rotate_o_auth_client_secret_1`]
+/// struct for typed errors of method [`auth_rotate_o_auth_client_secret_alt3`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthRotateOAuthClientSecret1Error {
+pub enum AuthRotateOAuthClientSecretAlt3Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -156,10 +156,10 @@ pub enum AuthUpdateOAuthClientError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`auth_update_o_auth_client_0`]
+/// struct for typed errors of method [`auth_update_o_auth_client_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum AuthUpdateOAuthClient0Error {
+pub enum AuthUpdateOAuthClientAlt2Error {
     UnknownValue(serde_json::Value),
 }
 
@@ -250,7 +250,7 @@ pub async fn auth_create_o_auth_client(configuration: &configuration::Configurat
     }
 }
 
-pub async fn auth_create_o_auth_client_0(configuration: &configuration::Configuration, create_o_auth_client_dto: models::CreateOAuthClientDto) -> Result<models::AuthCreateOAuthClient201Response, Error<AuthCreateOAuthClient0Error>> {
+pub async fn auth_create_o_auth_client_alt2(configuration: &configuration::Configuration, create_o_auth_client_dto: models::CreateOAuthClientDto) -> Result<models::AuthCreateOAuthClient201Response, Error<AuthCreateOAuthClientAlt2Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_create_o_auth_client_dto = create_o_auth_client_dto;
 
@@ -282,12 +282,12 @@ pub async fn auth_create_o_auth_client_0(configuration: &configuration::Configur
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthCreateOAuthClient0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthCreateOAuthClientAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn auth_create_o_auth_client_1(configuration: &configuration::Configuration, create_o_auth_client_dto: models::CreateOAuthClientDto) -> Result<models::AuthCreateOAuthClient201Response, Error<AuthCreateOAuthClient1Error>> {
+pub async fn auth_create_o_auth_client_alt3(configuration: &configuration::Configuration, create_o_auth_client_dto: models::CreateOAuthClientDto) -> Result<models::AuthCreateOAuthClient201Response, Error<AuthCreateOAuthClientAlt3Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_body_create_o_auth_client_dto = create_o_auth_client_dto;
 
@@ -319,7 +319,7 @@ pub async fn auth_create_o_auth_client_1(configuration: &configuration::Configur
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthCreateOAuthClient1Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthCreateOAuthClientAlt3Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -374,7 +374,7 @@ pub async fn auth_delete_o_auth_client(configuration: &configuration::Configurat
     }
 }
 
-pub async fn auth_delete_o_auth_client_0(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthDeleteOAuthClient0Error>> {
+pub async fn auth_delete_o_auth_client_alt2(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthDeleteOAuthClientAlt2Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
 
@@ -394,7 +394,7 @@ pub async fn auth_delete_o_auth_client_0(configuration: &configuration::Configur
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthDeleteOAuthClient0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthDeleteOAuthClientAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -461,7 +461,7 @@ pub async fn auth_get_o_auth_client(configuration: &configuration::Configuration
     }
 }
 
-pub async fn auth_get_o_auth_client_0(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthGetOAuthClient0Error>> {
+pub async fn auth_get_o_auth_client_alt2(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthGetOAuthClientAlt2Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
 
@@ -481,7 +481,7 @@ pub async fn auth_get_o_auth_client_0(configuration: &configuration::Configurati
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthGetOAuthClient0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthGetOAuthClientAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -532,7 +532,7 @@ pub async fn auth_list_o_auth_clients(configuration: &configuration::Configurati
     }
 }
 
-pub async fn auth_list_o_auth_clients_0(configuration: &configuration::Configuration, ) -> Result<(), Error<AuthListOAuthClients0Error>> {
+pub async fn auth_list_o_auth_clients_alt2(configuration: &configuration::Configuration, ) -> Result<(), Error<AuthListOAuthClientsAlt2Error>> {
 
     let uri_str = format!("{}/v3/auth/oauth/provision", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -550,12 +550,12 @@ pub async fn auth_list_o_auth_clients_0(configuration: &configuration::Configura
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthListOAuthClients0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthListOAuthClientsAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn auth_list_o_auth_clients_1(configuration: &configuration::Configuration, ) -> Result<(), Error<AuthListOAuthClients1Error>> {
+pub async fn auth_list_o_auth_clients_alt3(configuration: &configuration::Configuration, ) -> Result<(), Error<AuthListOAuthClientsAlt3Error>> {
 
     let uri_str = format!("{}/v3/auth/oauth/clients/provision", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
@@ -573,7 +573,7 @@ pub async fn auth_list_o_auth_clients_1(configuration: &configuration::Configura
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthListOAuthClients1Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthListOAuthClientsAlt3Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -603,7 +603,7 @@ pub async fn auth_rotate_o_auth_client_secret(configuration: &configuration::Con
     }
 }
 
-pub async fn auth_rotate_o_auth_client_secret_0(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthRotateOAuthClientSecret0Error>> {
+pub async fn auth_rotate_o_auth_client_secret_alt2(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthRotateOAuthClientSecretAlt2Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
 
@@ -623,12 +623,12 @@ pub async fn auth_rotate_o_auth_client_secret_0(configuration: &configuration::C
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthRotateOAuthClientSecret0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthRotateOAuthClientSecretAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
 
-pub async fn auth_rotate_o_auth_client_secret_1(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthRotateOAuthClientSecret1Error>> {
+pub async fn auth_rotate_o_auth_client_secret_alt3(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<AuthRotateOAuthClientSecretAlt3Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
 
@@ -648,7 +648,7 @@ pub async fn auth_rotate_o_auth_client_secret_1(configuration: &configuration::C
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthRotateOAuthClientSecret1Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthRotateOAuthClientSecretAlt3Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -705,7 +705,7 @@ pub async fn auth_update_o_auth_client(configuration: &configuration::Configurat
     }
 }
 
-pub async fn auth_update_o_auth_client_0(configuration: &configuration::Configuration, id: &str, update_o_auth_client_dto: models::UpdateOAuthClientDto) -> Result<(), Error<AuthUpdateOAuthClient0Error>> {
+pub async fn auth_update_o_auth_client_alt2(configuration: &configuration::Configuration, id: &str, update_o_auth_client_dto: models::UpdateOAuthClientDto) -> Result<(), Error<AuthUpdateOAuthClientAlt2Error>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
     let p_body_update_o_auth_client_dto = update_o_auth_client_dto;
@@ -727,7 +727,7 @@ pub async fn auth_update_o_auth_client_0(configuration: &configuration::Configur
         Ok(())
     } else {
         let content = resp.text().await?;
-        let entity: Option<AuthUpdateOAuthClient0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<AuthUpdateOAuthClientAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

@@ -23,10 +23,10 @@ pub enum POsGlobalProvisionError {
     UnknownValue(serde_json::Value),
 }
 
-/// struct for typed errors of method [`p_os_global_provision_0`]
+/// struct for typed errors of method [`p_os_global_provision_alt2`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
-pub enum POsGlobalProvision0Error {
+pub enum POsGlobalProvisionAlt2Error {
     Status400(models::ApiErrorResponseDto),
     UnknownValue(serde_json::Value),
 }
@@ -66,7 +66,7 @@ pub async fn p_os_global_provision(configuration: &configuration::Configuration,
     }
 }
 
-pub async fn p_os_global_provision_0(configuration: &configuration::Configuration, ) -> Result<models::ProvisionResponseDto, Error<POsGlobalProvision0Error>> {
+pub async fn p_os_global_provision_alt2(configuration: &configuration::Configuration, ) -> Result<models::ProvisionResponseDto, Error<POsGlobalProvisionAlt2Error>> {
 
     let uri_str = format!("{}/v3/pos/provision", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
@@ -95,7 +95,7 @@ pub async fn p_os_global_provision_0(configuration: &configuration::Configuratio
         }
     } else {
         let content = resp.text().await?;
-        let entity: Option<POsGlobalProvision0Error> = serde_json::from_str(&content).ok();
+        let entity: Option<POsGlobalProvisionAlt2Error> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }

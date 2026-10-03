@@ -268,11 +268,12 @@ pub enum TaskControllerUpdateTaskLeftSquareBracket1RightSquareBracketError {
 }
 
 
-pub async fn project_controller_create_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, create_project_dto: models::CreateProjectDto) -> Result<(), Error<ProjectControllerCreateProjectLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_create_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, create_project_dto: models::CreateProjectDto) -> Result<(), Error<ProjectControllerCreateProjectLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_body_create_project_dto = create_project_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/projects", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -326,11 +327,12 @@ pub async fn project_controller_create_project_left_square_bracket_1_right_squar
     }
 }
 
-pub async fn project_controller_delete_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<ProjectControllerDeleteProjectLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_delete_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str) -> Result<(), Error<ProjectControllerDeleteProjectLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -382,11 +384,12 @@ pub async fn project_controller_delete_project_left_square_bracket_1_right_squar
     }
 }
 
-pub async fn project_controller_get_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<ProjectControllerGetProjectLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_get_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str) -> Result<(), Error<ProjectControllerGetProjectLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -438,15 +441,16 @@ pub async fn project_controller_get_project_left_square_bracket_1_right_square_b
     }
 }
 
-pub async fn project_controller_list_projects_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, status: Option<&str>, department_id: Option<&str>, search: Option<&str>, page: Option<f64>, limit: Option<f64>) -> Result<(), Error<ProjectControllerListProjectsLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_list_projects_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, status: Option<&str>, department_id: Option<&str>, search: Option<&str>, page: Option<f64>, limit: Option<f64>) -> Result<(), Error<ProjectControllerListProjectsLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_query_status = status;
     let p_query_department_id = department_id;
     let p_query_search = search;
     let p_query_page = page;
     let p_query_limit = limit;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/projects", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_status {
@@ -532,12 +536,13 @@ pub async fn project_controller_list_projects_left_square_bracket_1_right_square
     }
 }
 
-pub async fn project_controller_manage_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, manage_project_member_dto: models::ManageProjectMemberDto) -> Result<(), Error<ProjectControllerManageMemberLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_manage_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, manage_project_member_dto: models::ManageProjectMemberDto) -> Result<(), Error<ProjectControllerManageMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_manage_project_member_dto = manage_project_member_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}/members", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}/members", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -592,12 +597,13 @@ pub async fn project_controller_manage_member_left_square_bracket_1_right_square
     }
 }
 
-pub async fn project_controller_remove_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, member_id: &str) -> Result<(), Error<ProjectControllerRemoveMemberLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_remove_member_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, member_id: &str) -> Result<(), Error<ProjectControllerRemoveMemberLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_path_member_id = member_id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}/members/{memberId}", configuration.base_path, id=crate::apis::urlencode(p_path_id), memberId=crate::apis::urlencode(p_path_member_id));
+    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}/members/{memberId}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id), memberId=crate::apis::urlencode(p_path_member_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -650,12 +656,13 @@ pub async fn project_controller_remove_member_left_square_bracket_1_right_square
     }
 }
 
-pub async fn project_controller_update_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, update_project_dto: models::UpdateProjectDto) -> Result<(), Error<ProjectControllerUpdateProjectLeftSquareBracket0RightSquareBracketError>> {
+pub async fn project_controller_update_project_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, update_project_dto: models::UpdateProjectDto) -> Result<(), Error<ProjectControllerUpdateProjectLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_update_project_dto = update_project_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/projects/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -710,12 +717,13 @@ pub async fn project_controller_update_project_left_square_bracket_1_right_squar
     }
 }
 
-pub async fn task_controller_add_comment_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, add_task_comment_dto: models::AddTaskCommentDto) -> Result<(), Error<TaskControllerAddCommentLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_add_comment_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, add_task_comment_dto: models::AddTaskCommentDto) -> Result<(), Error<TaskControllerAddCommentLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_add_task_comment_dto = add_task_comment_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/comments", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/comments", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -770,12 +778,13 @@ pub async fn task_controller_add_comment_left_square_bracket_1_right_square_brac
     }
 }
 
-pub async fn task_controller_add_dependency_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, add_task_dependency_dto: models::AddTaskDependencyDto) -> Result<(), Error<TaskControllerAddDependencyLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_add_dependency_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, add_task_dependency_dto: models::AddTaskDependencyDto) -> Result<(), Error<TaskControllerAddDependencyLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_add_task_dependency_dto = add_task_dependency_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/dependencies", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/dependencies", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -830,11 +839,12 @@ pub async fn task_controller_add_dependency_left_square_bracket_1_right_square_b
     }
 }
 
-pub async fn task_controller_create_label_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, create_task_label_dto: models::CreateTaskLabelDto) -> Result<(), Error<TaskControllerCreateLabelLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_create_label_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, create_task_label_dto: models::CreateTaskLabelDto) -> Result<(), Error<TaskControllerCreateLabelLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_body_create_task_label_dto = create_task_label_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/labels", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/labels", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -888,11 +898,12 @@ pub async fn task_controller_create_label_left_square_bracket_1_right_square_bra
     }
 }
 
-pub async fn task_controller_create_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, create_task_dto: models::CreateTaskDto) -> Result<(), Error<TaskControllerCreateTaskLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_create_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, create_task_dto: models::CreateTaskDto) -> Result<(), Error<TaskControllerCreateTaskLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_body_create_task_dto = create_task_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/tasks", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -946,11 +957,12 @@ pub async fn task_controller_create_task_left_square_bracket_1_right_square_brac
     }
 }
 
-pub async fn task_controller_delete_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<TaskControllerDeleteTaskLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_delete_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str) -> Result<(), Error<TaskControllerDeleteTaskLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1002,11 +1014,12 @@ pub async fn task_controller_delete_task_left_square_bracket_1_right_square_brac
     }
 }
 
-pub async fn task_controller_get_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<TaskControllerGetTaskLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_get_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str) -> Result<(), Error<TaskControllerGetTaskLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1058,11 +1071,12 @@ pub async fn task_controller_get_task_left_square_bracket_1_right_square_bracket
     }
 }
 
-pub async fn task_controller_list_labels_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, project_id: &str) -> Result<(), Error<TaskControllerListLabelsLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_list_labels_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, project_id: &str) -> Result<(), Error<TaskControllerListLabelsLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_query_project_id = project_id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/labels/list", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/labels/list", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     req_builder = req_builder.query(&[("projectId", &p_query_project_id.to_string())]);
@@ -1116,8 +1130,9 @@ pub async fn task_controller_list_labels_left_square_bracket_1_right_square_brac
     }
 }
 
-pub async fn task_controller_list_tasks_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, project_id: Option<&str>, status: Option<&str>, priority: Option<&str>, assignee_id: Option<&str>, search: Option<&str>, page: Option<f64>, limit: Option<f64>) -> Result<(), Error<TaskControllerListTasksLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_list_tasks_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, project_id: Option<&str>, status: Option<&str>, priority: Option<&str>, assignee_id: Option<&str>, search: Option<&str>, page: Option<f64>, limit: Option<f64>) -> Result<(), Error<TaskControllerListTasksLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_query_project_id = project_id;
     let p_query_status = status;
     let p_query_priority = priority;
@@ -1126,7 +1141,7 @@ pub async fn task_controller_list_tasks_left_square_bracket_0_right_square_brack
     let p_query_page = page;
     let p_query_limit = limit;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks", configuration.base_path);
+    let uri_str = format!("{}/v3/{orgSlug}/tasks", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_project_id {
@@ -1226,12 +1241,13 @@ pub async fn task_controller_list_tasks_left_square_bracket_1_right_square_brack
     }
 }
 
-pub async fn task_controller_manage_assignees_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, manage_task_assignees_dto: models::ManageTaskAssigneesDto) -> Result<(), Error<TaskControllerManageAssigneesLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_manage_assignees_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, manage_task_assignees_dto: models::ManageTaskAssigneesDto) -> Result<(), Error<TaskControllerManageAssigneesLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_manage_task_assignees_dto = manage_task_assignees_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/assignees", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/assignees", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1286,12 +1302,13 @@ pub async fn task_controller_manage_assignees_left_square_bracket_1_right_square
     }
 }
 
-pub async fn task_controller_remove_dependency_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, depends_on_task_id: &str) -> Result<(), Error<TaskControllerRemoveDependencyLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_remove_dependency_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, depends_on_task_id: &str) -> Result<(), Error<TaskControllerRemoveDependencyLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_path_depends_on_task_id = depends_on_task_id;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/dependencies/{dependsOnTaskId}", configuration.base_path, id=crate::apis::urlencode(p_path_id), dependsOnTaskId=crate::apis::urlencode(p_path_depends_on_task_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}/dependencies/{dependsOnTaskId}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id), dependsOnTaskId=crate::apis::urlencode(p_path_depends_on_task_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -1344,12 +1361,13 @@ pub async fn task_controller_remove_dependency_left_square_bracket_1_right_squar
     }
 }
 
-pub async fn task_controller_update_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, id: &str, update_task_dto: models::UpdateTaskDto) -> Result<(), Error<TaskControllerUpdateTaskLeftSquareBracket0RightSquareBracketError>> {
+pub async fn task_controller_update_task_left_square_bracket_0_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, id: &str, update_task_dto: models::UpdateTaskDto) -> Result<(), Error<TaskControllerUpdateTaskLeftSquareBracket0RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
     let p_path_id = id;
     let p_body_update_task_dto = update_task_dto;
 
-    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
+    let uri_str = format!("{}/v3/{orgSlug}/tasks/{id}", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug), id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {

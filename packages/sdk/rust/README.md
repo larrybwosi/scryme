@@ -72,24 +72,24 @@ Class | Method | HTTP request | Description
 *V3AuthApi* | [**auth_controller_handle_o_auth2**](docs/V3AuthApi.md#auth_controller_handle_o_auth2) | **GET** /v3/auth/oauth2/{path} | Handle OAuth2 provider requests
 *V3AuthApi* | [**auth_create_api_key**](docs/V3AuthApi.md#auth_create_api_key) | **POST** /v3/auth/api-keys | Create a new V3 API Secret Key for developer account
 *V3AuthApi* | [**auth_create_o_auth_client**](docs/V3AuthApi.md#auth_create_o_auth_client) | **POST** /v3/auth/oauth/clients | Register a new OAuth Application Client for Sign in with Scryme
-*V3AuthApi* | [**auth_create_o_auth_client_0**](docs/V3AuthApi.md#auth_create_o_auth_client_0) | **POST** /v3/auth/oauth/provision | Register a new OAuth Application Client for Sign in with Scryme
-*V3AuthApi* | [**auth_create_o_auth_client_1**](docs/V3AuthApi.md#auth_create_o_auth_client_1) | **POST** /v3/auth/oauth/clients/provision | Register a new OAuth Application Client for Sign in with Scryme
+*V3AuthApi* | [**auth_create_o_auth_client_alt2**](docs/V3AuthApi.md#auth_create_o_auth_client_alt2) | **POST** /v3/auth/oauth/provision | Register a new OAuth Application Client for Sign in with Scryme
+*V3AuthApi* | [**auth_create_o_auth_client_alt3**](docs/V3AuthApi.md#auth_create_o_auth_client_alt3) | **POST** /v3/auth/oauth/clients/provision | Register a new OAuth Application Client for Sign in with Scryme
 *V3AuthApi* | [**auth_delete_api_key**](docs/V3AuthApi.md#auth_delete_api_key) | **DELETE** /v3/auth/api-keys/{id} | Revoke and delete a V3 API Secret Key
 *V3AuthApi* | [**auth_delete_o_auth_client**](docs/V3AuthApi.md#auth_delete_o_auth_client) | **DELETE** /v3/auth/oauth/clients/{id} | Delete an OAuth Application Client
-*V3AuthApi* | [**auth_delete_o_auth_client_0**](docs/V3AuthApi.md#auth_delete_o_auth_client_0) | **DELETE** /v3/auth/oauth/provision/{id} | Delete an OAuth Application Client
+*V3AuthApi* | [**auth_delete_o_auth_client_alt2**](docs/V3AuthApi.md#auth_delete_o_auth_client_alt2) | **DELETE** /v3/auth/oauth/provision/{id} | Delete an OAuth Application Client
 *V3AuthApi* | [**auth_exchange_token**](docs/V3AuthApi.md#auth_exchange_token) | **POST** /v3/auth/token | Exchange client credentials for an access token
 *V3AuthApi* | [**auth_get_o_auth_client**](docs/V3AuthApi.md#auth_get_o_auth_client) | **GET** /v3/auth/oauth/clients/{id} | Get OAuth Application Client details
-*V3AuthApi* | [**auth_get_o_auth_client_0**](docs/V3AuthApi.md#auth_get_o_auth_client_0) | **GET** /v3/auth/oauth/provision/{id} | Get OAuth Application Client details
+*V3AuthApi* | [**auth_get_o_auth_client_alt2**](docs/V3AuthApi.md#auth_get_o_auth_client_alt2) | **GET** /v3/auth/oauth/provision/{id} | Get OAuth Application Client details
 *V3AuthApi* | [**auth_list_api_keys**](docs/V3AuthApi.md#auth_list_api_keys) | **GET** /v3/auth/api-keys | List V3 API Secret Keys owned by developer
 *V3AuthApi* | [**auth_list_o_auth_clients**](docs/V3AuthApi.md#auth_list_o_auth_clients) | **GET** /v3/auth/oauth/clients | List registered OAuth Application Clients
-*V3AuthApi* | [**auth_list_o_auth_clients_0**](docs/V3AuthApi.md#auth_list_o_auth_clients_0) | **GET** /v3/auth/oauth/provision | List registered OAuth Application Clients
-*V3AuthApi* | [**auth_list_o_auth_clients_1**](docs/V3AuthApi.md#auth_list_o_auth_clients_1) | **GET** /v3/auth/oauth/clients/provision | List registered OAuth Application Clients
+*V3AuthApi* | [**auth_list_o_auth_clients_alt2**](docs/V3AuthApi.md#auth_list_o_auth_clients_alt2) | **GET** /v3/auth/oauth/provision | List registered OAuth Application Clients
+*V3AuthApi* | [**auth_list_o_auth_clients_alt3**](docs/V3AuthApi.md#auth_list_o_auth_clients_alt3) | **GET** /v3/auth/oauth/clients/provision | List registered OAuth Application Clients
 *V3AuthApi* | [**auth_rotate_o_auth_client_secret**](docs/V3AuthApi.md#auth_rotate_o_auth_client_secret) | **POST** /v3/auth/oauth/clients/{id}/rotate-secret | Rotate OAuth Application Client secret key
-*V3AuthApi* | [**auth_rotate_o_auth_client_secret_0**](docs/V3AuthApi.md#auth_rotate_o_auth_client_secret_0) | **POST** /v3/auth/oauth/clients/{id}/rotate | Rotate OAuth Application Client secret key
-*V3AuthApi* | [**auth_rotate_o_auth_client_secret_1**](docs/V3AuthApi.md#auth_rotate_o_auth_client_secret_1) | **POST** /v3/auth/oauth/provision/{id}/rotate-secret | Rotate OAuth Application Client secret key
+*V3AuthApi* | [**auth_rotate_o_auth_client_secret_alt2**](docs/V3AuthApi.md#auth_rotate_o_auth_client_secret_alt2) | **POST** /v3/auth/oauth/clients/{id}/rotate | Rotate OAuth Application Client secret key
+*V3AuthApi* | [**auth_rotate_o_auth_client_secret_alt3**](docs/V3AuthApi.md#auth_rotate_o_auth_client_secret_alt3) | **POST** /v3/auth/oauth/provision/{id}/rotate-secret | Rotate OAuth Application Client secret key
 *V3AuthApi* | [**auth_toggle_api_key**](docs/V3AuthApi.md#auth_toggle_api_key) | **PUT** /v3/auth/api-keys/{id}/toggle | Toggle enabled status of a V3 API Secret Key
 *V3AuthApi* | [**auth_update_o_auth_client**](docs/V3AuthApi.md#auth_update_o_auth_client) | **PUT** /v3/auth/oauth/clients/{id} | Update OAuth Application Client configuration
-*V3AuthApi* | [**auth_update_o_auth_client_0**](docs/V3AuthApi.md#auth_update_o_auth_client_0) | **PUT** /v3/auth/oauth/provision/{id} | Update OAuth Application Client configuration
+*V3AuthApi* | [**auth_update_o_auth_client_alt2**](docs/V3AuthApi.md#auth_update_o_auth_client_alt2) | **PUT** /v3/auth/oauth/provision/{id} | Update OAuth Application Client configuration
 *V3B2BApi* | [**b2_b_create_order**](docs/V3B2BApi.md#b2_b_create_order) | **POST** /v3/{orgSlug}/b2b/orders | Create a new B2B order
 *V3B2BApi* | [**b2_b_create_quote**](docs/V3B2BApi.md#b2_b_create_quote) | **POST** /v3/{orgSlug}/b2b/quotes | Request a B2B quote
 *V3B2BApi* | [**b2_b_get_catalog**](docs/V3B2BApi.md#b2_b_get_catalog) | **GET** /v3/{orgSlug}/b2b/catalog | Get B2B product catalog
@@ -129,29 +129,29 @@ Class | Method | HTTP request | Description
 *V3CartApi* | [**cart_controller_get_cart**](docs/V3CartApi.md#cart_controller_get_cart) | **GET** /v3/{orgSlug}/cart | Get current cart
 *V3CartApi* | [**cart_controller_remove_from_cart**](docs/V3CartApi.md#cart_controller_remove_from_cart) | **DELETE** /v3/{orgSlug}/cart/items | Remove item from cart
 *V3CatalogApi* | [**catalog_create_product**](docs/V3CatalogApi.md#catalog_create_product) | **POST** /v3/{orgSlug}/catalog/products | Create a new product
-*V3CatalogApi* | [**catalog_create_product_0**](docs/V3CatalogApi.md#catalog_create_product_0) | **POST** /v3/catalog/products | Create a new product
+*V3CatalogApi* | [**catalog_create_product_alt2**](docs/V3CatalogApi.md#catalog_create_product_alt2) | **POST** /v3/catalog/products | Create a new product
 *V3CatalogApi* | [**catalog_create_review**](docs/V3CatalogApi.md#catalog_create_review) | **POST** /v3/{orgSlug}/catalog/products/{productId}/reviews | Create a new review for a product
-*V3CatalogApi* | [**catalog_create_review_0**](docs/V3CatalogApi.md#catalog_create_review_0) | **POST** /v3/catalog/products/{productId}/reviews | Create a new review for a product
+*V3CatalogApi* | [**catalog_create_review_alt2**](docs/V3CatalogApi.md#catalog_create_review_alt2) | **POST** /v3/catalog/products/{productId}/reviews | Create a new review for a product
 *V3CatalogApi* | [**catalog_delete_review**](docs/V3CatalogApi.md#catalog_delete_review) | **DELETE** /v3/{orgSlug}/catalog/reviews/{reviewId} | Delete a review
-*V3CatalogApi* | [**catalog_delete_review_0**](docs/V3CatalogApi.md#catalog_delete_review_0) | **DELETE** /v3/catalog/reviews/{reviewId} | Delete a review
+*V3CatalogApi* | [**catalog_delete_review_alt2**](docs/V3CatalogApi.md#catalog_delete_review_alt2) | **DELETE** /v3/catalog/reviews/{reviewId} | Delete a review
 *V3CatalogApi* | [**catalog_get_price_change_requests**](docs/V3CatalogApi.md#catalog_get_price_change_requests) | **GET** /v3/{orgSlug}/catalog/price-change-requests | Get all pending price change requests
-*V3CatalogApi* | [**catalog_get_price_change_requests_0**](docs/V3CatalogApi.md#catalog_get_price_change_requests_0) | **GET** /v3/catalog/price-change-requests | Get all pending price change requests
+*V3CatalogApi* | [**catalog_get_price_change_requests_alt2**](docs/V3CatalogApi.md#catalog_get_price_change_requests_alt2) | **GET** /v3/catalog/price-change-requests | Get all pending price change requests
 *V3CatalogApi* | [**catalog_get_product**](docs/V3CatalogApi.md#catalog_get_product) | **GET** /v3/{orgSlug}/catalog/products/{idOrSlug} | Get a product by ID or Slug
-*V3CatalogApi* | [**catalog_get_product_0**](docs/V3CatalogApi.md#catalog_get_product_0) | **GET** /v3/catalog/products/{idOrSlug} | Get a product by ID or Slug
+*V3CatalogApi* | [**catalog_get_product_alt2**](docs/V3CatalogApi.md#catalog_get_product_alt2) | **GET** /v3/catalog/products/{idOrSlug} | Get a product by ID or Slug
 *V3CatalogApi* | [**catalog_get_product_variants**](docs/V3CatalogApi.md#catalog_get_product_variants) | **GET** /v3/{orgSlug}/catalog/variants | Get paginated product variants
-*V3CatalogApi* | [**catalog_get_product_variants_0**](docs/V3CatalogApi.md#catalog_get_product_variants_0) | **GET** /v3/catalog/variants | Get paginated product variants
+*V3CatalogApi* | [**catalog_get_product_variants_alt2**](docs/V3CatalogApi.md#catalog_get_product_variants_alt2) | **GET** /v3/catalog/variants | Get paginated product variants
 *V3CatalogApi* | [**catalog_get_products**](docs/V3CatalogApi.md#catalog_get_products) | **GET** /v3/{orgSlug}/catalog/products | Get all products for an organization
-*V3CatalogApi* | [**catalog_get_products_0**](docs/V3CatalogApi.md#catalog_get_products_0) | **GET** /v3/catalog/products | Get all products for an organization
+*V3CatalogApi* | [**catalog_get_products_alt2**](docs/V3CatalogApi.md#catalog_get_products_alt2) | **GET** /v3/catalog/products | Get all products for an organization
 *V3CatalogApi* | [**catalog_get_services**](docs/V3CatalogApi.md#catalog_get_services) | **GET** /v3/{orgSlug}/catalog/services | Get all services for an organization
-*V3CatalogApi* | [**catalog_get_services_0**](docs/V3CatalogApi.md#catalog_get_services_0) | **GET** /v3/catalog/services | Get all services for an organization
+*V3CatalogApi* | [**catalog_get_services_alt2**](docs/V3CatalogApi.md#catalog_get_services_alt2) | **GET** /v3/catalog/services | Get all services for an organization
 *V3CatalogApi* | [**catalog_review_price_change_request**](docs/V3CatalogApi.md#catalog_review_price_change_request) | **POST** /v3/{orgSlug}/catalog/price-change-requests/{id}/review | Approve or reject a price change request
-*V3CatalogApi* | [**catalog_review_price_change_request_0**](docs/V3CatalogApi.md#catalog_review_price_change_request_0) | **POST** /v3/catalog/price-change-requests/{id}/review | Approve or reject a price change request
+*V3CatalogApi* | [**catalog_review_price_change_request_alt2**](docs/V3CatalogApi.md#catalog_review_price_change_request_alt2) | **POST** /v3/catalog/price-change-requests/{id}/review | Approve or reject a price change request
 *V3CatalogApi* | [**catalog_update_product**](docs/V3CatalogApi.md#catalog_update_product) | **PATCH** /v3/{orgSlug}/catalog/products/{id} | Update product details and CMS customizations
-*V3CatalogApi* | [**catalog_update_product_0**](docs/V3CatalogApi.md#catalog_update_product_0) | **PATCH** /v3/catalog/products/{id} | Update product details and CMS customizations
+*V3CatalogApi* | [**catalog_update_product_alt2**](docs/V3CatalogApi.md#catalog_update_product_alt2) | **PATCH** /v3/catalog/products/{id} | Update product details and CMS customizations
 *V3CatalogApi* | [**catalog_update_review**](docs/V3CatalogApi.md#catalog_update_review) | **PATCH** /v3/{orgSlug}/catalog/reviews/{reviewId} | Update an existing review
-*V3CatalogApi* | [**catalog_update_review_0**](docs/V3CatalogApi.md#catalog_update_review_0) | **PATCH** /v3/catalog/reviews/{reviewId} | Update an existing review
+*V3CatalogApi* | [**catalog_update_review_alt2**](docs/V3CatalogApi.md#catalog_update_review_alt2) | **PATCH** /v3/catalog/reviews/{reviewId} | Update an existing review
 *V3CatalogApi* | [**catalog_update_supplier_variant**](docs/V3CatalogApi.md#catalog_update_supplier_variant) | **PATCH** /v3/{orgSlug}/catalog/suppliers/{supplierId}/variants/{variantId} | Update supplier variant details and trigger price recalculation
-*V3CatalogApi* | [**catalog_update_supplier_variant_0**](docs/V3CatalogApi.md#catalog_update_supplier_variant_0) | **PATCH** /v3/catalog/suppliers/{supplierId}/variants/{variantId} | Update supplier variant details and trigger price recalculation
+*V3CatalogApi* | [**catalog_update_supplier_variant_alt2**](docs/V3CatalogApi.md#catalog_update_supplier_variant_alt2) | **PATCH** /v3/catalog/suppliers/{supplierId}/variants/{variantId} | Update supplier variant details and trigger price recalculation
 *V3CustomersApi* | [**customer_register**](docs/V3CustomersApi.md#customer_register) | **POST** /v3/{orgSlug}/customers/../customer/register | Register a new customer (singular alias)
 *V3CustomersApi* | [**customers_add_address**](docs/V3CustomersApi.md#customers_add_address) | **POST** /v3/{orgSlug}/customers/{id}/addresses | Add or update customer address
 *V3CustomersApi* | [**customers_delete**](docs/V3CustomersApi.md#customers_delete) | **DELETE** /v3/{orgSlug}/customers/{id} | Delete/Deactivate a customer
@@ -250,7 +250,7 @@ Class | Method | HTTP request | Description
 *V3FinanceAccountingApi* | [**accounting_get_tax_summary**](docs/V3FinanceAccountingApi.md#accounting_get_tax_summary) | **GET** /v3/{orgSlug}/finance/accounting/reports/tax-summary | Get Kenyan Tax Summary
 *V3FinanceAccountingApi* | [**accounting_initialize**](docs/V3FinanceAccountingApi.md#accounting_initialize) | **POST** /v3/{orgSlug}/finance/accounting/initialize | Initialize Chart of Accounts
 *V3GlobalPosApi* | [**p_os_global_provision**](docs/V3GlobalPosApi.md#p_os_global_provision) | **POST** /v3/global/pos/provision | Provision a new POS device using a setup token (Global endpoint)
-*V3GlobalPosApi* | [**p_os_global_provision_0**](docs/V3GlobalPosApi.md#p_os_global_provision_0) | **POST** /v3/pos/provision | Provision a new POS device using a setup token (Global endpoint)
+*V3GlobalPosApi* | [**p_os_global_provision_alt2**](docs/V3GlobalPosApi.md#p_os_global_provision_alt2) | **POST** /v3/pos/provision | Provision a new POS device using a setup token (Global endpoint)
 *V3InventoryApi* | [**inventory_approve_adjustment**](docs/V3InventoryApi.md#inventory_approve_adjustment) | **PATCH** /v3/{orgSlug}/inventory/adjustments/{id}/approve | Approve a pending stock adjustment
 *V3InventoryApi* | [**inventory_check_b2_b_availability**](docs/V3InventoryApi.md#inventory_check_b2_b_availability) | **POST** /v3/{orgSlug}/inventory/b2b/availability | Bulk check stock availability for B2B customers
 *V3InventoryApi* | [**inventory_complete_assembly**](docs/V3InventoryApi.md#inventory_complete_assembly) | **POST** /v3/{orgSlug}/inventory/assemblies/{id}/complete | Complete an assembly and update stock

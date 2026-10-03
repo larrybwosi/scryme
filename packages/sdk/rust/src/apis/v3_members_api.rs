@@ -159,13 +159,12 @@ pub async fn members_controller_admin_check_out_left_square_bracket_0_right_squa
     }
 }
 
-pub async fn members_controller_admin_check_out_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, member_id: &str, org_slug: &str, check_out_dto: models::CheckOutDto) -> Result<(), Error<MembersControllerAdminCheckOutLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_admin_check_out_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, member_id: &str, check_out_dto: models::CheckOutDto) -> Result<(), Error<MembersControllerAdminCheckOutLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_member_id = member_id;
-    let p_path_org_slug = org_slug;
     let p_body_check_out_dto = check_out_dto;
 
-    let uri_str = format!("{}/v3/members/{memberId}/attendance/check-out", configuration.base_path, memberId=crate::apis::urlencode(p_path_member_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{memberId}/attendance/check-out", configuration.base_path, memberId=crate::apis::urlencode(p_path_member_id));
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -231,12 +230,11 @@ pub async fn members_controller_create_member_left_square_bracket_0_right_square
     }
 }
 
-pub async fn members_controller_create_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, create_member_dto: models::CreateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerCreateMemberLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_create_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, create_member_dto: models::CreateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerCreateMemberLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_org_slug = org_slug;
     let p_body_create_member_dto = create_member_dto;
 
-    let uri_str = format!("{}/v3/members", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -301,12 +299,11 @@ pub async fn members_controller_delete_member_left_square_bracket_0_right_square
     }
 }
 
-pub async fn members_controller_delete_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerDeleteMemberLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_delete_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerDeleteMemberLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -359,12 +356,11 @@ pub async fn members_controller_get_member_activity_left_square_bracket_0_right_
     }
 }
 
-pub async fn members_controller_get_member_activity_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerGetMemberActivityLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_get_member_activity_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerGetMemberActivityLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/members/{id}/activity", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}/activity", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -428,12 +424,11 @@ pub async fn members_controller_get_member_left_square_bracket_0_right_square_br
     }
 }
 
-pub async fn members_controller_get_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<models::MemberResponseDto, Error<MembersControllerGetMemberLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_get_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<models::MemberResponseDto, Error<MembersControllerGetMemberLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -551,9 +546,8 @@ pub async fn members_controller_get_members_left_square_bracket_0_right_square_b
     }
 }
 
-pub async fn members_controller_get_members_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, org_slug: &str, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_get_members_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, page: Option<f64>, limit: Option<f64>, sort_by: Option<&str>, sort_order: Option<&str>, role: Option<&str>, membership_status: Option<&str>, is_active: Option<bool>, department_id: Option<&str>, search: Option<&str>, status: Option<&str>, is_checked_in: Option<bool>) -> Result<Vec<models::MemberResponseDto>, Error<MembersControllerGetMembersLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
-    let p_path_org_slug = org_slug;
     let p_query_page = page;
     let p_query_limit = limit;
     let p_query_sort_by = sort_by;
@@ -566,7 +560,7 @@ pub async fn members_controller_get_members_left_square_bracket_1_right_square_b
     let p_query_status = status;
     let p_query_is_checked_in = is_checked_in;
 
-    let uri_str = format!("{}/v3/members", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members", configuration.base_path);
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
     if let Some(ref param_value) = p_query_page {
@@ -676,13 +670,12 @@ pub async fn members_controller_update_member_left_square_bracket_0_right_square
     }
 }
 
-pub async fn members_controller_update_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str, update_member_dto: models::UpdateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerUpdateMemberLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_update_member_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, update_member_dto: models::UpdateMemberDto) -> Result<models::MemberResponseDto, Error<MembersControllerUpdateMemberLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
     let p_body_update_member_dto = update_member_dto;
 
-    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
@@ -747,12 +740,11 @@ pub async fn members_controller_update_status_left_square_bracket_0_right_square
     }
 }
 
-pub async fn members_controller_update_status_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<MembersControllerUpdateStatusLeftSquareBracket1RightSquareBracketError>> {
+pub async fn members_controller_update_status_left_square_bracket_1_right_square_bracket(configuration: &configuration::Configuration, id: &str) -> Result<(), Error<MembersControllerUpdateStatusLeftSquareBracket1RightSquareBracketError>> {
     // add a prefix to parameters to efficiently prevent name collisions
     let p_path_id = id;
-    let p_path_org_slug = org_slug;
 
-    let uri_str = format!("{}/v3/members/{id}/status", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let uri_str = format!("{}/v3/members/{id}/status", configuration.base_path, id=crate::apis::urlencode(p_path_id));
     let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
 
     if let Some(ref user_agent) = configuration.user_agent {
