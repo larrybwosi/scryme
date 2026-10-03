@@ -1,3 +1,4 @@
+import { AutomationService } from "../../../../../automation/automation.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProcessSaleUseCase } from "./process-sale.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -18,6 +19,7 @@ describe("ProcessSaleUseCase", () => {
   let prisma: any;
   let inventoryMovementService: any;
   let invoiceUseCase: any;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
     prisma = {
@@ -40,7 +42,7 @@ describe("ProcessSaleUseCase", () => {
       recordMovement: vi.fn().mockResolvedValue({}),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       providers: [
         ProcessSaleUseCase,
         { provide: PrismaService, useValue: prisma },
@@ -49,6 +51,12 @@ describe("ProcessSaleUseCase", () => {
           provide: LoyaltyService,
           useValue: {
             calculatePointsForTransaction: vi.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: AutomationService,
+          useValue: {
+            triggerWorkflow: vi.fn().mockResolvedValue({ success: true }),
           },
         },
         {
@@ -63,8 +71,8 @@ describe("ProcessSaleUseCase", () => {
       ],
     }).compile();
 
-    useCase = module.get<ProcessSaleUseCase>(ProcessSaleUseCase);
-    invoiceUseCase = module.get<InvoiceUseCase>(InvoiceUseCase);
+    useCase = moduleRef.get<ProcessSaleUseCase>(ProcessSaleUseCase);
+    invoiceUseCase = moduleRef.get<InvoiceUseCase>(InvoiceUseCase);
   });
 
   it("should handle null invoice gracefully when auto generate invoice is disabled", async () => {
@@ -399,6 +407,18 @@ describe("ProcessSaleUseCase", () => {
       }),
     );
     expect(result.status).toBe("PREORDER");
+
+    const automationService = moduleRef.get(AutomationService);
+    expect(automationService.triggerWorkflow).toHaveBeenCalledWith(
+      "org_1",
+      expect.objectContaining({
+        key: "preorder_notification",
+        payload: expect.objectContaining({
+          transactionId: "t_preorder_1",
+          depositAmount: 0,
+        }),
+      }),
+    );
   });
 
   it("should process a PREORDER sale with deposit/partial payment and assign paymentStatus PARTIALLY_PAID", async () => {

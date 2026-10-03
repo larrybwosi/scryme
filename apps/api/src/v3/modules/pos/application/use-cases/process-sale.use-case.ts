@@ -1,3 +1,4 @@
+import { AutomationService } from "../../../../../automation/automation.service";
 import {
   Injectable,
   BadRequestException,
@@ -22,6 +23,9 @@ export class ProcessSaleUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
     private readonly inventoryMovementService: InventoryMovementService,
     @Optional() private readonly openPanelService?: OpenPanelService,
+    @Optional()
+    @Inject(forwardRef(() => AutomationService))
+    private readonly automationService?: AutomationService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -199,6 +203,19 @@ export class ProcessSaleUseCase {
       console.error("Post-sale compliance handling failed:", err.message);
       return null;
     });
+
+    const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
+    if (isPreorder) {
+      this.triggerPreorderWorkflow(orgId, {
+        transactionId: transaction.id,
+        transactionNumber: transaction.number,
+        customerId: transaction.customerId || undefined,
+        dto,
+        total,
+      }).catch((err) => {
+        console.error("Post-sale preorder workflow trigger failed:", err.message);
+      });
+    }
 
     return {
       ...transaction,
@@ -549,5 +566,42 @@ export class ProcessSaleUseCase {
     const result = await this.invoiceUseCase.finalizeInvoice(orgId, invoice.id);
 
     return result.complianceData || null;
+  }
+
+  private async triggerPreorderWorkflow(orgId: string, params: { transactionId: string; transactionNumber: string; customerId?: string; dto: any; total: number }) {
+    if (!this.automationService) return;
+
+    let cust: any = null;
+    if (params.customerId) {
+      cust = await this.prisma.client.customer.findUnique({
+        where: { id: params.customerId },
+        select: { name: true, phone: true, email: true },
+      });
+    }
+
+    const dto = params.dto;
+    const metadata = dto.metadata || {};
+    const totalPaidAmount = (dto.payments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+    await this.automationService.triggerWorkflow(orgId, {
+      key: "preorder_notification",
+      payload: {
+        transactionId: params.transactionId,
+        transactionNumber: params.transactionNumber,
+        customerName: cust?.name || dto.customerName || "Valued Customer",
+        customerPhone: cust?.phone || dto.customerPhone || "",
+        customerEmail: cust?.email || dto.customerEmail || "",
+        dueDate: metadata.dueDate,
+        dueTime: metadata.dueTime,
+        itemSpecs: metadata.itemSpecs,
+        inscription: metadata.inscription,
+        customizationNotes: metadata.customizationNotes || dto.notes,
+        depositAmount: totalPaidAmount,
+        remainingBalance: Math.max(0, params.total - totalPaidAmount),
+        finalTotal: params.total,
+        currency: "KES",
+        metadata,
+      },
+    });
   }
 }

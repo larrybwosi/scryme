@@ -31,6 +31,26 @@ export class AutomationService {
 
   public readonly builtInTemplates: WorkflowTemplate[] = [
     {
+      path: "f/dealio/preorder_notification",
+      key: "preorder_notification",
+      name: "Pre-Order Notification Workflow",
+      description: "Sends automated notifications to ScrymeChat preorder channel when custom pre-orders are created.",
+      triggerType: "EVENT",
+      schema: {
+        type: "object",
+        properties: {
+          notificationEmail: {
+            type: "string",
+            title: "Alert Email",
+            default: "",
+            description: "Email address to receive preorder notifications.",
+            group: "Notifications",
+          },
+        },
+      },
+      defaultConfig: { notificationEmail: "" },
+    },
+    {
       path: "f/dealio/customer_onboarding",
       key: "customer_onboarding",
       name: "Customer Onboarding Workflow",
