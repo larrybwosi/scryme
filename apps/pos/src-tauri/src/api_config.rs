@@ -5,7 +5,6 @@ pub mod routes {
     pub const CHECK_IN: &str = "api/v3/:orgSlug/pos/login";
     pub const CHECK_OUT: &str = "api/v3/:orgSlug/pos/check-out";
     pub const LOCATIONS: &str = "api/v3/:orgSlug/pos/locations";
-    pub const ABLY_AUTH: &str = "api/v3/:orgSlug/pos/ably-auth";
     pub const MPESA_INITIATE: &str = "api/v3/:orgSlug/payments/stkpush";
 
     // --- Inventory / Stock ---
