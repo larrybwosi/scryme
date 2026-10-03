@@ -255,7 +255,11 @@ export class PosController {
   })
   @ApiResponse({ status: 200, description: "Realtime Auth token" })
   async ablyAuthPublic(@Req() req: any) {
-    const authHeader = req.headers["x-member-token"] || req.headers["authorization"] || req.headers["x-api-key"];
+    const authHeader =
+      req.headers["x-member-token"] ||
+      req.headers["authorization"] ||
+      req.headers["x-api-key"] ||
+      req.headers["x-device-key"];
     if (authHeader) {
       const rawToken = Array.isArray(authHeader) ? authHeader[0] : authHeader;
       const cleanToken = rawToken.startsWith("Bearer ") ? rawToken.split(" ")[1] : rawToken;
@@ -279,7 +283,26 @@ export class PosController {
             };
           }
         } catch {
-          // Fallback to returning cleanToken if present
+          try {
+            const clientObj = await this.authCore.validateClient(cleanToken);
+            if (clientObj) {
+              return {
+                data: {
+                  tokenRequest: { token: cleanToken },
+                  metadata: {
+                    paymentChannel: `organization:${clientObj.organizationId}:payments`,
+                    inventoryChannel: `organization:${clientObj.organizationId}:inventory`,
+                    pricingChannel: `organization:${clientObj.organizationId}:pricing`,
+                    customersChannel: `organization:${clientObj.organizationId}:customers`,
+                    ordersChannel: `organization:${clientObj.organizationId}:orders`,
+                    organizationId: clientObj.organizationId,
+                  },
+                },
+              };
+            }
+          } catch {
+            // Token parsing fallback
+          }
           return {
             data: {
               tokenRequest: { token: cleanToken },
