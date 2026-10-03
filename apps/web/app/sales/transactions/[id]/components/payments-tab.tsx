@@ -1,5 +1,6 @@
-import { PaymentProgress } from "./payment-progress";
 "use client";
+
+import { PaymentProgress } from "./payment-progress";
 
 import React from "react";
 import { format } from "date-fns";
