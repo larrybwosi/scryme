@@ -17,3 +17,7 @@
 ## 2026-09-15 - [Decoupling External Network Emissions from Prisma Transactions]
 **Learning:** Awaiting external HTTP/event emissions (such as Windmill workflow triggers or webhooks) inside active Prisma `$transaction` blocks unnecessarily holds database connections and row locks open for the full duration of external network roundtrips. Moving event emissions outside `$transaction` callbacks allows database transactions to commit and release connection pool resources immediately.
 **Action:** Always execute and commit database mutations inside `$transaction` first, then trigger non-critical external event emissions or webhooks outside the transaction scope.
+
+## 2026-10-03 - [Consolidating In-Memory Aggregations Before Concurrent Prisma Upserts]
+**Learning:** Parallelizing database writes with `Promise.all` across collections containing duplicate target entities (e.g., multiple stock reception items sharing the same `variantId`) can cause Prisma unique constraint violations (`P2002`) or row lock contentions if the target record doesn't exist yet and multiple concurrent `create` operations are attempted. Aggregating quantities per entity ID in-memory first collapses $M$ duplicate queries into 1 consolidated update per entity.
+**Action:** Always aggregate line item quantities in-memory by primary/unique key before executing concurrent database writes inside Prisma transactions.
