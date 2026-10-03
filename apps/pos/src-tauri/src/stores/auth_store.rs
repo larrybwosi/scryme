@@ -244,7 +244,8 @@ impl AuthState {
         if let Some(t) = token {
             let mut val = HeaderValue::from_str(&t).map_err(|e| e.to_string())?;
             val.set_sensitive(true);
-            request_builder = request_builder.header("X-MEMBER-TOKEN", val);
+            request_builder = request_builder.header("X-MEMBER-TOKEN", val.clone());
+            request_builder = request_builder.header("Authorization", format!("Bearer {}", t));
         }
 
 

@@ -758,6 +758,8 @@ pub async fn get_sales_history_command(
 
     if let Some(arr) = target.as_array() {
         Ok(arr.clone())
+    } else if let Some(data_arr) = target.get("data").and_then(|d| d.as_array()) {
+        Ok(data_arr.clone())
     } else if let Some(arr) = raw_val.as_array() {
         Ok(arr.clone())
     } else {
