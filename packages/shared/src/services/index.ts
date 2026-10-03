@@ -5,3 +5,4 @@ export * from './schema.service';
 export * from './customer';
 export * from './notification';
 // export * from "./email"; // sendEmail provided by notification service
+export * from './marketing-cms.service';
