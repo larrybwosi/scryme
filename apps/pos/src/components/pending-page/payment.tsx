@@ -22,7 +22,6 @@ import {
   ShieldCheck,
   Upload,
   X,
-  Search,
   CheckCircle2,
   XCircle
 } from 'lucide-react';
@@ -30,7 +29,6 @@ import { toast } from 'sonner';
 import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useRealtimeStore } from '@/store/realtimeStore';
-import { useMpesaSearch } from '@/hooks/mpesa';
 import { PaymentMethod } from '@/hooks/sales';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { getCurrentPhoneConfig } from '@/lib/phone.config';
@@ -75,11 +73,9 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
   // M-Pesa State
   const [mpesaMode, setMpesaMode] = useState<MpesaMode>('STK');
   const [mpesaPhone, setMpesaPhone] = useState('');
+  const [mpesaCode, setMpesaCode] = useState('');
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('IDLE');
-  const [mpesaSearchQuery, setMpesaSearchQuery] = useState('');
   const [mpesaWaiting, setMpesaWaiting] = useState(false);
-
-  const { data: unclaimedPayments, isLoading: isSearchingMpesa } = useMpesaSearch(mpesaSearchQuery);
 
   const paymentChannel = useRealtimeStore(state => state.paymentChannel);
   const subscribe = useRealtimeStore(state => state.subscribe);
@@ -95,6 +91,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
       setFilePreview(null);
       setMpesaStatus('IDLE');
       setMpesaMode('STK');
+      setMpesaCode('');
       setMpesaWaiting(false);
 
       // Auto-fill phone if available in transactions?
@@ -172,11 +169,22 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
 
   const submitPayment = () => {
     if (!transactionId || !amount) return;
+    let finalRef = reference;
+    if (method === PaymentMethod.MPESA && mpesaMode === 'MANUAL') {
+      const code = mpesaCode.trim().toUpperCase();
+      if (code.length < 3) {
+        toast.error('Invalid Transaction Code', {
+          description: 'M-Pesa transaction code must be at least 3 characters.',
+        });
+        return;
+      }
+      finalRef = code;
+    }
     paymentMutation.mutate({
       transactionId,
       amount: parseFloat(amount),
       method,
-      reference: reference || undefined,
+      reference: finalRef || undefined,
       notes: notes || undefined,
       filePath: filePath || undefined,
       memberId,
@@ -261,7 +269,7 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                   className="space-y-4 p-4 bg-muted/30 rounded-lg border border-dashed"
                 >
                   <div className="flex gap-2 p-1 bg-muted rounded-md mb-4">
-                    {['STK', 'QR', 'SEARCH'].map((mode) => (
+                    {['STK', 'QR', 'MANUAL'].map((mode) => (
                       <button
                         key={mode}
                         onClick={() => setMpesaMode(mode as MpesaMode)}
@@ -325,37 +333,28 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
                     </div>
                   )}
 
-                  {mpesaMode === 'SEARCH' && (
+                  {mpesaMode === 'MANUAL' && (
                     <div className="space-y-3">
-                      <div className="relative">
-                        <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                      <div className="space-y-1.5">
+                        <Label className="text-xs uppercase">M-Pesa Transaction Code</Label>
                         <Input
-                          placeholder="Search M-Pesa code or phone..."
-                          className="pl-8"
-                          value={mpesaSearchQuery}
-                          onChange={e => setMpesaSearchQuery(e.target.value)}
+                          placeholder="e.g. QGH1234567"
+                          className="font-mono uppercase"
+                          value={mpesaCode}
+                          onChange={e => {
+                            const val = e.target.value.toUpperCase();
+                            setMpesaCode(val);
+                            setReference(val);
+                          }}
                         />
                       </div>
-                      <div className="max-h-[150px] overflow-y-auto space-y-2 pr-1">
-                        {isSearchingMpesa ? (
-                          <div className="py-4 text-center"><Loader2 className="w-4 h-4 animate-spin mx-auto" /></div>
-                        ) : unclaimedPayments?.length ? (
-                          unclaimedPayments.map((p: any) => (
-                            <div key={p.id} className="p-2 border rounded flex justify-between items-center bg-background">
-                              <div className="text-xs">
-                                <p className="font-bold">{p.transId}</p>
-                                <p className="text-muted-foreground">{p.msisdn} • {formatCurrency(p.amount)}</p>
-                              </div>
-                              <Button size="sm" variant="outline" className="h-7 text-[10px]" onClick={() => {
-                                setReference(p.transId);
-                                setAmount(p.amount.toString());
-                                toast.success('Payment linked');
-                              }}>Link</Button>
-                            </div>
-                          ))
-                        ) : (
-                          <p className="text-center text-xs text-muted-foreground py-4">No payments found</p>
-                        )}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs uppercase">Customer Phone (Optional)</Label>
+                        <Input
+                          placeholder="07XX XXX XXX"
+                          value={mpesaPhone}
+                          onChange={e => setMpesaPhone(e.target.value)}
+                        />
                       </div>
                     </div>
                   )}

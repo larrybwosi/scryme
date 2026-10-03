@@ -43,7 +43,6 @@ import { usePosStore } from '@/store/store';
 import { PaymentMethod, PaymentStatus, useProcessSale } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { MpesaFlowType, ProcessSaleInput, ProcessSaleInputSchema } from '@/lib/validation/transactions';
-import { useMpesaSearch, useMpesaClaim, useMpesaVerifySafaricom } from '@/hooks/mpesa';
 import { cn } from '@/lib/utils';
 import { shiftService } from '@/lib/shift-service';
 import { emit } from '@tauri-apps/api/event';
@@ -76,7 +75,7 @@ interface AddedPayment {
   meta?: any;
 }
 
-type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'SEARCH';
+type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'MANUAL';
 type MpesaStatus = 'IDLE' | 'WAITING' | 'SUCCESS' | 'FAILED';
 type PaymentTab = 'CASH' | 'MOBILE_PAYMENT' | 'CREDIT_CARD' | 'GIFT_CARD' | 'INSURANCE';
 
@@ -278,17 +277,13 @@ const PaymentModal = ({
 
   // M-Pesa
   const [mpesaMode, setMpesaMode] = useState<MpesaMode>('STK');
-  const [mpesaSearchQuery, setMpesaSearchQuery] = useState('');
+  const [mpesaCode, setMpesaCode] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState(customer?.phone || '');
   const [mpesaWaiting, setMpesaWaiting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('IDLE');
   const [detectedPayment, setDetectedPayment] = useState<any>(null);
 
   const { mutateAsync: createSale, isPending: isProcessing } = useProcessSale();
-  const { data: unclaimedPayments, isLoading: isSearchingMpesa } = useMpesaSearch(mpesaSearchQuery);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { mutateAsync: _claimMpesaPayment, isPending: _isClaimingMpesa } = useMpesaClaim();
-  const { mutateAsync: verifyWithSafaricom, isPending: isVerifyingSafaricom } = useMpesaVerifySafaricom();
 
   const { openPhysicalDrawer } = useCashDrawer();
   const [activeShift, setActiveShift] = useState<any>(null);
@@ -489,6 +484,39 @@ const PaymentModal = ({
   }, []);
 
   // ── Handlers ──
+  const handleAddMpesaManual = () => {
+    const code = mpesaCode.trim().toUpperCase();
+    if (code.length < 3) {
+      toast.error('Invalid Transaction Code', {
+        description: 'M-Pesa transaction code must be at least 3 characters.',
+      });
+      return;
+    }
+    const amount = parseFloat(amountInput);
+    if (!amount || amount <= 0) {
+      toast.error('Invalid Amount', {
+        description: 'Please enter a valid payment amount.',
+      });
+      return;
+    }
+
+    const phone = mpesaPhone ? normalizePhoneNumber(mpesaPhone, PHONE_CONFIG) : undefined;
+
+    addPayment({
+      method: PaymentMethod.MPESA,
+      amount,
+      reference: code,
+      meta: {
+        mpesaType: MpesaFlowType.PAYBILL_MANUAL,
+        mpesaPhoneNumber: phone,
+        transactionCode: code,
+      },
+    });
+
+    setMpesaCode('');
+    toast.success('M-Pesa payment added');
+  };
+
   const handleAddCash = () => {
     if (settings.enforceShiftForCashPayments && !activeShift && import.meta.env.MODE !== 'standalone') {
         toast.error('No Active Shift', {
@@ -962,7 +990,7 @@ const PaymentModal = ({
                     <div className="space-y-4">
                       {/* Mode toggle */}
                       <div className="grid grid-cols-5 gap-1.5 p-1.5 bg-muted">
-                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS', 'SEARCH'] as MpesaMode[]).map(mode => (
+                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS', 'MANUAL'] as MpesaMode[]).map(mode => (
                           <button
                             key={mode}
                             onClick={() => {
@@ -977,7 +1005,7 @@ const PaymentModal = ({
                                 : 'text-muted-foreground hover:text-foreground'
                             )}
                           >
-                            {mode === 'SEARCH' ? 'MANUAL' : mode.replace('_', ' ')}
+                            {mode.replace('_', ' ')}
                           </button>
                         ))}
                       </div>
@@ -1077,77 +1105,38 @@ const PaymentModal = ({
                         </div>
                       )}
 
-                      {/* Manual Search */}
-                      {mpesaMode === 'SEARCH' && (
-                        <div className="space-y-4">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      {/* Manual Entry */}
+                      {mpesaMode === 'MANUAL' && (
+                        <div className="space-y-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                              M-Pesa Transaction Code
+                            </Label>
                             <Input
-                              value={mpesaSearchQuery}
-                              onChange={e => setMpesaSearchQuery(e.target.value)}
-                              placeholder="Code, Phone or Name..."
-                              className="pl-9 h-11"
+                              value={mpesaCode}
+                              onChange={e => setMpesaCode(e.target.value.toUpperCase())}
+                              placeholder="e.g. QGH1234567"
+                              className="h-11 font-mono uppercase"
                             />
                           </div>
-
-                          <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                            {isSearchingMpesa ? (
-                              <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                              </div>
-                            ) : unclaimedPayments?.length ? (
-                              unclaimedPayments.map((payment: any) => (
-                                <div
-                                  key={payment.id}
-                                  className="p-3 border bg-background hover:border-primary/50 transition-colors flex items-center justify-between group"
-                                >
-                                  <div>
-                                    <p className="text-sm font-bold">{payment.transId}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {payment.msisdn} • {formatCurrency(payment.amount)}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground opacity-70">
-                                      {new Date(payment.transTime).toLocaleString()}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    className="h-8 px-3 text-xs"
-                                    onClick={() => {
-                                      handlePaymentMatch({
-                                        receipt: payment.transId,
-                                        amount: Number(payment.amount),
-                                        phone: payment.msisdn,
-                                      });
-                                    }}
-                                  >
-                                    Link
-                                  </Button>
-                                </div>
-                              ))
-                            ) : mpesaSearchQuery.length >= 3 ? (
-                              <div className="text-center py-8 border border-dashed rounded-lg">
-                                <p className="text-sm text-muted-foreground">No matching payments found</p>
-                                <Button
-                                  variant="link"
-                                  size="sm"
-                                  className="mt-1 h-auto py-0"
-                                  disabled={isVerifyingSafaricom}
-                                  onClick={async () => {
-                                    await verifyWithSafaricom({
-                                      transactionCode: mpesaSearchQuery,
-                                    });
-                                  }}
-                                >
-                                  Request Safaricom verification?
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="text-center py-8 text-muted-foreground text-xs">
-                                Enter at least 3 characters to search
-                              </div>
-                            )}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                              Phone Number (Optional)
+                            </Label>
+                            <Input
+                              value={mpesaPhone}
+                              onChange={e => setMpesaPhone(e.target.value)}
+                              placeholder="07XX XXX XXX"
+                              className="h-11 font-mono"
+                            />
                           </div>
+                          <Button
+                            className="w-full h-12 font-semibold gap-2"
+                            onClick={handleAddMpesaManual}
+                            disabled={!mpesaCode.trim() || mpesaCode.trim().length < 3 || !amountInput || parseFloat(amountInput) <= 0}
+                          >
+                            <Plus className="w-4 h-4" /> Add Payment
+                          </Button>
                         </div>
                       )}
                     </div>
