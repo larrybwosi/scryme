@@ -253,6 +253,28 @@ export class V3AuthGuard implements CanActivate {
 
       if (!orgId) return null;
 
+      // First check if user is a staff Member in the organization
+      const member = await this.prisma.client.member.findFirst({
+        where: {
+          organizationId: orgId,
+          userId: user.id,
+          deletedAt: null,
+        },
+      });
+
+      if (member) {
+        request.user = user;
+        return {
+          type: "v3_hybrid",
+          memberId: member.id,
+          organizationId: orgId,
+          clientId: null,
+          scopes: [],
+          role: member.role,
+        };
+      }
+
+      // If not a staff member, check if user is a Customer
       const customer = await this.prisma.client.customer.findUnique({
         where: {
           organizationId_email: {
