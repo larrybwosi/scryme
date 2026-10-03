@@ -36,6 +36,7 @@ import { ManageDeliveryModal } from "@/components/sales/manage-delivery-modal";
 import { PaymentStatusBadge } from "./components/payment-status-badge";
 import { OrderTimeline } from "./components/timeline";
 import { CustomerCard } from "./components/customer-card";
+import { PreorderCard } from "./components/preorder-card";
 import { LocationCard } from "./components/location-card";
 import { ActionsCard } from "./components/actions-card";
 import { ItemsTab } from "./components/items-tab";
@@ -448,16 +449,11 @@ export function TransactionDetailClient({
 
           <LocationCard transaction={transaction} />
 
-          {transaction.notes && (
-            <Card className="bg-amber-500/10 border-amber-500/20 text-amber-700 dark:text-amber-400 p-5 rounded-none space-y-2">
-              <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                Internal note
-              </h4>
-              <p className="text-xs font-medium leading-relaxed">
-                {transaction.notes}
-              </p>
-            </Card>
-          )}
+          <PreorderCard
+            transaction={transaction}
+            onNotesUpdated={fetchTransaction}
+            formatCurrency={formatCurrency}
+          />
         </div>
       </div>
 

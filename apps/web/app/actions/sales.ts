@@ -374,6 +374,22 @@ export async function createTransaction(data: {
   return transaction;
 }
 
+export async function updateTransactionNotes(
+  id: string,
+  notes: string,
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const transaction = await db.transaction.update({
+    where: { id, organizationId: auth.organizationId },
+    data: { notes },
+  });
+
+  revalidatePath("/sales/transactions");
+  revalidatePath(`/sales/transactions/${id}`);
+  return transaction;
+}
+
 export async function updateTransactionStatus(
   id: string,
   status: TransactionStatus,

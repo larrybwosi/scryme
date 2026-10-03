@@ -165,4 +165,65 @@ describe("WorkflowHandlers", () => {
       );
     });
   });
+  describe("preorder_notification", () => {
+    it("should format preorder report, dispatch to preorder_alerts channel and send notification email", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        isActive: true,
+        workspaceSlug: "scryme-bakery",
+        channelMappings: {
+          preorder_alerts: "custom-preorders",
+        },
+      });
+
+      const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
+
+      const result = await handlers.executeHandler("preorder_notification", {
+        organizationId: "org_1",
+        executionId: "exec_4",
+        jobId: "job_4",
+        definitionConfig: { notificationEmail: "orders@bakery.com" },
+        payload: {
+          transactionId: "txn_1001",
+          transactionNumber: "TRX-2026-00100",
+          customerName: "John Doe",
+          customerPhone: "+254711223344",
+          customerEmail: "john@example.com",
+          metadata: {
+            dueDate: "2026-10-15",
+            dueTime: "15:00",
+            itemSpecs: "3-Tier Wedding Cake",
+            inscription: "Happy Anniversary",
+            customizationNotes: "Red Velvet with Cream Cheese frosting",
+            depositAmount: 5000,
+            remainingBalance: 5000,
+          },
+          finalTotal: 10000,
+          totalPaid: 5000,
+          currency: "KES",
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.scrymeNotificationSent).toBe(true);
+      expect(result.emailSent).toBe(true);
+      expect(result.details.transactionNumber).toBe("TRX-2026-00100");
+      expect(result.details.customerName).toBe("John Doe");
+
+      expect(sendScrymeSpy).toHaveBeenCalledWith(
+        "scryme-bakery",
+        "custom-preorders",
+        expect.objectContaining({
+          content: expect.stringContaining("TRX-2026-00100"),
+          actions: expect.arrayContaining([
+            expect.objectContaining({ id: "view_txn_txn_1001" }),
+          ]),
+          customMessage: expect.objectContaining({
+            context: expect.objectContaining({
+              title: "Pre-Order Received: TRX-2026-00100",
+            }),
+          }),
+        }),
+      );
+    });
+  });
 });

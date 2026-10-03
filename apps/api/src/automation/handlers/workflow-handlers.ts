@@ -129,6 +129,9 @@ export class WorkflowHandlers {
       case "daily_sales_report":
       case "f/dealio/daily_sales_report":
         return this.handleDailySalesReport(ctx);
+      case "preorder_notification":
+      case "f/dealio/preorder_notification":
+        return this.handlePreorderNotification(ctx);
       case "stock_movement_report":
       case "f/dealio/stock_movement_report":
         return this.handleStockMovementReport(ctx);
@@ -138,6 +141,128 @@ export class WorkflowHandlers {
       default:
         return this.handleGenericEvent(ctx);
     }
+  }
+
+  private async handlePreorderNotification(ctx: WorkflowJobHandlerContext) {
+    const transactionId = ctx.payload?.transactionId || ctx.payload?.id || "N/A";
+    const transactionNumber = ctx.payload?.transactionNumber || ctx.payload?.number || "N/A";
+    const customerName = ctx.payload?.customerName || ctx.payload?.customer?.name || "Valued Customer";
+    const customerPhone = ctx.payload?.customerPhone || ctx.payload?.customer?.phone || "";
+    const customerEmail = ctx.payload?.customerEmail || ctx.payload?.customer?.email || "";
+    const notificationEmail = ctx.definitionConfig?.notificationEmail || ctx.payload?.notificationEmail || customerEmail;
+
+    const metadata = ctx.payload?.metadata || {};
+    const dueDate = ctx.payload?.dueDate || metadata.dueDate || (metadata.scheduledAt ? metadata.scheduledAt.split("T")[0] : "N/A");
+    const dueTime = ctx.payload?.dueTime || metadata.dueTime || "";
+    const itemSpecs = ctx.payload?.itemSpecs || metadata.itemSpecs || "";
+    const inscription = ctx.payload?.inscription || metadata.inscription || "";
+    const customizationNotes = ctx.payload?.customizationNotes || metadata.customizationNotes || ctx.payload?.notes || "";
+
+    const currency = ctx.payload?.currency || ctx.payload?.currencyCode || "USD";
+    const totalAmount = ctx.payload?.finalTotal ?? ctx.payload?.totalAmount ?? 0;
+    const depositAmount = ctx.payload?.depositAmount ?? metadata.depositAmount ?? ctx.payload?.totalPaid ?? 0;
+    const remainingBalance = ctx.payload?.remainingBalance ?? metadata.remainingBalance ?? Math.max(0, Number(totalAmount) - Number(depositAmount));
+
+    this.logger.log(`[PreorderNotification] Processing preorder ${transactionNumber} (ID: ${transactionId}) for ${customerName}`);
+
+    const reportMsg =
+      `📌 **New Pre-Order Notification**\n\n` +
+      `• **Order Number:** **${transactionNumber}**\n` +
+      `• **Customer:** **${customerName}**${customerPhone ? ` (${customerPhone})` : ""}\n` +
+      `• **Scheduled Completion:** **${dueDate}${dueTime ? ` at ${dueTime}` : ""}**\n` +
+      `• **Deposit Paid:** **${currency} ${depositAmount}**\n` +
+      `• **Remaining Balance:** **${currency} ${remainingBalance}**`;
+
+    const actions: ScrymeChatAction[] = [
+      {
+        id: `view_txn_${transactionId}`,
+        label: "🔍 View Transaction",
+        type: "button",
+        style: "primary",
+        value: JSON.stringify({ action: "view_transaction", transactionId, number: transactionNumber }),
+      },
+      {
+        id: `update_status_${transactionId}`,
+        label: "⚡ Update Preorder Status",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "update_status", transactionId }),
+      },
+      {
+        id: `contact_cust_${transactionId}`,
+        label: "📞 Contact Customer",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "contact_customer", transactionId, phone: customerPhone, email: customerEmail }),
+      },
+    ];
+
+    const preorderReport = createReportMessage({
+      title: `Pre-Order Received: ${transactionNumber}`,
+      reportId: `preorder_${transactionId}_${Date.now()}`,
+      summary: `A new custom pre-order has been submitted for ${customerName}. Scheduled for completion on ${dueDate}${dueTime ? ` at ${dueTime}` : ""}.`,
+      metrics: [
+        { label: "Order Number", value: transactionNumber },
+        { label: "Customer Name", value: customerName },
+        { label: "Completion Schedule", value: `${dueDate}${dueTime ? ` at ${dueTime}` : ""}` },
+        { label: "Deposit Paid", value: `${currency} ${depositAmount}` },
+        { label: "Remaining Balance", value: `${currency} ${remainingBalance}` },
+        { label: "Specifications", value: itemSpecs || "Standard Custom" },
+        { label: "Custom Notes", value: customizationNotes || "None" },
+      ],
+      theme: { accentColor: "#f59e0b", borderColor: "#fef3c7", backgroundColor: "#fffbeb" },
+    });
+
+    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "preorder_alerts", reportMsg, {
+      actions,
+      customMessage: preorderReport,
+      metadata: {
+        transactionId,
+        transactionNumber,
+        depositAmount,
+        remainingBalance,
+        alertType: "PREORDER_NOTIFICATION",
+      },
+    });
+
+    let emailSent = false;
+    if (notificationEmail) {
+      const emailHtml = `
+        <h2>New Pre-Order Notification</h2>
+        <p>A new custom pre-order (<strong>${transactionNumber}</strong>) has been recorded.</p>
+        <ul>
+          <li><strong>Customer:</strong> ${customerName}</li>
+          <li><strong>Completion Schedule:</strong> ${dueDate} ${dueTime}</li>
+          <li><strong>Deposit Paid:</strong> ${currency} ${depositAmount}</li>
+          <li><strong>Remaining Balance:</strong> ${currency} ${remainingBalance}</li>
+          ${itemSpecs ? `<li><strong>Specifications:</strong> ${itemSpecs}</li>` : ""}
+          ${inscription ? `<li><strong>Inscription:</strong> ${inscription}</li>` : ""}
+          ${customizationNotes ? `<li><strong>Notes:</strong> ${customizationNotes}</li>` : ""}
+        </ul>
+      `;
+      emailSent = await this.dispatchWorkflowEmail(
+        notificationEmail,
+        `📌 New Pre-Order Received: ${transactionNumber}`,
+        emailHtml,
+        `New Pre-Order Received: ${transactionNumber}\nCustomer: ${customerName}\nDue Date: ${dueDate} ${dueTime}`,
+      );
+    }
+
+    return {
+      success: true,
+      scrymeNotificationSent: scrymeSent,
+      emailSent,
+      details: {
+        transactionId,
+        transactionNumber,
+        customerName,
+        dueDate,
+        dueTime,
+        depositAmount,
+        remainingBalance,
+        processedAt: new Date().toISOString(),
+      },
+    };
   }
 
   private async handleLowStockAlert(ctx: WorkflowJobHandlerContext) {
