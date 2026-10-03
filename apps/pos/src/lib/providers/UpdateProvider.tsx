@@ -192,7 +192,11 @@ export const UpdaterProvider = ({
         // Clear any snooze/skip state now that we've installed
         clearSnooze();
         setStatus('DONE');
-        setIsModalOpen(true);
+        if (enableAutoUpdate) {
+          await triggerRelaunch();
+        } else {
+          setIsModalOpen(true);
+        }
       } catch (e: any) {
         setError(e.message ?? 'Failed to update');
         setStatus('ERROR');
