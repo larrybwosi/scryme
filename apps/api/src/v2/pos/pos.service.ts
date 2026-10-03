@@ -469,24 +469,6 @@ export class PosService {
     };
   }
 
-  async ablyAuth(ctx: V2ApiContext) {
-    if (!ctx.memberId || !ctx.organizationId)
-      throw new UnauthorizedException("Missing context");
-
-    const { organizationId, memberId } = ctx;
-    const paymentChannel = `organization:${organizationId}:payments`;
-
-    const tokenRequest = {
-      token: "socketio-placeholder-token",
-      clientId: memberId,
-    };
-
-    return {
-      tokenRequest,
-      provider: "socketio",
-      metadata: { organizationId, paymentChannel },
-    };
-  }
 
   async getInventory(ctx: V2ApiContext, query: any) {
     return this.inventoryService.getInventory(ctx, query);

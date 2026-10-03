@@ -62,7 +62,12 @@ const TRANSACTIONS_CACHE_KEY_PREFIX = 'scryme_cached_transactions_';
 const fetchTransactions = async (locationId?: string): Promise<Transaction[]> => {
   const cacheKey = `${TRANSACTIONS_CACHE_KEY_PREFIX}${locationId || 'default'}`;
   try {
-    const data = await invoke<Transaction[]>('get_sales_history_command', { locationId });
+    const rawData = await invoke<any>('get_sales_history_command', { locationId });
+    const data: Transaction[] = Array.isArray(rawData)
+      ? rawData
+      : rawData?.data && Array.isArray(rawData.data)
+      ? rawData.data
+      : [];
     if (Array.isArray(data) && data.length > 0) {
       try {
         localStorage.setItem(cacheKey, JSON.stringify(data));

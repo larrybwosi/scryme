@@ -125,7 +125,7 @@ const serverSchema = z.object({
   ),
 
   // Realtime Configuration
-  REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
+  REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("socketio"),
   ABLY_API_KEY: z.string().optional(),
   SOCKET_URL: z.preprocess(
     sanitizeUrl,
@@ -186,7 +186,7 @@ const clientSchema = z.object({
   NEXT_PUBLIC_COOKIE_DOMAIN: z.string().optional(),
 
   // Realtime Configuration
-  NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("ably"),
+  NEXT_PUBLIC_REALTIME_PROVIDER: z.enum(["ably", "socketio"]).default("socketio"),
   NEXT_PUBLIC_SOCKET_URL: z.preprocess(
     sanitizeUrl,
     z.url().default("http://localhost:3002"),

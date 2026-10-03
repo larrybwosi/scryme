@@ -487,7 +487,6 @@ pub fn run() {
             #[cfg(not(feature = "standalone"))]
             auth_store::get_locations_command,
             #[cfg(not(feature = "standalone"))]
-            auth_store::get_ably_auth_token_command,
             #[cfg(all(not(feature = "standalone"), feature = "restaurant"))]
             auth_store::start_device_setup_command,
             

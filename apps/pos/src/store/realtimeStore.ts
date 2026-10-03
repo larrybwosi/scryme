@@ -1,23 +1,8 @@
-import { createWithEqualityFn as create } from 'zustand/traditional';
-import { z } from 'zod';
-import { invoke } from '@tauri-apps/api/core';
+import { create } from 'zustand';
 import type { Socket } from 'socket.io-client';
+import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from './pos-auth-store';
-import { getApiEndpoint } from '@/lib/api-config';
-
-const RealtimeConfigSchema = z.object({
-  data: z.object({
-    tokenRequest: z
-      .object({
-        token: z.string(),
-      })
-      .loose(),
-    metadata: z.object({
-      paymentChannel: z.string().optional(),
-      organizationId: z.string().optional(),
-    }),
-  }),
-});
+import { getApiEndpoint } from '../lib/api-config';
 
 type RealtimeConnectionState = 'idle' | 'connecting' | 'connected' | 'disconnected' | 'suspended' | 'failed' | 'closed';
 
@@ -94,6 +79,11 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
       .replace(/\/+$/, '')
       .replace(/\/(api|v3)+$/g, '');
 
+    const currentAuth = useAuthStore.getState();
+    const memberToken = (currentAuth.currentMember as any)?.token || (currentAuth as any).memberToken || (currentAuth as any).sessionToken;
+    const apiKey = currentAuth.deviceConfig?.apiKey;
+    const finalToken = memberToken || apiKey || 'socket-io-realtime';
+
     const initSocket = async () => {
       const { io } = await import('socket.io-client');
       const socket = io(`${cleanSocketBaseUrl}/v3`, {
@@ -104,6 +94,13 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         reconnectionDelay: 1000,
         reconnectionDelayMax: 5000,
         timeout: 20000,
+        auth: {
+          token: finalToken,
+        },
+        extraHeaders: {
+          Authorization: `Bearer ${finalToken}`,
+          'x-member-token': finalToken,
+        },
       });
 
       socket.on('connect', () => {
@@ -153,75 +150,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
         window.dispatchEvent(new CustomEvent('realtime-connection-change', { detail: { state: 'failed', reason: error } }));
       });
 
-      const fetchToken = async () => {
-          let tokenToUse: string | null = null;
-          const currentAuth = useAuthStore.getState();
-          const orgSlug = currentAuth.deviceConfig?.orgSlug;
-          const memberToken = (currentAuth.currentMember as any)?.token || (currentAuth as any).memberToken || (currentAuth as any).sessionToken;
-
-          try {
-              const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });
-              try {
-                const parsed = RealtimeConfigSchema.parse(response);
-                if (parsed.data?.metadata?.paymentChannel) {
-                  set({ paymentChannel: parsed.data.metadata.paymentChannel });
-                }
-                if (parsed.data?.tokenRequest?.token) {
-                  tokenToUse = parsed.data.tokenRequest.token;
-                }
-              } catch (parseErr) {
-                if (typeof response === 'object' && response !== null) {
-                  const respAny = response as any;
-                  tokenToUse = respAny?.data?.tokenRequest?.token || respAny?.token || respAny?.accessToken || null;
-                }
-              }
-          } catch (error) {
-              // Tauri invoke failed or non-Tauri browser environment
-              if (configuredApiUrl) {
-                try {
-                  const cleanApiUrl = configuredApiUrl.replace(/\/+$/, '');
-                  const url = orgSlug
-                    ? `${cleanApiUrl}/api/v3/${orgSlug}/pos/ably-auth`
-                    : `${cleanApiUrl}/api/v3/pos/ably-auth`;
-                  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-                  if (memberToken) {
-                    headers['x-member-token'] = memberToken;
-                    headers['Authorization'] = `Bearer ${memberToken}`;
-                  }
-                  const res = await fetch(url, {
-                    method: 'POST',
-                    headers,
-                  });
-                  if (res.ok) {
-                    const json = await res.json();
-                    if (json?.data?.metadata?.paymentChannel) {
-                      set({ paymentChannel: json.data.metadata.paymentChannel });
-                    }
-                    const tokenCandidate = json?.data?.tokenRequest?.token || json?.token;
-                    if (tokenCandidate && tokenCandidate !== 'socket-io-realtime') {
-                      tokenToUse = tokenCandidate;
-                    }
-                  }
-                } catch (fetchErr) {
-                  console.warn('[Realtime] Web fetch token error:', fetchErr);
-                }
-              }
-          }
-
-          const finalToken = tokenToUse || memberToken || 'socket-io-realtime';
-
-          socket.auth = { token: finalToken };
-          if (socket.io?.opts) {
-            socket.io.opts.extraHeaders = {
-              ...socket.io.opts.extraHeaders,
-              Authorization: `Bearer ${finalToken}`,
-              "x-member-token": memberToken || finalToken,
-            };
-          }
-          socket.connect();
-      };
-
-      fetchToken();
+      socket.connect();
       set({ socketClient: socket });
     };
 

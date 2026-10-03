@@ -297,13 +297,27 @@ export default function PricingViewPage() {
   const fetchData = async () => {
     setLoading(true);
     try {
-      const pricingData = await invoke<PosPricingData>('get_pos_pricing_command');
+      let pricingData = await invoke<PosPricingData>('get_pos_pricing_command');
+
+      if (!pricingData || !pricingData.lists || pricingData.lists.length === 0) {
+        try {
+          await triggerSync();
+          pricingData = await invoke<PosPricingData>('get_pos_pricing_command');
+        } catch (syncErr) {
+          console.warn('Initial pricing sync failed:', syncErr);
+        }
+      }
+
       setData(pricingData);
 
       const variantIds = new Set<string>();
-      pricingData.items.forEach(i => variantIds.add(i.variantId));
+      if (pricingData && pricingData.items) {
+        pricingData.items.forEach(i => variantIds.add(i.variantId));
+      }
       const customerIds = new Set<string>();
-      Object.keys(pricingData.allocations).forEach(id => customerIds.add(id));
+      if (pricingData && pricingData.allocations) {
+        Object.keys(pricingData.allocations).forEach(id => customerIds.add(id));
+      }
 
       const [fetchedProducts, fetchedCustomers] = await Promise.all([
         invoke<PosProduct[]>('get_products_by_ids_command', { ids: Array.from(variantIds) }),
