@@ -884,46 +884,6 @@ pub async fn get_locations_command(
     Ok(data)
 }
 
-#[tauri::command]
-pub async fn get_ably_auth_token_command(
-    state: State<'_, AuthState>,
-    params: Option<serde_json::Value>,
-) -> Result<serde_json::Value, String> {
-    let mut request =
-        match state.build_request(reqwest::Method::POST, crate::api_config::routes::ABLY_AUTH) {
-            Ok(req) => req,
-            Err(e) => {
-                println!("[AuthStore] Failed to build request: {}", e);
-                return Err(e);
-            }
-        };
-
-    // If params are provided, send them in body
-    if let Some(p) = params {
-        request = request.json(&serde_json::json!({ "params": p }));
-    } else {
-        // Ensure we send an empty JSON object if server expects JSON
-        request = request.json(&serde_json::json!({}));
-    }
-
-    let res = request.send().await.map_err(|e| {
-        println!("[AuthStore] Network request failed: {}", e);
-        format!("Network error: {}", e)
-    })?;
-
-    let status = res.status();
-
-    if !status.is_success() {
-        let err_body = res.text().await.unwrap_or_default();
-        return Err(format!("Ably auth failed: {} - {}", status, err_body));
-    }
-
-    let data: serde_json::Value = res
-        .json()
-        .await
-        .map_err(|e| format!("Invalid JSON: {}", e))?;
-    Ok(data)
-}
 
 #[tauri::command]
 pub async fn update_base_url(state: State<'_, AuthState>, base_url: String) -> Result<(), String> {

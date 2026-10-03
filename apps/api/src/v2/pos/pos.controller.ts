@@ -147,12 +147,6 @@ export class PosController {
     return this.posService.scanTransaction(ctx, code);
   }
 
-  @Post("ably-auth")
-  @Permissions("pos:auth")
-  @ApiOperation({ summary: "Ably realtime auth" })
-  async ablyAuth(@v2Context() ctx: V2ApiContext) {
-    return this.posService.ablyAuth(ctx);
-  }
 
   @Get("inventory")
   @Permissions("pos:product:read")
