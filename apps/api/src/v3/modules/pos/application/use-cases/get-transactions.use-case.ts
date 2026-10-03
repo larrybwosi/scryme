@@ -116,7 +116,13 @@ export class GetTransactionsUseCase {
         date: t.createdAt ? new Date(t.createdAt).toISOString() : new Date().toISOString(),
         status: txStatus,
         fulfillmentId: t.fulfillments?.[0]?.id || null,
-        invoiceLink: getDocumentUrl("invoice", t.id, ctx.organizationId),
+        invoiceLink: (() => {
+          try {
+            return getDocumentUrl("invoice", t.id, ctx.organizationId);
+          } catch {
+            return `/api/v2/public/documents/invoice/${t.id}`;
+          }
+        })(),
         items: (t.items || []).map((i: any) => ({
           id: i.id,
           productId: i.variant?.productId || i.variantId,
