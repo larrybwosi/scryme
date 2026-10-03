@@ -114,7 +114,6 @@ export class V3RealtimeGateway
               OR: [
                 { clientId },
                 { id: clientId },
-                { apiKey: apiKeyStr },
               ],
             },
             include: { organization: true },
