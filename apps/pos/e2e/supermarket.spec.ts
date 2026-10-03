@@ -77,6 +77,7 @@ test.describe('Supermarket POS Flow', () => {
           };
         }
 
+        if (cmd.includes('get_ably_auth_token')) return { data: { tokenRequest: { token: 'mock-jwt-token' }, metadata: { paymentChannel: 'mock-payment-channel' } } };
         if (cmd.includes('resolve_price_batch')) return [100];
         if (cmd.includes('get_tables')) return [];
         if (cmd.includes('get_local_ip')) return '127.0.0.1';
@@ -164,6 +165,7 @@ test.describe('Supermarket POS Flow', () => {
               this.close = () => {};
           }
       };
+      localStorage.setItem('ably-disabled', 'true');
     });
 
     // 2. Inject state

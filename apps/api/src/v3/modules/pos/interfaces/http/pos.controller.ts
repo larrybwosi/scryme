@@ -247,6 +247,80 @@ export class PosController {
     return this.getTransactionsUseCase.execute(ctx, query);
   }
 
+  @AllowPublic()
+  @Post("ably-auth")
+  @ApiOperation({
+    summary: "Get token for realtime communication",
+    operationId: "POS_AblyAuth",
+  })
+  @ApiResponse({ status: 200, description: "Realtime Auth token" })
+  async ablyAuthPublic(@Req() req: any) {
+    const authHeader =
+      req.headers["x-member-token"] ||
+      req.headers["authorization"] ||
+      req.headers["x-api-key"] ||
+      req.headers["x-device-key"];
+    if (authHeader) {
+      const rawToken = Array.isArray(authHeader) ? authHeader[0] : authHeader;
+      const cleanToken = rawToken.startsWith("Bearer ") ? rawToken.split(" ")[1] : rawToken;
+      if (cleanToken) {
+        try {
+          const verified = await this.authCore.verifyToken(cleanToken);
+          if (verified) {
+            return {
+              data: {
+                tokenRequest: { token: cleanToken },
+                metadata: {
+                  paymentChannel: `organization:${verified.organizationId}:payments`,
+                  inventoryChannel: `organization:${verified.organizationId}:inventory`,
+                  pricingChannel: `organization:${verified.organizationId}:pricing`,
+                  customersChannel: `organization:${verified.organizationId}:customers`,
+                  ordersChannel: `organization:${verified.organizationId}:orders`,
+                  organizationId: verified.organizationId,
+                  memberId: verified.memberId,
+                },
+              },
+            };
+          }
+        } catch {
+          try {
+            const clientObj = await this.authCore.validateClient(cleanToken);
+            if (clientObj) {
+              return {
+                data: {
+                  tokenRequest: { token: cleanToken },
+                  metadata: {
+                    paymentChannel: `organization:${clientObj.organizationId}:payments`,
+                    inventoryChannel: `organization:${clientObj.organizationId}:inventory`,
+                    pricingChannel: `organization:${clientObj.organizationId}:pricing`,
+                    customersChannel: `organization:${clientObj.organizationId}:customers`,
+                    ordersChannel: `organization:${clientObj.organizationId}:orders`,
+                    organizationId: clientObj.organizationId,
+                  },
+                },
+              };
+            }
+          } catch {
+            // Token parsing fallback
+          }
+          return {
+            data: {
+              tokenRequest: { token: cleanToken },
+              metadata: { paymentChannel: "public" },
+            },
+          };
+        }
+      }
+    }
+
+    return {
+      data: {
+        tokenRequest: { token: "socket-io-realtime" },
+        metadata: { paymentChannel: "public" },
+      },
+    };
+  }
+
   @Get("sale/:id")
   @UseGuards(V3AuthGuard, MultiTenancyGuard)
   @ApiBearerAuth()
@@ -360,6 +434,18 @@ export class PosController {
     @Body("code") code: string,
   ) {
     return this.posService.scanTransaction(ctx as any, code);
+  }
+
+  @Post("ably-auth/context")
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Realtime messaging token/auth for POS websocket channel",
+    operationId: "POS_AblyAuthContext",
+  })
+  @ApiResponse({ status: 200, description: "Realtime token details" })
+  async ablyAuthContext(@v3Context() ctx: V3ApiContext) {
+    return this.posService.ablyAuth(ctx as any);
   }
 
   @Get("inventory")
