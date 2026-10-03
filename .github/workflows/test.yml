@@ -18,6 +18,7 @@ jobs:
       pos_rust: ${{ steps.changes.outputs.pos_rust }}
       bakery: ${{ steps.changes.outputs.bakery }}
       bakery_rust: ${{ steps.changes.outputs.bakery_rust }}
+      android: ${{ steps.changes.outputs.android }}
       api: ${{ steps.changes.outputs.api }}
       crm: ${{ steps.changes.outputs.crm }}
       web: ${{ steps.changes.outputs.web }}
@@ -50,6 +51,8 @@ jobs:
               - 'apps/bakery/**'
             bakery_rust:
               - 'apps/bakery/src-tauri/**'
+            android:
+              - 'apps/android/**'
             api:
               - 'apps/api/**'
             crm:
@@ -102,6 +105,7 @@ jobs:
         run: |
           if [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
              [ "${{ needs.filter.outputs.bakery }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.android }}" == "true" ] || \
              [ "${{ needs.filter.outputs.api }}" == "true" ] || \
              [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
              [ "${{ needs.filter.outputs.web }}" == "true" ] || \
@@ -114,6 +118,37 @@ jobs:
           else
             echo "needed=false" >> $GITHUB_OUTPUT
           fi
+
+  android-ci:
+    needs: filter
+    if: |
+      needs.filter.outputs.android == 'true' ||
+      needs.filter.outputs.workflow == 'true' ||
+      needs.filter.outputs.test_workflow == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: apps/android
+
+      - name: Run Android Lint & Unit Tests
+        run: ./gradlew lintDebug testDebugUnitTest
+        working-directory: apps/android
+
+      - name: Build Debug APK
+        run: ./gradlew assembleDebug
+        working-directory: apps/android
 
   api-ci:
     needs: [filter]
