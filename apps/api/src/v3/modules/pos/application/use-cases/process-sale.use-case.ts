@@ -114,8 +114,9 @@ export class ProcessSaleUseCase {
         const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
 
-        const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
+        const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true || dto.type === "SALES_ORDER";
         const txnStatus = isPreorder ? "PREORDER" : (dto.status || "COMPLETED");
+        const txnType = dto.type || (isPreorder ? "SALES_ORDER" : "POS_SALE");
         const totalPaidAmount = paymentsList.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
         const paymentStatus = totalPaidAmount >= total
           ? "PAID"
@@ -128,7 +129,7 @@ export class ProcessSaleUseCase {
         const t = await tx.transaction.create({
           data: {
             number: `V3-POS-${Date.now()}`,
-            type: "POS_SALE",
+            type: txnType as any,
             status: txnStatus as any,
             paymentStatus: paymentStatus as any,
             totalPaid: totalPaidAmount,
@@ -302,17 +303,21 @@ export class ProcessSaleUseCase {
       if (c) return c.id;
     }
 
-    const customerName = name && name.trim() ? name.trim() : "POS Customer";
-    const nc = await tx.customer.create({
-      data: {
-        organizationId: orgId,
-        phone: phone && phone.trim() ? phone.trim() : undefined,
-        email: email && email.trim() ? email.trim() : undefined,
-        name: customerName,
-      },
-      select: { id: true },
-    });
-    return nc.id;
+    if (saveAsCustomer === true || (saveAsCustomer !== false && (phone || email || name))) {
+      const customerName = name && name.trim() ? name.trim() : "POS Customer";
+      const nc = await tx.customer.create({
+        data: {
+          organizationId: orgId,
+          phone: phone && phone.trim() ? phone.trim() : undefined,
+          email: email && email.trim() ? email.trim() : undefined,
+          name: customerName,
+        },
+        select: { id: true },
+      });
+      return nc.id;
+    }
+
+    return undefined;
   }
 
   private async vDisc(

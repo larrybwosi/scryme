@@ -591,6 +591,13 @@ const PaymentModal = ({
       }
     }
 
+    const { customerName: curCustName, customerPhone: curCustPhone } = usePosStore.getState().currentOrder;
+    const isCustomOrder = Boolean(metadata?.isCustomOrder);
+    const custName = customer?.name || curCustName || undefined;
+    const custPhone = customer?.phone || curCustPhone || undefined;
+    const custEmail = customer?.email || metadata?.customerEmail || undefined;
+    const saveAsCust = metadata?.saveAsCustomer ?? (customer ? false : true);
+
     return {
       cartItems: cartItems.map(item => ({
         productId: item.productId || '',
@@ -606,7 +613,14 @@ const PaymentModal = ({
       saleNumber: fullSaleNumber,
       accountRef: paybillAccountNo,
       isWholesale: false,
-      customerId: customer?.id && customer.id !== 'temp-id' ? customer.id : null,
+      customerId: customer?.id && customer.id !== 'temp-id' && customer.id !== 'temp-custom-customer' && !customer.id.startsWith('temp-') ? customer.id : null,
+      customerName: custName,
+      customerPhone: custPhone,
+      customerEmail: custEmail,
+      saveAsCustomer: saveAsCust,
+      type: isCustomOrder ? 'SALES_ORDER' : 'POS_SALE',
+      status: isCustomOrder ? 'PREORDER' : 'COMPLETED',
+      metadata,
       enableStockTracking: true,
       notes: finalNotes,
       discountAmount: editableDiscount,

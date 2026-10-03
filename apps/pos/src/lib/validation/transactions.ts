@@ -168,6 +168,7 @@ export const ProcessSaleInputSchema = z
     customerEmail: z.string().optional().nullable(),
     saveAsCustomer: z.boolean().optional().nullable(),
     status: z.string().optional().nullable(),
+    type: z.string().optional().nullable(),
     metadata: z.record(z.string(), z.any()).optional().nullable(),
     cashierName: z.string().optional().nullable(),
     accountRef: z.string().optional().nullable(),
