@@ -758,8 +758,6 @@ pub async fn get_sales_history_command(
 
     if let Some(arr) = target.as_array() {
         Ok(arr.clone())
-    } else if let Some(data_arr) = target.get("data").and_then(|d| d.as_array()) {
-        Ok(data_arr.clone())
     } else if let Some(arr) = raw_val.as_array() {
         Ok(arr.clone())
     } else {
@@ -780,19 +778,19 @@ pub async fn record_payment_command(
     let url_path = crate::api_config::routes::SALE_PAYMENTS.to_string();
     let request = auth_state.build_request(reqwest::Method::POST, &url_path)?;
 
-    let mut form = reqwest::multipart::Form::new()
-        .text("transactionId", transaction_id)
-        .text("amount", amount.to_string())
-        .text("method", method);
+    let res = if let Some(path) = file_path {
+        let mut form = reqwest::multipart::Form::new()
+            .text("transactionId", transaction_id)
+            .text("amount", amount.to_string())
+            .text("method", method);
 
-    if let Some(r) = reference {
-        form = form.text("reference", r);
-    }
-    if let Some(n) = notes {
-        form = form.text("notes", n);
-    }
+        if let Some(r) = reference {
+            form = form.text("reference", r);
+        }
+        if let Some(n) = notes {
+            form = form.text("notes", n);
+        }
 
-    if let Some(path) = file_path {
         match tokio::fs::read(&path).await {
             Ok(file_bytes) => {
                 let file_name = std::path::Path::new(&path)
@@ -810,9 +808,20 @@ pub async fn record_payment_command(
             }
             Err(e) => return Err(format!("Failed to read file at {}: {}", path, e)),
         }
-    }
 
-    let res = request.multipart(form).send().await.map_err(|e| e.to_string())?;
+        request.multipart(form).send().await.map_err(|e| e.to_string())?
+    } else {
+        let payload = serde_json::json!({
+            "transactionId": transaction_id,
+            "amount": amount,
+            "method": method,
+            "referenceNumber": reference.clone().or_else(|| notes.clone()),
+            "reference": reference,
+            "notes": notes,
+        });
+
+        request.json(&payload).send().await.map_err(|e| e.to_string())?
+    };
 
     let status = res.status();
     if !status.is_success() {

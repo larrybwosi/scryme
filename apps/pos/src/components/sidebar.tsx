@@ -250,6 +250,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             {[
               ...(import.meta.env.MODE !== 'standalone'
                 ? [
+                    { id: 'pending-transactions', label: 'Pending', icon: Clock, route: '/pending-transactions' },
                     { id: 'create-order', label: 'Create Order', icon: Plus, route: '/create-order' },
                     { id: 'cash-drawer', label: 'Cash Drawer', icon: Wallet, route: '/cash-drawer' },
                   ]

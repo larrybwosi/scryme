@@ -122,6 +122,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
           return Array.from(new Uint8Array([37, 80, 68, 70, 45, 49, 46, 52]));
         }
 
+        if (cmd.includes('get_ably_auth_token')) return { data: { tokenRequest: { token: 'mock-jwt-token' }, metadata: { paymentChannel: 'mock-payment-channel' } } };
         if (cmd.includes('get_pos_pricing')) return [];
         if (cmd.includes('resolve_price_batch')) return {};
         if (cmd.includes('get_app_version') || cmd.includes('app|version')) return '3.3.0';
@@ -194,6 +195,7 @@ test.describe('Order Creation and Invoice Download Flow', () => {
               this.close = () => {};
           }
       };
+      localStorage.setItem('ably-disabled', 'true');
     });
 
     // 2. Inject state
