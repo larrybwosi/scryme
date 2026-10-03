@@ -1,3 +1,4 @@
+import { AndroidModule } from "./modules/android/android.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { B2BModule } from "./modules/b2b/b2b.module";
@@ -55,6 +56,7 @@ export const V3_SUB_MODULES = [
   ProductionModule,
   DeliveriesModule,
   TasksModule,
+  AndroidModule,
 ];
 
 @Module({
