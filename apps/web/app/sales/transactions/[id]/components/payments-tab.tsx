@@ -1,3 +1,4 @@
+import { PaymentProgress } from "./payment-progress";
 "use client";
 
 import React from "react";
@@ -25,10 +26,11 @@ export function PaymentsTab({
   // Allow payments for anything except instant POS_SALE payments which are completed or quotes if they aren't finalized.
   // Actually, the user says "make the page capable of other operations such as the delivery options and payments for the correct transaction type."
   // POS_SALE is over-the-counter and instantly completed, so no "Record payment" button is shown.
-  const canRecordPayment = transaction.type !== "POS_SALE" && transaction.paymentStatus !== "PAID";
+  const canRecordPayment = transaction.paymentStatus !== "PAID";
 
   return (
     <div className="space-y-4 rounded-none">
+      <PaymentProgress transaction={transaction} formatCurrency={formatCurrency} onRecordPaymentClick={onRecordPaymentClick} />
       <div className="flex items-center justify-between border-b border-border pb-3 rounded-none">
         <h3 className="text-sm font-bold text-foreground uppercase tracking-wider flex items-center gap-2">
           <CreditCard className="w-4 h-4 text-muted-foreground" />

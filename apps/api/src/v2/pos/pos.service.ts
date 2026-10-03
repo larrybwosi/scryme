@@ -958,7 +958,11 @@ export class PosService {
     if (totalPaid.gte(transaction.finalTotal)) {
       await this.prisma.client.transaction.update({
         where: { id: transactionId },
-        data: { paymentStatus: "PAID" },
+        data: {
+          paymentStatus: "PAID",
+          totalPaid,
+          status: transaction.status === "PREORDER" ? "COMPLETED" : transaction.status,
+        },
       });
     } else if (totalPaid.gt(0)) {
       await this.prisma.client.transaction.update({
