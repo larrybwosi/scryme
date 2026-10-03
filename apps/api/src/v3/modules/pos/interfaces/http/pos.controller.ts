@@ -387,10 +387,11 @@ export class PosController {
     @v3Context() ctx: V3ApiContext,
     @Body() body: PosRecordPaymentDto | any,
   ) {
-    if (body.transactionId && body.amount && body.method && !body.saleId) {
-      body.saleId = body.transactionId;
+    const payload = body || {};
+    if (payload.transactionId && payload.amount && payload.method && !payload.saleId) {
+      payload.saleId = payload.transactionId;
     }
-    return this.posService.recordPayment(ctx as any, body);
+    return this.posService.recordPayment(ctx as any, payload);
   }
 
   @Get("incoming")

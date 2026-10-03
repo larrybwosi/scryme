@@ -445,18 +445,30 @@ export async function addPayment(
       chequeDate: data.chequeDate,
       bankName: data.bankName,
       status: "COMPLETED",
-      attachments: data.attachments
+      attachments: data.attachments?.length
         ? {
-            create: data.attachments.map(att => ({
-              id: att.id,
-              fileName: att.fileName,
-              fileUrl: att.fileUrl,
-              mimeType: att.mimeType,
-              sizeBytes: att.sizeBytes,
-              isPublic: true,
-              organizationId: auth.organizationId!,
-              memberId: auth.memberId!,
-            })),
+            ...(data.attachments.some(att => att.id)
+              ? {
+                  connect: data.attachments
+                    .filter(att => att.id)
+                    .map(att => ({ id: att.id })),
+                }
+              : {}),
+            ...(data.attachments.some(att => !att.id)
+              ? {
+                  create: data.attachments
+                    .filter(att => !att.id)
+                    .map(att => ({
+                      fileName: att.fileName,
+                      fileUrl: att.fileUrl,
+                      mimeType: att.mimeType,
+                      sizeBytes: att.sizeBytes,
+                      isPublic: true,
+                      organizationId: auth.organizationId!,
+                      memberId: auth.memberId!,
+                    })),
+                }
+              : {}),
           }
         : undefined,
     },
@@ -969,20 +981,32 @@ export async function reconcileFulfillment(
         deliveryNotes: data.notes,
         status: "DELIVERED", // Mark as delivered once OTP is verified
         deliveredAt: new Date(),
-        attachments: data.attachments
+        attachments: data.attachments?.length
           ? {
-              create: data.attachments.map(att => ({
-                id: att.id,
-                fileName: att.fileName,
-                fileUrl: att.fileUrl,
-                mimeType: att.mimeType,
-                sizeBytes: att.sizeBytes,
-                description: att.description,
-                isPublic: true,
-                organizationId: auth.organizationId!,
-                memberId: auth.memberId!,
-                transactionId: fulfillment.transactionId,
-              })),
+              ...(data.attachments.some(att => att.id)
+                ? {
+                    connect: data.attachments
+                      .filter(att => att.id)
+                      .map(att => ({ id: att.id })),
+                  }
+                : {}),
+              ...(data.attachments.some(att => !att.id)
+                ? {
+                    create: data.attachments
+                      .filter(att => !att.id)
+                      .map(att => ({
+                        fileName: att.fileName,
+                        fileUrl: att.fileUrl,
+                        mimeType: att.mimeType,
+                        sizeBytes: att.sizeBytes,
+                        description: att.description,
+                        isPublic: true,
+                        organizationId: auth.organizationId!,
+                        memberId: auth.memberId!,
+                        transactionId: fulfillment.transactionId,
+                      })),
+                  }
+                : {}),
             }
           : undefined,
       },
