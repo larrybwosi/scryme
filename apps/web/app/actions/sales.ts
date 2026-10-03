@@ -46,6 +46,7 @@ export async function getTransactions(params: {
   type?: TransactionType | "all";
   status?: TransactionStatus | "all";
   paymentStatus?: PaymentStatus | "all";
+  paymentMethod?: PaymentMethod | "all";
   locationId?: string;
   startDate?: Date;
   endDate?: Date;
@@ -80,6 +81,14 @@ export async function getTransactions(params: {
 
   if (params.paymentStatus && params.paymentStatus !== "all") {
     where.paymentStatus = params.paymentStatus;
+  }
+
+  if (params.paymentMethod && params.paymentMethod !== "all") {
+    where.payments = {
+      some: {
+        method: params.paymentMethod as PaymentMethod,
+      },
+    };
   }
 
   if (params.locationId && params.locationId !== "all") {
@@ -231,6 +240,9 @@ export async function getTransactionById(id: string) {
       payments: {
         include: {
           attachments: true,
+        },
+        orderBy: {
+          createdAt: "desc",
         },
       },
       fulfillments: {
