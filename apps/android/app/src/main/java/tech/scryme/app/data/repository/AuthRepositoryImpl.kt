@@ -30,11 +30,14 @@ class AuthRepositoryImpl @Inject constructor(
 
             if (response.isSuccessful && response.body()?.success == true) {
                 val data = response.body()?.data ?: return Result.failure(Exception("Empty response data"))
+                val token = data.effectiveToken
+                val memberId = data.effectiveMemberId
                 sessionManager.saveSession(
-                    accessToken = data.accessToken,
-                    orgSlug = data.organizationId.ifEmpty { orgSlug },
+                    accessToken = token,
+                    memberToken = token,
+                    orgSlug = data.organizationId?.ifEmpty { orgSlug } ?: orgSlug,
                     locationId = data.locationId,
-                    memberId = data.memberId
+                    memberId = memberId
                 )
                 Result.success(Unit)
             } else {

@@ -458,6 +458,13 @@ jobs:
         with:
           ref: ${{ github.ref_name }}
 
+      - name: Download Android Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-builds
+          path: android-release-builds
+          continue-on-error: true
+
       - name: Create Git Tag and Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -483,4 +490,16 @@ jobs:
               PRERELEASE_FLAG="--prerelease"
             fi
             gh release create "$TAG_NAME" --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG || true
+          fi
+
+          APK_PATH=$(find android-release-builds -name "*.apk" 2>/dev/null | head -n 1)
+          AAB_PATH=$(find android-release-builds -name "*.aab" 2>/dev/null | head -n 1)
+
+          if [ -n "$APK_PATH" ]; then
+            echo "Uploading Android APK $APK_PATH to release $TAG_NAME..."
+            gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || true
+          fi
+          if [ -n "$AAB_PATH" ]; then
+            echo "Uploading Android AAB $AAB_PATH to release $TAG_NAME..."
+            gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || true
           fi
