@@ -45,6 +45,7 @@ class ScheduleViewModelTest {
 
         coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(shifts)
+        coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(shifts)
         coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(trades)
 
         viewModel.loadSchedule()
@@ -52,7 +53,7 @@ class ScheduleViewModelTest {
 
         assertTrue(viewModel.uiState.value is ScheduleUiState.Success)
         val state = viewModel.uiState.value as ScheduleUiState.Success
-        assertEquals(1, state.shifts.size)
+        assertEquals(1, state.myShifts.size)
         assertEquals(1, state.trades.size)
     }
 
@@ -63,6 +64,7 @@ class ScheduleViewModelTest {
         coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.requestShiftTrade("scryme-org", "s1", null, "Personal reason") } returns Result.success(trade)
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(emptyList())
         coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(listOf(trade))
 
         viewModel.requestShiftTrade("s1", null, "Personal reason")

@@ -3,6 +3,7 @@ package tech.scryme.app.data.interceptor
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -25,6 +26,13 @@ class SessionManager @Inject constructor(
         val ORG_SLUG = stringPreferencesKey("org_slug")
         val LOCATION_ID = stringPreferencesKey("location_id")
         val MEMBER_ID = stringPreferencesKey("member_id")
+        val USER_NAME = stringPreferencesKey("user_name")
+        val USER_EMAIL = stringPreferencesKey("user_email")
+        val THEME_MODE = stringPreferencesKey("theme_mode") // "SYSTEM", "LIGHT", "DARK"
+        val DUTY_STATUS = stringPreferencesKey("duty_status") // "ONLINE", "BUSY", "OFFLINE"
+        val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
+        val SHIFT_NOTIFICATIONS = booleanPreferencesKey("shift_notifications")
+        val TASK_NOTIFICATIONS = booleanPreferencesKey("task_notifications")
     }
 
     val accessTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ACCESS_TOKEN] }
@@ -32,6 +40,13 @@ class SessionManager @Inject constructor(
     val orgSlugFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_SLUG] }
     val locationIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[LOCATION_ID] }
     val memberIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[MEMBER_ID] }
+    val userNameFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_NAME] }
+    val userEmailFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_EMAIL] }
+    val themeModeFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[THEME_MODE] ?: "SYSTEM" }
+    val dutyStatusFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[DUTY_STATUS] ?: "ONLINE" }
+    val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[NOTIFICATIONS_ENABLED] ?: true }
+    val shiftNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHIFT_NOTIFICATIONS] ?: true }
+    val taskNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TASK_NOTIFICATIONS] ?: true }
 
     suspend fun getAccessToken(): String? = accessTokenFlow.first()
     suspend fun getMemberToken(): String? = memberTokenFlow.first()
@@ -44,7 +59,9 @@ class SessionManager @Inject constructor(
         orgSlug: String,
         locationId: String? = null,
         memberId: String? = null,
-        memberToken: String? = null
+        memberToken: String? = null,
+        userName: String? = null,
+        userEmail: String? = null
     ) {
         context.dataStore.edit { prefs ->
             prefs[ACCESS_TOKEN] = accessToken
@@ -52,6 +69,8 @@ class SessionManager @Inject constructor(
             if (locationId != null) prefs[LOCATION_ID] = locationId
             if (memberId != null) prefs[MEMBER_ID] = memberId
             if (memberToken != null) prefs[MEMBER_TOKEN] = memberToken
+            if (userName != null) prefs[USER_NAME] = userName
+            if (userEmail != null) prefs[USER_EMAIL] = userEmail
         }
     }
 
@@ -61,9 +80,44 @@ class SessionManager @Inject constructor(
         }
     }
 
+    suspend fun updateThemeMode(themeMode: String) {
+        context.dataStore.edit { prefs ->
+            prefs[THEME_MODE] = themeMode
+        }
+    }
+
+    suspend fun updateDutyStatus(status: String) {
+        context.dataStore.edit { prefs ->
+            prefs[DUTY_STATUS] = status
+        }
+    }
+
+    suspend fun updateNotificationsEnabled(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[NOTIFICATIONS_ENABLED] = enabled
+        }
+    }
+
+    suspend fun updateShiftNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[SHIFT_NOTIFICATIONS] = enabled
+        }
+    }
+
+    suspend fun updateTaskNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[TASK_NOTIFICATIONS] = enabled
+        }
+    }
+
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
+            val currentTheme = prefs[THEME_MODE]
             prefs.clear()
+            // Retain theme choice on logout
+            if (currentTheme != null) {
+                prefs[THEME_MODE] = currentTheme
+            }
         }
     }
 }
