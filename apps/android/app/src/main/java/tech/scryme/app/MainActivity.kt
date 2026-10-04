@@ -12,17 +12,24 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.ui.auth.AuthViewModel
 import tech.scryme.app.ui.navigation.AppNavGraph
 import tech.scryme.app.ui.navigation.Screen
 import tech.scryme.app.ui.theme.ScrymeTheme
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            ScrymeTheme {
+            val themeMode by sessionManager.themeModeFlow.collectAsState(initial = "SYSTEM")
+            ScrymeTheme(themeMode = themeMode) {
                 MainAppScreen()
             }
         }
@@ -43,7 +50,8 @@ fun MainAppScreen(
         Screen.Schedule,
         Screen.Admin,
         Screen.Branch,
-        Screen.Profile
+        Screen.Profile,
+        Screen.Settings
     )
 
     Scaffold(
@@ -72,6 +80,7 @@ fun MainAppScreen(
                                         Screen.Admin -> "⚡"
                                         Screen.Branch -> "🏢"
                                         Screen.Profile -> "👤"
+                                        Screen.Settings -> "⚙️"
                                         else -> "•"
                                     }
                                 )

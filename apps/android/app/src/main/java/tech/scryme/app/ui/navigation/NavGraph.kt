@@ -16,6 +16,8 @@ import tech.scryme.app.ui.profile.ProfileScreen
 import tech.scryme.app.ui.profile.ProfileViewModel
 import tech.scryme.app.ui.schedule.ScheduleScreen
 import tech.scryme.app.ui.schedule.ScheduleViewModel
+import tech.scryme.app.ui.settings.SettingsScreen
+import tech.scryme.app.ui.settings.SettingsViewModel
 import tech.scryme.app.ui.tasks.TasksScreen
 import tech.scryme.app.ui.tasks.TasksViewModel
 
@@ -51,6 +53,10 @@ fun AppNavGraph(
             val viewModel: AdminViewModel = hiltViewModel()
             AdminScreen(viewModel = viewModel)
         }
+        composable(Screen.Branch.route) {
+            val viewModel: BranchViewModel = hiltViewModel()
+            BranchScreen(viewModel = viewModel)
+        }
         composable(Screen.Profile.route) {
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
@@ -61,9 +67,15 @@ fun AppNavGraph(
                 }
             )
         }
-        composable(Screen.Branch.route) {
-            val viewModel: BranchViewModel = hiltViewModel()
-            BranchScreen(viewModel = viewModel)
+        composable(Screen.Settings.route) {
+            val viewModel: SettingsViewModel = hiltViewModel()
+            SettingsScreen(
+                viewModel = viewModel,
+                onLogout = {
+                    authViewModel.logout()
+                    onLogout()
+                }
+            )
         }
     }
 }

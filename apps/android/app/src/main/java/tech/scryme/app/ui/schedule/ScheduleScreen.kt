@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
+import tech.scryme.app.ui.theme.Emerald500
+import tech.scryme.app.ui.theme.Rose500
 
 @Composable
 fun ScheduleScreen(
@@ -22,6 +24,8 @@ fun ScheduleScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showTradeDialog by remember { mutableStateOf<StaffShift?>(null) }
+    var showBreakDialog by remember { mutableStateOf<StaffShift?>(null) }
+    var showCreateShiftDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadSchedule()
@@ -33,15 +37,30 @@ fun ScheduleScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        Text(
-            text = "My Work Schedule",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "Work Schedule",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             )
-        )
 
-        Spacer(modifier = Modifier.height(16.dp))
+            if (uiState is ScheduleUiState.Success && (uiState as ScheduleUiState.Success).selectedTab == 1) {
+                Button(
+                    onClick = { showCreateShiftDialog = true },
+                    shape = RoundedCornerShape(8.dp)
+                ) {
+                    Text("+ Add Shift", fontSize = 12.sp)
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         when (val state = uiState) {
             is ScheduleUiState.Loading -> {
@@ -61,42 +80,41 @@ fun ScheduleScreen(
                 }
             }
             is ScheduleUiState.Success -> {
-                LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
-                ) {
-                    item {
-                        Text(
-                            text = "Assigned Shifts",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
-                    }
+                TabRow(selectedTabIndex = state.selectedTab) {
+                    Tab(
+                        selected = state.selectedTab == 0,
+                        onClick = { viewModel.selectTab(0) },
+                        text = { Text("My Schedule") }
+                    )
+                    Tab(
+                        selected = state.selectedTab == 1,
+                        onClick = { viewModel.selectTab(1) },
+                        text = { Text("Team Roster") }
+                    )
+                    Tab(
+                        selected = state.selectedTab == 2,
+                        onClick = { viewModel.selectTab(2) },
+                        text = { Text("Trades (${state.trades.size})") }
+                    )
+                }
 
-                    if (state.shifts.isEmpty()) {
-                        item {
-                            Text("No shifts assigned", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    } else {
-                        items(state.shifts, key = { it.id }) { shift ->
-                            ShiftCard(
-                                shift = shift,
-                                onRequestTrade = { showTradeDialog = shift }
-                            )
-                        }
-                    }
+                Spacer(modifier = Modifier.height(16.dp))
 
-                    if (state.trades.isNotEmpty()) {
-                        item {
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Text(
-                                text = "My Shift Trades",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                            )
+                when (state.selectedTab) {
+                    0 -> MyShiftsList(
+                        shifts = state.myShifts,
+                        onRequestTrade = { showTradeDialog = it },
+                        onAddBreak = { showBreakDialog = it }
+                    )
+                    1 -> TeamRosterList(
+                        shifts = state.teamShifts
+                    )
+                    2 -> ShiftTradesList(
+                        trades = state.trades,
+                        onProcessTrade = { tradeId, action ->
+                            viewModel.processShiftTrade(tradeId, action)
                         }
-
-                        items(state.trades, key = { it.id }) { trade ->
-                            TradeCard(trade = trade)
-                        }
-                    }
+                    )
                 }
             }
         }
@@ -112,23 +130,92 @@ fun ScheduleScreen(
             }
         )
     }
+
+    showBreakDialog?.let { shift ->
+        AddBreakDialog(
+            shift = shift,
+            onDismiss = { showBreakDialog = null },
+            onSubmit = { startTime, endTime, description ->
+                viewModel.addShiftBreak(shift.id, startTime, endTime, description)
+                showBreakDialog = null
+            }
+        )
+    }
+
+    if (showCreateShiftDialog) {
+        CreateShiftDialog(
+            onDismiss = { showCreateShiftDialog = false },
+            onSubmit = { memberId, dayOfWeek, startTime, endTime ->
+                viewModel.createStaffShift(memberId, dayOfWeek, startTime, endTime)
+                showCreateShiftDialog = false
+            }
+        )
+    }
+}
+
+@Composable
+fun MyShiftsList(
+    shifts: List<StaffShift>,
+    onRequestTrade: (StaffShift) -> Unit,
+    onAddBreak: (StaffShift) -> Unit
+) {
+    if (shifts.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No assigned shifts found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(shifts, key = { it.id }) { shift ->
+                ShiftCard(
+                    shift = shift,
+                    onRequestTrade = { onRequestTrade(shift) },
+                    onAddBreak = { onAddBreak(shift) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun TeamRosterList(shifts: List<StaffShift>) {
+    if (shifts.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No team shifts found", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(shifts, key = { it.id }) { shift ->
+                TeamShiftCard(shift = shift)
+            }
+        }
+    }
+}
+
+@Composable
+fun ShiftTradesList(
+    trades: List<ShiftTrade>,
+    onProcessTrade: (tradeId: String, action: String) -> Unit
+) {
+    if (trades.isEmpty()) {
+        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+            Text("No shift trade requests", color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
+    } else {
+        LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            items(trades, key = { it.id }) { trade ->
+                TradeCard(trade = trade, onProcessTrade = onProcessTrade)
+            }
+        }
+    }
 }
 
 @Composable
 fun ShiftCard(
     shift: StaffShift,
-    onRequestTrade: () -> Unit
+    onRequestTrade: () -> Unit,
+    onAddBreak: () -> Unit
 ) {
-    val dayName = when (shift.dayOfWeek) {
-        1 -> "Monday"
-        2 -> "Tuesday"
-        3 -> "Wednesday"
-        4 -> "Thursday"
-        5 -> "Friday"
-        6 -> "Saturday"
-        7 -> "Sunday"
-        else -> "Day ${shift.dayOfWeek}"
-    }
+    val dayName = getDayName(shift.dayOfWeek)
 
     Card(
         modifier = Modifier
@@ -153,14 +240,21 @@ fun ShiftCard(
                     color = MaterialTheme.colorScheme.primary
                 )
 
-                Button(
-                    onClick = onRequestTrade,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.secondary
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text("Swap / Trade", fontSize = 12.sp)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    OutlinedButton(
+                        onClick = onAddBreak,
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("+ Break", fontSize = 11.sp)
+                    }
+
+                    Button(
+                        onClick = onRequestTrade,
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Trade / Swap", fontSize = 11.sp)
+                    }
                 }
             }
 
@@ -190,17 +284,72 @@ fun ShiftCard(
 }
 
 @Composable
-fun TradeCard(trade: ShiftTrade) {
+fun TeamShiftCard(shift: StaffShift) {
+    val dayName = getDayName(shift.dayOfWeek)
+
+    Card(
+        modifier = Modifier.fillMaxWidth(),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 1.dp)
+    ) {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Text(
+                text = "Member: ${shift.memberId.take(8)}... - $dayName",
+                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Text(
+                text = "Shift Time: ${shift.startTime} - ${shift.endTime}",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+fun TradeCard(
+    trade: ShiftTrade,
+    onProcessTrade: (tradeId: String, action: String) -> Unit
+) {
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(
-                text = "Trade Status: ${trade.status}",
-                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold)
-            )
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Status: ${trade.status}",
+                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                )
+
+                if (trade.status.uppercase() == "PENDING") {
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        Button(
+                            onClick = { onProcessTrade(trade.id, "APPROVE") },
+                            colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text("Approve", fontSize = 11.sp)
+                        }
+
+                        Button(
+                            onClick = { onProcessTrade(trade.id, "REJECT") },
+                            colors = ButtonDefaults.buttonColors(containerColor = Rose500),
+                            shape = RoundedCornerShape(6.dp)
+                        ) {
+                            Text("Reject", fontSize = 11.sp)
+                        }
+                    }
+                }
+            }
+
             if (!trade.reason.isNullOrEmpty()) {
+                Spacer(modifier = Modifier.height(6.dp))
                 Text(
                     text = "Reason: ${trade.reason}",
                     style = MaterialTheme.typography.bodySmall,
@@ -224,7 +373,7 @@ fun RequestTradeDialog(
         title = { Text("Request Shift Swap") },
         text = {
             Column {
-                Text("Requesting trade for shift on Day ${shift.dayOfWeek} (${shift.startTime} - ${shift.endTime})")
+                Text("Requesting trade for shift on ${getDayName(shift.dayOfWeek)} (${shift.startTime} - ${shift.endTime})")
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
                     value = reason,
@@ -245,4 +394,128 @@ fun RequestTradeDialog(
             }
         }
     )
+}
+
+@Composable
+fun AddBreakDialog(
+    shift: StaffShift,
+    onDismiss: () -> Unit,
+    onSubmit: (startTime: String, endTime: String, description: String?) -> Unit
+) {
+    var startTime by remember { mutableStateOf("12:00") }
+    var endTime by remember { mutableStateOf("12:30") }
+    var description by remember { mutableStateOf("Meal break") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Add Break (${getDayName(shift.dayOfWeek)})") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = startTime,
+                    onValueChange = { startTime = it },
+                    label = { Text("Start Time (e.g. 12:00)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = endTime,
+                    onValueChange = { endTime = it },
+                    label = { Text("End Time (e.g. 12:30)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = { onSubmit(startTime, endTime, description.ifBlank { null }) },
+                enabled = startTime.isNotBlank() && endTime.isNotBlank()
+            ) {
+                Text("Add Break")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun CreateShiftDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
+) {
+    var memberId by remember { mutableStateOf("") }
+    var dayOfWeek by remember { mutableStateOf("1") }
+    var startTime by remember { mutableStateOf("09:00") }
+    var endTime by remember { mutableStateOf("17:00") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Create Staff Shift") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = memberId,
+                    onValueChange = { memberId = it },
+                    label = { Text("Staff Member ID") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = dayOfWeek,
+                    onValueChange = { dayOfWeek = it },
+                    label = { Text("Day of Week (1-7, Mon-Sun)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = startTime,
+                    onValueChange = { startTime = it },
+                    label = { Text("Start Time (09:00)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+                OutlinedTextField(
+                    value = endTime,
+                    onValueChange = { endTime = it },
+                    label = { Text("End Time (17:00)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    val dayInt = dayOfWeek.toIntOrNull() ?: 1
+                    onSubmit(memberId, dayInt, startTime, endTime)
+                },
+                enabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
+            ) {
+                Text("Create Shift")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
+}
+
+private fun getDayName(dayOfWeek: Int): String {
+    return when (dayOfWeek) {
+        1 -> "Monday"
+        2 -> "Tuesday"
+        3 -> "Wednesday"
+        4 -> "Thursday"
+        5 -> "Friday"
+        6 -> "Saturday"
+        7 -> "Sunday"
+        else -> "Day $dayOfWeek"
+    }
 }

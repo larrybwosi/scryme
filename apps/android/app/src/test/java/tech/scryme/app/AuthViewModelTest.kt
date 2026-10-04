@@ -33,31 +33,31 @@ class AuthViewModelTest {
     }
 
     @Test
-    fun login_blankOrgSlug_setsErrorState() = runTest {
-        viewModel.login("", "1234")
+    fun loginWithEmail_blankEmail_setsErrorState() = runTest {
+        viewModel.loginWithEmail("", "password123")
         assertTrue(viewModel.uiState.value is AuthUiState.Error)
-        assertEquals("Organization Slug is required", (viewModel.uiState.value as AuthUiState.Error).message)
+        assertEquals("Email is required", (viewModel.uiState.value as AuthUiState.Error).message)
     }
 
     @Test
-    fun login_success_setsSuccessState() = runTest {
-        coEvery { authRepository.loginMember("scryme-demo", "1234", null) } returns Result.success(Unit)
+    fun loginWithEmail_success_setsSuccessState() = runTest {
+        coEvery { authRepository.loginWithEmail("user@scryme.tech", "password123") } returns Result.success(Unit)
 
-        viewModel.login("scryme-demo", "1234")
+        viewModel.loginWithEmail("user@scryme.tech", "password123")
         testScheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value is AuthUiState.Success)
     }
 
     @Test
-    fun login_failure_setsErrorState() = runTest {
-        coEvery { authRepository.loginMember("scryme-demo", "9999", null) } returns Result.failure(Exception("Unauthorized PIN"))
+    fun loginWithEmail_failure_setsErrorState() = runTest {
+        coEvery { authRepository.loginWithEmail("user@scryme.tech", "wrongpass") } returns Result.failure(Exception("Invalid credentials"))
 
-        viewModel.login("scryme-demo", "9999")
+        viewModel.loginWithEmail("user@scryme.tech", "wrongpass")
         testScheduler.advanceUntilIdle()
 
         assertTrue(viewModel.uiState.value is AuthUiState.Error)
-        assertEquals("Unauthorized PIN", (viewModel.uiState.value as AuthUiState.Error).message)
+        assertEquals("Invalid credentials", (viewModel.uiState.value as AuthUiState.Error).message)
     }
 
     @Test

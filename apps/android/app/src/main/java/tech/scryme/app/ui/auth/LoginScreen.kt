@@ -21,8 +21,8 @@ fun LoginScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
-    var orgSlug by remember { mutableStateOf("") }
-    var pin by remember { mutableStateOf("") }
+    var email by remember { mutableStateOf("") }
+    var password by remember { mutableStateOf("") }
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
@@ -62,7 +62,7 @@ fun LoginScreen(
                 )
 
                 Text(
-                    text = "Sign in to access tasks and schedules",
+                    text = "Sign in with your Scryme account",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -70,20 +70,21 @@ fun LoginScreen(
                 Spacer(modifier = Modifier.height(8.dp))
 
                 OutlinedTextField(
-                    value = orgSlug,
-                    onValueChange = { orgSlug = it },
-                    label = { Text("Organization Slug") },
+                    value = email,
+                    onValueChange = { email = it },
+                    label = { Text("Email Address") },
                     singleLine = true,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     modifier = Modifier.fillMaxWidth()
                 )
 
                 OutlinedTextField(
-                    value = pin,
-                    onValueChange = { pin = it },
-                    label = { Text("Member PIN") },
+                    value = password,
+                    onValueChange = { password = it },
+                    label = { Text("Password") },
                     singleLine = true,
                     visualTransformation = PasswordVisualTransformation(),
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.NumberPassword),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Password),
                     modifier = Modifier.fillMaxWidth()
                 )
 
@@ -96,8 +97,8 @@ fun LoginScreen(
                 }
 
                 Button(
-                    onClick = { viewModel.login(orgSlug, pin) },
-                    enabled = uiState !is AuthUiState.Loading,
+                    onClick = { viewModel.loginWithEmail(email, password) },
+                    enabled = uiState !is AuthUiState.Loading && email.isNotBlank() && password.isNotBlank(),
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(50.dp),

@@ -6,7 +6,6 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.launch
 import tech.scryme.app.domain.repository.AuthRepository
 import javax.inject.Inject
@@ -37,7 +36,30 @@ class AuthViewModel @Inject constructor(
         }
     }
 
-    fun login(orgSlug: String, pin: String) {
+    fun loginWithEmail(email: String, password: String) {
+        if (email.isBlank()) {
+            _uiState.value = AuthUiState.Error("Email is required")
+            return
+        }
+        if (password.isBlank()) {
+            _uiState.value = AuthUiState.Error("Password is required")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            val result = authRepository.loginWithEmail(email.trim(), password)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = AuthUiState.Success
+                },
+                onFailure = { error ->
+                    _uiState.value = AuthUiState.Error(error.message ?: "Authentication failed. Please check credentials.")
+                }
+            )
+        }
+    }
+
+    fun loginWithPin(orgSlug: String, pin: String) {
         if (orgSlug.isBlank()) {
             _uiState.value = AuthUiState.Error("Organization Slug is required")
             return
@@ -54,7 +76,7 @@ class AuthViewModel @Inject constructor(
                     _uiState.value = AuthUiState.Success
                 },
                 onFailure = { error ->
-                    _uiState.value = AuthUiState.Error(error.message ?: "Login failed. Please check credentials.")
+                    _uiState.value = AuthUiState.Error(error.message ?: "PIN login failed. Please check credentials.")
                 }
             )
         }

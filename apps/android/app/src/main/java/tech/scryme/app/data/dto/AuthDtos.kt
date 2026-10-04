@@ -2,6 +2,46 @@ package tech.scryme.app.data.dto
 
 import com.google.gson.annotations.SerializedName
 
+data class EmailSignInRequestDto(
+    @SerializedName("email") val email: String,
+    @SerializedName("password") val password: String
+)
+
+data class EmailSignInResponseDto(
+    @SerializedName("token") val token: String? = null,
+    @SerializedName("accessToken") val accessToken: String? = null,
+    @SerializedName("user") val user: EmailUserDto? = null,
+    @SerializedName("session") val session: EmailSessionDto? = null,
+    @SerializedName("organization") val organization: OrganizationDetailDto? = null,
+    @SerializedName("orgSlug") val orgSlug: String? = null
+) {
+    val effectiveToken: String
+        get() = token ?: accessToken ?: session?.token ?: ""
+
+    val effectiveOrgSlug: String
+        get() = orgSlug ?: organization?.slug ?: user?.activeOrganizationId ?: session?.activeOrganizationId ?: "default"
+}
+
+data class EmailUserDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("email") val email: String? = null,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
+)
+
+data class EmailSessionDto(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("token") val token: String? = null,
+    @SerializedName("userId") val userId: String? = null,
+    @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
+)
+
+data class OrganizationDetailDto(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("slug") val slug: String? = null,
+    @SerializedName("name") val name: String? = null
+)
+
 data class TerminalLoginRequestDto(
     @SerializedName("pin") val pin: String? = null,
     @SerializedName("cardId") val cardId: String? = null

@@ -5,6 +5,7 @@ sealed class Screen(val route: String, val title: String) {
     object Tasks : Screen("tasks", "My Tasks")
     object Schedule : Screen("schedule", "My Schedule")
     object Admin : Screen("admin", "Admin Hub")
-    object Profile : Screen("profile", "Profile")
     object Branch : Screen("branch", "Branches")
+    object Profile : Screen("profile", "Profile")
+    object Settings : Screen("settings", "Settings")
 }
