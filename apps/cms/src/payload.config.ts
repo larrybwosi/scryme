@@ -49,6 +49,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgresql://dbuser:dbpassword@localhost:5432/app_db?schema=public',
     },
+    push: process.env.NODE_ENV !== 'production',
   }),
   plugins: [
     s3Storage({
