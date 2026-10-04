@@ -59,7 +59,7 @@ services:
       retries: 3
       start_period: 15s
 
-    # --- MESSAGE BROKER ---
+  # --- MESSAGE BROKER ---
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
@@ -266,20 +266,6 @@ services:
       retries: 3
       start_period: 60s
 
-
-volumes:
-  postgres_data:
-  customer_postgres_data:
-  rustfs_data:
-  loki_data:
-
-networks:
-  scryme-network:
-    driver: bridge
-  proxy-network:
-    name: ${PROXY_NETWORK_NAME:-dokploy-network}
-    external: true
-
   cms:
     image: ghcr.io/larrybwosi/scryme/cms:${SCRYME_VERSION:-latest}
     restart: always
@@ -308,3 +294,16 @@ networks:
     networks:
       - scryme-network
       - proxy-network
+
+volumes:
+  postgres_data:
+  customer_postgres_data:
+  rustfs_data:
+  loki_data:
+
+networks:
+  scryme-network:
+    driver: bridge
+  proxy-network:
+    name: ${PROXY_NETWORK_NAME:-dokploy-network}
+    external: true
