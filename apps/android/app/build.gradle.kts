@@ -42,19 +42,15 @@ android {
 
             val storeFileProp = System.getenv("KEYSTORE_FILE")
                 ?: keystoreProperties.getProperty("storeFile")
-                ?: "release.jks"
             val storePasswordProp = System.getenv("KEYSTORE_PASSWORD")
                 ?: keystoreProperties.getProperty("storePassword")
-                ?: "scryme1243"
             val keyAliasProp = System.getenv("KEY_ALIAS")
                 ?: keystoreProperties.getProperty("keyAlias")
-                ?: "scryme"
             val keyPasswordProp = System.getenv("KEY_PASSWORD")
                 ?: keystoreProperties.getProperty("keyPassword")
-                ?: "scryme1243"
 
-            val ksFile = file(storeFileProp)
-            if (ksFile.exists()) {
+            val ksFile = if (storeFileProp != null) file(storeFileProp) else null
+            if (ksFile != null && ksFile.exists() && storePasswordProp != null && keyAliasProp != null && keyPasswordProp != null) {
                 storeFile = ksFile
                 storePassword = storePasswordProp
                 keyAlias = keyAliasProp

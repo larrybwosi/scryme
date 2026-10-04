@@ -14,7 +14,6 @@ The Scryme Android application is built using modern Android development practic
 apps/android/
 ├── app/
 │   ├── build.gradle.kts
-│   ├── release.jks
 │   └── src/main/
 │       ├── AndroidManifest.xml
 │       └── java/tech/scryme/app/
@@ -59,7 +58,9 @@ cd apps/android
 The signed APK will be generated at `app/build/outputs/apk/release/app-release.apk`.
 
 ### Custom Signing Configurations
-By default, release builds are signed using the bundled `apps/android/app/release.jks`. You can supply custom keystore properties by creating a `keystore.properties` file in `apps/android/` (see `keystore.properties.example`), or by setting environment variables:
+When custom keystore parameters are provided, release builds are signed using your production keystore. If no custom keys are provided, release builds automatically fall back to signing with the debug key so developers and CI pipelines can build installable APKs.
+
+To configure custom signing keys, create a `keystore.properties` file in `apps/android/` (see `keystore.properties.example`), or set environment variables:
 
 - `KEYSTORE_FILE`: Path to your `.jks` or `.keystore` file
 - `KEYSTORE_PASSWORD`: Keystore password

@@ -62,3 +62,8 @@ local.properties
 **/generated-client
 node_modules/@prisma/client
 apps/api/src/customer-auth/prisma/*.db
+
+# keystores and credentials
+*.jks
+*.keystore
+keystore.properties
