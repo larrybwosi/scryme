@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
@@ -11,7 +13,7 @@ android {
 
     defaultConfig {
         applicationId = "tech.scryme.app"
-        minSdk = 26
+        minSdk = 26 // Android 8.0 (Oreo) or higher
         targetSdk = 34
         versionCode = 1
         versionName = "1.0.0"
@@ -28,9 +30,45 @@ android {
         unitTests.isReturnDefaultValues = true
     }
 
+    signingConfigs {
+        create("release") {
+            val keystorePropertiesFile = rootProject.file("keystore.properties")
+            val keystoreProperties = Properties()
+            if (keystorePropertiesFile.exists()) {
+                keystorePropertiesFile.inputStream().use { stream ->
+                    keystoreProperties.load(stream)
+                }
+            }
+
+            val storeFileProp = System.getenv("KEYSTORE_FILE")
+                ?: keystoreProperties.getProperty("storeFile")
+                ?: "release.jks"
+            val storePasswordProp = System.getenv("KEYSTORE_PASSWORD")
+                ?: keystoreProperties.getProperty("storePassword")
+                ?: "scryme1243"
+            val keyAliasProp = System.getenv("KEY_ALIAS")
+                ?: keystoreProperties.getProperty("keyAlias")
+                ?: "scryme"
+            val keyPasswordProp = System.getenv("KEY_PASSWORD")
+                ?: keystoreProperties.getProperty("keyPassword")
+                ?: "scryme1243"
+
+            val ksFile = file(storeFileProp)
+            if (ksFile.exists()) {
+                storeFile = ksFile
+                storePassword = storePasswordProp
+                keyAlias = keyAliasProp
+                keyPassword = keyPasswordProp
+            } else {
+                initWith(getByName("debug"))
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = signingConfigs.getByName("release")
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
@@ -108,7 +146,6 @@ dependencies {
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-    debugImplementation("androidx.compose.ui:ui-tooling")
+    androidTestImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
