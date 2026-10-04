@@ -3,6 +3,7 @@ package tech.scryme.app.ui.settings
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
@@ -22,7 +23,10 @@ data class SettingsUiState(
     val userName: String = "",
     val userEmail: String = "",
     val orgSlug: String = "",
-    val locationId: String = ""
+    val locationId: String = "",
+    val showQrScanner: Boolean = false,
+    val isPairingPos: Boolean = false,
+    val posPairingMessage: String? = null
 )
 
 private data class PrefsState(
@@ -46,6 +50,10 @@ class SettingsViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
     private val authRepository: AuthRepository
 ) : ViewModel() {
+
+    private val _showQrScanner = MutableStateFlow(false)
+    private val _isPairingPos = MutableStateFlow(false)
+    private val _posPairingMessage = MutableStateFlow<String?>(null)
 
     private val prefsFlow = combine(
         sessionManager.themeModeFlow,
@@ -77,7 +85,13 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
-    val uiState: StateFlow<SettingsUiState> = combine(prefsFlow, accountFlow) { prefs, account ->
+    val uiState: StateFlow<SettingsUiState> = combine(
+        prefsFlow,
+        accountFlow,
+        _showQrScanner,
+        _isPairingPos,
+        _posPairingMessage
+    ) { prefs, account, showScanner, isPairing, pairingMsg ->
         SettingsUiState(
             themeMode = prefs.themeMode,
             dutyStatus = prefs.dutyStatus,
@@ -87,7 +101,10 @@ class SettingsViewModel @Inject constructor(
             userName = account.userName,
             userEmail = account.userEmail,
             orgSlug = account.orgSlug,
-            locationId = account.locationId
+            locationId = account.locationId,
+            showQrScanner = showScanner,
+            isPairingPos = isPairing,
+            posPairingMessage = pairingMsg
         )
     }.stateIn(
         scope = viewModelScope,
@@ -128,6 +145,31 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             sessionManager.updateTaskNotifications(enabled)
         }
+    }
+
+    fun setShowQrScanner(show: Boolean) {
+        _showQrScanner.value = show
+    }
+
+    fun pairPosDevice(qrContent: String) {
+        viewModelScope.launch {
+            _isPairingPos.value = true
+            _posPairingMessage.value = "Authenticating POS Device..."
+            val result = authRepository.pairPosDevice(qrContent)
+            _isPairingPos.value = false
+            result.fold(
+                onSuccess = { msg ->
+                    _posPairingMessage.value = msg
+                },
+                onFailure = { error ->
+                    _posPairingMessage.value = error.message ?: "Failed to pair POS device"
+                }
+            )
+        }
+    }
+
+    fun clearPairingMessage() {
+        _posPairingMessage.value = null
     }
 
     fun logout() {
