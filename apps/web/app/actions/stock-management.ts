@@ -260,135 +260,162 @@ export async function receiveTransferStockWithBatches(data: {
   if (!transfer) throw new Error("Stock transfer not found");
 
   await db.$transaction(async tx => {
-    for (const itemInput of data.items) {
-      const tItem = transfer.items.find(i => i.id === itemInput.transferItemId);
-      if (!tItem) continue;
-
-      const receivedQty = Number(itemInput.quantity);
-      if (receivedQty <= 0) continue;
-
-      // 1. Update transfer item received quantity
-      await tx.stockTransferItem.update({
-        where: { id: tItem.id },
-        data: {
-          receivedQuantity: { increment: receivedQty },
-        },
-      });
-
-      // 2. Create StockBatch at destination location
-      const batchNo = itemInput.batchNumber || `XFER-${transfer.transferNumber}-${tItem.id.slice(-4)}`;
-      const expDate = itemInput.expiryDate ? new Date(itemInput.expiryDate) : null;
-      const recDate = itemInput.receivedDate ? new Date(itemInput.receivedDate) : new Date();
-
-      const batch = await tx.stockBatch.create({
-        data: {
-          organizationId: context.organizationId,
-          variantId: tItem.variantId,
-          locationId: transfer.toLocationId,
-          batchNumber: batchNo,
-          supplierBatchNumber: itemInput.supplierBatchNumber || null,
-          initialQuantity: receivedQty,
-          currentQuantity: receivedQty,
-          purchasePrice: Number(tItem.unitCost || 0),
-          expiryDate: expDate,
-          receivedDate: recDate,
-        },
-      });
-
-      // 3. Update transfer item link
-      await tx.stockTransferItem.update({
-        where: { id: tItem.id },
-        data: { stockBatchId: batch.id },
-      });
-
-      // 4. Update destination ProductVariantStock
-      const pvStock = await tx.productVariantStock.findUnique({
-        where: {
-          variantId_locationId: {
-            variantId: tItem.variantId,
-            locationId: transfer.toLocationId,
-          },
-        },
-      });
-
-      if (pvStock) {
-        await tx.productVariantStock.update({
-          where: { id: pvStock.id },
-          data: {
-            currentStock: { increment: receivedQty },
-            availableStock: { increment: receivedQty },
-          },
-        });
-      } else {
-        await tx.productVariantStock.create({
-          data: {
-            organizationId: context.organizationId,
-            productId: tItem.variant.productId,
-            variantId: tItem.variantId,
-            locationId: transfer.toLocationId,
-            currentStock: receivedQty,
-            availableStock: receivedQty,
-          },
-        });
-      }
-
-      // 5. Create stock movement record
-      await tx.stockMovement.create({
-        data: {
-          organizationId: context.organizationId,
-          variantId: tItem.variantId,
-          fromLocationId: transfer.fromLocationId,
-          toLocationId: transfer.toLocationId,
-          stockBatchId: batch.id,
-          quantity: receivedQty,
-          movementType: "TRANSFER",
-          referenceType: "StockTransfer",
-          referenceId: transfer.id,
-          memberId: context.memberId,
-          notes: data.notes || `Received Transfer ${transfer.transferNumber}`,
-        },
-      });
-
-      // 6. Audit log entry
-      await tx.stockAuditLog.create({
-        data: {
-          organizationId: context.organizationId,
-          entityType: "StockTransfer",
-          entityId: transfer.id,
-          action: "STOCK_TRANSFERRED",
-          newValue: `Received ${receivedQty} units of ${tItem.variant.product.name} at ${transfer.toLocation.name}`,
-          performedBy: context.memberId,
-          metadata: {
-            batchId: batch.id,
-            batchNumber: batchNo,
-            supplierBatchNumber: itemInput.supplierBatchNumber,
-            documentRef: data.documentRef,
-          },
-        },
-      });
-    }
-
-    // Evaluate transfer overall completion status
-    const updatedTransfer = await tx.stockTransfer.findUnique({
-      where: { id: data.transferId },
-      include: { items: true },
-    });
-
-    if (updatedTransfer) {
-      const allReceived = updatedTransfer.items.every(
-        i => Number(i.receivedQuantity || 0) >= Number(i.requestedQuantity || 0),
+    // ⚡ Bolt Optimization: Filter valid reception line items and match transfer items up-front.
+    const validItems = data.items
+      .map(itemInput => {
+        const tItem = transfer.items.find(i => i.id === itemInput.transferItemId);
+        const receivedQty = Number(itemInput.quantity);
+        return { itemInput, tItem, receivedQty };
+      })
+      .filter((entry): entry is { itemInput: (typeof data.items)[number]; tItem: (typeof transfer.items)[number]; receivedQty: number } =>
+        Boolean(entry.tItem) && entry.receivedQty > 0
       );
 
-      await tx.stockTransfer.update({
-        where: { id: data.transferId },
-        data: {
-          status: allReceived ? "COMPLETED" : "SHIPPED",
-          receivedById: context.memberId,
-          receivedDate: new Date(),
-          completedDate: allReceived ? new Date() : undefined,
-        },
-      });
+    if (validItems.length === 0) return;
+
+    // ⚡ Bolt Optimization: Pre-fetch destination stock records for all target variant IDs up-front,
+    // eliminating N+1 stock lookup queries inside the line item processing loop.
+    const uniqueVariantIds = Array.from(new Set(validItems.map(v => v.tItem.variantId)));
+    const existingStocks = await tx.productVariantStock.findMany({
+      where: {
+        locationId: transfer.toLocationId,
+        variantId: { in: uniqueVariantIds },
+      },
+    });
+    const stockMap = new Map(existingStocks.map(s => [s.variantId, s]));
+
+    // ⚡ Bolt Optimization: Aggregate received quantities per variant ID in-memory first
+    // to collapse duplicate updates and avoid Prisma unique constraint (P2002) race conditions on stock creation.
+    const qtyByVariant = new Map<string, number>();
+    const productIdByVariant = new Map<string, string>();
+
+    for (const { tItem, receivedQty } of validItems) {
+      qtyByVariant.set(tItem.variantId, (qtyByVariant.get(tItem.variantId) || 0) + receivedQty);
+      productIdByVariant.set(tItem.variantId, tItem.variant.productId);
     }
+
+    // ⚡ Bolt Optimization: Process line item batch creations, single transfer item updates, stock movements,
+    // and audit logs concurrently, collapsing 4N sequential operations into 1 parallel execution.
+    await Promise.all(
+      validItems.map(async ({ itemInput, tItem, receivedQty }) => {
+        const batchNo = itemInput.batchNumber || `XFER-${transfer.transferNumber}-${tItem.id.slice(-4)}`;
+        const expDate = itemInput.expiryDate ? new Date(itemInput.expiryDate) : null;
+        const recDate = itemInput.receivedDate ? new Date(itemInput.receivedDate) : new Date();
+
+        const batch = await tx.stockBatch.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId: tItem.variantId,
+            locationId: transfer.toLocationId,
+            batchNumber: batchNo,
+            supplierBatchNumber: itemInput.supplierBatchNumber || null,
+            initialQuantity: receivedQty,
+            currentQuantity: receivedQty,
+            purchasePrice: Number(tItem.unitCost || 0),
+            expiryDate: expDate,
+            receivedDate: recDate,
+          },
+        });
+
+        // Combined transfer item update setting both receivedQuantity and stockBatchId in a single call.
+        const updateTransferItem = tx.stockTransferItem.update({
+          where: { id: tItem.id },
+          data: {
+            receivedQuantity: { increment: receivedQty },
+            stockBatchId: batch.id,
+          },
+        });
+
+        const createMovement = tx.stockMovement.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId: tItem.variantId,
+            fromLocationId: transfer.fromLocationId,
+            toLocationId: transfer.toLocationId,
+            stockBatchId: batch.id,
+            quantity: receivedQty,
+            movementType: "TRANSFER",
+            referenceType: "StockTransfer",
+            referenceId: transfer.id,
+            memberId: context.memberId,
+            notes: data.notes || `Received Transfer ${transfer.transferNumber}`,
+          },
+        });
+
+        const createAuditLog = tx.stockAuditLog.create({
+          data: {
+            organizationId: context.organizationId,
+            entityType: "StockTransfer",
+            entityId: transfer.id,
+            action: "STOCK_TRANSFERRED",
+            newValue: `Received ${receivedQty} units of ${tItem.variant.product.name} at ${transfer.toLocation.name}`,
+            performedBy: context.memberId,
+            metadata: {
+              batchId: batch.id,
+              batchNumber: batchNo,
+              supplierBatchNumber: itemInput.supplierBatchNumber,
+              documentRef: data.documentRef,
+            },
+          },
+        });
+
+        return Promise.all([updateTransferItem, createMovement, createAuditLog]);
+      })
+    );
+
+    // ⚡ Bolt Optimization: Update destination stock records per aggregated variant ID concurrently.
+    await Promise.all(
+      Array.from(qtyByVariant.entries()).map(([variantId, totalQty]) => {
+        const pvStock = stockMap.get(variantId);
+        if (pvStock) {
+          return tx.productVariantStock.update({
+            where: { id: pvStock.id },
+            data: {
+              currentStock: { increment: totalQty },
+              availableStock: { increment: totalQty },
+            },
+          });
+        } else {
+          return tx.productVariantStock.create({
+            data: {
+              organizationId: context.organizationId,
+              productId: productIdByVariant.get(variantId)!,
+              variantId,
+              locationId: transfer.toLocationId,
+              currentStock: totalQty,
+              availableStock: totalQty,
+            },
+          });
+        }
+      })
+    );
+
+    // ⚡ Bolt Optimization: Evaluate transfer completion status in-memory using loaded transfer items
+    // and updated received quantities, eliminating an extra stockTransfer.findUnique database re-query.
+    const receivedQtyMap = new Map<string, number>();
+    for (const { tItem, receivedQty } of validItems) {
+      receivedQtyMap.set(
+        tItem.id,
+        (receivedQtyMap.get(tItem.id) || Number(tItem.receivedQuantity || 0)) + receivedQty
+      );
+    }
+
+    const allReceived = transfer.items.every(item => {
+      const newReceived = receivedQtyMap.has(item.id)
+        ? receivedQtyMap.get(item.id)!
+        : Number(item.receivedQuantity || 0);
+      return newReceived >= Number(item.requestedQuantity || 0);
+    });
+
+    await tx.stockTransfer.update({
+      where: { id: data.transferId },
+      data: {
+        status: allReceived ? "COMPLETED" : "SHIPPED",
+        receivedById: context.memberId,
+        receivedDate: new Date(),
+        completedDate: allReceived ? new Date() : undefined,
+      },
+    });
   });
 
   revalidatePath("/stocking/reception");
