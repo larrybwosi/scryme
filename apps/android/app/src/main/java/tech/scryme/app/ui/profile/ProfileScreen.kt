@@ -79,7 +79,7 @@ fun ProfileScreen(
                             contentAlignment = Alignment.Center
                         ) {
                             Text(
-                                text = profile.displayName.take(1).uppercase(),
+                                text = profile.name.take(1).uppercase(),
                                 fontSize = 24.sp,
                                 fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onPrimaryContainer
@@ -89,12 +89,12 @@ fun ProfileScreen(
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = profile.displayName,
+                            text = profile.name,
                             style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold)
                         )
 
                         Text(
-                            text = "Role: ${profile.role}",
+                            text = "Role: ${profile.role ?: "Member"}",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
@@ -112,7 +112,7 @@ fun ProfileScreen(
                             horizontalArrangement = Arrangement.spacedBy(8.dp)
                         ) {
                             listOf("ONLINE", "BUSY", "OFFLINE").forEach { status ->
-                                val isSelected = profile.dutyStatus == status
+                                val isSelected = profile.status == status
                                 FilterChip(
                                     selected = isSelected,
                                     onClick = { viewModel.updateDutyStatus(status) },

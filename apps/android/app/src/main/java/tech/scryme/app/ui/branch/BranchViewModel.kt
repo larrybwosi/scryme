@@ -39,7 +39,7 @@ class BranchViewModel @Inject constructor(
                 return@launch
             }
 
-            val result = branchRepository.getOrganizationBranches(orgSlug)
+            val result = branchRepository.getBranchLocations(orgSlug)
             val activeLoc = sessionManager.getLocationId()
 
             result.fold(
