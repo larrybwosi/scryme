@@ -24,6 +24,10 @@ android {
         buildConfigField("String", "BASE_URL", "\"https://api.scryme.tech/v3/\"")
     }
 
+    testOptions {
+        unitTests.isReturnDefaultValues = true
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
@@ -74,6 +78,16 @@ dependencies {
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:okhttp:4.12.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
+
+    // CameraX & ML Kit Barcode Scanning
+    implementation("androidx.camera:camera-camera2:1.3.1")
+    implementation("androidx.camera:camera-lifecycle:1.3.1")
+    implementation("androidx.camera:camera-view:1.3.1")
+    implementation("com.google.mlkit:barcode-scanning:17.2.0")
+    implementation("com.google.guava:guava:31.1-android")
+
+    // Firebase Messaging for Push Notifications
+    implementation("com.google.firebase:firebase-messaging-ktx:23.4.1")
 
     // Dependency Injection (Hilt)
     implementation("com.google.dagger:hilt-android:2.50")

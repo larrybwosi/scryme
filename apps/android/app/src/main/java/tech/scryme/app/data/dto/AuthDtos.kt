@@ -87,3 +87,21 @@ data class TokenExchangeResponseDto(
     @SerializedName("tokenType") val tokenType: String = "Bearer",
     @SerializedName("expiresIn") val expiresIn: Long
 )
+
+data class PosPairRequestDto(
+    @SerializedName("sessionId") val sessionId: String? = null,
+    @SerializedName("pairingCode") val pairingCode: String? = null,
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("deviceName") val deviceName: String? = "Android POS Terminal",
+    @SerializedName("deviceType") val deviceType: String? = "ANDROID"
+)
+
+data class PosPairResponseDto(
+    @SerializedName("sessionId") val sessionId: String? = null,
+    @SerializedName("pairingCode") val pairingCode: String? = null,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("deviceKey") val deviceKey: String? = null,
+    @SerializedName("apiKey") val apiKey: String? = null,
+    @SerializedName("organizationId") val organizationId: String? = null,
+    @SerializedName("authorized") val authorized: Boolean = true
+)

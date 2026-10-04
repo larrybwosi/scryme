@@ -8,6 +8,7 @@ import org.junit.Test
 import retrofit2.Response
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.dto.MemberUserDto
+import tech.scryme.app.data.dto.PosPairResponseDto
 import tech.scryme.app.data.dto.TerminalLoginResponseDto
 import tech.scryme.app.data.dto.V3ApiResponse
 import tech.scryme.app.data.interceptor.SessionManager
@@ -61,6 +62,44 @@ class AuthRepositoryTest {
 
         assertTrue(result.isFailure)
         assertEquals("Invalid PIN", result.exceptionOrNull()?.message)
+    }
+
+    @Test
+    fun pairPosDevice_withSessionId_success() = runBlocking {
+        val pairingResponse = PosPairResponseDto(
+            sessionId = "sess_123",
+            authorized = true
+        )
+
+        coEvery { sessionManager.getOrgSlug() } returns "org-slug"
+        coEvery { sessionManager.getLocationId() } returns "loc-1"
+        coEvery {
+            authApiService.authorizePosPairingSession("sess_123", any())
+        } returns Response.success(V3ApiResponse(success = true, data = pairingResponse))
+
+        val result = repository.pairPosDevice("sess_123")
+
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrNull()?.contains("sess_123") == true)
+    }
+
+    @Test
+    fun pairPosDevice_withJsonPayload_success() = runBlocking {
+        val jsonPayload = "{\"sessionId\":\"sess_456\",\"orgSlug\":\"org-test\"}"
+        val pairingResponse = PosPairResponseDto(
+            sessionId = "sess_456",
+            authorized = true
+        )
+
+        coEvery { sessionManager.getOrgSlug() } returns "org-test"
+        coEvery { sessionManager.getLocationId() } returns "loc-1"
+        coEvery {
+            authApiService.authorizePosPairingSession("sess_456", any())
+        } returns Response.success(V3ApiResponse(success = true, data = pairingResponse))
+
+        val result = repository.pairPosDevice(jsonPayload)
+
+        assertTrue(result.isSuccess)
     }
 
     @Test

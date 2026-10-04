@@ -1,8 +1,10 @@
 package tech.scryme.app.ui.schedule
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -12,6 +14,7 @@ import tech.scryme.app.domain.model.ShiftBreak
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.repository.ScheduleRepository
+import tech.scryme.app.notifications.NotificationHelper
 import javax.inject.Inject
 
 sealed interface ScheduleUiState {
@@ -28,7 +31,8 @@ sealed interface ScheduleUiState {
 @HiltViewModel
 class ScheduleViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<ScheduleUiState>(ScheduleUiState.Loading)
@@ -80,6 +84,11 @@ class ScheduleViewModel @Inject constructor(
             val result = scheduleRepository.requestShiftTrade(orgSlug, shiftId, targetMemberId, reason)
             result.fold(
                 onSuccess = {
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "Shift Trade Requested",
+                        "Your request to swap shift $shiftId was submitted successfully."
+                    )
                     val currentTab = (_uiState.value as? ScheduleUiState.Success)?.selectedTab ?: 0
                     loadSchedule(currentTab)
                 },
@@ -96,6 +105,11 @@ class ScheduleViewModel @Inject constructor(
             val result = scheduleRepository.processShiftTrade(orgSlug, tradeId, action)
             result.fold(
                 onSuccess = {
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "Shift Trade Updated",
+                        "Shift trade $tradeId has been $action."
+                    )
                     val currentTab = (_uiState.value as? ScheduleUiState.Success)?.selectedTab ?: 2
                     loadSchedule(currentTab)
                 },
@@ -134,6 +148,11 @@ class ScheduleViewModel @Inject constructor(
             val result = scheduleRepository.createStaffShift(orgSlug, memberId, dayOfWeek, startTime, endTime)
             result.fold(
                 onSuccess = {
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "New Shift Assigned",
+                        "A new shift was assigned for day $dayOfWeek ($startTime - $endTime)."
+                    )
                     val currentTab = (_uiState.value as? ScheduleUiState.Success)?.selectedTab ?: 1
                     loadSchedule(currentTab)
                 },

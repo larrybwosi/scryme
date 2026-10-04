@@ -1,5 +1,6 @@
 package tech.scryme.app
 
+import android.content.Context
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -21,12 +22,13 @@ class ScheduleViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val scheduleRepository = mockk<ScheduleRepository>()
     private val sessionManager = mockk<SessionManager>()
+    private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: ScheduleViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ScheduleViewModel(scheduleRepository, sessionManager)
+        viewModel = ScheduleViewModel(scheduleRepository, sessionManager, context)
     }
 
     @After
