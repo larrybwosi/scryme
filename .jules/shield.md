@@ -37,3 +37,7 @@
 ## 2026-10-05 - Multi-Tenant Scoping and Atomic State Check in Invitation Revocation
 **Learning:** `Invitation` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `invitation.update({ where: { id } })` ignores `organizationId` at runtime. Using `updateMany({ where: { id, organizationId, status: PENDING }, data: { status: DECLINED } })` guarantees database-level multi-tenant isolation and prevents invalid state transitions.
 **Action:** Always use `updateMany({ where: { id, organizationId, status: InvitationStatus.PENDING }, data })` followed by `findFirstOrThrow` for database-level multi-tenant and state-aware invitation mutations.
+
+## 2026-10-07 - Purchase Order Approval Tenant Isolation
+**Learning:** In `PurchaseOrderUseCase.approve`, `Purchase` model lacks a composite unique constraint on `[id, organizationId]`. Using standard `purchase.update({ where: { id } })` ignores non-unique `organizationId` filters in Prisma's `where` clause at runtime. If pre-checks are bypassed or raced against, single-ID targeting creates potential BOLA/IDOR risks.
+**Action:** Use `purchase.updateMany({ where: { id: purchaseId, organizationId }, data })` followed by `purchase.findFirstOrThrow({ where: { id: purchaseId, organizationId } })` to enforce database-level multi-tenant isolation during status mutations.
