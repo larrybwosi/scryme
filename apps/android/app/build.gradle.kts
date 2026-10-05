@@ -16,7 +16,7 @@ android {
         minSdk = 26 // Android 8.0 (Oreo) or higher
         targetSdk = 34
         versionCode = 1
-        versionName = "1.0.0"
+        versionName = "10.2.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
