@@ -41,3 +41,7 @@
 ## 2026-10-07 - Purchase Order Approval Tenant Isolation
 **Learning:** In `PurchaseOrderUseCase.approve`, `Purchase` model lacks a composite unique constraint on `[id, organizationId]`. Using standard `purchase.update({ where: { id } })` ignores non-unique `organizationId` filters in Prisma's `where` clause at runtime. If pre-checks are bypassed or raced against, single-ID targeting creates potential BOLA/IDOR risks.
 **Action:** Use `purchase.updateMany({ where: { id: purchaseId, organizationId }, data })` followed by `purchase.findFirstOrThrow({ where: { id: purchaseId, organizationId } })` to enforce database-level multi-tenant isolation during status mutations.
+
+## 2026-10-09 - Stock Transfer Mutation Multi-Tenant Scoping
+**Learning:** In `StockTransferUseCase` (`approve`, `ship`, `receive`), `StockTransfer` model lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `stockTransfer.update({ where: { id } })` ignores non-unique `organizationId` parameters in `where` clauses at database execution time, risking cross-tenant BOLA mutations if single-ID lookups are targeted directly.
+**Action:** Use `stockTransfer.updateMany({ where: { id: transferId, organizationId }, data })` followed by `stockTransfer.findFirstOrThrow({ where: { id: transferId, organizationId } })` to enforce database-level multi-tenant isolation during stock transfer status mutations.
