@@ -8,8 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import tech.scryme.app.ui.admin.AdminScreen
 import tech.scryme.app.ui.admin.AdminViewModel
+import tech.scryme.app.ui.auth.AuthScreen
 import tech.scryme.app.ui.auth.AuthViewModel
-import tech.scryme.app.ui.auth.LoginScreen
 import tech.scryme.app.ui.branch.BranchScreen
 import tech.scryme.app.ui.branch.BranchViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
@@ -36,7 +36,7 @@ fun AppNavGraph(
         modifier = modifier
     ) {
         composable(Screen.Login.route) {
-            LoginScreen(
+            AuthScreen(
                 viewModel = authViewModel,
                 onLoginSuccess = onLoginSuccess
             )

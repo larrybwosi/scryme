@@ -11,6 +11,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Lock
+import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
 import androidx.compose.material3.*
@@ -30,10 +31,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun LoginScreen(
+fun SignUpScreen(
     viewModel: AuthViewModel,
-    onLoginSuccess: () -> Unit,
-    onNavigateToSignUp: () -> Unit,
+    onSignUpSuccess: () -> Unit,
+    onNavigateToLogin: () -> Unit,
     onBackClick: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -41,14 +42,15 @@ fun LoginScreen(
     val context = LocalContext.current
     val focusManager = LocalFocusManager.current
 
+    var fullName by remember { mutableStateOf("") }
     var email by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
-    var rememberMe by remember { mutableStateOf(true) }
+    var agreeTerms by remember { mutableStateOf(false) }
 
     LaunchedEffect(uiState) {
         if (uiState is AuthUiState.Success) {
-            onLoginSuccess()
+            onSignUpSuccess()
         }
     }
 
@@ -75,7 +77,7 @@ fun LoginScreen(
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text(
-                    text = "Welcome Back!",
+                    text = "Create Your Account",
                     fontSize = 28.sp,
                     fontWeight = FontWeight.Bold,
                     color = Color(0xFF111827),
@@ -89,13 +91,26 @@ fun LoginScreen(
                     color = SubtitleText,
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 28.dp)
+                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
+                )
+
+                AuthTextField(
+                    value = fullName,
+                    onValueChange = { fullName = it },
+                    label = "Full Name*",
+                    placeholder = "Enter Full Name",
+                    leadingIcon = Icons.Outlined.Person,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Text,
+                        imeAction = ImeAction.Next
+                    ),
+                    modifier = Modifier.padding(bottom = 16.dp)
                 )
 
                 AuthTextField(
                     value = email,
                     onValueChange = { email = it },
-                    label = "Email Address",
+                    label = "Email Address*",
                     placeholder = "Enter Your Email",
                     leadingIcon = Icons.Outlined.Email,
                     keyboardOptions = KeyboardOptions(
@@ -108,7 +123,7 @@ fun LoginScreen(
                 AuthTextField(
                     value = password,
                     onValueChange = { password = it },
-                    label = "Password",
+                    label = "Password*",
                     placeholder = "Enter Your Password",
                     leadingIcon = Icons.Outlined.Lock,
                     trailingIcon = {
@@ -128,43 +143,36 @@ fun LoginScreen(
                     keyboardActions = KeyboardActions(
                         onDone = {
                             focusManager.clearFocus()
-                            viewModel.loginWithEmail(email, password)
+                            viewModel.signUp(fullName, email, password, agreeTerms)
                         }
                     ),
                     modifier = Modifier.padding(bottom = 12.dp)
                 )
 
-                // Remember me & Forgot Password Row
+                // Terms agreement checkbox row
                 Row(
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(bottom = 24.dp),
-                    horizontalArrangement = Arrangement.SpaceBetween,
+                        .padding(bottom = 20.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.clickable { rememberMe = !rememberMe }
-                    ) {
-                        RadioButton(
-                            selected = rememberMe,
-                            onClick = { rememberMe = !rememberMe },
-                            colors = RadioButtonDefaults.colors(selectedColor = PurpleAccent)
-                        )
-                        Text(
-                            text = "Remember me",
-                            fontSize = 13.sp,
-                            color = Color(0xFF4B5563)
-                        )
-                    }
-
+                    RadioButton(
+                        selected = agreeTerms,
+                        onClick = { agreeTerms = !agreeTerms },
+                        colors = RadioButtonDefaults.colors(selectedColor = PurpleAccent)
+                    )
                     Text(
-                        text = "Forgot Password?",
+                        text = "I agree with the ",
+                        fontSize = 13.sp,
+                        color = Color(0xFF4B5563)
+                    )
+                    Text(
+                        text = "Terms and Conditions",
                         fontSize = 13.sp,
                         fontWeight = FontWeight.SemiBold,
                         color = PurpleAccent,
                         modifier = Modifier.clickable {
-                            Toast.makeText(context, "Password reset instruction sent to email", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Terms & Conditions details", Toast.LENGTH_SHORT).show()
                         }
                     )
                 }
@@ -182,13 +190,13 @@ fun LoginScreen(
                 }
 
                 AuthPrimaryButton(
-                    text = "Log In",
+                    text = "Sign Up",
                     onClick = {
                         focusManager.clearFocus()
-                        viewModel.loginWithEmail(email, password)
+                        viewModel.signUp(fullName, email, password, agreeTerms)
                     },
                     isLoading = uiState is AuthUiState.Loading,
-                    enabled = email.isNotBlank() && password.isNotBlank()
+                    enabled = fullName.isNotBlank() && email.isNotBlank() && password.isNotBlank()
                 )
 
                 OrDivider()
@@ -199,21 +207,21 @@ fun LoginScreen(
             // Bottom Navigation Link
             Row(
                 modifier = Modifier
-                    .padding(top = 32.dp),
+                    .padding(top = 28.dp),
                 horizontalArrangement = Arrangement.Center,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Text(
-                    text = "Don't have an account? ",
+                    text = "Have an account? ",
                     fontSize = 14.sp,
                     color = SubtitleText
                 )
                 Text(
-                    text = "Sign up",
+                    text = "Log in",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Bold,
                     color = PurpleAccent,
-                    modifier = Modifier.clickable { onNavigateToSignUp() }
+                    modifier = Modifier.clickable { onNavigateToLogin() }
                 )
             }
         }

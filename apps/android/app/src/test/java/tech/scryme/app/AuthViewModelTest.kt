@@ -61,6 +61,30 @@ class AuthViewModelTest {
     }
 
     @Test
+    fun signUp_blankFullName_setsErrorState() = runTest {
+        viewModel.signUp("", "user@scryme.tech", "pass123", true)
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        assertEquals("Full Name is required", (viewModel.uiState.value as AuthUiState.Error).message)
+    }
+
+    @Test
+    fun signUp_termsNotAgreed_setsErrorState() = runTest {
+        viewModel.signUp("John Doe", "user@scryme.tech", "pass123", false)
+        assertTrue(viewModel.uiState.value is AuthUiState.Error)
+        assertEquals("You must agree to the Terms and Conditions", (viewModel.uiState.value as AuthUiState.Error).message)
+    }
+
+    @Test
+    fun signUp_success_setsSuccessState() = runTest {
+        coEvery { authRepository.loginWithEmail("user@scryme.tech", "pass123") } returns Result.success(Unit)
+
+        viewModel.signUp("John Doe", "user@scryme.tech", "pass123", true)
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.value is AuthUiState.Success)
+    }
+
+    @Test
     fun logout_resetsStateToIdle() = runTest {
         coEvery { authRepository.logout() } just Runs
 
