@@ -53,7 +53,6 @@ Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https
 * 👥 **[Scryme CRM](./apps/crm)**: Next.js multi-channel CRM for contact management, lead pipeline tracking, deal stages, loyalty, and automated messaging workflows.
 * 🛒 **[Scryme POS](./apps/pos)**: High-availability, offline-first Tauri v2 desktop checkout workstation. Includes native thermal printer drivers (ESC/POS), hardware barcode scanners, cash drawers, and second-screen customer displays.
 * 🥖 **[Scryme Bakery](./apps/bakery)**: Specialized Tauri v2 production management workstation for commercial bakeries, scaling recipe formulations, batch scheduling, ingredient tracking, and baker shift management.
-* 🛍️ **[Scryme Customer Portal](./apps/portal)**: B2B/B2C Next.js self-service customer portal for account tracking, order history, and digital invoices.
 * 🌐 **[Scryme Storefront & Site](./apps/site)**: Enterprise web landing page, download directory for native POS binaries, and headlessly-managed CMS catalog.
 * ⚙️ **[Scryme Admin Web](./apps/admin)**: Master administrative console for multi-tenant provisioning, subscription billing, system health diagnostics, and binary release sync.
 * 🤖 **[Scryme MCP Server](./apps/mcp)**: Model Context Protocol server exposing catalog, inventory, and CRM commands securely to LLMs (Claude Desktop, Cursor).

@@ -1,6 +1,6 @@
 # `@repo/ui`
 
-The shared React component and design system library for Scryme applications. Built on top of [Radix UI](https://www.radix-ui.com/) accessible primitives and styled with [Tailwind CSS v4](https://tailwindcss.com/), it ensures consistent, high-fidelity, and accessible user experiences across all frontends (Web, CRM, Portal, POS, and Bakery apps).
+The shared React component and design system library for Scryme applications. Built on top of [Radix UI](https://www.radix-ui.com/) accessible primitives and styled with [Tailwind CSS v4](https://tailwindcss.com/), it ensures consistent, high-fidelity, and accessible user experiences across all frontends (Web, CRM, POS, and Bakery apps).
 
 ## 🚀 Key Features
 
