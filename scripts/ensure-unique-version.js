@@ -3,10 +3,10 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 const posPackageJsonPath = path.join(__dirname, "../apps/pos/package.json");
+const appsDir = path.join(__dirname, "../apps");
 const paths = [
-  path.join(__dirname, "../apps/pos/package.json"),
-  path.join(__dirname, "../apps/bakery/package.json"),
-    path.join(__dirname, "../packages/sdk/package.json")
+  ...fs.readdirSync(appsDir).map(dir => path.join(appsDir, dir, "package.json")),
+  path.join(__dirname, "../packages/sdk/package.json")
 ];
 
 function parseSemver(v) {
