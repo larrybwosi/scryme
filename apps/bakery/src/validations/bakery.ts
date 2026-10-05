@@ -30,18 +30,28 @@ export const scheduleDaysSchema = z
 
 // --- Recipe Schemas ---
 
+const optionalNumber = z.preprocess(
+  val => (val === '' || val === null || val === undefined || Number.isNaN(Number(val)) ? undefined : Number(val)),
+  z.number().optional().nullable()
+);
+
+const optionalInt = z.preprocess(
+  val => (val === '' || val === null || val === undefined || Number.isNaN(Number(val)) ? undefined : Number(val)),
+  z.number().int().optional().nullable()
+);
+
 const baseRecipeSchema = z.object({
   name: z.string().min(1, 'Recipe name is required'),
   categoryId: z.string().min(1, 'A valid category must be selected'),
   yieldQuantity: z.coerce.number().positive('Yield quantity must be a positive number'),
   systemUnitId: z.string().optional().nullable(),
   orgUnitId: z.string().optional().nullable(),
-  costPrice: z.coerce.number().optional().nullable(),
-  prepTime: z.coerce.number().int().optional().nullable(),
-  bakeTime: z.coerce.number().int().optional().nullable(),
-  totalTime: z.coerce.number().int().optional().nullable(),
+  costPrice: optionalNumber,
+  prepTime: optionalInt,
+  bakeTime: optionalInt,
+  totalTime: optionalInt,
   difficulty: z.nativeEnum(RecipeDifficulty).optional().nullable(),
-  temperatureCelsius: z.coerce.number().int().optional().nullable(),
+  temperatureCelsius: optionalNumber,
   ingredients: z.array(ingredientSchema).min(1, "At least one ingredient is required"),
   description: z.string().optional().nullable(),
   servingSize: z.string().optional().nullable(),

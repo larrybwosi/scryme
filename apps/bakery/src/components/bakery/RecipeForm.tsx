@@ -27,7 +27,7 @@ import { TagInput } from '@repo/ui/components/ui/tag-input';
 import { Alert, AlertDescription, AlertTitle } from '@repo/ui/components/ui/alert';
 import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
-import { cn, formatVariantName } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 
 interface CreateEditRecipeDialogProps {
   open: boolean;
@@ -43,7 +43,8 @@ function SelectSkeleton() {
 
 function IngredientFormSkeleton() {
   return (
-    <div className="grid grid-cols-[1fr_120px_140px_40px] gap-3 items-center p-2">
+    <div className="grid grid-cols-[1fr_1.2fr_100px_130px_40px] gap-2 items-center p-2">
+      <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>
       <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>
       <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>
       <div className="h-9 bg-slate-100 dark:bg-slate-800 rounded-md animate-pulse"></div>
@@ -100,7 +101,11 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
       producesVariantId: '',
       prepTime: 0,
       bakeTime: 0,
+      totalTime: 0,
       difficulty: 'MEDIUM',
+      temperatureCelsius: undefined,
+      servingSize: '',
+      costPrice: undefined,
     },
   });
 
@@ -120,25 +125,30 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   useEffect(() => {
     if (recipe && mode === 'edit') {
       reset({
-        name: recipe.name,
+        name: recipe.name || '',
         categoryId: recipe.categoryId || '',
         description: recipe.description || '',
         instructions: recipe.instructions || '',
         notes: recipe.notes || '',
         yieldQuantity: recipe.yieldQuantity,
-        systemUnitId: recipe.systemUnitId,
-        orgUnitId: recipe.orgUnitId,
-        producesVariantId: recipe.producesVariantId,
-        prepTime: recipe.prepTime || 0,
-        bakeTime: recipe.bakeTime || 0,
+        systemUnitId: recipe.systemUnitId || undefined,
+        orgUnitId: recipe.orgUnitId || undefined,
+        producesVariantId: recipe.producesVariantId || '',
+        prepTime: recipe.prepTime ?? 0,
+        bakeTime: recipe.bakeTime ?? 0,
+        totalTime: recipe.totalTime ?? ((recipe.prepTime || 0) + (recipe.bakeTime || 0)),
         difficulty: recipe.difficulty || 'MEDIUM',
+        temperatureCelsius: recipe.temperatureCelsius ?? undefined,
+        servingSize: recipe.servingSize || '',
+        costPrice: recipe.costPrice ?? undefined,
         tags: recipe.tags || [],
         ingredients: recipe.ingredients?.map(ing => ({
+          id: ing.id,
           ingredientVariantId: ing.ingredientVariantId,
           quantity: ing.quantity,
-          systemUnitId: ing.systemUnitId,
-          orgUnitId: ing.orgUnitId,
-          preparationNotes: ing.preparationNotes,
+          systemUnitId: ing.systemUnitId || undefined,
+          orgUnitId: ing.orgUnitId || undefined,
+          preparationNotes: ing.preparationNotes || '',
         })) || [],
       });
     } else {
@@ -146,6 +156,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         name: '',
         categoryId: '',
         yieldQuantity: 1,
+        systemUnitId: undefined,
+        orgUnitId: undefined,
         ingredients: [],
         description: '',
         instructions: '',
@@ -154,7 +166,11 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         producesVariantId: '',
         prepTime: 0,
         bakeTime: 0,
+        totalTime: 0,
         difficulty: 'MEDIUM',
+        temperatureCelsius: undefined,
+        servingSize: '',
+        costPrice: undefined,
       });
     }
   }, [recipe, mode, reset]);
@@ -165,10 +181,16 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         ...data,
         systemUnitId: data.systemUnitId || undefined,
         orgUnitId: data.orgUnitId || undefined,
+        costPrice: data.costPrice !== undefined && data.costPrice !== '' && !Number.isNaN(Number(data.costPrice)) ? Number(data.costPrice) : undefined,
+        prepTime: data.prepTime !== undefined && data.prepTime !== '' && !Number.isNaN(Number(data.prepTime)) ? Number(data.prepTime) : undefined,
+        bakeTime: data.bakeTime !== undefined && data.bakeTime !== '' && !Number.isNaN(Number(data.bakeTime)) ? Number(data.bakeTime) : undefined,
+        totalTime: data.totalTime !== undefined && data.totalTime !== '' && !Number.isNaN(Number(data.totalTime)) ? Number(data.totalTime) : undefined,
+        temperatureCelsius: data.temperatureCelsius !== undefined && data.temperatureCelsius !== '' && !Number.isNaN(Number(data.temperatureCelsius)) ? Number(data.temperatureCelsius) : undefined,
         ingredients: data.ingredients?.map((ing: any) => ({
           ...ing,
           systemUnitId: ing.systemUnitId || undefined,
           orgUnitId: ing.orgUnitId || undefined,
+          preparationNotes: ing.preparationNotes || undefined,
         })),
       };
 
@@ -201,7 +223,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   };
 
   const addIngredientRow = () => {
-    append({ ingredientVariantId: '', quantity: 0, systemUnitId: undefined, orgUnitId: undefined });
+    append({ ingredientVariantId: '', quantity: 0, systemUnitId: undefined, orgUnitId: undefined, preparationNotes: '' });
   };
 
   const handleIngredientUnitChange = (index: number) => (value: string | undefined, type: 'system' | 'org') => {
@@ -420,6 +442,36 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                     </div>
                   </div>
 
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div className="space-y-1.5">
+                      <Label htmlFor="servingSize" className="text-xs font-medium text-slate-500 uppercase">
+                        Serving Size
+                      </Label>
+                      <Input
+                        id="servingSize"
+                        {...register('servingSize')}
+                        placeholder="e.g. 1 loaf, 8 slices, 12 cookies"
+                        disabled={isSubmitting}
+                        className="h-9"
+                      />
+                    </div>
+
+                    <div className="space-y-1.5">
+                      <Label htmlFor="costPrice" className="text-xs font-medium text-slate-500 uppercase">
+                        Estimated Cost Price
+                      </Label>
+                      <Input
+                        id="costPrice"
+                        type="number"
+                        step="0.01"
+                        {...register('costPrice', { valueAsNumber: true })}
+                        placeholder="e.g. 12.50"
+                        disabled={isSubmitting}
+                        className="h-9"
+                      />
+                    </div>
+                  </div>
+
                   <div className="space-y-1.5">
                     <Label className="text-xs font-medium text-slate-500 uppercase">Search Tags</Label>
                     <TagInput
@@ -431,7 +483,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                 </FormSection>
 
                 <FormSection title="Technical Parameters" icon={Settings}>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                     <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-500 uppercase">Prep Time (min)</Label>
                       <Input
@@ -451,6 +503,27 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       />
                     </div>
                     <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-500 uppercase">Total Time (min)</Label>
+                      <Input
+                        type="number"
+                        {...register('totalTime', { valueAsNumber: true })}
+                        disabled={isSubmitting}
+                        placeholder="Optional"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
+                      <Label className="text-xs font-medium text-slate-500 uppercase">Bake Temp (°C)</Label>
+                      <Input
+                        type="number"
+                        step="1"
+                        {...register('temperatureCelsius', { valueAsNumber: true })}
+                        disabled={isSubmitting}
+                        placeholder="e.g. 180"
+                        className="h-9"
+                      />
+                    </div>
+                    <div className="space-y-1.5">
                       <Label className="text-xs font-medium text-slate-500 uppercase">Complexity</Label>
                       <Select
                         value={difficulty}
@@ -464,6 +537,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                           <SelectItem value="EASY">Level 1 - Easy</SelectItem>
                           <SelectItem value="MEDIUM">Level 2 - Medium</SelectItem>
                           <SelectItem value="HARD">Level 3 - Complex</SelectItem>
+                          <SelectItem value="EXPERT">Level 4 - Expert</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -472,9 +546,10 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
                 <FormSection title="Bill of Materials (BOM)" icon={Layers}>
                   <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-[1fr_120px_140px_40px] gap-3 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
+                    <div className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-[1.5fr_1.5fr_100px_130px_40px] gap-2 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
                       <div>Material Component</div>
-                      <div>Requirement</div>
+                      <div>Preparation Notes</div>
+                      <div>Qty</div>
                       <div>UOM</div>
                       <div></div>
                     </div>
@@ -494,7 +569,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                             return (
                               <div
                                 key={field.id}
-                                className="grid grid-cols-[1fr_120px_140px_40px] gap-3 items-start px-3 py-2 bg-white dark:bg-slate-950"
+                                className="grid grid-cols-[1.5fr_1.5fr_100px_130px_40px] gap-2 items-start px-3 py-2 bg-white dark:bg-slate-950"
                               >
                                 <div>
                                   <ProductVariantsSelect
@@ -504,6 +579,15 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     productType="ALL"
                                     placeholder="Select material..."
                                     className={ingredientErrors?.[index] ? 'border-red-500' : ''}
+                                  />
+                                </div>
+
+                                <div>
+                                  <Input
+                                    {...register(`ingredients.${index}.preparationNotes` as any)}
+                                    placeholder="e.g. Sifted, Chilled"
+                                    disabled={isSubmitting}
+                                    className="h-9 text-xs"
                                   />
                                 </div>
 

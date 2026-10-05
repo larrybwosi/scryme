@@ -3,7 +3,7 @@ import { Badge } from '@repo/ui/components/ui/badge';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Recipe } from '@/types/bakery';
-import { Clock, Thermometer, Scale, ChefHat, Info, Flame } from 'lucide-react';
+import { Clock, Thermometer, Scale, ChefHat, Info, Flame, Utensils } from 'lucide-react';
 // import Image from 'next/image';
 import Markdown from 'markdown-to-jsx';
 import { useFormattedCurrency, formatVariantName } from '@/lib/utils';
@@ -117,7 +117,7 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                     </div>
                   )}
                   <div className="flex-1 space-y-4">
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                       <StatCard
                         icon={Scale}
                         label="Yield"
@@ -127,11 +127,20 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                       <StatCard icon={Clock} label="Prep" value={recipeData.prepTime || 0} unit="min" />
                       <StatCard icon={Flame} label="Bake" value={recipeData.bakeTime || 0} unit="min" />
                       <StatCard
+                        icon={Clock}
+                        label="Total Time"
+                        value={recipeData.totalTime || ((recipeData.prepTime || 0) + (recipeData.bakeTime || 0))}
+                        unit="min"
+                      />
+                      <StatCard
                         icon={Thermometer}
                         label="Temp"
                         value={recipeData.temperatureCelsius ? `${recipeData.temperatureCelsius}°` : '—'}
                         unit={recipeData.temperatureCelsius ? 'C' : undefined}
                       />
+                      {recipeData.servingSize && (
+                        <StatCard icon={Utensils} label="Serving" value={recipeData.servingSize} />
+                      )}
                     </div>
                     {recipeData.description && (
                       <p className="text-sm text-muted-foreground leading-relaxed">

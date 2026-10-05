@@ -225,6 +225,113 @@ describe("ProductionService - Category and Recipe Validation", () => {
       );
     });
 
+    it("should create a recipe with all fields including temperature, servingSize, totalTime, costPrice, and preparationNotes", async () => {
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
+
+      const dto: CreateRecipeDto = {
+        name: "Grand Sourdough",
+        categoryId: "cat-1",
+        producesVariantId: "var-prod-1",
+        yieldQuantity: 10,
+        systemUnitId: "unit-kg",
+        costPrice: 25.50,
+        description: "Special sourdough formula",
+        prepTime: 45,
+        bakeTime: 35,
+        totalTime: 80,
+        difficulty: "EXPERT",
+        temperatureCelsius: 230,
+        servingSize: "1 loaf",
+        instructions: "1. Mix flour and water\n2. Ferment for 12h",
+        notes: "Keep ambient temp at 24C",
+        tags: ["sourdough", "artisan"],
+        ingredients: [
+          {
+            ingredientVariantId: "flour-var-1",
+            quantity: 5,
+            systemUnitId: "unit-kg",
+            preparationNotes: "Cold water hydration, sifted flour",
+          },
+        ],
+      };
+
+      const mockCreatedRecipe = { id: "rec-full-1", name: "Grand Sourdough", organizationId: "org-1" };
+      prismaMock.client.recipe.create.mockResolvedValue(mockCreatedRecipe);
+
+      const result = await service.createRecipe("org-1", dto);
+      expect(result).toEqual(mockCreatedRecipe);
+      expect(prismaMock.client.recipe.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: "Grand Sourdough",
+          costPrice: 25.50,
+          prepTime: 45,
+          bakeTime: 35,
+          totalTime: 80,
+          difficulty: "EXPERT",
+          temperatureCelsius: 230,
+          servingSize: "1 loaf",
+          instructions: "1. Mix flour and water\n2. Ferment for 12h",
+          notes: "Keep ambient temp at 24C",
+          tags: ["sourdough", "artisan"],
+          ingredients: {
+            create: [
+              {
+                ingredientVariantId: "flour-var-1",
+                quantity: 5,
+                systemUnitId: "unit-kg",
+                orgUnitId: undefined,
+                preparationNotes: "Cold water hydration, sifted flour",
+              },
+            ],
+          },
+        }),
+        include: expect.anything(),
+      });
+    });
+
+    it("should update a recipe and switch yield unit cleanly from system unit to org unit", async () => {
+      prismaMock.client.recipe.findFirst.mockResolvedValue({
+        id: "rec-1",
+        organizationId: "org-1",
+        systemUnitId: "sys-unit-old",
+        orgUnitId: null,
+      });
+
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue(null);
+      prismaMock.client.organizationUnit.findFirst.mockResolvedValue({ id: "org-unit-new" });
+
+      const mockUpdatedRecipe = {
+        id: "rec-1",
+        name: "Sourdough Updated",
+        organizationId: "org-1",
+        systemUnitId: null,
+        orgUnitId: "org-unit-new",
+      };
+      prismaMock.client.recipe.update.mockResolvedValue(mockUpdatedRecipe);
+
+      const result = await service.updateRecipe("org-1", "rec-1", {
+        name: "Sourdough Updated",
+        orgUnitId: "org-unit-new",
+        temperatureCelsius: 220,
+        servingSize: "2 loaves",
+        costPrice: 18.0,
+      });
+
+      expect(result).toEqual(mockUpdatedRecipe);
+      expect(prismaMock.client.recipe.update).toHaveBeenCalledWith({
+        where: { id: "rec-1", organizationId: "org-1" },
+        data: expect.objectContaining({
+          name: "Sourdough Updated",
+          systemUnitId: null,
+          orgUnitId: "org-unit-new",
+          temperatureCelsius: 220,
+          servingSize: "2 loaves",
+          costPrice: 18.0,
+        }),
+        include: expect.anything(),
+      });
+    });
+
     it("should create recipe successfully when system unit is valid", async () => {
       prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-kg" });
 

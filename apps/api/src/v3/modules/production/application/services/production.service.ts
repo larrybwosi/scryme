@@ -476,6 +476,8 @@ export class ProductionService {
         difficulty: true,
         temperatureCelsius: true,
         servingSize: true,
+        instructions: true,
+        notes: true,
         tags: true,
         organizationId: true,
         createdAt: true,
@@ -829,8 +831,12 @@ export class ProductionService {
     let resolvedYieldUnit: { systemUnitId?: string; orgUnitId?: string } | undefined = undefined;
 
     if (rest.systemUnitId !== undefined || rest.orgUnitId !== undefined || rest.yieldQuantity !== undefined) {
-      const sysUnit = rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : existing.systemUnitId;
-      const orgUnit = rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : existing.orgUnitId;
+      const sysUnit = rest.systemUnitId !== undefined
+        ? cleanUnitId(rest.systemUnitId)
+        : (rest.orgUnitId !== undefined ? undefined : existing.systemUnitId);
+      const orgUnit = rest.orgUnitId !== undefined
+        ? cleanUnitId(rest.orgUnitId)
+        : (rest.systemUnitId !== undefined ? undefined : existing.orgUnitId);
 
       if (!sysUnit && !orgUnit) {
         throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
@@ -889,8 +895,8 @@ export class ProductionService {
       where: { id, organizationId },
       data: {
         ...rest,
-        systemUnitId: resolvedYieldUnit ? resolvedYieldUnit.systemUnitId : undefined,
-        orgUnitId: resolvedYieldUnit ? resolvedYieldUnit.orgUnitId : undefined,
+        systemUnitId: resolvedYieldUnit ? (resolvedYieldUnit.systemUnitId ?? null) : undefined,
+        orgUnitId: resolvedYieldUnit ? (resolvedYieldUnit.orgUnitId ?? null) : undefined,
         difficulty: rest.difficulty as any,
         ingredients: resolvedIngredients
           ? {
