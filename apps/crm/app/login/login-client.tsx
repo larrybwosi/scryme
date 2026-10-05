@@ -279,7 +279,7 @@ const LoginContent = () => {
     try {
       const { data: result, error } = await authClient.forgetPassword({
         email: data.email,
-        redirectTo: "/reset-password",
+        redirectTo: typeof window !== "undefined" ? `${window.location.origin}/reset-password` : "/reset-password",
       });
 
       if (error) {
