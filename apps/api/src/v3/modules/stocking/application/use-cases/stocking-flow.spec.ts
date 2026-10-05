@@ -104,7 +104,9 @@ describe("Stocking Flow Verification", () => {
         create: vi.fn(),
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       stockReceipt: {
         create: vi.fn(),
@@ -134,7 +136,9 @@ describe("Stocking Flow Verification", () => {
         create: vi.fn(),
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
       },
       stockTransferItem: {
         update: vi.fn(),
@@ -342,13 +346,14 @@ describe("Stocking Flow Verification", () => {
     mockTx.productVariantStock.findMany.mockResolvedValue([
       { variantId: "v1", availableStock: 10 },
     ]);
-    mockTx.stockTransfer.update.mockImplementation(({ data }: any) => ({
+    mockTx.stockTransfer.updateMany.mockResolvedValue({ count: 1 });
+    mockTx.stockTransfer.findFirstOrThrow.mockImplementation(({ where }: any) => ({
       id: "tr-1",
       transferNumber: "TR-1",
+      status: StockTransferStatus.APPROVED,
       shippedDate: new Date(),
       receivedDate: new Date(),
       receivedBy: { user: { name: "Test" } },
-      ...data,
     }));
 
     await stockTransferUseCase.approve(mockOrgId, mockMemberId, "tr-1");

@@ -175,12 +175,23 @@ export class StockTransferUseCase {
         ),
       );
 
-      return tx.stockTransfer.update({
-        where: { id: transferId },
+      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
+      // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
+      const updateResult = await tx.stockTransfer.updateMany({
+        where: { id: transferId, organizationId },
         data: {
           status: StockTransferStatus.APPROVED,
           approvedById: memberId,
         },
+      });
+
+      if (updateResult.count === 0) {
+        throw new NotFoundException("Transfer not found or unauthorized");
+      }
+
+      return tx.stockTransfer.findFirstOrThrow({
+        where: { id: transferId, organizationId },
       });
     });
   }
@@ -341,8 +352,11 @@ export class StockTransferUseCase {
       // Execute stockTransferItem updates concurrently
       await Promise.all(itemUpdatePromises);
 
-      const updatedTransfer = await tx.stockTransfer.update({
-        where: { id: transferId },
+      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
+      // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
+      const updateResult = await tx.stockTransfer.updateMany({
+        where: { id: transferId, organizationId },
         data: {
           status: StockTransferStatus.SHIPPED,
           shippedById: memberId,
@@ -352,7 +366,13 @@ export class StockTransferUseCase {
         },
       });
 
-      return updatedTransfer;
+      if (updateResult.count === 0) {
+        throw new NotFoundException("Transfer not found or unauthorized");
+      }
+
+      return tx.stockTransfer.findFirstOrThrow({
+        where: { id: transferId, organizationId },
+      });
     });
 
     // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
@@ -499,18 +519,27 @@ export class StockTransferUseCase {
         });
       }
 
-      const completedTransfer = await tx.stockTransfer.update({
-        where: { id: transferId },
+      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
+      // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
+      const updateResult = await tx.stockTransfer.updateMany({
+        where: { id: transferId, organizationId },
         data: {
           status: StockTransferStatus.COMPLETED,
           receivedById: memberId,
           receivedDate: new Date(),
           completedDate: new Date(),
         },
-        include: { receivedBy: { include: { user: true } } },
       });
 
-      return completedTransfer;
+      if (updateResult.count === 0) {
+        throw new NotFoundException("Transfer not found or unauthorized");
+      }
+
+      return tx.stockTransfer.findFirstOrThrow({
+        where: { id: transferId, organizationId },
+        include: { receivedBy: { include: { user: true } } },
+      });
     });
 
     // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
