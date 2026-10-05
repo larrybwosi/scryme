@@ -1,7 +1,7 @@
 {
   "name": "tasks",
   "private": true,
-  "version": "10.1.32",
+  "version": "10.2.0",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {

@@ -3,11 +3,7 @@ const path = require("path");
 const { execSync } = require("child_process");
 
 const posPackageJsonPath = path.join(__dirname, "../apps/pos/package.json");
-const paths = [
-  path.join(__dirname, "../apps/pos/package.json"),
-  path.join(__dirname, "../apps/bakery/package.json"),
-    path.join(__dirname, "../packages/sdk/package.json")
-];
+const MINIMUM_BASELINE_VERSION = "10.2.0";
 
 function parseSemver(v) {
   const match = v.match(/^(\d+)\.(\d+)\.(\d+)(.*)$/);
@@ -29,9 +25,29 @@ function compareSemver(v1, v2) {
   return p1.suffix.localeCompare(p2.suffix);
 }
 
+function getAllPackageJsonPaths() {
+  const results = [];
+  const root = path.join(__dirname, "..");
+
+  for (const group of ["apps", "packages"]) {
+    const groupDir = path.join(root, group);
+    if (fs.existsSync(groupDir)) {
+      for (const entry of fs.readdirSync(groupDir)) {
+        const pkgPath = path.join(groupDir, entry, "package.json");
+        if (fs.existsSync(pkgPath)) {
+          results.push(pkgPath);
+        }
+      }
+    }
+  }
+  return results;
+}
+
 function getHighestVersion() {
-  let highest = "0.0.0";
-  for (const p of paths) {
+  let highest = MINIMUM_BASELINE_VERSION;
+  const packagePaths = getAllPackageJsonPaths();
+
+  for (const p of packagePaths) {
     if (fs.existsSync(p)) {
       try {
         const pkg = JSON.parse(fs.readFileSync(p, "utf8"));
@@ -53,14 +69,13 @@ function updatePackageVersion(newVersion) {
   fs.writeFileSync(
     posPackageJsonPath,
     JSON.stringify(pkg, null, 2) + "\n",
-    "utf8",
+    "utf8"
   );
 }
 
 function tagExistsOnRemote(version) {
   const tag = `v${version}`;
   try {
-    // Run git ls-remote to check if the tag exists on the remote repository
     const output = execSync(`git ls-remote --tags origin refs/tags/${tag}`, {
       stdio: ["ignore", "pipe", "pipe"],
       encoding: "utf8",
@@ -72,11 +87,10 @@ function tagExistsOnRemote(version) {
     }
   } catch (error) {
     console.warn(
-      `Could not check remote tags: ${error.message}. Checking GitHub releases and local tags instead.`,
+      `Could not check remote tags: ${error.message}. Checking GitHub releases and local tags instead.`
     );
   }
 
-  // Check if a GitHub release exists for this tag (including draft releases)
   try {
     const ghOutput = execSync(`gh release view ${tag}`, {
       stdio: ["ignore", "pipe", "pipe"],
@@ -88,7 +102,7 @@ function tagExistsOnRemote(version) {
       return true;
     }
   } catch (ghError) {
-    // gh release view throws if release is not found or gh is unauthenticated/not installed
+    // gh release view throws if release is not found or gh is unauthenticated
   }
 
   try {
@@ -119,19 +133,18 @@ function main() {
   let currentVersion = getHighestVersion();
   const initialVersion = currentVersion;
   console.log(
-    `Starting unique version check. Determined highest version: ${initialVersion}`,
+    `Starting unique version check. Determined highest version: ${initialVersion}`
   );
   let wasBumped = false;
   while (tagExistsOnRemote(currentVersion)) {
     const nextVersion = bumpVersion(currentVersion);
     console.log(
-      `Version ${currentVersion} already exists on remote. Jumping to next version: ${nextVersion}`,
+      `Version ${currentVersion} already exists on remote. Jumping to next version: ${nextVersion}`
     );
     currentVersion = nextVersion;
     wasBumped = true;
   }
 
-  // Get current pos version to see if it needs update
   let posVersion = "0.0.0";
   if (fs.existsSync(posPackageJsonPath)) {
     posVersion = JSON.parse(fs.readFileSync(posPackageJsonPath, "utf8")).version;
@@ -139,41 +152,39 @@ function main() {
 
   if (currentVersion !== posVersion || wasBumped) {
     console.log(
-      `Updating apps/pos/package.json to version: ${currentVersion}`,
+      `Updating apps/pos/package.json to version: ${currentVersion}`
     );
     updatePackageVersion(currentVersion);
   } else {
     console.log(
-      `Version ${currentVersion} is unique and does not exist on remote. No bump required.`,
+      `Version ${currentVersion} is unique and does not exist on remote. No bump required.`
     );
   }
 
-  // Sync version to other package.json files and Tauri configs on every run
   console.log(
-    "Syncing version to other packages, SDKs, and Tauri configurations...",
+    "Syncing version to all packages, SDKs, Android, Cargo, and Tauri configurations..."
   );
   const syncScriptPath = path.join(__dirname, "sync-tauri-version.sh");
   try {
-    execSync(`bash "${syncScriptPath}"`, { stdio: "inherit" });
+    execSync(`bash "${syncScriptPath}" "${currentVersion}"`, { stdio: "inherit" });
     console.log("Version synchronization complete.");
   } catch (syncError) {
     console.error(
-      `Error executing sync-tauri-version.sh: ${syncError.message}`,
+      `Error executing sync-tauri-version.sh: ${syncError.message}`
     );
     process.exit(1);
   }
 
-  // Expose the final version to GitHub Actions step outputs if running in CI
   if (process.env.GITHUB_OUTPUT) {
     fs.appendFileSync(
       process.env.GITHUB_OUTPUT,
       `version=${currentVersion}\n`,
-      "utf8",
+      "utf8"
     );
     fs.appendFileSync(
       process.env.GITHUB_OUTPUT,
       `was_bumped=${wasBumped}\n`,
-      "utf8",
+      "utf8"
     );
   }
 }

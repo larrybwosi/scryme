@@ -173,6 +173,7 @@ jobs:
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add .
           git commit -m "chore(release): bump version to v${{ steps.get-version.outputs.version }}"
+          git push origin ${{ github.ref_name }}
 
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
@@ -220,6 +221,9 @@ jobs:
           else
             echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
           fi
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
 
       - name: Build and Publish POS App
         uses: tauri-apps/tauri-action@v0
@@ -290,6 +294,9 @@ jobs:
             echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
           fi
 
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
       - name: Build and Publish Bakery App
         uses: tauri-apps/tauri-action@v0
         env:
@@ -327,6 +334,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -408,6 +418,9 @@ jobs:
       - name: Setup Rust Toolchain
         uses: dtolnay/rust-toolchain@stable
 
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
       - name: Generate Rust SDK
         run: pnpm --filter @scryme/sdk generate:rust
 
@@ -426,6 +439,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
