@@ -39,7 +39,9 @@ describe("Stock Reception and Batch Traceability Use Cases", () => {
         },
         stockTransfer: {
           findFirst: vi.fn(),
+          findFirstOrThrow: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
         stockTransferItem: {
           update: vi.fn(),
@@ -157,7 +159,7 @@ describe("Stock Reception and Batch Traceability Use Cases", () => {
     };
 
     prismaMock.client.stockTransfer.findFirst.mockResolvedValue(mockTransfer);
-    prismaMock.client.stockTransfer.update.mockResolvedValue({
+    prismaMock.client.stockTransfer.findFirstOrThrow.mockResolvedValue({
       ...mockTransfer,
       status: StockTransferStatus.COMPLETED,
       receivedDate: new Date(),

@@ -276,117 +276,155 @@ export async function receivePurchaseStockWithBatches(data: {
   }
 
   await db.$transaction(async tx => {
-    for (const itemInput of data.items) {
-      const pItem = purchase.items.find(i => i.id === itemInput.purchaseItemId);
-      if (!pItem) continue;
+    // Filter and collect valid received purchase items
+    const validItems = data.items
+      .map(itemInput => {
+        const pItem = purchase.items.find(i => i.id === itemInput.purchaseItemId);
+        if (!pItem) return null;
+        const receivedQty = Number(itemInput.quantity);
+        if (receivedQty <= 0) return null;
+        return { itemInput, pItem, receivedQty };
+      })
+      .filter((x): x is NonNullable<typeof x> => x !== null);
 
-      const receivedQty = Number(itemInput.quantity);
-      if (receivedQty <= 0) continue;
+    if (validItems.length > 0) {
+      const variantIds = Array.from(new Set(validItems.map(v => v.pItem.variantId)));
 
-      // 1. Update purchase item received quantity
-      await tx.purchaseItem.update({
-        where: { id: pItem.id },
-        data: {
-          receivedQuantity: { increment: receivedQty },
-        },
-      });
-
-      // 2. Generate stock batch for tracking, expiry, and supplier genealogy
-      const batchNo = itemInput.batchNumber || `BATCH-${Date.now()}-${pItem.id.slice(-4)}`;
-      const expDate = itemInput.expiryDate ? new Date(itemInput.expiryDate) : null;
-      const recDate = itemInput.receivedDate ? new Date(itemInput.receivedDate) : new Date();
-      const pPrice = itemInput.unitCost ?? Number(pItem.unitCost || 0);
-
-      const batch = await tx.stockBatch.create({
-        data: {
-          organizationId: auth.organizationId,
-          variantId: pItem.variantId,
-          locationId: targetLocationId,
-          purchaseItemId: pItem.id,
-          supplierId: purchase.supplierId,
-          batchNumber: batchNo,
-          supplierBatchNumber: itemInput.supplierBatchNumber || null,
-          initialQuantity: receivedQty,
-          currentQuantity: receivedQty,
-          purchasePrice: pPrice,
-          expiryDate: expDate,
-          receivedDate: recDate,
-        },
-      });
-
-      // 3. Increment or upsert product variant stock
-      const existingStock = await tx.productVariantStock.findUnique({
+      // ⚡ Bolt Optimization: Batch fetch existing stock records and missing product variants up-front,
+      // converting up to 5N sequential database queries per item into batched read queries,
+      // consolidated per-variant stock upserts, and concurrent write operations via Promise.all.
+      const existingStocks = await tx.productVariantStock.findMany({
         where: {
-          variantId_locationId: {
-            variantId: pItem.variantId,
-            locationId: targetLocationId,
-          },
+          locationId: targetLocationId,
+          variantId: { in: variantIds },
         },
       });
+      const stockMap = new Map(existingStocks.map(s => [s.variantId, s]));
 
-      if (existingStock) {
-        await tx.productVariantStock.update({
-          where: { id: existingStock.id },
-          data: {
-            currentStock: { increment: receivedQty },
-            availableStock: { increment: receivedQty },
-          },
+      const missingVariantIds = variantIds.filter(vId => !stockMap.has(vId));
+      let variantMap = new Map<string, { productId: string }>();
+      if (missingVariantIds.length > 0) {
+        const variants = await tx.productVariant.findMany({
+          where: { id: { in: missingVariantIds } },
+          select: { id: true, productId: true },
         });
-      } else {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: pItem.variantId },
-          select: { productId: true },
-        });
+        variantMap = new Map(variants.map(v => [v.id, v]));
+      }
 
-        if (variant) {
-          await tx.productVariantStock.create({
-            data: {
-              organizationId: auth.organizationId,
-              productId: variant.productId,
-              variantId: pItem.variantId,
-              locationId: targetLocationId,
-              currentStock: receivedQty,
-              availableStock: receivedQty,
-            },
-          });
+      // Consolidate total received stock quantity per variantId to eliminate lock contention
+      // and duplicate row insertion collisions when multiple items share the same variant.
+      const variantTotals = new Map<string, { totalQty: number; productId: string }>();
+      for (const { pItem, receivedQty } of validItems) {
+        const current = variantTotals.get(pItem.variantId);
+        const productId = stockMap.get(pItem.variantId)?.productId || variantMap.get(pItem.variantId)?.productId || "";
+        if (current) {
+          current.totalQty += receivedQty;
+        } else {
+          variantTotals.set(pItem.variantId, { totalQty: receivedQty, productId });
         }
       }
 
-      // 4. Log Stock Movement
-      await tx.stockMovement.create({
-        data: {
-          organizationId: auth.organizationId,
-          variantId: pItem.variantId,
-          toLocationId: targetLocationId,
-          stockBatchId: batch.id,
-          quantity: receivedQty,
-          movementType: "PURCHASE_RECEIPT",
-          referenceType: "Purchase",
-          referenceId: purchase.id,
-          memberId: auth.memberId,
-          notes: data.notes || itemInput.notes || `Received PO ${purchase.purchaseNumber}`,
-        },
+      // Execute consolidated stock updates (1 query per unique variant)
+      const stockOps = Array.from(variantTotals.entries()).map(([variantId, { totalQty, productId }]) => {
+        const existingStock = stockMap.get(variantId);
+        if (existingStock) {
+          return tx.productVariantStock.update({
+            where: { id: existingStock.id },
+            data: {
+              currentStock: { increment: totalQty },
+              availableStock: { increment: totalQty },
+            },
+          });
+        } else if (productId) {
+          return tx.productVariantStock.create({
+            data: {
+              organizationId: auth.organizationId,
+              productId,
+              variantId,
+              locationId: targetLocationId,
+              currentStock: totalQty,
+              availableStock: totalQty,
+            },
+          });
+        }
+        return Promise.resolve();
       });
 
-      // 5. Log Stock Audit Log
-      await tx.stockAuditLog.create({
-        data: {
-          organizationId: auth.organizationId,
-          entityType: "Purchase",
-          entityId: purchase.id,
-          action: "STOCK_RECEIVED",
-          fieldName: "receivedQuantity",
-          newValue: `${receivedQty} received into batch ${batchNo}`,
-          performedBy: auth.memberId,
-          metadata: {
-            batchId: batch.id,
-            batchNumber: batchNo,
-            supplierBatchNumber: itemInput.supplierBatchNumber,
-            expiryDate: expDate,
-            documentRef: data.documentRef,
+      // Process item-level receipts, batches, movements, and audit logs concurrently
+      const itemOps = validItems.map(async ({ itemInput, pItem, receivedQty }) => {
+        const batchNo = itemInput.batchNumber || `BATCH-${Date.now()}-${pItem.id.slice(-4)}`;
+        const expDate = itemInput.expiryDate ? new Date(itemInput.expiryDate) : null;
+        const recDate = itemInput.receivedDate ? new Date(itemInput.receivedDate) : new Date();
+        const pPrice = itemInput.unitCost ?? Number(pItem.unitCost || 0);
+
+        // 1. Update purchase item received quantity
+        const updateItemOp = tx.purchaseItem.update({
+          where: { id: pItem.id },
+          data: {
+            receivedQuantity: { increment: receivedQty },
           },
-        },
+        });
+
+        // 2. Generate stock batch for tracking, expiry, and supplier genealogy
+        const createBatchOp = tx.stockBatch.create({
+          data: {
+            organizationId: auth.organizationId,
+            variantId: pItem.variantId,
+            locationId: targetLocationId,
+            purchaseItemId: pItem.id,
+            supplierId: purchase.supplierId,
+            batchNumber: batchNo,
+            supplierBatchNumber: itemInput.supplierBatchNumber || null,
+            initialQuantity: receivedQty,
+            currentQuantity: receivedQty,
+            purchasePrice: pPrice,
+            expiryDate: expDate,
+            receivedDate: recDate,
+          },
+        });
+
+        const [, batch] = await Promise.all([updateItemOp, createBatchOp]);
+
+        // 3. Log Stock Movement
+        const movementOp = tx.stockMovement.create({
+          data: {
+            organizationId: auth.organizationId,
+            variantId: pItem.variantId,
+            toLocationId: targetLocationId,
+            stockBatchId: batch.id,
+            quantity: receivedQty,
+            movementType: "PURCHASE_RECEIPT",
+            referenceType: "Purchase",
+            referenceId: purchase.id,
+            memberId: auth.memberId,
+            notes: data.notes || itemInput.notes || `Received PO ${purchase.purchaseNumber}`,
+          },
+        });
+
+        // 4. Log Stock Audit Log
+        const auditOp = tx.stockAuditLog.create({
+          data: {
+            organizationId: auth.organizationId,
+            entityType: "Purchase",
+            entityId: purchase.id,
+            action: "STOCK_RECEIVED",
+            fieldName: "receivedQuantity",
+            newValue: `${receivedQty} received into batch ${batchNo}`,
+            performedBy: auth.memberId,
+            metadata: {
+              batchId: batch.id,
+              batchNumber: batchNo,
+              supplierBatchNumber: itemInput.supplierBatchNumber,
+              expiryDate: expDate,
+              documentRef: data.documentRef,
+            },
+          },
+        });
+
+        await Promise.all([movementOp, auditOp]);
       });
+
+      await Promise.all([...stockOps, ...itemOps]);
     }
 
     // Check overall purchase status

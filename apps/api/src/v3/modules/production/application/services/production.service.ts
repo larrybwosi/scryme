@@ -2248,9 +2248,14 @@ export class ProductionService {
 
       const variantMap = new Map(variants.map(v => [v.id, v]));
 
-      for (let i = 0; i < lines.length; i++) {
-        const line = lines[i];
+      // ⚡ Bolt Optimization: Validate all ingredients first and aggregate stock updates
+      // by unique variantId in-memory to prevent row-lock contention and reduce database roundtrips.
+      const variantStockUpdates = new Map<
+        string,
+        { productId: string; totalQuantity: number }
+      >();
 
+      for (const line of lines) {
         const variant = variantMap.get(line.ingredientId);
 
         if (!variant) {
@@ -2259,6 +2264,20 @@ export class ProductionService {
           );
         }
 
+        const existing = variantStockUpdates.get(line.ingredientId);
+        if (existing) {
+          existing.totalQuantity += line.quantity;
+        } else {
+          variantStockUpdates.set(line.ingredientId, {
+            productId: variant.productId,
+            totalQuantity: line.quantity,
+          });
+        }
+      }
+
+      // ⚡ Bolt Optimization: Create stock batches and movements for received ingredient lines.
+      for (let i = 0; i < lines.length; i++) {
+        const line = lines[i];
         const batch = await tx.stockBatch.create({
           data: {
             organizationId,
@@ -2275,27 +2294,6 @@ export class ProductionService {
           } as any,
         });
 
-        await tx.productVariantStock.upsert({
-          where: {
-            variantId_locationId: {
-              variantId: line.ingredientId,
-              locationId,
-            },
-          },
-          update: {
-            currentStock: { increment: line.quantity },
-            availableStock: { increment: line.quantity },
-          },
-          create: {
-            organizationId,
-            productId: variant.productId,
-            variantId: line.ingredientId,
-            locationId,
-            currentStock: line.quantity,
-            availableStock: line.quantity,
-          } as any,
-        });
-
         await tx.stockMovement.create({
           data: {
             organizationId,
@@ -2309,6 +2307,31 @@ export class ProductionService {
             referenceType: "StockReceipt",
             notes: `Received via Production GRN ${receiptReference}`,
           },
+        });
+      }
+
+      // ⚡ Bolt Optimization: Update productVariantStock exactly once per unique variantId
+      // to eliminate row lock contention and redundant database updates.
+      for (const [variantId, updateInfo] of variantStockUpdates.entries()) {
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
+              variantId,
+              locationId,
+            },
+          },
+          update: {
+            currentStock: { increment: updateInfo.totalQuantity },
+            availableStock: { increment: updateInfo.totalQuantity },
+          },
+          create: {
+            organizationId,
+            productId: updateInfo.productId,
+            variantId,
+            locationId,
+            currentStock: updateInfo.totalQuantity,
+            availableStock: updateInfo.totalQuantity,
+          } as any,
         });
       }
 

@@ -384,12 +384,19 @@ export class PurchaseOrderUseCase {
 
     if (!purchase) throw new NotFoundException("Purchase order not found");
 
-    const updatedPurchase = await this.prisma.client.purchase.update({
-      where: { id: purchaseId },
+    // SECURITY (Sentinel): Purchase model lacks a composite unique constraint on [id, organizationId].
+    // Prisma's standard `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
+    // Using `updateMany({ where: { id: purchaseId, organizationId } })` guarantees database-level multi-tenant isolation during status mutations.
+    await this.prisma.client.purchase.updateMany({
+      where: { id: purchaseId, organizationId },
       data: {
         status: PurchaseStatus.APPROVED,
         updatedAt: new Date(),
       },
+    });
+
+    const updatedPurchase = await this.prisma.client.purchase.findFirstOrThrow({
+      where: { id: purchaseId, organizationId },
     });
 
     // Post to ledger after approval

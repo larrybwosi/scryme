@@ -29,3 +29,19 @@
 ## 2026-09-30 - User Owner Scoping in OAuth Clients and API Keys
 **Learning:** `OAuthClient` and `Apikey` models lack composite unique constraints on `[id, userId]`. Standard Prisma `update` and `delete` calls ignore non-unique `userId` conditions in `where` clauses at runtime. In user-owned developer features, relying solely on pre-checks leaves potential race or bypass exposure.
 **Action:** Always use `updateMany({ where: { id, userId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, userId } })` for database-level user owner scoping on auth resource mutations.
+
+## 2026-10-02 - Custom Role Mutation Tenant Isolation
+**Learning:** In `RoleManagementUseCase`, `CustomRole` lacks a composite unique constraint on `[id, organizationId]`. Using standard `customRole.update` or `customRole.delete` with `{ where: { id } }` ignores non-unique tenant parameters at database execution time.
+**Action:** Use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, organizationId } })` to enforce database-level multi-tenant isolation during custom role mutations.
+
+## 2026-10-05 - Multi-Tenant Scoping and Atomic State Check in Invitation Revocation
+**Learning:** `Invitation` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `invitation.update({ where: { id } })` ignores `organizationId` at runtime. Using `updateMany({ where: { id, organizationId, status: PENDING }, data: { status: DECLINED } })` guarantees database-level multi-tenant isolation and prevents invalid state transitions.
+**Action:** Always use `updateMany({ where: { id, organizationId, status: InvitationStatus.PENDING }, data })` followed by `findFirstOrThrow` for database-level multi-tenant and state-aware invitation mutations.
+
+## 2026-10-07 - Purchase Order Approval Tenant Isolation
+**Learning:** In `PurchaseOrderUseCase.approve`, `Purchase` model lacks a composite unique constraint on `[id, organizationId]`. Using standard `purchase.update({ where: { id } })` ignores non-unique `organizationId` filters in Prisma's `where` clause at runtime. If pre-checks are bypassed or raced against, single-ID targeting creates potential BOLA/IDOR risks.
+**Action:** Use `purchase.updateMany({ where: { id: purchaseId, organizationId }, data })` followed by `purchase.findFirstOrThrow({ where: { id: purchaseId, organizationId } })` to enforce database-level multi-tenant isolation during status mutations.
+
+## 2026-10-09 - Stock Transfer Mutation Multi-Tenant Scoping
+**Learning:** In `StockTransferUseCase` (`approve`, `ship`, `receive`), `StockTransfer` model lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `stockTransfer.update({ where: { id } })` ignores non-unique `organizationId` parameters in `where` clauses at database execution time, risking cross-tenant BOLA mutations if single-ID lookups are targeted directly.
+**Action:** Use `stockTransfer.updateMany({ where: { id: transferId, organizationId }, data })` followed by `stockTransfer.findFirstOrThrow({ where: { id: transferId, organizationId } })` to enforce database-level multi-tenant isolation during stock transfer status mutations.
