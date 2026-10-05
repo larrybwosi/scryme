@@ -41,6 +41,66 @@ describe("Bakery App Validations - Category, Recipe & Batch Schemas", () => {
       expect(result.success).toBe(true);
     });
 
+    it("should pass with all recipe fields provided including EXPERT difficulty and ingredient preparationNotes", () => {
+      const fullRecipe = {
+        name: "Artisan Baguette",
+        categoryId: "cat-123",
+        producesVariantId: "prod-variant-123",
+        yieldQuantity: 12,
+        systemUnitId: "unit-pcs",
+        costPrice: 15.5,
+        prepTime: 30,
+        bakeTime: 25,
+        totalTime: 55,
+        difficulty: "EXPERT",
+        temperatureCelsius: 240,
+        servingSize: "1 baguette",
+        instructions: "1. Autolyse\n2. Bulk ferment\n3. Shape and bake",
+        notes: "Steam oven for 10 mins",
+        tags: ["french", "artisan"],
+        ingredients: [
+          {
+            ingredientVariantId: "flour-1",
+            quantity: 1000,
+            systemUnitId: "unit-g",
+            preparationNotes: "Unbleached bread flour, sifted",
+          },
+        ],
+      };
+      const result = recipeSchema.safeParse(fullRecipe);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.difficulty).toBe("EXPERT");
+        expect(result.data.temperatureCelsius).toBe(240);
+        expect(result.data.servingSize).toBe("1 baguette");
+        expect(result.data.ingredients[0].preparationNotes).toBe("Unbleached bread flour, sifted");
+      }
+    });
+
+    it("should handle empty or NaN strings for optional numeric fields gracefully", () => {
+      const recipeWithEmptyStrings = {
+        name: "Brioche",
+        categoryId: "cat-123",
+        producesVariantId: "prod-variant-123",
+        yieldQuantity: 1,
+        systemUnitId: "unit-loaves",
+        costPrice: "",
+        prepTime: "",
+        bakeTime: "",
+        totalTime: "",
+        temperatureCelsius: "",
+        ingredients: [validIngredient],
+      };
+      const result = recipeSchema.safeParse(recipeWithEmptyStrings);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data.costPrice).toBeUndefined();
+        expect(result.data.prepTime).toBeUndefined();
+        expect(result.data.bakeTime).toBeUndefined();
+        expect(result.data.temperatureCelsius).toBeUndefined();
+      }
+    });
+
     it("should fail when ingredients list is empty", () => {
       const result = recipeSchema.safeParse({
         name: "Classic Sourdough",
