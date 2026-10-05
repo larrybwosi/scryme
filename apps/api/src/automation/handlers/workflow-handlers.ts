@@ -288,6 +288,7 @@ export class WorkflowHandlers {
     const threshold = ctx.definitionConfig?.threshold ?? ctx.payload?.threshold ?? 10;
     const notificationEmail = ctx.definitionConfig?.notificationEmail ?? ctx.payload?.notificationEmail ?? "";
     const productId = ctx.payload?.productId;
+    const variantId = ctx.payload?.variantId || productId;
     const rawProductName = ctx.payload?.productName || "";
     const rawVariantName = ctx.payload?.variantName || "";
 
@@ -305,72 +306,206 @@ export class WorkflowHandlers {
       }
     }
 
+    let supplierId = ctx.payload?.supplierId;
+    let supplierName = ctx.payload?.supplierName;
+    let existingPoId = ctx.payload?.existingPoId;
+    let existingPoNumber = ctx.payload?.existingPoNumber;
+
+    if (!supplierId && (variantId || productId)) {
+      try {
+        const vId = variantId || productId;
+        const variant = await (this.prisma.client as any).productVariant.findFirst({
+          where: { id: vId },
+          include: {
+            suppliers: { include: { supplier: true } },
+            product: {
+              include: {
+                suppliers: { include: { supplier: true } },
+              },
+            },
+          },
+        });
+
+        if (variant) {
+          const candidateSuppliers =
+            variant.suppliers?.length > 0
+              ? variant.suppliers
+              : variant.product?.suppliers || [];
+          const preferred =
+            candidateSuppliers.find((s: any) => s.isPreferred) || candidateSuppliers[0];
+          if (preferred?.supplier) {
+            supplierId = preferred.supplier.id;
+            supplierName = preferred.supplier.name;
+          }
+        }
+      } catch (err: any) {
+        this.logger.warn(`Could not resolve supplier for variant ${variantId}: ${err.message}`);
+      }
+    }
+
+    if (supplierId && !existingPoId) {
+      try {
+        const existingPo = await (this.prisma.client as any).purchase.findFirst({
+          where: {
+            organizationId: ctx.organizationId,
+            supplierId,
+            status: { in: ["DRAFT", "PENDING_APPROVAL", "ORDERED"] },
+          },
+          orderBy: { createdAt: "desc" },
+          select: { id: true, purchaseNumber: true },
+        });
+
+        if (existingPo) {
+          existingPoId = existingPo.id;
+          existingPoNumber = existingPo.purchaseNumber;
+        }
+      } catch (err: any) {
+        this.logger.warn(`Could not query existing PO for supplier ${supplierId}: ${err.message}`);
+      }
+    }
+
     const currentStock = ctx.payload?.currentStock ?? 0;
     const isLowStock = currentStock < threshold;
 
-    this.logger.log(`[LowStockAlert] ${displayName}: stock ${currentStock}, threshold ${threshold}. Alert triggered: ${isLowStock}`);
+    this.logger.log(
+      `[LowStockAlert] ${displayName}: stock ${currentStock}, threshold ${threshold}, supplier: ${supplierName || "None"}. Alert triggered: ${isLowStock}`,
+    );
 
     let scrymeSent = false;
     let emailSent = false;
 
     if (isLowStock) {
-      const alertMsg = `⚠️ **Low Stock Alert Report**\n\n` +
+      const alertMsg =
+        `⚠️ **Low Stock Alert Report**\n\n` +
         `• **Item:** ${displayName}\n` +
         `• **Current Stock:** **${currentStock}**\n` +
-        `• **Threshold:** **${threshold}**`;
+        `• **Threshold:** **${threshold}**` +
+        (supplierName ? `\n• **Supplier:** **${supplierName}**` : "");
 
-      const actions: ScrymeChatAction[] = [
-        {
-          id: `restock_${productId || "item"}`,
-          label: "⚡ Quick Restock",
-          type: "button",
-          style: "primary",
-          value: JSON.stringify({ action: "restock_now", productId, productName: displayName, currentStock, threshold }),
-        },
-        {
-          id: `reorder_${productId || "item"}`,
-          label: "📦 Reorder from Supplier",
-          type: "button",
-          style: "secondary",
-          value: JSON.stringify({ action: "reorder_supplier", productId, productName: displayName }),
-        },
-        {
-          id: `view_${productId || "item"}`,
-          label: "🔍 View Details",
-          type: "button",
-          style: "secondary",
-          value: JSON.stringify({ action: "view_product", productId }),
-        },
+      const actions: ScrymeChatAction[] = [];
+
+      if (supplierId) {
+        if (existingPoId && existingPoNumber) {
+          actions.push({
+            id: `add_po_${existingPoId}`,
+            label: `➕ Add to PO #${existingPoNumber}`,
+            type: "button",
+            style: "primary",
+            value: JSON.stringify({
+              action: "add_to_po",
+              purchaseId: existingPoId,
+              purchaseNumber: existingPoNumber,
+              supplierId,
+              supplierName,
+              variantId,
+              productId,
+              productName: displayName,
+              currentStock,
+              threshold,
+            }),
+          });
+        } else {
+          actions.push({
+            id: `create_po_${supplierId}`,
+            label: `📝 Create PO (${supplierName})`,
+            type: "button",
+            style: "primary",
+            value: JSON.stringify({
+              action: "create_po",
+              supplierId,
+              supplierName,
+              variantId,
+              productId,
+              productName: displayName,
+              currentStock,
+              threshold,
+            }),
+          });
+        }
+      }
+
+      actions.push({
+        id: `restock_${productId || "item"}`,
+        label: "⚡ Quick Restock",
+        type: "button",
+        style: supplierId ? "secondary" : "primary",
+        value: JSON.stringify({
+          action: "restock_now",
+          productId,
+          variantId,
+          productName: displayName,
+          currentStock,
+          threshold,
+        }),
+      });
+
+      actions.push({
+        id: `view_${productId || "item"}`,
+        label: "🔍 View Details",
+        type: "button",
+        style: "secondary",
+        value: JSON.stringify({ action: "view_product", productId, variantId }),
+      });
+
+      const metrics = [
+        { label: "Item Name", value: displayName },
+        { label: "Current Quantity", value: String(currentStock) },
+        { label: "Minimum Threshold", value: String(threshold) },
+        { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
       ];
+
+      if (supplierName) {
+        metrics.push({ label: "Linked Supplier", value: supplierName });
+        if (existingPoNumber) {
+          metrics.push({ label: "Existing Open PO", value: `#${existingPoNumber}` });
+        }
+      }
 
       const customReport = createReportMessage({
         title: `Low Stock Warning: ${displayName}`,
         reportId: `low_stock_${productId || "item"}_${Date.now()}`,
-        summary: `Stock count (${currentStock}) is below minimum threshold (${threshold}). Immediate replenishment recommended.`,
-        metrics: [
-          { label: "Item Name", value: displayName },
-          { label: "Current Quantity", value: String(currentStock) },
-          { label: "Minimum Threshold", value: String(threshold) },
-          { label: "Stock Deficit", value: String(Math.max(0, threshold - currentStock)) },
-        ],
+        summary: `Stock count (${currentStock}) is below minimum threshold (${threshold}). ${
+          supplierName
+            ? existingPoNumber
+              ? `Linked supplier is ${supplierName}. Open PO #${existingPoNumber} available to append items.`
+              : `Linked supplier is ${supplierName}. Ready to create a new Purchase Order.`
+            : "Immediate replenishment recommended."
+        }`,
+        metrics,
         theme: { accentColor: "#f59e0b", borderColor: "#fef3c7", backgroundColor: "#fffbeb" },
       });
 
       scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "stock_alerts", alertMsg, {
         actions,
         customMessage: customReport,
-        metadata: { productId, currentStock, threshold, alertType: "LOW_STOCK" },
+        metadata: {
+          productId,
+          variantId,
+          supplierId,
+          supplierName,
+          existingPoId,
+          existingPoNumber,
+          currentStock,
+          threshold,
+          alertType: "LOW_STOCK",
+        },
       });
 
       // FCM Push Notification for Low Stock
       try {
         await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
           title: `Low Stock Alert: ${displayName}`,
-          body: `Current stock (${currentStock}) is below threshold (${threshold}).`,
+          body: `Current stock (${currentStock}) is below threshold (${threshold}).${
+            supplierName ? ` Supplier: ${supplierName}` : ""
+          }`,
           data: {
             eventType: "LOW_STOCK_ALERT",
             productId: productId || "",
+            variantId: variantId || "",
             productName: displayName,
+            supplierId: supplierId || "",
+            supplierName: supplierName || "",
+            existingPoId: existingPoId || "",
             organizationId: ctx.organizationId,
           },
         });
@@ -386,13 +521,17 @@ export class WorkflowHandlers {
             <li><strong>Item Name:</strong> ${displayName}</li>
             <li><strong>Current Stock:</strong> ${currentStock}</li>
             <li><strong>Threshold:</strong> ${threshold}</li>
+            ${supplierName ? `<li><strong>Supplier:</strong> ${supplierName}</li>` : ""}
+            ${existingPoNumber ? `<li><strong>Existing PO:</strong> #${existingPoNumber}</li>` : ""}
           </ul>
         `;
         emailSent = await this.dispatchWorkflowEmail(
           notificationEmail,
           `⚠️ Low Stock Alert: ${displayName}`,
           emailHtml,
-          `Low Stock Alert: ${displayName}\nCurrent Stock: ${currentStock} (Threshold: ${threshold})`,
+          `Low Stock Alert: ${displayName}\nCurrent Stock: ${currentStock} (Threshold: ${threshold})${
+            supplierName ? `\nSupplier: ${supplierName}` : ""
+          }`,
         );
       }
     }
@@ -404,7 +543,12 @@ export class WorkflowHandlers {
       emailSent,
       details: {
         productId,
+        variantId,
         productName: displayName,
+        supplierId,
+        supplierName,
+        existingPoId,
+        existingPoNumber,
         currentStock,
         threshold,
         notificationEmail,

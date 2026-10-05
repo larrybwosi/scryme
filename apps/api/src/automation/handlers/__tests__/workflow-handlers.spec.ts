@@ -99,6 +99,83 @@ describe("WorkflowHandlers", () => {
       expect(messageContent).not.toContain("Default");
       expect(messageContent).not.toContain("prod_100");
     });
+
+    it("should include supplier and Add to PO action when open PO exists", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        isActive: true,
+        workspaceSlug: "scryme-corp",
+        channelMappings: {
+          stock_alerts: "inventory-alerts",
+        },
+      });
+
+      const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
+
+      const result = await handlers.executeHandler("lowstock_alert", {
+        organizationId: "org_1",
+        executionId: "exec_10",
+        jobId: "job_10",
+        definitionConfig: { threshold: 10 },
+        payload: {
+          productId: "prod_1",
+          variantId: "var_1",
+          productName: "Chocolate Cake",
+          variantName: "1KG",
+          currentStock: 2,
+          supplierId: "sup_1",
+          supplierName: "Bakery Supplies Ltd",
+          existingPoId: "po_100",
+          existingPoNumber: "PO-2026-001",
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.details.productName).toBe("Chocolate Cake - 1KG");
+      expect(result.details.supplierName).toBe("Bakery Supplies Ltd");
+      expect(result.details.existingPoNumber).toBe("PO-2026-001");
+
+      const payloadSent = sendScrymeSpy.mock.calls[0][2];
+      expect(payloadSent.content).toContain("Chocolate Cake - 1KG");
+      expect(payloadSent.content).toContain("Bakery Supplies Ltd");
+
+      const addPoAction = payloadSent.actions.find((a: any) => a.id === "add_po_po_100");
+      expect(addPoAction).toBeDefined();
+      expect(addPoAction.label).toContain("PO #PO-2026-001");
+    });
+
+    it("should include supplier and Create PO action when no open PO exists", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        isActive: true,
+        workspaceSlug: "scryme-corp",
+      });
+
+      const sendScrymeSpy = vi.spyOn((handlers as any).scrymeClient, "sendMessage").mockResolvedValue({} as any);
+
+      const result = await handlers.executeHandler("lowstock_alert", {
+        organizationId: "org_1",
+        executionId: "exec_11",
+        jobId: "job_11",
+        definitionConfig: { threshold: 10 },
+        payload: {
+          productId: "prod_2",
+          variantId: "var_2",
+          productName: "Flour",
+          variantName: "Default",
+          currentStock: 1,
+          supplierId: "sup_2",
+          supplierName: "Global Grain Co",
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.details.productName).toBe("Flour");
+      expect(result.details.supplierName).toBe("Global Grain Co");
+
+      const payloadSent = sendScrymeSpy.mock.calls[0][2];
+      const createPoAction = payloadSent.actions.find((a: any) => a.id === "create_po_sup_2");
+      expect(createPoAction).toBeDefined();
+      expect(createPoAction.label).toContain("Global Grain Co");
+    });
   });
 
   describe("customer_onboarding", () => {

@@ -19,6 +19,9 @@ describe("AutomationScheduler", () => {
           count: vi.fn(),
           aggregate: vi.fn(),
         },
+        purchase: {
+          findFirst: vi.fn(),
+        },
       },
     };
 
@@ -50,7 +53,16 @@ describe("AutomationScheduler", () => {
           ],
         },
         include: {
-          product: true,
+          product: {
+            include: {
+              suppliers: {
+                include: { supplier: true },
+              },
+            },
+          },
+          suppliers: {
+            include: { supplier: true },
+          },
           variantStocks: true,
         },
         take: 50,
@@ -59,11 +71,16 @@ describe("AutomationScheduler", () => {
       expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
         key: "lowstock_alert",
         inputs: {
-          productId: "var_10",
+          variantId: "var_10",
+          productId: undefined,
           productName: "Flour",
           variantName: "1kg",
           currentStock: 2,
           threshold: 5,
+          supplierId: undefined,
+          supplierName: undefined,
+          existingPoId: undefined,
+          existingPoNumber: undefined,
         },
       });
     });
@@ -94,11 +111,68 @@ describe("AutomationScheduler", () => {
       expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
         key: "lowstock_alert",
         inputs: {
-          productId: "var_11",
+          variantId: "var_11",
+          productId: undefined,
           productName: "Sugar",
           variantName: "1kg",
           currentStock: 7,
           threshold: 10,
+          supplierId: undefined,
+          supplierName: undefined,
+          existingPoId: undefined,
+          existingPoNumber: undefined,
+        },
+      });
+    });
+    it("should resolve preferred supplier and existing draft PO for low stock variant", async () => {
+      mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
+        { id: "def_1", key: "lowstock_alert", organizationId: "org_1", config: { threshold: 10 } },
+      ]);
+
+      mockPrisma.client.productVariant.findMany.mockResolvedValue([
+        {
+          id: "var_20",
+          productId: "prod_1",
+          name: "500g",
+          product: { id: "prod_1", name: "Butter" },
+          variantStocks: [{ currentStock: 2 }],
+          suppliers: [
+            { isPreferred: false, supplier: { id: "sup_1", name: "Alpha Supplier" } },
+            { isPreferred: true, supplier: { id: "sup_2", name: "Beta Preferred Supplier" } },
+          ],
+        },
+      ]);
+
+      mockPrisma.client.purchase.findFirst.mockResolvedValue({
+        id: "po_99",
+        purchaseNumber: "PO-1002",
+      });
+
+      await scheduler.handleLowStockCronCheck();
+
+      expect(mockPrisma.client.purchase.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org_1",
+          supplierId: "sup_2",
+          status: { in: ["DRAFT", "PENDING_APPROVAL", "ORDERED"] },
+        },
+        orderBy: { createdAt: "desc" },
+        select: { id: true, purchaseNumber: true },
+      });
+
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
+        key: "lowstock_alert",
+        inputs: {
+          variantId: "var_20",
+          productId: "prod_1",
+          productName: "Butter",
+          variantName: "500g",
+          currentStock: 2,
+          threshold: 10,
+          supplierId: "sup_2",
+          supplierName: "Beta Preferred Supplier",
+          existingPoId: "po_99",
+          existingPoNumber: "PO-1002",
         },
       });
     });

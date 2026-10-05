@@ -40,7 +40,16 @@ export class AutomationScheduler {
               ],
             },
             include: {
-              product: true,
+              product: {
+                include: {
+                  suppliers: {
+                    include: { supplier: true },
+                  },
+                },
+              },
+              suppliers: {
+                include: { supplier: true },
+              },
               variantStocks: true,
             },
             take: 50,
@@ -55,14 +64,52 @@ export class AutomationScheduler {
                 ) ?? 0;
 
               if (currentStock <= threshold) {
+                // Priority supplier resolution: variant-level suppliers first, then product-level suppliers
+                const candidateSuppliers =
+                  variant.suppliers?.length > 0
+                    ? variant.suppliers
+                    : variant.product?.suppliers || [];
+
+                const preferredSupplierRel =
+                  candidateSuppliers.find((s: any) => s.isPreferred) || candidateSuppliers[0];
+
+                const supplier = preferredSupplierRel?.supplier;
+                const supplierId = supplier?.id;
+                const supplierName = supplier?.name;
+
+                let existingPoId: string | undefined;
+                let existingPoNumber: string | undefined;
+
+                if (supplierId) {
+                  const existingPo = await (this.prisma.client as any).purchase.findFirst({
+                    where: {
+                      organizationId: def.organizationId,
+                      supplierId,
+                      status: { in: ["DRAFT", "PENDING_APPROVAL", "ORDERED"] },
+                    },
+                    orderBy: { createdAt: "desc" },
+                    select: { id: true, purchaseNumber: true },
+                  });
+
+                  if (existingPo) {
+                    existingPoId = existingPo.id;
+                    existingPoNumber = existingPo.purchaseNumber;
+                  }
+                }
+
                 await this.automationService.triggerWorkflow(def.organizationId, {
                   key: def.key,
                   inputs: {
-                    productId: variant.id,
-                    productName: variant.product?.name || variant.name || "Product",
+                    variantId: variant.id,
+                    productId: variant.productId || variant.product?.id,
+                    productName: variant.product?.name || "Product",
                     variantName: variant.name,
                     currentStock,
                     threshold,
+                    supplierId,
+                    supplierName,
+                    existingPoId,
+                    existingPoNumber,
                   },
                 });
               }
