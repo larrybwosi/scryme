@@ -1,36 +1,45 @@
 import React, { useState } from 'react';
-import { useTaskStore, taskStore } from '../lib/store';
-import { Plus, Mail, CheckCircle2, ShieldCheck, Activity } from 'lucide-react';
-import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
+import { useTaskStore } from '../lib/store';
+import { Mail, Shield, Plus } from 'lucide-react';
 import { Card } from '@repo/ui/components/ui/card';
+import { Button } from '@repo/ui/components/ui/button';
 import { Badge } from '@repo/ui/components/ui/badge';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/ui/avatar';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@repo/ui/components/ui/dialog';
+import { Input } from '@repo/ui/components/ui/input';
+import { Label } from '@repo/ui/components/ui/label';
 
 export default function TeamsPage() {
   const teamMembers = useTaskStore((state) => state.teamMembers);
-  const [isAdding, setIsAdding] = useState(false);
+  const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
-  const [role, setRole] = useState('Product Designer');
+  const [role, setRole] = useState('Senior Software Engineer');
 
-  const handleAddMember = (e: React.FormEvent) => {
+  const handleInviteMember = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
-    taskStore.addTeamMember({
-      name: name.trim(),
-      email: email.trim() || `${name.toLowerCase().replace(/\s+/g, '.')}@snazzy.studio`,
+    if (!name.trim() || !email.trim()) return;
+
+    const newMember = {
+      id: `usr-${Date.now()}`,
+      name,
+      email,
       role,
-      avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=100',
-      department: 'Engineering',
-      assignedTasksCount: 2,
-      completedTasksCount: 5,
+      avatar: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150`,
+      assignedTasksCount: 0,
+      completedTasksCount: 0,
       weeklyCapacityHours: 40,
-      loggedHoursThisWeek: 20,
-      status: 'ONLINE'
-    });
+      loggedHoursThisWeek: 0,
+      status: 'ONLINE' as const,
+    };
+
+    useTaskStore.setState((state) => ({
+      teamMembers: [...state.teamMembers, newMember],
+    }));
+
+    setIsInviteModalOpen(false);
     setName('');
     setEmail('');
-    setIsAdding(false);
   };
 
   return (
@@ -39,89 +48,99 @@ export default function TeamsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Team Members
+            Team Workspace Roster
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage organization members, roles, and resource workload allocation.
+            Manage organization team members, assign workspace roles, and inspect active access.
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsAdding(!isAdding)}
-          className="gap-2 self-start sm:self-auto text-xs"
-          size="sm"
-        >
-          <Plus className="h-4 w-4" />
-          <span>Add Member</span>
-        </Button>
+        <Dialog open={isInviteModalOpen} onOpenChange={setIsInviteModalOpen}>
+          <DialogTrigger asChild>
+            <Button className="gap-2 text-xs shadow-xs">
+              <Plus className="h-4 w-4" />
+              <span>Invite Team Member</span>
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="text-base font-bold">Invite Member to Workspace</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={handleInviteMember} className="space-y-4 pt-2">
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Full Name</Label>
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="e.g. Jordan Miller"
+                  className="text-xs"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Email Address</Label>
+                <Input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="jordan@company.com"
+                  className="text-xs"
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <Label className="text-xs font-semibold">Role Title</Label>
+                <Input
+                  value={role}
+                  onChange={(e) => setRole(e.target.value)}
+                  placeholder="e.g. Product Designer / Backend Dev"
+                  className="text-xs"
+                  required
+                />
+              </div>
+
+              <DialogFooter className="pt-2">
+                <Button type="button" variant="outline" onClick={() => setIsInviteModalOpen(false)} className="text-xs">
+                  Cancel
+                </Button>
+                <Button type="submit" className="text-xs">
+                  Send Invitation
+                </Button>
+              </DialogFooter>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
 
-      {/* Add Member Form */}
-      {isAdding && (
-        <Card className="p-5 shadow-xs border-border bg-muted/20">
-          <form onSubmit={handleAddMember} className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">Invite New Team Member</h3>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              <Input
-                type="text"
-                required
-                placeholder="Full Name *"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                className="text-xs"
-              />
-              <Input
-                type="email"
-                placeholder="Email Address"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="text-xs"
-              />
-              <Input
-                type="text"
-                placeholder="Role (e.g. Frontend Engineer)"
-                value={role}
-                onChange={(e) => setRole(e.target.value)}
-                className="text-xs"
-              />
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button type="button" variant="outline" size="sm" onClick={() => setIsAdding(false)} className="text-xs">
-                Cancel
-              </Button>
-              <Button type="submit" size="sm" className="text-xs">
-                Save Member
-              </Button>
-            </div>
-          </form>
-        </Card>
-      )}
-
-      {/* Team Cards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      {/* Member Roster Grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {teamMembers.map((member) => (
-          <Card key={member.id} className="p-5 border-border shadow-xs space-y-4">
-            <div className="flex items-center gap-3">
-              <img src={member.avatar} alt={member.name} className="h-10 w-10 rounded-full object-cover ring-2 ring-border" />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between">
-                  <h3 className="font-bold text-sm text-foreground truncate">{member.name}</h3>
-                  <Badge variant="secondary" className="text-[10px] bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400">
-                    {member.status}
-                  </Badge>
-                </div>
-                <div className="text-xs text-muted-foreground truncate">{member.role}</div>
-              </div>
-            </div>
+          <Card key={member.id} className="p-4 hover:shadow-xs transition-shadow flex items-start gap-3.5">
+            <Avatar className="h-11 w-11 border border-border shrink-0">
+              <AvatarImage src={member.avatar} alt={member.name} />
+              <AvatarFallback className="text-xs font-bold">
+                {member.name.substring(0, 2).toUpperCase()}
+              </AvatarFallback>
+            </Avatar>
 
-            <div className="pt-3 border-t border-border grid grid-cols-2 gap-2 text-xs">
-              <div>
-                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Capacity</span>
-                <span className="font-bold text-foreground">{member.loggedHoursThisWeek} / {member.weeklyCapacityHours} hrs</span>
+            <div className="space-y-1.5 min-w-0 flex-1">
+              <div className="flex items-center justify-between gap-1">
+                <h3 className="font-bold text-xs text-foreground truncate">{member.name}</h3>
+                <Badge variant="outline" className="text-[9px] uppercase px-1.5 py-0">
+                  {member.status || 'Active'}
+                </Badge>
               </div>
-              <div>
-                <span className="text-muted-foreground block text-[10px] uppercase font-semibold">Assigned Tasks</span>
-                <span className="font-bold text-foreground">{member.assignedTasksCount} tasks</span>
+
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate">
+                <Shield className="h-3 w-3 text-indigo-500 shrink-0" />
+                <span className="truncate">{member.role}</span>
+              </div>
+
+              <div className="text-[11px] text-muted-foreground flex items-center gap-1.5 truncate pt-1 border-t border-border/60">
+                <Mail className="h-3 w-3 text-muted-foreground shrink-0" />
+                <span className="truncate">{member.email || `${member.name.toLowerCase().replace(' ', '.')}@scryme.tech`}</span>
               </div>
             </div>
           </Card>

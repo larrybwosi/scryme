@@ -246,21 +246,41 @@ export class V3AuthGuard implements CanActivate {
       if (!session) return null;
 
       const user = session.user as any;
-      const orgId =
+      let targetOrgId =
         organization?.id ||
         user.activeOrganizationId ||
         (session.session as any).activeOrganizationId;
 
-      if (!orgId) return null;
+      let member = null;
 
-      // First check if user is a staff Member in the organization
-      const member = await this.prisma.client.member.findFirst({
-        where: {
-          organizationId: orgId,
-          userId: user.id,
-          deletedAt: null,
-        },
-      });
+      if (targetOrgId) {
+        member = await this.prisma.client.member.findFirst({
+          where: {
+            organizationId: targetOrgId,
+            userId: user.id,
+            deletedAt: null,
+          },
+        });
+      }
+
+      if (!member) {
+        // Fallback: search for any active membership for this user
+        member = await this.prisma.client.member.findFirst({
+          where: {
+            userId: user.id,
+            deletedAt: null,
+          },
+          include: {
+            organization: true,
+          },
+        });
+        if (member) {
+          targetOrgId = member.organizationId;
+        }
+      }
+
+      const orgId = targetOrgId;
+      if (!orgId) return null;
 
       if (member) {
         request.user = user;
