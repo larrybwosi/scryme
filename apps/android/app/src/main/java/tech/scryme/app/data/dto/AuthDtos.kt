@@ -105,3 +105,25 @@ data class PosPairResponseDto(
     @SerializedName("organizationId") val organizationId: String? = null,
     @SerializedName("authorized") val authorized: Boolean = true
 )
+
+data class AndroidMeResponseDto(
+    @SerializedName("user") val user: UserDetailDto? = null,
+    @SerializedName("member") val member: MemberUserDto? = null,
+    @SerializedName("activeOrganization") val activeOrganization: OrganizationDetailDto? = null,
+    @SerializedName("memberships") val memberships: List<MembershipDto>? = emptyList(),
+    @SerializedName("locations") val locations: List<LocationDetailDto>? = emptyList()
+)
+
+data class MembershipDto(
+    @SerializedName("organizationId") val organizationId: String? = null,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("slug") val slug: String? = null,
+    @SerializedName("role") val role: String? = null
+)
+
+data class LocationDetailDto(
+    @SerializedName("id") val id: String? = null,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("code") val code: String? = null,
+    @SerializedName("isDefault") val isDefault: Boolean? = false
+)

@@ -7,10 +7,7 @@ import org.junit.Before
 import org.junit.Test
 import retrofit2.Response
 import tech.scryme.app.data.api.AuthApiService
-import tech.scryme.app.data.dto.MemberUserDto
-import tech.scryme.app.data.dto.PosPairResponseDto
-import tech.scryme.app.data.dto.TerminalLoginResponseDto
-import tech.scryme.app.data.dto.V3ApiResponse
+import tech.scryme.app.data.dto.*
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.data.repository.AuthRepositoryImpl
 
@@ -23,6 +20,60 @@ class AuthRepositoryTest {
     @Before
     fun setUp() {
         repository = AuthRepositoryImpl(authApiService, sessionManager)
+    }
+
+    @Test
+    fun loginWithEmail_success_savesSession() = runBlocking {
+        val signInResponse = EmailSignInResponseDto(
+            token = "jwt-user-token-789",
+            user = EmailUserDto(id = "usr_123", email = "test@scryme.tech", name = "Test User"),
+            orgSlug = "test-org"
+        )
+
+        coEvery {
+            authApiService.loginWithEmail(any())
+        } returns Response.success(signInResponse)
+
+        coEvery {
+            authApiService.getAndroidMe()
+        } returns Response.success(V3ApiResponse(success = true, data = AndroidMeResponseDto(
+            user = UserDetailDto(id = "usr_123", email = "test@scryme.tech", name = "Test User"),
+            activeOrganization = OrganizationDetailDto(id = "org_1", slug = "test-org", name = "Test Org")
+        )))
+
+        val result = repository.loginWithEmail("test@scryme.tech", "password123")
+
+        assertTrue(result.isSuccess)
+        coVerify {
+            sessionManager.saveSession(
+                accessToken = "jwt-user-token-789",
+                memberToken = "jwt-user-token-789",
+                orgSlug = "test-org",
+                locationId = any(),
+                memberId = any(),
+                userName = "Test User",
+                userEmail = "test@scryme.tech"
+            )
+        }
+    }
+
+    @Test
+    fun validateSession_success_updatesSession() = runBlocking {
+        coEvery { sessionManager.getAccessToken() } returns "jwt-valid-token"
+        coEvery {
+            authApiService.getAndroidMe()
+        } returns Response.success(V3ApiResponse(
+            success = true,
+            data = AndroidMeResponseDto(
+                user = UserDetailDto(id = "usr_1", email = "user@scryme.tech", name = "Scryme Admin"),
+                activeOrganization = OrganizationDetailDto(id = "org_1", slug = "scryme-hq", name = "Scryme HQ")
+            )
+        ))
+
+        val result = repository.validateSession()
+
+        assertTrue(result.isSuccess)
+        assertEquals("Scryme HQ", result.getOrNull()?.activeOrganization?.name)
     }
 
     @Test

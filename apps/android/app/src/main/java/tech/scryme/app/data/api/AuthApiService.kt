@@ -2,9 +2,11 @@ package tech.scryme.app.data.api
 
 import retrofit2.Response
 import retrofit2.http.Body
+import retrofit2.http.GET
 import retrofit2.http.Header
 import retrofit2.http.POST
 import retrofit2.http.Path
+import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
 import tech.scryme.app.data.dto.EmailSignInResponseDto
 import tech.scryme.app.data.dto.PosPairRequestDto
@@ -17,7 +19,7 @@ import tech.scryme.app.data.dto.V3ApiResponse
 
 interface AuthApiService {
 
-    @POST("auth/sign-in/email")
+    @POST("/auth/sign-in/email")
     suspend fun loginWithEmail(
         @Body request: EmailSignInRequestDto
     ): Response<EmailSignInResponseDto>
@@ -33,6 +35,9 @@ interface AuthApiService {
     suspend fun exchangeToken(
         @Body request: TokenExchangeRequestDto
     ): Response<V3ApiResponse<TokenExchangeResponseDto>>
+
+    @GET("android/me")
+    suspend fun getAndroidMe(): Response<V3ApiResponse<AndroidMeResponseDto>>
 
     @POST("{orgSlug}/pos/pair")
     suspend fun pairPosDevice(
