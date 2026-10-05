@@ -36,8 +36,12 @@ android {
 
     signingConfigs {
         getByName("debug") {
+            isV1SigningEnabled = true
+            isV2SigningEnabled = true
         }
         create("release") {
+            isV1SigningEnabled = true
+            isV2SigningEnabled = true
             val keystorePropertiesFile = rootProject.file("keystore.properties")
             val keystoreProperties = Properties()
             if (keystorePropertiesFile.exists()) {
@@ -97,6 +101,9 @@ android {
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+        jniLibs {
+            useLegacyPackaging = true
         }
     }
 }
