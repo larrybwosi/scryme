@@ -427,13 +427,26 @@ export async function createOrder(
                 organizationId,
               })),
             },
-            attachments: validation.data.attachments
+            attachments: validation.data.attachments?.length
               ? {
-                  create: validation.data.attachments.map((a) => ({
-                    ...a,
-                    organizationId,
-                    memberId,
-                  })),
+                  ...(validation.data.attachments.some((a: any) => a.id)
+                    ? {
+                        connect: validation.data.attachments
+                          .filter((a: any) => a.id)
+                          .map((a: any) => ({ id: a.id })),
+                      }
+                    : {}),
+                  ...(validation.data.attachments.some((a: any) => !a.id)
+                    ? {
+                        create: validation.data.attachments
+                          .filter((a: any) => !a.id)
+                          .map((a: any) => ({
+                            ...a,
+                            organizationId,
+                            memberId,
+                          })),
+                      }
+                    : {}),
                 }
               : undefined,
             taxes: { create: appliedTaxesCreateData },

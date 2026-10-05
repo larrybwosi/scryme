@@ -14,21 +14,29 @@ use serde::{Deserialize, Serialize};
 #[derive(Clone, Default, Debug, PartialEq, Serialize, Deserialize)]
 pub struct PosLoginDto {
     /// The Client ID of the provisioned device
-    #[serde(rename = "clientId")]
-    pub client_id: String,
+    #[serde(rename = "clientId", skip_serializing_if = "Option::is_none")]
+    pub client_id: Option<String>,
+    /// The device key of the provisioned device (alias for clientId)
+    #[serde(rename = "deviceKey", skip_serializing_if = "Option::is_none")]
+    pub device_key: Option<String>,
+    /// Optional location ID context
+    #[serde(rename = "locationId", skip_serializing_if = "Option::is_none")]
+    pub location_id: Option<String>,
     /// The staff PIN
-    #[serde(rename = "pin")]
-    pub pin: String,
+    #[serde(rename = "pin", skip_serializing_if = "Option::is_none")]
+    pub pin: Option<String>,
     /// Optional card ID for optimized member lookup
     #[serde(rename = "cardId", skip_serializing_if = "Option::is_none")]
     pub card_id: Option<String>,
 }
 
 impl PosLoginDto {
-    pub fn new(client_id: String, pin: String) -> PosLoginDto {
+    pub fn new() -> PosLoginDto {
         PosLoginDto {
-            client_id,
-            pin,
+            client_id: None,
+            device_key: None,
+            location_id: None,
+            pin: None,
             card_id: None,
         }
     }

@@ -4,7 +4,7 @@ import { Input } from '@repo/ui/components/ui/input';
 import { Minus, Plus, ShoppingCart, Package, ImageOff, Tag, Wrench } from 'lucide-react';
 import { cn, useFormattedCurrency } from '@/lib/utils';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { UnitSelectionDialog } from './unit-selection-dialog';
 
 // --- Types ---
@@ -168,7 +168,7 @@ export const ProductListItem = memo(({ product, onAddToCart, onSelectProduct, pr
       <div className="relative h-12 w-12 shrink-0 rounded-md bg-muted/20 overflow-hidden border border-border/50">
         {!imgError && product.imageUrl ? (
           <img
-            src={convertFileSrc(product.imageUrl)}
+            src={getPOSImageUrl(product.imageUrl)}
             alt={product.name}
             onError={() => setImgError(true)}
             className={cn(

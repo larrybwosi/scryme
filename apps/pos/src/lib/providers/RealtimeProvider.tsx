@@ -40,15 +40,26 @@ export default function RealtimeInitializer() {
     }
   }, [reconnect, isAuthInitialized, isConfigured, currentMember?.id]);
 
-  // ── Presence management ────────────────────────────────────────────────────
+    // ── Presence management ────────────────────────────────────────────────────
   useEffect(() => {
-    if (!isConfigured || !currentLocation?.id || !currentMember) return;
+    if (!isConfigured || !currentMember || !organizationId) return;
 
     if (socketClient && socketClient.connected) {
-        socketClient.emit('join', { channel: `presence:${currentLocation.id}` });
+      if (currentLocation?.id) {
+        socketClient.emit("join", { channel: `presence:${currentLocation.id}` });
+      }
+      const orgChannel = `presence:org:${organizationId}`;
+      socketClient.emit("presence:enter", {
+        channel: orgChannel,
+        metadata: {
+          app: "pos",
+          memberId: currentMember.id,
+          locationId: currentLocation?.id,
+          timestamp: Date.now(),
+        },
+      });
     }
-
-  }, [socketClient, currentLocation?.id, currentMember, isConfigured]);
+  }, [socketClient, organizationId, currentLocation?.id, currentMember, isConfigured]);
 
   // ── Reconnect when page becomes visible after being backgrounded ───────────
   useEffect(() => {
@@ -137,12 +148,13 @@ export default function RealtimeInitializer() {
           console.log('[Realtime] Price list created received');
           await syncPricing().catch(console.error);
           queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubPriceListUpdated = subscribe(pricingChannel, 'price-list-updated', async () => {
           console.log('[Realtime] Price list updated received');
           await syncPricing().catch(console.error);
-          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubPriceListDeleted = subscribe(pricingChannel, 'price-list-deleted', async (data: any) => {
@@ -156,6 +168,7 @@ export default function RealtimeInitializer() {
           }
           await syncPricing().catch(console.error);
           queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
+          queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
       const unsubCustomerCreated = subscribe(customersChannel, 'customer-created', async () => {

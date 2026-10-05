@@ -31,6 +31,26 @@ export class AutomationService {
 
   public readonly builtInTemplates: WorkflowTemplate[] = [
     {
+      path: "f/dealio/preorder_notification",
+      key: "preorder_notification",
+      name: "Pre-Order Notification Workflow",
+      description: "Sends automated notifications to ScrymeChat preorder channel when custom pre-orders are created.",
+      triggerType: "EVENT",
+      schema: {
+        type: "object",
+        properties: {
+          notificationEmail: {
+            type: "string",
+            title: "Alert Email",
+            default: "",
+            description: "Email address to receive preorder notifications.",
+            group: "Notifications",
+          },
+        },
+      },
+      defaultConfig: { notificationEmail: "" },
+    },
+    {
       path: "f/dealio/customer_onboarding",
       key: "customer_onboarding",
       name: "Customer Onboarding Workflow",
@@ -102,7 +122,7 @@ export class AutomationService {
           notificationEmail: {
             type: "string",
             title: "Alert Email",
-            default: "procurement@example.com",
+            default: "",
             description: "Primary email endpoint for critical inventory alerts.",
             group: "Notifications",
           },
@@ -116,7 +136,7 @@ export class AutomationService {
           },
         },
       },
-      defaultConfig: { threshold: 10, alertFrequency: "IMMEDIATE", notificationEmail: "procurement@example.com" },
+      defaultConfig: { threshold: 10, alertFrequency: "IMMEDIATE", notificationEmail: "" },
     },
     {
       path: "f/dealio/daily_sales_report",
@@ -130,7 +150,7 @@ export class AutomationService {
           recipients: {
             type: "string",
             title: "Recipient Emails (comma separated)",
-            default: "admin@example.com",
+            default: "",
             description: "Comma-separated list of executive email addresses.",
             group: "Distribution",
           },
@@ -151,7 +171,7 @@ export class AutomationService {
           },
         },
       },
-      defaultConfig: { recipients: "admin@example.com", reportTime: "18:00", includeCharts: true },
+      defaultConfig: { recipients: "", reportTime: "18:00", includeCharts: true },
     },
     {
       path: "f/dealio/stock_movement_report",

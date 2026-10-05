@@ -1,3 +1,4 @@
+import { AndroidModule } from "./modules/android/android.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
 import { AgentModule } from "./modules/agent/agent.module";
 import { B2BModule } from "./modules/b2b/b2b.module";
@@ -22,7 +23,6 @@ import { FinanceModule } from "./modules/finance/finance.module";
 import { StandalonePosModule } from "./modules/standalone-pos/standalone-pos.module";
 import { CrmIntegrationsModule } from "./modules/crm-integrations/crm-integrations.module";
 import { UnitsModule } from "./modules/units/units.module";
-import { StrapiModule } from "./modules/strapi/strapi.module";
 import { ServicesModule } from "./modules/services/services.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { ProductionModule } from "./modules/production/production.module";
@@ -51,12 +51,12 @@ export const V3_SUB_MODULES = [
   B2BModule,
   CrmIntegrationsModule,
   UnitsModule,
-  StrapiModule,
   ServicesModule,
   AnalyticsModule,
   ProductionModule,
   DeliveriesModule,
   TasksModule,
+  AndroidModule,
 ];
 
 @Module({

@@ -34,6 +34,7 @@ interface PricingRuleDialogProps {
 }
 
 import { getCurrencySymbol } from "../../lib/utils";
+import { useOrganizationStore } from "../../lib/stores/organization-store";
 
 export function PricingRuleDialog({
   priceListId,
@@ -41,8 +42,10 @@ export function PricingRuleDialog({
   onOpenChange,
   products,
   categories,
-  currency = "USD",
+  currency: currencyProp,
 }: PricingRuleDialogProps) {
+  const { currency: storeCurrency, currencySymbol: storeSymbol } = useOrganizationStore();
+  const currency = currencyProp || storeCurrency;
   const symbol = getCurrencySymbol(currency);
   const [loading, setLoading] = useState(false);
 

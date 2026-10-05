@@ -36,7 +36,39 @@ import {
   UpdateIngredientDto,
   CreateQualityIncidentDto,
   UpdateQualityIncidentDto,
+  DispatchStagedBatchDto,
+  DisposeStagedStockDto,
 } from "../dto/production.dto";
+
+
+function getUnitSearchTerms(candidate: string): string[] {
+  const terms = new Set<string>();
+  const trimmed = candidate.trim();
+  if (!trimmed) return [];
+
+  terms.add(trimmed);
+
+  const parts = trimmed.split(/[-_]+/);
+  for (const part of parts) {
+    if (part) {
+      terms.add(part);
+      if (part.endsWith('s') && part.length > 1) {
+        terms.add(part.slice(0, -1));
+      }
+    }
+  }
+
+  if (trimmed.endsWith('s') && trimmed.length > 1) {
+    terms.add(trimmed.slice(0, -1));
+  }
+
+  return Array.from(terms);
+}
+
+function cleanUnitId(id?: string | null): string | undefined {
+  if (!id || (typeof id === 'string' && id.trim() === '')) return undefined;
+  return id;
+}
 
 @Injectable()
 export class ProductionService {
@@ -46,6 +78,83 @@ export class ProductionService {
     private readonly prisma: PrismaService,
     private readonly authCoreService: V3AuthCoreService,
   ) {}
+
+  private async resolveUnitId(
+    systemUnitId?: string | null,
+    orgUnitId?: string | null,
+    organizationId?: string,
+    label: string = 'unit',
+  ): Promise<{ systemUnitId?: string; orgUnitId?: string }> {
+    const sysId = cleanUnitId(systemUnitId);
+    const customId = cleanUnitId(orgUnitId);
+
+    if (!sysId && !customId) {
+      return {};
+    }
+
+    const candidate = sysId || customId;
+
+    if (candidate) {
+      const systemUnit = await this.prisma.client.systemUnit.findUnique({
+        where: { id: candidate },
+        select: { id: true },
+      });
+
+      if (systemUnit) {
+        return { systemUnitId: candidate, orgUnitId: undefined };
+      }
+
+      const orgUnit = await this.prisma.client.organizationUnit.findFirst({
+        where: {
+          id: candidate,
+          ...(organizationId ? { organizationId } : {}),
+        },
+        select: { id: true },
+      });
+
+      if (orgUnit) {
+        return { systemUnitId: undefined, orgUnitId: candidate };
+      }
+
+      const searchTerms = getUnitSearchTerms(candidate);
+      if (searchTerms.length > 0) {
+        const sysFallback = await this.prisma.client.systemUnit.findFirst({
+          where: {
+            OR: searchTerms.flatMap((term) => [
+              { symbol: { equals: term, mode: 'insensitive' } },
+              { name: { equals: term, mode: 'insensitive' } },
+            ]),
+          },
+          select: { id: true },
+        });
+
+        if (sysFallback) {
+          return { systemUnitId: sysFallback.id, orgUnitId: undefined };
+        }
+
+        const orgFallback = await this.prisma.client.organizationUnit.findFirst({
+          where: {
+            ...(organizationId ? { organizationId } : {}),
+            OR: searchTerms.flatMap((term) => [
+              { symbol: { equals: term, mode: 'insensitive' } },
+              { name: { equals: term, mode: 'insensitive' } },
+            ]),
+          },
+          select: { id: true },
+        });
+
+        if (orgFallback) {
+          return { systemUnitId: undefined, orgUnitId: orgFallback.id };
+        }
+      }
+
+      throw new BadRequestException(
+        `The specified ${label} '${candidate}' was not found as a valid System Unit or Organization Unit.`,
+      );
+    }
+
+    return {};
+  }
 
   async getAttendanceStatus(ctx: V3ApiContext) {
     if (!ctx.memberId) {
@@ -287,11 +396,8 @@ export class ProductionService {
       where: {
         product: {
           organizationId,
+          type: "RAW_MATERIAL" as any,
         },
-        OR: [
-          { product: { type: "RAW_MATERIAL" as any } },
-          { producedByRecipe: { isNot: null } },
-        ],
       },
       select: {
         id: true,
@@ -361,6 +467,8 @@ export class ProductionService {
         categoryId: true,
         producesVariantId: true,
         yieldQuantity: true,
+        systemUnitId: true,
+        orgUnitId: true,
         prepTime: true,
         bakeTime: true,
         totalTime: true,
@@ -444,14 +552,37 @@ export class ProductionService {
 
     const { id: _, createdAt: __, updatedAt: ___, ...recipeData } = recipe;
 
+    const resolvedYieldUnit = await this.resolveUnitId(
+      recipeData.systemUnitId,
+      recipeData.orgUnitId,
+      organizationId,
+      "recipe yield unit",
+    );
+
+    const resolvedIngredients = await Promise.all(
+      recipe.ingredients.map(async ({ id: _, recipeId: __, ...ing }) => {
+        const resolvedIngUnit = await this.resolveUnitId(
+          ing.systemUnitId,
+          ing.orgUnitId,
+          organizationId,
+          `ingredient '${ing.ingredientVariantId}' unit`,
+        );
+        return {
+          ...ing,
+          systemUnitId: resolvedIngUnit.systemUnitId,
+          orgUnitId: resolvedIngUnit.orgUnitId,
+        };
+      }),
+    );
+
     return this.prisma.client.recipe.create({
       data: {
         ...recipeData,
         name: `${recipeData.name} (Copy)`,
+        systemUnitId: resolvedYieldUnit.systemUnitId,
+        orgUnitId: resolvedYieldUnit.orgUnitId,
         ingredients: {
-          create: recipe.ingredients.map(
-            ({ id: _, recipeId: __, ...ing }) => ing,
-          ),
+          create: resolvedIngredients,
         },
       },
     });
@@ -571,8 +702,6 @@ export class ProductionService {
       categoryId,
       producesVariantId,
       yieldQuantity,
-      systemUnitId,
-      orgUnitId,
       costPrice,
       description,
       prepTime,
@@ -588,7 +717,10 @@ export class ProductionService {
       ingredients,
     } = data;
 
-    if (!systemUnitId && !orgUnitId) {
+    const rawSystemUnitId = cleanUnitId(data.systemUnitId);
+    const rawOrgUnitId = cleanUnitId(data.orgUnitId);
+
+    if (!rawSystemUnitId && !rawOrgUnitId) {
       throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
     }
 
@@ -597,9 +729,47 @@ export class ProductionService {
     }
 
     for (const ing of ingredients) {
-      if (!ing.systemUnitId && !ing.orgUnitId) {
+      const ingSysId = cleanUnitId(ing.systemUnitId);
+      const ingOrgId = cleanUnitId(ing.orgUnitId);
+      if (!ingSysId && !ingOrgId) {
         throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
       }
+    }
+
+    const resolvedYieldUnit = await this.resolveUnitId(
+      rawSystemUnitId,
+      rawOrgUnitId,
+      organizationId,
+      "recipe yield unit",
+    );
+
+    if (!resolvedYieldUnit.systemUnitId && !resolvedYieldUnit.orgUnitId) {
+      throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
+    }
+
+    const resolvedIngredients = [];
+    for (const ing of ingredients) {
+      const ingSysId = cleanUnitId(ing.systemUnitId);
+      const ingOrgId = cleanUnitId(ing.orgUnitId);
+
+      const resolvedIngUnit = await this.resolveUnitId(
+        ingSysId,
+        ingOrgId,
+        organizationId,
+        `ingredient '${ing.ingredientVariantId}' unit`,
+      );
+
+      if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+        throw new BadRequestException("Each ingredient must have a valid unit selected.");
+      }
+
+      resolvedIngredients.push({
+        ingredientVariantId: ing.ingredientVariantId,
+        quantity: ing.quantity,
+        systemUnitId: resolvedIngUnit.systemUnitId,
+        orgUnitId: resolvedIngUnit.orgUnitId,
+        preparationNotes: ing.preparationNotes,
+      });
     }
 
     return this.prisma.client.recipe.create({
@@ -608,8 +778,8 @@ export class ProductionService {
         categoryId,
         producesVariantId,
         yieldQuantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: resolvedYieldUnit.systemUnitId,
+        orgUnitId: resolvedYieldUnit.orgUnitId,
         costPrice,
         description,
         prepTime,
@@ -623,13 +793,7 @@ export class ProductionService {
         tags,
         organizationId,
         ingredients: {
-          create: ingredients.map((ing: any) => ({
-            ingredientVariantId: ing.ingredientVariantId,
-            quantity: ing.quantity,
-            systemUnitId: ing.systemUnitId,
-            orgUnitId: ing.orgUnitId,
-            preparationNotes: ing.preparationNotes,
-          })),
+          create: resolvedIngredients,
         },
       },
       include: {
@@ -657,26 +821,67 @@ export class ProductionService {
   async updateRecipe(organizationId: string, id: string, data: UpdateRecipeDto) {
     const { ingredients, isArchived, ...rest } = data;
 
-    if (rest.yieldQuantity !== undefined) {
-      const existing = await this.prisma.client.recipe.findFirst({
-        where: { id, organizationId },
-      });
-      if (!existing) throw new NotFoundException("Recipe not found");
-      const sysUnit = rest.systemUnitId !== undefined ? rest.systemUnitId : existing.systemUnitId;
-      const orgUnit = rest.orgUnitId !== undefined ? rest.orgUnitId : existing.orgUnitId;
+    const existing = await this.prisma.client.recipe.findFirst({
+      where: { id, organizationId },
+    });
+    if (!existing) throw new NotFoundException("Recipe not found");
+
+    let resolvedYieldUnit: { systemUnitId?: string; orgUnitId?: string } | undefined = undefined;
+
+    if (rest.systemUnitId !== undefined || rest.orgUnitId !== undefined || rest.yieldQuantity !== undefined) {
+      const sysUnit = rest.systemUnitId !== undefined ? cleanUnitId(rest.systemUnitId) : existing.systemUnitId;
+      const orgUnit = rest.orgUnitId !== undefined ? cleanUnitId(rest.orgUnitId) : existing.orgUnitId;
+
       if (!sysUnit && !orgUnit) {
         throw new BadRequestException("At least one yield unit (system or organization) must be selected.");
       }
+
+      resolvedYieldUnit = await this.resolveUnitId(
+        sysUnit,
+        orgUnit,
+        organizationId,
+        "recipe yield unit",
+      );
+
+      if (!resolvedYieldUnit.systemUnitId && !resolvedYieldUnit.orgUnitId) {
+        throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
+      }
     }
+
+    let resolvedIngredients: any[] | undefined = undefined;
 
     if (ingredients !== undefined) {
       if (!ingredients || ingredients.length === 0) {
         throw new BadRequestException("Ingredients list cannot be empty.");
       }
+
+      resolvedIngredients = [];
       for (const ing of ingredients) {
-        if (!ing.systemUnitId && !ing.orgUnitId) {
+        const ingSysId = cleanUnitId(ing.systemUnitId);
+        const ingOrgId = cleanUnitId(ing.orgUnitId);
+
+        if (!ingSysId && !ingOrgId) {
           throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
         }
+
+        const resolvedIngUnit = await this.resolveUnitId(
+          ingSysId,
+          ingOrgId,
+          organizationId,
+          `ingredient '${ing.ingredientVariantId}' unit`,
+        );
+
+        if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+          throw new BadRequestException("Each ingredient must have a valid unit selected.");
+        }
+
+        resolvedIngredients.push({
+          ingredientVariantId: ing.ingredientVariantId,
+          quantity: ing.quantity,
+          systemUnitId: resolvedIngUnit.systemUnitId,
+          orgUnitId: resolvedIngUnit.orgUnitId,
+          preparationNotes: ing.preparationNotes,
+        });
       }
     }
 
@@ -684,17 +889,13 @@ export class ProductionService {
       where: { id, organizationId },
       data: {
         ...rest,
+        systemUnitId: resolvedYieldUnit ? resolvedYieldUnit.systemUnitId : undefined,
+        orgUnitId: resolvedYieldUnit ? resolvedYieldUnit.orgUnitId : undefined,
         difficulty: rest.difficulty as any,
-        ingredients: ingredients
+        ingredients: resolvedIngredients
           ? {
               deleteMany: {},
-              create: ingredients.map((ing: any) => ({
-                ingredientVariantId: ing.ingredientVariantId,
-                quantity: ing.quantity,
-                systemUnitId: ing.systemUnitId,
-                orgUnitId: ing.orgUnitId,
-                preparationNotes: ing.preparationNotes,
-              })),
+              create: resolvedIngredients,
             }
           : undefined,
       },
@@ -747,6 +948,8 @@ export class ProductionService {
         status: true,
         plannedQuantity: true,
         actualQuantity: true,
+        systemUnitId: true,
+        orgUnitId: true,
         recipeMultiplier: true,
         scheduledStartAt: true,
         startedAt: true,
@@ -833,6 +1036,13 @@ export class ProductionService {
   }
 
   async createBatch(organizationId: string, data: CreateBatchDto) {
+    const cleanedSysUnitId = cleanUnitId(data.systemUnitId);
+    const cleanedOrgUnitId = cleanUnitId(data.orgUnitId);
+
+    if (!cleanedSysUnitId && !cleanedOrgUnitId) {
+      throw new BadRequestException("At least one unit (system or organization) must be selected.");
+    }
+
     const batchNumber = await this.generateBatchNumber(organizationId);
 
     const {
@@ -866,8 +1076,8 @@ export class ProductionService {
       data: {
         recipeId,
         plannedQuantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: cleanUnitId(systemUnitId),
+        orgUnitId: cleanUnitId(orgUnitId),
         recipeMultiplier: recipeMultiplier ?? 1.0,
         leadBakerId,
         notes,
@@ -887,6 +1097,8 @@ export class ProductionService {
 
   async updateBatch(organizationId: string, id: string, data: UpdateBatchDto) {
     const { assistantBakerIds, status, ...updateData } = data;
+    if (updateData.systemUnitId !== undefined) updateData.systemUnitId = cleanUnitId(updateData.systemUnitId);
+    if (updateData.orgUnitId !== undefined) updateData.orgUnitId = cleanUnitId(updateData.orgUnitId);
 
     return this.prisma.client.batch.update({
       where: { id, organizationId },
@@ -933,6 +1145,27 @@ export class ProductionService {
     const waste = Number(wasteQuantity || 0);
     const netQuantity = Math.max(0, grossQuantity - waste);
 
+    const settings = await this.prisma.client.bakerySettings.findUnique({
+      where: { organizationId },
+    });
+    const enableStaging = settings?.enableProductionStaging ?? false;
+
+    let stagingData: any = {
+      stagedQuantity: 0,
+      dispatchedQuantity: 0,
+      stagingWasteQuantity: 0,
+      stagingStatus: "NOT_STAGED",
+    };
+
+    if (enableStaging && netQuantity > 0) {
+      stagingData = {
+        stagedQuantity: netQuantity,
+        dispatchedQuantity: 0,
+        stagingWasteQuantity: 0,
+        stagingStatus: "STAGED",
+      };
+    }
+
     return await this.prisma.client.$transaction(async tx => {
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
@@ -944,6 +1177,7 @@ export class ProductionService {
           wasteQuantity: waste,
           wasteReason: data.wasteReason,
           notes: notes || (batch as any).notes,
+          ...stagingData,
         },
       });
 
@@ -1116,6 +1350,258 @@ export class ProductionService {
     });
   }
 
+
+  async getStagedBatches(ctx: V3ApiContext) {
+    const organizationId = ctx.organizationId;
+    return this.prisma.client.batch.findMany({
+      where: {
+        organizationId,
+        status: "COMPLETED" as any,
+        stagingStatus: {
+          in: ["STAGED", "PARTIALLY_DISPATCHED"] as any,
+        },
+      },
+      include: {
+        recipe: {
+          include: {
+            producesVariant: {
+              include: {
+                product: true,
+              },
+            },
+          },
+        },
+        outputLocation: true,
+        dispatches: {
+          include: {
+            toLocation: true,
+            dispatchedBy: {
+              include: { user: true },
+            },
+          },
+          orderBy: { dispatchedAt: "desc" },
+        },
+      },
+      orderBy: { completedAt: "desc" },
+    });
+  }
+
+  async dispatchStagedBatch(
+    ctx: V3ApiContext,
+    batchId: string,
+    data: DispatchStagedBatchDto,
+  ) {
+    const organizationId = ctx.organizationId;
+    const { toLocationId, quantity, notes } = data;
+
+    const dispatchQty = Number(quantity);
+    if (dispatchQty <= 0) {
+      throw new BadRequestException("Dispatch quantity must be greater than zero");
+    }
+
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id: batchId, organizationId },
+      include: {
+        recipe: { include: { producesVariant: true } },
+      },
+    });
+
+    if (!batch) {
+      throw new NotFoundException("Batch not found");
+    }
+
+    if (batch.status !== "COMPLETED") {
+      throw new BadRequestException("Only completed batches can be dispatched");
+    }
+
+    const totalStaged = Number(batch.stagedQuantity || 0);
+    const currentDispatched = Number(batch.dispatchedQuantity || 0);
+    const currentWaste = Number(batch.stagingWasteQuantity || 0);
+    const availableToDispatch = Math.max(0, totalStaged - currentDispatched - currentWaste);
+
+    if (dispatchQty > availableToDispatch) {
+      throw new BadRequestException(
+        `Cannot dispatch ${dispatchQty}. Available staged quantity is ${availableToDispatch}`,
+      );
+    }
+
+    const toLocation = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id: toLocationId, organizationId },
+    });
+    if (!toLocation) {
+      throw new NotFoundException("Destination Front Office location not found");
+    }
+
+    return await this.prisma.client.$transaction(async (tx) => {
+      const newDispatched = currentDispatched + dispatchQty;
+      const newStagingStatus =
+        newDispatched + currentWaste >= totalStaged
+          ? "FULLY_DISPATCHED"
+          : "PARTIALLY_DISPATCHED";
+
+      const updatedBatch = await tx.batch.update({
+        where: { id: batchId },
+        data: {
+          dispatchedQuantity: newDispatched,
+          stagingStatus: newStagingStatus as any,
+        },
+      });
+
+      const dispatchLog = await tx.batchDispatch.create({
+        data: {
+          batchId,
+          toLocationId,
+          quantity: dispatchQty,
+          dispatchedById: ctx.memberId!,
+          notes,
+          organizationId,
+        },
+      });
+
+      if (batch.recipe.producesVariantId) {
+        const variantId = batch.recipe.producesVariantId;
+        const productId = (batch.recipe.producesVariant as any).productId;
+
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
+              variantId,
+              locationId: toLocationId,
+            },
+          },
+          update: {
+            currentStock: { increment: dispatchQty },
+            availableStock: { increment: dispatchQty },
+          },
+          create: {
+            productId,
+            variantId,
+            locationId: toLocationId,
+            currentStock: dispatchQty,
+            availableStock: dispatchQty,
+            organizationId,
+          } as any,
+        });
+
+        const frontOfficeStockBatch = await tx.stockBatch.create({
+          data: {
+            variantId,
+            batchNumber: `${batch.batchNumber}-FO`,
+            locationId: toLocationId,
+            initialQuantity: dispatchQty,
+            currentQuantity: dispatchQty,
+            purchasePrice: batch.recipe.costPrice || 0,
+            organizationId,
+            productionBatchId: batch.id,
+            receivedDate: new Date(),
+            expiryDate: batch.expiresAt,
+          } as any,
+        });
+
+        const fromLocationId = batch.outputLocationId || ctx.locationId;
+        await tx.stockMovement.create({
+          data: {
+            variantId,
+            stockBatchId: frontOfficeStockBatch.id,
+            fromLocationId,
+            toLocationId,
+            quantity: dispatchQty,
+            movementType: "TRANSFER_IN" as any,
+            memberId: ctx.memberId!,
+            organizationId,
+            notes: notes || `Dispatched from Batch ${batch.batchNumber} to Front Office (${toLocation.name})`,
+          },
+        });
+      }
+
+      return {
+        dispatchLog,
+        batch: updatedBatch,
+      };
+    });
+  }
+
+  async disposeStagedStock(
+    ctx: V3ApiContext,
+    batchId: string,
+    data: DisposeStagedStockDto,
+  ) {
+    const organizationId = ctx.organizationId;
+    const { quantity, reason, notes } = data;
+
+    const wasteQty = Number(quantity);
+    if (wasteQty <= 0) {
+      throw new BadRequestException("Waste quantity must be greater than zero");
+    }
+
+    const batch = await this.prisma.client.batch.findFirst({
+      where: { id: batchId, organizationId },
+      include: { recipe: true },
+    });
+
+    if (!batch) {
+      throw new NotFoundException("Batch not found");
+    }
+
+    const totalStaged = Number(batch.stagedQuantity || 0);
+    const currentDispatched = Number(batch.dispatchedQuantity || 0);
+    const currentWaste = Number(batch.stagingWasteQuantity || 0);
+    const availableToDispatch = Math.max(0, totalStaged - currentDispatched - currentWaste);
+
+    if (wasteQty > availableToDispatch) {
+      throw new BadRequestException(
+        `Cannot dispose ${wasteQty}. Available staged quantity is ${availableToDispatch}`,
+      );
+    }
+
+    return await this.prisma.client.$transaction(async (tx) => {
+      const newWaste = currentWaste + wasteQty;
+      let newStagingStatus = batch.stagingStatus;
+      if (currentDispatched + newWaste >= totalStaged) {
+        newStagingStatus = currentDispatched === 0 ? ("DISPOSED" as any) : ("FULLY_DISPATCHED" as any);
+      }
+
+      const updatedBatch = await tx.batch.update({
+        where: { id: batchId },
+        data: {
+          stagingWasteQuantity: newWaste,
+          stagingStatus: newStagingStatus as any,
+        },
+      });
+
+      if (batch.recipe.producesVariantId) {
+        const locationId = batch.outputLocationId || ctx.locationId;
+        if (locationId) {
+          await tx.productVariantStock.updateMany({
+            where: {
+              variantId: batch.recipe.producesVariantId,
+              locationId,
+              organizationId,
+            },
+            data: {
+              currentStock: { decrement: wasteQty },
+              availableStock: { decrement: wasteQty },
+            },
+          });
+
+          await tx.stockMovement.create({
+            data: {
+              variantId: batch.recipe.producesVariantId,
+              fromLocationId: locationId,
+              quantity: wasteQty,
+              movementType: "WASTE" as any,
+              memberId: ctx.memberId!,
+              organizationId,
+              notes: notes || `Staging disposal for Batch ${batch.batchNumber}: ${reason || "Spoiled/Damaged"}`,
+            },
+          });
+        }
+      }
+
+      return updatedBatch;
+    });
+  }
+
   async getBatchTraceability(organizationId: string, id: string) {
     const batch = await this.prisma.client.batch.findFirst({
       where: { id, organizationId },
@@ -1208,8 +1694,8 @@ export class ProductionService {
         name,
         recipeId,
         quantity,
-        systemUnitId,
-        orgUnitId,
+        systemUnitId: cleanUnitId(systemUnitId),
+        orgUnitId: cleanUnitId(orgUnitId),
         recipeMultiplier,
         duration,
         leadBakerId,
@@ -1222,9 +1708,12 @@ export class ProductionService {
   }
 
   async updateTemplate(organizationId: string, id: string, data: UpdateTemplateDto) {
+    const cleanData = { ...data };
+    if (cleanData.systemUnitId !== undefined) cleanData.systemUnitId = cleanUnitId(cleanData.systemUnitId);
+    if (cleanData.orgUnitId !== undefined) cleanData.orgUnitId = cleanUnitId(cleanData.orgUnitId);
     return this.prisma.client.template.update({
       where: { id, organizationId },
-      data,
+      data: cleanData,
     });
   }
 
@@ -1347,7 +1836,7 @@ export class ProductionService {
   }
 
   async addBaker(organizationId: string, data: AddBakerDto) {
-    const { memberId, specialties, isActive } = data;
+    const { memberId, specialties, isActive, isDefault } = data;
 
     const member = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId },
@@ -1359,7 +1848,7 @@ export class ProductionService {
 
     const settings = await this.getSettings(organizationId);
 
-    return this.prisma.client.bakeryBaker.create({
+    const baker = await this.prisma.client.bakeryBaker.create({
       data: {
         memberId,
         specialties: specialties || [],
@@ -1367,6 +1856,15 @@ export class ProductionService {
         bakerySettingsId: settings.id,
       },
     });
+
+    if (isDefault) {
+      await this.prisma.client.bakerySettings.update({
+        where: { id: settings.id },
+        data: { defaultBakerId: baker.id },
+      });
+    }
+
+    return baker;
   }
 
   async updateBaker(organizationId: string, id: string, data: UpdateBakerDto) {
@@ -1375,15 +1873,32 @@ export class ProductionService {
     });
     if (!baker) throw new NotFoundException("Baker not found");
 
-    const { specialties, isActive } = data;
+    const { specialties, isActive, isDefault } = data;
 
-    return this.prisma.client.bakeryBaker.update({
+    const updatedBaker = await this.prisma.client.bakeryBaker.update({
       where: { id },
       data: {
         specialties,
         isActive,
       },
     });
+
+    if (isDefault !== undefined) {
+      const settings = await this.getSettings(organizationId);
+      if (isDefault) {
+        await this.prisma.client.bakerySettings.update({
+          where: { id: settings.id },
+          data: { defaultBakerId: id },
+        });
+      } else if (settings.defaultBakerId === id) {
+        await this.prisma.client.bakerySettings.update({
+          where: { id: settings.id },
+          data: { defaultBakerId: null },
+        });
+      }
+    }
+
+    return updatedBaker;
   }
 
   async removeBaker(organizationId: string, id: string) {

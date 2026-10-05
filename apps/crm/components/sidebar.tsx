@@ -18,6 +18,7 @@ import {
   TooltipTrigger,
 } from '@repo/ui/components/ui/tooltip';
 import {
+  MessageSquare,
   LayoutDashboard,
   Users,
   TrendingUp,
@@ -68,6 +69,12 @@ const navGroups: NavGroup[] = [
       { title: 'Leads', icon: UserPlus, href: '/leads' },
       { title: 'Pipeline', icon: TrendingUp, href: '/pipeline' },
       { title: 'Customers', icon: Users, href: '/customers' },
+    ],
+  },
+  {
+    title: 'Engagement',
+    items: [
+      { title: 'Communications', icon: MessageSquare, href: '/communications' },
     ],
   },
   {

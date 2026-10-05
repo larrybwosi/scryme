@@ -99,11 +99,6 @@ const PERMISSION_GROUPS = [
   {
     name: "Integrations & Webhooks",
     permissions: [
-      { value: "integrations:strapi:create", label: "Create Strapi Connection" },
-      { value: "integrations:strapi:read", label: "Read Strapi Settings & Logs" },
-      { value: "integrations:strapi:update", label: "Update Strapi Connection" },
-      { value: "integrations:strapi:delete", label: "Delete Strapi Connection" },
-      { value: "integrations:strapi:sync", label: "Trigger Strapi Sync" },
       { value: "webhooks:read", label: "Read Webhooks" },
       { value: "webhooks:write", label: "Create/Delete Webhooks" },
     ],

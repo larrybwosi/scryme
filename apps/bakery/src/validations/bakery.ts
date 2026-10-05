@@ -14,6 +14,7 @@ export const ingredientSchema = z
   })
   .refine(data => data.systemUnitId || data.orgUnitId, {
     message: 'At least one unit (system or organization) must be selected for the ingredient',
+    path: ['systemUnitId'],
   });
 
 export const scheduleDaysSchema = z
@@ -53,6 +54,7 @@ const baseRecipeSchema = z.object({
 
 export const recipeSchema = baseRecipeSchema.refine(data => data.systemUnitId || data.orgUnitId, {
   message: 'At least one yield unit (system or organization) must be selected for the recipe',
+  path: ['systemUnitId'],
 });
 
 export const updateRecipeSchema = baseRecipeSchema.partial();
@@ -63,6 +65,7 @@ export const createRecipeSchema = baseRecipeSchema
   })
   .refine(data => data.systemUnitId || data.orgUnitId, {
     message: 'At least one yield unit (system or organization) must be selected for the recipe',
+    path: ['systemUnitId'],
   });
 
 // --- Batch Schemas ---
@@ -101,6 +104,7 @@ const baseBatchSchema = z.object({
 
 export const batchSchema = baseBatchSchema.refine(data => data.systemUnitId || data.orgUnitId, {
   message: 'At least one unit (system or organization) must be selected for the batch quantity',
+  path: ['systemUnitId'],
 });
 
 export const updateBatchSchema = baseBatchSchema
@@ -145,6 +149,7 @@ const baseTemplateSchema = z.object({
 
 export const templateSchema = baseTemplateSchema.refine(data => data.systemUnitId || data.orgUnitId, {
   message: 'At least one unit (system or organization) must be selected for the template quantity',
+  path: ['systemUnitId'],
 });
 
 export const updateTemplateSchema = baseTemplateSchema.partial();

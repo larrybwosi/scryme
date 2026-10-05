@@ -16,12 +16,18 @@ pub struct ProcessSaleDto {
     /// List of physical product variants purchased
     #[serde(rename = "items", skip_serializing_if = "Option::is_none")]
     pub items: Option<Vec<models::SaleItemDto>>,
+    /// Alias for items
+    #[serde(rename = "cartItems", skip_serializing_if = "Option::is_none")]
+    pub cart_items: Option<Vec<models::SaleItemDto>>,
     /// List of services purchased (Option A with bookingId or Option C without)
     #[serde(rename = "serviceItems", skip_serializing_if = "Option::is_none")]
     pub service_items: Option<Vec<models::SaleServiceItemDto>>,
     /// List of payments applied to this transaction
-    #[serde(rename = "payments")]
-    pub payments: Vec<models::SalePaymentDto>,
+    #[serde(rename = "payments", skip_serializing_if = "Option::is_none")]
+    pub payments: Option<Vec<models::SalePaymentDto>>,
+    /// Optional payment method if single payment method provided
+    #[serde(rename = "paymentMethod", skip_serializing_if = "Option::is_none")]
+    pub payment_method: Option<String>,
     /// Generic discount amount applied to the overall transaction
     #[serde(rename = "discountAmount", skip_serializing_if = "Option::is_none")]
     pub discount_amount: Option<f64>,
@@ -34,18 +40,100 @@ pub struct ProcessSaleDto {
     /// Optional loyalty voucher code to apply discount
     #[serde(rename = "loyaltyVoucherCode", skip_serializing_if = "Option::is_none")]
     pub loyalty_voucher_code: Option<String>,
+    /// Optional location ID override
+    #[serde(rename = "locationId", skip_serializing_if = "Option::is_none")]
+    pub location_id: Option<String>,
+    /// Optional member ID override
+    #[serde(rename = "memberId", skip_serializing_if = "Option::is_none")]
+    pub member_id: Option<String>,
+    /// Optional sale number
+    #[serde(rename = "saleNumber", skip_serializing_if = "Option::is_none")]
+    pub sale_number: Option<String>,
+    /// Whether this is a wholesale sale
+    #[serde(rename = "isWholesale", skip_serializing_if = "Option::is_none")]
+    pub is_wholesale: Option<bool>,
+    /// Optional customer ID
+    #[serde(rename = "customerId", skip_serializing_if = "Option::is_none")]
+    pub customer_id: Option<String>,
+    /// Optional business account ID
+    #[serde(rename = "businessAccountId", skip_serializing_if = "Option::is_none")]
+    pub business_account_id: Option<String>,
+    /// Optional payment status
+    #[serde(rename = "paymentStatus", skip_serializing_if = "Option::is_none")]
+    pub payment_status: Option<String>,
+    /// Optional M-Pesa transaction flow type
+    #[serde(rename = "mpesaType", skip_serializing_if = "Option::is_none")]
+    pub mpesa_type: Option<String>,
+    /// Optional M-Pesa phone number
+    #[serde(rename = "mpesaPhoneNumber", skip_serializing_if = "Option::is_none")]
+    pub mpesa_phone_number: Option<String>,
+    /// Optional forced immediate sync threshold
+    #[serde(rename = "forcedImmediateSyncThreshold", skip_serializing_if = "Option::is_none")]
+    pub forced_immediate_sync_threshold: Option<f64>,
+    /// Optional total transaction amount
+    #[serde(rename = "total", skip_serializing_if = "Option::is_none")]
+    pub total: Option<f64>,
+    /// Optional amount received from customer
+    #[serde(rename = "amountReceived", skip_serializing_if = "Option::is_none")]
+    pub amount_received: Option<f64>,
+    /// Optional change amount returned to customer
+    #[serde(rename = "change", skip_serializing_if = "Option::is_none")]
+    pub change: Option<f64>,
+    /// Optional cash drawer ID
+    #[serde(rename = "cashDrawerId", skip_serializing_if = "Option::is_none")]
+    pub cash_drawer_id: Option<String>,
+    /// Whether stock tracking is enabled
+    #[serde(rename = "enableStockTracking", skip_serializing_if = "Option::is_none")]
+    pub enable_stock_tracking: Option<bool>,
+    /// Optional tax IDs applied
+    #[serde(rename = "taxIds", skip_serializing_if = "Option::is_none")]
+    pub tax_ids: Option<Vec<String>>,
+    /// Optional cashier name
+    #[serde(rename = "cashierName", skip_serializing_if = "Option::is_none")]
+    pub cashier_name: Option<String>,
+    /// Optional account reference number
+    #[serde(rename = "accountRef", skip_serializing_if = "Option::is_none")]
+    pub account_ref: Option<String>,
+    /// Optional prescription ID for pharmacy POS
+    #[serde(rename = "prescriptionId", skip_serializing_if = "Option::is_none")]
+    pub prescription_id: Option<String>,
+    /// Optional doctor name for pharmacy POS
+    #[serde(rename = "doctorName", skip_serializing_if = "Option::is_none")]
+    pub doctor_name: Option<String>,
 }
 
 impl ProcessSaleDto {
-    pub fn new(payments: Vec<models::SalePaymentDto>) -> ProcessSaleDto {
+    pub fn new() -> ProcessSaleDto {
         ProcessSaleDto {
             items: None,
+            cart_items: None,
             service_items: None,
-            payments,
+            payments: None,
+            payment_method: None,
             discount_amount: None,
             customer_phone: None,
             notes: None,
             loyalty_voucher_code: None,
+            location_id: None,
+            member_id: None,
+            sale_number: None,
+            is_wholesale: None,
+            customer_id: None,
+            business_account_id: None,
+            payment_status: None,
+            mpesa_type: None,
+            mpesa_phone_number: None,
+            forced_immediate_sync_threshold: None,
+            total: None,
+            amount_received: None,
+            change: None,
+            cash_drawer_id: None,
+            enable_stock_tracking: None,
+            tax_ids: None,
+            cashier_name: None,
+            account_ref: None,
+            prescription_id: None,
+            doctor_name: None,
         }
     }
 }

@@ -43,7 +43,7 @@ STUDIO_BASIC_AUTH=admin:$$apr1$$q89T1P18$$x/T5pD63lH698305.8123.
 
 ### Step 3: Start the Service
 ```bash
-docker compose -f docker-compose.prod.yml up -d prisma-studio
+docker compose -f docker/studio/docker-compose.yml up -d
 ```
 
 Traefik will route incoming HTTPS requests from `https://studio.scryme.tech` to Prisma Studio after successfully verifying HTTP Basic Auth credentials.
@@ -55,7 +55,7 @@ Traefik will route incoming HTTPS requests from `https://studio.scryme.tech` to 
 If you prefer not to expose Prisma Studio to a public domain, you can keep the service bound exclusively to `127.0.0.1` on the server host and access it securely through an SSH tunnel.
 
 ### Step 1: Verify Host Binding in `docker-compose.yml`
-In `docker-compose.yml`, the `prisma-studio` service binds port `5555` to `127.0.0.1`:
+In `docker/studio/docker-compose.yml`, Prisma Studio is defined as a standalone service binding port `5555`:
 
 ```yaml
 ports:
@@ -83,7 +83,7 @@ To minimize the attack surface, leave the `prisma-studio` container stopped when
 
 ### Start Studio On Demand:
 ```bash
-docker compose up -d prisma-studio
+docker compose -f docker/studio/docker-compose.yml up -d
 ```
 
 ### Perform Operations
@@ -91,7 +91,7 @@ Access Studio via HTTPS basic auth or SSH tunnel.
 
 ### Stop Studio Immediately After Use:
 ```bash
-docker compose stop prisma-studio
+docker compose -f docker/studio/docker-compose.yml stop
 ```
 
 ---

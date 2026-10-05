@@ -21,6 +21,12 @@ export interface Member {
   isBanned?: boolean;
   department: any;
   userId: string;
+  user?: {
+    id: string;
+    name?: string;
+    email?: string;
+    image?: string;
+  };
 }
 
 export interface Employee {
@@ -63,8 +69,18 @@ export const useListMembers = () => {
     queryFn: paths.list,
   });
 
+  const rawList = Array.isArray(data)
+    ? data
+    : (data as any)?.items || (data as any)?.members || [];
+
+  const members: Member[] = rawList.map((m: any) => ({
+    ...m,
+    name: m.name || m.user?.name || 'Unnamed Member',
+    email: m.email || m.user?.email || '',
+  }));
+
   return {
-    data: ((data as any)?.members as Member[]) || [],
+    data: members,
     isLoading,
     isError: !!error,
     error,

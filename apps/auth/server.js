@@ -8,6 +8,7 @@ const __dirname = path.dirname(__filename);
 
 const PORT = process.env.PORT || 4444;
 const DIST_DIR = path.join(__dirname, 'dist');
+const IS_PROD = process.env.NODE_ENV === 'production';
 
 const getTargetApiUrl = () => {
   const envUrl = process.env.VITE_PUBLIC_API_URL || process.env.VITE_API_URL;
@@ -19,7 +20,7 @@ const getTargetApiUrl = () => {
   ) {
     return envUrl.trim().replace(/\/+$/, '');
   }
-  return 'http://localhost:3002';
+  return IS_PROD ? 'https://api.scryme.tech' : 'http://localhost:3002';
 };
 
 const MIME_TYPES = {
@@ -40,7 +41,8 @@ const MIME_TYPES = {
 };
 
 const server = http.createServer(async (req, res) => {
-  const parsedUrl = new URL(req.url, `http://${req.headers.host || 'localhost'}`);
+  const fallbackHost = IS_PROD ? 'auth.scryme.tech' : 'localhost';
+  const parsedUrl = new URL(req.url, `http://${req.headers.host || fallbackHost}`);
   const pathname = parsedUrl.pathname;
 
   // 1. Health checks

@@ -123,7 +123,9 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
   SCHEMA_PATH="./prisma/schema"
 
   wait_for_db() {
-    echo "Waiting for database to be ready..."
+    target_url="$1"
+    db_label="${2:-database}"
+    echo "Waiting for $db_label to be ready..."
     MAX_RETRIES=60
     COUNT=0
 
@@ -134,26 +136,46 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
         PRISMA_BIN="prisma"
       else
         echo "Error: Prisma binary not found."
-        exit 1
+        return 1
       fi
     fi
 
-    # Check if database is ready by executing a simple SELECT 1
-    until echo "SELECT 1;" | $PRISMA_BIN db execute --stdin > /dev/null 2>&1 || [ $COUNT -eq $MAX_RETRIES ]; do
-      sleep 2
+    LAST_ERR=""
+    until
+      ERR_OUTPUT=$(DATABASE_URL="$target_url" CUSTOMER_DB="$target_url" echo "SELECT 1;" | DATABASE_URL="$target_url" CUSTOMER_DB="$target_url" $PRISMA_BIN db execute --stdin 2>&1)
+    do
       COUNT=$((COUNT + 1))
-      echo "Retry $COUNT/$MAX_RETRIES: Database not yet available..."
+      LAST_ERR=$(echo "$ERR_OUTPUT" | tr "\n" " " | sed "s/  */ /g")
+
+      # Check if error indicates database does not exist
+      if echo "$ERR_OUTPUT" | grep -qiE "database \".*\" does not exist|does not exist"; then
+        DB_NAME=$(echo "$target_url" | sed -nE "s|^.*://[^/]+/([^?#/]+).*|\1|p")
+        BASE_URL=$(echo "$target_url" | sed -E "s|^(.*://[^/]+/)[^?#/]+(.*)|\1postgres\2|")
+
+        if [ -n "$DB_NAME" ] && [ "$DB_NAME" != "postgres" ]; then
+          echo "Database '$DB_NAME' does not exist on target server. Attempting auto-creation..."
+          CREATE_OUTPUT=$(DATABASE_URL="$BASE_URL" CUSTOMER_DB="$BASE_URL" echo "CREATE DATABASE \"$DB_NAME\";" | DATABASE_URL="$BASE_URL" CUSTOMER_DB="$BASE_URL" $PRISMA_BIN db execute --stdin 2>&1 || true)
+          echo "Database creation output: $CREATE_OUTPUT"
+        fi
+      fi
+
+      if [ $COUNT -eq $MAX_RETRIES ]; then
+        break
+      fi
+
+      echo "Retry $COUNT/$MAX_RETRIES: $db_label not yet available... [Last error: ${LAST_ERR:-connection pending}]"
+      sleep 2
     done
 
     if [ $COUNT -eq $MAX_RETRIES ]; then
-      echo "❌ Database is not ready after $MAX_RETRIES retries. Exiting."
-      exit 1
+      echo "❌ $db_label is not ready after $MAX_RETRIES retries. Last error: $LAST_ERR"
+      return 1
     fi
-    echo "✅ Database is ready!"
+    echo "✅ $db_label is ready!"
   }
 
   if [ -n "$DATABASE_URL" ]; then
-    wait_for_db
+    wait_for_db "$DATABASE_URL" "main database"
     echo "Deploying database migrations..."
 
     PRISMA_BIN="./node_modules/.bin/prisma"
@@ -161,17 +183,26 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       PRISMA_BIN="prisma"
     fi
 
-    if ! $PRISMA_BIN migrate deploy; then
+    MIGRATE_FAILED=false
+    MIGRATE_OUTPUT=$($PRISMA_BIN migrate deploy 2>&1) || MIGRATE_FAILED=true
+    echo "$MIGRATE_OUTPUT"
+
+    if [ "$MIGRATE_FAILED" = "true" ]; then
       echo "⚠️ Database migration deployment failed. Checking for failed migrations to resolve..."
-      FAILED_MIGRATIONS=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL OR (rolled_back_at IS NOT NULL AND rolled_back_at = '1970-01-01 00:00:00');" | $PRISMA_BIN db execute --stdin 2>/dev/null | grep -o '20[0-9]\{12\}_[^" ]*' || true)
-      if [ -n "$FAILED_MIGRATIONS" ]; then
-        for mig in $FAILED_MIGRATIONS; do
+
+      # Extract failed migration names directly from the Prisma migrate error output
+      FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -oE "20[0-9]{12}_[a-zA-Z0-9_]+" | sort -u || true)
+
+      # Also query _prisma_migrations table to capture any unfinished/failed migrations in DB
+      DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" | $PRISMA_BIN db execute --stdin 2>/dev/null | grep -oE "20[0-9]{12}_[a-zA-Z0-9_]+" | sort -u || true)
+
+      ALL_FAILED=$(printf "%s\n%s\n" "$FAILED_MIGRATIONS" "$DB_FAILED" | grep -v "^$" | sort -u || true)
+
+      if [ -n "$ALL_FAILED" ]; then
+        for mig in $ALL_FAILED; do
           echo "Resolving failed migration as rolled-back: $mig"
           $PRISMA_BIN migrate resolve --rolled-back "$mig" || true
         done
-      else
-        echo "Resolving failed migration 20260919000000_enterprise_scheduling_and_tasks as rolled-back..."
-        $PRISMA_BIN migrate resolve --rolled-back "20260919000000_enterprise_scheduling_and_tasks" || true
       fi
 
       echo "Retrying database migrations deployment..."
@@ -184,7 +215,9 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
     echo "⚠️ DATABASE_URL not set, skipping migrations."
   fi
 
-  if [ -n "$CUSTOMER_DB" ]; then
+  C_DB_URL="${CUSTOMER_DB:-$CUSTOMER_DATABASE_URL}"
+  if [ -n "$C_DB_URL" ]; then
+    wait_for_db "$C_DB_URL" "customer database"
     echo "Deploying customer database migrations..."
     PRISMA_BIN="./node_modules/.bin/prisma"
     if [ ! -f "$PRISMA_BIN" ]; then
@@ -192,10 +225,10 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
     fi
 
     if [ -f "./src/customer-auth/prisma/schema.prisma" ]; then
-      $PRISMA_BIN migrate deploy --schema=./src/customer-auth/prisma/schema.prisma || $PRISMA_BIN db push --schema=./src/customer-auth/prisma/schema.prisma --accept-data-loss || echo "⚠️ Customer DB deployment failed, continuing anyway."
+      DATABASE_URL="$C_DB_URL" $PRISMA_BIN migrate deploy --schema=./src/customer-auth/prisma/schema.prisma || DATABASE_URL="$C_DB_URL" $PRISMA_BIN db push --schema=./src/customer-auth/prisma/schema.prisma --accept-data-loss || echo "⚠️ Customer DB deployment failed, continuing anyway."
     fi
   else
-    echo "ℹ️ CUSTOMER_DB not set, skipping customer DB deployment."
+    echo "ℹ️ CUSTOMER_DB / CUSTOMER_DATABASE_URL not set, skipping customer DB deployment."
   fi
 fi
 

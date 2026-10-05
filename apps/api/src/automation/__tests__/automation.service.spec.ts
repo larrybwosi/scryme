@@ -55,7 +55,7 @@ describe("AutomationService", () => {
     ]);
 
     const available = await service.getAvailableWorkflows("org_1");
-    expect(available).toHaveLength(4);
+    expect(available).toHaveLength(service.builtInTemplates.length);
     const onboarding = available.find((a) => a.key === "customer_onboarding");
     expect(onboarding?.isProvisioned).toBe(true);
     expect(onboarding?.settings).toEqual({ sendWelcomeEmail: true });

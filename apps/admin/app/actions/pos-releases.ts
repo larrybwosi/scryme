@@ -11,6 +11,9 @@ export async function getPosReleaseSettings() {
     where: {
       key: {
         in: [
+          "github_app_id",
+          "github_client_id",
+          "github_client_secret",
           "github_webhook_secret",
           "github_owner",
           "github_repo",
@@ -29,6 +32,9 @@ export async function getPosReleaseSettings() {
   );
 
   return {
+    appId: settingsMap["github_app_id"] || "",
+    clientId: settingsMap["github_client_id"] || "",
+    clientSecret: settingsMap["github_client_secret"] || "",
     webhookSecret: settingsMap["github_webhook_secret"] || "",
     owner: settingsMap["github_owner"] || "dealio-org",
     repo: settingsMap["github_repo"] || "scryme",
@@ -37,6 +43,9 @@ export async function getPosReleaseSettings() {
 }
 
 export async function updatePosReleaseSettings(data: {
+  appId?: string;
+  clientId?: string;
+  clientSecret?: string;
   webhookSecret?: string;
   owner?: string;
   repo?: string;
@@ -45,6 +54,9 @@ export async function updatePosReleaseSettings(data: {
   await requireSuperAdmin();
 
   const entries = [
+    { key: "github_app_id", value: data.appId || "" },
+    { key: "github_client_id", value: data.clientId || "" },
+    { key: "github_client_secret", value: data.clientSecret || "" },
     { key: "github_webhook_secret", value: data.webhookSecret || "" },
     { key: "github_owner", value: data.owner || "" },
     { key: "github_repo", value: data.repo || "" },
@@ -64,6 +76,54 @@ export async function updatePosReleaseSettings(data: {
   revalidatePath("/systems");
   revalidatePath("/settings");
   return { success: true };
+}
+
+export async function testGithubAppConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getPosReleaseSettings();
+  const owner = settings.owner || "dealio-org";
+  const repo = settings.repo || "scryme";
+  const token = settings.token;
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "Scryme-Admin-App",
+  };
+
+  if (token) {
+    headers["Authorization"] = `token ${token}`;
+  }
+
+  try {
+    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      return {
+        success: false,
+        message: errorData.message || `GitHub API responded with status ${response.status}`,
+      };
+    }
+
+    const repoData = await response.json();
+    return {
+      success: true,
+      message: `Successfully connected to repository ${repoData.full_name} (${repoData.private ? "Private" : "Public"})`,
+      repo: {
+        fullName: repoData.full_name,
+        description: repoData.description,
+        defaultBranch: repoData.default_branch,
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Failed to reach GitHub API",
+    };
+  }
 }
 
 export async function listPosReleaseBinaries() {

@@ -16,6 +16,7 @@ import {
   Prisma,
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
+import { getResolvedApiUrl } from "@/lib/utils";
 
 async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
@@ -45,6 +46,7 @@ export async function getTransactions(params: {
   type?: TransactionType | "all";
   status?: TransactionStatus | "all";
   paymentStatus?: PaymentStatus | "all";
+  paymentMethod?: PaymentMethod | "all";
   locationId?: string;
   startDate?: Date;
   endDate?: Date;
@@ -79,6 +81,14 @@ export async function getTransactions(params: {
 
   if (params.paymentStatus && params.paymentStatus !== "all") {
     where.paymentStatus = params.paymentStatus;
+  }
+
+  if (params.paymentMethod && params.paymentMethod !== "all") {
+    where.payments = {
+      some: {
+        method: params.paymentMethod as PaymentMethod,
+      },
+    };
   }
 
   if (params.locationId && params.locationId !== "all") {
@@ -231,6 +241,9 @@ export async function getTransactionById(id: string) {
         include: {
           attachments: true,
         },
+        orderBy: {
+          createdAt: "desc",
+        },
       },
       fulfillments: {
         include: {
@@ -374,6 +387,22 @@ export async function createTransaction(data: {
   return transaction;
 }
 
+export async function updateTransactionNotes(
+  id: string,
+  notes: string,
+) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const transaction = await db.transaction.update({
+    where: { id, organizationId: auth.organizationId },
+    data: { notes },
+  });
+
+  revalidatePath("/sales/transactions");
+  revalidatePath(`/sales/transactions/${id}`);
+  return transaction;
+}
+
 export async function updateTransactionStatus(
   id: string,
   status: TransactionStatus,
@@ -428,18 +457,30 @@ export async function addPayment(
       chequeDate: data.chequeDate,
       bankName: data.bankName,
       status: "COMPLETED",
-      attachments: data.attachments
+      attachments: data.attachments?.length
         ? {
-            create: data.attachments.map(att => ({
-              id: att.id,
-              fileName: att.fileName,
-              fileUrl: att.fileUrl,
-              mimeType: att.mimeType,
-              sizeBytes: att.sizeBytes,
-              isPublic: true,
-              organizationId: auth.organizationId!,
-              memberId: auth.memberId!,
-            })),
+            ...(data.attachments.some(att => att.id)
+              ? {
+                  connect: data.attachments
+                    .filter(att => att.id)
+                    .map(att => ({ id: att.id })),
+                }
+              : {}),
+            ...(data.attachments.some(att => !att.id)
+              ? {
+                  create: data.attachments
+                    .filter(att => !att.id)
+                    .map(att => ({
+                      fileName: att.fileName,
+                      fileUrl: att.fileUrl,
+                      mimeType: att.mimeType,
+                      sizeBytes: att.sizeBytes,
+                      isPublic: true,
+                      organizationId: auth.organizationId!,
+                      memberId: auth.memberId!,
+                    })),
+                }
+              : {}),
           }
         : undefined,
     },
@@ -452,19 +493,23 @@ export async function addPayment(
     paymentStatus = "PAID";
   }
 
+  const updateData: any = {
+    totalPaid,
+    paymentStatus,
+  };
+  if (transaction.status === "PREORDER" && totalPaid.gte(transaction.finalTotal)) {
+    updateData.status = "COMPLETED";
+  }
+
   await db.transaction.update({
     where: { id: transactionId },
-    data: {
-      totalPaid,
-      paymentStatus,
-    },
+    data: updateData,
   });
 
   // Generation of invoice and receipt on payment via API delegation
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const invoiceToken = generateDocumentToken(
       "invoice",
@@ -547,8 +592,7 @@ export async function generateDocumentAction(
 
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const token = generateDocumentToken(
       type,
@@ -600,8 +644,7 @@ export async function generatePublicLinkAction(
 
   try {
     const { generateDocumentToken } = await import("@repo/shared/api/v2");
-    const defaultApiUrl = "http://localhost:3002";
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+    const apiUrl = getResolvedApiUrl();
 
     const token = generateDocumentToken(
       type,
@@ -950,20 +993,32 @@ export async function reconcileFulfillment(
         deliveryNotes: data.notes,
         status: "DELIVERED", // Mark as delivered once OTP is verified
         deliveredAt: new Date(),
-        attachments: data.attachments
+        attachments: data.attachments?.length
           ? {
-              create: data.attachments.map(att => ({
-                id: att.id,
-                fileName: att.fileName,
-                fileUrl: att.fileUrl,
-                mimeType: att.mimeType,
-                sizeBytes: att.sizeBytes,
-                description: att.description,
-                isPublic: true,
-                organizationId: auth.organizationId!,
-                memberId: auth.memberId!,
-                transactionId: fulfillment.transactionId,
-              })),
+              ...(data.attachments.some(att => att.id)
+                ? {
+                    connect: data.attachments
+                      .filter(att => att.id)
+                      .map(att => ({ id: att.id })),
+                  }
+                : {}),
+              ...(data.attachments.some(att => !att.id)
+                ? {
+                    create: data.attachments
+                      .filter(att => !att.id)
+                      .map(att => ({
+                        fileName: att.fileName,
+                        fileUrl: att.fileUrl,
+                        mimeType: att.mimeType,
+                        sizeBytes: att.sizeBytes,
+                        description: att.description,
+                        isPublic: true,
+                        organizationId: auth.organizationId!,
+                        memberId: auth.memberId!,
+                        transactionId: fulfillment.transactionId,
+                      })),
+                  }
+                : {}),
             }
           : undefined,
       },

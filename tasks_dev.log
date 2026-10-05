@@ -1,0 +1,10 @@
+.                                        |  WARN  Unsupported engine: wanted: {"node":">=24"} (current: {"node":"v22.22.1","pnpm":"10.34.1"})
+
+> tasks@10.1.32 dev /app/apps/tasks
+> vite
+
+sh: 1: vite: not found
+/app/apps/tasks:
+ ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL  tasks@10.1.32 dev: `vite`
+spawn ENOENT
+ WARN   Local package.json exists, but node_modules missing, did you mean to install?

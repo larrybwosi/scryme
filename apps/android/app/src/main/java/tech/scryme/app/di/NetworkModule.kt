@@ -14,8 +14,14 @@ import tech.scryme.app.data.api.BranchApiService
 import tech.scryme.app.data.api.MemberApiService
 import tech.scryme.app.data.api.ScheduleApiService
 import tech.scryme.app.data.interceptor.HeaderInterceptor
+import java.security.SecureRandom
+import java.security.cert.X509Certificate
 import java.util.concurrent.TimeUnit
 import javax.inject.Singleton
+import javax.net.ssl.HostnameVerifier
+import javax.net.ssl.SSLContext
+import javax.net.ssl.TrustManager
+import javax.net.ssl.X509TrustManager
 
 @Module
 @InstallIn(SingletonComponent::class)
@@ -35,17 +41,38 @@ object NetworkModule {
 
     @Provides
     @Singleton
+    fun provideTrustManager(): X509TrustManager {
+        return object : X509TrustManager {
+            override fun checkClientTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun checkServerTrusted(chain: Array<out X509Certificate>?, authType: String?) {}
+            override fun getAcceptedIssuers(): Array<X509Certificate> = arrayOf()
+        }
+    }
+
+    @Provides
+    @Singleton
     fun provideOkHttpClient(
         headerInterceptor: HeaderInterceptor,
-        loggingInterceptor: HttpLoggingInterceptor
+        loggingInterceptor: HttpLoggingInterceptor,
+        trustManager: X509TrustManager
     ): OkHttpClient {
-        return OkHttpClient.Builder()
+        val builder = OkHttpClient.Builder()
             .addInterceptor(headerInterceptor)
             .addInterceptor(loggingInterceptor)
             .connectTimeout(30, TimeUnit.SECONDS)
             .readTimeout(30, TimeUnit.SECONDS)
             .writeTimeout(30, TimeUnit.SECONDS)
-            .build()
+
+        try {
+            val sslContext = SSLContext.getInstance("TLS")
+            sslContext.init(null, arrayOf<TrustManager>(trustManager), SecureRandom())
+            builder.sslSocketFactory(sslContext.socketFactory, trustManager)
+            builder.hostnameVerifier(HostnameVerifier { _, _ -> true })
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
+        return builder.build()
     }
 
     @Provides

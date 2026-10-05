@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getServerAuth } from "@repo/auth/server";
 import { db } from "@repo/db";
+import { getResolvedApiUrl } from "@/lib/utils";
 import { renderToStream } from "@react-pdf/renderer";
 import { createElement } from "react";
 import { Mappers, DeliveryNoteDocument } from "@repo/documents/server";
@@ -40,8 +41,7 @@ export async function GET(
       const { generateDocumentToken } = await import("@repo/shared/api/v2");
       const token = generateDocumentToken(type as any, id, auth.organizationId);
 
-      const defaultApiUrl = "http://localhost:3002";
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || defaultApiUrl;
+      const apiUrl = getResolvedApiUrl();
 
       let fetchUrl = "";
       if (type === "invoice") {

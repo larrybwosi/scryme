@@ -40,7 +40,7 @@ services:
       - scryme-network
     healthcheck:
       test:
-        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${CUSTOMER_DB_NAME:-customer_db} -q"]
+        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -59,7 +59,7 @@ services:
       retries: 3
       start_period: 15s
 
-    # --- MESSAGE BROKER ---
+  # --- MESSAGE BROKER ---
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
@@ -136,8 +136,8 @@ services:
       - path: .env
         required: false
     environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - CUSTOMER_DB=${CUSTOMER_DB}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-app_db}?schema=public}
+      - CUSTOMER_DB=${CUSTOMER_DB:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@customer-db:5432/${CUSTOMER_DB_NAME:-customer_db}?schema=public}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
       - REDIS_URL=${REDIS_URL:-redis://redis:6379}
@@ -266,43 +266,8 @@ services:
       retries: 3
       start_period: 60s
 
-  auth:
-    image: ghcr.io/larrybwosi/scryme/auth:${SCRYME_VERSION:-latest}
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - PORT=${AUTH_PORT:-4444}
-      - VITE_PUBLIC_API_URL=${VITE_PUBLIC_API_URL:-https://api.scryme.tech}
-      - VITE_API_URL=${VITE_API_URL:-https://api.scryme.tech}
-      - VITE_PUBLIC_WEB_URL=${VITE_PUBLIC_WEB_URL:-https://scryme.tech}
-    depends_on:
-      api:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "node",
-          "-e",
-          "fetch('http://localhost:' + (process.env.PORT || 4444) + '/health').then(r => r.ok ? process.exit(0) : process.exit(1)).catch(() => process.exit(1))"
-        ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 45s
-
-  prisma-studio:
-    image: ghcr.io/larrybwosi/scryme/prisma-studio:${SCRYME_VERSION:-latest}
+  cms:
+    image: ghcr.io/larrybwosi/scryme/cms:${SCRYME_VERSION:-latest}
     restart: always
     deploy:
       resources:
@@ -314,24 +279,21 @@ services:
         required: false
     environment:
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - PORT=${STUDIO_PORT:-5555}
-    ports:
-      - "127.0.0.1:${STUDIO_PORT:-5555}:${STUDIO_PORT:-5555}"
+      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
+      - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_CMS_URL:-http://localhost:3010}
+      - PORT=${CMS_PORT:-3010}
+      - RUSTFS_ENDPOINT=${RUSTFS_ENDPOINT:-http://rustfs:9000}
+      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}
+      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-your-secret-key}
+      - RUSTFS_BUCKET=${RUSTFS_BUCKET:-dealio-uploads}
     depends_on:
       db:
         condition: service_healthy
+      api:
+        condition: service_healthy
     networks:
       - scryme-network
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "wget --no-verbose --tries=1 -O - http://localhost:${STUDIO_PORT:-5555}/ > /dev/null || exit 1",
-        ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      - proxy-network
 
 volumes:
   postgres_data:

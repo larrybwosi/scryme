@@ -4,8 +4,10 @@ import { MovementType } from "@repo/db";
 import { Decimal } from "decimal.js";
 
 // Mock the ScrymeChatApiClient
-vi.mock("@repo/chat", () => {
+vi.mock("@repo/chat", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("@repo/chat")>();
   return {
+    ...actual,
     ScrymeChatApiClient: class {
       sendMessage = vi.fn().mockResolvedValue({ success: true });
     }

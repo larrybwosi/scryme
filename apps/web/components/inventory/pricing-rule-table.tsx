@@ -32,8 +32,11 @@ interface PricingRuleTableProps {
 }
 
 import { getCurrencySymbol } from "../../lib/utils";
+import { useOrganizationStore } from "../../lib/stores/organization-store";
 
-export function PricingRuleTable({ priceListId, rules, currency = "USD" }: PricingRuleTableProps) {
+export function PricingRuleTable({ priceListId, rules, currency: currencyProp }: PricingRuleTableProps) {
+  const { currency: storeCurrency } = useOrganizationStore();
+  const currency = currencyProp || storeCurrency;
   const symbol = getCurrencySymbol(currency);
 
   const getDiscountDisplay = (rule: any) => {

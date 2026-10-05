@@ -28,6 +28,7 @@ import {
   Tag,
   Clock,
   Search,
+  Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { useFormattedCurrency } from '@/lib/utils';
@@ -42,7 +43,6 @@ import { usePosStore } from '@/store/store';
 import { PaymentMethod, PaymentStatus, useProcessSale } from '@/hooks/sales';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { MpesaFlowType, ProcessSaleInput, ProcessSaleInputSchema } from '@/lib/validation/transactions';
-import { useMpesaSearch, useMpesaClaim, useMpesaVerifySafaricom } from '@/hooks/mpesa';
 import { cn } from '@/lib/utils';
 import { shiftService } from '@/lib/shift-service';
 import { emit } from '@tauri-apps/api/event';
@@ -75,7 +75,7 @@ interface AddedPayment {
   meta?: any;
 }
 
-type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'SEARCH';
+type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'MANUAL';
 type MpesaStatus = 'IDLE' | 'WAITING' | 'SUCCESS' | 'FAILED';
 type PaymentTab = 'CASH' | 'MOBILE_PAYMENT' | 'CREDIT_CARD' | 'GIFT_CARD' | 'INSURANCE';
 
@@ -277,17 +277,13 @@ const PaymentModal = ({
 
   // M-Pesa
   const [mpesaMode, setMpesaMode] = useState<MpesaMode>('STK');
-  const [mpesaSearchQuery, setMpesaSearchQuery] = useState('');
+  const [mpesaCode, setMpesaCode] = useState('');
   const [mpesaPhone, setMpesaPhone] = useState(customer?.phone || '');
   const [mpesaWaiting, setMpesaWaiting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('IDLE');
   const [detectedPayment, setDetectedPayment] = useState<any>(null);
 
   const { mutateAsync: createSale, isPending: isProcessing } = useProcessSale();
-  const { data: unclaimedPayments, isLoading: isSearchingMpesa } = useMpesaSearch(mpesaSearchQuery);
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  const { mutateAsync: _claimMpesaPayment, isPending: _isClaimingMpesa } = useMpesaClaim();
-  const { mutateAsync: verifyWithSafaricom, isPending: isVerifyingSafaricom } = useMpesaVerifySafaricom();
 
   const { openPhysicalDrawer } = useCashDrawer();
   const [activeShift, setActiveShift] = useState<any>(null);
@@ -325,14 +321,19 @@ const PaymentModal = ({
     setEditableDiscount(discount);
   }, [discount]);
 
+  const currentOrder = usePosStore(state => state.currentOrder);
+  const isCustomPreorder = Boolean(currentOrder.metadata?.isCustomOrder);
+  const customDeposit = Number(currentOrder.metadata?.depositAmount) || 0;
+
   // ── Calculations ──
-  const { totalPayable, priceBeforeTax, calculatedTax } = useMemo(() => {
+  const { totalPayable, priceBeforeTax, calculatedTax, fullOrderTotal } = useMemo(() => {
     const total = Math.max(0, subtotal - editableDiscount);
     const rate = Number(taxRate) || 0;
     const taxableAmount = total / (1 + rate);
     const taxAmount = total - taxableAmount;
-    return { totalPayable: total, priceBeforeTax: taxableAmount, calculatedTax: taxAmount };
-  }, [subtotal, editableDiscount, taxRate]);
+    const targetPayable = isCustomPreorder && customDeposit > 0 ? Math.min(customDeposit, total) : total;
+    return { totalPayable: targetPayable, priceBeforeTax: taxableAmount, calculatedTax: taxAmount, fullOrderTotal: total };
+  }, [subtotal, editableDiscount, taxRate, isCustomPreorder, customDeposit]);
 
   const totalPaid = useMemo(() => currentPayments.reduce((sum, p) => sum + p.amount, 0), [currentPayments]);
   const remainingBalance = useMemo(() => Math.max(0, totalPayable - totalPaid), [totalPayable, totalPaid]);
@@ -483,6 +484,39 @@ const PaymentModal = ({
   }, []);
 
   // ── Handlers ──
+  const handleAddMpesaManual = () => {
+    const code = mpesaCode.trim().toUpperCase();
+    if (code.length < 3) {
+      toast.error('Invalid Transaction Code', {
+        description: 'M-Pesa transaction code must be at least 3 characters.',
+      });
+      return;
+    }
+    const amount = parseFloat(amountInput);
+    if (!amount || amount <= 0) {
+      toast.error('Invalid Amount', {
+        description: 'Please enter a valid payment amount.',
+      });
+      return;
+    }
+
+    const phone = mpesaPhone ? normalizePhoneNumber(mpesaPhone, PHONE_CONFIG) : undefined;
+
+    addPayment({
+      method: PaymentMethod.MPESA,
+      amount,
+      reference: code,
+      meta: {
+        mpesaType: MpesaFlowType.PAYBILL_MANUAL,
+        mpesaPhoneNumber: phone,
+        transactionCode: code,
+      },
+    });
+
+    setMpesaCode('');
+    toast.success('M-Pesa payment added');
+  };
+
   const handleAddCash = () => {
     if (settings.enforceShiftForCashPayments && !activeShift && import.meta.env.MODE !== 'standalone') {
         toast.error('No Active Shift', {
@@ -557,6 +591,13 @@ const PaymentModal = ({
       }
     }
 
+    const { customerName: curCustName, customerPhone: curCustPhone } = usePosStore.getState().currentOrder;
+    const isCustomOrder = Boolean(metadata?.isCustomOrder);
+    const custName = customer?.name || curCustName || undefined;
+    const custPhone = customer?.phone || curCustPhone || undefined;
+    const custEmail = customer?.email || metadata?.customerEmail || undefined;
+    const saveAsCust = metadata?.saveAsCustomer ?? (customer ? false : true);
+
     return {
       cartItems: cartItems.map(item => ({
         productId: item.productId || '',
@@ -572,7 +613,14 @@ const PaymentModal = ({
       saleNumber: fullSaleNumber,
       accountRef: paybillAccountNo,
       isWholesale: false,
-      customerId: customer?.id && customer.id !== 'temp-id' ? customer.id : null,
+      customerId: customer?.id && customer.id !== 'temp-id' && customer.id !== 'temp-custom-customer' && !customer.id.startsWith('temp-') ? customer.id : null,
+      customerName: custName,
+      customerPhone: custPhone,
+      customerEmail: custEmail,
+      saveAsCustomer: saveAsCust,
+      type: isCustomOrder ? 'SALES_ORDER' : 'POS_SALE',
+      status: isCustomOrder ? 'PREORDER' : 'COMPLETED',
+      metadata,
       enableStockTracking: true,
       notes: finalNotes,
       discountAmount: editableDiscount,
@@ -639,10 +687,14 @@ const PaymentModal = ({
           },
         ];
 
+    const currentOrderState = usePosStore.getState().currentOrder;
+    const isCustomOrder = Boolean(currentOrderState.metadata?.isCustomOrder);
+
     const payload: any = {
       ...getCommonPayloadFields(),
       paymentMethod: primaryMethod,
-      paymentStatus: PaymentStatus.COMPLETED,
+      paymentStatus: isCustomOrder ? PaymentStatus.PENDING : PaymentStatus.COMPLETED,
+      status: isCustomOrder ? "PREORDER" : "COMPLETED",
       amountReceived: totalPaid > 0 ? totalPaid : totalPayable,
       change: changeDue,
       payments: paymentsToSubmit,
@@ -952,7 +1004,7 @@ const PaymentModal = ({
                     <div className="space-y-4">
                       {/* Mode toggle */}
                       <div className="grid grid-cols-5 gap-1.5 p-1.5 bg-muted">
-                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS', 'SEARCH'] as MpesaMode[]).map(mode => (
+                        {(['STK', 'QR', 'PAYBILL', 'BUY_GOODS', 'MANUAL'] as MpesaMode[]).map(mode => (
                           <button
                             key={mode}
                             onClick={() => {
@@ -967,7 +1019,7 @@ const PaymentModal = ({
                                 : 'text-muted-foreground hover:text-foreground'
                             )}
                           >
-                            {mode === 'SEARCH' ? 'MANUAL' : mode.replace('_', ' ')}
+                            {mode.replace('_', ' ')}
                           </button>
                         ))}
                       </div>
@@ -1067,77 +1119,38 @@ const PaymentModal = ({
                         </div>
                       )}
 
-                      {/* Manual Search */}
-                      {mpesaMode === 'SEARCH' && (
-                        <div className="space-y-4">
-                          <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      {/* Manual Entry */}
+                      {mpesaMode === 'MANUAL' && (
+                        <div className="space-y-3">
+                          <div className="space-y-1.5">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                              M-Pesa Transaction Code
+                            </Label>
                             <Input
-                              value={mpesaSearchQuery}
-                              onChange={e => setMpesaSearchQuery(e.target.value)}
-                              placeholder="Code, Phone or Name..."
-                              className="pl-9 h-11"
+                              value={mpesaCode}
+                              onChange={e => setMpesaCode(e.target.value.toUpperCase())}
+                              placeholder="e.g. QGH1234567"
+                              className="h-11 font-mono uppercase"
                             />
                           </div>
-
-                          <div className="space-y-2 max-h-[240px] overflow-y-auto pr-1">
-                            {isSearchingMpesa ? (
-                              <div className="flex items-center justify-center py-8">
-                                <Loader2 className="w-6 h-6 animate-spin text-muted-foreground" />
-                              </div>
-                            ) : unclaimedPayments?.length ? (
-                              unclaimedPayments.map((payment: any) => (
-                                <div
-                                  key={payment.id}
-                                  className="p-3 border bg-background hover:border-primary/50 transition-colors flex items-center justify-between group"
-                                >
-                                  <div>
-                                    <p className="text-sm font-bold">{payment.transId}</p>
-                                    <p className="text-xs text-muted-foreground">
-                                      {payment.msisdn} • {formatCurrency(payment.amount)}
-                                    </p>
-                                    <p className="text-[10px] text-muted-foreground opacity-70">
-                                      {new Date(payment.transTime).toLocaleString()}
-                                    </p>
-                                  </div>
-                                  <Button
-                                    size="sm"
-                                    className="h-8 px-3 text-xs"
-                                    onClick={() => {
-                                      handlePaymentMatch({
-                                        receipt: payment.transId,
-                                        amount: Number(payment.amount),
-                                        phone: payment.msisdn,
-                                      });
-                                    }}
-                                  >
-                                    Link
-                                  </Button>
-                                </div>
-                              ))
-                            ) : mpesaSearchQuery.length >= 3 ? (
-                              <div className="text-center py-8 border border-dashed rounded-lg">
-                                <p className="text-sm text-muted-foreground">No matching payments found</p>
-                                <Button
-                                  variant="link"
-                                  size="sm"
-                                  className="mt-1 h-auto py-0"
-                                  disabled={isVerifyingSafaricom}
-                                  onClick={async () => {
-                                    await verifyWithSafaricom({
-                                      transactionCode: mpesaSearchQuery,
-                                    });
-                                  }}
-                                >
-                                  Request Safaricom verification?
-                                </Button>
-                              </div>
-                            ) : (
-                              <div className="text-center py-8 text-muted-foreground text-xs">
-                                Enter at least 3 characters to search
-                              </div>
-                            )}
+                          <div className="space-y-1.5">
+                            <Label className="text-xs uppercase tracking-wider text-muted-foreground">
+                              Phone Number (Optional)
+                            </Label>
+                            <Input
+                              value={mpesaPhone}
+                              onChange={e => setMpesaPhone(e.target.value)}
+                              placeholder="07XX XXX XXX"
+                              className="h-11 font-mono"
+                            />
                           </div>
+                          <Button
+                            className="w-full h-12 font-semibold gap-2"
+                            onClick={handleAddMpesaManual}
+                            disabled={!mpesaCode.trim() || mpesaCode.trim().length < 3 || !amountInput || parseFloat(amountInput) <= 0}
+                          >
+                            <Plus className="w-4 h-4" /> Add Payment
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -1281,6 +1294,33 @@ const PaymentModal = ({
                 )}
               </div>
               <PaymentProgress paid={totalPaid} total={totalPayable} />
+              {isCustomPreorder && (
+                <div className="mt-3 p-3 bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 rounded-lg text-xs space-y-2">
+                  <div className="flex justify-between items-center font-bold text-amber-900 dark:text-amber-200">
+                    <span className="flex items-center gap-1.5">
+                      <Sparkles className="w-4 h-4 text-amber-500" /> Pre-Order Deposit Collection
+                    </span>
+                    <span>Order Value: {formatCurrency(fullOrderTotal)}</span>
+                  </div>
+                  <p className="text-amber-800 dark:text-amber-300 text-[11px]">
+                    Collecting deposit of <strong>{formatCurrency(totalPayable)}</strong>.
+                    Remaining balance of <strong>{formatCurrency(Math.max(0, fullOrderTotal - totalPayable))}</strong> will be due at completion.
+                  </p>
+                  <div className="pt-1 border-t border-amber-200 dark:border-amber-800/80 flex justify-end">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-6 text-[11px] px-2 text-amber-900 dark:text-amber-200 hover:bg-amber-200/60 dark:hover:bg-amber-900/60 font-medium"
+                      onClick={() => {
+                        usePosStore.getState().cancelPreOrder();
+                        toast.info('Switched to normal full sale');
+                      }}
+                    >
+                      Switch to Normal Sale
+                    </Button>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Payment list */}
@@ -1349,10 +1389,23 @@ const PaymentModal = ({
                     <span className="tabular-nums">{formatCurrency(calculatedTax)}</span>
                   </div>
                 )}
-                <div className="flex justify-between items-center font-bold pt-1 border-t">
-                  <span>Total</span>
-                  <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
-                </div>
+                {isCustomPreorder ? (
+                  <>
+                    <div className="flex justify-between items-center text-muted-foreground">
+                      <span>Full Order Value</span>
+                      <span className="tabular-nums font-medium">{formatCurrency(fullOrderTotal)}</span>
+                    </div>
+                    <div className="flex justify-between items-center font-bold pt-1 border-t text-amber-700 dark:text-amber-400">
+                      <span>Deposit Amount Due</span>
+                      <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
+                    </div>
+                  </>
+                ) : (
+                  <div className="flex justify-between items-center font-bold pt-1 border-t">
+                    <span>Total</span>
+                    <span className="tabular-nums">{formatCurrency(totalPayable)}</span>
+                  </div>
+                )}
                 {totalPaid > 0 && (
                   <div className="flex justify-between items-center text-sm text-emerald-600 dark:text-emerald-400">
                     <span>Paid</span>

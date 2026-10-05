@@ -26,7 +26,7 @@ import {
 @ApiTags('V3 Enterprise Tasks')
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, PermissionsGuard)
-@Controller('v3/projects')
+@Controller([':orgSlug/projects', 'projects'])
 export class ProjectController {
   constructor(private readonly projectUseCase: ProjectUseCase) {}
 

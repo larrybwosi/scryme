@@ -60,6 +60,7 @@ interface AuditStockModalProps {
 }
 
 import { getCurrencySymbol } from "../../lib/utils";
+import { useOrganizationStore } from "../../lib/stores/organization-store";
 
 export function AuditStockModal({
   isOpen,

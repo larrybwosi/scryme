@@ -34,6 +34,7 @@ import {
   generateMemberCardId,
   resetMemberPassword,
 } from "../../../app/actions/staff";
+import { BakeryStaffCard } from "./bakery-staff-card";
 import { toast } from "sonner";
 import {
   Select,
@@ -99,7 +100,7 @@ export function StaffSettings({
       toast.success("Settings updated successfully");
       setForm(prev => ({ ...prev, pin: "" }));
     } else {
-      toast.error(result.error);
+      toast.error(result.error || "Failed to update settings");
     }
     setLoading(false);
   };
@@ -107,22 +108,20 @@ export function StaffSettings({
   const handleGeneratePin = async () => {
     const result = await generateMemberPin(member.id);
     if (result.success) {
-      toast.success(`PIN updated to: ${result.pin}`, {
-        duration: 10000,
-        description: "Please share this with the staff member securely.",
-      });
+      setForm(prev => ({ ...prev, pin: result.pin }));
+      toast.success(`Generated PIN: ${result.pin}`);
     } else {
-      toast.error(result.error);
+      toast.error(result.error || "Failed to generate PIN");
     }
   };
 
   const handleGenerateCard = async () => {
     const result = await generateMemberCardId(member.id);
     if (result.success) {
-      toast.success(`Card ID updated to: ${result.cardId}`);
       setForm(prev => ({ ...prev, cardId: result.cardId }));
+      toast.success(`Generated Card ID: ${result.cardId}`);
     } else {
-      toast.error(result.error);
+      toast.error(result.error || "Failed to generate Card ID");
     }
   };
 
@@ -130,51 +129,43 @@ export function StaffSettings({
     setResettingPassword(true);
     const result = await resetMemberPassword(member.id);
     if (result.success) {
-      toast.success(`Password reset successful`, {
-        duration: 15000,
-        description: `New password: ${result.password}. Please copy and share it securely.`,
+      toast.success(`Password reset successfully. New Password: ${result.password}`, {
+        duration: 10000,
       });
       setShowResetConfirm(false);
     } else {
-      toast.error(result.error);
+      toast.error(result.error || "Failed to reset password");
     }
     setResettingPassword(false);
   };
 
   return (
-    <div className="bg-background">
-      <form onSubmit={handleUpdate} className="">
-        {/* Sticky header with Save button */}
-        <div className="sticky top-0 z-10 flex items-center justify-between gap-4 bg-background/95 backdrop-blur-sm border-b border-border px-1 py-3 mb-6">
-          <div>
-            <h2 className="text-base font-bold text-foreground">
-              Staff Settings
-            </h2>
-            <p className="text-xs text-muted-foreground">
-              {form.name || member.user?.email || "Manage staff details"}
-            </p>
-          </div>
-          <Button
-            type="submit"
-            disabled={loading}
-            className="gap-2 bg-primary text-primary-foreground hover:bg-primary/90">
-            {loading ? (
-              <>
+    <div className="space-y-6">
+      <form onSubmit={handleUpdate}>
+        <div className="flex flex-col gap-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-foreground">
+                Account Settings
+              </h2>
+              <p className="text-sm text-muted-foreground">
+                Manage personal information, job details, and authentication parameters.
+              </p>
+            </div>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground gap-2">
+              {loading ? (
                 <Loader2 size={16} className="animate-spin" />
-                Saving...
-              </>
-            ) : (
-              <>
+              ) : (
                 <Save size={16} />
-                Save Changes
-              </>
-            )}
-          </Button>
-        </div>
+              )}
+              Save Changes
+            </Button>
+          </div>
 
-        {/* Scrollable content */}
-        <div className="flex-1 min-h-0 overflow-y-auto pb-6">
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 items-start">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <div className="lg:col-span-2 space-y-6">
               <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
@@ -183,156 +174,115 @@ export function StaffSettings({
                     Personal Information
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Manage staff personal details and contact information.
+                    Basic identification and contact details.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label className="text-foreground">Profile Image</Label>
+                  <div className="flex items-center gap-6 pb-4 border-b border-border">
                     <ImageUpload
                       value={form.image ? [form.image] : []}
-                      onChange={urls =>
-                        setForm({ ...form, image: urls[0] || "" })
-                      }
-                      maxImages={1}
+                      onChange={urls => setForm({ ...form, image: urls[0] || "" })}
                     />
+                    <div className="space-y-1">
+                      <Label className="text-base font-semibold text-foreground">
+                        Profile Picture
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        JPG, PNG, or GIF. Max 5MB.
+                      </p>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="name" className="text-foreground">Full Name</Label>
-                      <div className="relative">
-                        <User
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="name"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="e.g. John Doe"
-                          value={form.name}
-                          onChange={e =>
-                            setForm({ ...form, name: e.target.value })
-                          }
-                        />
-                      </div>
+                      <Input
+                        id="name"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="John Doe"
+                        value={form.name}
+                        onChange={e => setForm({ ...form, name: e.target.value })}
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="email" className="text-foreground">Email Address</Label>
-                      <div className="relative">
-                        <Mail
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="email"
-                          type="email"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="e.g. john@example.com"
-                          value={form.email}
-                          onChange={e =>
-                            setForm({ ...form, email: e.target.value })
-                          }
-                        />
-                      </div>
+                      <Input
+                        id="email"
+                        type="email"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="john@example.com"
+                        value={form.email}
+                        onChange={e => setForm({ ...form, email: e.target.value })}
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-foreground">Phone Number</Label>
-                      <div className="relative">
-                        <Phone
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="phone"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="+254..."
-                          value={form.phone}
-                          onChange={e =>
-                            setForm({ ...form, phone: e.target.value })
-                          }
-                        />
-                      </div>
+                      <Input
+                        id="phone"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="+254..."
+                        value={form.phone}
+                        onChange={e => setForm({ ...form, phone: e.target.value })}
+                      />
                     </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="age" className="text-foreground">Age</Label>
+                      <Input
+                        id="age"
+                        type="number"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="e.g. 28"
+                        value={form.age}
+                        onChange={e => setForm({ ...form, age: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="gender" className="text-foreground">Gender</Label>
                       <Select
-                        value={form.gender || undefined}
-                        onValueChange={val =>
-                          setForm({ ...form, gender: val })
-                        }>
-                        <SelectTrigger className="bg-background border-border text-foreground">
+                        value={form.gender}
+                        onValueChange={val => setForm({ ...form, gender: val })}>
+                        <SelectTrigger id="gender" className="bg-background border-border text-foreground">
                           <SelectValue placeholder="Select gender" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="MALE">Male</SelectItem>
-                          <SelectItem value="FEMALE">Female</SelectItem>
-                          <SelectItem value="OTHER">Other</SelectItem>
-                          <SelectItem value="PREFER_NOT_TO_SAY">
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="Male">Male</SelectItem>
+                          <SelectItem value="Female">Female</SelectItem>
+                          <SelectItem value="Other">Other</SelectItem>
+                          <SelectItem value="Prefer not to say">
                             Prefer not to say
                           </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-                  </div>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="age" className="text-foreground">Age / Date of Birth</Label>
-                      <div className="relative">
-                        <Hash
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="age"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="e.g. 25"
-                          value={form.age}
-                          onChange={e =>
-                            setForm({ ...form, age: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="tags" className="text-foreground">Tags (Comma separated)</Label>
-                      <div className="relative">
-                        <Tag
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="tags"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="Shift A, Morning, Delivery"
-                          value={form.tags}
-                          onChange={e =>
-                            setForm({ ...form, tags: e.target.value })
-                          }
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="address" className="text-foreground">Address</Label>
-                    <div className="relative">
-                      <Home
-                        className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                        size={16}
-                      />
+                      <Label htmlFor="address" className="text-foreground">Residential Address</Label>
                       <Input
                         id="address"
-                        className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                        placeholder="Full residential address"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="Street, City, Country"
                         value={form.address}
                         onChange={e =>
                           setForm({ ...form, address: e.target.value })
                         }
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tags" className="text-foreground">Tags (comma-separated)</Label>
+                    <Input
+                      id="tags"
+                      className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                      placeholder="Full-time, Driver, POS Operator"
+                      value={form.tags}
+                      onChange={e => setForm({ ...form, tags: e.target.value })}
+                    />
                   </div>
                 </CardContent>
               </Card>
@@ -344,45 +294,39 @@ export function StaffSettings({
                     Employment Details
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Corporate position and employment contract information.
+                    Job role, employment classification, and line manager.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="jobTitle" className="text-foreground">Job Title</Label>
-                      <div className="relative">
-                        <Briefcase
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="jobTitle"
-                          className="pl-10 bg-background border-border text-foreground placeholder:text-muted-foreground/60"
-                          placeholder="e.g. Senior Accountant"
-                          value={form.jobTitle}
-                          onChange={e =>
-                            setForm({ ...form, jobTitle: e.target.value })
-                          }
-                        />
-                      </div>
+                      <Label htmlFor="jobTitle" className="text-foreground">Job Title / Position</Label>
+                      <Input
+                        id="jobTitle"
+                        className="bg-background border-border text-foreground placeholder:text-muted-foreground/60"
+                        placeholder="Senior Cashier, Inventory Clerk..."
+                        value={form.jobTitle}
+                        onChange={e =>
+                          setForm({ ...form, jobTitle: e.target.value })
+                        }
+                      />
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="employmentType" className="text-foreground">Employment Type</Label>
                       <Select
-                        value={form.employmentType || undefined}
+                        value={form.employmentType}
                         onValueChange={val =>
                           setForm({ ...form, employmentType: val })
                         }>
-                        <SelectTrigger className="bg-background border-border text-foreground">
+                        <SelectTrigger id="employmentType" className="bg-background border-border text-foreground">
                           <SelectValue placeholder="Select type" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="FULL_TIME">Full-time</SelectItem>
-                          <SelectItem value="PART_TIME">Part-time</SelectItem>
-                          <SelectItem value="CONTRACT">Contract</SelectItem>
-                          <SelectItem value="INTERN">Intern</SelectItem>
-                          <SelectItem value="TEMPORARY">Temporary</SelectItem>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="Full-Time">Full-Time</SelectItem>
+                          <SelectItem value="Part-Time">Part-Time</SelectItem>
+                          <SelectItem value="Contract">Contract</SelectItem>
+                          <SelectItem value="Temporary">Temporary</SelectItem>
+                          <SelectItem value="Intern">Intern</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -390,43 +334,34 @@ export function StaffSettings({
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="joiningDate" className="text-foreground">Joining Date</Label>
-                      <div className="relative">
-                        <Calendar
-                          className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
-                          size={16}
-                        />
-                        <Input
-                          id="joiningDate"
-                          type="date"
-                          className="pl-10 bg-background border-border text-foreground"
-                          value={form.joiningDate}
-                          onChange={e =>
-                            setForm({ ...form, joiningDate: e.target.value })
-                          }
-                        />
-                      </div>
+                      <Label htmlFor="joiningDate" className="text-foreground">Date Joined</Label>
+                      <Input
+                        id="joiningDate"
+                        type="date"
+                        className="bg-background border-border text-foreground"
+                        value={form.joiningDate}
+                        onChange={e =>
+                          setForm({ ...form, joiningDate: e.target.value })
+                        }
+                      />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="manager" className="text-foreground">Reporting Manager</Label>
+                      <Label htmlFor="managerId" className="text-foreground">Line Manager</Label>
                       <Select
-                        value={form.managerId || "none"}
+                        value={form.managerId}
                         onValueChange={val =>
-                          setForm({
-                            ...form,
-                            managerId: val === "none" ? "" : val,
-                          })
+                          setForm({ ...form, managerId: val })
                         }>
-                        <SelectTrigger className="bg-background border-border text-foreground">
-                          <SelectValue placeholder="Select manager" />
+                        <SelectTrigger id="managerId" className="bg-background border-border text-foreground">
+                          <SelectValue placeholder="Select line manager" />
                         </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="none">No Manager</SelectItem>
+                        <SelectContent className="bg-card border-border">
+                          <SelectItem value="none">None</SelectItem>
                           {allMembers
                             .filter(m => m.id !== member.id)
                             .map(m => (
                               <SelectItem key={m.id} value={m.id}>
-                                {m.user?.name || m.user?.email}
+                                {m.user?.name || m.user?.email || m.id}
                               </SelectItem>
                             ))}
                         </SelectContent>
@@ -439,11 +374,11 @@ export function StaffSettings({
               <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
-                    <Heart size={20} className="text-rose-500" />
+                    <Heart size={20} className="text-red-500" />
                     Emergency Contact
                   </CardTitle>
                   <CardDescription className="text-muted-foreground">
-                    Primary contact in case of an emergency.
+                    Emergency notification details.
                   </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
@@ -573,6 +508,8 @@ export function StaffSettings({
             </div>
 
             <div className="space-y-6 lg:sticky lg:top-[72px] self-start">
+              <BakeryStaffCard memberId={member.id} />
+
               <Card className="border-border shadow-sm bg-card">
                 <CardHeader>
                   <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">

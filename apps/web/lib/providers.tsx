@@ -6,6 +6,8 @@ import { RealtimeProvider } from "@repo/shared/realtime/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
 import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TopLoader } from "../components/top-loader";
+import { OrganizationInitializer } from "../components/organization-initializer";
+import { OrgPresenceTracker } from "../components/org-presence-tracker";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -16,6 +18,8 @@ export function Providers({ children }: ProvidersProps) {
     <NuqsAdapter>
       <TooltipProvider>
         <RealtimeProvider>
+          <OrganizationInitializer />
+          <OrgPresenceTracker />
           <TopLoader />
           {children}
           <Toaster />

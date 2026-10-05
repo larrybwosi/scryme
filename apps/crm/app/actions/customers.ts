@@ -178,22 +178,22 @@ export async function createCustomer(data: CustomerFormValues): Promise<any> {
       },
     });
 
-    // Proactively initialize CRM Record for customer
-    let objectDef = await db.crmObjectDefinition.findUnique({
+    // Proactively initialize CRM Record for customer using upsert
+    const objectDef = await db.crmObjectDefinition.upsert({
       where: { organizationId_name: { organizationId, name: "customer" } },
+      update: {
+        label: "Customer",
+        labelPlural: "Customers",
+        isSystem: true,
+      },
+      create: {
+        organizationId,
+        name: "customer",
+        label: "Customer",
+        labelPlural: "Customers",
+        isSystem: true,
+      },
     });
-
-    if (!objectDef) {
-      objectDef = await db.crmObjectDefinition.create({
-        data: {
-          organizationId,
-          name: "customer",
-          label: "Customer",
-          labelPlural: "Customers",
-          isSystem: true,
-        },
-      });
-    }
 
     const record = await db.crmRecord.create({
       data: {
@@ -469,26 +469,26 @@ export async function getCustomer(id: string): Promise<any> {
     });
 
     if (customer && !customer.crmRecordId) {
-      let objectDef = await db.crmObjectDefinition.findUnique({
+      const objectDef = await db.crmObjectDefinition.upsert({
         where: {
           organizationId_name: {
             organizationId: customer.organizationId,
             name: "customer",
           },
         },
+        update: {
+          label: "Customer",
+          labelPlural: "Customers",
+          isSystem: true,
+        },
+        create: {
+          organizationId: customer.organizationId,
+          name: "customer",
+          label: "Customer",
+          labelPlural: "Customers",
+          isSystem: true,
+        },
       });
-
-      if (!objectDef) {
-        objectDef = await db.crmObjectDefinition.create({
-          data: {
-            organizationId: customer.organizationId,
-            name: "customer",
-            label: "Customer",
-            labelPlural: "Customers",
-            isSystem: true,
-          },
-        });
-      }
 
       const record = await db.crmRecord.create({
         data: {

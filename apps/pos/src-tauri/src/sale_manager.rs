@@ -165,7 +165,7 @@ pub async fn get_invoice_blob_command(
     auth_state: State<'_, AuthState>,
     url: String,
 ) -> Result<Vec<u8>, String> {
-    let (device_key, token, base_url) = {
+    let (device_key, token, base_url, org_slug) = {
         let config_guard = auth_state.device_config.lock().map_err(|e| e.to_string())?;
         let config = config_guard.as_ref().ok_or("Device not initialized")?;
 
@@ -175,16 +175,23 @@ pub async fn get_invoice_blob_command(
             config.device_key.clone(),
             token,
             config.base_url.clone(),
+            config.org_slug.clone(),
         )
     };
 
     let full_url = if url.starts_with("http") {
         url
     } else {
+        let clean_path = url.trim_start_matches('/');
+        let resolved_path = if clean_path.contains(":orgSlug") || clean_path.contains("{orgSlug}") {
+            clean_path.replace(":orgSlug", &org_slug).replace("{orgSlug}", &org_slug)
+        } else {
+            clean_path.to_string()
+        };
         format!(
             "{}/{}",
             base_url.trim_end_matches('/'),
-            url.trim_start_matches('/')
+            resolved_path
         )
     };
 

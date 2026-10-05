@@ -109,8 +109,13 @@ export class V3RealtimeGateway
         const apiKeyStr = token;
         const clientId = apiKeyStr.includes(".") ? apiKeyStr.split(".")[0] : apiKeyStr;
         try {
-          const clientObj = await this.prisma.client.v3ApiClient.findUnique({
-            where: { clientId },
+          const clientObj = await this.prisma.client.v3ApiClient.findFirst({
+            where: {
+              OR: [
+                { clientId },
+                { id: clientId },
+              ],
+            },
             include: { organization: true },
           });
           if (clientObj && clientObj.isActive) {
@@ -193,8 +198,13 @@ export class V3RealtimeGateway
 
     if (!context) return false;
 
-    // Presence channel check (e.g., presence:locationId)
+    // Presence channel check (e.g., presence:locationId, presence:org:orgId)
     if (channel.startsWith("presence:")) {
+      const parts = channel.split(":");
+      if (parts[1] === "org" && parts[2]) {
+        const targetOrg = parts[2];
+        return targetOrg === context.organizationId || targetOrg === context.orgSlug;
+      }
       return true;
     }
 

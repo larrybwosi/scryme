@@ -7,14 +7,11 @@ import {
   Plus,
   TrendingUp,
   Percent,
-  Layers,
   Trash2,
-  Package,
   ShoppingBag,
   Loader2,
   Sparkles,
   SlidersHorizontal,
-  Info,
   CheckCircle2,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
@@ -53,6 +50,8 @@ import {
   TableRow,
 } from "@repo/ui/components/ui/table";
 import { toast } from "sonner";
+import { formatCurrency } from "@/lib/utils";
+import { useOrganizationStore } from "@/lib/stores/organization-store";
 import {
   getProductPricingDetails,
   createVolumeTierForProduct,
@@ -69,6 +68,9 @@ interface PricingTabProps {
 }
 
 export function PricingTab({ product, setProduct }: PricingTabProps) {
+  const { currency, currencySymbol: storeSymbol } = useOrganizationStore();
+  const currencySymbol = storeSymbol || "$";
+
   const retailPrice = Number(product.variants?.[0]?.retailPrice || 0);
   const buyingPrice = Number(product.variants?.[0]?.buyingPrice || 0);
   const marginPercentage =
@@ -98,31 +100,50 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
   const [volumeForm, setVolumeForm] = useState({
     variantId: product.variants?.[0]?.id || "",
     minQuantity: 5,
-    maxQuantity: "",
+    maxQuantity: "" as string | number,
     price: retailPrice > 0 ? Number((retailPrice * 0.9).toFixed(2)) : 0,
-    wholesalePrice: "",
+    wholesalePrice: "" as string | number,
     priceListId: "",
   });
 
   // Bundle Form State
-  const [bundleForm, setBundleForm] = useState({
+  const [bundleForm, setBundleForm] = useState<{
+    variantId: string;
+    name: string;
+    description: string;
+    bundleType: "FIXED" | "DYNAMIC";
+    buyQuantity: number;
+    bundlePrice: number;
+    getQuantity: number;
+    getDiscountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE";
+    getDiscountValue: number;
+  }>({
     variantId: product.variants?.[0]?.id || "",
     name: "Buy 3 Pack Special",
     description: "Get a special discounted package price when buying 3 items",
-    bundleType: "FIXED" as "FIXED" | "DYNAMIC",
+    bundleType: "FIXED",
     buyQuantity: 3,
     bundlePrice: retailPrice > 0 ? Number((retailPrice * 2.5).toFixed(2)) : 0,
     getQuantity: 1,
-    getDiscountType: "PERCENTAGE" as "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE",
+    getDiscountType: "PERCENTAGE",
     getDiscountValue: 50,
   });
 
   // Pricing Rule Form State
-  const [ruleForm, setRuleForm] = useState({
+  const [ruleForm, setRuleForm] = useState<{
+    variantId: string;
+    name: string;
+    description: string;
+    discountType: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE";
+    discountValue: number;
+    minQuantity: number;
+    minOrderValue: number;
+    priceListId: string;
+  }>({
     variantId: "ALL",
     name: "Bulk Order Discount",
     description: "Special percentage off for high volume orders",
-    discountType: "PERCENTAGE" as "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE",
+    discountType: "PERCENTAGE",
     discountValue: 10,
     minQuantity: 10,
     minOrderValue: 0,
@@ -182,7 +203,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Volume pricing tier added successfully");
       setIsVolumeTierOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create volume pricing tier");
     } finally {
       setIsSubmitting(false);
@@ -195,7 +216,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteVolumeTier(id, product.id);
       toast.success("Volume pricing tier removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove volume tier");
     } finally {
       setIsDeleting(null);
@@ -231,7 +252,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Multi-buy pricing rule created");
       setIsBundleOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create multi-buy rule");
     } finally {
       setIsSubmitting(false);
@@ -244,7 +265,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteProductPricingBundle(id, product.id);
       toast.success("Multi-buy rule removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove multi-buy rule");
     } finally {
       setIsDeleting(null);
@@ -276,7 +297,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       toast.success("Pricing rule created");
       setIsRuleOpen(false);
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to create pricing rule");
     } finally {
       setIsSubmitting(false);
@@ -289,7 +310,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
       await deleteProductPricingRule(id, product.id);
       toast.success("Pricing rule removed");
       await loadPricingData();
-    } catch (e) {
+    } catch {
       toast.error("Failed to remove pricing rule");
     } finally {
       setIsDeleting(null);
@@ -473,7 +494,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 No quantity tiers defined
               </h4>
               <p className="text-xs text-muted-foreground max-w-sm mb-4">
-                Offer bulk quantity discounts (e.g. 10+ units @ $8.00, 50+ units @ $6.50) to incentivize higher volume sales.
+                Offer bulk quantity discounts (e.g. 10+ units @ {currencySymbol}8.00, 50+ units @ {currencySymbol}6.50) to incentivize higher volume sales.
               </p>
               <Button
                 size="sm"
@@ -516,10 +537,10 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {item.maxQuantity ? `${item.maxQuantity} units` : "∞"}
                     </TableCell>
                     <TableCell className="font-bold text-emerald-600 dark:text-emerald-400">
-                      ${Number(item.price).toFixed(2)}
+                      {formatCurrency(Number(item.price), currency)}
                     </TableCell>
                     <TableCell>
-                      {item.wholesalePrice ? `$${Number(item.wholesalePrice).toFixed(2)}` : "—"}
+                      {item.wholesalePrice ? formatCurrency(Number(item.wholesalePrice), currency) : "—"}
                     </TableCell>
                     <TableCell>
                       <Badge variant="outline" className="text-[11px]">
@@ -557,7 +578,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
               Grouped & Multi-Buy Rules
             </CardTitle>
             <CardDescription>
-              Configure package deals, bulk bundles (e.g. 3 for $25), or Buy-X-Get-Y promotions.
+              Configure package deals, bulk bundles (e.g. 3 for {currencySymbol}25), or Buy-X-Get-Y promotions.
             </CardDescription>
           </div>
           <Button
@@ -579,7 +600,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 No multi-buy rules configured
               </h4>
               <p className="text-xs text-muted-foreground max-w-sm mb-4">
-                Set up group pricing like "Buy 3 for $25.00" or dynamic rules like "Buy 2 Get 1 50% Off".
+                Set up group pricing like "Buy 3 for {currencySymbol}25.00" or dynamic rules like "Buy 2 Get 1 50% Off".
               </p>
               <Button
                 size="sm"
@@ -632,7 +653,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Group Price ({bundle.buyQuantity || 1} units):</span>
                         <span className="font-extrabold text-emerald-600 dark:text-emerald-400">
-                          ${Number(bundle.bundlePrice || 0).toFixed(2)}
+                          {formatCurrency(Number(bundle.bundlePrice || 0), currency)}
                         </span>
                       </div>
                     ) : (
@@ -730,8 +751,8 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {rule.discountType === "PERCENTAGE"
                         ? `${rule.discountValue}% OFF`
                         : rule.discountType === "FIXED_AMOUNT"
-                        ? `$${rule.discountValue} OFF`
-                        : `$${rule.discountValue} FIXED`}
+                        ? `${formatCurrency(Number(rule.discountValue), currency)} OFF`
+                        : `${formatCurrency(Number(rule.discountValue), currency)} FIXED`}
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
                       {rule.conditions?.minQuantity ? (
@@ -743,7 +764,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                       {rule.conditions?.minOrderValue ? (
                         <div className="flex items-center gap-1">
                           <CheckCircle2 className="w-3 h-3 text-emerald-500" />
-                          <span>Min Order: ${rule.conditions.minOrderValue}</span>
+                          <span>Min Order: {formatCurrency(Number(rule.conditions.minOrderValue), currency)}</span>
                         </div>
                       ) : null}
                       {!rule.conditions?.minQuantity && !rule.conditions?.minOrderValue && "No threshold conditions"}
@@ -827,7 +848,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Tier Unit Price ($)</Label>
+                <Label>Tier Unit Price ({currencySymbol})</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -837,7 +858,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Wholesale Price ($ Optional)</Label>
+                <Label>Wholesale Price ({currencySymbol} Optional)</Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -891,7 +912,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
           <DialogHeader>
             <DialogTitle>Create Multi-Buy / Group Pricing</DialogTitle>
             <DialogDescription>
-              Configure package discounts like "Buy 3 for $25" or "Buy 2 Get 1 Free".
+              Configure package discounts like "Buy 3 for {currencySymbol}25" or "Buy 2 Get 1 Free".
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-2">
@@ -926,12 +947,12 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
               <Label>Multi-Buy Deal Type</Label>
               <Select
                 value={bundleForm.bundleType}
-                onValueChange={(val: any) => setBundleForm({ ...bundleForm, bundleType: val })}>
+                onValueChange={(val: "FIXED" | "DYNAMIC") => setBundleForm({ ...bundleForm, bundleType: val })}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="FIXED">Fixed Group Price (e.g. 3 for $25)</SelectItem>
+                  <SelectItem value="FIXED">Fixed Group Price (e.g. 3 for {currencySymbol}25)</SelectItem>
                   <SelectItem value="DYNAMIC">Buy X Get Y (e.g. Buy 2 Get 1 50% Off)</SelectItem>
                 </SelectContent>
               </Select>
@@ -950,7 +971,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
 
               {bundleForm.bundleType === "FIXED" ? (
                 <div className="space-y-2">
-                  <Label>Group Bundle Price ($)</Label>
+                  <Label>Group Bundle Price ({currencySymbol})</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -978,13 +999,15 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                   <Label>Discount Type</Label>
                   <Select
                     value={bundleForm.getDiscountType}
-                    onValueChange={(val: any) => setBundleForm({ ...bundleForm, getDiscountType: val })}>
+                    onValueChange={(val: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE") =>
+                      setBundleForm({ ...bundleForm, getDiscountType: val })
+                    }>
                     <SelectTrigger>
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                      <SelectItem value="FIXED_AMOUNT">Fixed Amount ($)</SelectItem>
+                      <SelectItem value="FIXED_AMOUNT">Fixed Amount ({currencySymbol})</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -1071,14 +1094,16 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 <Label>Discount Type</Label>
                 <Select
                   value={ruleForm.discountType}
-                  onValueChange={(val: any) => setRuleForm({ ...ruleForm, discountType: val })}>
+                  onValueChange={(val: "PERCENTAGE" | "FIXED_AMOUNT" | "FIXED_PRICE") =>
+                    setRuleForm({ ...ruleForm, discountType: val })
+                  }>
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="PERCENTAGE">Percentage (%)</SelectItem>
-                    <SelectItem value="FIXED_AMOUNT">Fixed Amount ($)</SelectItem>
-                    <SelectItem value="FIXED_PRICE">Fixed Price ($)</SelectItem>
+                    <SelectItem value="FIXED_AMOUNT">Fixed Amount ({currencySymbol})</SelectItem>
+                    <SelectItem value="FIXED_PRICE">Fixed Price ({currencySymbol})</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1105,7 +1130,7 @@ export function PricingTab({ product, setProduct }: PricingTabProps) {
                 />
               </div>
               <div className="space-y-2">
-                <Label>Min Order Value ($ Optional)</Label>
+                <Label>Min Order Value ({currencySymbol} Optional)</Label>
                 <Input
                   type="number"
                   value={ruleForm.minOrderValue}

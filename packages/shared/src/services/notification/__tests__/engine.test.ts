@@ -6,6 +6,7 @@ vi.mock('@repo/db', () => ({
   db: {
     notificationTemplate: {
       findUnique: vi.fn(),
+      upsert: vi.fn(),
     },
     member: {
       findMany: vi.fn(),
@@ -70,5 +71,43 @@ describe('NotificationEngine', () => {
     const createCall = (db.notificationDispatch.create as any).mock.calls[0][0];
     expect(createCall.data.finalContent).toContain('| Name | Stock |');
     expect(createCall.data.finalContent).toContain('| Bread | 10 |');
+  });
+  it("should auto-upsert missing template if not found in db", async () => {
+    (db.notificationTemplate.findUnique as any).mockResolvedValue(null);
+    (db.notificationTemplate.upsert as any).mockResolvedValue({
+      id: "default-template-id",
+      content: "Your delivery verification code for order #{{orderNumber}} is {{otp}}.",
+      subject: "Delivery OTP for Order #{{orderNumber}}",
+    });
+    (db.notificationDispatch.create as any).mockResolvedValue({ id: "dispatch-id" });
+
+    await notificationEngine.notify({
+      organizationId: "org-id",
+      templateName: "DELIVERY_OTP",
+      data: {
+        otp: "123456",
+        orderNumber: "ORD-001",
+      },
+    });
+
+    expect(db.notificationTemplate.upsert).toHaveBeenCalledWith({
+      where: {
+        organizationId_name: {
+          organizationId: "org-id",
+          name: "DELIVERY_OTP",
+        },
+      },
+      update: {},
+      create: {
+        organizationId: "org-id",
+        name: "DELIVERY_OTP",
+        subject: "Delivery OTP for Order #{{orderNumber}}",
+        content: "Your delivery verification code for order #{{orderNumber}} is {{otp}}.",
+      },
+    });
+
+    const createCall = (db.notificationDispatch.create as any).mock.calls[0][0];
+    expect(createCall.data.finalSubject).toBe("Delivery OTP for Order #ORD-001");
+    expect(createCall.data.finalContent).toBe("Your delivery verification code for order #ORD-001 is 123456.");
   });
 });

@@ -76,7 +76,6 @@ import type {
   CreateServiceDto,
   CreateServiceResourceDto,
   CreateSetupKeyDto,
-  CreateStrapiConnectionDto,
   CreateTransferDto,
   CreateUtilityAccountDto,
   CreateWebhookDto,
@@ -156,14 +155,12 @@ import type {
   StockingGetPurchasesParams,
   StockingGetRequestsParams,
   StockingGetTransfersParams,
-  StrapiConnectionResponseDto,
   SubmitReconciliationDto,
   SuspendOrganizationDto,
   TerminalLoginDto,
   TerminalLoginResponseDto,
   TokenRequestDto,
   TopUpPettyCashFundDto,
-  TriggerSyncDto,
   UnitsGetUnitsParams,
   UpdateCrmRecordDto,
   UpdateCustomRoleDto,
@@ -181,7 +178,6 @@ import type {
   UpdateServiceCategoryDto,
   UpdateServiceDto,
   UpdateServiceResourceDto,
-  UpdateStrapiConnectionDto,
   UpdateSubscriptionDto,
   UpdateSupplierProductDto,
   ValidateVoucherDto,
@@ -3619,159 +3615,6 @@ const unitsGetUnits = (
   }
 
 /**
- * @summary Create a new Strapi connection for this organisation
- */
-const strapiCreateConnection = (
-    orgSlug: string,
-    createStrapiConnectionDto: CreateStrapiConnectionDto, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<StrapiConnectionResponseDto>> => {
-    return axiosInstance.post(
-      `/v3/${orgSlug}/strapi/connections`,
-      createStrapiConnectionDto,options
-    );
-  }
-
-/**
- * @summary List all Strapi connections for this organisation
- */
-const strapiListConnections = (
-    orgSlug: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<StrapiConnectionResponseDto[]>> => {
-    return axiosInstance.get(
-      `/v3/${orgSlug}/strapi/connections`,options
-    );
-  }
-
-/**
- * @summary Get a single Strapi connection
- */
-const strapiGetConnection = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<StrapiConnectionResponseDto>> => {
-    return axiosInstance.get(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}`,options
-    );
-  }
-
-/**
- * @summary Update a Strapi connection
- */
-const strapiUpdateConnection = (
-    orgSlug: string,
-    connectionId: string,
-    updateStrapiConnectionDto: UpdateStrapiConnectionDto, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<StrapiConnectionResponseDto>> => {
-    return axiosInstance.patch(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}`,
-      updateStrapiConnectionDto,options
-    );
-  }
-
-/**
- * @summary Deactivate a Strapi connection
- */
-const strapiDeleteConnection = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.delete(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}`,options
-    );
-  }
-
-/**
- * @summary Trigger a manual sync for products and/or customers
- */
-const strapiTriggerSync = (
-    orgSlug: string,
-    connectionId: string,
-    triggerSyncDto: TriggerSyncDto, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.post(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/sync`,
-      triggerSyncDto,options
-    );
-  }
-
-/**
- * @summary Enqueue a background sync job
- */
-const strapiEnqueueSync = (
-    orgSlug: string,
-    connectionId: string,
-    triggerSyncDto: TriggerSyncDto, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.post(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/sync/queue`,
-      triggerSyncDto,options
-    );
-  }
-
-/**
- * @summary Get recent webhook event logs for a Strapi connection
- */
-const strapiGetWebhookLogs = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.get(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/webhook-logs`,options
-    );
-  }
-
-/**
- * @summary Get recent sync logs for a Strapi connection
- */
-const strapiGetSyncLogs = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.get(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/sync-logs`,options
-    );
-  }
-
-/**
- * @summary Exchange a Strapi storefront JWT for a Scryme customer session
- */
-const strapiExchangeCustomerToken = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.post(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/customers/exchange-token`,
-      undefined,options
-    );
-  }
-
-/**
- * @summary Register a storefront customer in both Strapi and Scryme
- */
-const strapiRegisterCustomer = (
-    orgSlug: string,
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.post(
-      `/v3/${orgSlug}/strapi/connections/${connectionId}/customers/register`,
-      undefined,options
-    );
-  }
-
-/**
- * Public endpoint. Configure this URL in your Strapi Settings → Webhooks panel. Signature verification uses HMAC-SHA256 via the X-Strapi-Signature header when a webhookSecret is configured.
- * @summary Receive a Strapi v4 lifecycle webhook event
- */
-const strapiReceiveWebhook = (
-    connectionId: string, options?: AxiosRequestConfig
- ): Promise<AxiosResponse<void>> => {
-    return axiosInstance.post(
-      `/v3/webhooks/strapi/${connectionId}`,
-      undefined,options
-    );
-  }
-
-/**
  * @summary Get dashboard analytics
  */
 const analyticsControllerGetDashboardAnalytics = (
@@ -3796,7 +3639,7 @@ const analyticsControllerGetResourceUtilization = (
     );
   }
 
-return {servicesCreateCategory,servicesGetCategories,servicesUpdateCategory,servicesDeleteCategory,servicesCreateService,servicesGetServices,servicesGetCurrentMemberShifts,servicesGetShifts,servicesGetService,servicesUpdateService,servicesGetAvailability,servicesDeleteService,servicesCreateResource,servicesGetResources,servicesUpdateResource,servicesDeleteResource,servicesCreateBooking,servicesGetBookings,servicesGetBooking,servicesUpdateBookingStatus,servicesCompleteBooking,servicesCancelBookingSeries,servicesCreateShift,servicesGetStaffShifts,servicesAddBreak,servicesRegisterCustomerApp,servicesGetUtilization,servicesGetPerformance,servicesGetFunnel,publicServicesListServices,publicServicesGetCategories,publicServicesGetService,publicServicesGetAvailability,publicServicesRequestOtp,publicServicesVerifyOtp,publicServicesCreatePublicBooking,inventoryVerifyIntegrity,inventoryFixIntegrity,inventoryGetInventory,inventoryTraceBatch,inventorySplitBatch,inventoryMergeBatches,inventoryCreateAssembly,inventoryCompleteAssembly,inventoryRequestAdjustment,inventoryGetAdjustments,inventoryApproveAdjustment,inventoryRejectAdjustment,inventoryGetLeadTime,inventoryGetWasteAnalysis,inventoryCheckB2BAvailability,inventoryUnpackBatch,inventoryScanUnpackBatch,inventoryQuickStockInquiry,expenseControllerCreateExpense,expenseControllerGetExpenses,expenseControllerGetExpenseCategories,expenseControllerGetExpense,pettyCashControllerCreateFund,pettyCashControllerGetFunds,pettyCashControllerGetFund,pettyCashControllerTopUpFund,pettyCashControllerGetFundTransactions,utilityAccountControllerCreateAccount,utilityAccountControllerGetAccounts,utilityAccountControllerGetAccount,accountingInitialize,accountingGetProfitLoss,accountingGetBalanceSheet,accountingGetCashFlow,accountingGetTaxSummary,invoiceControllerCreateInvoice,invoiceControllerGetInvoices,invoiceControllerGetInvoice,invoiceControllerUpdateInvoice,invoiceControllerDeleteInvoice,invoiceControllerFinalizeInvoice,invoiceControllerGetTemplates,invoiceControllerCreateTemplate,invoiceControllerGetConfig,invoiceControllerUpdateConfig,publicInvoiceControllerDownloadInvoice,publicInvoiceControllerDownloadInvoiceByTransaction,publicInvoiceControllerDownloadReceipt,publicInvoiceControllerGeneratePublicLink,authExchangeToken,authCreateOAuthClient,authListOAuthClients,authGetOAuthClient,authUpdateOAuthClient,authDeleteOAuthClient,authControllerHandleOAuth2,adminControllerGetStats,adminControllerListOrganizations,adminControllerCreateOrganization,adminControllerGetOrganizationDetails,adminControllerUpdateOrganization,adminControllerDeleteOrganization,adminControllerSuspendOrganization,adminControllerReactivateOrganization,adminControllerGetEffectiveQuota,adminControllerSetQuotaOverrides,adminControllerListMembers,adminControllerListUsers,adminControllerBanUser,adminControllerUnbanUser,adminControllerListConnectedApps,adminControllerListSystemLogs,adminControllerListGlobalSettings,adminControllerSetGlobalSetting,adminControllerDeleteGlobalSetting,adminControllerListTiers,adminControllerDefineTier,adminControllerDeleteTier,adminControllerGetOrganizationSubscription,adminControllerUpdateOrganizationSubscription,adminControllerListSystemPayments,adminControllerRecordCustomPayment,adminControllerListIntegrationDefinitions,adminControllerCreateIntegrationDefinition,adminControllerUpdateIntegrationDefinition,adminControllerDeleteIntegrationDefinition,adminControllerListActiveOrganizationIntegrations,webhooksCreate,webhooksList,webhooksDelete,catalogGetProducts,catalogCreateProduct,catalogGetProduct,catalogGetServices,catalogUpdateProduct,catalogUpdateSupplierVariant,catalogGetPriceChangeRequests,catalogReviewPriceChangeRequest,catalogCreateReview,catalogUpdateReview,catalogDeleteReview,customersGetCustomers,customersRegister,customerRegister,customersLogin,customersRefreshSession,customersGetCurrentSession,customersGetSessions,customersRevokeAllSessions,customersRevokeSession,customersUpdate,customersGetCustomerById,customersDelete,customersGetAddresses,customersAddAddress,businessAccountControllerCreate,businessAccountControllerGetOne,crmControllerCreateRecord,crmControllerGetRecord,crmControllerUpdateRecord,crmControllerCreateNote,crmControllerGetRecordNotes,crmControllerCreateActivity,crmControllerGetTimeline,crmControllerCreateObject,crmControllerListObjects,crmControllerCreateField,crmControllerListFields,crmControllerCreateRelationship,crmControllerListRelationships,crmControllerCreateAssociation,crmControllerListRecordAssociations,loyaltyRedeemReward,loyaltyGetCustomerStatus,loyaltyValidateVoucher,ordersCreateOrder,ordersGetOrders,ordersUpdateStatus,ordersRequestB2BQuote,ordersConvertQuoteToOrder,paymentsCheckout,paymentsControllerHandleStkCallback,pOSProvision,pOSLogin,pOSGetMe,pOSProcessSale,pOSSync,pOSGetTransactions,pOSRegisterPettyCash,pOSGetPettyCashFunds,pOSGetPettyCashTransactions,pOSCreatePairingSession,pOSGetPairingSessionStatus,pOSAuthorizePairingSession,membersControllerGetMembers,membersControllerCreateMember,membersControllerGetMember,membersControllerUpdateMember,membersControllerDeleteMember,membersControllerGetMemberActivity,membersControllerUpdateStatus,membersControllerAdminCheckOut,terminalMembersControllerLogin,invitationsList,invitationsCreate,invitationsRevoke,invitationsAccept,roleManagementControllerGetCustomRoles,roleManagementControllerCreateCustomRole,roleManagementControllerUpdateCustomRole,roleManagementControllerDeleteCustomRole,roleManagementControllerGetPermissionSets,roleManagementControllerCreatePermissionSet,roleManagementControllerGetRoleGroups,roleManagementControllerCreateRoleGroup,roleManagementControllerAssignRoles,roleManagementControllerRemoveRoles,departmentsList,departmentsCreate,departmentsGet,departmentsUpdate,departmentsDelete,departmentsAddMember,departmentsRemoveMember,attendanceControllerGetLogs,attendanceControllerCheckIn,attendanceControllerCheckOut,attendanceControllerGetMyStatus,attendanceControllerGetStatus,announcementControllerBroadcastAnnouncement,cartControllerGetCart,cartControllerClearCart,cartControllerAddToCart,cartControllerRemoveFromCart,favoritesControllerGetFavorites,favoritesControllerAddFavorite,favoritesControllerRemoveFavorite,stockingGetPurchases,stockingCreatePurchase,stockingReceivePurchase,stockingGetTransfers,stockingCreateTransfer,stockingShipTransfer,stockingReceiveTransfer,stockingGetRequests,stockingGetPendingDispatch,stockingDispatchOrders,stockingGetActiveDeliveries,stockingReconcilePod,stockingGetPhysicalReconciliations,stockingSubmitPhysicalReconciliation,stockingGetReconciliationReport,stockingGetPartners,stockingCreatePartner,stockingGetPartner,stockingUpdatePartner,stockingAdjustPartnerWallet,standalonePosControllerCreateSetupKey,standalonePosControllerActivateDevice,standalonePosControllerValidateKey,standalonePosControllerLinkOrganization,b2BGetCatalog,b2BGetInvoices,b2BGetOrders,b2BCreateOrder,b2BCreateQuote,crmIntegrationsGetAuthUrl,crmIntegrationsHandleCallback,crmIntegrationsHandleWebhook,crmIntegrationsReplyToActivity,unitsGetUnits,strapiCreateConnection,strapiListConnections,strapiGetConnection,strapiUpdateConnection,strapiDeleteConnection,strapiTriggerSync,strapiEnqueueSync,strapiGetWebhookLogs,strapiGetSyncLogs,strapiExchangeCustomerToken,strapiRegisterCustomer,strapiReceiveWebhook,analyticsControllerGetDashboardAnalytics,analyticsControllerGetResourceUtilization}};
+return {servicesCreateCategory,servicesGetCategories,servicesUpdateCategory,servicesDeleteCategory,servicesCreateService,servicesGetServices,servicesGetCurrentMemberShifts,servicesGetShifts,servicesGetService,servicesUpdateService,servicesGetAvailability,servicesDeleteService,servicesCreateResource,servicesGetResources,servicesUpdateResource,servicesDeleteResource,servicesCreateBooking,servicesGetBookings,servicesGetBooking,servicesUpdateBookingStatus,servicesCompleteBooking,servicesCancelBookingSeries,servicesCreateShift,servicesGetStaffShifts,servicesAddBreak,servicesRegisterCustomerApp,servicesGetUtilization,servicesGetPerformance,servicesGetFunnel,publicServicesListServices,publicServicesGetCategories,publicServicesGetService,publicServicesGetAvailability,publicServicesRequestOtp,publicServicesVerifyOtp,publicServicesCreatePublicBooking,inventoryVerifyIntegrity,inventoryFixIntegrity,inventoryGetInventory,inventoryTraceBatch,inventorySplitBatch,inventoryMergeBatches,inventoryCreateAssembly,inventoryCompleteAssembly,inventoryRequestAdjustment,inventoryGetAdjustments,inventoryApproveAdjustment,inventoryRejectAdjustment,inventoryGetLeadTime,inventoryGetWasteAnalysis,inventoryCheckB2BAvailability,inventoryUnpackBatch,inventoryScanUnpackBatch,inventoryQuickStockInquiry,expenseControllerCreateExpense,expenseControllerGetExpenses,expenseControllerGetExpenseCategories,expenseControllerGetExpense,pettyCashControllerCreateFund,pettyCashControllerGetFunds,pettyCashControllerGetFund,pettyCashControllerTopUpFund,pettyCashControllerGetFundTransactions,utilityAccountControllerCreateAccount,utilityAccountControllerGetAccounts,utilityAccountControllerGetAccount,accountingInitialize,accountingGetProfitLoss,accountingGetBalanceSheet,accountingGetCashFlow,accountingGetTaxSummary,invoiceControllerCreateInvoice,invoiceControllerGetInvoices,invoiceControllerGetInvoice,invoiceControllerUpdateInvoice,invoiceControllerDeleteInvoice,invoiceControllerFinalizeInvoice,invoiceControllerGetTemplates,invoiceControllerCreateTemplate,invoiceControllerGetConfig,invoiceControllerUpdateConfig,publicInvoiceControllerDownloadInvoice,publicInvoiceControllerDownloadInvoiceByTransaction,publicInvoiceControllerDownloadReceipt,publicInvoiceControllerGeneratePublicLink,authExchangeToken,authCreateOAuthClient,authListOAuthClients,authGetOAuthClient,authUpdateOAuthClient,authDeleteOAuthClient,authControllerHandleOAuth2,adminControllerGetStats,adminControllerListOrganizations,adminControllerCreateOrganization,adminControllerGetOrganizationDetails,adminControllerUpdateOrganization,adminControllerDeleteOrganization,adminControllerSuspendOrganization,adminControllerReactivateOrganization,adminControllerGetEffectiveQuota,adminControllerSetQuotaOverrides,adminControllerListMembers,adminControllerListUsers,adminControllerBanUser,adminControllerUnbanUser,adminControllerListConnectedApps,adminControllerListSystemLogs,adminControllerListGlobalSettings,adminControllerSetGlobalSetting,adminControllerDeleteGlobalSetting,adminControllerListTiers,adminControllerDefineTier,adminControllerDeleteTier,adminControllerGetOrganizationSubscription,adminControllerUpdateOrganizationSubscription,adminControllerListSystemPayments,adminControllerRecordCustomPayment,adminControllerListIntegrationDefinitions,adminControllerCreateIntegrationDefinition,adminControllerUpdateIntegrationDefinition,adminControllerDeleteIntegrationDefinition,adminControllerListActiveOrganizationIntegrations,webhooksCreate,webhooksList,webhooksDelete,catalogGetProducts,catalogCreateProduct,catalogGetProduct,catalogGetServices,catalogUpdateProduct,catalogUpdateSupplierVariant,catalogGetPriceChangeRequests,catalogReviewPriceChangeRequest,catalogCreateReview,catalogUpdateReview,catalogDeleteReview,customersGetCustomers,customersRegister,customerRegister,customersLogin,customersRefreshSession,customersGetCurrentSession,customersGetSessions,customersRevokeAllSessions,customersRevokeSession,customersUpdate,customersGetCustomerById,customersDelete,customersGetAddresses,customersAddAddress,businessAccountControllerCreate,businessAccountControllerGetOne,crmControllerCreateRecord,crmControllerGetRecord,crmControllerUpdateRecord,crmControllerCreateNote,crmControllerGetRecordNotes,crmControllerCreateActivity,crmControllerGetTimeline,crmControllerCreateObject,crmControllerListObjects,crmControllerCreateField,crmControllerListFields,crmControllerCreateRelationship,crmControllerListRelationships,crmControllerCreateAssociation,crmControllerListRecordAssociations,loyaltyRedeemReward,loyaltyGetCustomerStatus,loyaltyValidateVoucher,ordersCreateOrder,ordersGetOrders,ordersUpdateStatus,ordersRequestB2BQuote,ordersConvertQuoteToOrder,paymentsCheckout,paymentsControllerHandleStkCallback,pOSProvision,pOSLogin,pOSGetMe,pOSProcessSale,pOSSync,pOSGetTransactions,pOSRegisterPettyCash,pOSGetPettyCashFunds,pOSGetPettyCashTransactions,pOSCreatePairingSession,pOSGetPairingSessionStatus,pOSAuthorizePairingSession,membersControllerGetMembers,membersControllerCreateMember,membersControllerGetMember,membersControllerUpdateMember,membersControllerDeleteMember,membersControllerGetMemberActivity,membersControllerUpdateStatus,membersControllerAdminCheckOut,terminalMembersControllerLogin,invitationsList,invitationsCreate,invitationsRevoke,invitationsAccept,roleManagementControllerGetCustomRoles,roleManagementControllerCreateCustomRole,roleManagementControllerUpdateCustomRole,roleManagementControllerDeleteCustomRole,roleManagementControllerGetPermissionSets,roleManagementControllerCreatePermissionSet,roleManagementControllerGetRoleGroups,roleManagementControllerCreateRoleGroup,roleManagementControllerAssignRoles,roleManagementControllerRemoveRoles,departmentsList,departmentsCreate,departmentsGet,departmentsUpdate,departmentsDelete,departmentsAddMember,departmentsRemoveMember,attendanceControllerGetLogs,attendanceControllerCheckIn,attendanceControllerCheckOut,attendanceControllerGetMyStatus,attendanceControllerGetStatus,announcementControllerBroadcastAnnouncement,cartControllerGetCart,cartControllerClearCart,cartControllerAddToCart,cartControllerRemoveFromCart,favoritesControllerGetFavorites,favoritesControllerAddFavorite,favoritesControllerRemoveFavorite,stockingGetPurchases,stockingCreatePurchase,stockingReceivePurchase,stockingGetTransfers,stockingCreateTransfer,stockingShipTransfer,stockingReceiveTransfer,stockingGetRequests,stockingGetPendingDispatch,stockingDispatchOrders,stockingGetActiveDeliveries,stockingReconcilePod,stockingGetPhysicalReconciliations,stockingSubmitPhysicalReconciliation,stockingGetReconciliationReport,stockingGetPartners,stockingCreatePartner,stockingGetPartner,stockingUpdatePartner,stockingAdjustPartnerWallet,standalonePosControllerCreateSetupKey,standalonePosControllerActivateDevice,standalonePosControllerValidateKey,standalonePosControllerLinkOrganization,b2BGetCatalog,b2BGetInvoices,b2BGetOrders,b2BCreateOrder,b2BCreateQuote,crmIntegrationsGetAuthUrl,crmIntegrationsHandleCallback,crmIntegrationsHandleWebhook,crmIntegrationsReplyToActivity,unitsGetUnits,analyticsControllerGetDashboardAnalytics,analyticsControllerGetResourceUtilization}};
 export type ServicesCreateCategoryResult = AxiosResponse<void>
 export type ServicesGetCategoriesResult = AxiosResponse<void>
 export type ServicesUpdateCategoryResult = AxiosResponse<void>
@@ -4064,17 +3907,5 @@ export type CrmIntegrationsHandleCallbackResult = AxiosResponse<void>
 export type CrmIntegrationsHandleWebhookResult = AxiosResponse<void>
 export type CrmIntegrationsReplyToActivityResult = AxiosResponse<void>
 export type UnitsGetUnitsResult = AxiosResponse<void>
-export type StrapiCreateConnectionResult = AxiosResponse<StrapiConnectionResponseDto>
-export type StrapiListConnectionsResult = AxiosResponse<StrapiConnectionResponseDto[]>
-export type StrapiGetConnectionResult = AxiosResponse<StrapiConnectionResponseDto>
-export type StrapiUpdateConnectionResult = AxiosResponse<StrapiConnectionResponseDto>
-export type StrapiDeleteConnectionResult = AxiosResponse<void>
-export type StrapiTriggerSyncResult = AxiosResponse<void>
-export type StrapiEnqueueSyncResult = AxiosResponse<void>
-export type StrapiGetWebhookLogsResult = AxiosResponse<void>
-export type StrapiGetSyncLogsResult = AxiosResponse<void>
-export type StrapiExchangeCustomerTokenResult = AxiosResponse<void>
-export type StrapiRegisterCustomerResult = AxiosResponse<void>
-export type StrapiReceiveWebhookResult = AxiosResponse<void>
 export type AnalyticsControllerGetDashboardAnalyticsResult = AxiosResponse<void>
 export type AnalyticsControllerGetResourceUtilizationResult = AxiosResponse<void>

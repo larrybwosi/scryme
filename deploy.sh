@@ -22,11 +22,28 @@ docker compose up -d api
 
 # Run database migrations explicitly
 echo "Deploying database migrations..."
-docker compose exec -T api prisma migrate deploy || (
-  echo "Attempting to resolve failed migrations..."
-  docker compose exec -T api prisma migrate resolve --rolled-back "20260919000000_enterprise_scheduling_and_tasks" || true
+MIGRATE_FAILED=false
+MIGRATE_OUTPUT=$(docker compose exec -T api prisma migrate deploy 2>&1) || MIGRATE_FAILED=true
+echo "$MIGRATE_OUTPUT"
+
+if [ "$MIGRATE_FAILED" = "true" ]; then
+  echo "⚠️ Database migration deployment failed. Checking for failed migrations to resolve..."
+  FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
+  DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" | docker compose exec -T api prisma db execute --stdin 2>/dev/null | grep -oE '20[0-9]{12}_[a-zA-Z0-9_]+' | sort -u || true)
+  ALL_FAILED=$(printf "%s
+%s
+" "$FAILED_MIGRATIONS" "$DB_FAILED" | grep -v '^$' | sort -u || true)
+
+  if [ -n "$ALL_FAILED" ]; then
+    for mig in $ALL_FAILED; do
+      echo "Resolving failed migration as rolled-back: $mig"
+      docker compose exec -T api prisma migrate resolve --rolled-back "$mig" || true
+    done
+  fi
+
+  echo "Retrying database migrations deployment..."
   docker compose exec -T api prisma migrate deploy
-)
+fi
 
 # Run database seeding
 echo "Seeding database..."

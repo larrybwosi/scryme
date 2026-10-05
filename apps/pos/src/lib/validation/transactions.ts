@@ -164,6 +164,12 @@ export const ProcessSaleInputSchema = z
 
     enableStockTracking: z.boolean(),
 
+    customerName: z.string().optional().nullable(),
+    customerEmail: z.string().optional().nullable(),
+    saveAsCustomer: z.boolean().optional().nullable(),
+    status: z.string().optional().nullable(),
+    type: z.string().optional().nullable(),
+    metadata: z.record(z.string(), z.any()).optional().nullable(),
     cashierName: z.string().optional().nullable(),
     accountRef: z.string().optional().nullable(),
     prescriptionId: z.string().optional().nullable(),

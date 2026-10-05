@@ -28,35 +28,45 @@ export class AutomationScheduler {
         },
       });
 
-      /**
-       * ⚡ Bolt Optimization: Parallelize definition processing and workflow triggering.
-       * Executing product variant queries and workflow trigger dispatches concurrently via Promise.all
-       * collapses $O(N \times M)$ sequential async roundtrips down to $O(1)$ flat parallel execution,
-       * drastically reducing cron task execution time across multiple organizations.
-       */
       await Promise.all(
         activeDefinitions.map(async (def: any) => {
           const threshold = def.config?.threshold ?? 10;
           const lowStockVariants = await (this.prisma.client as any).productVariant.findMany({
             where: {
               product: { organizationId: def.organizationId },
-              stockQuantity: { lte: threshold },
+              OR: [
+                { variantStocks: { some: { currentStock: { lte: threshold } } } },
+                { variantStocks: { none: {} } },
+              ],
+            },
+            include: {
+              product: true,
+              variantStocks: true,
             },
             take: 50,
           });
 
           await Promise.all(
-            lowStockVariants.map((variant: any) =>
-              this.automationService.triggerWorkflow(def.organizationId, {
-                key: def.key,
-                inputs: {
-                  productId: variant.id,
-                  productName: variant.name || "Product Variant",
-                  currentStock: variant.stockQuantity,
-                  threshold,
-                },
-              }),
-            ),
+            lowStockVariants.map(async (variant: any) => {
+              const currentStock =
+                variant.variantStocks?.reduce(
+                  (acc: number, curr: any) => acc + (Number(curr.currentStock) || 0),
+                  0,
+                ) ?? 0;
+
+              if (currentStock <= threshold) {
+                await this.automationService.triggerWorkflow(def.organizationId, {
+                  key: def.key,
+                  inputs: {
+                    productId: variant.id,
+                    productName: variant.product?.name || variant.name || "Product",
+                    variantName: variant.name,
+                    currentStock,
+                    threshold,
+                  },
+                });
+              }
+            }),
           );
         }),
       );

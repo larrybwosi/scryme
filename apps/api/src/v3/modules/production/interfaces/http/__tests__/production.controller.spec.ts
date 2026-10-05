@@ -1,7 +1,10 @@
+import { GetUnitsUseCase } from "../../../../units/application/use-cases/get-units.use-case";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionController } from "../production.controller";
 import { ProductionService } from "../../../application/services/production.service";
 import { ProductionReportService } from "../../../reports/production-report.service";
+import { MemberUseCase } from "../../../../members/application/use-cases/member.use-case";
+import { GetUnitsUseCase } from "../../../../units/application/use-cases/get-units.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
 import { AuditService } from "@/v3/common/services/audit.service";
@@ -12,6 +15,8 @@ describe("ProductionController (V3)", () => {
   let controller: ProductionController;
   let productionService: ProductionService;
   let productionReportService: ProductionReportService;
+  let memberUseCase: MemberUseCase;
+  let getUnitsUseCase: GetUnitsUseCase;
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
@@ -29,6 +34,18 @@ describe("ProductionController (V3)", () => {
             updateCategory: vi.fn(),
             updateSettings: vi.fn(),
             getVariants: vi.fn(),
+          },
+        },
+        {
+          provide: MemberUseCase,
+          useValue: {
+            getMembers: vi.fn(),
+          },
+        },
+        {
+          provide: GetUnitsUseCase,
+          useValue: {
+            execute: vi.fn(),
           },
         },
         {
@@ -59,6 +76,12 @@ describe("ProductionController (V3)", () => {
             log: vi.fn(),
           },
         },
+        {
+          provide: GetUnitsUseCase,
+          useValue: {
+            execute: vi.fn(),
+          },
+        },
         Reflector,
       ],
     }).compile();
@@ -66,6 +89,8 @@ describe("ProductionController (V3)", () => {
     controller = module.get<ProductionController>(ProductionController);
     productionService = module.get<ProductionService>(ProductionService);
     productionReportService = module.get<ProductionReportService>(ProductionReportService);
+    memberUseCase = module.get<MemberUseCase>(MemberUseCase);
+    getUnitsUseCase = module.get<GetUnitsUseCase>(GetUnitsUseCase);
   });
 
   it("should be defined", () => {
@@ -124,6 +149,30 @@ describe("ProductionController (V3)", () => {
       expect(productionService.getBakers).toHaveBeenCalledWith("org_123");
       expect(result).toEqual(mockBakers);
     });
+
+    it("should call productionService.addBaker with organizationId and body", async () => {
+      const mockBaker = { id: "b1", memberId: "m1", role: "LEAD_BAKER", isDefault: true };
+      const body = { memberId: "m1", role: "LEAD_BAKER", isDefault: true };
+      vi.mocked(productionService.addBaker).mockResolvedValue(mockBaker as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const result = await controller.addBaker(mockCtx, body as any);
+
+      expect(productionService.addBaker).toHaveBeenCalledWith("org_123", body);
+      expect(result).toEqual(mockBaker);
+    });
+
+    it("should call productionService.updateBaker with organizationId, id, and body", async () => {
+      const mockBaker = { id: "b1", role: "HEAD_PASTRY_CHEF", isDefault: false };
+      const body = { role: "HEAD_PASTRY_CHEF", isDefault: false };
+      vi.mocked(productionService.updateBaker).mockResolvedValue(mockBaker as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const result = await controller.updateBaker(mockCtx, "b1", body as any);
+
+      expect(productionService.updateBaker).toHaveBeenCalledWith("org_123", "b1", body);
+      expect(result).toEqual(mockBaker);
+    });
   });
 
   describe("category & settings endpoints", () => {
@@ -153,6 +202,21 @@ describe("ProductionController (V3)", () => {
       expect(productionService.updateSettings).toHaveBeenCalledWith("org_123", body);
       expect(resPatch).toEqual({ id: "set_1", autoStartBatch: true });
       expect(resPut).toEqual({ id: "set_1", autoStartBatch: true });
+    });
+  });
+
+  describe("members endpoint", () => {
+    it("should call memberUseCase.getMembers with organizationId and query", async () => {
+
+      const mockResult = { members: [], total: 0 };
+      vi.mocked(memberUseCase.getMembers).mockResolvedValue(mockResult as any);
+
+      const mockCtx = { organizationId: "org_123" } as any;
+      const mockQuery = { page: 1, limit: 10 } as any;
+      const result = await controller.getMembers(mockCtx, mockQuery);
+
+      expect(memberUseCase.getMembers).toHaveBeenCalledWith("org_123", mockQuery);
+      expect(result).toEqual(mockResult);
     });
   });
 

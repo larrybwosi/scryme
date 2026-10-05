@@ -5,7 +5,12 @@ import { storageService } from "@repo/shared/storage";
 import axios from "axios";
 import { vi, describe, it, expect, beforeEach } from "vitest";
 
-vi.mock("axios");
+vi.mock("axios", () => {
+  const mockAxios: any = vi.fn();
+  mockAxios.get = vi.fn();
+  return { default: mockAxios };
+});
+
 vi.mock("@repo/shared/storage", () => ({
   storageService: {
     upload: vi.fn().mockResolvedValue({ url: "http://rustfs/test.msi", id: "key-1" }),
@@ -114,5 +119,39 @@ describe("PosReleaseService", () => {
     expect(result.processed).toBe(true);
     expect(result.releaseTag).toBe("v2.0.0");
     expect(result.savedCount).toBe(1);
+  });
+
+  it("should handle tag push/create webhook payload and sync release from GitHub", async () => {
+    (axios.get as any).mockResolvedValueOnce({
+      data: {
+        tag_name: "v3.0.0",
+        assets: [
+          {
+            name: "scryme-pos-retail.msi",
+            browser_download_url: "https://github.com/releases/scryme-pos-retail.msi",
+          },
+        ],
+      },
+    });
+    (axios as any).mockResolvedValueOnce({
+      data: Buffer.from("dummy-binary-data"),
+      headers: { "content-type": "application/x-msi" },
+    });
+
+    mockPrismaClient.globalSetting.findUnique.mockImplementation(({ where }) => {
+      if (where.key === "github_owner") return Promise.resolve({ value: "test-owner" });
+      if (where.key === "github_repo") return Promise.resolve({ value: "test-repo" });
+      return Promise.resolve(null);
+    });
+
+    const payload = {
+      ref: "refs/tags/v3.0.0",
+      ref_type: "tag",
+    };
+
+    const result = await service.handleWebhookReleasePayload(payload);
+
+    expect(result.processed).toBe(true);
+    expect(result.releaseTag).toBe("v3.0.0");
   });
 });

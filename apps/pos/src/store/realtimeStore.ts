@@ -63,6 +63,17 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
   initialize: (force = false) => {
     const { socketClient, connectionState } = get();
 
+    // Guard: Do not initialize realtime connection if no staff member is checked in
+    const authStoreState = useAuthStore.getState();
+    if (!authStoreState.isConfigured || !authStoreState.currentMember) {
+      if (socketClient) {
+        socketClient.removeAllListeners();
+        socketClient.disconnect();
+      }
+      set({ status: 'idle', connectionState: 'idle', socketClient: null });
+      return;
+    }
+
     if (!force && socketClient && !['closed', 'failed', 'idle'].includes(connectionState)) {
       return;
     }
@@ -146,7 +157,7 @@ export const useRealtimeStore = create<RealtimeState>((set, get) => ({
           let tokenToUse: string | null = null;
           const currentAuth = useAuthStore.getState();
           const orgSlug = currentAuth.deviceConfig?.orgSlug;
-          const memberToken = (currentAuth as any).memberToken || (currentAuth as any).sessionToken;
+          const memberToken = (currentAuth.currentMember as any)?.token || (currentAuth as any).memberToken || (currentAuth as any).sessionToken;
 
           try {
               const response = await invoke<unknown>('get_ably_auth_token_command', { params: {} });

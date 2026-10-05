@@ -4,6 +4,8 @@ import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 
+const IS_PROD = process.env.NODE_ENV === "production";
+
 export default defineConfig({
   plugins: [
     TanStackRouterVite({
@@ -23,7 +25,7 @@ export default defineConfig({
     port: 4444,
     proxy: {
       "/api": {
-        target: process.env.VITE_PUBLIC_API_URL || "http://localhost:3002",
+        target: process.env.VITE_PUBLIC_API_URL || (IS_PROD ? "https://api.scryme.tech" : "http://localhost:3002"),
         changeOrigin: true,
       },
     },

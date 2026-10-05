@@ -3,7 +3,7 @@ import { AgentService } from "../agent.service";
 import { SendAgentMessageDto, RequestAgentApprovalDto, HandleAgentApprovalCallbackDto } from "../dto/agent.dto";
 import { V3AuthGuard, PermissionsGuard, Permissions, v3Context } from "../../../common/auth";
 
-@Controller("v3/:orgSlug/agent")
+@Controller(":orgSlug/agent")
 @UseGuards(V3AuthGuard, PermissionsGuard)
 export class AgentController {
   constructor(private readonly agentService: AgentService) {}

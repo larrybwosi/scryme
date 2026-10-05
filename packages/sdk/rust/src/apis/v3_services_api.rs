@@ -70,6 +70,13 @@ pub enum ServicesCreateResourceError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`services_create_schedule_override`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesCreateScheduleOverrideError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`services_create_service`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -88,6 +95,13 @@ pub enum ServicesCreateShiftError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`services_create_staff_task`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesCreateStaffTaskError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`services_delete_category`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -103,6 +117,13 @@ pub enum ServicesDeleteCategoryError {
 pub enum ServicesDeleteResourceError {
     Status401(models::ApiErrorResponseDto),
     Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_delete_schedule_override`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesDeleteScheduleOverrideError {
     UnknownValue(serde_json::Value),
 }
 
@@ -149,6 +170,13 @@ pub enum ServicesGetCategoriesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`services_get_coverage`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesGetCoverageError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`services_get_current_member_shifts`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -181,6 +209,13 @@ pub enum ServicesGetResourcesError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`services_get_schedule_overrides`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesGetScheduleOverridesError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`services_get_service`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
@@ -195,6 +230,13 @@ pub enum ServicesGetServiceError {
 #[serde(untagged)]
 pub enum ServicesGetServicesError {
     Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_get_shift_trades`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesGetShiftTradesError {
     UnknownValue(serde_json::Value),
 }
 
@@ -215,11 +257,25 @@ pub enum ServicesGetStaffShiftsError {
     UnknownValue(serde_json::Value),
 }
 
+/// struct for typed errors of method [`services_get_staff_tasks`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesGetStaffTasksError {
+    UnknownValue(serde_json::Value),
+}
+
 /// struct for typed errors of method [`services_get_utilization`]
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(untagged)]
 pub enum ServicesGetUtilizationError {
     Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_process_shift_trade`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesProcessShiftTradeError {
     UnknownValue(serde_json::Value),
 }
 
@@ -229,6 +285,27 @@ pub enum ServicesGetUtilizationError {
 pub enum ServicesRegisterCustomerAppError {
     Status400(models::ApiErrorResponseDto),
     Status401(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_request_shift_trade`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesRequestShiftTradeError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_reschedule_booking`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesRescheduleBookingError {
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_respond_to_assignment`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesRespondToAssignmentError {
     UnknownValue(serde_json::Value),
 }
 
@@ -269,6 +346,13 @@ pub enum ServicesUpdateServiceError {
     Status400(models::ApiErrorResponseDto),
     Status401(models::ApiErrorResponseDto),
     Status404(models::ApiErrorResponseDto),
+    UnknownValue(serde_json::Value),
+}
+
+/// struct for typed errors of method [`services_update_staff_task`]
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(untagged)]
+pub enum ServicesUpdateStaffTaskError {
     UnknownValue(serde_json::Value),
 }
 
@@ -460,6 +544,37 @@ pub async fn services_create_resource(configuration: &configuration::Configurati
     }
 }
 
+pub async fn services_create_schedule_override(configuration: &configuration::Configuration, member_id: &str, org_slug: &str, create_schedule_override_dto: models::CreateScheduleOverrideDto) -> Result<(), Error<ServicesCreateScheduleOverrideError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_member_id = member_id;
+    let p_path_org_slug = org_slug;
+    let p_body_create_schedule_override_dto = create_schedule_override_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/staff/{memberId}/overrides", configuration.base_path, memberId=crate::apis::urlencode(p_path_member_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_create_schedule_override_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesCreateScheduleOverrideError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Registers a new bookable service under the organization. Includes specifications for pricing model, estimated duration, buffer times, assigned staff, and optional Bill of Materials (BOM).
 pub async fn services_create_service(configuration: &configuration::Configuration, org_slug: &str, create_service_dto: models::CreateServiceDto) -> Result<(), Error<ServicesCreateServiceError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -523,6 +638,34 @@ pub async fn services_create_shift(configuration: &configuration::Configuration,
     }
 }
 
+pub async fn services_create_staff_task(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<ServicesCreateStaffTaskError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/tasks", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesCreateStaffTaskError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Deletes a service category from the organization. Child items or assigned services will be detached or rejected.
 pub async fn services_delete_category(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<ServicesDeleteCategoryError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -579,6 +722,35 @@ pub async fn services_delete_resource(configuration: &configuration::Configurati
     } else {
         let content = resp.text().await?;
         let entity: Option<ServicesDeleteResourceError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_delete_schedule_override(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<ServicesDeleteScheduleOverrideError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/schedule/overrides/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::DELETE, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesDeleteScheduleOverrideError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -678,13 +850,40 @@ pub async fn services_get_booking(configuration: &configuration::Configuration, 
 }
 
 /// Returns all service bookings scheduled for the organization. Supports filtering by date and state.
-pub async fn services_get_bookings(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<ServicesGetBookingsError>> {
+pub async fn services_get_bookings(configuration: &configuration::Configuration, from: chrono::DateTime<chrono::FixedOffset>, to: chrono::DateTime<chrono::FixedOffset>, org_slug: &str, member_id: Option<&str>, location_id: Option<&str>, status: Option<Vec<String>>, limit: Option<f64>, cursor: Option<&str>) -> Result<(), Error<ServicesGetBookingsError>> {
     // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_from = from;
+    let p_query_to = to;
     let p_path_org_slug = org_slug;
+    let p_query_member_id = member_id;
+    let p_query_location_id = location_id;
+    let p_query_status = status;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
 
     let uri_str = format!("{}/v3/{orgSlug}/services/bookings", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
     let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
 
+    req_builder = req_builder.query(&[("from", &p_query_from.to_string())]);
+    req_builder = req_builder.query(&[("to", &p_query_to.to_string())]);
+    if let Some(ref param_value) = p_query_member_id {
+        req_builder = req_builder.query(&[("memberId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_location_id {
+        req_builder = req_builder.query(&[("locationId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(&param_value.into_iter().map(|p| ("status".to_owned(), p.to_string())).collect::<Vec<(std::string::String, std::string::String)>>()),
+            _ => req_builder.query(&[("status", &param_value.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]),
+        };
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
     if let Some(ref user_agent) = configuration.user_agent {
         req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
     }
@@ -731,6 +930,61 @@ pub async fn services_get_categories(configuration: &configuration::Configuratio
     } else {
         let content = resp.text().await?;
         let entity: Option<ServicesGetCategoriesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_get_coverage(configuration: &configuration::Configuration, from: chrono::DateTime<chrono::FixedOffset>, to: chrono::DateTime<chrono::FixedOffset>, org_slug: &str, member_id: Option<&str>, location_id: Option<&str>, status: Option<Vec<String>>, limit: Option<f64>, cursor: Option<&str>) -> Result<(), Error<ServicesGetCoverageError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_from = from;
+    let p_query_to = to;
+    let p_path_org_slug = org_slug;
+    let p_query_member_id = member_id;
+    let p_query_location_id = location_id;
+    let p_query_status = status;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/calendar/coverage", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("from", &p_query_from.to_string())]);
+    req_builder = req_builder.query(&[("to", &p_query_to.to_string())]);
+    if let Some(ref param_value) = p_query_member_id {
+        req_builder = req_builder.query(&[("memberId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_location_id {
+        req_builder = req_builder.query(&[("locationId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(&param_value.into_iter().map(|p| ("status".to_owned(), p.to_string())).collect::<Vec<(std::string::String, std::string::String)>>()),
+            _ => req_builder.query(&[("status", &param_value.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]),
+        };
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesGetCoverageError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -859,6 +1113,61 @@ pub async fn services_get_resources(configuration: &configuration::Configuration
     }
 }
 
+pub async fn services_get_schedule_overrides(configuration: &configuration::Configuration, from: chrono::DateTime<chrono::FixedOffset>, to: chrono::DateTime<chrono::FixedOffset>, org_slug: &str, member_id: Option<&str>, location_id: Option<&str>, status: Option<Vec<String>>, limit: Option<f64>, cursor: Option<&str>) -> Result<(), Error<ServicesGetScheduleOverridesError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_query_from = from;
+    let p_query_to = to;
+    let p_path_org_slug = org_slug;
+    let p_query_member_id = member_id;
+    let p_query_location_id = location_id;
+    let p_query_status = status;
+    let p_query_limit = limit;
+    let p_query_cursor = cursor;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/schedule/overrides", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    req_builder = req_builder.query(&[("from", &p_query_from.to_string())]);
+    req_builder = req_builder.query(&[("to", &p_query_to.to_string())]);
+    if let Some(ref param_value) = p_query_member_id {
+        req_builder = req_builder.query(&[("memberId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_location_id {
+        req_builder = req_builder.query(&[("locationId", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_status {
+        req_builder = match "multi" {
+            "multi" => req_builder.query(&param_value.into_iter().map(|p| ("status".to_owned(), p.to_string())).collect::<Vec<(std::string::String, std::string::String)>>()),
+            _ => req_builder.query(&[("status", &param_value.into_iter().map(|p| p.to_string()).collect::<Vec<String>>().join(",").to_string())]),
+        };
+    }
+    if let Some(ref param_value) = p_query_limit {
+        req_builder = req_builder.query(&[("limit", &param_value.to_string())]);
+    }
+    if let Some(ref param_value) = p_query_cursor {
+        req_builder = req_builder.query(&[("cursor", &param_value.to_string())]);
+    }
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesGetScheduleOverridesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Fetches detailed information about a specific service by database ID or slug, including its full category details, pricing models, assigned staff/resources, and Bill of Materials.
 pub async fn services_get_service(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<ServicesGetServiceError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -914,6 +1223,34 @@ pub async fn services_get_services(configuration: &configuration::Configuration,
     } else {
         let content = resp.text().await?;
         let entity: Option<ServicesGetServicesError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_get_shift_trades(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<ServicesGetShiftTradesError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/shifts/trades", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesGetShiftTradesError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -989,6 +1326,34 @@ pub async fn services_get_staff_shifts(configuration: &configuration::Configurat
     }
 }
 
+pub async fn services_get_staff_tasks(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<ServicesGetStaffTasksError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/tasks", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::GET, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesGetStaffTasksError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Calculates the booking density and utilization ratios for physical rooms and resources over a specified date range.
 pub async fn services_get_utilization(configuration: &configuration::Configuration, start_date: chrono::NaiveDate, end_date: chrono::NaiveDate, org_slug: &str) -> Result<(), Error<ServicesGetUtilizationError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1022,6 +1387,35 @@ pub async fn services_get_utilization(configuration: &configuration::Configurati
     }
 }
 
+pub async fn services_process_shift_trade(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<ServicesProcessShiftTradeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/shifts/trades/{id}/process", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesProcessShiftTradeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
 /// Registers a customer-facing external app or portal, returning credentials to support customer-driven bookings.
 pub async fn services_register_customer_app(configuration: &configuration::Configuration, org_slug: &str, services_register_customer_app_request: models::ServicesRegisterCustomerAppRequest) -> Result<(), Error<ServicesRegisterCustomerAppError>> {
     // add a prefix to parameters to efficiently prevent name collisions
@@ -1049,6 +1443,96 @@ pub async fn services_register_customer_app(configuration: &configuration::Confi
     } else {
         let content = resp.text().await?;
         let entity: Option<ServicesRegisterCustomerAppError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_request_shift_trade(configuration: &configuration::Configuration, org_slug: &str) -> Result<(), Error<ServicesRequestShiftTradeError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/shifts/trades", configuration.base_path, orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::POST, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesRequestShiftTradeError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_reschedule_booking(configuration: &configuration::Configuration, id: &str, org_slug: &str, reschedule_booking_dto: models::RescheduleBookingDto) -> Result<(), Error<ServicesRescheduleBookingError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+    let p_body_reschedule_booking_dto = reschedule_booking_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/bookings/{id}/reschedule", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_reschedule_booking_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesRescheduleBookingError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}
+
+pub async fn services_respond_to_assignment(configuration: &configuration::Configuration, id: &str, org_slug: &str, assignment_response_dto: models::AssignmentResponseDto) -> Result<(), Error<ServicesRespondToAssignmentError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+    let p_body_assignment_response_dto = assignment_response_dto;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/bookings/{id}/assignment", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+    req_builder = req_builder.json(&p_body_assignment_response_dto);
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesRespondToAssignmentError> = serde_json::from_str(&content).ok();
         Err(Error::ResponseError(ResponseContent { status, content, entity }))
     }
 }
@@ -1181,3 +1665,31 @@ pub async fn services_update_service(configuration: &configuration::Configuratio
     }
 }
 
+pub async fn services_update_staff_task(configuration: &configuration::Configuration, id: &str, org_slug: &str) -> Result<(), Error<ServicesUpdateStaffTaskError>> {
+    // add a prefix to parameters to efficiently prevent name collisions
+    let p_path_id = id;
+    let p_path_org_slug = org_slug;
+
+    let uri_str = format!("{}/v3/{orgSlug}/services/tasks/{id}", configuration.base_path, id=crate::apis::urlencode(p_path_id), orgSlug=crate::apis::urlencode(p_path_org_slug));
+    let mut req_builder = configuration.client.request(reqwest::Method::PATCH, &uri_str);
+
+    if let Some(ref user_agent) = configuration.user_agent {
+        req_builder = req_builder.header(reqwest::header::USER_AGENT, user_agent.clone());
+    }
+    if let Some(ref token) = configuration.bearer_access_token {
+        req_builder = req_builder.bearer_auth(token.to_owned());
+    };
+
+    let req = req_builder.build()?;
+    let resp = configuration.client.execute(req).await?;
+
+    let status = resp.status();
+
+    if !status.is_client_error() && !status.is_server_error() {
+        Ok(())
+    } else {
+        let content = resp.text().await?;
+        let entity: Option<ServicesUpdateStaffTaskError> = serde_json::from_str(&content).ok();
+        Err(Error::ResponseError(ResponseContent { status, content, entity }))
+    }
+}

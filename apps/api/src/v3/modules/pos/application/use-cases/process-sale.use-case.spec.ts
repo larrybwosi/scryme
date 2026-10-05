@@ -1,3 +1,4 @@
+import { AutomationService } from "../../../../../automation/automation.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProcessSaleUseCase } from "./process-sale.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -18,6 +19,7 @@ describe("ProcessSaleUseCase", () => {
   let prisma: any;
   let inventoryMovementService: any;
   let invoiceUseCase: any;
+  let moduleRef: TestingModule;
 
   beforeEach(async () => {
     prisma = {
@@ -40,7 +42,7 @@ describe("ProcessSaleUseCase", () => {
       recordMovement: vi.fn().mockResolvedValue({}),
     };
 
-    const module: TestingModule = await Test.createTestingModule({
+    moduleRef = await Test.createTestingModule({
       providers: [
         ProcessSaleUseCase,
         { provide: PrismaService, useValue: prisma },
@@ -49,6 +51,12 @@ describe("ProcessSaleUseCase", () => {
           provide: LoyaltyService,
           useValue: {
             calculatePointsForTransaction: vi.fn().mockResolvedValue(0),
+          },
+        },
+        {
+          provide: AutomationService,
+          useValue: {
+            triggerWorkflow: vi.fn().mockResolvedValue({ success: true }),
           },
         },
         {
@@ -63,8 +71,8 @@ describe("ProcessSaleUseCase", () => {
       ],
     }).compile();
 
-    useCase = module.get<ProcessSaleUseCase>(ProcessSaleUseCase);
-    invoiceUseCase = module.get<InvoiceUseCase>(InvoiceUseCase);
+    useCase = moduleRef.get<ProcessSaleUseCase>(ProcessSaleUseCase);
+    invoiceUseCase = moduleRef.get<InvoiceUseCase>(InvoiceUseCase);
   });
 
   it("should handle null invoice gracefully when auto generate invoice is disabled", async () => {
@@ -349,4 +357,235 @@ describe("ProcessSaleUseCase", () => {
       ],
     });
   });
+
+  it("should process a PREORDER sale with no payment and assign paymentStatus UNPAID and status PREORDER", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_1",
+        number: data.number,
+        status: data.status,
+        paymentStatus: data.paymentStatus,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PREORDER",
+          paymentStatus: "UNPAID",
+        }),
+      }),
+    );
+    expect(result.status).toBe("PREORDER");
+
+    const automationService = moduleRef.get(AutomationService);
+    expect(automationService.triggerWorkflow).toHaveBeenCalledWith(
+      "org_1",
+      expect.objectContaining({
+        key: "preorder_notification",
+        payload: expect.objectContaining({
+          transactionId: "t_preorder_1",
+          depositAmount: 0,
+        }),
+      }),
+    );
+  });
+
+  it("should process a PREORDER sale with deposit/partial payment and assign paymentStatus PARTIALLY_PAID", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [{ method: "CASH", amount: 40 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_2",
+        number: data.number,
+        status: data.status,
+        paymentStatus: data.paymentStatus,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          status: "PREORDER",
+          paymentStatus: "PARTIALLY_PAID",
+          totalPaid: 40,
+        }),
+      }),
+    );
+    expect(result.status).toBe("PREORDER");
+  });
+
+  it("should set transaction type to SALES_ORDER for preorders/custom orders", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      metadata: { isCustomOrder: true },
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [{ method: "CASH", amount: 50 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_3",
+        number: data.number,
+        type: data.type,
+        status: data.status,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    await useCase.execute(ctx, dto);
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          type: "SALES_ORDER",
+          status: "PREORDER",
+        }),
+      }),
+    );
+  });
+
+  it("should auto-create a new customer when saveAsCustomer option is checked", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 50 }],
+      payments: [{ method: "CASH", amount: 50 }],
+      customerName: "Jane Doe",
+      customerPhone: "+254712345678",
+      customerEmail: "jane@example.com",
+      saveAsCustomer: true,
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 50,
+        buyingPrice: 20,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.customer.findFirst.mockResolvedValue(null);
+    prisma.client.customer.create.mockResolvedValue({ id: "new_cust_123" });
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_cust_1",
+        number: data.number,
+        customerId: data.customerId,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    await useCase.execute(ctx, dto);
+
+    expect(prisma.client.customer.create).toHaveBeenCalledWith({
+      data: {
+        organizationId: "org_1",
+        phone: "+254712345678",
+        email: "jane@example.com",
+        name: "Jane Doe",
+      },
+      select: { id: true },
+    });
+
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          customerId: "new_cust_123",
+        }),
+      }),
+    );
+  });
+
 });

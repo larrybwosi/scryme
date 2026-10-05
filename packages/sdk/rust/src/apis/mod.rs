@@ -111,6 +111,7 @@ impl From<&str> for ContentType {
     }
 }
 
+pub mod agent_api;
 pub mod payments_api;
 pub mod public_invoices_api;
 pub mod v3_admin_api;
@@ -120,13 +121,17 @@ pub mod v3_auth_api;
 pub mod v3_b2_b_api;
 pub mod v3_business_accounts_api;
 pub mod v3_crm_api;
+pub mod v3_crm_whats_app_api;
 pub mod v3_cart_api;
 pub mod v3_catalog_api;
 pub mod v3_customers_api;
+pub mod v3_deliveries_api;
 pub mod v3_departments_api;
+pub mod v3_enterprise_tasks_api;
 pub mod v3_favorites_api;
 pub mod v3_finance_api;
 pub mod v3_finance_accounting_api;
+pub mod v3_global_pos_api;
 pub mod v3_inventory_api;
 pub mod v3_loyalty_api;
 pub mod v3_member_attendance_api;
@@ -136,14 +141,15 @@ pub mod v3_members_terminal_api;
 pub mod v3_orders_api;
 pub mod v3_pos_api;
 pub mod v3_pos_pairing_api;
+pub mod v3_production_api;
 pub mod v3_public_services_api;
 pub mod v3_role_management_api;
+pub mod v3_sentry_webhook_receiver_api;
 pub mod v3_services_api;
 pub mod v3_standalone_pos_api;
 pub mod v3_stocking_api;
-pub mod v3_strapi_integration_api;
-pub mod v3_strapi_webhooks_api;
 pub mod v3_units_api;
 pub mod v3_webhooks_api;
+pub mod v3_webhooks_receiver_api;
 
 pub mod configuration;

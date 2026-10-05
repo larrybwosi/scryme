@@ -32,6 +32,7 @@ async function TransactionList({
     type?: string;
     status?: string;
     paymentStatus?: string;
+    paymentMethod?: string;
     locationId?: string;
     sortBy?: string;
     startDate?: string;
@@ -46,6 +47,7 @@ async function TransactionList({
     type: searchParams.type as TransactionType | "all",
     status: searchParams.status as TransactionStatus | "all",
     paymentStatus: searchParams.paymentStatus as PaymentStatus | "all",
+    paymentMethod: searchParams.paymentMethod as any,
     locationId: searchParams.locationId,
     sortBy: searchParams.sortBy,
     startDate: searchParams.startDate ? new Date(searchParams.startDate) : undefined,

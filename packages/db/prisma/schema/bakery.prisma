@@ -44,6 +44,15 @@ enum BatchStatus {
   CANCELLED
 }
 
+enum BatchStagingStatus {
+  NOT_STAGED
+  STAGED
+  PARTIALLY_DISPATCHED
+  FULLY_DISPATCHED
+  DISPOSED
+}
+
+
 enum BakeryAuthMode {
   SSO
   CARD_PIN
@@ -164,6 +173,13 @@ model Batch {
   qcData                Json?                // Stores structured QC checks (visual, weight, temp, notes)
   wasteQuantity         Decimal?             @db.Decimal(10, 4) // Quantified waste from this batch
   wasteReason           String?              // specific reason code or text for the waste
+
+  // Staging & Dispatch tracking
+  stagedQuantity        Decimal?             @db.Decimal(10, 4)
+  dispatchedQuantity    Decimal?             @default(0) @db.Decimal(10, 4)
+  stagingWasteQuantity  Decimal?             @default(0) @db.Decimal(10, 4)
+  stagingStatus         BatchStagingStatus?  @default(NOT_STAGED)
+  dispatches            BatchDispatch[]
 
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
@@ -295,6 +311,7 @@ model BakerySettings {
   batchSequence          String         @default("4")
 
   // Operational Rules
+  enableProductionStaging Boolean        @default(false)
   autoApproveBatches     Boolean        @default(false)
   lowStockAlerts         Boolean        @default(true)
   timezone               String         @default("UTC")
@@ -465,4 +482,33 @@ enum WalletTxType {
   ADJUSTMENT
   RECONCILIATION_CHARGE
   DEPOSIT
+}
+
+
+model BatchDispatch {
+  id             String            @id @default(cuid())
+  batchId        String
+  batch          Batch             @relation(fields: [batchId], references: [id], onDelete: Cascade)
+
+  toLocationId   String
+  toLocation     InventoryLocation @relation(fields: [toLocationId], references: [id], onDelete: Restrict)
+
+  quantity       Decimal           @db.Decimal(10, 4)
+
+  dispatchedById String
+  dispatchedBy   Member            @relation("BatchDispatchedBy", fields: [dispatchedById], references: [id])
+
+  dispatchedAt   DateTime          @default(now())
+  notes          String?
+
+  organizationId String
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([batchId])
+  @@index([toLocationId])
+  @@index([organizationId])
+  @@map("batch_dispatch")
 }

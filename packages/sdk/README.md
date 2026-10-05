@@ -24,7 +24,6 @@ For the complete, interactive documentation, live sandbox playgrounds, and detai
   - **Finance & Accounting**: Invoices, corporate expenses, utility account tracking, petty cash funds, Profit & Loss reports, balance sheets, and cash flow analysis.
   - **POS**: POS device provisioning, standalone POS keys, staff login, terminal sync, and petty cash expense logging.
   - **Members & Roles**: Staff rosters, custom roles, permission sets, departments, invitations, and attendance logging (check-in/check-out).
-  - **Integrations & Webhooks**: Subscription management, Strapi E-commerce integration, and Windmill workflow callback orchestration.
 
 ---
 

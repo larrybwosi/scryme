@@ -1,3 +1,4 @@
+import { AutomationService } from "../../../../../automation/automation.service";
 import {
   Injectable,
   BadRequestException,
@@ -22,6 +23,9 @@ export class ProcessSaleUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
     private readonly inventoryMovementService: InventoryMovementService,
     @Optional() private readonly openPanelService?: OpenPanelService,
+    @Optional()
+    @Inject(forwardRef(() => AutomationService))
+    private readonly automationService?: AutomationService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -98,16 +102,37 @@ export class ProcessSaleUseCase {
           sub += serviceItemsToCreate.reduce((s: number, si: any) => s + si.lineTotal, 0);
         }
 
-        const cId = await this.getC(tx, orgId, dto.customerPhone);
+        const cId = await this.getC(
+          tx,
+          orgId,
+          dto.customerPhone,
+          dto.customerEmail,
+          dto.customerName,
+          dto.saveAsCustomer,
+          dto.customerId,
+        );
         const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
 
+        const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true || dto.type === "SALES_ORDER";
+        const txnStatus = isPreorder ? "PREORDER" : (dto.status || "COMPLETED");
+        const txnType = dto.type || (isPreorder ? "SALES_ORDER" : "POS_SALE");
+        const totalPaidAmount = paymentsList.reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+        const paymentStatus = totalPaidAmount >= total
+          ? "PAID"
+          : totalPaidAmount > 0
+          ? "PARTIALLY_PAID"
+          : dto.paymentStatus && ["PENDING", "UNPAID"].includes(dto.paymentStatus)
+          ? dto.paymentStatus
+          : "UNPAID";
+
         const t = await tx.transaction.create({
           data: {
-            number: `V3-POS-${Date.now()}`,
-            type: "POS_SALE",
-            status: "COMPLETED",
-            paymentStatus: "PAID",
+            number: dto.number || dto.orderNumber || `POS-${Date.now()}`,
+            type: txnType as any || "POS_SALE",
+            status: txnStatus as any,
+            paymentStatus: paymentStatus as any,
+            totalPaid: totalPaidAmount,
             organizationId: orgId,
             memberId: mId,
             locationId: locId,
@@ -119,6 +144,7 @@ export class ProcessSaleUseCase {
             baseCurrencyTotal: total,
             currencyCode: "KES",
             notes: dto.notes,
+            metadata: dto.metadata || undefined,
             items: hasProducts ? { create: items } : undefined,
             serviceItems: hasServices ? { create: serviceItemsToCreate } : undefined,
             payments: paymentsList.length > 0
@@ -179,10 +205,23 @@ export class ProcessSaleUseCase {
       return null;
     });
 
+    const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
+    if (isPreorder) {
+      this.triggerPreorderWorkflow(orgId, {
+        transactionId: transaction.id,
+        transactionNumber: transaction.number,
+        customerId: transaction.customerId || undefined,
+        dto,
+        total,
+      }).catch((err) => {
+        console.error("Post-sale preorder workflow trigger failed:", err.message);
+      });
+    }
+
     return {
       ...transaction,
       finalTotal: total,
-      status: "COMPLETED",
+      status: transaction.status,
       complianceData,
     };
   }
@@ -229,18 +268,56 @@ export class ProcessSaleUseCase {
     });
   }
 
-  private async getC(tx: any, orgId: string, phone?: string) {
-    if (!phone) return undefined;
-    const c = await tx.customer.findFirst({
-      where: { organizationId: orgId, phone },
-      select: { id: true },
-    });
-    if (c) return c.id;
-    const nc = await tx.customer.create({
-      data: { organizationId: orgId, phone, name: "POS Customer" },
-      select: { id: true },
-    });
-    return nc.id;
+  private async getC(
+    tx: any,
+    orgId: string,
+    phone?: string,
+    email?: string,
+    name?: string,
+    saveAsCustomer?: boolean,
+    explicitCustomerId?: string,
+  ) {
+    if (
+      explicitCustomerId &&
+      explicitCustomerId !== "temp-custom-customer" &&
+      !explicitCustomerId.startsWith("temp-")
+    ) {
+      const existing = await tx.customer.findFirst({
+        where: { id: explicitCustomerId, organizationId: orgId },
+        select: { id: true },
+      });
+      if (existing) return existing.id;
+    }
+
+    if (!phone && !email && !name) return undefined;
+
+    const orConditions: any[] = [];
+    if (phone && phone.trim()) orConditions.push({ phone: phone.trim() });
+    if (email && email.trim()) orConditions.push({ email: email.trim() });
+
+    if (orConditions.length > 0) {
+      const c = await tx.customer.findFirst({
+        where: { organizationId: orgId, OR: orConditions },
+        select: { id: true },
+      });
+      if (c) return c.id;
+    }
+
+    if (saveAsCustomer === true || (saveAsCustomer !== false && (phone || email || name))) {
+      const customerName = name && name.trim() ? name.trim() : "POS Customer";
+      const nc = await tx.customer.create({
+        data: {
+          organizationId: orgId,
+          phone: phone && phone.trim() ? phone.trim() : undefined,
+          email: email && email.trim() ? email.trim() : undefined,
+          name: customerName,
+        },
+        select: { id: true },
+      });
+      return nc.id;
+    }
+
+    return undefined;
   }
 
   private async vDisc(
@@ -494,5 +571,42 @@ export class ProcessSaleUseCase {
     const result = await this.invoiceUseCase.finalizeInvoice(orgId, invoice.id);
 
     return result.complianceData || null;
+  }
+
+  private async triggerPreorderWorkflow(orgId: string, params: { transactionId: string; transactionNumber: string; customerId?: string; dto: any; total: number }) {
+    if (!this.automationService) return;
+
+    let cust: any = null;
+    if (params.customerId) {
+      cust = await this.prisma.client.customer.findUnique({
+        where: { id: params.customerId },
+        select: { name: true, phone: true, email: true },
+      });
+    }
+
+    const dto = params.dto;
+    const metadata = dto.metadata || {};
+    const totalPaidAmount = (dto.payments || []).reduce((sum: number, p: any) => sum + Number(p.amount || 0), 0);
+
+    await this.automationService.triggerWorkflow(orgId, {
+      key: "preorder_notification",
+      payload: {
+        transactionId: params.transactionId,
+        transactionNumber: params.transactionNumber,
+        customerName: cust?.name || dto.customerName || "Valued Customer",
+        customerPhone: cust?.phone || dto.customerPhone || "",
+        customerEmail: cust?.email || dto.customerEmail || "",
+        dueDate: metadata.dueDate,
+        dueTime: metadata.dueTime,
+        itemSpecs: metadata.itemSpecs,
+        inscription: metadata.inscription,
+        customizationNotes: metadata.customizationNotes || dto.notes,
+        depositAmount: totalPaidAmount,
+        remainingBalance: Math.max(0, params.total - totalPaidAmount),
+        finalTotal: params.total,
+        currency: "KES",
+        metadata,
+      },
+    });
   }
 }

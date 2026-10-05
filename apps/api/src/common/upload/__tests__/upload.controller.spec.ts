@@ -59,7 +59,7 @@ describe("UploadController", () => {
     );
   });
 
-  it("should upload file and return url", async () => {
+  it("should upload file and return url with v2Context", async () => {
     const mockFile = {
       filename: "test.png",
       mimetype: "image/png",
@@ -86,5 +86,41 @@ describe("UploadController", () => {
       "image/png",
       { organizationId: "org-123" },
     );
+  });
+
+  it("should upload file and return url with v3Context from POS or Bakery app authorization", async () => {
+    const mockFile = {
+      filename: "receipt.jpg",
+      mimetype: "image/jpeg",
+      toBuffer: vi.fn().mockResolvedValue(Buffer.from("receipt-bytes")),
+    };
+    const req = {
+      file: vi.fn().mockResolvedValue(mockFile),
+      v3Context: {
+        organizationId: "org-v3-pos",
+        memberId: "mem-pos-1",
+        clientId: "pos-client-1",
+        authType: "v3_hybrid",
+      },
+    };
+    const res = {
+      send: vi.fn().mockImplementation((data) => data),
+    };
+
+    await controller.uploadFile(req as any, res as any);
+    expect(res.send).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "http://api.test.com/s/short",
+        shortUrl: "http://api.test.com/s/short",
+      }),
+    );
+    expect(mockPrisma.client.attachment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        fileName: "receipt.jpg",
+        mimeType: "image/jpeg",
+        organizationId: "org-v3-pos",
+        memberId: "mem-pos-1",
+      }),
+    });
   });
 });

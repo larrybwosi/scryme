@@ -167,17 +167,30 @@ export class PosReleaseService {
   }
 
   /**
-   * Handle GitHub release webhook event
+   * Handle GitHub release/tag webhook event
    */
   async handleWebhookReleasePayload(payload: any) {
+    // 1. Check for standard GitHub Release event
     const action = payload.action;
-    if (action !== "published" && action !== "released" && action !== "created") {
+
+    // Handle tag push or tag create events
+    if (payload.ref_type === "tag" || (typeof payload.ref === "string" && payload.ref.startsWith("refs/tags/"))) {
+      const tag = payload.ref_type === "tag" ? payload.ref : payload.ref.replace("refs/tags/", "");
+      this.logger.log(`Received GitHub tag webhook for tag ${tag}. Syncing release binaries...`);
+      return this.syncReleaseFromGithub(tag);
+    }
+
+    if (action && action !== "published" && action !== "released" && action !== "created") {
       this.logger.log(`Ignoring release action "${action}"`);
       return { processed: false, reason: `Ignored action ${action}` };
     }
 
     const release = payload.release;
     if (!release || !release.assets || !Array.isArray(release.assets)) {
+      if (payload.ref) {
+        const tag = payload.ref.replace("refs/tags/", "");
+        return this.syncReleaseFromGithub(tag);
+      }
       throw new BadRequestException("Invalid release payload format");
     }
 

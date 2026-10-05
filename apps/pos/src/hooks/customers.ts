@@ -4,6 +4,7 @@ import { useCallback } from 'react';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { Customer } from '@/types';
 import { useDebounce } from 'use-debounce';
+import { logger, writeAudit } from '@/lib/logger';
 
 // Types match the Rust JSON output (camelCase)
 export interface PosCustomer extends Customer {
@@ -34,11 +35,12 @@ export const usePosCustomers = ({ search, enabled = true }: UsePosCustomersParam
 
   // 1. Optimization: Use Selectors to prevent unnecessary re-renders
   const locationId = useAuthStore(state => state.currentLocation?.id);
+  const currentMember = useAuthStore(state => state.currentMember);
 
   const safeSearch = search || '';
   const [debouncedSearch] = useDebounce(safeSearch, 500);
 
-  const { data: customers = [], isLoading: isSearching } = useQuery({
+  const { data: customers = [], isLoading: isSearching, refetch } = useQuery({
     queryKey: ['pos-customers', debouncedSearch],
     queryFn: async () => {
       return await invoke<PosCustomer[]>('search_customers_command', {
@@ -52,19 +54,43 @@ export const usePosCustomers = ({ search, enabled = true }: UsePosCustomersParam
 
   const syncMutation = useMutation({
     mutationFn: async () => {
-      if (!locationId) throw new Error('No Location ID');
+      if (!locationId) throw new Error('No Location ID configured for customer sync');
 
-      console.log('Syncing Customers...');
-      // No args needed now, backend uses stored auth state
-      const res = await invoke('sync_customers_command', {});
-      console.log('Sync Result:', res);
+      logger.info('[Sync] Initiating Customer Sync request', { locationId, actorId: currentMember?.id });
+      console.log('[API Console] Sending GET Customer Sync request via Rust engine...');
+
+      const res = await invoke<string>('sync_customers_command', {});
+      console.log('[API Console] Customer Sync Response:', res);
+
+      writeAudit({
+        action: 'SYNC_CUSTOMERS',
+        level: 'INFO',
+        actorId: currentMember?.id,
+        actorName: currentMember?.name,
+        locationId,
+        details: { result: res },
+      });
+
       return res;
     },
-    onSuccess: () => {
-      // After sync, invalidate the search query so the UI updates with new data
-      queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ['pos-customers'] });
+      refetch();
     },
-    onError: err => console.error('Customer Sync Failed:', err),
+    onError: err => {
+      const msg = err instanceof Error ? err.message : String(err);
+      logger.error('[Sync] Customer Sync Failed', err, { locationId });
+      console.error('[API Console] Customer Sync Error:', msg);
+
+      writeAudit({
+        action: 'SYNC_CUSTOMERS_FAILED',
+        level: 'WARNING',
+        actorId: currentMember?.id,
+        actorName: currentMember?.name,
+        locationId,
+        details: { error: msg },
+      });
+    },
   });
 
   const handleSync = useCallback(() => {

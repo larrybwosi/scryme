@@ -1,29 +1,127 @@
 package tech.scryme.app
 
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Modifier
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import tech.scryme.app.data.interceptor.SessionManager
+import tech.scryme.app.ui.auth.AuthViewModel
+import tech.scryme.app.ui.navigation.AppNavGraph
+import tech.scryme.app.ui.navigation.Screen
+import tech.scryme.app.ui.theme.ScrymeTheme
+import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var sessionManager: SessionManager
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+                    101
+                )
+            }
+        }
+
         setContent {
-            MaterialTheme {
-                Surface {
-                    Greeting("Scryme Mobile")
-                }
+            val themeMode by sessionManager.themeModeFlow.collectAsState(initial = "SYSTEM")
+            ScrymeTheme(themeMode = themeMode) {
+                MainAppScreen()
             }
         }
     }
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun MainAppScreen(
+    authViewModel: AuthViewModel = hiltViewModel()
+) {
+    val navController = rememberNavController()
+    val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+
+    val bottomNavScreens = listOf(
+        Screen.Tasks,
+        Screen.Schedule,
+        Screen.Admin,
+        Screen.Branch,
+        Screen.Profile,
+        Screen.Settings
+    )
+
+    Scaffold(
+        bottomBar = {
+            if (isLoggedIn && currentRoute != Screen.Login.route) {
+                NavigationBar {
+                    bottomNavScreens.forEach { screen ->
+                        val selected = currentRoute == screen.route
+                        NavigationBarItem(
+                            selected = selected,
+                            onClick = {
+                                navController.navigate(screen.route) {
+                                    popUpTo(navController.graph.findStartDestination().id) {
+                                        saveState = true
+                                    }
+                                    launchSingleTop = true
+                                    restoreState = true
+                                }
+                            },
+                            label = { Text(screen.title) },
+                            icon = {
+                                Text(
+                                    text = when (screen) {
+                                        Screen.Tasks -> "📋"
+                                        Screen.Schedule -> "📅"
+                                        Screen.Admin -> "⚡"
+                                        Screen.Branch -> "🏢"
+                                        Screen.Profile -> "👤"
+                                        Screen.Settings -> "⚙️"
+                                        else -> "•"
+                                    }
+                                )
+                            }
+                        )
+                    }
+                }
+            }
+        }
+    ) { innerPadding ->
+        AppNavGraph(
+            navController = navController,
+            startDestination = if (isLoggedIn) Screen.Tasks.route else Screen.Login.route,
+            authViewModel = authViewModel,
+            onLoginSuccess = {
+                navController.navigate(Screen.Tasks.route) {
+                    popUpTo(Screen.Login.route) { inclusive = true }
+                }
+            },
+            onLogout = {
+                navController.navigate(Screen.Login.route) {
+                    popUpTo(0) { inclusive = true }
+                }
+            },
+            modifier = Modifier.padding(innerPadding)
+        )
+    }
 }

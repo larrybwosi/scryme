@@ -48,8 +48,11 @@ import Link from "next/link";
 import Image from "next/image";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
+import { useRouter } from "next/navigation";
+import { PowerOff } from "lucide-react";
 import {
   updateProduct,
+  deleteProduct,
   bulkDeleteVariants,
   updateVariantStatus,
   createVariant,
@@ -329,6 +332,11 @@ export function ProductPageClient({
     toast.success("Metadata parameter removed");
   };
 
+  const router = useRouter();
+  const [isProductActionDialogOpen, setIsProductActionDialogOpen] = useState(false);
+  const [isUpdatingProductStatus, setIsUpdatingProductStatus] = useState(false);
+  const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
   const [variantsToDelete, setVariantsToDelete] = useState<string[] | null>(
@@ -560,18 +568,29 @@ export function ProductPageClient({
               </Badge>
               <Select
                 value={product.isActive ? "active" : "inactive"}
-                onValueChange={value =>
+                onValueChange={async (value) => {
+                  const newActiveState = value === "active";
                   setProduct({
                     ...product,
-                    isActive: value === "active",
-                  })
-                }>
+                    isActive: newActiveState,
+                  });
+                  try {
+                    await updateProduct(product.id, { isActive: newActiveState });
+                    toast.success(newActiveState ? "Product activated" : "Product disabled");
+                  } catch (err) {
+                    toast.error("Failed to update product status");
+                    setProduct({
+                      ...product,
+                      isActive: !newActiveState,
+                    });
+                  }
+                }}>
                 <SelectTrigger className="h-7 text-[10px] font-bold uppercase rounded border-border w-[100px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="inactive">Inactive (Disabled)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -589,9 +608,10 @@ export function ProductPageClient({
         <div className="flex items-center gap-3">
           <Button
             variant="outline"
+            onClick={() => setIsProductActionDialogOpen(true)}
             className="gap-2 text-red-600 border-red-200 hover:bg-red-50 hover:text-red-700 dark:border-red-800 dark:hover:bg-red-950">
             <Trash2 className="w-4 h-4" />
-            Delete
+            Delete / Disable
           </Button>
           <Button
             onClick={handleSave}
@@ -863,6 +883,81 @@ export function ProductPageClient({
           </Card>
         </div>
       </div>
+
+      <AlertDialog
+        open={isProductActionDialogOpen}
+        onOpenChange={setIsProductActionDialogOpen}>
+        <AlertDialogContent className="sm:max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-foreground">Delete or Disable Product</AlertDialogTitle>
+            <AlertDialogDescription className="text-muted-foreground">
+              Disabling the product makes it inactive and hides it from sales channels while preserving sales and inventory history.
+              Permanently deleting the product removes all its records.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <div className="py-2 space-y-3">
+            <div className="p-3 border rounded-lg bg-muted/30 border-border">
+              <p className="text-xs font-semibold text-foreground mb-1">Product Status</p>
+              <p className="text-xs text-muted-foreground">
+                Currently <span className="font-bold">{product.isActive ? "Active" : "Disabled (Inactive)"}</span>
+              </p>
+            </div>
+          </div>
+          <AlertDialogFooter className="flex-col sm:flex-row gap-2">
+            <AlertDialogCancel disabled={isUpdatingProductStatus || isDeletingProduct}>
+              Cancel
+            </AlertDialogCancel>
+            {product.isActive && (
+              <Button
+                variant="outline"
+                disabled={isUpdatingProductStatus || isDeletingProduct}
+                onClick={async () => {
+                  setIsUpdatingProductStatus(true);
+                  try {
+                    await updateProduct(product.id, { isActive: false });
+                    setProduct({ ...product, isActive: false });
+                    toast.success("Product disabled successfully");
+                    setIsProductActionDialogOpen(false);
+                  } catch (err) {
+                    toast.error("Failed to disable product");
+                  } finally {
+                    setIsUpdatingProductStatus(false);
+                  }
+                }}
+                className="gap-1.5 border-amber-300 text-amber-700 hover:bg-amber-50 dark:border-amber-800 dark:text-amber-400 dark:hover:bg-amber-950">
+                {isUpdatingProductStatus ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <PowerOff className="w-4 h-4" />
+                )}
+                Disable Product
+              </Button>
+            )}
+            <Button
+              variant="destructive"
+              disabled={isUpdatingProductStatus || isDeletingProduct}
+              onClick={async () => {
+                setIsDeletingProduct(true);
+                try {
+                  await deleteProduct(product.id);
+                  toast.success("Product deleted successfully");
+                  router.push("/inventory");
+                } catch (err) {
+                  toast.error("Failed to delete product");
+                  setIsDeletingProduct(false);
+                }
+              }}
+              className="gap-1.5 bg-red-600 hover:bg-red-700 text-white">
+              {isDeletingProduct ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Trash2 className="w-4 h-4" />
+              )}
+              Permanently Delete
+            </Button>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <AlertDialog
         open={!!variantsToDelete}

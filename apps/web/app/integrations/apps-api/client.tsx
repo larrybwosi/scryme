@@ -181,11 +181,6 @@ const SCOPE_CATEGORIES = [
     scopes: [
       { value: "webhooks:read", label: "Read Webhooks", description: "View active webhook URLs" },
       { value: "webhooks:write", label: "Write Webhooks", description: "Create and update webhooks" },
-      { value: "integrations:strapi:create", label: "Create Strapi", description: "Create Strapi integration" },
-      { value: "integrations:strapi:read", label: "Read Strapi", description: "Read Strapi details" },
-      { value: "integrations:strapi:update", label: "Update Strapi", description: "Modify Strapi settings" },
-      { value: "integrations:strapi:delete", label: "Delete Strapi", description: "Remove Strapi integration" },
-      { value: "integrations:strapi:sync", label: "Sync Strapi", description: "Trigger Strapi sync tasks" },
     ],
   },
   {

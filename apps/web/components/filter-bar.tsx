@@ -8,6 +8,7 @@ import {
   RotateCcw,
   ArrowUpDown,
   DollarSign,
+  Wallet,
   MapPin,
   ClipboardList,
   Zap,
@@ -47,6 +48,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
   const currentType = searchParams.get("type") || "all";
   const currentStatus = searchParams.get("status") || "all";
   const currentPaymentStatus = searchParams.get("paymentStatus") || "all";
+  const currentPaymentMethod = searchParams.get("paymentMethod") || "all";
   const currentLocationId = searchParams.get("locationId") || "all";
   const currentSortBy = searchParams.get("sortBy") || "createdAt_desc";
   const currentStartDate = searchParams.get("startDate") || "";
@@ -251,6 +253,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     currentType !== "all" ||
     currentStatus !== "all" ||
     currentPaymentStatus !== "all" ||
+    currentPaymentMethod !== "all" ||
     currentLocationId !== "all" ||
     currentSortBy !== "createdAt_desc" ||
     currentStartDate !== "" ||
@@ -390,6 +393,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
           <SelectContent>
             <SelectItem value="all">All Statuses</SelectItem>
             <SelectItem value="DRAFT">Draft</SelectItem>
+            <SelectItem value="PREORDER">Pre-Order</SelectItem>
             <SelectItem value="PENDING_CONFIRMATION">
               Pending Confirmation
             </SelectItem>
@@ -408,10 +412,36 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
             <SelectValue placeholder="Payment" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="all">All Payments</SelectItem>
+            <SelectItem value="all">All Payment Statuses</SelectItem>
             <SelectItem value="PAID">Paid</SelectItem>
             <SelectItem value="UNPAID">Unpaid</SelectItem>
             <SelectItem value="PARTIALLY_PAID">Partially Paid</SelectItem>
+          </SelectContent>
+        </Select>
+
+        {/* Payment Method */}
+        <Select
+          value={currentPaymentMethod}
+          onValueChange={val => updateQueryParam("paymentMethod", val)}>
+          <SelectTrigger className="w-[160px] text-xs h-9 bg-background border-border text-foreground hover:bg-accent transition-colors">
+            <Wallet className="w-3.5 h-3.5 mr-1.5 text-muted-foreground" />
+            <SelectValue placeholder="Payment Method" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Methods</SelectItem>
+            <SelectItem value="MPESA">M-Pesa (Express / STK)</SelectItem>
+            <SelectItem value="MPESA_C2B">M-Pesa C2B / Till</SelectItem>
+            <SelectItem value="CASH">Cash</SelectItem>
+            <SelectItem value="CARD">Card</SelectItem>
+            <SelectItem value="MOBILE_PAYMENT">Mobile Payment</SelectItem>
+            <SelectItem value="BANK_TRANSFER">Bank Transfer</SelectItem>
+            <SelectItem value="CHEQUE">Cheque</SelectItem>
+            <SelectItem value="CREDIT">Credit</SelectItem>
+            <SelectItem value="STORE_CREDIT">Store Credit</SelectItem>
+            <SelectItem value="GIFT_CARD">Gift Card</SelectItem>
+            <SelectItem value="LOYALTY_POINTS">Loyalty Points</SelectItem>
+            <SelectItem value="ON_ACCOUNT">On Account</SelectItem>
+            <SelectItem value="OTHER">Other</SelectItem>
           </SelectContent>
         </Select>
 

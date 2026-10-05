@@ -11,9 +11,25 @@ export class SchemaService {
   async createObject(input: CreateObjectInput) {
     if (this.cache) {
       await this.cache.del(`crm:schema:objects:${input.organizationId}`);
+      await this.cache.del(
+        `crm:schema:object:${input.organizationId}:${input.name}`,
+      );
     }
-    return this.prisma.crmObjectDefinition.create({
-      data: input,
+    return this.prisma.crmObjectDefinition.upsert({
+      where: {
+        organizationId_name: {
+          organizationId: input.organizationId,
+          name: input.name,
+        },
+      },
+      update: {
+        label: input.label,
+        labelPlural: input.labelPlural,
+        icon: input.icon,
+        description: input.description,
+        isSystem: input.isSystem ?? false,
+      },
+      create: input,
     });
   }
 
@@ -67,8 +83,24 @@ export class SchemaService {
         `crm:schema:object:${obj.organizationId}:${obj.name}`,
       );
     }
-    return this.prisma.crmFieldDefinition.create({
-      data: input,
+    return this.prisma.crmFieldDefinition.upsert({
+      where: {
+        objectId_name: {
+          objectId: input.objectId,
+          name: input.name,
+        },
+      },
+      update: {
+        label: input.label,
+        type: input.type,
+        isRequired: input.isRequired ?? false,
+        isUnique: input.isUnique ?? false,
+        defaultValue: input.defaultValue,
+        options: input.options,
+        isSystem: input.isSystem ?? false,
+        order: input.order ?? 0,
+      },
+      create: input,
     });
   }
 
@@ -199,8 +231,21 @@ export class SchemaService {
     }
 
     // Standard Relationship: Company -> People
-    await this.prisma.crmRelationshipDefinition.create({
-      data: {
+    await this.prisma.crmRelationshipDefinition.upsert({
+      where: {
+        organizationId_name: {
+          organizationId,
+          name: "company_people",
+        },
+      },
+      update: {
+        type: "ONE_TO_MANY",
+        sourceObjectId: company.id,
+        targetObjectId: person.id,
+        sourceLabel: "Employees",
+        targetLabel: "Company",
+      },
+      create: {
         organizationId,
         name: "company_people",
         type: "ONE_TO_MANY",
@@ -352,8 +397,21 @@ export class SchemaService {
     }
 
     // Standard Relationship: Company -> Deals
-    await this.prisma.crmRelationshipDefinition.create({
-      data: {
+    await this.prisma.crmRelationshipDefinition.upsert({
+      where: {
+        organizationId_name: {
+          organizationId,
+          name: "company_deals",
+        },
+      },
+      update: {
+        type: "ONE_TO_MANY",
+        sourceObjectId: company.id,
+        targetObjectId: deal.id,
+        sourceLabel: "Deals",
+        targetLabel: "Company",
+      },
+      create: {
         organizationId,
         name: "company_deals",
         type: "ONE_TO_MANY",
@@ -365,8 +423,21 @@ export class SchemaService {
     });
 
     // Standard Relationship: Person -> Deals
-    await this.prisma.crmRelationshipDefinition.create({
-      data: {
+    await this.prisma.crmRelationshipDefinition.upsert({
+      where: {
+        organizationId_name: {
+          organizationId,
+          name: "person_deals",
+        },
+      },
+      update: {
+        type: "ONE_TO_MANY",
+        sourceObjectId: person.id,
+        targetObjectId: deal.id,
+        sourceLabel: "Deals",
+        targetLabel: "Contact",
+      },
+      create: {
         organizationId,
         name: "person_deals",
         type: "ONE_TO_MANY",

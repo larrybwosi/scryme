@@ -1,6 +1,8 @@
 "use client";
 
 import React, { useState } from "react";
+import { useOrganizationStore } from "../../../../../lib/stores/organization-store";
+import { formatCurrency } from "../../../../../lib/utils";
 import { Plus, MoreHorizontal, Truck, Loader2, ExternalLink, Pencil, Trash2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -73,6 +75,7 @@ interface SuppliersTabProps {
 }
 
 export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersTabProps) {
+  const { currency, currencySymbol } = useOrganizationStore();
   // Modal States
   const [isLinkDialogOpen, setIsLinkDialogOpen] = useState(false);
   const [editingSupplierLink, setEditingSupplierLink] = useState<any | null>(null);
@@ -273,7 +276,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
                       {s.supplierSku || "-"}
                     </TableCell>
                     <TableCell className="text-right font-medium">
-                      ${Number(s.costPrice || 0).toFixed(2)}
+                      {formatCurrency(Number(s.costPrice || 0), currency)}
                     </TableCell>
                     <TableCell className="text-right">
                       {s.leadTimeDays ? `${s.leadTimeDays} days` : "-"}
@@ -409,7 +412,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="link-cost">Cost Price ($)</Label>
+                <Label htmlFor="link-cost">Cost Price ({currencySymbol})</Label>
                 <Input
                   id="link-cost"
                   type="number"
@@ -500,7 +503,7 @@ export function SuppliersTab({ product, setProduct, suppliers = [] }: SuppliersT
               </div>
 
               <div className="grid gap-2">
-                <Label htmlFor="edit-cost">Cost Price ($)</Label>
+                <Label htmlFor="edit-cost">Cost Price ({currencySymbol})</Label>
                 <Input
                   id="edit-cost"
                   type="number"

@@ -70,7 +70,7 @@ interface PosAuthState {
 }
 
 interface PosAuthActions {
-  setMemberSession: (member: Member, isRestored?: boolean) => void;
+  setMemberSession: (member: Member, isRestored?: boolean, token?: string) => void;
   clearMemberSession: () => void;
   switchMember: (memberId: string) => Promise<void>;
   setCurrentLocation: (location: InventoryLocation) => void;
@@ -126,18 +126,35 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
         }
       },
 
-      setMemberSession: (member: Member, isRestored = false) => {
+      setMemberSession: (member: Member, isRestored = false, token?: string) => {
+        const memberWithToken = {
+          ...member,
+          ...(token ? { token } : {}),
+        };
+
         set(state => {
           const alreadyCheckedIn = state.checkedInMembers.find(m => m.id === member.id);
-          const newCheckedInMembers = alreadyCheckedIn ? state.checkedInMembers : [...state.checkedInMembers, member];
+          const updatedMembers = state.checkedInMembers.map(m => m.id === member.id ? memberWithToken : m);
+          const newCheckedInMembers = alreadyCheckedIn ? updatedMembers : [...state.checkedInMembers, memberWithToken];
 
           return {
-            currentMember: member,
+            currentMember: memberWithToken,
             checkedInMembers: newCheckedInMembers,
             isRestoredSession: isRestored,
             sessionUpdatedAt: Date.now(),
           };
         });
+
+        if (token) {
+          invoke('restore_member_session', {
+            member: {
+              id: member.id,
+              name: member.name,
+              role: (member as any).role || 'staff',
+            },
+            token,
+          }).catch(() => {});
+        }
 
         identifyPosUser({
           profileId: member.id,
@@ -351,6 +368,7 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
                   name: currentMember.name,
                   role: (currentMember as any).role || 'staff',
                 },
+                token: (currentMember as any).token || null,
               }).catch(() => {});
             }
           } else {

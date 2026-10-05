@@ -18,6 +18,9 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { ProductionService } from "../../application/services/production.service";
+import { MemberUseCase } from "../../../members/application/use-cases/member.use-case";
+import { GetUnitsUseCase } from "../../../units/application/use-cases/get-units.use-case";
+import { MemberQueryDto } from "../../../members/application/dto/member.dto";
 import { ProductionReportService } from "../../reports/production-report.service";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
@@ -46,6 +49,8 @@ import {
   UpdateIngredientDto,
   CreateQualityIncidentDto,
   UpdateQualityIncidentDto,
+  DispatchStagedBatchDto,
+  DisposeStagedStockDto,
 } from "../../application/dto/production.dto";
 
 @ApiTags("V3 Production")
@@ -58,6 +63,8 @@ export class ProductionController {
   constructor(
     private readonly productionService: ProductionService,
     private readonly productionReportService: ProductionReportService,
+    private readonly memberUseCase: MemberUseCase,
+    private readonly getUnitsUseCase: GetUnitsUseCase,
   ) {}
 
   @Get(["", "overview"])
@@ -72,6 +79,14 @@ export class ProductionController {
   @ApiOperation({ summary: "Get production attendance status" })
   async getAttendanceStatus(@v3Context() ctx: V3ApiContext) {
     return this.productionService.getAttendanceStatus(ctx);
+  }
+
+  // Units
+  @Get("units")
+  @Permissions("production:recipe:read")
+  @ApiOperation({ summary: "List units for production" })
+  async getUnits(@v3Context() ctx: V3ApiContext, @Query("lastSync") lastSync?: string) {
+    return this.getUnitsUseCase.execute(ctx.organizationId, lastSync);
   }
 
   // Ingredients
@@ -271,6 +286,36 @@ export class ProductionController {
     return this.productionService.startBatch(ctx.organizationId, id);
   }
 
+
+  @Get("staged-batches")
+  @Permissions("production:batch:read")
+  @ApiOperation({ summary: "Get staged production batches awaiting dispatch" })
+  async getStagedBatches(@v3Context() ctx: V3ApiContext) {
+    return this.productionService.getStagedBatches(ctx);
+  }
+
+  @Post("batches/:id/dispatch")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Dispatch staged batch items to front office location" })
+  async dispatchStagedBatch(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() body: DispatchStagedBatchDto,
+  ) {
+    return this.productionService.dispatchStagedBatch(ctx, id, body);
+  }
+
+  @Post("batches/:id/dispose-staged")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Dispose staged items before front office dispatch" })
+  async disposeStagedStock(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() body: DisposeStagedStockDto,
+  ) {
+    return this.productionService.disposeStagedStock(ctx, id, body);
+  }
+
   @Post("batches/:id/complete")
   @Permissions("production:batch:write")
   @ApiOperation({ summary: "Complete production batch" })
@@ -456,6 +501,16 @@ export class ProductionController {
     const { organizationId } = ctx;
     await this.productionReportService.generateAndSendReport(organizationId, 7);
     return { status: "success", message: "Test report triggered" };
+  }
+
+  @Get("members")
+  @Permissions("members:read")
+  @ApiOperation({ summary: "List organization members for production management" })
+  async getMembers(
+    @v3Context() ctx: V3ApiContext,
+    @Query() query: MemberQueryDto,
+  ) {
+    return this.memberUseCase.getMembers(ctx.organizationId, query);
   }
 
   @Get(["bakers", "staff", "operators"])

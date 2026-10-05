@@ -17,10 +17,11 @@ import {
   DialogFooter,
   DialogDescription,
 } from '@repo/ui/components/ui/dialog';
-import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle } from 'lucide-react';
+import { Trash2, Edit2, Minus, Plus, PanelRightClose, PanelRightOpen, ShoppingCart, Pause, Clock, ImageOff, User, ReceiptText, Printer, Package, Tag, ShieldCheck, Wrench, UserCheck, AlertTriangle, Sparkles } from 'lucide-react';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Kbd } from '@/components/ui/kbd';
 import PaymentModal from '@/components/pos/payment-dialog';
+import { CustomOrderDialog } from '@/components/pos/custom-order-dialog';
 import { CustomerSelector } from '@/components/customer-selector';
 import { ToggleGroup, ToggleGroupItem } from '@repo/ui/components/ui/toggle-group';
 import { AgeVerificationDialog } from '@/components/age-verification-dialog';
@@ -32,7 +33,7 @@ import { emitTo } from '@tauri-apps/api/event';
 import { HeldOrdersDialog } from '@/components/held-orders-dialog';
 import { PrescriptionDialog } from '@/components/pos/prescription-dialog';
 import { HoldOrderDialog } from '@/components/hold-order-dialog';
-import { convertFileSrc } from '@tauri-apps/api/core';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { usePrinter } from '@/hooks/use-printer';
 import { toast } from 'sonner';
 
@@ -47,7 +48,8 @@ export function Cart() {
   const {
     paymentDialogOpen, setPaymentDialogOpen,
     holdOrderDialogOpen, setHoldOrderDialogOpen,
-    prescriptionDialogOpen, setPrescriptionDialogOpen
+    prescriptionDialogOpen, setPrescriptionDialogOpen,
+    setCustomOrderDialogOpen
   } = useUiStore();
 
   const [ageVerificationOpen, setAgeVerificationOpen] = useState(false);
@@ -87,6 +89,7 @@ export function Cart() {
   const removeItemFromOrder = usePosStore(state => state.removeItemFromOrder);
   const updateItemInOrder = usePosStore(state => state.updateItemInOrder);
   const resetOrder = usePosStore(state => state.resetOrder);
+  const cancelPreOrder = usePosStore(state => state.cancelPreOrder);
 
   // --- Hold Sale Store Hooks ---
   const heldOrders = usePosStore(state => state.heldOrders);
@@ -409,6 +412,34 @@ export function Cart() {
               </Button>
             </div>
 
+            {/* Pre-Order Active Banner */}
+            {currentOrder.metadata?.isCustomOrder && (
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-md p-2.5 flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200 min-w-0">
+                  <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <div className="truncate">
+                    <p className="font-bold text-xs leading-none">Pre-Order Mode Active</p>
+                    {currentOrder.metadata?.dueDate && (
+                      <p className="text-[10px] text-amber-700 dark:text-amber-300 mt-0.5 truncate">
+                        Due: {currentOrder.metadata.dueDate} {currentOrder.metadata.dueTime || ''}
+                      </p>
+                    )}
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="h-7 text-[11px] px-2 text-amber-800 border-amber-300 bg-amber-100 hover:bg-amber-200 dark:bg-amber-900 dark:text-amber-100 dark:border-amber-700 dark:hover:bg-amber-800 shrink-0 font-semibold"
+                  onClick={() => {
+                    cancelPreOrder();
+                    toast.info('Switched to normal sale mode');
+                  }}
+                >
+                  Exit Pre-Order
+                </Button>
+              </div>
+            )}
+
             {/* Customer & Type Selectors */}
             <div className="grid grid-cols-5 gap-2">
               {import.meta.env.MODE !== 'standalone' && (
@@ -529,7 +560,7 @@ export function Cart() {
                     <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted shrink-0 border border-border/50">
                       {item.imageUrl ? (
                         <img
-                          src={convertFileSrc(item.imageUrl)}
+                          src={getPOSImageUrl(item.imageUrl)}
                           alt={item.productName}
                           className="object-cover w-full h-full"
                           loading="lazy"
@@ -693,7 +724,18 @@ export function Cart() {
             </div>
 
             {/* Main Actions */}
-            <div className="grid grid-cols-5 gap-2">
+            <div className="grid grid-cols-6 gap-1.5">
+              <Button
+                variant="outline"
+                className="col-span-1 h-12 flex-col gap-0.5 border-amber-200 bg-amber-50 dark:bg-amber-950/30 text-amber-700 dark:text-amber-300 hover:bg-amber-100"
+                onClick={() => setCustomOrderDialogOpen(true)}
+                disabled={currentOrder.items.length === 0}
+                title="Custom Order / Pre-order with Deposit"
+              >
+                <Sparkles className="w-4 h-4 text-amber-600" />
+                <span className="text-[9px] font-bold uppercase">Custom</span>
+              </Button>
+
               {businessConfig.type === 'pharmacy' && (
                 <Button
                   variant="outline"
@@ -703,7 +745,7 @@ export function Cart() {
                   title="Prescription"
                 >
                   <ReceiptText className="w-4 h-4" />
-                  <span className="text-[10px] font-medium">RX</span>
+                  <span className="text-[9px] font-bold">RX</span>
                 </Button>
               )}
 
@@ -719,7 +761,7 @@ export function Cart() {
                         aria-label={`Hold Order (${modifier}+S)`}
                       >
                         <Pause className="w-4 h-4" />
-                        <span className="text-[10px] font-medium">Hold</span>
+                        <span className="text-[9px] font-bold">Hold</span>
                         <Kbd className="absolute -top-2 -right-1 opacity-0 group-hover/btn:opacity-100 transition-opacity scale-75">S</Kbd>
                       </Button>
                     </TooltipTrigger>
@@ -743,7 +785,7 @@ export function Cart() {
                   ) : (
                     <Printer className="w-4 h-4" />
                   )}
-                  <span className="text-[10px] font-medium">Bill</span>
+                  <span className="text-[9px] font-bold">Bill</span>
                 </Button>
               )}
 
@@ -753,8 +795,7 @@ export function Cart() {
                     <Button
                       className={cn(
                         'h-12 shadow-md text-sm font-bold uppercase tracking-wide relative group/btn',
-                        (enableHoldSale && import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-3' :
-                        (enableHoldSale || import.meta.env.VITE_BUSINESS_MODE === 'restaurant') ? 'col-span-4' : 'col-span-5'
+                        businessConfig.type === 'pharmacy' ? 'col-span-3' : 'col-span-4'
                       )}
                       onClick={handleConfirmPayment}
                       disabled={currentOrder.items.length === 0}
@@ -790,6 +831,8 @@ export function Cart() {
       </div>
 
       {/* --- Dialogs --- */}
+      <CustomOrderDialog />
+
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
