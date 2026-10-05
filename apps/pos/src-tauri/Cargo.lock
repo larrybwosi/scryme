@@ -6376,7 +6376,7 @@ dependencies = [
 
 [[package]]
 name = "scryme-sdk"
-version = "10.1.60"
+version = "10.1.63"
 dependencies = [
  "chrono",
  "reqwest 0.13.4",

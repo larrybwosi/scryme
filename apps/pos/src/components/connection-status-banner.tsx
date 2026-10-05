@@ -143,43 +143,5 @@ export function ConnectionStatusBanner() {
     );
   }
 
-  const config = status ? getStatusConfig(status.state) : null;
-  const visible = !dismissed && !!config && DEGRADED_STATES.has(status?.state ?? '');
-
-  if (!visible) return null;
-
-  const Icon = config.icon;
-
-  return (
-    <div
-      role="alert"
-      aria-live="polite"
-      className={cn(
-        'fixed top-0 inset-x-0 z-[200] flex items-center justify-between gap-3',
-        'px-4 py-2 text-sm border-b backdrop-blur-sm transition-all duration-300',
-        config.className
-      )}
-    >
-      <div className="flex items-center gap-2 min-w-0">
-        <Icon className={cn('h-4 w-4 shrink-0', config.iconClass, config.spinning && 'animate-spin')} />
-        <span className="font-medium truncate">{config.label}</span>
-        {config.sublabel && <span className="text-xs opacity-70 truncate hidden sm:inline">— {config.sublabel}</span>}
-      </div>
-
-      <div className="flex items-center gap-2 shrink-0">
-        {status?.state === 'connected' && (
-          <span className="flex items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 font-medium">
-            <Wifi className="h-3.5 w-3.5" /> Reconnected
-          </span>
-        )}
-        <button
-          onClick={() => setDismissed(true)}
-          aria-label="Dismiss connection warning"
-          className="rounded-md p-1 opacity-60 hover:opacity-100 hover:bg-black/5 dark:hover:bg-white/5 transition-opacity"
-        >
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-    </div>
-  );
+  return null;
 }

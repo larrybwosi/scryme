@@ -1053,6 +1053,69 @@ export class PosService {
       });
     });
 
+    const rules = await this.prisma.client.pricingRule.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+        ...(lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        priceListId: true,
+        variantId: true,
+        categoryId: true,
+        conditions: true,
+        discountType: true,
+        discountValue: true,
+        stackable: true,
+        priority: true,
+        maxUsage: true,
+        usageCount: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
+      },
+    });
+
+    const bundles = await this.prisma.client.pricingBundle.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+        ...(lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        bundleType: true,
+        bundlePrice: true,
+        buyQuantity: true,
+        getQuantity: true,
+        getDiscountType: true,
+        getDiscountValue: true,
+        savingsLabel: true,
+        imageUrl: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
+        items: {
+          select: {
+            id: true,
+            bundleId: true,
+            variantId: true,
+            quantity: true,
+            itemRole: true,
+            priceOverride: true,
+          },
+        },
+      },
+    });
+
     return {
       success: true,
       data: {
@@ -1064,6 +1127,20 @@ export class PosService {
           lists,
           items,
           customerAllocations,
+          rules: rules.map(r => ({
+            ...r,
+            discountValue: r.discountValue ? r.discountValue.toString() : '0',
+            conditions: typeof r.conditions === 'string' ? r.conditions : JSON.stringify(r.conditions ?? {}),
+          })),
+          bundles: bundles.map(b => ({
+            ...b,
+            bundlePrice: b.bundlePrice ? b.bundlePrice.toString() : null,
+            getDiscountValue: b.getDiscountValue ? b.getDiscountValue.toString() : null,
+            items: b.items.map(bi => ({
+              ...bi,
+              priceOverride: bi.priceOverride ? bi.priceOverride.toString() : null,
+            })),
+          })),
           deletedItemIds: [],
         },
       },

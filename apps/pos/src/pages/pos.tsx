@@ -130,7 +130,7 @@ export function POS() {
 
   // B. Prepare Items for Batch Pricing
   const pricingItems = useMemo(() => {
-    const items: { variantId: string; unitId: string | null; isBaseUnit: boolean }[] = [];
+    const items: { variantId: string; unitId: string | null; isBaseUnit: boolean; quantity?: number }[] = [];
     products.forEach((p: any) => {
       if (!p.variants) return;
       p.variants.forEach((v: any) => {
@@ -140,12 +140,23 @@ export function POS() {
             variantId: v.variantId,
             unitId: u.unitId || null,
             isBaseUnit: !!u.isBaseUnit,
+            quantity: 1,
           });
         });
       });
     });
+
+    currentOrder.items.forEach(item => {
+      items.push({
+        variantId: item.variantId,
+        unitId: item.selectedUnit.unitId || null,
+        isBaseUnit: !!item.selectedUnit.isBaseUnit,
+        quantity: item.quantity,
+      });
+    });
+
     return items;
-  }, [products]);
+  }, [products, currentOrder.items]);
 
   // C. Fetch Prices from Rust
   const { priceMap } = useBatchPricing(pricingItems, currentOrder.customerId);
@@ -159,6 +170,23 @@ export function POS() {
     },
     [priceMap]
   );
+
+  // Sync cart item prices when multi-buy or rule pricing resolves for cart item quantities
+  useEffect(() => {
+    currentOrder.items.forEach(item => {
+      const keyWithQty = `${item.variantId}:${item.selectedUnit.unitId ?? 'null'}:${item.quantity}`;
+      const resolvedPrice = priceMap[keyWithQty];
+      if (typeof resolvedPrice === 'number' && resolvedPrice !== item.selectedUnit.price) {
+        updateItemInOrder({
+          ...item,
+          selectedUnit: {
+            ...item.selectedUnit,
+            price: resolvedPrice,
+          },
+        });
+      }
+    });
+  }, [priceMap, currentOrder.items, updateItemInOrder]);
 
   // 4. Extract Categories
   useEffect(() => {
