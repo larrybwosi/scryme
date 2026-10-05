@@ -55,8 +55,6 @@ android {
                 storePassword = storePasswordProp
                 keyAlias = keyAliasProp
                 keyPassword = keyPasswordProp
-            } else {
-                initWith(getByName("debug"))
             }
         }
     }
@@ -64,7 +62,12 @@ android {
     buildTypes {
         release {
             isMinifyEnabled = false
-            signingConfig = signingConfigs.getByName("release")
+            val releaseConfig = signingConfigs.findByName("release")
+            if (releaseConfig?.storeFile != null) {
+                signingConfig = releaseConfig
+            } else {
+                signingConfig = signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
