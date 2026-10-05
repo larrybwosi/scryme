@@ -28,7 +28,7 @@ describe("ProcessSaleUseCase", () => {
       client: {
         $transaction: vi.fn(cb => cb(prisma.client)),
         productVariant: { findMany: vi.fn() },
-        customer: { findFirst: vi.fn(), create: vi.fn() },
+        customer: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
         transaction: { create: vi.fn() },
         productVariantStock: { update: vi.fn() },
         stockMovement: { createMany: vi.fn() },
