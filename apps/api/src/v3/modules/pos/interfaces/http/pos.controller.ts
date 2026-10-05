@@ -388,8 +388,11 @@ export class PosController {
     @Body() body: PosRecordPaymentDto | any,
   ) {
     const payload = body || {};
-    if (payload.transactionId && payload.amount && payload.method && !payload.saleId) {
+    if (payload.transactionId && !payload.saleId) {
       payload.saleId = payload.transactionId;
+    }
+    if (payload.saleId && !payload.transactionId) {
+      payload.transactionId = payload.saleId;
     }
     return this.posService.recordPayment(ctx as any, payload);
   }

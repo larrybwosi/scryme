@@ -919,13 +919,12 @@ export class PosService {
 
   async recordPayment(ctx: V2ApiContext, body: any) {
     const validated = this.validate<any>(RecordPaymentSchema, body);
-    const {
-      transactionId,
-      amount,
-      method,
-      referenceNumber: reference,
-      payerPhone,
-    } = validated;
+    const transactionId = (validated.transactionId || validated.saleId) as string;
+    const amount = validated.amount;
+    const method = validated.method;
+    const reference = validated.referenceNumber || validated.reference || null;
+    const payerPhone = validated.payerPhone || null;
+    const notes = validated.notes || null;
 
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId: ctx.organizationId },
@@ -941,6 +940,7 @@ export class PosService {
         method,
         referenceNumber: reference,
         payerPhone,
+        notes,
         status: "PAID" as any,
         processedAt: new Date(),
       },
