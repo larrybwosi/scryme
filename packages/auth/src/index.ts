@@ -35,7 +35,28 @@ export const authOptions: BetterAuthOptions = {
     enabled: true,
     async sendResetPassword({ user, url, token }) {
       try {
-        const resetUrl = url || `${env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/reset-password?token=${token}`;
+        let targetOrigin = env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech";
+        if (url) {
+          try {
+            const parsedUrl = new URL(url);
+            const callbackParam = parsedUrl.searchParams.get("callbackURL");
+            if (callbackParam) {
+              const decodedCallback = decodeURIComponent(callbackParam);
+              if (decodedCallback.startsWith("http://") || decodedCallback.startsWith("https://")) {
+                const parsedCallback = new URL(decodedCallback);
+                targetOrigin = parsedCallback.origin;
+              } else if (parsedUrl.origin) {
+                targetOrigin = parsedUrl.origin;
+              }
+            } else if (parsedUrl.origin) {
+              targetOrigin = parsedUrl.origin;
+            }
+          } catch (e) {
+            // Ignore URL parse error and fallback to default targetOrigin
+          }
+        }
+        const cleanOrigin = targetOrigin.replace(/\/+$/, "");
+        const resetUrl = `${cleanOrigin}/reset-password?token=${token}`;
         await sendPasswordResetEmail({
           email: user.email,
           url: resetUrl,

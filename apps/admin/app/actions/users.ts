@@ -169,7 +169,7 @@ export async function resetUserPassword(
         headers: await headers(),
         body: {
           email: user.email,
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/reset-password`,
+          redirectTo: `${process.env.NEXT_PUBLIC_ADMIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://admin.scryme.tech"}/reset-password`,
         },
       });
       return { success: true, message: `Password reset email sent to ${user.email}` };
