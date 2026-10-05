@@ -9,7 +9,10 @@
     "start": "next start --port 3010",
     "lint": "eslint . --max-warnings 0",
     "type-check": "tsc --noEmit",
-    "payload": "payload"
+    "payload": "payload",
+    "payload:migrate": "payload migrate",
+    "payload:migrate:create": "payload migrate:create",
+    "payload:migrate:status": "payload migrate:status"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.750.0",
