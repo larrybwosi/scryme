@@ -35,10 +35,7 @@ import { ManageDeliveryModal } from "@/components/sales/manage-delivery-modal";
 
 import { PaymentStatusBadge } from "./components/payment-status-badge";
 import { OrderTimeline } from "./components/timeline";
-import { CustomerCard } from "./components/customer-card";
-import { PreorderCard } from "./components/preorder-card";
-import { LocationCard } from "./components/location-card";
-import { ActionsCard } from "./components/actions-card";
+import { OverviewTab } from "./components/overview-tab";
 import { ItemsTab } from "./components/items-tab";
 import { PaymentsTab } from "./components/payments-tab";
 import { DocumentsTab } from "./components/documents-tab";
@@ -101,6 +98,7 @@ export function TransactionDetailClient({
 }: TransactionDetailClientProps) {
   const router = useRouter();
   const [transaction, setTransaction] = useState<any>(initialTransaction);
+  const [activeTab, setActiveTab] = useState<string>("overview");
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [isDeliveryModalOpen, setIsDeliveryModalOpen] = useState(false);
   const [isGeneratingInvoice, setIsGeneratingInvoice] = useState(false);
@@ -356,8 +354,17 @@ export function TransactionDetailClient({
       {/* Main Split Content Grid */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 items-start rounded-none">
         <div className="lg:col-span-2 space-y-6 rounded-none">
-          <Tabs defaultValue="items" className="w-full rounded-none">
-            <TabsList className="w-full grid grid-cols-4 bg-muted p-1 border border-border/80 rounded-none h-11">
+          <Tabs
+            value={activeTab}
+            onValueChange={setActiveTab}
+            className="w-full rounded-none"
+          >
+            <TabsList className="w-full grid grid-cols-5 bg-muted p-1 border border-border/80 rounded-none h-11">
+              <TabsTrigger
+                value="overview"
+                className="text-xs font-semibold uppercase tracking-wider rounded-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-all">
+                Overview
+              </TabsTrigger>
               <TabsTrigger
                 value="items"
                 className="text-xs font-semibold uppercase tracking-wider rounded-none data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-none border-b-2 border-transparent data-[state=active]:border-foreground transition-all">
@@ -379,6 +386,20 @@ export function TransactionDetailClient({
                 Deliveries
               </TabsTrigger>
             </TabsList>
+
+            {/* Overview Content */}
+            <TabsContent
+              value="overview"
+              className="mt-6 outline-none rounded-none">
+              <OverviewTab
+                transaction={transaction}
+                formatCurrency={formatCurrency}
+                onStatusUpdate={handleStatusUpdate}
+                onRecordPaymentClick={() => setIsPaymentModalOpen(true)}
+                onNotesUpdated={fetchTransaction}
+                onTabChange={setActiveTab}
+              />
+            </TabsContent>
 
             {/* Items Content */}
             <TabsContent
@@ -429,7 +450,7 @@ export function TransactionDetailClient({
           </Tabs>
         </div>
 
-        {/* Right Column */}
+        {/* Focused Right Column (Order Timeline) */}
         <div className="space-y-6 rounded-none">
           <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
             <div className="flex items-center gap-2 px-5 py-4 border-b border-border bg-muted">
@@ -442,19 +463,6 @@ export function TransactionDetailClient({
               <OrderTimeline transaction={transaction} />
             </div>
           </Card>
-
-          <ActionsCard transaction={transaction} onStatusUpdate={handleStatusUpdate} onRecordPaymentClick={() => setIsPaymentModalOpen(true)} />
-
-          <CustomerCard transaction={transaction} />
-
-          <LocationCard transaction={transaction} />
-
-          <PreorderCard
-            transaction={transaction}
-            onNotesUpdated={fetchTransaction}
-            formatCurrency={formatCurrency}
-            onRecordPaymentClick={() => setIsPaymentModalOpen(true)}
-          />
         </div>
       </div>
 
