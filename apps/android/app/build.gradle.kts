@@ -24,6 +24,10 @@ android {
         }
 
         buildConfigField("String", "BASE_URL", "\"https://api.scryme.tech/v3/\"")
+
+        ndk {
+            abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
+        }
     }
 
     testOptions {
@@ -31,6 +35,8 @@ android {
     }
 
     signingConfigs {
+        getByName("debug") {
+        }
         create("release") {
             val keystorePropertiesFile = rootProject.file("keystore.properties")
             val keystoreProperties = Properties()
