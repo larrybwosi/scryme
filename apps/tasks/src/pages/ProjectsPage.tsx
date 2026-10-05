@@ -1,134 +1,94 @@
 import React, { useState } from 'react';
 import { useTaskStore } from '../lib/store';
-import { Project } from '../lib/types';
-import CreateProjectModal from '../components/modals/CreateProjectModal';
-import { Plus, Search } from 'lucide-react';
+import { Clock, Plus } from 'lucide-react';
+import { Card, CardHeader, CardTitle, CardContent } from '@repo/ui/components/ui/card';
 import { Button } from '@repo/ui/components/ui/button';
-import { Input } from '@repo/ui/components/ui/input';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { Card } from '@repo/ui/components/ui/card';
+import { Progress } from '@repo/ui/components/ui/progress';
+import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/ui/avatar';
+import CreateProjectModal from '../components/modals/CreateProjectModal';
 
 export default function ProjectsPage() {
   const projects = useTaskStore((state) => state.projects);
-  const [searchQuery, setSearchQuery] = useState('');
-  const [isCreateOpen, setIsCreateOpen] = useState(false);
-
-  const filteredProjects = projects.filter((p) =>
-    p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.client.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    p.key.toLowerCase().includes(searchQuery.toLowerCase())
-  );
+  const tasks = useTaskStore((state) => state.tasks);
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* Header */}
+      {/* Page Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">
-            Projects
+            Workspace Projects
           </h1>
           <p className="text-xs text-muted-foreground mt-1">
-            Manage organization project portfolios, milestones, and team assignments.
+            Manage projects, monitor completion status, and organize team task force allocations.
           </p>
         </div>
 
-        <Button
-          onClick={() => setIsCreateOpen(true)}
-          className="gap-2 self-start sm:self-auto text-xs bg-indigo-600 hover:bg-indigo-700 text-white"
-          size="sm"
-        >
+        <Button onClick={() => setIsCreateModalOpen(true)} className="gap-2 text-xs shadow-xs">
           <Plus className="h-4 w-4" />
-          <span>New Project</span>
+          <span>Create Project</span>
         </Button>
       </div>
 
-      {/* Search Bar */}
-      <Card className="p-3 shadow-xs flex items-center gap-2 border-border">
-        <Search className="h-4 w-4 text-muted-foreground ml-1" />
-        <Input
-          type="text"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          placeholder="Search projects by name, key, or client..."
-          className="border-0 shadow-none focus-visible:ring-0 text-xs h-8"
-        />
-      </Card>
-
       {/* Projects Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredProjects.map((p) => {
-          const projectSlug = (p.key || p.id).toLowerCase();
+        {projects.map((project) => {
+          const projectTasks = tasks.filter((t) => t.project === project.name);
+          const completedTasks = projectTasks.filter((t) => t.status === 'Completed').length;
+
           return (
-            <Card
-              key={p.id}
-              onClick={() => {
-                window.location.href = `/projects/${projectSlug}`;
-              }}
-              className="p-5 cursor-pointer hover:border-indigo-500/50 transition-all space-y-4 group shadow-xs border-border"
-            >
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex items-center gap-3">
-                  <div
-                    className="h-10 w-10 rounded-xl flex items-center justify-center font-bold text-xs text-white shadow-xs"
-                    style={{ backgroundColor: p.color || '#6366F1' }}
-                  >
-                    {p.key}
-                  </div>
-                  <div>
-                    <div className="text-[11px] font-semibold text-muted-foreground">{p.client}</div>
-                    <h3 className="font-bold text-sm text-foreground group-hover:text-indigo-600 transition-colors">
-                      {p.name}
-                    </h3>
-                  </div>
+            <Card key={project.id} className="flex flex-col justify-between hover:shadow-xs transition-shadow">
+              <CardHeader className="pb-3">
+                <div className="flex items-start justify-between gap-2">
+                  <Badge variant="outline" className="text-[10px] uppercase">
+                    {project.status || 'ACTIVE'}
+                  </Badge>
                 </div>
-                <Badge
-                  variant={p.status === 'ACTIVE' ? 'secondary' : 'outline'}
-                  className={p.status === 'ACTIVE' ? 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-400 border-emerald-200 dark:border-emerald-800' : ''}
-                >
-                  {p.status}
-                </Badge>
-              </div>
-
-              {p.description && (
-                <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                  {p.description}
+                <CardTitle className="text-base font-bold text-foreground mt-2">
+                  {project.name}
+                </CardTitle>
+                <p className="text-xs text-muted-foreground line-clamp-2 mt-1">
+                  {project.description}
                 </p>
-              )}
+              </CardHeader>
 
-              {/* Progress Bar */}
-              <div className="space-y-1.5 pt-2 border-t border-border">
-                <div className="flex justify-between text-[11px] font-semibold text-muted-foreground">
-                  <span>Completion</span>
-                  <span>{p.progress || 50}%</span>
+              <CardContent className="space-y-4 pt-0">
+                <div className="space-y-1.5">
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span className="font-semibold">Completion</span>
+                    <span>{project.progress || 0}% ({completedTasks}/{projectTasks.length} tasks)</span>
+                  </div>
+                  <Progress value={project.progress || 0} className="h-2" />
                 </div>
-                <div className="w-full bg-muted h-2 rounded-full overflow-hidden">
-                  <div
-                    className="bg-indigo-600 h-full rounded-full transition-all duration-300"
-                    style={{ width: `${p.progress || 50}%` }}
-                  />
-                </div>
-              </div>
 
-              {/* Owner & Meta */}
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
-                <div className="flex items-center gap-1.5">
-                  {p.owner?.avatar && (
-                    <img src={p.owner.avatar} alt={p.owner.name} className="h-5 w-5 rounded-full object-cover" />
-                  )}
-                  <span className="text-foreground font-medium text-[11px]">
-                    {p.owner?.name || 'Unassigned'}
-                  </span>
+                <div className="flex items-center justify-between pt-2 border-t border-border text-xs">
+                  <div className="flex items-center gap-1.5 text-muted-foreground">
+                    <Clock className="h-3.5 w-3.5" />
+                    <span>Due {project.endDate || 'Dec 2025'}</span>
+                  </div>
+
+                  <div className="flex -space-x-1.5 overflow-hidden">
+                    {project.members?.map((m: any, idx: number) => (
+                      <Avatar key={idx} className="h-6 w-6 border-2 border-background">
+                        <AvatarImage src={m.avatar} />
+                        <AvatarFallback className="text-[9px]">
+                          {m.name ? m.name.substring(0, 2).toUpperCase() : 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                    ))}
+                  </div>
                 </div>
-                <span className="text-[10px]">{p.taskCount || 0} tasks</span>
-              </div>
+              </CardContent>
             </Card>
           );
         })}
       </div>
 
       <CreateProjectModal
-        isOpen={isCreateOpen}
-        onClose={() => setIsCreateOpen(false)}
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
       />
     </div>
   );
