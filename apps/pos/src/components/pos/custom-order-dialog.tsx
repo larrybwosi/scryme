@@ -13,9 +13,10 @@ import { Label } from '@repo/ui/components/ui/label';
 import { Textarea } from '@repo/ui/components/ui/textarea';
 import { Checkbox } from '@repo/ui/components/ui/checkbox';
 import { Separator } from '@repo/ui/components/ui/separator';
-import { Sparkles, Calendar, User, FileText, ShoppingBag } from 'lucide-react';
+import { Sparkles, Calendar, User, FileText, ShoppingBag, UserCheck } from 'lucide-react';
 import { usePosStore } from '@/store/store';
 import { useUiStore } from '@/store/ui-store';
+import { CustomerSelector } from '@/components/customer-selector';
 import { toast } from 'sonner';
 
 export function CustomOrderDialog() {
@@ -49,6 +50,9 @@ export function CustomOrderDialog() {
       setCustomerName(currentOrder.customerName || '');
       setCustomerPhone(currentOrder.customerPhone || '');
       setCustomerEmail(currentOrder.metadata?.customerEmail || '');
+      if (currentOrder.customerId) {
+        setSaveAsCustomer(false);
+      }
 
       // Default due date to tomorrow if not set
       if (!dueDate) {
@@ -63,6 +67,18 @@ export function CustomOrderDialog() {
       }
     }
   }, [customOrderDialogOpen, total]);
+
+  // Sync state when customer is selected via CustomerSelector
+  useEffect(() => {
+    if (customOrderDialogOpen && currentOrder.customerId) {
+      setCustomerName(currentOrder.customerName || '');
+      setCustomerPhone(currentOrder.customerPhone || '');
+      if (currentOrder.metadata?.customerEmail) {
+        setCustomerEmail(currentOrder.metadata.customerEmail);
+      }
+      setSaveAsCustomer(false);
+    }
+  }, [customOrderDialogOpen, currentOrder.customerId, currentOrder.customerName, currentOrder.customerPhone]);
 
   const todayStr = new Date().toISOString().split('T')[0];
 
@@ -112,7 +128,7 @@ export function CustomOrderDialog() {
           itemSpecs,
           inscription,
           customizationNotes,
-          saveAsCustomer,
+          saveAsCustomer: currentOrder.customerId ? false : saveAsCustomer,
           customerEmail,
           depositAmount: Math.min(depositAmount, total),
           remainingBalance: Math.max(0, total - Math.min(depositAmount, total)),
@@ -137,16 +153,33 @@ export function CustomOrderDialog() {
             Custom Customer Order (Pre-order)
           </DialogTitle>
           <DialogDescription>
-            Record customer details, customization specifications, schedule, and deposit amount.
+            Select an existing customer or enter details, customization specifications, schedule, and deposit amount.
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-2">
           {/* --- Section 1: Customer Info --- */}
           <div className="space-y-3 bg-muted/40 p-3 rounded-lg border">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-              <User className="w-3.5 h-3.5" /> Customer Contact Information
-            </h4>
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                <User className="w-3.5 h-3.5" /> Customer Contact Information
+              </h4>
+              {currentOrder.customerId ? (
+                <span className="text-[10px] bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 font-semibold px-2 py-0.5 rounded border border-emerald-200 dark:border-emerald-800 flex items-center gap-1">
+                  <UserCheck className="w-3 h-3" /> Registered Customer
+                </span>
+              ) : null}
+            </div>
+
+            <div className="space-y-1">
+              <Label className="text-xs font-medium text-muted-foreground">
+                Select Existing Customer (Optional)
+              </Label>
+              <CustomerSelector />
+            </div>
+
+            <Separator className="my-2" />
+
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1">
                 <Label htmlFor="cust-name" className="text-xs">
@@ -156,7 +189,12 @@ export function CustomOrderDialog() {
                   id="cust-name"
                   placeholder="e.g. Jane Doe"
                   value={customerName}
-                  onChange={e => setCustomerName(e.target.value)}
+                  onChange={e => {
+                    setCustomerName(e.target.value);
+                    if (currentOrder.customerId) {
+                      usePosStore.getState().setCustomerId('');
+                    }
+                  }}
                   className="h-9 text-xs"
                 />
               </div>
@@ -168,7 +206,12 @@ export function CustomOrderDialog() {
                   id="cust-phone"
                   placeholder="e.g. +254712345678"
                   value={customerPhone}
-                  onChange={e => setCustomerPhone(e.target.value)}
+                  onChange={e => {
+                    setCustomerPhone(e.target.value);
+                    if (currentOrder.customerId) {
+                      usePosStore.getState().setCustomerId('');
+                    }
+                  }}
                   className="h-9 text-xs"
                 />
               </div>
@@ -187,16 +230,18 @@ export function CustomOrderDialog() {
                   className="h-9 text-xs"
                 />
               </div>
-              <div className="flex items-center space-x-2 pt-4">
-                <Checkbox
-                  id="save-customer"
-                  checked={saveAsCustomer}
-                  onCheckedChange={(checked) => setSaveAsCustomer(!!checked)}
-                />
-                <Label htmlFor="save-customer" className="text-xs cursor-pointer font-medium">
-                  Save as permanent customer profile
-                </Label>
-              </div>
+              {!currentOrder.customerId && (
+                <div className="flex items-center space-x-2 pt-4">
+                  <Checkbox
+                    id="save-customer"
+                    checked={saveAsCustomer}
+                    onCheckedChange={(checked) => setSaveAsCustomer(!!checked)}
+                  />
+                  <Label htmlFor="save-customer" className="text-xs cursor-pointer font-medium">
+                    Save as permanent customer profile
+                  </Label>
+                </div>
+              )}
             </div>
           </div>
 
