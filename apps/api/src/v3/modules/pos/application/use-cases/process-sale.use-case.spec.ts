@@ -28,7 +28,7 @@ describe("ProcessSaleUseCase", () => {
       client: {
         $transaction: vi.fn(cb => cb(prisma.client)),
         productVariant: { findMany: vi.fn() },
-        customer: { findFirst: vi.fn(), create: vi.fn() },
+        customer: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
         transaction: { create: vi.fn() },
         productVariantStock: { update: vi.fn() },
         stockMovement: { createMany: vi.fn() },
@@ -655,5 +655,61 @@ describe("ProcessSaleUseCase", () => {
         }),
       }),
     );
+  });
+
+  it("should process sale successfully when customerId is provided without customerName, customerPhone, or customerEmail", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      customerId: "selected_cust_100",
+      status: "PREORDER",
+      metadata: { isCustomOrder: true },
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 100 }],
+      payments: [{ method: "CASH", amount: 50 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.customer.findFirst.mockResolvedValue({ id: "selected_cust_100" });
+    prisma.client.customer.findUnique.mockResolvedValue({
+      id: "selected_cust_100",
+      name: "Selected Customer",
+      phone: "+254700000000",
+      email: "selected@example.com",
+    });
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_selected_cust_1",
+        number: data.number,
+        customerId: data.customerId,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.customerId).toBe("selected_cust_100");
+    expect(prisma.client.customer.findFirst).toHaveBeenCalledWith({
+      where: { id: "selected_cust_100", organizationId: "org_1" },
+      select: { id: true },
+    });
   });
 });
