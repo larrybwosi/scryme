@@ -2,6 +2,7 @@ import { s3Storage } from '@payloadcms/storage-s3';
 import { postgresAdapter } from '@payloadcms/db-postgres';
 import { lexicalEditor } from '@payloadcms/richtext-lexical';
 import { buildConfig } from 'payload';
+import sharp from 'sharp';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -30,6 +31,7 @@ export default buildConfig({
       baseDir: path.resolve(dirname),
     },
   },
+  sharp,
   collections: [
     Tenants,
     Users,
@@ -49,7 +51,7 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL || 'postgresql://dbuser:dbpassword@localhost:5432/app_db?schema=public',
     },
-    push: process.env.NODE_ENV !== 'production',
+    push: process.env.PAYLOAD_DB_PUSH === 'true' || process.env.NODE_ENV !== 'production',
   }),
   plugins: [
     s3Storage({
