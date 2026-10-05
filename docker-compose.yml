@@ -3,6 +3,8 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
     env_file:
       - .env.example
       - path: .env
@@ -26,6 +28,8 @@ services:
   customer-db:
     image: postgres:17-alpine
     restart: always
+    ports:
+      - "${CUSTOMER_DB_PORT:-5433}:5432"
     env_file:
       - .env.example
       - path: .env
@@ -50,6 +54,8 @@ services:
   redis:
     image: redis:alpine
     restart: always
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
     networks:
       - scryme-network
     healthcheck:
@@ -63,6 +69,9 @@ services:
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
     deploy:
       resources:
         limits:
@@ -78,46 +87,6 @@ services:
       - scryme-network
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "5672"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
-  admin:
-    image: ghcr.io/larrybwosi/scryme/admin:${SCRYME_VERSION:-latest}
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-      - NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL:-http://localhost:3007}
-      - PORT=${ADMIN_PORT:-3007}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-    depends_on:
-      db:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--spider",
-          "http://localhost:${ADMIN_PORT:-3007}/api/health",
-        ]
       interval: 60s
       timeout: 10s
       retries: 3
@@ -224,48 +193,6 @@ services:
       retries: 3
       start_period: 60s
 
-  crm:
-    image: ghcr.io/larrybwosi/scryme/crm:${SCRYME_VERSION:-latest}
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
-      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
-      - PORT=${CRM_PORT:-3001}
-      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-    depends_on:
-      db:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
-    healthcheck:
-      test:
-        [
-          "CMD",
-          "wget",
-          "--no-verbose",
-          "--tries=1",
-          "--timeout=3",
-          "--spider",
-          "http://localhost:${CRM_PORT:-3001}/api/health",
-        ]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
-
   cms:
     image: ghcr.io/larrybwosi/scryme/cms:${SCRYME_VERSION:-latest}
     restart: always
@@ -303,6 +230,7 @@ volumes:
 
 networks:
   scryme-network:
+    name: scryme-network
     driver: bridge
   proxy-network:
     name: ${PROXY_NETWORK_NAME:-dokploy-network}
