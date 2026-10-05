@@ -116,8 +116,9 @@ export function POS() {
   });
 
   // 3. Store Actions
-  const { addItemToOrder, businessConfig, settings, currentOrder, setTableNumber } = usePosStore(state => ({
+  const { addItemToOrder, updateItemInOrder, businessConfig, settings, currentOrder, setTableNumber } = usePosStore(state => ({
     addItemToOrder: state.addItemToOrder,
+    updateItemInOrder: state.updateItemInOrder,
     businessConfig: state.getBusinessConfig(),
     settings: state.settings,
     currentOrder: state.currentOrder,
