@@ -59,6 +59,37 @@ class AuthViewModel @Inject constructor(
         }
     }
 
+    fun signUp(fullName: String, email: String, password: String, agreeTerms: Boolean = true) {
+        if (fullName.isBlank()) {
+            _uiState.value = AuthUiState.Error("Full Name is required")
+            return
+        }
+        if (email.isBlank()) {
+            _uiState.value = AuthUiState.Error("Email is required")
+            return
+        }
+        if (password.isBlank()) {
+            _uiState.value = AuthUiState.Error("Password is required")
+            return
+        }
+        if (!agreeTerms) {
+            _uiState.value = AuthUiState.Error("You must agree to the Terms and Conditions")
+            return
+        }
+        viewModelScope.launch {
+            _uiState.value = AuthUiState.Loading
+            val result = authRepository.loginWithEmail(email.trim(), password)
+            result.fold(
+                onSuccess = {
+                    _uiState.value = AuthUiState.Success
+                },
+                onFailure = { error ->
+                    _uiState.value = AuthUiState.Error(error.message ?: "Sign up failed. Please check your information.")
+                }
+            )
+        }
+    }
+
     fun loginWithPin(orgSlug: String, pin: String) {
         if (orgSlug.isBlank()) {
             _uiState.value = AuthUiState.Error("Organization Slug is required")
