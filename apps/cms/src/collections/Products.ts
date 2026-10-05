@@ -108,6 +108,7 @@ export const Products: CollectionConfig = {
     },
     {
       name: 'pricingHighlights',
+      dbName: 'prc_hl',
       type: 'array',
       fields: [
         {
@@ -126,6 +127,7 @@ export const Products: CollectionConfig = {
         },
         {
           name: 'featuresList',
+          dbName: 'ft_lst',
           type: 'array',
           fields: [
             {
