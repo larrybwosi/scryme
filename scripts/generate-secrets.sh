@@ -78,7 +78,6 @@ update_env_var "RUSTFS_FORCE_PATH_STYLE" "true" "false"
 update_env_var "NEXT_PUBLIC_API_URL" "http://api.scryme.local" "true"
 update_env_var "NEXT_PUBLIC_WEB_URL" "http://scryme.local" "true"
 update_env_var "NEXT_PUBLIC_CRM_URL" "http://crm.scryme.local" "true"
-update_env_var "NEXT_PUBLIC_PORTAL_URL" "http://portal.scryme.local" "true"
 update_env_var "SOCKET_URL" "http://api.scryme.local" "true"
 update_env_var "NEXT_PUBLIC_SOCKET_URL" "http://api.scryme.local" "true"
 
@@ -100,7 +99,6 @@ update_env_var "API_PORT" "4000" "false"
 update_env_var "WEB_PORT" "3000" "false"
 update_env_var "CRM_PORT" "3001" "false"
 update_env_var "BAKERY_PORT" "3003" "false"
-update_env_var "PORTAL_PORT" "3006" "false"
 
 # 11. Windmill and Scryme values
 update_env_var "SCRYME_CHAT_API_URL" "https://api.scryme.tech" "false"
