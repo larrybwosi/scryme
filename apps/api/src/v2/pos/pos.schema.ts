@@ -106,13 +106,21 @@ export const CreateStockTransferSchema = z.object({
   notes: z.string().optional(),
 });
 
-export const RecordPaymentSchema = z.object({
-  transactionId: z.string().min(1),
-  amount: z.number().positive(),
-  method: z.string().min(1),
-  reference: z.string().optional(),
-  payerPhone: z.string().optional(),
-});
+export const RecordPaymentSchema = z
+  .object({
+    transactionId: z.string().optional().nullable(),
+    saleId: z.string().optional().nullable(),
+    amount: z.coerce.number().positive("Amount must be a positive number"),
+    method: z.string().min(1, "Payment method is required"),
+    reference: z.string().optional().nullable(),
+    referenceNumber: z.string().optional().nullable(),
+    notes: z.string().optional().nullable(),
+    payerPhone: z.string().optional().nullable(),
+  })
+  .refine((data) => Boolean(data.transactionId || data.saleId), {
+    message: "Either transactionId or saleId is required",
+    path: ["transactionId"],
+  });
 
 export const ShiftSyncSchema = z.object({
   location_id: z.string().min(1),

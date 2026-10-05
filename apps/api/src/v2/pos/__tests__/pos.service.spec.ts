@@ -305,3 +305,137 @@ describe("PosService.sync", () => {
     expect(result.categories).toEqual(mockCategories);
   });
 });
+
+
+describe("PosService.recordPayment", () => {
+  let service: PosService;
+  let prisma: PrismaService;
+
+  const mockCtx: V2ApiContext = {
+    organizationId: "org_123",
+    memberId: "mem_123",
+    locationId: "loc_123",
+    permissions: [],
+  };
+
+  beforeEach(async () => {
+    const module: TestingModule = await Test.createTestingModule({
+      providers: [
+        PosService,
+        {
+          provide: PrismaService,
+          useValue: {
+            client: {
+              transaction: {
+                findFirst: vi.fn(),
+                update: vi.fn(),
+              },
+              payment: {
+                create: vi.fn(),
+                findMany: vi.fn(),
+              },
+            },
+          },
+        },
+        { provide: RedisService, useValue: {} },
+        { provide: InventoryService, useValue: {} },
+        { provide: PosCustomerService, useValue: {} },
+      ],
+    }).compile();
+
+    service = module.get<PosService>(PosService);
+    prisma = module.get<PrismaService>(PrismaService);
+
+    vi.clearAllMocks();
+  });
+
+  it("should record payment when reference and notes are null (e.g. from Tauri POS app)", async () => {
+    const mockTx = {
+      id: "tx_123",
+      organizationId: "org_123",
+      finalTotal: new Decimal(100),
+      status: "PENDING",
+    };
+
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue(mockTx as any);
+    vi.mocked(prisma.client.payment.create).mockResolvedValue({ id: "pay_1" } as any);
+    vi.mocked(prisma.client.payment.findMany).mockResolvedValue([
+      { amount: new Decimal(100) },
+    ] as any);
+
+    const payload = {
+      transactionId: "tx_123",
+      amount: 100,
+      method: "CASH",
+      referenceNumber: null,
+      reference: null,
+      notes: null,
+    };
+
+    const result = await service.recordPayment(mockCtx, payload);
+
+    expect(prisma.client.payment.create).toHaveBeenCalledWith({
+      data: {
+        organizationId: "org_123",
+        transactionId: "tx_123",
+        amount: new Decimal(100),
+        method: "CASH",
+        referenceNumber: null,
+        payerPhone: null,
+        notes: null,
+        status: "PAID",
+        processedAt: expect.any(Date),
+      },
+    });
+    expect(result).toEqual({ id: "pay_1" });
+  });
+
+  it("should support saleId in place of transactionId and extract referenceNumber", async () => {
+    const mockTx = {
+      id: "sale_999",
+      organizationId: "org_123",
+      finalTotal: new Decimal(50),
+      status: "PREORDER",
+    };
+
+    vi.mocked(prisma.client.transaction.findFirst).mockResolvedValue(mockTx as any);
+    vi.mocked(prisma.client.payment.create).mockResolvedValue({ id: "pay_2" } as any);
+    vi.mocked(prisma.client.payment.findMany).mockResolvedValue([
+      { amount: new Decimal(50) },
+    ] as any);
+
+    const payload = {
+      saleId: "sale_999",
+      amount: "50",
+      method: "MPESA",
+      referenceNumber: "MPESA12345",
+      notes: "Paid via M-Pesa",
+    };
+
+    const result = await service.recordPayment(mockCtx, payload);
+
+    expect(prisma.client.payment.create).toHaveBeenCalledWith({
+      data: {
+        organizationId: "org_123",
+        transactionId: "sale_999",
+        amount: new Decimal(50),
+        method: "MPESA",
+        referenceNumber: "MPESA12345",
+        payerPhone: null,
+        notes: "Paid via M-Pesa",
+        status: "PAID",
+        processedAt: expect.any(Date),
+      },
+    });
+
+    expect(prisma.client.transaction.update).toHaveBeenCalledWith({
+      where: { id: "sale_999" },
+      data: {
+        paymentStatus: "PAID",
+        totalPaid: new Decimal(50),
+        status: "COMPLETED",
+      },
+    });
+    expect(result).toEqual({ id: "pay_2" });
+  });
+});

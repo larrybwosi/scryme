@@ -72,10 +72,15 @@ export class ProvisionResponseDto {
 }
 
 export class PosRecordPaymentDto {
-  @ApiProperty({ example: "tx_123" })
+  @ApiPropertyOptional({ example: "tx_123" })
   @IsString()
-  @IsNotEmpty()
-  transactionId: string;
+  @IsOptional()
+  transactionId?: string;
+
+  @ApiPropertyOptional({ example: "tx_123" })
+  @IsString()
+  @IsOptional()
+  saleId?: string;
 
   @ApiProperty({ example: 100 })
   @IsNumber()
@@ -89,7 +94,17 @@ export class PosRecordPaymentDto {
   @ApiPropertyOptional({ example: "REF123" })
   @IsString()
   @IsOptional()
+  reference?: string;
+
+  @ApiPropertyOptional({ example: "REF123" })
+  @IsString()
+  @IsOptional()
   referenceNumber?: string;
+
+  @ApiPropertyOptional({ example: "Payment notes" })
+  @IsString()
+  @IsOptional()
+  notes?: string;
 
   @ApiPropertyOptional({ example: "+254700000000" })
   @IsString()
