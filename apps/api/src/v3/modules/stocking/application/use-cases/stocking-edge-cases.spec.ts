@@ -66,7 +66,9 @@ describe("Stocking Edge Cases", () => {
       stockTransfer: {
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         create: vi.fn(),
       },
       stockTransferItem: {
@@ -141,7 +143,7 @@ describe("Stocking Edge Cases", () => {
       { id: "batch-1", variantId: "v1", currentQuantity: 10 },
     ]);
 
-    mockTx.stockTransfer.update.mockResolvedValue({
+    mockTx.stockTransfer.findFirstOrThrow.mockResolvedValue({
       id: transferId,
       transferNumber: "TR-PARTIAL",
       shippedDate: new Date(),
@@ -299,7 +301,7 @@ describe("Stocking Edge Cases", () => {
     };
 
     mockTx.stockBatch.create.mockResolvedValue({ id: "new-batch-v1" });
-    mockTx.stockTransfer.update.mockResolvedValue({
+    mockTx.stockTransfer.findFirstOrThrow.mockResolvedValue({
       id: transferId,
       transferNumber: "TR-REC-1",
       receivedDate: new Date(),
