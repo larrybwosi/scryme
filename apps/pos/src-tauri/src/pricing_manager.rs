@@ -9,6 +9,7 @@ pub struct BatchPricingRequest {
     pub variant_id: String,
     pub unit_id: Option<String>,
     pub is_base_unit: bool,
+    pub quantity: Option<i32>,
 }
 
 #[tauri::command]
@@ -32,13 +33,15 @@ pub async fn resolve_price_batch_command(
 ) -> Result<Vec<Option<f64>>, String> {
     let mut results = Vec::new();
     for req in requests {
-        let price = pricing_store::resolve_price(
+        let qty = req.quantity.unwrap_or(1);
+        let price = pricing_store::resolve_price_with_qty(
             &app,
             &state,
             customer_id.clone(),
             req.variant_id,
             req.unit_id,
             req.is_base_unit,
+            qty,
         ).await;
         results.push(price);
     }

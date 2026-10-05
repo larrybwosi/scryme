@@ -282,10 +282,70 @@ pub struct ServerPricingResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 #[serde(rename_all = "camelCase")]
+pub struct ServerPricingRuleItem {
+    pub id: String,
+    pub name: String,
+    pub description: Option<String>,
+    pub price_list_id: String,
+    pub variant_id: Option<String>,
+    pub category_id: Option<String>,
+    pub conditions: Option<String>,
+    pub discount_type: String,
+    pub discount_value: String,
+    pub stackable: Option<bool>,
+    pub priority: Option<i32>,
+    pub max_usage: Option<i32>,
+    pub usage_count: Option<i32>,
+    pub is_active: Option<bool>,
+    pub valid_from: Option<String>,
+    pub valid_to: Option<String>,
+    pub updated_at: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ServerPricingBundleItem {
+    pub id: String,
+    pub bundle_id: String,
+    pub variant_id: String,
+    pub quantity: i32,
+    pub item_role: Option<String>,
+    pub price_override: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct ServerPricingBundle {
+    pub id: String,
+    pub name: String,
+    pub code: String,
+    pub description: Option<String>,
+    pub bundle_type: String,
+    pub bundle_price: Option<String>,
+    pub buy_quantity: Option<i32>,
+    pub get_quantity: Option<i32>,
+    pub get_discount_type: Option<String>,
+    pub get_discount_value: Option<String>,
+    pub savings_label: Option<String>,
+    pub image_url: Option<String>,
+    pub is_active: Option<bool>,
+    pub valid_from: Option<String>,
+    pub valid_to: Option<String>,
+    pub updated_at: Option<String>,
+    #[serde(default)]
+    pub items: Vec<ServerPricingBundleItem>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[serde(rename_all = "camelCase")]
 pub struct ServerPricingData {
     pub lists: Vec<ServerPriceList>,
     pub items: Vec<ServerPriceListItem>,
     pub customer_allocations: Option<std::collections::HashMap<String, Vec<String>>>,
+    #[serde(default)]
+    pub rules: Vec<ServerPricingRuleItem>,
+    #[serde(default)]
+    pub bundles: Vec<ServerPricingBundle>,
     #[serde(default)]
     pub deleted_item_ids: Vec<String>,
 }
@@ -343,6 +403,10 @@ pub struct PosPricingData {
     pub lists: Vec<ClientPriceList>,
     pub items: Vec<ClientPriceListItem>,
     pub allocations: std::collections::HashMap<String, Vec<String>>,
+    #[serde(default)]
+    pub rules: Vec<ServerPricingRuleItem>,
+    #[serde(default)]
+    pub bundles: Vec<ServerPricingBundle>,
 }
 
 // A robust error type for the frontend to consume

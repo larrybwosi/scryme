@@ -63,6 +63,7 @@ export type PricingItem = {
   variantId: string;
   unitId: string | null;
   isBaseUnit: boolean;
+  quantity?: number;
 };
 
 /**
@@ -72,7 +73,7 @@ export type PricingItem = {
 export function buildPricingKey(items: PricingItem[]): string {
   if (items.length === 0) return '';
   return items
-    .map(i => `${i.variantId}:${i.unitId ?? 'null'}:${i.isBaseUnit}`)
+    .map(i => `${i.variantId}:${i.unitId ?? 'null'}:${i.isBaseUnit}:${i.quantity ?? 1}`)
     .sort()
     .join('|');
 }
@@ -111,6 +112,7 @@ export const useBatchPricing = (items: PricingItem[], customerId?: string | null
         variant_id: item.variantId,
         unit_id: item.unitId,
         is_base_unit: item.isBaseUnit,
+        quantity: item.quantity ?? 1,
       }));
 
       const results = await invoke<Array<number | null>>('resolve_price_batch_command', {
@@ -122,10 +124,13 @@ export const useBatchPricing = (items: PricingItem[], customerId?: string | null
       results.forEach((price, index) => {
         if (price !== null && price !== undefined) {
           const item = stableItems[index];
-          // Key format must match resolvePrice() in the page component:
-          // `${variantId}:${unitId ?? 'null'}`
-          const key = `${item.variantId}:${item.unitId ?? 'null'}`;
-          map[key] = price;
+          const qty = item.quantity ?? 1;
+          const keyWithQty = `${item.variantId}:${item.unitId ?? 'null'}:${qty}`;
+          const keyBase = `${item.variantId}:${item.unitId ?? 'null'}`;
+          map[keyWithQty] = price;
+          if (qty === 1 || map[keyBase] === undefined) {
+            map[keyBase] = price;
+          }
         }
       });
 
