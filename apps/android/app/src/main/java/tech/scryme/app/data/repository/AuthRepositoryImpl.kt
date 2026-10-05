@@ -4,6 +4,7 @@ import com.google.gson.JsonParser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 import tech.scryme.app.data.api.AuthApiService
+import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
@@ -38,6 +39,29 @@ class AuthRepositoryImpl @Inject constructor(
                         userName = userName,
                         userEmail = userEmail
                     )
+
+                    // Refresh context details via V3 Android Controller if available
+                    runCatching {
+                        val meResponse = authApiService.getAndroidMe()
+                        if (meResponse.isSuccessful && meResponse.body()?.success == true) {
+                            val meData = meResponse.body()?.data
+                            val activeOrgSlug = meData?.activeOrganization?.slug ?: orgSlug
+                            val defaultLocationId = meData?.locations?.firstOrNull { it.isDefault == true }?.id
+                                ?: meData?.locations?.firstOrNull()?.id
+                            val memberId = meData?.member?.id ?: userId
+
+                            sessionManager.saveSession(
+                                accessToken = token,
+                                memberToken = token,
+                                orgSlug = activeOrgSlug,
+                                locationId = defaultLocationId,
+                                memberId = memberId,
+                                userName = meData?.user?.name ?: userName,
+                                userEmail = meData?.user?.email ?: userEmail
+                            )
+                        }
+                    }
+
                     Result.success(Unit)
                 } else {
                     Result.failure(Exception("Authentication succeeded but no token was returned"))
@@ -45,6 +69,37 @@ class AuthRepositoryImpl @Inject constructor(
             } else {
                 val errorMsg = response.errorBody()?.string()?.takeIf { it.isNotBlank() } ?: response.message()
                 Result.failure(Exception("Login failed: $errorMsg"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun validateSession(): Result<AndroidMeResponseDto> {
+        return try {
+            val response = authApiService.getAndroidMe()
+            if (response.isSuccessful && response.body()?.success == true) {
+                val data = response.body()?.data ?: return Result.failure(Exception("Empty profile response"))
+                val token = sessionManager.getAccessToken() ?: ""
+                val activeOrgSlug = data.activeOrganization?.slug ?: sessionManager.getOrgSlug() ?: "default"
+                val defaultLocationId = data.locations?.firstOrNull { it.isDefault == true }?.id
+                    ?: data.locations?.firstOrNull()?.id
+                    ?: sessionManager.getLocationId()
+                val memberId = data.member?.id ?: sessionManager.getMemberId()
+
+                sessionManager.saveSession(
+                    accessToken = token,
+                    memberToken = token,
+                    orgSlug = activeOrgSlug,
+                    locationId = defaultLocationId,
+                    memberId = memberId,
+                    userName = data.user?.name,
+                    userEmail = data.user?.email
+                )
+                Result.success(data)
+            } else {
+                val errorMsg = response.body()?.error?.message ?: response.message()
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
