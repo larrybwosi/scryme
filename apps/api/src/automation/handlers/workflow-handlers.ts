@@ -3,6 +3,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { WebhookDispatcherService } from "../webhook-dispatcher.service";
 import { ScrymeChatApiClient, ScrymeChatAction, createReportMessage, CustomMessage } from "@repo/chat";
 import { sendEmail } from "@repo/shared/services/email";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 
 export interface WorkflowJobHandlerContext {
   organizationId: string;
@@ -20,6 +21,7 @@ export class WorkflowHandlers {
   constructor(
     private readonly prisma: PrismaService,
     private readonly webhookDispatcher: WebhookDispatcherService,
+    private readonly firebaseMessagingService: FirebaseMessagingService,
   ) {}
 
   private async dispatchScrymeChatReport(
@@ -225,9 +227,26 @@ export class WorkflowHandlers {
       },
     });
 
+    // FCM Push Notification for Preorder
+    try {
+      await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
+        title: `Pre-Order Received: ${transactionNumber}`,
+        body: `Customer: ${customerName} - Schedule: ${dueDate}`,
+        data: {
+          eventType: "PREORDER_NOTIFICATION",
+          transactionId,
+          transactionNumber,
+          organizationId: ctx.organizationId,
+        },
+      });
+    } catch (fcmError: any) {
+      this.logger.warn(`FCM push for preorder failed: ${fcmError.message}`);
+    }
+
     let emailSent = false;
     if (notificationEmail) {
       const emailHtml = `
+        200 OK - New Preorder
         <h2>New Pre-Order Notification</h2>
         <p>A new custom pre-order (<strong>${transactionNumber}</strong>) has been recorded.</p>
         <ul>
@@ -342,6 +361,22 @@ export class WorkflowHandlers {
         customMessage: customReport,
         metadata: { productId, currentStock, threshold, alertType: "LOW_STOCK" },
       });
+
+      // FCM Push Notification for Low Stock
+      try {
+        await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
+          title: `Low Stock Alert: ${displayName}`,
+          body: `Current stock (${currentStock}) is below threshold (${threshold}).`,
+          data: {
+            eventType: "LOW_STOCK_ALERT",
+            productId: productId || "",
+            productName: displayName,
+            organizationId: ctx.organizationId,
+          },
+        });
+      } catch (fcmError: any) {
+        this.logger.warn(`FCM push for low stock failed: ${fcmError.message}`);
+      }
 
       if (notificationEmail) {
         const emailHtml = `
