@@ -131,8 +131,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         instructions: recipe.instructions || '',
         notes: recipe.notes || '',
         yieldQuantity: recipe.yieldQuantity,
-        systemUnitId: recipe.systemUnitId || undefined,
-        orgUnitId: recipe.orgUnitId || undefined,
+        systemUnitId: recipe.systemUnitId || recipe.systemUnit?.id || undefined,
+        orgUnitId: recipe.orgUnitId || recipe.orgUnit?.id || undefined,
         producesVariantId: recipe.producesVariantId || '',
         prepTime: recipe.prepTime ?? 0,
         bakeTime: recipe.bakeTime ?? 0,
@@ -146,8 +146,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
           id: ing.id,
           ingredientVariantId: ing.ingredientVariantId,
           quantity: ing.quantity,
-          systemUnitId: ing.systemUnitId || undefined,
-          orgUnitId: ing.orgUnitId || undefined,
+          systemUnitId: ing.systemUnitId || ing.systemUnit?.id || undefined,
+          orgUnitId: ing.orgUnitId || ing.orgUnit?.id || undefined,
           preparationNotes: ing.preparationNotes || '',
         })) || [],
       });
@@ -482,67 +482,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                   </div>
                 </FormSection>
 
-                <FormSection title="Technical Parameters" icon={Settings}>
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Prep Time (min)</Label>
-                      <Input
-                        type="number"
-                        {...register('prepTime', { valueAsNumber: true })}
-                        disabled={isSubmitting}
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Bake Time (min)</Label>
-                      <Input
-                        type="number"
-                        {...register('bakeTime', { valueAsNumber: true })}
-                        disabled={isSubmitting}
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Total Time (min)</Label>
-                      <Input
-                        type="number"
-                        {...register('totalTime', { valueAsNumber: true })}
-                        disabled={isSubmitting}
-                        placeholder="Optional"
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Bake Temp (°C)</Label>
-                      <Input
-                        type="number"
-                        step="1"
-                        {...register('temperatureCelsius', { valueAsNumber: true })}
-                        disabled={isSubmitting}
-                        placeholder="e.g. 180"
-                        className="h-9"
-                      />
-                    </div>
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-medium text-slate-500 uppercase">Complexity</Label>
-                      <Select
-                        value={difficulty}
-                        onValueChange={value => setValue('difficulty', value as any)}
-                        disabled={isSubmitting}
-                      >
-                        <SelectTrigger className="h-9">
-                          <SelectValue placeholder="Select complexity" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="EASY">Level 1 - Easy</SelectItem>
-                          <SelectItem value="MEDIUM">Level 2 - Medium</SelectItem>
-                          <SelectItem value="HARD">Level 3 - Complex</SelectItem>
-                          <SelectItem value="EXPERT">Level 4 - Expert</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </FormSection>
+
 
                 <FormSection title="Bill of Materials (BOM)" icon={Layers}>
                   <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
@@ -576,7 +516,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     value={currentIng?.ingredientVariantId}
                                     onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value, { shouldValidate: true })}
                                     disabled={isSubmitting}
-                                    productType="ALL"
+                                    productType="RAW_MATERIAL"
                                     placeholder="Select material..."
                                     className={ingredientErrors?.[index] ? 'border-red-500' : ''}
                                   />
