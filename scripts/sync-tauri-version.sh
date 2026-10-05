@@ -5,16 +5,11 @@ VERSION=$(jq -r .version apps/pos/package.json)
 
 if [ -z "$VERSION" ] || [ "$VERSION" == "null" ]; then
   echo "Error: Could not determine version from apps/pos/package.json"
-  return 1 2>/dev/null || true
+  exit 1
 fi
 
-echo "Syncing version $VERSION across all app package.json files..."
-for APP_PKG in apps/*/package.json; do
-  if [ -f "$APP_PKG" ]; then
-    echo "Updating $APP_PKG to $VERSION"
-    jq --arg v "$VERSION" '.version = $v' "$APP_PKG" > tmp.json && mv tmp.json "$APP_PKG"
-  fi
-done
+echo "Syncing version $VERSION to apps/bakery/package.json..."
+jq --arg v "$VERSION" '.version = $v' apps/bakery/package.json > tmp.json && mv tmp.json apps/bakery/package.json
 
 echo "Syncing version $VERSION to SDK packages..."
 if [ -f "packages/sdk/package.json" ]; then
@@ -33,38 +28,25 @@ if [ -f "packages/sdk/rust/Cargo.toml" ]; then
   ' "$VERSION"
 fi
 
-if [ -f "apps/android/app/build.gradle.kts" ]; then
-  echo "Updating apps/android/app/build.gradle.kts versionName to $VERSION"
-  node -e '
-    const fs = require("fs");
-    const v = process.argv[1];
-    let gradle = fs.readFileSync("apps/android/app/build.gradle.kts", "utf8");
-    gradle = gradle.replace(/versionName\s*=\s*"[^"]+"/, `versionName = "${v}"`);
-    fs.writeFileSync("apps/android/app/build.gradle.kts", gradle, "utf8");
-  ' "$VERSION"
-fi
-
 # Sanitize version for Tauri configs (MSI target on Windows requires numeric-only prerelease identifier <= 65535)
-TAURI_VERSION=$(node -e '
+TAURI_VERSION=$(node -e "
   const v = process.argv[1];
-  if (!v.includes("-")) { console.log(v); }
-  else {
-    const parts = v.split("-");
-    const mainVersion = parts[0];
-    const prerelease = parts.slice(1).join("-");
-    const match = prerelease.match(/(\d+)$/);
-    if (match && parseInt(match[1], 10) <= 65535) {
-      console.log(`${mainVersion}-${match[1]}`);
-    } else {
-      console.log(mainVersion);
-    }
+  if (!v.includes('-')) { console.log(v); process.exit(0); }
+  const parts = v.split('-');
+  const mainVersion = parts[0];
+  const prerelease = parts.slice(1).join('-');
+  const match = prerelease.match(/(\d+)$/);
+  if (match && parseInt(match[1], 10) <= 65535) {
+    console.log(\`\${mainVersion}-\${match[1]}\`);
+  } else {
+    console.log(mainVersion);
   }
-' "$VERSION")
+" "$VERSION")
 
 echo "Syncing version $TAURI_VERSION to Tauri configs..."
 
 # List of all tauri config files in the correct directory
-CONFIG_FILES=$(ls apps/pos/src-tauri/tauri*.json apps/bakery/src-tauri/tauri.conf.json 2>/dev/null)
+CONFIG_FILES=$(ls apps/pos/src-tauri/tauri.*json apps/bakery/src-tauri/tauri.conf.json)
 
 for FILE in $CONFIG_FILES; do
   echo "Updating $FILE"
@@ -72,4 +54,4 @@ for FILE in $CONFIG_FILES; do
   jq --arg v "$TAURI_VERSION" '.version = $v' "$FILE" > tmp.json && mv tmp.json "$FILE"
 done
 
-echo "Successfully synced version to all apps and configs."
+echo "Successfully synced version to $(echo $CONFIG_FILES | wc -w) files."
