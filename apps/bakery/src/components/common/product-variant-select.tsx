@@ -70,7 +70,7 @@ interface ProductVariantsSelectProps {
   placeholder?: string;
   disabled?: boolean;
   required?: boolean;
-  productType?: ProductType | "ALL";
+  productType?: ProductType | "RAW_MATERIAL" | "FINISHED_GOOD" | "MERCHANDISE" | "OTHER" | "ALL" | string;
   includeLocation?: boolean;
   showLocationInfo?: boolean;
   excludeVariant?: string;
