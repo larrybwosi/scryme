@@ -1,3 +1,4 @@
+import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { AutomationService } from "../../../../../automation/automation.service";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProcessSaleUseCase } from "./process-sale.use-case";
@@ -19,6 +20,7 @@ describe("ProcessSaleUseCase", () => {
   let prisma: any;
   let inventoryMovementService: any;
   let invoiceUseCase: any;
+  let crmSyncService: any;
   let moduleRef: TestingModule;
 
   beforeEach(async () => {
@@ -42,11 +44,16 @@ describe("ProcessSaleUseCase", () => {
       recordMovement: vi.fn().mockResolvedValue({}),
     };
 
+    crmSyncService = {
+      enqueueSyncCustomer: vi.fn().mockResolvedValue({}),
+    };
+
     moduleRef = await Test.createTestingModule({
       providers: [
         ProcessSaleUseCase,
         { provide: PrismaService, useValue: prisma },
         { provide: InventoryMovementService, useValue: inventoryMovementService },
+        { provide: CrmSyncService, useValue: crmSyncService },
         {
           provide: LoyaltyService,
           useValue: {
@@ -575,9 +582,15 @@ describe("ProcessSaleUseCase", () => {
         phone: "+254712345678",
         email: "jane@example.com",
         name: "Jane Doe",
+        customerType: "B2C",
       },
       select: { id: true },
     });
+
+    expect(crmSyncService.enqueueSyncCustomer).toHaveBeenCalledWith(
+      "org_1",
+      "new_cust_123"
+    );
 
     expect(prisma.client.transaction.create).toHaveBeenCalledWith(
       expect.objectContaining({

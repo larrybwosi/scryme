@@ -1,3 +1,4 @@
+import { CrmModule } from "../crm/crm.module";
 import { AutomationModule } from "../../../automation/automation.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
 import { PrismaModule } from "../../../prisma/prisma.module";
@@ -25,6 +26,7 @@ import { FinanceModule } from "../finance/finance.module";
     LoyaltyModule,
     V2PosModule,
     FinanceModule,
+    CrmModule,
   ],
   controllers: [PosController, GlobalPosController, PosPairingController],
   providers: [

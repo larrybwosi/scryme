@@ -1,3 +1,4 @@
+import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { AutomationService } from "../../../../../automation/automation.service";
 import {
   Injectable,
@@ -23,6 +24,7 @@ export class ProcessSaleUseCase {
     private readonly invoiceUseCase: InvoiceUseCase,
     private readonly inventoryMovementService: InventoryMovementService,
     @Optional() private readonly openPanelService?: OpenPanelService,
+    @Optional() private readonly crmSyncService?: CrmSyncService,
     @Optional()
     @Inject(forwardRef(() => AutomationService))
     private readonly automationService?: AutomationService,
@@ -103,7 +105,7 @@ export class ProcessSaleUseCase {
         }
 
         const targetCustomerId = dto.customerId || dto.metadata?.customerId;
-        const cId = await this.getC(
+        const custRes = await this.getC(
           tx,
           orgId,
           dto.customerPhone,
@@ -112,7 +114,9 @@ export class ProcessSaleUseCase {
           dto.saveAsCustomer,
           targetCustomerId,
         );
-        const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
+        const cId = custRes?.id;
+        const isNewCustomer = custRes?.isNew || false;
+        const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId || '', sub);
         const total = sub - (dto.discountAmount || 0) - disc;
 
         const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true || dto.type === "SALES_ORDER";
@@ -184,7 +188,7 @@ export class ProcessSaleUseCase {
           );
         }
 
-        return { transaction: t, total, customerId: cId };
+        return { transaction: t, total, customerId: cId, isNewCustomer };
       },
     );
 
@@ -195,6 +199,14 @@ export class ProcessSaleUseCase {
       transactionNumber: transaction.number,
       itemsCount: productItems.length + (dto.serviceItems?.length || 0),
     });
+
+    if (transaction.customerId && this.crmSyncService) {
+      this.crmSyncService
+        .enqueueSyncCustomer(orgId, transaction.customerId)
+        .catch((err) => {
+          console.error("CRM customer sync enqueue failed:", err.message);
+        });
+    }
 
     const complianceData = await this.handlePostSale(
       orgId,
@@ -277,7 +289,7 @@ export class ProcessSaleUseCase {
     name?: string,
     saveAsCustomer?: boolean,
     explicitCustomerId?: string,
-  ) {
+  ): Promise<{ id: string; isNew: boolean } | undefined> {
     if (
       explicitCustomerId &&
       explicitCustomerId !== "temp-custom-customer" &&
@@ -287,7 +299,7 @@ export class ProcessSaleUseCase {
         where: { id: explicitCustomerId, organizationId: orgId },
         select: { id: true },
       });
-      if (existing) return existing.id;
+      if (existing) return { id: existing.id, isNew: false };
     }
 
     if (!phone && !email && !name) return undefined;
@@ -301,7 +313,7 @@ export class ProcessSaleUseCase {
         where: { organizationId: orgId, OR: orConditions },
         select: { id: true },
       });
-      if (c) return c.id;
+      if (c) return { id: c.id, isNew: false };
     }
 
     if (saveAsCustomer === true || (saveAsCustomer !== false && (phone || email || name))) {
@@ -312,10 +324,11 @@ export class ProcessSaleUseCase {
           phone: phone && phone.trim() ? phone.trim() : undefined,
           email: email && email.trim() ? email.trim() : undefined,
           name: customerName,
+          customerType: "B2C",
         },
         select: { id: true },
       });
-      return nc.id;
+      return { id: nc.id, isNew: true };
     }
 
     return undefined;
