@@ -116,21 +116,25 @@ export async function provisionScryme() {
       { name: "general", slug: "general" },
     ];
 
-    for (const channel of channels) {
-      try {
-        await scrymeClient.createChannel(
-          scrymeWorkspace.slug,
-          channel.name,
-          channel.slug,
-          "public",
-        );
-      } catch (channelErr: any) {
-        console.error(
-          `Failed to create default channel ${channel.slug} for workspace ${scrymeWorkspace.slug}:`,
-          channelErr.message,
-        );
-      }
-    }
+    // ⚡ Bolt Optimization: Concurrently create default channels via Promise.all.
+    // Executing channel creations concurrently reduces provisioning latency from O(N*T) to O(1T).
+    await Promise.all(
+      channels.map(async (channel) => {
+        try {
+          await scrymeClient.createChannel(
+            scrymeWorkspace.slug,
+            channel.name,
+            channel.slug,
+            "public",
+          );
+        } catch (channelErr: any) {
+          console.error(
+            `Failed to create default channel ${channel.slug} for workspace ${scrymeWorkspace.slug}:`,
+            channelErr.message,
+          );
+        }
+      }),
+    );
 
     const defaultChannelMappings = {
       po_alerts: "alerts",
@@ -276,13 +280,17 @@ export async function getScrymeWorkspaceDetails() {
     const { ScrymeChatApiClient } = await import("@repo/chat");
     const scrymeClient = new ScrymeChatApiClient();
 
-    const channels = await scrymeClient.listChannels(config.workspaceSlug);
-
-    let apiMembers = await scrymeClient.listWorkspaceMembers(config.workspaceSlug);
-    const dbMembers = await prisma.member.findMany({
-      where: { organizationId: context.organizationId, isActive: true },
-      include: { user: true },
-    });
+    // ⚡ Bolt Optimization: Parallelize independent Scryme API network calls and Prisma DB queries.
+    // Fetching channels, workspace members, and database members concurrently via Promise.all
+    // collapses loading latency on the integrations page from O(3T) sequential roundtrips to O(1T).
+    const [channels, apiMembers, dbMembers] = await Promise.all([
+      scrymeClient.listChannels(config.workspaceSlug),
+      scrymeClient.listWorkspaceMembers(config.workspaceSlug),
+      prisma.member.findMany({
+        where: { organizationId: context.organizationId, isActive: true },
+        include: { user: true },
+      }),
+    ]);
 
     const userMapByEmail = new Map<string, { id: string; name: string | null; email: string; role: string }>();
     const userMapById = new Map<string, { id: string; name: string | null; email: string; role: string }>();
