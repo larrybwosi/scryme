@@ -1,10 +1,10 @@
 services:
-  admin:
-    image: ghcr.io/larrybwosi/scryme/admin:${SCRYME_VERSION:-latest}
-    container_name: scryme-admin
+  crm:
+    image: ghcr.io/larrybwosi/scryme/crm:${SCRYME_VERSION:-latest}
+    container_name: scryme-crm
     restart: always
     ports:
-      - "${ADMIN_PORT:-3007}:3007"
+      - "${CRM_PORT:-3001}:3001"
     deploy:
       resources:
         limits:
@@ -16,12 +16,12 @@ services:
         required: false
     environment:
       - NODE_ENV=production
-      - PORT=${ADMIN_PORT:-3007}
+      - PORT=${CRM_PORT:-3001}
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
-      - NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL:-http://localhost:3007}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
-      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-http://localhost:3007}
     networks:
       - scryme-network
       - proxy-network
@@ -32,8 +32,9 @@ services:
           "wget",
           "--no-verbose",
           "--tries=1",
+          "--timeout=3",
           "--spider",
-          "http://localhost:${ADMIN_PORT:-3007}/api/health",
+          "http://localhost:${CRM_PORT:-3001}/api/health",
         ]
       interval: 30s
       timeout: 10s
