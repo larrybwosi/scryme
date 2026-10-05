@@ -102,6 +102,7 @@ export class ProcessSaleUseCase {
           sub += serviceItemsToCreate.reduce((s: number, si: any) => s + si.lineTotal, 0);
         }
 
+        const targetCustomerId = dto.customerId || dto.metadata?.customerId;
         const cId = await this.getC(
           tx,
           orgId,
@@ -109,7 +110,7 @@ export class ProcessSaleUseCase {
           dto.customerEmail,
           dto.customerName,
           dto.saveAsCustomer,
-          dto.customerId,
+          targetCustomerId,
         );
         const disc = await this.vDisc(tx, orgId, dto.loyaltyVoucherCode, cId, sub);
         const total = sub - (dto.discountAmount || 0) - disc;
