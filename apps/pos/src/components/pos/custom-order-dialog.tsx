@@ -37,6 +37,12 @@ export function CustomOrderDialog() {
 
   const [depositAmount, setDepositAmount] = useState<number>(0);
 
+  const isCustomerSelected = Boolean(
+    currentOrder.customerId &&
+      currentOrder.customerId !== 'temp-custom-customer' &&
+      !currentOrder.customerId.startsWith('temp-')
+  );
+
   const itemsCount = currentOrder.items.reduce((acc, i) => acc + i.quantity, 0);
   const total = currentOrder.items.reduce((acc, i) => {
     const itemPrice = i.selectedUnit?.price ?? 0;
@@ -83,25 +89,31 @@ export function CustomOrderDialog() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const handleProceed = () => {
-    if (!customerName.trim()) {
-      toast.error('Customer name is required');
-      return;
-    }
-    if (!customerPhone.trim()) {
-      toast.error('Customer phone number is required');
-      return;
+    if (!isCustomerSelected) {
+      if (!customerName.trim()) {
+        toast.error('Customer name is required');
+        return;
+      }
+      if (!customerPhone.trim()) {
+        toast.error('Customer phone number is required');
+        return;
+      }
     }
     if (!dueDate || !dueTime) {
       toast.error('Due date and time are required');
       return;
     }
 
+    const finalName = isCustomerSelected ? (currentOrder.customerName || customerName) : customerName;
+    const finalPhone = isCustomerSelected ? (currentOrder.customerPhone || customerPhone) : customerPhone;
+    const finalEmail = isCustomerSelected ? (currentOrder.metadata?.customerEmail || customerEmail) : customerEmail;
+
     // 1. Update customer profile in order context
     setCustomer({
       id: currentOrder.customerId || 'temp-custom-customer',
-      name: customerName,
-      email: customerEmail,
-      phone: customerPhone,
+      name: finalName,
+      email: finalEmail,
+      phone: finalPhone,
       totalPurchases: 0,
       lastVisit: new Date(),
       loyaltyPoints: currentOrder.loyaltyPoints || 0,
@@ -116,8 +128,8 @@ export function CustomOrderDialog() {
       currentOrder: {
         ...state.currentOrder,
         orderType: 'pickup',
-        customerName,
-        customerPhone,
+        customerName: finalName,
+        customerPhone: finalPhone,
         instructions: customizationNotes || state.currentOrder.instructions,
         metadata: {
           ...state.currentOrder.metadata,
@@ -128,8 +140,8 @@ export function CustomOrderDialog() {
           itemSpecs,
           inscription,
           customizationNotes,
-          saveAsCustomer: currentOrder.customerId ? false : saveAsCustomer,
-          customerEmail,
+          saveAsCustomer: isCustomerSelected ? false : saveAsCustomer,
+          customerEmail: finalEmail,
           depositAmount: Math.min(depositAmount, total),
           remainingBalance: Math.max(0, total - Math.min(depositAmount, total)),
         },
@@ -178,71 +190,85 @@ export function CustomOrderDialog() {
               <CustomerSelector />
             </div>
 
-            <Separator className="my-2" />
-
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1">
-                <Label htmlFor="cust-name" className="text-xs">
-                  Full Name <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cust-name"
-                  placeholder="e.g. Jane Doe"
-                  value={customerName}
-                  onChange={e => {
-                    setCustomerName(e.target.value);
-                    if (currentOrder.customerId) {
-                      usePosStore.getState().setCustomerId('');
-                    }
-                  }}
-                  className="h-9 text-xs"
-                />
-              </div>
-              <div className="space-y-1">
-                <Label htmlFor="cust-phone" className="text-xs">
-                  Phone Number <span className="text-destructive">*</span>
-                </Label>
-                <Input
-                  id="cust-phone"
-                  placeholder="e.g. +254712345678"
-                  value={customerPhone}
-                  onChange={e => {
-                    setCustomerPhone(e.target.value);
-                    if (currentOrder.customerId) {
-                      usePosStore.getState().setCustomerId('');
-                    }
-                  }}
-                  className="h-9 text-xs"
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-3 items-center">
-              <div className="space-y-1">
-                <Label htmlFor="cust-email" className="text-xs">
-                  Email Address (Optional)
-                </Label>
-                <Input
-                  id="cust-email"
-                  type="email"
-                  placeholder="jane@example.com"
-                  value={customerEmail}
-                  onChange={e => setCustomerEmail(e.target.value)}
-                  className="h-9 text-xs"
-                />
-              </div>
-              {!currentOrder.customerId && (
-                <div className="flex items-center space-x-2 pt-4">
-                  <Checkbox
-                    id="save-customer"
-                    checked={saveAsCustomer}
-                    onCheckedChange={(checked) => setSaveAsCustomer(!!checked)}
-                  />
-                  <Label htmlFor="save-customer" className="text-xs cursor-pointer font-medium">
-                    Save as permanent customer profile
-                  </Label>
+            {isCustomerSelected ? (
+              <div className="bg-background/80 p-2.5 rounded border text-xs space-y-1">
+                <div className="font-semibold text-foreground">
+                  {currentOrder.customerName || 'Selected Customer'}
                 </div>
-              )}
-            </div>
+                {currentOrder.customerPhone && (
+                  <div className="text-muted-foreground">Phone: {currentOrder.customerPhone}</div>
+                )}
+                {currentOrder.metadata?.customerEmail && (
+                  <div className="text-muted-foreground">Email: {currentOrder.metadata.customerEmail}</div>
+                )}
+              </div>
+            ) : (
+              <>
+                <Separator className="my-2" />
+
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="cust-name" className="text-xs">
+                      Full Name <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="cust-name"
+                      placeholder="e.g. Jane Doe"
+                      value={customerName}
+                      onChange={e => {
+                        setCustomerName(e.target.value);
+                        if (currentOrder.customerId) {
+                          usePosStore.getState().setCustomerId('');
+                        }
+                      }}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="cust-phone" className="text-xs">
+                      Phone Number <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="cust-phone"
+                      placeholder="e.g. +254712345678"
+                      value={customerPhone}
+                      onChange={e => {
+                        setCustomerPhone(e.target.value);
+                        if (currentOrder.customerId) {
+                          usePosStore.getState().setCustomerId('');
+                        }
+                      }}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 items-center">
+                  <div className="space-y-1">
+                    <Label htmlFor="cust-email" className="text-xs">
+                      Email Address (Optional)
+                    </Label>
+                    <Input
+                      id="cust-email"
+                      type="email"
+                      placeholder="jane@example.com"
+                      value={customerEmail}
+                      onChange={e => setCustomerEmail(e.target.value)}
+                      className="h-9 text-xs"
+                    />
+                  </div>
+                  <div className="flex items-center space-x-2 pt-4">
+                    <Checkbox
+                      id="save-customer"
+                      checked={saveAsCustomer}
+                      onCheckedChange={(checked) => setSaveAsCustomer(!!checked)}
+                    />
+                    <Label htmlFor="save-customer" className="text-xs cursor-pointer font-medium">
+                      Save as permanent customer profile
+                    </Label>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {/* --- Section 2: Due Date & Time --- */}

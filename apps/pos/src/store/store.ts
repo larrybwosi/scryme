@@ -1128,6 +1128,10 @@ export const usePosStore = create<PosStore>()(
             customerName: customer.name,
             customerPhone: customer.phone,
             loyaltyPoints: customer.loyaltyPoints,
+            metadata: {
+              ...state.currentOrder.metadata,
+              customerEmail: customer.email || '',
+            },
           },
         })),
 
