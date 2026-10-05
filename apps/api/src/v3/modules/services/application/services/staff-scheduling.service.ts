@@ -7,6 +7,7 @@ import {
 import { BookingStatus, ScheduleOverrideType } from "@repo/db";
 import { fromZonedTime, toZonedTime } from "date-fns-tz";
 import { PrismaService } from "@/prisma/prisma.service";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 
 const TIME_PATTERN = /^([01]\d|2[0-3]):([0-5]\d)$/;
 const ACTIVE_BOOKING_STATUSES = [
@@ -21,9 +22,14 @@ type AvailabilityOptions = {
   excludeBookingId?: string;
 };
 
+const DAY_NAMES = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
 @Injectable()
 export class StaffSchedulingService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseMessagingService: FirebaseMessagingService,
+  ) {}
 
   private validateTimeRange(startTime: string, endTime: string) {
     if (!TIME_PATTERN.test(startTime) || !TIME_PATTERN.test(endTime)) {
@@ -93,9 +99,25 @@ export class StaffSchedulingService {
     });
     if (overlap) throw new ConflictException("Shift overlaps an active shift");
 
-    return this.prisma.client.staffShift.create({
+    const createdShift = await this.prisma.client.staffShift.create({
       data: { ...data, memberId, organizationId: orgId },
     });
+
+    // Send FCM push notification to staff member for new shift assignment
+    const dayName = DAY_NAMES[data.dayOfWeek] || "Day";
+    this.firebaseMessagingService
+      .sendToMembers(memberId, {
+        title: "New Shift Scheduled",
+        body: `Your shift on ${dayName} (${data.startTime} - ${data.endTime}) has been created.`,
+        data: {
+          eventType: "SHIFT_CREATED",
+          shiftId: createdShift.id,
+          organizationId: orgId,
+        },
+      })
+      .catch(() => {});
+
+    return createdShift;
   }
 
   async getStaffShifts(orgId: string, memberId: string) {
@@ -170,7 +192,23 @@ export class StaffSchedulingService {
       },
     });
     if (existingBreak) throw new ConflictException("Break overlaps an existing break");
-    return this.prisma.client.staffBreak.create({ data: { ...data, shiftId } });
+
+    const createdBreak = await this.prisma.client.staffBreak.create({ data: { ...data, shiftId } });
+
+    // Notify member of break scheduled on shift
+    this.firebaseMessagingService
+      .sendToMembers(shift.memberId, {
+        title: "Break Added to Shift",
+        body: `Break scheduled from ${data.startTime} to ${data.endTime}.`,
+        data: {
+          eventType: "BREAK_ADDED",
+          shiftId,
+          organizationId: orgId,
+        },
+      })
+      .catch(() => {});
+
+    return createdBreak;
   }
 
   async createOverride(
@@ -194,9 +232,23 @@ export class StaffSchedulingService {
     });
     if (!member) throw new NotFoundException("Member not found");
 
-    return this.prisma.client.staffScheduleOverride.create({
+    const override = await this.prisma.client.staffScheduleOverride.create({
       data: { ...data, organizationId: orgId, memberId },
     });
+
+    this.firebaseMessagingService
+      .sendToMembers(memberId, {
+        title: "Schedule Override Created",
+        body: `Your schedule has a new override (${data.type})`,
+        data: {
+          eventType: "SCHEDULE_OVERRIDE",
+          overrideId: override.id,
+          organizationId: orgId,
+        },
+      })
+      .catch(() => {});
+
+    return override;
   }
 
   async deleteOverride(orgId: string, overrideId: string) {
@@ -401,7 +453,7 @@ export class StaffSchedulingService {
       throw new BadRequestException("Task title is required");
     }
 
-    return this.prisma.client.staffTask.create({
+    const createdTask = await this.prisma.client.staffTask.create({
       data: {
         ...data,
         organizationId: orgId,
@@ -417,6 +469,22 @@ export class StaffSchedulingService {
         location: { select: { id: true, name: true } },
       },
     });
+
+    if (data.memberId) {
+      this.firebaseMessagingService
+        .sendToMembers(data.memberId, {
+          title: "New Operational Task Assigned",
+          body: createdTask.title,
+          data: {
+            eventType: "STAFF_TASK_ASSIGNED",
+            taskId: createdTask.id,
+            organizationId: orgId,
+          },
+        })
+        .catch(() => {});
+    }
+
+    return createdTask;
   }
 
   async updateStaffTask(
@@ -440,7 +508,7 @@ export class StaffSchedulingService {
     });
     if (!task) throw new NotFoundException("Task not found");
 
-    return this.prisma.client.staffTask.update({
+    const updatedTask = await this.prisma.client.staffTask.update({
       where: { id: taskId },
       data,
       include: {
@@ -453,6 +521,23 @@ export class StaffSchedulingService {
         location: { select: { id: true, name: true } },
       },
     });
+
+    const targetMemberId = data.memberId || task.memberId;
+    if (targetMemberId) {
+      this.firebaseMessagingService
+        .sendToMembers(targetMemberId, {
+          title: "Operational Task Updated",
+          body: `${updatedTask.title} (${updatedTask.status})`,
+          data: {
+            eventType: "STAFF_TASK_UPDATED",
+            taskId: updatedTask.id,
+            organizationId: orgId,
+          },
+        })
+        .catch(() => {});
+    }
+
+    return updatedTask;
   }
 
   async getShiftTrades(
@@ -496,7 +581,7 @@ export class StaffSchedulingService {
       throw new BadRequestException("You can only trade your own shifts");
     }
 
-    return this.prisma.client.shiftTradeRequest.create({
+    const tradeRequest = await this.prisma.client.shiftTradeRequest.create({
       data: {
         organizationId: orgId,
         requesterMemberId,
@@ -512,6 +597,22 @@ export class StaffSchedulingService {
         shift: { select: { id: true, dayOfWeek: true, startTime: true, endTime: true } },
       },
     });
+
+    if (data.targetMemberId) {
+      this.firebaseMessagingService
+        .sendToMembers(data.targetMemberId, {
+          title: "Shift Swap/Trade Request",
+          body: `${tradeRequest.requesterMember?.user?.name || "A teammate"} requested a shift trade with you.`,
+          data: {
+            eventType: "SHIFT_TRADE_REQUESTED",
+            tradeId: tradeRequest.id,
+            organizationId: orgId,
+          },
+        })
+        .catch(() => {});
+    }
+
+    return tradeRequest;
   }
 
   async processShiftTrade(
@@ -527,17 +628,32 @@ export class StaffSchedulingService {
     if (!trade) throw new NotFoundException("Shift trade request not found");
 
     if (action === "CANCEL") {
-      return this.prisma.client.shiftTradeRequest.update({
+      const updated = await this.prisma.client.shiftTradeRequest.update({
         where: { id: tradeId },
         data: { status: "CANCELLED" },
       });
+      return updated;
     }
 
     if (action === "REJECT") {
-      return this.prisma.client.shiftTradeRequest.update({
+      const updated = await this.prisma.client.shiftTradeRequest.update({
         where: { id: tradeId },
         data: { status: "REJECTED", approvedById: actorMemberId },
       });
+
+      this.firebaseMessagingService
+        .sendToMembers(trade.requesterMemberId, {
+          title: "Shift Trade Declined",
+          body: "Your shift trade request was rejected.",
+          data: {
+            eventType: "SHIFT_TRADE_REJECTED",
+            tradeId,
+            organizationId: orgId,
+          },
+        })
+        .catch(() => {});
+
+      return updated;
     }
 
     if (action === "APPROVE") {
@@ -573,6 +689,19 @@ export class StaffSchedulingService {
           data: { status: "APPROVED", approvedById: actorMemberId },
         });
       }
+
+      this.firebaseMessagingService
+        .sendToMembers([trade.requesterMemberId, ...(trade.targetMemberId ? [trade.targetMemberId] : [])], {
+          title: "Shift Trade Approved",
+          body: "The shift swap/trade request has been approved.",
+          data: {
+            eventType: "SHIFT_TRADE_APPROVED",
+            tradeId,
+            organizationId: orgId,
+          },
+        })
+        .catch(() => {});
+
       return { status: "APPROVED" };
     }
 

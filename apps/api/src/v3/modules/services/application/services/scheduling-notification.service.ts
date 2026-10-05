@@ -3,6 +3,7 @@ import { BookingStatus } from "@repo/db";
 import { ScrymeChatAction, ScrymeChatApiClient } from "@repo/chat";
 import { notificationEngine } from "@repo/shared/services/notification";
 import { PrismaService } from "@/prisma/prisma.service";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 
 export type SchedulingNotificationKind =
   | "ASSIGNMENT"
@@ -16,7 +17,10 @@ export class SchedulingNotificationService {
   private readonly logger = new Logger(SchedulingNotificationService.name);
   private readonly scryme = new ScrymeChatApiClient();
 
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseMessagingService: FirebaseMessagingService,
+  ) {}
 
   async send(organizationId: string, bookingId: string, kind: SchedulingNotificationKind) {
     const booking = await this.prisma.client.serviceBooking.findFirst({
@@ -35,19 +39,20 @@ export class SchedulingNotificationService {
       kind !== "CANCELLATION"
     ) return { skipped: "BOOKING_CLOSED" };
 
-    const title: Record<SchedulingNotificationKind, string> = {
+    const titleMap: Record<SchedulingNotificationKind, string> = {
       ASSIGNMENT: "New booking assignment",
       REMINDER: "Upcoming booking reminder",
       ESCALATION: "Assignment needs attention",
       CHANGE: "Booking schedule changed",
       CANCELLATION: "Booking cancelled",
     };
+    const title = titleMap[kind];
     const when = new Intl.DateTimeFormat("en", {
       dateStyle: "medium",
       timeStyle: "short",
       timeZone: "UTC",
     }).format(booking.scheduledStartTime);
-    const content = `*${title[kind]}*\n\n${booking.serviceName}\n${when} UTC\n${booking.location?.name || "Location not set"}\nBooking: ${booking.id}`;
+    const content = `*${title}*\n\n${booking.serviceName}\n${when} UTC\n${booking.location?.name || "Location not set"}\nBooking: ${booking.id}`;
     const actions: ScrymeChatAction[] = kind === "CANCELLATION" ? [] : [
       ...(kind === "ASSIGNMENT" ? [
         { id: `booking_accept:${booking.id}:${booking.revision}`, label: "Accept", type: "button" as const, style: "primary" as const },
@@ -71,6 +76,24 @@ export class SchedulingNotificationService {
       });
     } catch (error: any) {
       this.logger.warn(`Notification fallback failed: ${error.message}`);
+    }
+
+    // Send FCM Push Notification to assigned staff members
+    try {
+      const assignedMemberIds = booking.staff.map(s => s.memberId);
+      if (assignedMemberIds.length > 0) {
+        await this.firebaseMessagingService.sendToMembers(assignedMemberIds, {
+          title,
+          body: `${booking.serviceName} - ${when} UTC`,
+          data: {
+            eventType: `BOOKING_${kind}`,
+            bookingId: booking.id,
+            organizationId,
+          },
+        });
+      }
+    } catch (fcmError: any) {
+      this.logger.warn(`FCM push notification dispatch failed: ${fcmError.message}`);
     }
 
     const workspaceSlug = booking.organization.scrymeConfiguration?.workspaceSlug;

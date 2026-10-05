@@ -60,6 +60,16 @@ export class AndroidController {
     return this.androidUseCase.registerDevice(req.v3Context, dto);
   }
 
+  @Post("device-token")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Dedicated endpoint to update FCM device token for authenticated member/user",
+  })
+  @ApiResponse({ status: 200, description: "FCM device token updated successfully" })
+  async updateDeviceToken(@Req() req: any, @Body() dto: RegisterDeviceDto) {
+    return this.androidUseCase.registerDevice(req.v3Context, dto);
+  }
+
   @Get("dashboard")
   @ApiOperation({
     summary: "Get mobile operational summary and dashboard metrics for the active org",

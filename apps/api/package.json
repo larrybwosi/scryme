@@ -64,6 +64,7 @@
     "date-fns-tz": "^3.2.0",
     "decimal.js": "^10.6.0",
     "fastify": "^5.8.5",
+    "firebase-admin": "^14.5.0",
     "graphql": "^16.14.2",
     "ioredis": "^5.11.1",
     "jsonwebtoken": "^9.0.3",

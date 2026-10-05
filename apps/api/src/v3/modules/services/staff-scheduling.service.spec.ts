@@ -1,7 +1,8 @@
-import { Test, TestingModule } from "@nestjs/testing";
+import * as testing from "@nestjs/testing";
 import { NotFoundException } from "@nestjs/common";
 import { StaffSchedulingService } from "./application/services/staff-scheduling.service";
 import { PrismaService } from "../../../prisma/prisma.service";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("StaffSchedulingService", () => {
@@ -9,7 +10,8 @@ describe("StaffSchedulingService", () => {
   let prisma: PrismaService;
 
   beforeEach(async () => {
-    const module: TestingModule = await Test.createTestingModule({
+    const Test = (testing as any).Test || (testing as any).default?.Test;
+    const module = await Test.createTestingModule({
       providers: [
         StaffSchedulingService,
         {
@@ -30,11 +32,19 @@ describe("StaffSchedulingService", () => {
             },
           },
         },
+        {
+          provide: FirebaseMessagingService,
+          useValue: {
+            sendToMembers: vi.fn().mockResolvedValue({ successCount: 0, failureCount: 0 }),
+            sendToOrganization: vi.fn().mockResolvedValue({ successCount: 0, failureCount: 0 }),
+            sendToTokens: vi.fn().mockResolvedValue({ successCount: 0, failureCount: 0 }),
+          },
+        },
       ],
     }).compile();
 
-    service = module.get<StaffSchedulingService>(StaffSchedulingService);
-    prisma = module.get<PrismaService>(PrismaService);
+    service = module.get(StaffSchedulingService);
+    prisma = module.get(PrismaService);
   });
 
   it("should be defined", () => {

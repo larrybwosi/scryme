@@ -5,6 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../../../prisma/prisma.service';
+import { FirebaseMessagingService } from '@/common/firebase/firebase-messaging.service';
 import {
   AddTaskCommentDto,
   AddTaskDependencyDto,
@@ -17,7 +18,10 @@ import {
 
 @Injectable()
 export class TaskUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly firebaseMessagingService: FirebaseMessagingService,
+  ) {}
 
   async createTask(organizationId: string, dto: CreateTaskDto, currentMemberId?: string) {
     const project = await this.prisma.client.project.findFirst({
@@ -106,6 +110,22 @@ export class TaskUseCase {
         _count: { select: { comments: true, subtasks: true } },
       },
     });
+
+    // Send FCM push notification to assignees
+    if (dto.assigneeIds && dto.assigneeIds.length > 0) {
+      this.firebaseMessagingService
+        .sendToMembers(dto.assigneeIds, {
+          title: `New Task Assigned: [${task.taskKey}]`,
+          body: `${task.title} in project ${project.name}`,
+          data: {
+            eventType: 'TASK_ASSIGNED',
+            taskId: task.id,
+            taskKey: task.taskKey,
+            organizationId,
+          },
+        })
+        .catch(() => {});
+    }
 
     return task;
   }
@@ -226,6 +246,7 @@ export class TaskUseCase {
   async updateTask(organizationId: string, taskId: string, dto: UpdateTaskDto, currentMemberId?: string) {
     const existing = await this.prisma.client.task.findFirst({
       where: { id: taskId, organizationId },
+      include: { assignees: true },
     });
 
     if (!existing) {
@@ -268,6 +289,23 @@ export class TaskUseCase {
         details: JSON.parse(JSON.stringify({ changes: dto })),
       },
     });
+
+    // Notify assignees of task update
+    const assigneeMemberIds = existing.assignees.map((a) => a.memberId);
+    if (assigneeMemberIds.length > 0) {
+      this.firebaseMessagingService
+        .sendToMembers(assigneeMemberIds, {
+          title: `Task Updated: [${existing.taskKey}]`,
+          body: `${existing.title} status/details updated`,
+          data: {
+            eventType: 'TASK_UPDATED',
+            taskId: existing.id,
+            taskKey: existing.taskKey,
+            organizationId,
+          },
+        })
+        .catch(() => {});
+    }
 
     return this.getTask(organizationId, taskId);
   }
@@ -317,6 +355,20 @@ export class TaskUseCase {
           memberId,
         })),
       });
+
+      // Notify newly assigned members
+      this.firebaseMessagingService
+        .sendToMembers(dto.memberIds, {
+          title: `Task Assignment: [${task.taskKey}]`,
+          body: `You were assigned to ${task.title}`,
+          data: {
+            eventType: 'TASK_ASSIGNED',
+            taskId: task.id,
+            taskKey: task.taskKey,
+            organizationId,
+          },
+        })
+        .catch(() => {});
     }
 
     await this.prisma.client.taskActivityLog.create({
@@ -388,6 +440,7 @@ export class TaskUseCase {
   async addComment(organizationId: string, taskId: string, dto: AddTaskCommentDto, currentMemberId: string) {
     const task = await this.prisma.client.task.findFirst({
       where: { id: taskId, organizationId },
+      include: { assignees: true },
     });
     if (!task) {
       throw new NotFoundException('Task not found');
@@ -419,6 +472,23 @@ export class TaskUseCase {
         details: { commentId: comment.id },
       },
     });
+
+    // Notify task assignees
+    const assigneeIds = task.assignees.map((a) => a.memberId).filter((id) => id !== currentMemberId);
+    if (assigneeIds.length > 0) {
+      this.firebaseMessagingService
+        .sendToMembers(assigneeIds, {
+          title: `New Comment on [${task.taskKey}]`,
+          body: `${comment.author?.user?.name || 'A teammate'}: ${dto.content.slice(0, 80)}`,
+          data: {
+            eventType: 'TASK_COMMENT_ADDED',
+            taskId: task.id,
+            taskKey: task.taskKey,
+            organizationId,
+          },
+        })
+        .catch(() => {});
+    }
 
     return comment;
   }
