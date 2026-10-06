@@ -193,34 +193,7 @@ services:
       retries: 3
       start_period: 60s
 
-  cms:
-    image: ghcr.io/larrybwosi/scryme/cms:${SCRYME_VERSION:-latest}
-    restart: always
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-    env_file:
-      - .env.example
-      - path: .env
-        required: false
-    environment:
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
-      - PAYLOAD_SECRET=${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
-      - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_CMS_URL:-http://localhost:3010}
-      - PORT=${CMS_PORT:-3010}
-      - RUSTFS_ENDPOINT=${RUSTFS_ENDPOINT:-http://rustfs:9000}
-      - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}
-      - RUSTFS_SECRET_KEY=${RUSTFS_SECRET_KEY:-your-secret-key}
-      - RUSTFS_BUCKET=${RUSTFS_BUCKET:-dealio-uploads}
-    depends_on:
-      db:
-        condition: service_healthy
-      api:
-        condition: service_healthy
-    networks:
-      - scryme-network
-      - proxy-network
+
 
 volumes:
   postgres_data:
