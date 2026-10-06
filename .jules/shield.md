@@ -45,3 +45,7 @@
 ## 2026-10-09 - Stock Transfer Mutation Multi-Tenant Scoping
 **Learning:** In `StockTransferUseCase` (`approve`, `ship`, `receive`), `StockTransfer` model lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `stockTransfer.update({ where: { id } })` ignores non-unique `organizationId` parameters in `where` clauses at database execution time, risking cross-tenant BOLA mutations if single-ID lookups are targeted directly.
 **Action:** Use `stockTransfer.updateMany({ where: { id: transferId, organizationId }, data })` followed by `stockTransfer.findFirstOrThrow({ where: { id: transferId, organizationId } })` to enforce database-level multi-tenant isolation during stock transfer status mutations.
+
+## 2026-10-12 - Physical Reconciliation Status Mutation Tenant Isolation
+**Learning:** In `PhysicalReconciliationUseCase.approve`, the `StockReconciliation` model lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `stockReconciliation.update({ where: { id } })` ignores non-unique `organizationId` filters in `where` parameters at database execution time. Relying solely on pre-checks leaves potential BOLA/IDOR vulnerability risks if single-ID lookups are targeted directly or raced against.
+**Action:** Always use `stockReconciliation.updateMany({ where: { id: reconciliationId, organizationId }, data })` followed by `stockReconciliation.findFirstOrThrow({ where: { id: reconciliationId, organizationId } })` to enforce database-level multi-tenant isolation during physical reconciliation approvals.
