@@ -3,8 +3,6 @@ services:
   db:
     image: postgres:17-alpine
     restart: always
-    ports:
-      - "${POSTGRES_PORT:-5432}:5432"
     env_file:
       - .env.example
       - path: .env
@@ -18,18 +16,15 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test:
-        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
-      interval: 30s
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-dbuser} -d $${POSTGRES_DB:-app_db}"]
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 10s
 
   customer-db:
     image: postgres:17-alpine
     restart: always
-    ports:
-      - "${CUSTOMER_DB_PORT:-5433}:5432"
     env_file:
       - .env.example
       - path: .env
@@ -43,35 +38,29 @@ services:
     networks:
       - scryme-network
     healthcheck:
-      test:
-        ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB} -q"]
-      interval: 30s
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-dbuser} -d $${CUSTOMER_DB_NAME:-customer_db}"]
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 30s
+      retries: 5
+      start_period: 10s
 
   # --- CACHE ---
   redis:
     image: redis:alpine
     restart: always
-    ports:
-      - "${REDIS_PORT:-6379}:6379"
     networks:
       - scryme-network
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
-      interval: 30s
+      interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 15s
+      retries: 5
+      start_period: 5s
 
   # --- MESSAGE BROKER ---
   rabbitmq:
     image: rabbitmq:3-management-alpine
     restart: always
-    ports:
-      - "${RABBITMQ_PORT:-5672}:5672"
-      - "${RABBITMQ_MGMT_PORT:-15672}:15672"
     deploy:
       resources:
         limits:
@@ -87,10 +76,10 @@ services:
       - scryme-network
     healthcheck:
       test: ["CMD", "nc", "-z", "localhost", "5672"]
-      interval: 60s
-      timeout: 10s
-      retries: 3
-      start_period: 60s
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
 
   # --- APPLICATIONS ---
   api:
@@ -144,10 +133,10 @@ services:
           "--spider",
           "http://localhost:${API_PORT:-4000}/api/v2/health",
         ]
-      interval: 60s
-      timeout: 10s
+      interval: 30s
+      timeout: 5s
       retries: 3
-      start_period: 60s
+      start_period: 30s
 
   web:
     image: ghcr.io/larrybwosi/scryme/web:${SCRYME_VERSION:-latest}
@@ -188,12 +177,10 @@ services:
           "--spider",
           "http://localhost:${WEB_PORT:-3000}/api/health",
         ]
-      interval: 60s
-      timeout: 10s
+      interval: 30s
+      timeout: 5s
       retries: 3
-      start_period: 60s
-
-
+      start_period: 30s
 
 volumes:
   postgres_data:
