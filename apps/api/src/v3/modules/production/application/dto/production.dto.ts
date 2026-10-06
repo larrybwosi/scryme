@@ -13,10 +13,26 @@ import {
 import { Type } from "class-transformer";
 
 export class CreateRecipeIngredientDto {
-  @ApiProperty({ description: "Product variant ID of the ingredient" })
+  @ApiPropertyOptional({ description: "Product variant ID of the ingredient" })
+  @IsOptional()
   @IsString()
-  @IsNotEmpty()
-  ingredientVariantId!: string;
+  ingredientVariantId?: string;
+
+  @ApiPropertyOptional({ description: "Sub-recipe ID if this ingredient is a pre-made batch/recipe component" })
+  @IsOptional()
+  @IsString()
+  subRecipeId?: string;
+
+  @ApiPropertyOptional({ description: "Whether this ingredient is flour (used as baseline for Baker's Percentage)" })
+  @IsOptional()
+  @IsBoolean()
+  isFlour?: boolean;
+
+  @ApiPropertyOptional({ description: "Baker's percentage relative to flour baseline" })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  bakersPercentage?: number;
 
   @ApiProperty({ description: "Quantity required" })
   @IsNumber()

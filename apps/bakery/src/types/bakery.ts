@@ -59,8 +59,12 @@ export interface BakeryCategory {
 export interface RecipeIngredient {
   id: string;
   recipeId: string;
-  ingredientVariantId: string;
-  ingredientVariant: ProductVariant;
+  ingredientVariantId?: string;
+  ingredientVariant?: ProductVariant;
+  subRecipeId?: string;
+  subRecipe?: Recipe;
+  isFlour?: boolean;
+  bakersPercentage?: number;
   quantity: number;
   systemUnitId?: string;
   systemUnit?: SystemUnit;

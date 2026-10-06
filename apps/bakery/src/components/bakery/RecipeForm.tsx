@@ -11,7 +11,7 @@ import { Textarea } from '@repo/ui/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/components/ui/tabs';
 import { Recipe } from '@/types/bakery';
-import { Save, Plus, Trash2, Loader2, Sparkles, AlertCircle, Cpu, FileText, Layers, Settings, Cloud } from 'lucide-react';
+import { Save, Plus, Trash2, Loader2, Sparkles, AlertCircle, Cpu, FileText, Layers, Settings, Cloud, Wheat, Droplets } from 'lucide-react';
 import { AdvancedUnitSelector } from '@/components/common/units/advance-select';
 import {
   useCreateRecipe,
@@ -20,6 +20,7 @@ import {
   useListIngredients,
   useGenerateRecipeAi,
   useBakerySettings,
+  useRecipes,
 } from '@/hooks/bakery';
 import { recipeSchema } from '@/validations/bakery';
 import { ProductVariantsSelect } from '@/components/common/product-variant-select';
@@ -70,6 +71,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   const { data: categories, isLoading: loadingCategories } = useBakeryCategories();
   const { data: ingredients, isLoading: loadingIngredients } = useListIngredients();
   const { data: settings } = useBakerySettings() as any;
+  const { data: availableRecipes } = useRecipes();
 
   const [activeTab, setActiveTab] = useState('manual');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -144,7 +146,10 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         tags: recipe.tags || [],
         ingredients: recipe.ingredients?.map(ing => ({
           id: ing.id,
-          ingredientVariantId: ing.ingredientVariantId,
+          ingredientVariantId: ing.ingredientVariantId || undefined,
+          subRecipeId: ing.subRecipeId || undefined,
+          isFlour: Boolean(ing.isFlour),
+          bakersPercentage: ing.bakersPercentage ? Number(ing.bakersPercentage) : undefined,
           quantity: ing.quantity,
           systemUnitId: ing.systemUnitId || ing.systemUnit?.id || undefined,
           orgUnitId: ing.orgUnitId || ing.orgUnit?.id || undefined,
@@ -223,7 +228,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   };
 
   const addIngredientRow = () => {
-    append({ ingredientVariantId: '', quantity: 0, systemUnitId: undefined, orgUnitId: undefined, preparationNotes: '' });
+    append({ ingredientVariantId: '', subRecipeId: undefined, isFlour: false, quantity: 0, systemUnitId: undefined, orgUnitId: undefined, preparationNotes: '' });
   };
 
   const handleIngredientUnitChange = (index: number) => (value: string | undefined, type: 'system' | 'org') => {
@@ -485,11 +490,34 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
 
                 <FormSection title="Bill of Materials (BOM)" icon={Layers}>
+                  {(() => {
+                    const totalFlour = watchIngredients?.filter((i: any) => i?.isFlour)?.reduce((acc: number, i: any) => acc + (Number(i?.quantity) || 0), 0) || 0;
+                    return (
+                      <div className="flex flex-wrap items-center justify-between gap-3 p-3 bg-amber-50/80 dark:bg-amber-950/20 border border-amber-200/80 dark:border-amber-900/40 rounded-lg text-xs">
+                        <div className="flex items-center gap-2 text-amber-900 dark:text-amber-200">
+                          <Wheat className="h-4 w-4 text-amber-600" />
+                          <span className="font-semibold uppercase tracking-wider">Total Flour Weight:</span>
+                          <span className="font-bold text-sm font-mono">{totalFlour.toFixed(2)}</span>
+                        </div>
+                        {totalFlour > 0 && (
+                          <div className="flex items-center gap-2 text-amber-800 dark:text-amber-300">
+                            <Droplets className="h-4 w-4 text-amber-600" />
+                            <span className="font-semibold uppercase tracking-wider">Baker's Scaling:</span>
+                            <span className="px-2 py-0.5 rounded bg-amber-100 dark:bg-amber-900/60 font-bold font-mono text-amber-900 dark:text-amber-100">
+                              Active (Flour = 100%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })()}
+
                   <div className="rounded-md border border-slate-200 dark:border-slate-800 overflow-hidden">
-                    <div className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-[1.5fr_1.5fr_100px_130px_40px] gap-2 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      <div>Material Component</div>
-                      <div>Preparation Notes</div>
-                      <div>Qty</div>
+                    <div className="bg-slate-50 dark:bg-slate-900/50 border-b border-slate-200 dark:border-slate-800 grid grid-cols-[1.8fr_80px_1.2fr_90px_110px_40px] gap-2 px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider items-center">
+                      <div>Material / Sub-Recipe Component</div>
+                      <div className="text-center">Is Flour</div>
+                      <div>Notes</div>
+                      <div className="text-right">Qty</div>
                       <div>UOM</div>
                       <div></div>
                     </div>
@@ -505,27 +533,101 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                           {ingredientFields.map((field, index) => {
                             const currentIng = watchIngredients?.[index];
                             const ingUnitValue = currentIng?.systemUnitId || currentIng?.orgUnitId;
+                            const totalFlour = watchIngredients?.filter((i: any) => i?.isFlour)?.reduce((acc: number, i: any) => acc + (Number(i?.quantity) || 0), 0) || 0;
+                            const qty = Number(currentIng?.quantity) || 0;
+                            const bakersPct = totalFlour > 0 ? ((qty / totalFlour) * 100).toFixed(1) : null;
+                            const isSubRecipeMode = Boolean(currentIng?.subRecipeId);
 
                             return (
                               <div
                                 key={field.id}
-                                className="grid grid-cols-[1.5fr_1.5fr_100px_130px_40px] gap-2 items-start px-3 py-2 bg-white dark:bg-slate-950"
+                                className="grid grid-cols-[1.8fr_80px_1.2fr_90px_110px_40px] gap-2 items-center px-3 py-2 bg-white dark:bg-slate-950"
                               >
-                                <div>
-                                  <ProductVariantsSelect
-                                    value={currentIng?.ingredientVariantId}
-                                    onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value, { shouldValidate: true })}
-                                    disabled={isSubmitting}
-                                    productType="RAW_MATERIAL"
-                                    placeholder="Select material..."
-                                    className={ingredientErrors?.[index] ? 'border-red-500' : ''}
-                                  />
+                                <div className="space-y-1">
+                                  <div className="flex items-center gap-1.5 mb-1 text-[11px]">
+                                    <button
+                                      type="button"
+                                      className={cn(
+                                        "px-2 py-0.5 rounded text-[10px] font-semibold transition-colors",
+                                        !isSubRecipeMode ? "bg-slate-900 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                      )}
+                                      onClick={() => {
+                                        setValue(`ingredients.${index}.subRecipeId` as any, undefined);
+                                      }}
+                                    >
+                                      Raw Material
+                                    </button>
+                                    <button
+                                      type="button"
+                                      className={cn(
+                                        "px-2 py-0.5 rounded text-[10px] font-semibold transition-colors",
+                                        isSubRecipeMode ? "bg-blue-600 text-white" : "bg-slate-100 text-slate-600 hover:bg-slate-200"
+                                      )}
+                                      onClick={() => {
+                                        setValue(`ingredients.${index}.ingredientVariantId` as any, undefined);
+                                        if (availableRecipes && availableRecipes.length > 0) {
+                                          setValue(`ingredients.${index}.subRecipeId` as any, availableRecipes[0].id);
+                                        }
+                                      }}
+                                    >
+                                      Sub-Recipe
+                                    </button>
+                                  </div>
+
+                                  {!isSubRecipeMode ? (
+                                    <ProductVariantsSelect
+                                      value={currentIng?.ingredientVariantId}
+                                      onValueChange={value => setValue(`ingredients.${index}.ingredientVariantId` as any, value, { shouldValidate: true })}
+                                      disabled={isSubmitting}
+                                      productType="RAW_MATERIAL"
+                                      placeholder="Select material..."
+                                      className={ingredientErrors?.[index] ? 'border-red-500' : ''}
+                                    />
+                                  ) : (
+                                    <Select
+                                      value={currentIng?.subRecipeId || ''}
+                                      onValueChange={val => setValue(`ingredients.${index}.subRecipeId` as any, val, { shouldValidate: true })}
+                                      disabled={isSubmitting}
+                                    >
+                                      <SelectTrigger className="h-9">
+                                        <SelectValue placeholder="Select sub-recipe component..." />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        {availableRecipes
+                                          ?.filter((r: any) => r.id !== recipe?.id)
+                                          ?.map((r: any) => (
+                                            <SelectItem key={r.id} value={r.id}>
+                                              {r.name}
+                                            </SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                </div>
+
+                                <div className="flex flex-col items-center justify-center gap-1">
+                                  <label className="flex items-center gap-1 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={Boolean(currentIng?.isFlour)}
+                                      onChange={e => {
+                                        setValue(`ingredients.${index}.isFlour` as any, e.target.checked);
+                                      }}
+                                      className="rounded border-slate-300 text-amber-600 focus:ring-amber-500 h-4 w-4"
+                                    />
+                                    <span className="text-[10px] font-medium text-slate-600">Flour</span>
+                                  </label>
+                                  {bakersPct !== null && (
+                                    <span className="text-[10px] font-mono font-semibold text-amber-700 bg-amber-50 px-1 rounded">
+                                      {bakersPct}%
+                                    </span>
+                                  )}
                                 </div>
 
                                 <div>
                                   <Input
                                     {...register(`ingredients.${index}.preparationNotes` as any)}
-                                    placeholder="e.g. Sifted, Chilled"
+                                    placeholder="e.g. Sifted"
                                     disabled={isSubmitting}
                                     className="h-9 text-xs"
                                   />
@@ -539,7 +641,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                                     {...register(`ingredients.${index}.quantity` as any, { valueAsNumber: true })}
                                     disabled={isSubmitting}
                                     className={cn(
-                                      'h-9 text-right tabular-nums',
+                                      'h-9 text-right tabular-nums text-xs',
                                       ingredientErrors?.[index] && 'border-red-500'
                                     )}
                                   />
@@ -580,21 +682,6 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
                       )}
                     </div>
                   </div>
-
-                  {errors.ingredients && typeof errors.ingredients.message === 'string' && (
-                    <p className="text-xs text-red-500 mt-2">{errors.ingredients.message}</p>
-                  )}
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    onClick={addIngredientRow}
-                    disabled={isSubmitting}
-                    className="border-dashed border-slate-300 text-slate-600 w-full sm:w-auto mt-2"
-                  >
-                    <Plus className="h-4 w-4 mr-2" />
-                    Add Material Line
-                  </Button>
                 </FormSection>
 
                 <FormSection title="Standard Operating Procedure (SOP)" icon={FileText}>
