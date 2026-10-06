@@ -26,7 +26,9 @@ describe("PhysicalReconciliationUseCase", () => {
         create: vi.fn(),
         findUnique: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
       stockAdjustment: {
         create: vi.fn(),
@@ -249,7 +251,7 @@ describe("PhysicalReconciliationUseCase", () => {
   });
 
   describe("approve", () => {
-    it("should approve pending reconciliation using findFirst with organizationId scoping", async () => {
+    it("should approve pending reconciliation using updateMany and findFirstOrThrow with organizationId scoping", async () => {
       const mockReconciliation = {
         id: "rec-123",
         status: ReconciliationStatus.PENDING_REVIEW,
@@ -269,8 +271,10 @@ describe("PhysicalReconciliationUseCase", () => {
       mockTx.productVariantStock.update.mockResolvedValue({});
       mockTx.stockBatch.create.mockResolvedValue({});
       mockTx.reconciliationItem.updateMany.mockResolvedValue({ count: 1 });
-      mockTx.stockReconciliation.update.mockResolvedValue({
+      mockTx.stockReconciliation.updateMany.mockResolvedValue({ count: 1 });
+      mockTx.stockReconciliation.findFirstOrThrow.mockResolvedValue({
         id: "rec-123",
+        organizationId: mockOrgId,
         status: ReconciliationStatus.COMPLETED,
       });
 
@@ -293,8 +297,22 @@ describe("PhysicalReconciliationUseCase", () => {
         }),
       });
 
+      expect(mockTx.stockReconciliation.updateMany).toHaveBeenCalledWith({
+        where: { id: "rec-123", organizationId: mockOrgId },
+        data: expect.objectContaining({
+          status: ReconciliationStatus.COMPLETED,
+          completedBy: mockMemberId,
+          reviewedBy: mockMemberId,
+        }),
+      });
+
+      expect(mockTx.stockReconciliation.findFirstOrThrow).toHaveBeenCalledWith({
+        where: { id: "rec-123", organizationId: mockOrgId },
+      });
+
       expect(result).toEqual({
         id: "rec-123",
+        organizationId: mockOrgId,
         status: ReconciliationStatus.COMPLETED,
       });
     });

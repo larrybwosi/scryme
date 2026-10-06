@@ -302,14 +302,21 @@ export class PhysicalReconciliationUseCase {
         });
       }
 
-      return tx.stockReconciliation.update({
-        where: { id: reconciliationId },
+      // SECURITY (Sentinel): BOLA/IDOR Defense - StockReconciliation lacks a composite unique constraint on [id, organizationId].
+      // Standard Prisma update ignores non-unique fields in 'where' clauses at runtime.
+      // updateMany strictly enforces database-level multi-tenant isolation during status mutations.
+      await tx.stockReconciliation.updateMany({
+        where: { id: reconciliationId, organizationId },
         data: {
           status: ReconciliationStatus.COMPLETED,
           completedBy: memberId,
           reviewedBy: memberId,
           completedAt: new Date(),
         },
+      });
+
+      return tx.stockReconciliation.findFirstOrThrow({
+        where: { id: reconciliationId, organizationId },
       });
     });
   }
