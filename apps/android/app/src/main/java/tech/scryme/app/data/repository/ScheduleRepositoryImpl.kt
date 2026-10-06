@@ -14,7 +14,7 @@ class ScheduleRepositoryImpl @Inject constructor(
 
     override suspend fun getCurrentMemberShifts(orgSlug: String): Result<List<StaffShift>> {
         return try {
-            val res = scheduleApiService.getCurrentMemberShifts(orgSlug)
+            val res = scheduleApiService.getCurrentMemberShifts()
             if (res.isSuccessful && res.body()?.success == true) {
                 val list = res.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(list)
@@ -32,7 +32,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         locationId: String?
     ): Result<List<StaffShift>> {
         return try {
-            val res = scheduleApiService.getOrganizationShifts(orgSlug, memberId, locationId)
+            val res = scheduleApiService.getOrganizationShifts(memberId, locationId)
             if (res.isSuccessful && res.body()?.success == true) {
                 val list = res.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(list)
@@ -53,7 +53,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     ): Result<StaffShift> {
         return try {
             val dto = CreateShiftDto(dayOfWeek, startTime, endTime)
-            val res = scheduleApiService.createStaffShift(orgSlug, memberId, dto)
+            val res = scheduleApiService.createStaffShift(memberId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val shift = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(shift)
@@ -77,7 +77,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                 endTime = breakItem.endTime,
                 description = breakItem.description
             )
-            val res = scheduleApiService.addShiftBreak(orgSlug, shiftId, dto)
+            val res = scheduleApiService.addShiftBreak(shiftId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val shift = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(shift)
@@ -95,7 +95,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         status: String?
     ): Result<List<ShiftTrade>> {
         return try {
-            val res = scheduleApiService.getShiftTrades(orgSlug, memberId, status)
+            val res = scheduleApiService.getShiftTrades(memberId, status)
             if (res.isSuccessful && res.body()?.success == true) {
                 val list = res.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(list)
@@ -115,7 +115,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     ): Result<ShiftTrade> {
         return try {
             val dto = RequestShiftTradeDto(shiftId, targetMemberId, reason)
-            val res = scheduleApiService.requestShiftTrade(orgSlug, dto)
+            val res = scheduleApiService.requestShiftTrade(dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val trade = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(trade)
@@ -134,7 +134,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     ): Result<ShiftTrade> {
         return try {
             val dto = ProcessShiftTradeDto(action)
-            val res = scheduleApiService.processShiftTrade(orgSlug, tradeId, dto)
+            val res = scheduleApiService.processShiftTrade(tradeId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val trade = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(trade)
@@ -152,7 +152,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         status: String?
     ): Result<List<StaffTask>> {
         return try {
-            val res = scheduleApiService.getStaffTasks(orgSlug, memberId, status)
+            val res = scheduleApiService.getStaffTasks(memberId, status)
             if (res.isSuccessful && res.body()?.success == true) {
                 val list = res.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(list)
@@ -174,7 +174,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     ): Result<StaffTask> {
         return try {
             val dto = CreateStaffTaskDto(title, description, assignedMemberId, priority, dueDate)
-            val res = scheduleApiService.createStaffTask(orgSlug, dto)
+            val res = scheduleApiService.createStaffTask(dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(task)
@@ -195,7 +195,7 @@ class ScheduleRepositoryImpl @Inject constructor(
     ): Result<StaffTask> {
         return try {
             val dto = UpdateStaffTaskDto(status, title, description)
-            val res = scheduleApiService.updateStaffTask(orgSlug, taskId, dto)
+            val res = scheduleApiService.updateStaffTask(taskId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 Result.success(task)

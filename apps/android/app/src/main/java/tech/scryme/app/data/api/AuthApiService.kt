@@ -19,33 +19,33 @@ import tech.scryme.app.data.dto.V3ApiResponse
 
 interface AuthApiService {
 
-    @POST("/auth/sign-in/email")
+    @POST("v3/android/auth/login")
     suspend fun loginWithEmail(
         @Body request: EmailSignInRequestDto
-    ): Response<EmailSignInResponseDto>
+    ): Response<V3ApiResponse<EmailSignInResponseDto>>
 
-    @POST("members/login")
+    @POST("v3/android/pos/members/login")
     suspend fun loginMember(
         @Header("x-org-slug") orgSlug: String,
         @Header("x-api-key") apiKey: String? = null,
         @Body request: TerminalLoginRequestDto
     ): Response<V3ApiResponse<TerminalLoginResponseDto>>
 
-    @POST("auth/token")
+    @POST("v3/android/pos/token")
     suspend fun exchangeToken(
         @Body request: TokenExchangeRequestDto
     ): Response<V3ApiResponse<TokenExchangeResponseDto>>
 
-    @GET("android/me")
+    @GET("v3/android/auth/me")
     suspend fun getAndroidMe(): Response<V3ApiResponse<AndroidMeResponseDto>>
 
-    @POST("{orgSlug}/pos/pair")
+    @POST("v3/android/pos/pair")
     suspend fun pairPosDevice(
-        @Path("orgSlug") orgSlug: String,
+        @Header("x-org-slug") orgSlug: String,
         @Body request: PosPairRequestDto
     ): Response<V3ApiResponse<PosPairResponseDto>>
 
-    @POST("pos/pairing/session/{sessionId}/authorize")
+    @POST("v3/android/pos/pairing/session/{sessionId}/authorize")
     suspend fun authorizePosPairingSession(
         @Path("sessionId") sessionId: String,
         @Body request: PosPairRequestDto

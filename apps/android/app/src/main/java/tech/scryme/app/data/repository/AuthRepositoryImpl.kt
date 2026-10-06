@@ -22,13 +22,13 @@ class AuthRepositoryImpl @Inject constructor(
     override suspend fun loginWithEmail(email: String, password: String): Result<Unit> {
         return try {
             val response = authApiService.loginWithEmail(EmailSignInRequestDto(email = email, password = password))
-            if (response.isSuccessful && response.body() != null) {
-                val body = response.body()!!
-                val token = body.effectiveToken
-                val orgSlug = body.effectiveOrgSlug
-                val userName = body.user?.name
-                val userEmail = body.user?.email ?: email
-                val userId = body.user?.id
+            if (response.isSuccessful && response.body()?.success == true) {
+                val body = response.body()?.data
+                val token = body?.effectiveToken ?: body?.token ?: ""
+                val orgSlug = body?.effectiveOrgSlug ?: body?.orgSlug ?: "default"
+                val userName = body?.user?.name
+                val userEmail = body?.user?.email ?: email
+                val userId = body?.user?.id
 
                 if (token.isNotEmpty()) {
                     sessionManager.saveSession(
@@ -67,7 +67,7 @@ class AuthRepositoryImpl @Inject constructor(
                     Result.failure(Exception("Authentication succeeded but no token was returned"))
                 }
             } else {
-                val errorMsg = response.errorBody()?.string()?.takeIf { it.isNotBlank() } ?: response.message()
+                val errorMsg = response.body()?.error?.message ?: response.message()
                 Result.failure(Exception("Login failed: $errorMsg"))
             }
         } catch (e: Exception) {

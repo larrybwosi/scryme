@@ -16,7 +16,7 @@ class BranchRepositoryImpl @Inject constructor(
 
     override suspend fun getBranchLocations(orgSlug: String): Result<List<BranchLocation>> {
         return try {
-            val res = branchApiService.getBranchLocations(orgSlug)
+            val res = branchApiService.getBranchLocations()
             if (res.isSuccessful && res.body()?.success == true) {
                 val locations = res.body()?.data?.locations?.map { it.toDomain() } ?: emptyList()
                 Result.success(locations)
@@ -33,7 +33,7 @@ class BranchRepositoryImpl @Inject constructor(
         locationId: String
     ): Result<BranchLocation> {
         return try {
-            val res = branchApiService.getBranchDetails(orgSlug, locationId)
+            val res = branchApiService.getBranchDetails(locationId)
             if (res.isSuccessful && res.body()?.success == true) {
                 val branch = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null branch response"))
                 Result.success(branch)
