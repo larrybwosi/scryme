@@ -1120,7 +1120,12 @@ export const usePosStore = create<PosStore>()(
           currentOrder: { ...state.currentOrder, customerId: id },
         })),
 
-      setCustomer: customer =>
+      setCustomer: customer => {
+        trackPosEvent(POS_EVENTS.CUSTOMER_SELECTED, {
+          customerId: customer.id,
+          customerName: customer.name,
+          customerPhone: customer.phone,
+        });
         set(state => ({
           currentOrder: {
             ...state.currentOrder,
@@ -1133,7 +1138,8 @@ export const usePosStore = create<PosStore>()(
               customerEmail: customer.email || '',
             },
           },
-        })),
+        }));
+      },
 
       setOrderType: type =>
         set(state => ({
@@ -1197,7 +1203,13 @@ export const usePosStore = create<PosStore>()(
         });
       },
 
-      updateItemQuantity: (productId, variantId, unitId, quantity) =>
+      updateItemQuantity: (productId, variantId, unitId, quantity) => {
+        trackPosEvent(POS_EVENTS.CART_ITEM_QTY_UPDATED, {
+          productId,
+          variantId,
+          unitId,
+          quantity,
+        });
         set(state => ({
           currentOrder: {
             ...state.currentOrder,
@@ -1205,7 +1217,8 @@ export const usePosStore = create<PosStore>()(
               item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId ? { ...item, quantity } : item
             ),
           },
-        })),
+        }));
+      },
 
       updateItemInOrder: updatedItem =>
         set(state => {
@@ -1254,7 +1267,12 @@ export const usePosStore = create<PosStore>()(
           };
         }),
 
-      removeItemFromOrder: (productId, variantId, unitId) =>
+      removeItemFromOrder: (productId, variantId, unitId) => {
+        trackPosEvent(POS_EVENTS.CART_ITEM_REMOVED, {
+          productId,
+          variantId,
+          unitId,
+        });
         set(state => ({
           currentOrder: {
             ...state.currentOrder,
@@ -1262,7 +1280,8 @@ export const usePosStore = create<PosStore>()(
               item => !(item.productId === productId && item.variantId === variantId && item.selectedUnit.unitId === unitId)
             ),
           },
-        })),
+        }));
+      },
 
       setProducts: products => set({ products }),
 
@@ -1414,6 +1433,7 @@ export const usePosStore = create<PosStore>()(
 
       resetOrder: () => {
         posthog.capture("cart_cleared");
+        trackPosEvent(POS_EVENTS.CART_CLEARED);
         set({
           currentOrder: {
             customerName: '',

@@ -40,6 +40,7 @@ export const useSyncEngineStore = create<SyncEngineState>((set, get) => ({
   pricing: { ...initialEntityState },
 
   setIsOnline: (online: boolean) => {
+    trackPosEvent(POS_EVENTS.NETWORK_STATUS_CHANGED, { isOnline: online });
     set({ isOnline: online });
   },
 

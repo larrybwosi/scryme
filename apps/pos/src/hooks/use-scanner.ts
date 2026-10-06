@@ -68,6 +68,7 @@ export const useScanner = () => {
         const { setError, setIsConnected } = useScannerStore.getState();
         setError(event.payload);
         setIsConnected(false);
+        trackPosEvent(POS_EVENTS.SCANNER_ERROR, { error: event.payload });
       });
       unlisteners.current.push(unlistenError);
 
@@ -80,9 +81,11 @@ export const useScanner = () => {
       useScannerStore.getState().setIsScanning(true);
     } catch (err: any) {
       console.error('Failed to start scanner:', err);
+      const errMsg = typeof err === 'string' ? err : err?.message || 'Unknown error';
       const { setError, setIsScanning } = useScannerStore.getState();
-      setError(typeof err === 'string' ? err : 'Unknown error');
+      setError(errMsg);
       setIsScanning(false);
+      trackPosEvent(POS_EVENTS.SCANNER_ERROR, { error: errMsg });
       stopScanner();
     }
   }, [stopScanner]); // Only depends on stopScanner, which is safely memoized
