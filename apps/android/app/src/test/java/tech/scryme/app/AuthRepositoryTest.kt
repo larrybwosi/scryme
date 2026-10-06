@@ -32,7 +32,7 @@ class AuthRepositoryTest {
 
         coEvery {
             authApiService.loginWithEmail(any())
-        } returns Response.success(signInResponse)
+        } returns Response.success(V3ApiResponse(success = true, data = signInResponse))
 
         coEvery {
             authApiService.getAndroidMe()

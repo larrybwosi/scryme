@@ -34,7 +34,7 @@ class ScheduleRepositoryTest {
         )
 
         coEvery {
-            scheduleApiService.getCurrentMemberShifts("scryme-org")
+            scheduleApiService.getCurrentMemberShifts()
         } returns Response.success(V3ApiResponse(success = true, data = dtoList))
 
         val result = repository.getCurrentMemberShifts("scryme-org")
@@ -60,7 +60,7 @@ class ScheduleRepositoryTest {
         )
 
         coEvery {
-            scheduleApiService.getStaffTasks("scryme-org", "mem_1", null)
+            scheduleApiService.getStaffTasks("mem_1", null)
         } returns Response.success(V3ApiResponse(success = true, data = tasksDto))
 
         val result = repository.getStaffTasks("scryme-org", "mem_1", null)
@@ -81,7 +81,7 @@ class ScheduleRepositoryTest {
         )
 
         coEvery {
-            scheduleApiService.updateStaffTask("scryme-org", "task_1", any())
+            scheduleApiService.updateStaffTask("task_1", any())
         } returns Response.success(V3ApiResponse(success = true, data = updatedTaskDto))
 
         val result = repository.updateStaffTask("scryme-org", "task_1", status = "COMPLETED")

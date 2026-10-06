@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, UnauthorizedException, BadRequestException, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { AuthService } from "@/auth/auth.service";
 import {
@@ -30,7 +30,6 @@ export class AndroidAuthUseCase {
 
       const user = response.user;
 
-      // Find active session token for the user
       let token = response.token || response.session?.token;
       if (!token && user.id) {
         const session = await this.prisma.client.session.findFirst({
@@ -47,7 +46,6 @@ export class AndroidAuthUseCase {
         throw new UnauthorizedException("Session creation failed");
       }
 
-      // Find active organization context for the user
       let orgSlug = dto.orgSlug;
       let activeOrgId = user.activeOrganizationId;
 
@@ -90,7 +88,6 @@ export class AndroidAuthUseCase {
       const effectiveOrgSlug = member?.organization?.slug || orgSlug || "default";
       const effectiveOrgId = member?.organizationId || activeOrgId;
 
-      // Find default location if org is available
       let defaultLocationId = null;
       if (effectiveOrgId) {
         const loc = await this.prisma.client.inventoryLocation.findFirst({
@@ -167,9 +164,9 @@ export class AndroidAuthUseCase {
     }
   }
 
-  async loginMember(orgSlug: String, apiKey: string | undefined, dto: AndroidMemberLoginDto) {
+  async loginMember(orgSlug: string, apiKey: string | undefined, dto: AndroidMemberLoginDto) {
     const organization = await this.prisma.client.organization.findUnique({
-      where: { slug: orgSlug as string },
+      where: { slug: orgSlug },
       select: { id: true, slug: true },
     });
 
@@ -186,7 +183,6 @@ export class AndroidAuthUseCase {
       deletedAt: null,
     };
 
-    if (dto.pin) whereClause.pin = dto.pin;
     if (dto.cardId) whereClause.cardId = dto.cardId;
 
     const member = await this.prisma.client.member.findFirst({
@@ -200,7 +196,6 @@ export class AndroidAuthUseCase {
       throw new UnauthorizedException("Invalid PIN or member card credentials");
     }
 
-    // Get default location
     const defaultLoc = await this.prisma.client.inventoryLocation.findFirst({
       where: { organizationId: organization.id, isDefault: true },
       select: { id: true },
@@ -209,7 +204,6 @@ export class AndroidAuthUseCase {
       select: { id: true },
     });
 
-    // Create or retrieve session token for member's underlying user if available
     let token = "";
     if (member.user) {
       const session = await this.prisma.client.session.findFirst({
@@ -237,7 +231,7 @@ export class AndroidAuthUseCase {
     const client = await this.prisma.client.v3ApiClient.findFirst({
       where: {
         clientId: dto.clientId,
-        status: "ACTIVE",
+        isActive: true,
       },
       include: {
         organization: true,

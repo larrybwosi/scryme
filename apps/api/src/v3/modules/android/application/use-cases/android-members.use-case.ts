@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { AndroidUpdateMemberDto, AndroidUpdateMemberStatusDto } from "../dto/android-auth.dto";
 
@@ -31,7 +31,6 @@ export class AndroidMembersUseCase {
         id: true,
         role: true,
         status: true,
-        dutyStatus: true,
         user: {
           select: {
             id: true,
@@ -49,8 +48,8 @@ export class AndroidMembersUseCase {
       name: m.user?.name || "Staff Member",
       email: m.user?.email || "",
       role: m.role,
-      status: m.status || "ACTIVE",
-      dutyStatus: m.dutyStatus || "ONLINE",
+      status: m.status || "OFFLINE",
+      dutyStatus: m.status || "OFFLINE",
       avatarUrl: m.user?.image || null,
     }));
   }
@@ -68,8 +67,6 @@ export class AndroidMembersUseCase {
         id: true,
         role: true,
         status: true,
-        dutyStatus: true,
-        pin: true,
         cardId: true,
         createdAt: true,
         user: {
@@ -92,8 +89,8 @@ export class AndroidMembersUseCase {
       name: member.user?.name || "Staff Member",
       email: member.user?.email || "",
       role: member.role,
-      status: member.status || "ACTIVE",
-      dutyStatus: member.dutyStatus || "ONLINE",
+      status: member.status || "OFFLINE",
+      dutyStatus: member.status || "OFFLINE",
       avatarUrl: member.user?.image || null,
       createdAt: member.createdAt,
     };
@@ -138,10 +135,12 @@ export class AndroidMembersUseCase {
       throw new NotFoundException(`Member '${id}' not found`);
     }
 
+    const newStatus = dto.dutyStatus === "ONLINE" || dto.dutyStatus === "BUSY" ? "ONLINE" : "OFFLINE";
+
     const updated = await this.prisma.client.member.update({
       where: { id },
       data: {
-        dutyStatus: dto.dutyStatus,
+        status: newStatus as any,
       },
       include: {
         user: true,
@@ -153,8 +152,8 @@ export class AndroidMembersUseCase {
       name: updated.user?.name || "Staff Member",
       email: updated.user?.email || "",
       role: updated.role,
-      status: updated.status || "ACTIVE",
-      dutyStatus: updated.dutyStatus || dto.dutyStatus,
+      status: updated.status,
+      dutyStatus: dto.dutyStatus || updated.status,
     };
   }
 }

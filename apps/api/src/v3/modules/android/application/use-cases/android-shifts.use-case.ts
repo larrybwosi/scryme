@@ -1,5 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { TaskPriority, TaskStatus, ShiftTradeStatus } from "@repo/db";
 import {
   AndroidCreateShiftDto,
   AndroidShiftBreakDto,
@@ -25,30 +26,27 @@ export class AndroidShiftsUseCase {
         memberId,
       },
       include: {
-        location: {
-          select: { id: true, name: true },
-        },
         breaks: true,
       },
-      orderBy: { startTime: "asc" },
+      orderBy: { dayOfWeek: "asc" },
     });
 
     return shifts.map((s) => ({
       id: s.id,
       memberId: s.memberId,
       locationId: s.locationId,
-      locationName: s.location?.name || "Main Location",
-      startTime: s.startTime.toISOString(),
-      endTime: s.endTime.toISOString(),
-      status: s.status,
-      role: s.role || "STAFF",
-      notes: s.notes || "",
+      locationName: "Main Location",
+      startTime: s.startTime,
+      endTime: s.endTime,
+      dayOfWeek: s.dayOfWeek,
+      status: s.isActive ? "ACTIVE" : "INACTIVE",
+      role: s.roleTags?.[0] || "STAFF",
+      notes: "",
       breaks: s.breaks.map((b) => ({
         id: b.id,
-        breakType: b.breakType || "MEAL",
-        startTime: b.startTime.toISOString(),
-        endTime: b.endTime ? b.endTime.toISOString() : null,
-        paid: b.paid,
+        breakType: "MEAL",
+        startTime: b.startTime,
+        endTime: b.endTime,
       })),
     }));
   }
@@ -69,12 +67,9 @@ export class AndroidShiftsUseCase {
             user: { select: { name: true, email: true } },
           },
         },
-        location: {
-          select: { id: true, name: true },
-        },
         breaks: true,
       },
-      orderBy: { startTime: "asc" },
+      orderBy: { dayOfWeek: "asc" },
     });
 
     return shifts.map((s) => ({
@@ -82,18 +77,18 @@ export class AndroidShiftsUseCase {
       memberId: s.memberId,
       memberName: s.member?.user?.name || "Staff Member",
       locationId: s.locationId,
-      locationName: s.location?.name || "Main Location",
-      startTime: s.startTime.toISOString(),
-      endTime: s.endTime.toISOString(),
-      status: s.status,
-      role: s.role || "STAFF",
-      notes: s.notes || "",
+      locationName: "Main Location",
+      startTime: s.startTime,
+      endTime: s.endTime,
+      dayOfWeek: s.dayOfWeek,
+      status: s.isActive ? "ACTIVE" : "INACTIVE",
+      role: s.roleTags?.[0] || "STAFF",
+      notes: "",
       breaks: s.breaks.map((b) => ({
         id: b.id,
-        breakType: b.breakType || "MEAL",
-        startTime: b.startTime.toISOString(),
-        endTime: b.endTime ? b.endTime.toISOString() : null,
-        paid: b.paid,
+        breakType: "MEAL",
+        startTime: b.startTime,
+        endTime: b.endTime,
       })),
     }));
   }
@@ -117,19 +112,24 @@ export class AndroidShiftsUseCase {
       throw new BadRequestException("No location available to create shift");
     }
 
+    const startDate = new Date(dto.startTime);
+    const dayOfWeek = startDate.getDay();
+    const startTimeStr = startDate.toTimeString().slice(0, 5);
+    const endDate = new Date(dto.endTime);
+    const endTimeStr = endDate.toTimeString().slice(0, 5);
+
     const shift = await this.prisma.client.staffShift.create({
       data: {
         organizationId,
         memberId: targetMemberId,
         locationId,
-        startTime: new Date(dto.startTime),
-        endTime: new Date(dto.endTime),
-        role: dto.role || "STAFF",
-        notes: dto.notes,
-        status: "SCHEDULED",
+        dayOfWeek,
+        startTime: startTimeStr,
+        endTime: endTimeStr,
+        roleTags: dto.role ? [dto.role] : ["STAFF"],
+        isActive: true,
       },
       include: {
-        location: { select: { name: true } },
         member: { select: { user: { select: { name: true } } } },
       },
     });
@@ -139,12 +139,13 @@ export class AndroidShiftsUseCase {
       memberId: shift.memberId,
       memberName: shift.member?.user?.name || "Staff Member",
       locationId: shift.locationId,
-      locationName: shift.location?.name || "",
-      startTime: shift.startTime.toISOString(),
-      endTime: shift.endTime.toISOString(),
-      status: shift.status,
-      role: shift.role,
-      notes: shift.notes || "",
+      locationName: "Main Location",
+      startTime: shift.startTime,
+      endTime: shift.endTime,
+      dayOfWeek: shift.dayOfWeek,
+      status: shift.isActive ? "ACTIVE" : "INACTIVE",
+      role: shift.roleTags?.[0] || "STAFF",
+      notes: dto.notes || "",
       breaks: [],
     };
   }
@@ -160,17 +161,19 @@ export class AndroidShiftsUseCase {
       throw new NotFoundException(`Shift '${shiftId}' not found`);
     }
 
-    await this.prisma.client.shiftBreak.create({
+    const startBreak = new Date(dto.startTime).toTimeString().slice(0, 5);
+    const endBreak = dto.endTime ? new Date(dto.endTime).toTimeString().slice(0, 5) : startBreak;
+
+    await this.prisma.client.staffBreak.create({
       data: {
         shiftId,
-        breakType: dto.breakType || "MEAL",
-        startTime: new Date(dto.startTime),
-        endTime: dto.endTime ? new Date(dto.endTime) : null,
-        paid: dto.paid ?? false,
+        startTime: startBreak,
+        endTime: endBreak,
+        description: dto.breakType || "MEAL",
       },
     });
 
-    return this.getOrganizationShifts(v3Context, shift.memberId)[0];
+    return (await this.getOrganizationShifts(v3Context, shift.memberId))[0];
   }
 
   async getShiftTrades(v3Context: any, memberId?: string, status?: string) {
@@ -179,17 +182,16 @@ export class AndroidShiftsUseCase {
     const where: any = { organizationId };
     if (memberId) {
       where.OR = [
-        { requestingMemberId: memberId },
+        { requesterMemberId: memberId },
         { targetMemberId: memberId },
       ];
     }
-    if (status) where.status = status;
+    if (status) where.status = status as ShiftTradeStatus;
 
-    const trades = await this.prisma.client.shiftTrade.findMany({
+    const trades = await this.prisma.client.shiftTradeRequest.findMany({
       where,
       include: {
-        shift: true,
-        requestingMember: { select: { user: { select: { name: true } } } },
+        requesterMember: { select: { user: { select: { name: true } } } },
         targetMember: { select: { user: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
@@ -198,8 +200,8 @@ export class AndroidShiftsUseCase {
     return trades.map((t) => ({
       id: t.id,
       shiftId: t.shiftId,
-      requestingMemberId: t.requestingMemberId,
-      requestingMemberName: t.requestingMember?.user?.name || "Staff",
+      requestingMemberId: t.requesterMemberId,
+      requestingMemberName: t.requesterMember?.user?.name || "Staff",
       targetMemberId: t.targetMemberId,
       targetMemberName: t.targetMember?.user?.name || "Staff",
       status: t.status,
@@ -219,21 +221,21 @@ export class AndroidShiftsUseCase {
       throw new NotFoundException(`Shift '${dto.shiftId}' not found`);
     }
 
-    const trade = await this.prisma.client.shiftTrade.create({
+    const trade = await this.prisma.client.shiftTradeRequest.create({
       data: {
         organizationId,
         shiftId: dto.shiftId,
-        requestingMemberId: memberId || shift.memberId,
+        requesterMemberId: memberId || shift.memberId,
         targetMemberId: dto.targetMemberId,
         reason: dto.reason,
-        status: "PENDING",
+        status: ShiftTradeStatus.PENDING,
       },
     });
 
     return {
       id: trade.id,
       shiftId: trade.shiftId,
-      requestingMemberId: trade.requestingMemberId,
+      requestingMemberId: trade.requesterMemberId,
       targetMemberId: trade.targetMemberId,
       status: trade.status,
       reason: trade.reason || "",
@@ -244,7 +246,7 @@ export class AndroidShiftsUseCase {
   async processShiftTrade(v3Context: any, id: string, dto: AndroidProcessShiftTradeDto) {
     const { organizationId } = v3Context;
 
-    const trade = await this.prisma.client.shiftTrade.findFirst({
+    const trade = await this.prisma.client.shiftTradeRequest.findFirst({
       where: { id, organizationId },
     });
 
@@ -252,10 +254,12 @@ export class AndroidShiftsUseCase {
       throw new NotFoundException(`Shift trade '${id}' not found`);
     }
 
-    const updated = await this.prisma.client.shiftTrade.update({
+    const newStatus = dto.action === "ACCEPT" ? ShiftTradeStatus.APPROVED : dto.action === "REJECT" ? ShiftTradeStatus.REJECTED : ShiftTradeStatus.CANCELLED;
+
+    const updated = await this.prisma.client.shiftTradeRequest.update({
       where: { id },
       data: {
-        status: dto.action === "ACCEPT" ? "APPROVED" : dto.action === "REJECT" ? "REJECTED" : "CANCELLED",
+        status: newStatus,
       },
     });
 
@@ -270,13 +274,13 @@ export class AndroidShiftsUseCase {
     const { organizationId } = v3Context;
 
     const where: any = { organizationId };
-    if (memberId) where.assignedMemberId = memberId;
-    if (status) where.status = status;
+    if (memberId) where.memberId = memberId;
+    if (status) where.status = status as TaskStatus;
 
     const tasks = await this.prisma.client.staffTask.findMany({
       where,
       include: {
-        assignedMember: { select: { user: { select: { name: true } } } },
+        member: { select: { user: { select: { name: true } } } },
       },
       orderBy: { createdAt: "desc" },
     });
@@ -288,8 +292,8 @@ export class AndroidShiftsUseCase {
       status: t.status,
       priority: t.priority || "MEDIUM",
       dueDate: t.dueDate ? t.dueDate.toISOString() : null,
-      assignedMemberId: t.assignedMemberId,
-      assignedMemberName: t.assignedMember?.user?.name || null,
+      assignedMemberId: t.memberId,
+      assignedMemberName: t.member?.user?.name || null,
     }));
   }
 
@@ -302,9 +306,9 @@ export class AndroidShiftsUseCase {
         title: dto.title,
         description: dto.description,
         dueDate: dto.dueDate ? new Date(dto.dueDate) : null,
-        assignedMemberId: dto.assignedMemberId || memberId,
-        priority: dto.priority || "MEDIUM",
-        status: "PENDING",
+        memberId: dto.assignedMemberId || memberId,
+        priority: (dto.priority as TaskPriority) || TaskPriority.MEDIUM,
+        status: TaskStatus.TODO,
       },
     });
 
@@ -315,7 +319,7 @@ export class AndroidShiftsUseCase {
       status: task.status,
       priority: task.priority,
       dueDate: task.dueDate ? task.dueDate.toISOString() : null,
-      assignedMemberId: task.assignedMemberId,
+      assignedMemberId: task.memberId,
     };
   }
 
@@ -335,8 +339,8 @@ export class AndroidShiftsUseCase {
       data: {
         title: dto.title || task.title,
         description: dto.description ?? task.description,
-        status: dto.status || task.status,
-        priority: dto.priority || task.priority,
+        status: (dto.status as TaskStatus) || task.status,
+        priority: (dto.priority as TaskPriority) || task.priority,
       },
     });
 
