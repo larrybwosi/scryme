@@ -532,6 +532,12 @@ export class ProductionService {
             ingredientVariant: {
               include: { product: true },
             },
+            subRecipe: {
+              include: {
+                category: true,
+                producesVariant: { include: { product: true } },
+              },
+            },
             systemUnit: true,
             orgUnit: true,
           },
@@ -749,8 +755,16 @@ export class ProductionService {
       throw new BadRequestException("At least one valid yield unit (system or organization) must be selected.");
     }
 
+    const totalFlour = ingredients
+      .filter((i) => i.isFlour)
+      .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
+
     const resolvedIngredients = [];
     for (const ing of ingredients) {
+      if (!ing.ingredientVariantId && !ing.subRecipeId) {
+        throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
+      }
+
       const ingSysId = cleanUnitId(ing.systemUnitId);
       const ingOrgId = cleanUnitId(ing.orgUnitId);
 
@@ -758,15 +772,22 @@ export class ProductionService {
         ingSysId,
         ingOrgId,
         organizationId,
-        `ingredient '${ing.ingredientVariantId}' unit`,
+        `ingredient unit`,
       );
 
       if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
         throw new BadRequestException("Each ingredient must have a valid unit selected.");
       }
 
+      const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
+        ? ing.bakersPercentage
+        : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
+
       resolvedIngredients.push({
-        ingredientVariantId: ing.ingredientVariantId,
+        ingredientVariantId: ing.ingredientVariantId || undefined,
+        subRecipeId: ing.subRecipeId || undefined,
+        isFlour: Boolean(ing.isFlour),
+        bakersPercentage: bakersPct,
         quantity: ing.quantity,
         systemUnitId: resolvedIngUnit.systemUnitId,
         orgUnitId: resolvedIngUnit.orgUnitId,
@@ -811,6 +832,12 @@ export class ProductionService {
           include: {
             ingredientVariant: {
               include: { product: true },
+            },
+            subRecipe: {
+              include: {
+                category: true,
+                producesVariant: { include: { product: true } },
+              },
             },
             systemUnit: true,
             orgUnit: true,
@@ -861,8 +888,16 @@ export class ProductionService {
         throw new BadRequestException("Ingredients list cannot be empty.");
       }
 
+      const totalFlour = ingredients
+        .filter((i) => i.isFlour)
+        .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
+
       resolvedIngredients = [];
       for (const ing of ingredients) {
+        if (!ing.ingredientVariantId && !ing.subRecipeId) {
+          throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
+        }
+
         const ingSysId = cleanUnitId(ing.systemUnitId);
         const ingOrgId = cleanUnitId(ing.orgUnitId);
 
@@ -874,15 +909,22 @@ export class ProductionService {
           ingSysId,
           ingOrgId,
           organizationId,
-          `ingredient '${ing.ingredientVariantId}' unit`,
+          `ingredient unit`,
         );
 
         if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
           throw new BadRequestException("Each ingredient must have a valid unit selected.");
         }
 
+        const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
+          ? ing.bakersPercentage
+          : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
+
         resolvedIngredients.push({
-          ingredientVariantId: ing.ingredientVariantId,
+          ingredientVariantId: ing.ingredientVariantId || undefined,
+          subRecipeId: ing.subRecipeId || undefined,
+          isFlour: Boolean(ing.isFlour),
+          bakersPercentage: bakersPct,
           quantity: ing.quantity,
           systemUnitId: resolvedIngUnit.systemUnitId,
           orgUnitId: resolvedIngUnit.orgUnitId,
@@ -918,6 +960,12 @@ export class ProductionService {
           include: {
             ingredientVariant: {
               include: { product: true },
+            },
+            subRecipe: {
+              include: {
+                category: true,
+                producesVariant: { include: { product: true } },
+              },
             },
             systemUnit: true,
             orgUnit: true,

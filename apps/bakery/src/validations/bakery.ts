@@ -6,11 +6,18 @@ import { BatchStatus, DisposalReason, ExpirationStatus, RecipeDifficulty } from 
 export const ingredientSchema = z
   .object({
     id: z.string().optional(),
-    ingredientVariantId: z.string().min(1, 'A valid product variant must be selected'),
+    ingredientVariantId: z.string().optional().nullable(),
+    subRecipeId: z.string().optional().nullable(),
+    isFlour: z.boolean().optional().default(false),
+    bakersPercentage: z.coerce.number().optional().nullable(),
     quantity: z.coerce.number().positive('Quantity must be a positive number'),
     systemUnitId: z.string().optional().nullable(),
     orgUnitId: z.string().optional().nullable(),
     preparationNotes: z.string().optional().nullable(),
+  })
+  .refine(data => data.ingredientVariantId || data.subRecipeId, {
+    message: 'Either a product variant or a sub-recipe must be selected',
+    path: ['ingredientVariantId'],
   })
   .refine(data => data.systemUnitId || data.orgUnitId, {
     message: 'At least one unit (system or organization) must be selected for the ingredient',

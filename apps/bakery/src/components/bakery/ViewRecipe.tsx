@@ -3,12 +3,10 @@ import { Badge } from '@repo/ui/components/ui/badge';
 import { Skeleton } from '@repo/ui/components/ui/skeleton';
 import { ScrollArea } from '@repo/ui/components/ui/scroll-area';
 import { Recipe } from '@/types/bakery';
-import { Clock, Thermometer, Scale, ChefHat, Info, Flame, Utensils } from 'lucide-react';
-// import Image from 'next/image';
+import { Clock, Thermometer, Scale, ChefHat, Info, Flame, Utensils, Droplets, Layers, Wheat } from 'lucide-react';
 import Markdown from 'markdown-to-jsx';
 import { useFormattedCurrency, formatVariantName } from '@/lib/utils';
 import { useRecipe } from '@/hooks/bakery';
-import sanityLoader from '@/lib/sanity-loader';
 
 interface ViewRecipeSheetProps {
   open: boolean;
@@ -44,6 +42,20 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
   const toNumber = (val: any) => Number(val || 0);
 
   const difficulty = recipeData?.difficulty ? DIFFICULTY_CONFIG[recipeData.difficulty as string] : null;
+
+  // Calculate Total Flour Weight and Dough Hydration %
+  const totalFlourWeight = recipeData?.ingredients
+    ?.filter((i: any) => i.isFlour)
+    ?.reduce((sum: number, i: any) => sum + toNumber(i.quantity), 0) || 0;
+
+  const totalLiquidWeight = recipeData?.ingredients
+    ?.filter((i: any) => {
+      const name = (i.ingredientVariant?.product?.name || i.subRecipe?.name || '').toLowerCase();
+      return name.includes('water') || name.includes('milk') || name.includes('liquid') || name.includes('juice');
+    })
+    ?.reduce((sum: number, i: any) => sum + toNumber(i.quantity), 0) || 0;
+
+  const hydrationPercentage = totalFlourWeight > 0 ? (totalLiquidWeight / totalFlourWeight) * 100 : 0;
 
   if (!recipe && !open) return null;
 
@@ -110,7 +122,6 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                         src={(recipeData.producesVariant as any).product.imageUrls[0]}
                         alt={(recipeData.producesVariant as any).product.name}
                         className="w-full h-48 object-cover rounded-xl border border-border/60"
-
                         width={600}
                         height={200}
                       />
@@ -124,6 +135,21 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                         value={toNumber(recipeData.yieldQuantity)}
                         unit={(recipeData.systemUnit as any)?.symbol || (recipeData.orgUnit as any)?.symbol}
                       />
+                      {totalFlourWeight > 0 && (
+                        <StatCard
+                          icon={Wheat}
+                          label="Flour Base"
+                          value={totalFlourWeight.toFixed(2)}
+                          unit={(recipeData.ingredients?.find((i: any) => i.isFlour)?.systemUnit as any)?.symbol || 'kg'}
+                        />
+                      )}
+                      {hydrationPercentage > 0 && (
+                        <StatCard
+                          icon={Droplets}
+                          label="Hydration"
+                          value={`${hydrationPercentage.toFixed(1)}%`}
+                        />
+                      )}
                       <StatCard icon={Clock} label="Prep" value={recipeData.prepTime || 0} unit="min" />
                       <StatCard icon={Flame} label="Bake" value={recipeData.bakeTime || 0} unit="min" />
                       <StatCard
@@ -155,18 +181,28 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
 
                 {/* ── INGREDIENTS ── */}
                 <div className="space-y-3">
-                  <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground/80">
-                    Ingredients
-                  </h3>
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold uppercase tracking-widest text-muted-foreground/80">
+                      Bill of Materials
+                    </h3>
+                    {totalFlourWeight > 0 && (
+                      <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200">
+                        Baker's Percentage Active
+                      </span>
+                    )}
+                  </div>
                   <div className="rounded-xl border border-border/60 overflow-hidden">
                     <table className="w-full text-sm">
                       <thead>
                         <tr className="bg-muted/40 border-b border-border/60">
                           <th className="px-4 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-                            Ingredient
+                            Ingredient Component
                           </th>
                           <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Qty
+                          </th>
+                          <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                            Baker's %
                           </th>
                           <th className="px-4 py-2.5 text-right text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
                             Cost
@@ -174,33 +210,59 @@ export function ViewRecipe({ open, onOpenChange, recipe }: ViewRecipeSheetProps)
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-border/40">
-                        {recipeData.ingredients?.map((item: any) => (
-                          <tr key={item.id} className="group hover:bg-muted/30 transition-colors">
-                            <td className="px-4 py-3.5">
-                              <div className="font-medium text-foreground">
-                                {formatVariantName(item.ingredientVariant?.product?.name, item.ingredientVariant?.name)}
-                              </div>
-                              {item.preparationNotes && (
-                                <div className="text-[10px] text-amber-600 mt-1 italic">
-                                  {item.preparationNotes}
+                        {recipeData.ingredients?.map((item: any) => {
+                          const bakersPct = item.bakersPercentage
+                            ? Number(item.bakersPercentage)
+                            : totalFlourWeight > 0
+                            ? (toNumber(item.quantity) / totalFlourWeight) * 100
+                            : null;
+
+                          return (
+                            <tr key={item.id} className="group hover:bg-muted/30 transition-colors">
+                              <td className="px-4 py-3.5">
+                                <div className="flex items-center gap-2">
+                                  {item.subRecipe ? (
+                                    <span className="font-semibold text-blue-600 flex items-center gap-1">
+                                      <Layers className="w-3.5 h-3.5 text-blue-500" />
+                                      {item.subRecipe.name}
+                                      <span className="text-[10px] text-blue-500 font-normal">(Sub-recipe)</span>
+                                    </span>
+                                  ) : (
+                                    <span className="font-medium text-foreground">
+                                      {formatVariantName(item.ingredientVariant?.product?.name, item.ingredientVariant?.name)}
+                                    </span>
+                                  )}
+                                  {item.isFlour && (
+                                    <Badge variant="outline" className="text-[10px] bg-amber-50 text-amber-800 border-amber-300 font-bold px-1.5 py-0">
+                                      Flour Base (100%)
+                                    </Badge>
+                                  )}
                                 </div>
-                              )}
-                            </td>
-                            <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                              <span className="font-semibold text-foreground">{toNumber(item.quantity)}</span>
-                              <span className="text-muted-foreground ml-1 text-[10px]">
-                                {item.systemUnit?.symbol || item.orgUnit?.symbol}
-                              </span>
-                            </td>
-                            <td className="px-4 py-3.5 text-right text-muted-foreground">
-                              {formattedCurrency(item.calculatedCost)}
-                            </td>
-                          </tr>
-                        ))}
+                                {item.preparationNotes && (
+                                  <div className="text-[10px] text-amber-600 mt-1 italic">
+                                    {item.preparationNotes}
+                                  </div>
+                                )}
+                              </td>
+                              <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                                <span className="font-semibold text-foreground">{toNumber(item.quantity)}</span>
+                                <span className="text-muted-foreground ml-1 text-[10px]">
+                                  {item.systemUnit?.symbol || item.orgUnit?.symbol}
+                                </span>
+                              </td>
+                              <td className="px-4 py-3.5 text-right whitespace-nowrap font-mono text-xs text-muted-foreground">
+                                {bakersPct !== null ? `${bakersPct.toFixed(1)}%` : '—'}
+                              </td>
+                              <td className="px-4 py-3.5 text-right text-muted-foreground">
+                                {formattedCurrency(item.calculatedCost)}
+                              </td>
+                            </tr>
+                          );
+                        })}
                       </tbody>
                       <tfoot>
                         <tr className="bg-muted/40 border-t border-border/60">
-                          <td className="px-4 py-3 text-xs font-semibold text-foreground" colSpan={2}>
+                          <td className="px-4 py-3 text-xs font-semibold text-foreground" colSpan={3}>
                             Total Estimated Cost
                           </td>
                           <td className="px-4 py-3 text-right font-bold text-emerald-700 text-xs">

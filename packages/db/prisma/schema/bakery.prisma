@@ -97,6 +97,7 @@ model Recipe {
 
   templates         Template[]
   batches           Batch[]
+  parentIngredientUses RecipeIngredient[] @relation("SubRecipeToIngredient")
 
   @@unique([organizationId, name])
   @@unique([id, organizationId])
@@ -268,9 +269,17 @@ model RecipeIngredient {
   recipeId            String
   recipe              Recipe             @relation(fields: [recipeId], references: [id], onDelete: Cascade)
 
-  // Link to ingredient ProductVariant
-  ingredientVariantId String
-  ingredientVariant   ProductVariant     @relation(fields: [ingredientVariantId], references: [id], onDelete: Restrict)
+  // Link to ingredient ProductVariant (optional if subRecipeId is provided)
+  ingredientVariantId String?
+  ingredientVariant   ProductVariant?    @relation(fields: [ingredientVariantId], references: [id], onDelete: Restrict)
+
+  // Optional link to sub-recipe (for multi-component recipes like cakes/pastries)
+  subRecipeId         String?
+  subRecipe           Recipe?            @relation("SubRecipeToIngredient", fields: [subRecipeId], references: [id], onDelete: Restrict)
+
+  // Baker's Percentage & Flour baseline fields
+  isFlour             Boolean            @default(false)
+  bakersPercentage    Decimal?           @db.Decimal(8, 2)
 
   // Quantity configuration
   quantity            Decimal            @db.Decimal(10, 4)
@@ -282,9 +291,9 @@ model RecipeIngredient {
   // Optional preparation notes
   preparationNotes    String?
 
-  @@unique([recipeId, ingredientVariantId, systemUnitId])
   @@index([recipeId])
   @@index([ingredientVariantId])
+  @@index([subRecipeId])
   @@index([systemUnitId])
   @@index([orgUnitId])
   @@map("recipe_ingredient")
