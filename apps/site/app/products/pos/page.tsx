@@ -26,7 +26,6 @@ import { PosOfflineMock } from "@/components/products/pos/pos-offline-mock";
 import { PosInventorySyncMock } from "@/components/products/pos/pos-inventory-sync-mock";
 import { PosDownloadSection } from "@/components/products/pos/pos-download-section";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -121,7 +120,6 @@ export default async function PosPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

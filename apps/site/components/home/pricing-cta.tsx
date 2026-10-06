@@ -54,7 +54,7 @@ export function PricingCTA({
   const displayDescription =
     description ||
     "Start your 30-day free trial. No complex setup — your first store is live in minutes. Upgrade, downgrade, or cancel at any time.";
-  const displayPrimaryCta = primaryCta || { label: "Try Scryme Free", href: "/try" };
+  const displayPrimaryCta = primaryCta || { label: "Try Scryme Free", href: `${webUrl}/sign-up` };
   const displaySecondaryCta = secondaryCta || { label: "Create Account", href: `${webUrl}/sign-up` };
 
   const handleCtaClick = (

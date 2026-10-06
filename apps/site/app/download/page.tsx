@@ -1,6 +1,5 @@
 import type { Metadata } from "next";
 import { DownloadPageClient } from "./client";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -21,7 +20,6 @@ export default async function DownloadPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

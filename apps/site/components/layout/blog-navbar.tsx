@@ -3,6 +3,11 @@
 import Link from "next/link";
 import { BookOpen, ArrowLeft, ArrowUpRight } from "lucide-react";
 import { colors, fonts } from "@/lib/scryme-tokens";
+
+const webUrl =
+  process.env.NEXT_PUBLIC_WEB_URL ||
+  process.env.NEXT_PUBLIC_APP_URL ||
+  "https://app.scryme.tech";
 import { ThemeToggle } from "./theme-toggle";
 
 export function BlogNavbar() {
@@ -71,7 +76,7 @@ export function BlogNavbar() {
           <ThemeToggle />
 
           <Link
-            href="/try"
+            href={`${webUrl}/sign-up`}
             className="hidden sm:inline-flex items-center gap-1 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all hover:scale-[1.02]"
             style={{
               background: colors.brass,
