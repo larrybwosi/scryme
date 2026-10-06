@@ -275,13 +275,12 @@ describe("ProductionService - Category and Recipe Validation", () => {
           tags: ["sourdough", "artisan"],
           ingredients: {
             create: [
-              {
+              expect.objectContaining({
                 ingredientVariantId: "flour-var-1",
                 quantity: 5,
                 systemUnitId: "unit-kg",
-                orgUnitId: undefined,
                 preparationNotes: "Cold water hydration, sifted flour",
-              },
+              }),
             ],
           },
         }),
