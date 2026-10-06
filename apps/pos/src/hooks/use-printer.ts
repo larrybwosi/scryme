@@ -124,6 +124,11 @@ export const usePrinter = () => {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : 'Unknown error';
       store.updatePrintJob(jobId, { status: 'failed', error: errorMessage });
+      trackPosEvent(POS_EVENTS.PRINTER_ERROR, {
+        jobType: type,
+        orderId: order.id,
+        error: errorMessage,
+      });
       return { success: false, jobId, error: errorMessage, requiresRetry: true };
     }
   };

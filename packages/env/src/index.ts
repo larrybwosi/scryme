@@ -153,6 +153,12 @@ const serverSchema = z.object({
   OPENPANEL_CLIENT_SECRET: z.string().optional(),
   OPENPANEL_HOST: z.string().optional(),
 
+  // OpenObserve Configuration
+  OPENOBSERVE_URL: z.string().optional(),
+  OPENOBSERVE_ORGANIZATION: z.string().optional().default("default"),
+  OPENOBSERVE_STREAM: z.string().optional().default("pos-events"),
+  OPENOBSERVE_AUTH_TOKEN: z.string().optional(),
+
   // Resend Email Configuration
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("Scryme <no-reply@scryme.tech>"),
@@ -202,6 +208,13 @@ const clientSchema = z.object({
   // Sanity Public Configuration
   NEXT_PUBLIC_SITE_SANITY_DATASET: z.string().optional().default("production"),
   NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: z.string().optional().default("ce88cj7n"),
+
+  // OpenObserve Public/Vite Configuration
+  VITE_OPENOBSERVE_URL: z.string().optional(),
+  VITE_OPENOBSERVE_ORGANIZATION: z.string().optional().default("default"),
+  VITE_OPENOBSERVE_STREAM: z.string().optional().default("pos-events"),
+  VITE_OPENOBSERVE_AUTH_TOKEN: z.string().optional(),
+  NEXT_PUBLIC_OPENOBSERVE_URL: z.string().optional(),
 
   // OpenPanel Public Configuration
   NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string().optional(),
@@ -358,12 +371,25 @@ function getRawEnv() {
     SCRYME_SYSTEM_WORKSPACE_SLUG: process.env.SCRYME_SYSTEM_WORKSPACE_SLUG,
     SCRYME_SYSTEM_CHANNEL_SLUG: process.env.SCRYME_SYSTEM_CHANNEL_SLUG,
     CUSTOMER_AUTH_STRATEGY: process.env.CUSTOMER_AUTH_STRATEGY,
+    // OpenObserve
+    OPENOBSERVE_URL: process.env.OPENOBSERVE_URL,
+    OPENOBSERVE_ORGANIZATION: process.env.OPENOBSERVE_ORGANIZATION,
+    OPENOBSERVE_STREAM: process.env.OPENOBSERVE_STREAM,
+    OPENOBSERVE_AUTH_TOKEN: process.env.OPENOBSERVE_AUTH_TOKEN,
+    VITE_OPENOBSERVE_URL: process.env.VITE_OPENOBSERVE_URL,
+    VITE_OPENOBSERVE_ORGANIZATION: process.env.VITE_OPENOBSERVE_ORGANIZATION,
+    VITE_OPENOBSERVE_STREAM: process.env.VITE_OPENOBSERVE_STREAM,
+    VITE_OPENOBSERVE_AUTH_TOKEN: process.env.VITE_OPENOBSERVE_AUTH_TOKEN,
+    NEXT_PUBLIC_OPENOBSERVE_URL: process.env.NEXT_PUBLIC_OPENOBSERVE_URL,
+
     // OpenPanel
     OPENPANEL_CLIENT_ID: process.env.OPENPANEL_CLIENT_ID,
     OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
     OPENPANEL_HOST: process.env.OPENPANEL_HOST,
 
-    // Resend Email Configuration
+
+
+  // Resend Email Configuration
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
