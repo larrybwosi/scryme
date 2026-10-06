@@ -20,7 +20,7 @@ class ProfileRepositoryImpl @Inject constructor(
         role: String?
     ): Result<List<UserProfile>> {
         return try {
-            val res = memberApiService.getMembers(orgSlug, search, role)
+            val res = memberApiService.getMembers(search, role)
             if (res.isSuccessful && res.body()?.success == true) {
                 val list = res.body()?.data?.map { it.toDomain() } ?: emptyList()
                 Result.success(list)
@@ -34,7 +34,7 @@ class ProfileRepositoryImpl @Inject constructor(
 
     override suspend fun getMemberProfile(orgSlug: String, memberId: String): Result<UserProfile> {
         return try {
-            val res = memberApiService.getMember(orgSlug, memberId)
+            val res = memberApiService.getMember(memberId)
             if (res.isSuccessful && res.body()?.success == true) {
                 val profile = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null profile response"))
                 Result.success(profile)
@@ -56,7 +56,7 @@ class ProfileRepositoryImpl @Inject constructor(
     ): Result<UserProfile> {
         return try {
             val dto = UpdateMemberDto(name, phone, email, avatarUrl)
-            val res = memberApiService.updateMember(orgSlug, memberId, dto)
+            val res = memberApiService.updateMember(memberId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val profile = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null profile response"))
                 Result.success(profile)
@@ -75,7 +75,7 @@ class ProfileRepositoryImpl @Inject constructor(
     ): Result<UserProfile> {
         return try {
             val dto = UpdateMemberStatusDto(status)
-            val res = memberApiService.updateStatus(orgSlug, memberId, dto)
+            val res = memberApiService.updateStatus(memberId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val profile = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null profile response"))
                 Result.success(profile)

@@ -9,14 +9,11 @@ import tech.scryme.app.data.dto.V3ApiResponse
 
 interface BranchApiService {
 
-    @GET("{orgSlug}/pos/locations")
-    suspend fun getBranchLocations(
-        @Path("orgSlug") orgSlug: String
-    ): Response<V3ApiResponse<BranchListResponseDto>>
+    @GET("v3/android/branches/locations")
+    suspend fun getBranchLocations(): Response<V3ApiResponse<BranchListResponseDto>>
 
-    @GET("{orgSlug}/pos/locations/{id}")
+    @GET("v3/android/branches/locations/{id}")
     suspend fun getBranchDetails(
-        @Path("orgSlug") orgSlug: String,
         @Path("id") id: String
     ): Response<V3ApiResponse<BranchDto>>
 }
