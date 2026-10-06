@@ -75,7 +75,7 @@ export function Hero({
               initial={reduceMotion ? false : { opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.08, duration: 0.7 }}
-              className="max-w-3xl text-balance font-sans text-5xl font-medium leading-[0.98] tracking-[-0.045em] text-textPrimary sm:text-6xl lg:text-7xl"
+              className="max-w-3xl text-balance font-sans text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-textPrimary sm:text-5xl lg:text-6xl"
             >
               {title}
             </motion.h1>
@@ -83,7 +83,7 @@ export function Hero({
               initial={reduceMotion ? false : { opacity: 0, y: 16 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.16, duration: 0.65 }}
-              className="max-w-xl text-pretty font-sans text-lg leading-relaxed text-textMuted sm:text-xl"
+              className="max-w-xl text-pretty font-sans text-base sm:text-lg leading-relaxed text-textMuted"
             >
               {subtitle}
             </motion.p>
@@ -94,9 +94,9 @@ export function Hero({
               className="flex flex-col gap-3 sm:flex-row"
             >
               <Link
-                href="/try"
+                href={`${webUrl}/sign-up`}
                 className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-brass px-6 font-sans text-sm font-semibold text-inkBg transition-transform hover:-translate-y-0.5"
-                onClick={() => trackClick("Try Scryme Free", "/try")}
+                onClick={() => trackClick("Try Scryme Free", `${webUrl}/sign-up`)}
               >
                 <span>Try Scryme Free</span>
                 <Sparkles size={16} aria-hidden="true" />

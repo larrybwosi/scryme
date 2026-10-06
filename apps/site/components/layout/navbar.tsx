@@ -586,7 +586,7 @@ export function Navbar() {
           </a>
 
           <Link
-            href="/try"
+            href={`${webUrl}/sign-up`}
             className="flex items-center gap-1.5 px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-[1.02] active:scale-[0.98]"
             style={{
               background: colors.brass,
@@ -598,10 +598,10 @@ export function Navbar() {
               captureCtaClicked("navigation_cta_clicked", {
                 location: "navbar",
                 cta_label: "Try Scryme",
-                destination: "/try",
+                destination: `${webUrl}/sign-up`,
                 cta_type: "primary",
               });
-              trackEvent("nav_try_scryme_clicked", { destination: "/try" });
+              trackEvent("nav_try_scryme_clicked", { destination: `${webUrl}/sign-up` });
             }}
           >
             <span>Try Scryme</span>
@@ -774,7 +774,7 @@ export function Navbar() {
             </a>
 
             <Link
-              href="/try"
+              href={`${webUrl}/sign-up`}
               className="w-full text-center py-2.5 rounded-lg text-sm font-semibold bg-[#C89A4B] text-[#0B1220]"
               onClick={() => {
                 trackEvent("mobile_nav_try_scryme_clicked");

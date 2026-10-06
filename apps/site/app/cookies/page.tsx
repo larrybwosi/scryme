@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -22,7 +21,6 @@ export default async function CookiesPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

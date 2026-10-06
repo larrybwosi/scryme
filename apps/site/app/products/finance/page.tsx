@@ -20,7 +20,6 @@ import { FinancePlMock } from "@/components/products/finance/finance-pl-mock";
 import { FinanceInvoicesMock } from "@/components/products/finance/finance-invoices-mock";
 import { FinanceExpenseMock } from "@/components/products/finance/finance-expense-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -94,7 +93,6 @@ export default async function FinancePage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

@@ -8,7 +8,6 @@ import { CRMTeaser } from "@/components/home/crm-teaser";
 import { POSTeaser } from "@/components/home/pos-teaser";
 import { Testimonials } from "@/components/home/testimonials";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getHomePageContent, getPageMetadata } from "../lib/sanity";
 import type { Metadata } from "next";
 
@@ -26,10 +25,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default async function HomePage() {
   const content = await getHomePageContent();
-
-  if (content.sections?.length) {
-    return <main id="main-content"><PageBuilder sections={content.sections} /></main>;
-  }
 
   return (
     <main id="main-content">

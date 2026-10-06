@@ -65,6 +65,11 @@ const nextConfig: NextConfig = {
 
     return [
       {
+        source: "/try",
+        destination: `${webUrl}/sign-up`,
+        permanent: false,
+      },
+      {
         source: "/login",
         destination: `${webUrl}/login`,
         permanent: false,
@@ -91,7 +96,7 @@ const nextConfig: NextConfig = {
       },
       {
         source: "/demo",
-        destination: "/try",
+        destination: `${webUrl}/sign-up`,
         permanent: false,
       },
     ];

@@ -1,6 +1,5 @@
 import type {Metadata} from "next";
 import {notFound} from "next/navigation";
-import {PageBuilder} from "@/components/sections/page-builder";
 import {getCmsPage, getPageMetadata} from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -21,6 +20,6 @@ export default async function CmsPageRoute({params}: {params: Promise<{slug?: st
   const {slug} = await params;
   const path = pathFrom(slug);
   const page = await getCmsPage(path);
-  if (!page?.sections?.length) notFound();
-  return <main id="main-content"><PageBuilder sections={page.sections} /></main>;
+  if (!page) notFound();
+  return <main id="main-content" className="container mx-auto py-20 px-4"><h1 className="text-4xl font-bold">{page.title}</h1></main>;
 }

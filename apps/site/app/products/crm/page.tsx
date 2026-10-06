@@ -20,7 +20,6 @@ import { CrmPipelineMock } from "@/components/products/crm/crm-pipeline-mock";
 import { CrmContactMock } from "@/components/products/crm/crm-contact-mock";
 import { CrmAnalyticsMock } from "@/components/products/crm/crm-analytics-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -94,7 +93,6 @@ export default async function CrmPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

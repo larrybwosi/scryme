@@ -19,7 +19,6 @@ import { InventoryStockStub } from "@/components/products/inventory/inventory-st
 import { InventoryStockMock } from "@/components/products/inventory/inventory-stock-mock";
 import { InventoryForecastMock } from "@/components/products/inventory/inventory-forecast-mock";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -93,7 +92,6 @@ export default async function InventoryPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

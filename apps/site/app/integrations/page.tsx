@@ -3,7 +3,6 @@ import Link from "next/link";
 import { colors, fonts } from "@/lib/scryme-tokens";
 import { Eyebrow } from "@/components/products/eyebrow";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -42,7 +41,6 @@ export default async function IntegrationsPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

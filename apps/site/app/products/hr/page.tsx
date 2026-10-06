@@ -16,7 +16,6 @@ import { IndexGrid } from "@/components/products/index-grid";
 import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
-import { PageBuilder } from "@/components/sections/page-builder";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -90,7 +89,6 @@ export default async function HrPage() {
   if (cmsPage?.sections?.length) {
     return (
       <main id="main-content">
-        <PageBuilder sections={cmsPage.sections} />
       </main>
     );
   }

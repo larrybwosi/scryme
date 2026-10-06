@@ -2,7 +2,24 @@
 
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Layout, ShoppingCart, Package, ShieldAlert } from "lucide-react";
+import {
+  Layout,
+  ShoppingCart,
+  Package,
+  ShieldAlert,
+  Search,
+  SlidersHorizontal,
+  Plus,
+  RefreshCw,
+  ExternalLink,
+  ChevronRight,
+  TrendingUp,
+  CreditCard,
+  Building2,
+  CheckCircle2,
+  AlertCircle,
+  Clock,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { colors, fonts, modules } from "@/lib/scryme-tokens";
 
@@ -19,29 +36,34 @@ const tabs = modules.slice(0, 4).map((m) => ({
   code: m.code,
   accent: m.accent,
   icon: ICONS[m.code],
+  description: m.description,
 }));
 
-function StatusChip({
+function StatusBadge({
   tone,
   label,
 }: {
-  tone: "positive" | "warn" | "negative";
+  tone: "positive" | "warn" | "negative" | "info";
   label: string;
 }) {
   const map = {
-    positive: colors.ledgerGreen,
-    warn: colors.brass,
-    negative: colors.ledgerRust,
+    positive: { bg: "rgba(16, 185, 129, 0.12)", text: "#10B981", border: "rgba(16, 185, 129, 0.25)" },
+    warn: { bg: "rgba(200, 154, 75, 0.12)", text: "#C89A4B", border: "rgba(200, 154, 75, 0.25)" },
+    negative: { bg: "rgba(239, 68, 68, 0.12)", text: "#EF4444", border: "rgba(239, 68, 68, 0.25)" },
+    info: { bg: "rgba(59, 130, 246, 0.12)", text: "#60A5FA", border: "rgba(59, 130, 246, 0.25)" },
   };
+  const conf = map[tone];
+
   return (
     <span
-      className="text-xs px-2 py-0.5 rounded animate-pulse"
+      className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-[10px] font-mono font-semibold uppercase tracking-wider border"
       style={{
-        background: `${map[tone]}22`,
-        color: map[tone],
-        fontFamily: fonts.mono,
+        background: conf.bg,
+        color: conf.text,
+        borderColor: conf.border,
       }}
     >
+      <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ background: conf.text }} />
       {label}
     </span>
   );
@@ -50,124 +72,101 @@ function StatusChip({
 function CRMMockUI() {
   const columns = [
     {
-      title: "Store Drafts",
+      title: "Pipeline Lead Stage",
       count: 4,
-      intensity: 0.28,
       cards: [
-        { name: "Urban Threads Shop", company: "Retail Theme v2", value: "Draft" },
-        { name: "Veloce Wholesalers", company: "B2B Bulk Portal", value: "Draft" },
-        { name: "Solaris Botanicals", company: "Minimal Peach", value: "Review" },
+        { name: "Urban Threads Store", source: "Online Sign-up", value: "$12,400", time: "10m ago" },
+        { name: "Veloce Wholesalers", source: "Inbound Email", value: "$45,000", time: "1h ago" },
+        { name: "Solaris Botanicals", source: "Demo Request", value: "$8,900", time: "3h ago" },
       ],
     },
     {
-      title: "Ready to Sync",
+      title: "Contract Negotiating",
       count: 2,
-      intensity: 0.5,
       cards: [
-        { name: "Apex Sports Hub", company: "Performance Dark", value: "Ready" },
-        { name: "Glow Cosmetics", company: "Elegance Pink", value: "Ready" },
+        { name: "Apex Sports Hub", source: "Enterprise Lead", value: "$98,000", time: "4h ago" },
+        { name: "Glow Cosmetics", source: "Partner Referral", value: "$24,500", time: "1d ago" },
       ],
     },
     {
-      title: "Publishing Channels",
+      title: "Provisioned Storefronts",
       count: 3,
-      intensity: 0.74,
       cards: [
-        { name: "Meridian Boutique", company: "Custom Subdomain", value: "Deploying" },
-        { name: "Kestrel Outlet", company: "Custom Domain", value: "Propagating" },
+        { name: "Meridian Boutique", source: "Custom Domain", value: "$15,200", time: "2d ago" },
+        { name: "Kestrel Outlet", source: "Wholesale Portal", value: "$32,000", time: "3d ago" },
       ],
     },
     {
-      title: "Live Storefronts",
+      title: "Active Accounts",
       count: 42,
-      intensity: 1,
       cards: [
-        { name: "Fontaine Direct", company: "Custom Domain", value: "Active" },
-        { name: "Solis Distributors", company: "Wholesale Portal", value: "Active" },
+        { name: "Fontaine Direct", source: "Custom Domain", value: "$120,000", time: "Active" },
+        { name: "Solis Distributors", source: "B2B Multi-Store", value: "$210,000", time: "Active" },
       ],
     },
   ];
 
   return (
-    <div className="flex gap-3 h-full overflow-hidden">
-      {columns.map((col) => (
-        <div key={col.title} className="flex-1 flex flex-col gap-2 min-w-0">
-          <div className="flex items-center justify-between px-1">
-            <span
-              className="text-xs font-semibold truncate"
-              style={{ color: colors.textMuted, fontFamily: fonts.body }}
-            >
-              {col.title}
-            </span>
-            <span
-              className="text-xs px-1.5 py-0.5 rounded"
-              style={{
-                background: `${colors.brass}${Math.round(
-                  col.intensity * 40 + 15,
-                )
-                  .toString(16)
-                  .padStart(2, "0")}`,
-                color: colors.brass,
-                fontFamily: fonts.mono,
-              }}
-            >
-              {col.count}
-            </span>
-          </div>
-          <div className="flex flex-col gap-2">
-            {col.cards.map((card) => (
-              <div
-                key={card.name}
-                className="rounded-lg p-2.5"
-                style={{
-                  background: colors.inkPanel,
-                  border: `1px solid ${colors.inkLine}`,
-                }}
-              >
-                <div className="flex items-center gap-2 mb-1">
-                  <div
-                    className="w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
-                    style={{
-                      background: `rgba(200,154,75,${col.intensity})`,
-                      color:
-                        col.intensity > 0.6 ? colors.inkBg : colors.textPrimary,
-                      fontFamily: fonts.body,
-                    }}
-                  >
-                    {card.name[0]}
-                  </div>
-                  <span
-                    className="text-xs font-medium truncate"
-                    style={{
-                      color: colors.textPrimary,
-                      fontFamily: fonts.body,
-                    }}
-                  >
-                    {card.name}
-                  </span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span
-                    className="text-xs truncate"
-                    style={{ color: colors.textFaint, fontFamily: fonts.body }}
-                  >
-                    {card.company}
-                  </span>
-                  <span
-                    className="text-xs font-semibold shrink-0 ml-1"
-                    style={{
-                      color: colors.ledgerGreen,
-                      fontFamily: fonts.mono,
-                    }}
-                  >
-                    {card.value}
-                  </span>
-                </div>
-              </div>
-            ))}
+    <div className="flex flex-col gap-4 h-full">
+      {/* Search and Filter Bar */}
+      <div className="flex items-center justify-between pb-3 border-b border-[rgba(241,233,216,0.08)]">
+        <div className="flex items-center gap-3 flex-1 max-w-sm">
+          <div className="relative w-full">
+            <Search className="absolute left-3 top-2.5 h-3.5 w-3.5 text-[rgba(241,233,216,0.4)]" />
+            <input
+              type="text"
+              readOnly
+              value="Filter contacts & deal stages..."
+              className="w-full pl-8 pr-3 py-1.5 rounded-lg text-xs bg-[#0B1220] border border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.6)] focus:outline-none"
+            />
           </div>
         </div>
-      ))}
+        <div className="flex items-center gap-2">
+          <button className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs bg-[#0B1220] border border-[rgba(241,233,216,0.1)] text-[rgba(241,233,216,0.8)] font-medium">
+            <SlidersHorizontal size={13} />
+            <span>Filter</span>
+          </button>
+          <button className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs bg-[#C89A4B] text-[#0B1220] font-semibold">
+            <Plus size={13} />
+            <span>New Lead</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Kanban Board Columns */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-3">
+        {columns.map((col) => (
+          <div key={col.title} className="flex flex-col gap-2.5 min-w-0 bg-[#0B1220]/60 p-3 rounded-xl border border-[rgba(241,233,216,0.06)]">
+            <div className="flex items-center justify-between px-1">
+              <span className="text-xs font-semibold text-[#F1E9D8] truncate">{col.title}</span>
+              <span className="text-[10px] font-mono px-2 py-0.5 rounded-full bg-[#121B2E] border border-[rgba(241,233,216,0.1)] text-[#C89A4B]">
+                {col.count}
+              </span>
+            </div>
+            <div className="flex flex-col gap-2">
+              {col.cards.map((card) => (
+                <div
+                  key={card.name}
+                  className="group rounded-lg p-3 bg-[#121B2E] border border-[rgba(241,233,216,0.08)] hover:border-[rgba(200,154,75,0.3)] transition-all cursor-pointer"
+                >
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-xs font-bold text-[#F1E9D8] truncate">{card.name}</span>
+                    <span className="text-[10px] font-mono text-[rgba(241,233,216,0.4)]">{card.time}</span>
+                  </div>
+                  <p className="text-[11px] text-[rgba(241,233,216,0.6)] mb-2.5">{card.source}</p>
+                  <div className="flex items-center justify-between pt-2 border-t border-[rgba(241,233,216,0.06)]">
+                    <span className="text-xs font-mono font-semibold text-[#C89A4B]">{card.value}</span>
+                    <div className="flex items-center gap-1 text-[10px] text-emerald-400 font-mono">
+                      <TrendingUp size={12} />
+                      <span>92%</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -183,106 +182,81 @@ function POSMockUI() {
   const total = subtotal + tax;
 
   return (
-    <div className="flex gap-4 h-full">
-      <div className="flex-1 flex flex-col gap-2">
-        <div
-          className="text-xs font-semibold px-1 mb-1 uppercase tracking-wider"
-          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-        >
-          Register Cart (Branch B)
+    <div className="grid lg:grid-cols-12 gap-5 h-full">
+      {/* Left Item Selector & Active Cart */}
+      <div className="lg:col-span-8 flex flex-col gap-3">
+        <div className="flex items-center justify-between px-1 pb-2 border-b border-[rgba(241,233,216,0.08)]">
+          <div className="flex items-center gap-2">
+            <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#C89A4B]">
+              REGISTER #03
+            </span>
+            <span className="text-xs text-[rgba(241,233,216,0.4)]">&bull;</span>
+            <span className="text-xs font-medium text-[rgba(241,233,216,0.7)]">Westfield Branch</span>
+          </div>
+          <StatusBadge tone="positive" label="OFFLINE SYNC READY" />
         </div>
-        {items.map((item) => (
-          <div
-            key={item.sku}
-            className="flex items-center gap-3 rounded-lg p-2.5"
-            style={{
-              background: colors.inkPanel,
-              border: `1px solid ${colors.inkLine}`,
-            }}
-          >
+
+        <div className="space-y-2">
+          {items.map((item) => (
             <div
-              className="w-8 h-8 rounded-md shrink-0"
-              style={{ background: `${colors.ledgerGreen}22` }}
-            />
-            <div className="flex-1 min-w-0">
-              <div
-                className="text-xs font-medium truncate"
-                style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-              >
-                {item.name}
+              key={item.sku}
+              className="flex items-center justify-between p-3 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] hover:border-[rgba(200,154,75,0.2)] transition-all"
+            >
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-9 h-9 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.1)] flex items-center justify-center shrink-0">
+                  <Package size={16} className="text-[#C89A4B]" />
+                </div>
+                <div className="min-w-0">
+                  <div className="text-xs font-bold text-[#F1E9D8] truncate">{item.name}</div>
+                  <div className="text-[11px] font-mono text-[rgba(241,233,216,0.5)]">
+                    {item.sku} &bull; ${item.price.toFixed(2)} each
+                  </div>
+                </div>
               </div>
-              <div
-                className="text-xs"
-                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-              >
-                {item.sku} &middot; Qty {item.qty}
+              <div className="flex items-center gap-4 shrink-0">
+                <span className="text-xs font-mono font-semibold text-[rgba(241,233,216,0.8)]">
+                  x{item.qty}
+                </span>
+                <span className="text-xs font-mono font-bold text-[#F1E9D8] min-w-[70px] text-right">
+                  ${(item.qty * item.price).toFixed(2)}
+                </span>
               </div>
             </div>
-            <span
-              className="text-xs font-semibold shrink-0"
-              style={{ color: colors.textPrimary, fontFamily: fonts.mono }}
-            >
-              ${(item.qty * item.price).toFixed(2)}
-            </span>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
 
-      <div className="w-44 flex flex-col gap-3">
-        <div
-          className="rounded-lg p-3 flex flex-col gap-2"
-          style={{
-            background: colors.inkPanel,
-            border: `1px solid ${colors.inkLine}`,
-          }}
-        >
-          <div
-            className="flex justify-between text-xs"
-            style={{ color: colors.textMuted, fontFamily: fonts.mono }}
-          >
-            <span>Subtotal</span>
-            <span>${subtotal.toFixed(2)}</span>
-          </div>
-          <div
-            className="flex justify-between text-xs"
-            style={{ color: colors.textMuted, fontFamily: fonts.mono }}
-          >
-            <span>Tax (8%)</span>
-            <span>${tax.toFixed(2)}</span>
-          </div>
-          <div
-            className="border-t pt-2 flex justify-between text-sm font-bold"
-            style={{
-              borderColor: colors.inkLine,
-              color: colors.textPrimary,
-              fontFamily: fonts.mono,
-            }}
-          >
-            <span>Total Bill</span>
-            <span>${total.toFixed(2)}</span>
+      {/* Right Payment Terminal Panel */}
+      <div className="lg:col-span-4 flex flex-col justify-between p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.1)] space-y-4">
+        <div>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-[rgba(241,233,216,0.5)] block mb-3">
+            Transaction Summary
+          </span>
+          <div className="space-y-2 text-xs">
+            <div className="flex justify-between text-[rgba(241,233,216,0.7)] font-mono">
+              <span>Subtotal</span>
+              <span>${subtotal.toFixed(2)}</span>
+            </div>
+            <div className="flex justify-between text-[rgba(241,233,216,0.7)] font-mono">
+              <span>Tax (8% VAT)</span>
+              <span>${tax.toFixed(2)}</span>
+            </div>
+            <div className="pt-2 border-t border-[rgba(241,233,216,0.1)] flex justify-between text-base font-mono font-bold text-[#F1E9D8]">
+              <span>Total Payable</span>
+              <span className="text-[#C89A4B]">${total.toFixed(2)}</span>
+            </div>
           </div>
         </div>
-        <button
-          className="w-full py-2.5 rounded-lg text-xs font-bold transition-opacity hover:opacity-90"
-          style={{
-            background: colors.ledgerGreen,
-            color: colors.inkBg,
-            fontFamily: fonts.body,
-          }}
-        >
-          Swipe / Tap Card
-        </button>
-        <button
-          className="w-full py-2 rounded-lg text-xs font-medium"
-          style={{
-            background: "transparent",
-            border: `1px solid ${colors.inkLine}`,
-            color: colors.textMuted,
-            fontFamily: fonts.body,
-          }}
-        >
-          Split Payment
-        </button>
+
+        <div className="space-y-2">
+          <button className="w-full py-3 rounded-lg text-xs font-bold bg-[#10B981] text-[#0B1220] hover:bg-[#059669] transition-all flex items-center justify-center gap-2 shadow-lg shadow-emerald-500/20">
+            <CreditCard size={15} />
+            <span>Process Card / Tap Payment</span>
+          </button>
+          <button className="w-full py-2.5 rounded-lg text-xs font-medium text-[rgba(241,233,216,0.8)] bg-[#121B2E] border border-[rgba(241,233,216,0.1)] hover:bg-[#1a263e] transition-colors">
+            Split Payment / Cash
+          </button>
+        </div>
       </div>
     </div>
   );
@@ -290,217 +264,96 @@ function POSMockUI() {
 
 function InventoryMockUI() {
   const rows = [
-    {
-      sku: "CHR-109",
-      name: "Premium Ergonomic Chair",
-      branch: "Branch A (Westfield)",
-      stock: 14,
-      low: false,
-    },
-    {
-      sku: "CHR-109",
-      name: "Premium Ergonomic Chair",
-      branch: "Branch B (Solis)",
-      stock: 3,
-      low: true,
-    },
-    {
-      sku: "KBD-044",
-      name: "Wireless Mech Keyboard",
-      branch: "Branch A (Westfield)",
-      stock: 45,
-      low: false,
-    },
-    {
-      sku: "KBD-044",
-      name: "Wireless Mech Keyboard",
-      branch: "Branch B (Solis)",
-      stock: 0,
-      low: true,
-    },
-    {
-      sku: "HDP-081",
-      name: "Noise-Cancel Headphones",
-      branch: "Branch B (Solis)",
-      stock: 29,
-      low: false,
-    },
+    { sku: "CHR-109", name: "Premium Ergonomic Chair", branch: "Branch A (Westfield)", stock: 14, low: false },
+    { sku: "CHR-109", name: "Premium Ergonomic Chair", branch: "Branch B (Solis)", stock: 3, low: true },
+    { sku: "KBD-044", name: "Wireless Mech Keyboard", branch: "Branch A (Westfield)", stock: 45, low: false },
+    { sku: "KBD-044", name: "Wireless Mech Keyboard", branch: "Branch B (Solis)", stock: 0, low: true },
+    { sku: "HDP-081", name: "Noise-Cancel Headphones", branch: "Branch B (Solis)", stock: 29, low: false },
   ];
 
   return (
-    <div className="flex flex-col gap-2 h-full">
-      <div
-        className="grid gap-2 px-3 py-2 rounded-lg text-xs font-semibold uppercase tracking-wider"
-        style={{
-          gridTemplateColumns: "80px 1.5fr 1.2fr 80px 60px",
-          background: colors.inkPanel,
-          color: colors.textFaint,
-          fontFamily: fonts.mono,
-        }}
-      >
-        <span>SKU</span>
-        <span>Product Name</span>
-        <span>Store Branch</span>
-        <span>Stock</span>
-        <span>Status</span>
+    <div className="flex flex-col gap-3 h-full">
+      <div className="flex items-center justify-between pb-2 border-b border-[rgba(241,233,216,0.08)]">
+        <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#C89A4B]">
+          Multi-Branch Stock Balance Ledger
+        </span>
+        <StatusBadge tone="info" label="Auto-Sync Enabled" />
       </div>
-      {rows.map((row) => (
-        <div
-          key={`${row.sku}-${row.branch}`}
-          className="grid gap-2 px-3 py-2.5 rounded-lg items-center"
-          style={{
-            gridTemplateColumns: "80px 1.5fr 1.2fr 80px 60px",
-            background: colors.inkPanelAlt,
-            border: `1px solid ${colors.inkLine}`,
-          }}
-        >
-          <span
-            className="text-xs"
-            style={{ color: "#7C93B0", fontFamily: fonts.mono }}
-          >
-            {row.sku}
-          </span>
-          <span
-            className="text-xs truncate"
-            style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-          >
-            {row.name}
-          </span>
-          <span
-            className="text-xs truncate"
-            style={{ color: colors.textMuted, fontFamily: fonts.body }}
-          >
-            {row.branch}
-          </span>
-          <span
-            className="text-xs font-semibold"
-            style={{
-              color: row.stock === 0 ? colors.ledgerRust : (row.low ? colors.brass : colors.textPrimary),
-              fontFamily: fonts.mono,
-            }}
-          >
-            {row.stock} units
-          </span>
-          <StatusChip
-            tone={row.stock === 0 ? "negative" : (row.low ? "warn" : "positive")}
-            label={row.stock === 0 ? "Out" : (row.low ? "Low" : "OK")}
-          />
-        </div>
-      ))}
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="border-b border-[rgba(241,233,216,0.08)] text-[11px] font-mono uppercase text-[rgba(241,233,216,0.5)]">
+              <th className="py-2.5 px-3">SKU</th>
+              <th className="py-2.5 px-3">Product Title</th>
+              <th className="py-2.5 px-3">Location</th>
+              <th className="py-2.5 px-3">Balance</th>
+              <th className="py-2.5 px-3 text-right">Status</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-[rgba(241,233,216,0.06)] text-xs">
+            {rows.map((row, idx) => (
+              <tr key={idx} className="hover:bg-[#0B1220]/50 transition-colors">
+                <td className="py-3 px-3 font-mono font-semibold text-[#C89A4B]">{row.sku}</td>
+                <td className="py-3 px-3 font-semibold text-[#F1E9D8]">{row.name}</td>
+                <td className="py-3 px-3 text-[rgba(241,233,216,0.7)]">{row.branch}</td>
+                <td className="py-3 px-3 font-mono font-bold text-[#F1E9D8]">{row.stock} units</td>
+                <td className="py-3 px-3 text-right">
+                  <StatusBadge
+                    tone={row.stock === 0 ? "negative" : row.low ? "warn" : "positive"}
+                    label={row.stock === 0 ? "Out of Stock" : row.low ? "Low Stock" : "In Stock"}
+                  />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }
 
 function FinanceMockUI() {
   const metrics = [
-    { label: "Branch A Sales", value: "$184,320", change: "+14.2%", up: true },
-    { label: "Branch B Sales", value: "$96,150", change: "+8.5%", up: true },
-    { label: "Online Sales", value: "$61,380", change: "+24.8%", up: true },
-    { label: "Total Revenue", value: "$341,850", change: "+15.3%", up: true },
+    { label: "Westfield Branch Sales", value: "$184,320", change: "+14.2%" },
+    { label: "Solis Branch Sales", value: "$96,150", change: "+8.5%" },
+    { label: "Automated Storefront", value: "$61,380", change: "+24.8%" },
+    { label: "Consolidated Total", value: "$341,850", change: "+15.3%" },
   ];
-
-  const recentTransfers = [
-    {
-      id: "TR-0921",
-      detail: "Stock: Branch A ➔ Branch B",
-      qty: "150 units",
-      status: "completed" as const,
-    },
-    {
-      id: "TR-0922",
-      detail: "Stock: Main WH ➔ Branch A",
-      qty: "400 units",
-      status: "pending" as const,
-    },
-    {
-      id: "TR-0923",
-      detail: "Stock: Branch B ➔ Branch A",
-      qty: "50 units",
-      status: "completed" as const,
-    },
-  ];
-
-  const statusTone = {
-    completed: "positive",
-    pending: "warn",
-  } as const;
 
   return (
-    <div className="flex flex-col gap-3 h-full">
-      <div className="grid grid-cols-4 gap-2">
+    <div className="flex flex-col gap-4 h-full">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         {metrics.map((m) => (
-          <div
-            key={m.label}
-            className="rounded-lg p-2.5"
-            style={{
-              background: colors.inkPanel,
-              border: `1px solid ${colors.inkLine}`,
-            }}
-          >
-            <div
-              className="text-xs mb-1 truncate"
-              style={{ color: colors.textFaint, fontFamily: fonts.body }}
-            >
-              {m.label}
-            </div>
-            <div
-              className="text-xs font-bold"
-              style={{ color: colors.textPrimary, fontFamily: fonts.mono }}
-            >
-              {m.value}
-            </div>
-            <div
-              className="text-xs mt-0.5"
-              style={{
-                color: m.up ? colors.ledgerGreen : colors.ledgerRust,
-                fontFamily: fonts.mono,
-              }}
-            >
-              {m.change}
-            </div>
+          <div key={m.label} className="p-3.5 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)]">
+            <span className="text-[11px] font-mono text-[rgba(241,233,216,0.5)] block mb-1 truncate">{m.label}</span>
+            <div className="text-lg font-mono font-bold text-[#F1E9D8]">{m.value}</div>
+            <span className="text-[10px] font-mono font-semibold text-emerald-400 mt-1 inline-block">{m.change} vs last month</span>
           </div>
         ))}
       </div>
 
-      <div className="flex-1">
-        <div
-          className="text-xs font-semibold mb-2 uppercase tracking-wider"
-          style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-        >
-          Branch Stock Transfers (Central Management)
+      <div className="p-4 rounded-xl bg-[#0B1220] border border-[rgba(241,233,216,0.08)] space-y-3">
+        <div className="flex items-center justify-between pb-2 border-b border-[rgba(241,233,216,0.08)]">
+          <span className="text-xs font-mono font-semibold uppercase tracking-wider text-[#C89A4B]">
+            Inter-Branch Stock Transfers & Audit Trail
+          </span>
+          <StatusBadge tone="positive" label="RECONCILED" />
         </div>
-        <div className="flex flex-col gap-1.5">
-          {recentTransfers.map((tr) => (
-            <div
-              key={tr.id}
-              className="flex items-center justify-between px-3 py-2.5 rounded-lg"
-              style={{
-                background: colors.inkPanel,
-                border: `1px solid ${colors.inkLine}`,
-              }}
-            >
+
+        <div className="space-y-2">
+          {[
+            { id: "TR-0921", desc: "Stock Transfer: Westfield ➔ Solis Branch", qty: "150 units", status: "Completed" },
+            { id: "TR-0922", desc: "Stock Reception: Main WH ➔ Westfield Branch", qty: "400 units", status: "In Transit" },
+          ].map((tr) => (
+            <div key={tr.id} className="flex items-center justify-between p-2.5 rounded-lg bg-[#121B2E] border border-[rgba(241,233,216,0.06)] text-xs">
               <div className="flex items-center gap-3">
-                <span
-                  className="text-xs"
-                  style={{ color: colors.brass, fontFamily: fonts.mono }}
-                >
-                  {tr.id}
-                </span>
-                <span
-                  className="text-xs"
-                  style={{ color: colors.textMuted, fontFamily: fonts.body }}
-                >
-                  {tr.detail}
-                </span>
+                <span className="font-mono font-bold text-[#C89A4B]">{tr.id}</span>
+                <span className="text-[rgba(241,233,216,0.8)]">{tr.desc}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span
-                  className="text-xs font-semibold"
-                  style={{ color: colors.textPrimary, fontFamily: fonts.mono }}
-                >
-                  {tr.qty}
-                </span>
-                <StatusChip tone={statusTone[tr.status]} label={tr.status} />
+                <span className="font-mono font-semibold text-[#F1E9D8]">{tr.qty}</span>
+                <StatusBadge tone={tr.status === "Completed" ? "positive" : "warn"} label={tr.status} />
               </div>
             </div>
           ))}
@@ -519,130 +372,89 @@ const mockUIs: Record<string, React.ReactNode> = {
 
 export function PlatformShowcase() {
   const [activeTab, setActiveTab] = useState("CRM");
-  const activeAccent =
-    tabs.find((t) => t.id === activeTab)?.accent ?? colors.brass;
+  const currentTab = tabs.find((t) => t.id === activeTab) || tabs[0];
 
   return (
-    <section
-      className="py-24"
-      style={{ background: colors.inkBg }}
-      aria-labelledby="showcase-heading"
-    >
-      <div className="container mx-auto">
-        <div className="text-center mb-12">
-          <span
-            className="text-[11px] uppercase tracking-widest"
-            style={{ color: colors.brass, fontFamily: fonts.mono }}
-          >
-            The workspace
-          </span>
-          <h2
-            id="showcase-heading"
-            className="mt-3 text-3xl sm:text-4xl font-medium text-balance"
-            style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-          >
-            Unified central data, four high-performance channels
+    <section className="py-24 relative overflow-hidden bg-[#070C15]" aria-labelledby="showcase-heading">
+      {/* Background glow ambient */}
+      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[500px] bg-[rgba(200,154,75,0.04)] blur-[120px] pointer-events-none rounded-full" />
+
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-6xl">
+        {/* Section Header */}
+        <div className="text-center max-w-3xl mx-auto mb-14 space-y-3">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full border border-brassLine bg-brassDim text-brass text-xs font-mono font-semibold uppercase tracking-widest">
+            <Building2 size={13} />
+            <span>Integrated Platform Engine</span>
+          </div>
+          <h2 id="showcase-heading" className="text-3xl sm:text-4xl lg:text-5xl font-medium tracking-tight text-[#F1E9D8]" style={{ fontFamily: fonts.display }}>
+            Unified workspace, zero sync delay.
           </h2>
-          <p
-            className="mt-4 text-base max-w-2xl mx-auto leading-relaxed"
-            style={{ color: colors.textMuted, fontFamily: fonts.body }}
-          >
-            Customer websites receive orders. Registers check out guests. Central office tracks stock transfers and performance. Everything updates seamlessly at sub-second latency.
+          <p className="text-base sm:text-lg text-[rgba(241,233,216,0.7)] leading-relaxed">
+            Every transaction, register shift, order intake, and stock transfer reflects in real time across your entire corporate ledger.
           </p>
         </div>
 
-        {/* Tabs */}
-        <div className="flex flex-wrap justify-center gap-2 mb-8">
+        {/* Navigation Tabs */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-8">
           {tabs.map((tab) => {
             const Icon = tab.icon;
-            const active = activeTab === tab.id;
+            const isSelected = activeTab === tab.id;
             return (
               <button
                 key={tab.id}
-                role="tab"
                 onClick={() => setActiveTab(tab.id)}
-                className={cn(
-                  "flex items-center gap-2 pl-3 pr-4 py-2 rounded-lg text-sm font-medium transition-all duration-200",
-                )}
-                style={
-                  active
-                    ? { background: tab.accent, color: colors.inkBg }
-                    : {
-                        background: colors.inkPanel,
-                        color: colors.textMuted,
-                        border: `1px solid ${colors.inkLine}`,
-                      }
-                }
-                aria-selected={active}
+                className={`flex flex-col items-start p-4 rounded-xl border text-left transition-all ${
+                  isSelected
+                    ? "bg-[#121B2E] border-[#C89A4B] shadow-lg shadow-black/50 scale-[1.02]"
+                    : "bg-[#0B1220]/60 border-[rgba(241,233,216,0.08)] hover:border-[rgba(200,154,75,0.3)] hover:bg-[#121B2E]/40"
+                }`}
               >
-                <Icon size={15} />
-                <span
-                  className="text-xs font-semibold tracking-wider"
-                  style={{ fontFamily: fonts.mono }}
+                <div
+                  className={`w-8 h-8 rounded-lg flex items-center justify-center mb-2.5 transition-colors ${
+                    isSelected ? "bg-[#C89A4B] text-[#0B1220]" : "bg-[rgba(241,233,216,0.06)] text-[rgba(241,233,216,0.7)]"
+                  }`}
                 >
-                  {tab.code}
+                  <Icon size={18} />
+                </div>
+                <span className="text-[10px] font-mono font-bold uppercase tracking-wider mb-0.5" style={{ color: isSelected ? colors.brass : colors.textFaint }}>
+                  MODULE {tab.code}
                 </span>
-                <span
-                  className="hidden sm:inline"
-                  style={{ fontFamily: fonts.body }}
-                >
-                  {tab.label}
-                </span>
+                <span className="text-sm font-bold text-[#F1E9D8] truncate w-full">{tab.label}</span>
               </button>
             );
           })}
         </div>
 
-        {/* Mock UI panel */}
-        <div
-          className="rounded-2xl overflow-hidden"
-          style={{
-            background: colors.inkPanelAlt,
-            border: `1px solid ${colors.inkLine}`,
-          }}
-        >
-          <div
-            className="flex items-center gap-2 px-5 py-3 border-b"
-            style={{ background: "#080D18", borderColor: colors.inkLine }}
-          >
-            <div className="flex gap-1.5">
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ background: "#ff5f57" }}
-              />
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ background: "#febc2e" }}
-              />
-              <div
-                className="w-3 h-3 rounded-full"
-                style={{ background: "#28c840" }}
-              />
+        {/* Mock UI Workspace Container */}
+        <div className="rounded-2xl overflow-hidden border border-[rgba(241,233,216,0.12)] bg-[#121B2E] shadow-2xl">
+          {/* Top Browser Bar */}
+          <div className="flex items-center justify-between px-5 py-3 border-b border-[rgba(241,233,216,0.1)] bg-[#0B1220]">
+            <div className="flex items-center gap-2">
+              <div className="flex gap-1.5">
+                <div className="w-3 h-3 rounded-full bg-[#EF4444]/80" />
+                <div className="w-3 h-3 rounded-full bg-[#F59E0B]/80" />
+                <div className="w-3 h-3 rounded-full bg-[#10B981]/80" />
+              </div>
+              <div className="ml-4 px-3 py-1 rounded-md bg-[#121B2E] border border-[rgba(241,233,216,0.08)] text-xs font-mono text-[rgba(241,233,216,0.6)] flex items-center gap-2">
+                <span className="text-emerald-400">&bull;</span>
+                <span>https://app.scryme.tech/{activeTab.toLowerCase()}</span>
+              </div>
             </div>
-            <div
-              className="flex-1 mx-4 rounded h-6 flex items-center px-3 text-xs"
-              style={{
-                background: colors.inkPanel,
-                color: colors.textFaint,
-                fontFamily: fonts.mono,
-              }}
-            >
-              app.scryme.tech/{activeTab.toLowerCase()}
+
+            <div className="flex items-center gap-2 text-xs font-mono text-[rgba(241,233,216,0.5)]">
+              <RefreshCw size={12} className="animate-spin text-[#C89A4B]" />
+              <span className="hidden sm:inline">LIVE LEDGER CONNECTION</span>
             </div>
-            <motion.span
-              className="w-1.5 h-1.5 rounded-full"
-              animate={{ background: activeAccent }}
-              transition={{ duration: 0.3 }}
-            />
           </div>
 
-          <div className="p-6 min-h-[320px]">
+          {/* Dynamic Content Frame */}
+          <div className="p-6 min-h-[380px] bg-[#121B2E]">
             <AnimatePresence mode="wait">
               <motion.div
                 key={activeTab}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -8 }}
+                exit={{ opacity: 0, y: -10 }}
                 transition={{ duration: 0.25 }}
                 className="h-full"
               >
