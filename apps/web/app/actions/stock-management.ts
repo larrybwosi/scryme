@@ -34,113 +34,118 @@ export async function bulkUpdateLocationStock(
   }
 
   await db.$transaction(async tx => {
-    for (const update of updates) {
-      const { variantId, newTotalStock } = update;
+    // ⚡ Bolt Optimization: Batch pre-fetch current stock records and product variant metadata up-front.
+    // Indexing these into Maps transforms $O(N)$ sequential database lookups into $O(1)$ constant-time memory reads,
+    // and eliminates post-creation batch reference update queries.
+    const uniqueVariantIds = Array.from(new Set(updates.map(u => u.variantId)));
 
-      // 1. Get current stock
-      const stockRecord = await tx.productVariantStock.findUnique({
+    const [stockRecords, variants] = await Promise.all([
+      tx.productVariantStock.findMany({
         where: {
-          variantId_locationId: {
-            variantId,
-            locationId,
-          },
-        },
-      });
-
-      const currentStock = stockRecord?.currentStock || new Decimal(0);
-      const diff = new Decimal(newTotalStock).minus(currentStock);
-
-      if (diff.isZero()) continue;
-
-      // 2. Create Stock Adjustment
-      const adjustment = await tx.stockAdjustment.create({
-        data: {
-          variantId,
           locationId,
-          memberId: context.memberId!,
-          quantity: diff,
-          reason: "INVENTORY_COUNT",
-          notes: "Bulk update from location stock table",
-          status: "APPROVED",
-          organizationId: context.organizationId,
+          variantId: { in: uniqueVariantIds },
         },
-      });
-
-      // 3. Create Stock Movement
-      await tx.stockMovement.create({
-        data: {
-          organizationId: context.organizationId,
-          variantId,
-          quantity: diff,
-          fromLocationId: diff.isNegative() ? locationId : null,
-          toLocationId: diff.isPositive() ? locationId : null,
-          movementType: diff.isPositive() ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
-          adjustmentId: adjustment.id,
-          memberId: context.memberId!,
-          notes: "Bulk update from location stock table",
+      }),
+      tx.productVariant.findMany({
+        where: {
+          id: { in: uniqueVariantIds },
         },
-      });
+        select: { id: true, productId: true, sku: true, buyingPrice: true },
+      }),
+    ]);
 
-      // 4. Update or Create ProductVariantStock
-      if (stockRecord) {
-        await tx.productVariantStock.update({
-          where: { id: stockRecord.id },
+    const stockMap = new Map(stockRecords.map(s => [s.variantId, s]));
+    const variantMap = new Map(variants.map(v => [v.id, v]));
+
+    // ⚡ Bolt Optimization: Process non-zero stock diff updates concurrently via Promise.all.
+    // For positive diffs, batch creation occurs before adjustment and movement creation,
+    // directly associating stockBatchId during initial insertion and avoiding redundant update queries.
+    await Promise.all(
+      updates.map(async update => {
+        const { variantId, newTotalStock } = update;
+        const stockRecord = stockMap.get(variantId);
+        const currentStock = stockRecord?.currentStock || new Decimal(0);
+        const diff = new Decimal(newTotalStock).minus(currentStock);
+
+        if (diff.isZero()) return;
+
+        const variant = variantMap.get(variantId);
+        if (!stockRecord && !variant) {
+          throw new Error(`Variant ${variantId} not found`);
+        }
+
+        // Handle Batch creation prior to adjustment/movement if adding stock
+        let batchId: string | undefined = undefined;
+        if (diff.isPositive()) {
+          const batch = await tx.stockBatch.create({
+            data: {
+              organizationId: context.organizationId,
+              variantId,
+              locationId,
+              initialQuantity: diff,
+              currentQuantity: diff,
+              purchasePrice: variant?.buyingPrice || new Decimal(0),
+              receivedDate: new Date(),
+              batchNumber: `BULK-${variant?.sku || "VAR"}-${Date.now().toString().slice(-4)}`,
+            },
+          });
+          batchId = batch.id;
+        }
+
+        // Create Stock Adjustment with pre-associated stockBatchId if available
+        const adjustment = await tx.stockAdjustment.create({
           data: {
-            currentStock: new Decimal(newTotalStock),
-            availableStock: { increment: diff }, // Assuming available follows current
-          },
-        });
-      } else {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: variantId },
-          select: { productId: true },
-        });
-
-        if (!variant) throw new Error(`Variant ${variantId} not found`);
-
-        await tx.productVariantStock.create({
-          data: {
-            organizationId: context.organizationId,
-            productId: variant.productId,
             variantId,
             locationId,
-            currentStock: new Decimal(newTotalStock),
-            availableStock: new Decimal(newTotalStock),
+            memberId: context.memberId!,
+            quantity: diff,
+            reason: "INVENTORY_COUNT",
+            notes: "Bulk update from location stock table",
+            status: "APPROVED",
+            organizationId: context.organizationId,
+            stockBatchId: batchId,
           },
         });
-      }
 
-      // 5. Handle Batch if adding stock
-      if (diff.isPositive()) {
-        const variant = await tx.productVariant.findUnique({
-          where: { id: variantId },
-          select: { buyingPrice: true, sku: true },
-        });
-
-        const batch = await tx.stockBatch.create({
+        // Create Stock Movement with pre-associated stockBatchId if available
+        await tx.stockMovement.create({
           data: {
             organizationId: context.organizationId,
             variantId,
-            locationId,
-            initialQuantity: diff,
-            currentQuantity: diff,
-            purchasePrice: variant?.buyingPrice || new Decimal(0),
-            receivedDate: new Date(),
-            batchNumber: `BULK-${variant?.sku || "VAR"}-${Date.now().toString().slice(-4)}`,
+            quantity: diff,
+            fromLocationId: diff.isNegative() ? locationId : null,
+            toLocationId: diff.isPositive() ? locationId : null,
+            movementType: diff.isPositive() ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
+            adjustmentId: adjustment.id,
+            memberId: context.memberId!,
+            notes: "Bulk update from location stock table",
+            stockBatchId: batchId,
           },
         });
 
-        await tx.stockAdjustment.update({
-          where: { id: adjustment.id },
-          data: { stockBatchId: batch.id },
-        });
-
-        await tx.stockMovement.update({
-          where: { adjustmentId: adjustment.id },
-          data: { stockBatchId: batch.id },
-        });
-      }
-    }
+        // Update or Create ProductVariantStock
+        if (stockRecord) {
+          await tx.productVariantStock.update({
+            where: { id: stockRecord.id },
+            data: {
+              currentStock: new Decimal(newTotalStock),
+              availableStock: { increment: diff },
+            },
+          });
+        } else {
+          await tx.productVariantStock.create({
+            data: {
+              organizationId: context.organizationId,
+              productId: variant!.productId,
+              variantId,
+              locationId,
+              currentStock: new Decimal(newTotalStock),
+              availableStock: new Decimal(newTotalStock),
+            },
+          });
+        }
+      })
+    );
   });
 
   revalidatePath(`/locations/${locationId}`);
