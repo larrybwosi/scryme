@@ -35,7 +35,8 @@ export const signIn: typeof authClient.signIn = authClient.signIn;
 export const signUp: typeof authClient.signUp = authClient.signUp;
 export const useSession: typeof authClient.useSession = authClient.useSession;
 export const forgetPassword: typeof authClient.forgetPassword =
-  authClient.forgetPassword;
+  authClient.requestPasswordReset || authClient.forgetPassword;
 export const resetPassword: typeof authClient.resetPassword =
   authClient.resetPassword;
-export const requestPasswordReset = authClient.forgetPassword;
+export const requestPasswordReset =
+  authClient.requestPasswordReset || authClient.forgetPassword;

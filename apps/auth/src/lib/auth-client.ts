@@ -39,7 +39,7 @@ export const authClient = createAuthClient({
 }) as any;
 
 export const requestPasswordReset = (email: string, redirectTo: string) => {
-  return authClient.forgetPassword({ email, redirectTo });
+  return (authClient.requestPasswordReset || authClient.forgetPassword)({ email, redirectTo });
 };
 
 export const consentOAuth2 = (accept: boolean) => {

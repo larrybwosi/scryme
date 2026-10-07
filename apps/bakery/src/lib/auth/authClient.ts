@@ -43,5 +43,6 @@ export const {
   resetPassword,
 } = authClient;
 
-export const forgetPassword: any = authClient.forgetPassword;
+export const forgetPassword: any =
+  authClient.requestPasswordReset || authClient.forgetPassword;
 export const requestPasswordReset = forgetPassword;
