@@ -36,6 +36,7 @@ keyring = "3.6"
 mac_address = "1.1"
 tauri-plugin-store = "2.4.3"
 directories = "6.0.0"
+fastrand = "2.1"
 
 [lib]
 name = "bakery_lib"
