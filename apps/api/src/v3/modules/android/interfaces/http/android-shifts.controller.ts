@@ -31,7 +31,7 @@ import {
 } from "../../application/dto/android-auth.dto";
 
 @ApiTags("V3 Android Shifts")
-@Controller("v3/android/shifts")
+@Controller("android/shifts")
 @UseGuards(V3AuthGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @ApiBearerAuth()

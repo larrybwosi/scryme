@@ -23,7 +23,7 @@ import { AndroidMembersUseCase } from "../../application/use-cases/android-membe
 import { AndroidUpdateMemberDto, AndroidUpdateMemberStatusDto } from "../../application/dto/android-auth.dto";
 
 @ApiTags("V3 Android Members")
-@Controller("v3/android/members")
+@Controller("android/members")
 @UseGuards(V3AuthGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @ApiBearerAuth()

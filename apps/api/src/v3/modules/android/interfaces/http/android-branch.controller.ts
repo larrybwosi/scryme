@@ -18,7 +18,7 @@ import { StandardResponseInterceptor } from "../../../../common/interceptors/sta
 import { AndroidBranchUseCase } from "../../application/use-cases/android-branch.use-case";
 
 @ApiTags("V3 Android Branch")
-@Controller("v3/android/branches")
+@Controller("android/branches")
 @UseGuards(V3AuthGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @ApiBearerAuth()

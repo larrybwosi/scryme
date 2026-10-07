@@ -26,7 +26,7 @@ import { RegisterDeviceDto, SwitchOrgDto } from "../../application/dto/android.d
   description: "Target Organization Slug Context (optional if active in session)",
   required: false,
 })
-@Controller("v3/android")
+@Controller("android")
 @UseGuards(V3AuthGuard)
 export class AndroidController {
   constructor(private readonly androidUseCase: AndroidUseCase) {}

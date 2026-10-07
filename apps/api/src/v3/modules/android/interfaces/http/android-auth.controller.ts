@@ -28,7 +28,7 @@ import {
 import { SwitchOrgDto } from "../../application/dto/android.dto";
 
 @ApiTags("V3 Android Auth")
-@Controller("v3/android/auth")
+@Controller("android/auth")
 @UseInterceptors(StandardResponseInterceptor)
 export class AndroidAuthController {
   constructor(
