@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
-import { colors, fonts } from "@/lib/scryme-tokens";
-import { Eyebrow } from "@/components/products/eyebrow";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Card } from "@/components/ui/card";
 import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -17,111 +17,57 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function PrivacyPage() {
-  const cmsPage = await getCmsPage("privacy");
-  if (cmsPage?.sections?.length) {
-    return (
-      <main id="main-content">
-      </main>
-    );
-  }
-
   return (
-    <main
-      style={{ background: colors.inkBg }}
-      className="min-h-screen py-24 px-6"
-    >
-      <div className="max-w-4xl mx-auto">
-        <Eyebrow>Legal & Compliance</Eyebrow>
-        <h1
-          className="mb-8 mt-4 text-4xl sm:text-5xl font-semibold"
-          style={{ fontFamily: fonts.display, color: colors.paper }}
-        >
-          Privacy Policy
-        </h1>
-        <p
-          className="text-sm font-mono mb-12"
-          style={{ color: colors.textFaint }}
-        >
-          Last updated: October 24, 2025
-        </p>
+    <main className="min-h-screen pt-28 pb-20 bg-background">
+      <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <SectionHeader
+          eyebrow="Data Protection & Privacy"
+          title="Privacy Policy"
+          description="Last updated: October 2025"
+          align="left"
+        />
 
-        <div
-          className="space-y-8 text-base leading-relaxed"
-          style={{ color: colors.textMuted, fontFamily: fonts.body }}
-        >
+        <Card className="p-8 sm:p-10 space-y-8 text-sm sm:text-base text-muted-foreground leading-relaxed">
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               1. Information We Collect
             </h2>
-            <p className="mb-4">
-              Scryme Technologies Ltd. (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) collects
-              information required to provide, configure, and maintain our
-              enterprise B2B operating systems. This includes business accounts,
-              operational records, transactional events, customer contact
-              information, employee schedules, and audit trail records.
-            </p>
-            <p>
-              When user sessions are established under better-auth or OIDC
-              structures, we process cryptographically secure
-              session records, user emails, active organization IDs, and B2B
-              customer identifiers.
+            <p className="mb-3">
+              Scryme Technologies Ltd. (&quot;we&quot;, &quot;us&quot;, or &quot;our&quot;) collects information required to provide, configure, and maintain our enterprise operating systems. This includes business accounts, operational records, transactional events, customer contact information, and audit trail logs.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               2. How We Use Your Data
             </h2>
-            <p className="mb-4">
-              All processed data is utilized strictly to run customer
-              operations, resolve database synchronization conflicts using CRDT
-              structures, perform automatic workspace provisioning, and deliver
-              integrated platform features like point of sale (POS)
-              offline-first sync.
+            <p className="mb-3">
+              All processed data is utilized strictly to execute commerce operations, resolve multi-branch database synchronization conflicts, perform workspace provisioning, and deliver integrated platform features.
             </p>
             <p>
-              We do not sell, rent, or trade your enterprise or customer data to
-              third-party advertisers. All telemetry data processed via Next.js
-              routes is strictly anonymous or is routed cleanly with monitoring
-              filters like Sentry and PostHog to maintain security.
+              We do not sell or trade your enterprise or customer data to third-party advertisers.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
-              3. Data Retention & Hosting
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
+              3. Data Retention & Security
             </h2>
             <p>
-              Operational records and customer databases are stored securely in
-              high-availability environments. B2B storefront database tables are
-              backed up regularly, and sensitive credentials like encryption
-              keys and secret hashes are kept securely isolated.
+              Operational records are stored securely in high-availability environments. Databases are backed up regularly, and sensitive credentials are encrypted using modern cryptographic standards.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               4. Contact Us
             </h2>
             <p>
-              For privacy requests or localized compliance concerns, please
-              contact our legal and data protection team at{" "}
-              <span style={{ color: colors.brass }}>privacy@scryme.tech</span>.
+              For privacy requests or compliance concerns, reach out to our team at{" "}
+              <span className="text-[var(--brass)] font-semibold">privacy@scryme.tech</span>.
             </p>
           </section>
-        </div>
+        </Card>
       </div>
     </main>
   );

@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
-import { ArrowRight, CheckCircle } from "lucide-react";
+import { ArrowRight, CheckCircle2, Sparkles } from "lucide-react";
 import { useOpenPanel } from "@openpanel/nextjs";
-import { captureCtaClicked } from "@/lib/posthog-tracking";
-import { colors, fonts } from "@/lib/scryme-tokens";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Card } from "@/components/ui/card";
 
 const webUrl =
   process.env.NEXT_PUBLIC_WEB_URL ||
@@ -13,16 +15,16 @@ const webUrl =
 
 const highlights = [
   "No credit card required to start",
-  "Full access to all modules",
-  "Dedicated onboarding specialist",
-  "99.9% uptime SLA guarantee",
+  "Full access to all 6 core operating modules",
+  "Dedicated enterprise onboarding specialist",
+  "99.99% guaranteed uptime SLA",
 ];
 
 const statement = [
-  { label: "Businesses on Scryme", value: "4,200+" },
-  { label: "Transactions processed daily", value: "$3.8M+" },
-  { label: "Avg. revenue lift after 90 days", value: "+28%" },
-  { label: "Customer satisfaction score", value: "4.9 / 5" },
+  { label: "Active Businesses", value: "4,200+" },
+  { label: "Daily Processing Volume", value: "$3.8M+" },
+  { label: "Avg Revenue Lift (90 days)", value: "+28%" },
+  { label: "Customer Satisfaction", value: "4.9 / 5" },
 ];
 
 export interface PricingCTAProps {
@@ -45,35 +47,19 @@ export function PricingCTA({
   secondaryCta,
 }: PricingCTAProps = {}) {
   const op = useOpenPanel();
-  const displayTitle = title || (
-    <>
-      The ledger grows <br className="hidden lg:block" />
-      with your business
-    </>
-  );
+  const displayTitle = title || "The Ledger Grows With Your Business";
   const displayDescription =
     description ||
-    "Start your 30-day free trial. No complex setup — your first store is live in minutes. Upgrade, downgrade, or cancel at any time.";
+    "Start your 30-day free trial today. Connect your physical registers and automated e-commerce storefronts in minutes.";
   const displayPrimaryCta = primaryCta || { label: "Try Scryme Free", href: `${webUrl}/sign-up` };
-  const displaySecondaryCta = secondaryCta || { label: "Create Account", href: `${webUrl}/sign-up` };
+  const displaySecondaryCta = secondaryCta || { label: "View Pricing Plans", href: "/pricing" };
 
-  const handleCtaClick = (
-    label: string,
-    href: string,
-    type: "primary" | "secondary"
-  ) => {
-    captureCtaClicked("homepage_cta_clicked", {
-      location: "closing_statement",
-      cta_label: label,
-      destination: href,
-      cta_type: type,
-    });
+  const handleCtaClick = (label: string, href: string) => {
     try {
       op.track("cta_clicked", {
         location: "closing_statement",
         cta_label: label,
         destination: href,
-        cta_type: type,
       });
     } catch (e) {
       // Ignore tracking errors
@@ -81,143 +67,72 @@ export function PricingCTA({
   };
 
   return (
-    <section
-      className="py-28 relative overflow-hidden"
-      style={{ background: colors.paper }}
-    >
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 opacity-[0.06]"
-        style={{
-          backgroundImage: `linear-gradient(${colors.inkBg} 1px, transparent 1px)`,
-          backgroundSize: "100% 40px",
-        }}
-      />
+    <section className="py-20 lg:py-28 bg-[var(--site-dark)] text-white relative overflow-hidden border-t border-border/80">
+      <div className="container mx-auto px-4 lg:px-8 relative z-10 max-w-6xl">
+        <div className="grid grid-cols-1 lg:grid-cols-12 items-center gap-12 lg:gap-16">
+          <div className="lg:col-span-7 flex flex-col items-start space-y-6">
+            <Badge variant="brass" size="md">
+              <Sparkles size={12} className="text-[var(--brass)]" />
+              Scale Your Commerce Operations
+            </Badge>
 
-      <div className="relative z-10 mx-auto max-w-6xl px-6 flex flex-col lg:flex-row items-center gap-14">
-        {/* Copy */}
-        <div className="flex-1 text-center lg:text-left">
-          <p
-            className="text-xs font-semibold uppercase tracking-widest mb-4"
-            style={{ color: colors.ledgerRust, fontFamily: fonts.mono }}
-          >
-            Closing statement
-          </p>
-          <h2
-            className="text-4xl md:text-5xl font-medium leading-[1.1] text-balance mb-6"
-            style={{ color: colors.inkBg, fontFamily: fonts.display }}
-          >
-            {displayTitle}
-          </h2>
-          <p
-            className="text-lg max-w-lg mx-auto lg:mx-0 text-pretty leading-relaxed"
-            style={{ color: "var(--pricing-cta-text-muted)", fontFamily: fonts.body }}
-          >
-            {displayDescription}
-          </p>
-          <ul className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3 max-w-lg mx-auto lg:mx-0">
-            {highlights.map((item) => (
-              <li
-                key={item}
-                className="flex items-center gap-2 text-sm"
-                style={{ color: "var(--pricing-cta-text-body)", fontFamily: fonts.body }}
-              >
-                <CheckCircle
-                  className="w-4 h-4 shrink-0"
-                  style={{ color: colors.ledgerRust }}
-                />
-                {item}
-              </li>
-            ))}
-          </ul>
-          <div className="mt-10 flex flex-wrap gap-4 justify-center lg:justify-start">
-            <Link
-              href={displayPrimaryCta.href}
-              className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-90"
-              style={{
-                background: colors.inkBg,
-                color: colors.paper,
-                fontFamily: fonts.body,
-              }}
-              onClick={() =>
-                handleCtaClick(displayPrimaryCta.label, displayPrimaryCta.href, "primary")
-              }
-            >
-              {displayPrimaryCta.label} <ArrowRight className="w-4 h-4" />
-            </Link>
-            <a
-              href={displaySecondaryCta.href}
-              className="inline-flex items-center gap-2 rounded-md px-6 py-3 text-sm font-semibold transition-colors"
-              style={{
-                border: "1px solid var(--pricing-cta-border-dim)",
-                color: colors.inkBg,
-                fontFamily: fonts.body,
-              }}
-              onClick={() =>
-                handleCtaClick(
-                  displaySecondaryCta.label,
-                  displaySecondaryCta.href,
-                  "secondary"
-                )
-              }
-            >
-              {displaySecondaryCta.label}
-            </a>
-          </div>
-        </div>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold tracking-tight text-white leading-[1.12]">
+              {displayTitle}
+            </h2>
 
-        {/* Statement card */}
-        <div className="flex-1 w-full max-w-md">
-          <div
-            className="rounded-lg p-8"
-            style={{
-              background: "var(--pricing-cta-card-bg)",
-              border: "1px solid var(--pricing-cta-card-border)",
-            }}
-          >
-            <div
-              className="flex items-center justify-between pb-4 mb-5 border-b"
-              style={{ borderColor: "var(--pricing-cta-card-border)" }}
-            >
-              <span
-                className="text-[11px] uppercase tracking-widest"
-                style={{ color: colors.ledgerRust, fontFamily: fonts.mono }}
-              >
-                Statement — YTD
-              </span>
-              <span
-                className="text-[11px]"
-                style={{ color: "var(--pricing-cta-text-faint)", fontFamily: fonts.mono }}
-              >
-                {new Date().getFullYear()}
-              </span>
-            </div>
-            <div className="space-y-4">
-              {statement.map(({ label, value }) => (
-                <div key={label} className="flex items-baseline gap-2">
-                  <span
-                    className="text-sm shrink-0"
-                    style={{
-                      color: "var(--pricing-cta-text-muted-alt)",
-                      fontFamily: fonts.body,
-                    }}
-                  >
-                    {label}
-                  </span>
-                  <span
-                    className="flex-1 border-b border-dotted translate-y-[-3px]"
-                    style={{ borderColor: "var(--pricing-cta-border-dim)" }}
-                    aria-hidden="true"
-                  />
-                  <span
-                    className="text-lg font-semibold shrink-0 tabular-nums"
-                    style={{ color: colors.inkBg, fontFamily: fonts.mono }}
-                  >
-                    {value}
-                  </span>
-                </div>
+            <p className="text-base sm:text-lg text-white/70 leading-relaxed max-w-xl">
+              {displayDescription}
+            </p>
+
+            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 w-full max-w-xl">
+              {highlights.map((item) => (
+                <li key={item} className="flex items-center gap-2 text-xs sm:text-sm text-white/80">
+                  <CheckCircle2 size={16} className="text-[var(--brass)] shrink-0" />
+                  <span>{item}</span>
+                </li>
               ))}
+            </ul>
+
+            <div className="flex flex-col sm:flex-row gap-4 pt-4 w-full sm:w-auto">
+              <Button
+                variant="brass"
+                size="lg"
+                href={displayPrimaryCta.href}
+                icon={<ArrowRight size={16} />}
+                onClick={() => handleCtaClick(displayPrimaryCta.label, displayPrimaryCta.href)}
+              >
+                {displayPrimaryCta.label}
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                href={displaySecondaryCta.href}
+                className="border-white/20 text-white hover:bg-white/10"
+                onClick={() => handleCtaClick(displaySecondaryCta.label, displaySecondaryCta.href)}
+              >
+                {displaySecondaryCta.label}
+              </Button>
             </div>
+          </div>
+
+          <div className="lg:col-span-5 w-full">
+            <Card variant="dark" className="p-8 border-[var(--site-dark-border)] bg-[var(--site-dark-surface)]/80 backdrop-blur-md shadow-2xl">
+              <div className="flex items-center justify-between pb-4 mb-6 border-b border-white/10">
+                <span className="text-xs font-mono font-bold uppercase tracking-widest text-[var(--brass)]">
+                  Platform Ledger Metrics
+                </span>
+                <span className="text-xs font-mono text-white/50">YTD {new Date().getFullYear()}</span>
+              </div>
+
+              <div className="space-y-4">
+                {statement.map(({ label, value }) => (
+                  <div key={label} className="flex items-center justify-between text-xs sm:text-sm">
+                    <span className="text-white/70">{label}</span>
+                    <span className="font-mono font-bold text-white text-base">{value}</span>
+                  </div>
+                ))}
+              </div>
+            </Card>
           </div>
         </div>
       </div>

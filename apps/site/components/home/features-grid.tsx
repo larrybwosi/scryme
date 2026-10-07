@@ -1,9 +1,12 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { ArrowRight } from "lucide-react";
-import { colors, fonts, modules as defaultModules, type ModuleCode } from "@/lib/scryme-tokens";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Badge } from "@/components/ui/badge";
+import { modules as defaultModules, type ModuleCode } from "@/lib/scryme-tokens";
 import Image from "next/image";
 import { urlFor } from "@/sanity/lib/image";
 
@@ -15,12 +18,11 @@ function ConnectsTo({ codes }: { codes: ModuleCode[] }) {
         return (
           <span
             key={c}
-            className="text-[10px] px-1.5 py-0.5 rounded"
+            className="text-[10px] font-mono font-bold px-2 py-0.5 rounded border"
             style={{
-              fontFamily: fonts.mono,
-              color: target?.accent,
-              background: `${target?.accent}1A`,
-              border: `1px solid ${target?.accent}33`,
+              color: target?.accent || "var(--brass)",
+              backgroundColor: `${target?.accent || "#C89A4B"}12`,
+              borderColor: `${target?.accent || "#C89A4B"}33`,
             }}
           >
             {c}
@@ -38,7 +40,9 @@ function ManifestRow({
   module: any;
   index: number;
 }) {
-  const imageUrl = module.image ? (module.image.url || urlFor(module.image).width(400).height(250).url()) : null;
+  const imageUrl = module.image
+    ? module.image.url || urlFor(module.image).width(400).height(250).url()
+    : null;
 
   return (
     <motion.article
@@ -46,21 +50,20 @@ function ManifestRow({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-40px" }}
       transition={{
-        delay: index * 0.06,
-        duration: 0.5,
-        ease: [0.22, 1, 0.36, 1],
+        delay: index * 0.05,
+        duration: 0.45,
+        ease: "easeOut",
       }}
-      className="group grid grid-cols-1 sm:grid-cols-[88px_minmax(0,1.2fr)_minmax(0,2fr)_minmax(0,1.4fr)_140px] items-start sm:items-center gap-3 sm:gap-6 px-5 py-5 sm:py-4 border-b transition-colors hover:bg-[var(--hover-bg)]"
-      style={{ borderColor: colors.inkLine }}
+      className="group grid grid-cols-1 sm:grid-cols-12 items-start sm:items-center gap-4 sm:gap-6 p-5 sm:px-6 sm:py-4 border-b border-border/60 transition-colors hover:bg-accent/40"
     >
       {/* Ticker code */}
-      <div className="flex items-center gap-2 sm:block">
+      <div className="sm:col-span-1 flex items-center">
         <span
-          className="text-sm font-semibold tracking-wider inline-block px-2 py-1 rounded"
+          className="text-xs font-mono font-bold tracking-wider px-2 py-1 rounded border"
           style={{
-            fontFamily: fonts.mono,
             color: module.accent,
-            background: `${module.accent}17`,
+            backgroundColor: `${module.accent}15`,
+            borderColor: `${module.accent}30`,
           }}
         >
           {module.code}
@@ -68,55 +71,48 @@ function ManifestRow({
       </div>
 
       {/* Name */}
-      <h3
-        className="text-base sm:text-lg font-medium leading-snug"
-        style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-      >
-        {module.name}
-      </h3>
+      <div className="sm:col-span-3">
+        <h3 className="text-base font-bold text-foreground group-hover:text-[var(--brass)] transition-colors">
+          {module.name}
+        </h3>
+      </div>
 
       {/* Description */}
-      <p
-        className="text-sm leading-relaxed"
-        style={{ color: colors.textMuted, fontFamily: fonts.body }}
-      >
-        {module.description}
-      </p>
+      <div className="sm:col-span-4">
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+          {module.description}
+        </p>
+      </div>
 
       {/* Image Preview Block */}
-      <div className="relative hidden md:block h-14 w-24 overflow-hidden rounded border"
-        style={{ borderColor: colors.inkLine, background: colors.inkPanel }}
-      >
-        {imageUrl ? (
-          <Image
-            src={imageUrl}
-            alt={module.image?.alt || module.name}
-            fill
-            sizes="96px"
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
-            loading="lazy"
-          />
-        ) : (
-          <div className="flex items-center justify-center h-full w-full bg-slate-900/40 text-[10px] uppercase font-bold tracking-widest text-slate-500">
-            Preview
-          </div>
-        )}
+      <div className="hidden lg:block sm:col-span-2">
+        <div className="relative h-12 w-24 overflow-hidden rounded-lg border border-border/80 bg-muted/40 shadow-xs">
+          {imageUrl ? (
+            <Image
+              src={imageUrl}
+              alt={module.image?.alt || module.name}
+              fill
+              sizes="96px"
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="lazy"
+            />
+          ) : (
+            <div className="flex items-center justify-center h-full w-full text-[10px] font-mono uppercase tracking-widest text-muted-foreground/60">
+              Preview
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Connects to + link */}
-      <div className="flex sm:flex-col items-start sm:items-end gap-2 sm:gap-2">
-        <ConnectsTo codes={module.connectsTo} />
+      <div className="sm:col-span-2 flex flex-col items-start sm:items-end gap-2">
+        <ConnectsTo codes={module.connectsTo || []} />
         <Link
           href={module.href}
-          className="inline-flex items-center gap-1 text-xs font-medium transition-colors opacity-70 group-hover:opacity-100"
-          style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-          aria-label={`Learn more about ${module.name}`}
+          className="inline-flex items-center gap-1 text-xs font-semibold text-foreground hover:text-[var(--brass)] transition-colors pt-1"
         >
-          Learn more
-          <ArrowRight
-            size={12}
-            className="transition-transform group-hover:translate-x-0.5"
-          />
+          <span>Explore</span>
+          <ArrowRight size={12} className="transition-transform group-hover:translate-x-1" />
         </Link>
       </div>
     </motion.article>
@@ -127,64 +123,23 @@ export function FeaturesGrid({ modules }: { modules?: any[] }) {
   const moduleList = modules && modules.length > 0 ? modules : defaultModules;
 
   return (
-    <section
-      id="features"
-      className="py-24"
-      style={{ background: colors.inkBg }}
-      aria-labelledby="features-heading"
-    >
-      <div className="container mx-auto">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.5 }}
-          className="max-w-2xl mb-12"
-        >
-          <span
-            className="text-[11px] uppercase tracking-widest"
-            style={{ color: colors.brass, fontFamily: fonts.mono }}
-          >
-            The manifest
-          </span>
-          <h2
-            id="features-heading"
-            className="mt-3 text-3xl sm:text-4xl font-medium text-balance leading-tight"
-            style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-          >
-            Six modules. One ledger underneath.
-          </h2>
-          <p
-            className="mt-4 text-base leading-relaxed"
-            style={{ color: colors.textMuted, fontFamily: fonts.body }}
-          >
-            Nothing here runs in isolation. Every module posts to the same
-            record, so the &quot;connects to&quot; column isn&apos;t marketing — it&apos;s what
-            actually happens when an entry is made.
-          </p>
-        </motion.div>
+    <section id="features" className="py-20 lg:py-28 bg-background">
+      <div className="container mx-auto px-4 lg:px-8">
+        <SectionHeader
+          eyebrow="Integrated Architecture"
+          title="Six Core Modules. One Single Ledger."
+          description="Every channel, shift, transaction, and inventory adjustment posts automatically to the central Scryme ledger. No batch delays, no missing stock."
+          align="left"
+        />
 
-        <div
-          className="rounded-xl overflow-hidden"
-          style={{
-            background: colors.inkPanelAlt,
-            border: `1px solid ${colors.inkLine}`,
-          }}
-        >
-          {/* header row — desktop only */}
-          <div
-            className="hidden sm:grid grid-cols-[88px_minmax(0,1.2fr)_minmax(0,2fr)_minmax(0,1.4fr)_140px] gap-6 px-5 py-3 border-b"
-            style={{ borderColor: colors.inkLine }}
-          >
-            {["Code", "Module", "What it does", "Preview", "Connects to"].map((h) => (
-              <span
-                key={h}
-                className="text-[10px] uppercase tracking-widest"
-                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-              >
-                {h}
-              </span>
-            ))}
+        <div className="rounded-2xl border border-border/80 bg-card overflow-hidden shadow-lg">
+          {/* Header Row */}
+          <div className="hidden sm:grid grid-cols-12 gap-6 px-6 py-3 border-b border-border bg-muted/30 font-mono text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <span className="col-span-1">Code</span>
+            <span className="col-span-3">Module Name</span>
+            <span className="col-span-4">Platform Capability</span>
+            <span className="hidden lg:block col-span-2">Preview</span>
+            <span className="col-span-2 text-right">Interconnected</span>
           </div>
 
           {moduleList.map((module, index) => (

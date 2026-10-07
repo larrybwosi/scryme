@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { colors, fonts } from "@/lib/scryme-tokens";
-import { Eyebrow } from "@/components/products/eyebrow";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { getCmsPage, getPageMetadata } from "@/lib/sanity";
 
 export const revalidate = 60;
@@ -17,103 +18,56 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function TermsPage() {
-  const cmsPage = await getCmsPage("terms");
-  if (cmsPage?.sections?.length) {
-    return (
-      <main id="main-content">
-      </main>
-    );
-  }
-
   return (
-    <main
-      style={{ background: colors.inkBg }}
-      className="min-h-screen py-24 px-6"
-    >
-      <div className="max-w-4xl mx-auto">
-        <Eyebrow>Legal & Compliance</Eyebrow>
-        <h1
-          className="mb-8 mt-4 text-4xl sm:text-5xl font-semibold"
-          style={{ fontFamily: fonts.display, color: colors.paper }}
-        >
-          Terms of Service
-        </h1>
-        <p
-          className="text-sm font-mono mb-12"
-          style={{ color: colors.textFaint }}
-        >
-          Last updated: October 24, 2025
-        </p>
+    <main className="min-h-screen pt-28 pb-20 bg-background">
+      <div className="container mx-auto px-4 lg:px-8 max-w-4xl">
+        <SectionHeader
+          eyebrow="Legal & Governance"
+          title="Terms of Service"
+          description="Last updated: October 2025"
+          align="left"
+        />
 
-        <div
-          className="space-y-8 text-base leading-relaxed"
-          style={{ color: colors.textMuted, fontFamily: fonts.body }}
-        >
+        <Card className="p-8 sm:p-10 space-y-8 text-sm sm:text-base text-muted-foreground leading-relaxed">
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               1. Acceptance of Terms
             </h2>
             <p>
-              By establishing an account, running our Tauri-based desktop POS,
-              or integrating our B2B APIs, your organization agrees to be fully
-              bound by these Terms of Service. If you do not agree, please do
-              not access or use the Scryme operating platform.
+              By establishing an account, running our desktop POS applications, or integrating our B2B APIs, your organization agrees to be fully bound by these Terms of Service.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               2. Accounts & Platform Licenses
             </h2>
-            <p className="mb-4">
-              We grant your organization a non-exclusive, non-transferable,
-              revocable license to access our cloud-hosted services and run
-              terminal modules according to your active subscription plan.
+            <p className="mb-3">
+              We grant your organization a non-exclusive, non-transferable, revocable license to access our cloud-hosted services and run terminal modules according to your active subscription plan.
             </p>
             <p>
-              You are responsible for keeping all administrator credentials,
-              better-auth session tokens, and
-              webhook URLs securely managed. Unauthorized bypass attempts may
-              result in immediate account termination.
+              You are responsible for keeping all administrator credentials, session tokens, and M2M API keys securely managed.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               3. Service Level Agreement & Offline Capability
             </h2>
             <p>
-              While Scryme&#39s offline-first POS includes CRDT database
-              synchronization to sustain local retail transactions without
-              internet connectivity, cloud-hosted ledgers are subject to
-              standard network availability. We strive for a 99.9% uptime metric
-              for enterprise core modules.
+              While Scryme&#39;s offline-first POS includes local database synchronization to sustain retail transactions without internet connectivity, cloud-hosted ledgers are subject to standard network availability with a 99.99% uptime target.
             </p>
           </section>
 
           <section>
-            <h2
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.paper, fontFamily: fonts.display }}
-            >
+            <h2 className="text-lg sm:text-xl font-bold text-foreground mb-3">
               4. Governing Law
             </h2>
             <p>
-              These terms are governed by and construed in accordance with the
-              laws of Ghana and relevant international B2B software compliance
-              standards.
+              These terms are governed by international B2B software compliance standards and relevant jurisdiction frameworks.
             </p>
           </section>
-        </div>
+        </Card>
       </div>
     </main>
   );

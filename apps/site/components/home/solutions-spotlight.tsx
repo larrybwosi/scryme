@@ -1,8 +1,11 @@
 "use client";
 
+import React from "react";
 import Image from "next/image";
 import { motion } from "framer-motion";
-import { colors, fonts } from "@/lib/scryme-tokens";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 import { urlFor } from "@/sanity/lib/image";
 
 interface SolutionsSpotlightProps {
@@ -20,7 +23,7 @@ interface SolutionsSpotlightProps {
 }
 
 export function SolutionsSpotlight({ data }: SolutionsSpotlightProps) {
-  const sfTitle = data.storefrontTitle || "Customer-Facing Storefront Websites";
+  const sfTitle = data.storefrontTitle || "Automated Storefront Websites";
   const sfSubtitle = data.storefrontSubtitle || "Instantly build, customize, and manage customer-facing storefront websites for your brand. Beautiful e-commerce templates synchronized natively with your central stock database and retail POS registers.";
   const sfImgUrl = data.storefrontImage ? (data.storefrontImage.url || urlFor(data.storefrontImage).width(800).height(500).url()) : "https://images.unsplash.com/photo-1551434678-e076c223a692?auto=format&fit=crop&w=800&q=80";
 
@@ -33,83 +36,59 @@ export function SolutionsSpotlight({ data }: SolutionsSpotlightProps) {
   const cmsImgUrl = data.cmsImage ? (data.cmsImage.url || urlFor(data.cmsImage).width(800).height(500).url()) : "https://images.unsplash.com/photo-1542744095-2a483a7b9fd8?auto=format&fit=crop&w=800&q=80";
 
   const items = [
-    { title: sfTitle, subtitle: sfSubtitle, imgUrl: sfImgUrl, label: "Storefronts" },
-    { title: mbTitle, subtitle: mbSubtitle, imgUrl: mbImgUrl, label: "Multi-Branch" },
-    { title: cmsTitle, subtitle: cmsSubtitle, imgUrl: cmsImgUrl, label: "CMS Management" },
+    { title: sfTitle, subtitle: sfSubtitle, imgUrl: sfImgUrl, label: "E-Commerce" },
+    { title: mbTitle, subtitle: mbSubtitle, imgUrl: mbImgUrl, label: "Multi-Location" },
+    { title: cmsTitle, subtitle: cmsSubtitle, imgUrl: cmsImgUrl, label: "Content CMS" },
   ];
 
   return (
     <section
-      className="py-24 border-t border-b"
-      style={{ background: colors.inkPanel, borderColor: colors.inkLine }}
+      className="py-20 lg:py-28 bg-background border-t border-border/80"
       aria-labelledby="solutions-spotlight-heading"
     >
-      <div className="container mx-auto">
-        <div className="text-center mb-16">
-          <span
-            className="text-[11px] uppercase tracking-widest"
-            style={{ color: colors.brass, fontFamily: fonts.mono }}
-          >
-            Sanity-Managed Solutions
-          </span>
-          <h2
-            id="solutions-spotlight-heading"
-            className="mt-3 text-3xl sm:text-4xl font-medium text-balance"
-            style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-          >
-            Engineered for high performance and growth
-          </h2>
-          <p
-            className="mt-4 text-base max-w-2xl mx-auto leading-relaxed"
-            style={{ color: colors.textMuted, fontFamily: fonts.body }}
-          >
-            Empower your team and your clients with automated website builders, multi-branch tracking, and robust offline point-of-sale systems.
-          </p>
-        </div>
+      <div className="container mx-auto px-4 lg:px-8">
+        <SectionHeader
+          eyebrow="Growth Engine"
+          title="Engineered for High Performance and Scale"
+          description="Empower your operational teams and customers with automated e-commerce storefronts, multi-branch syncing, and built-in CMS controls."
+          align="center"
+        />
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {items.map((item, idx) => (
             <motion.div
               key={idx}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              transition={{ delay: idx * 0.1, duration: 0.5 }}
-              className="rounded-2xl p-6 flex flex-col justify-between border"
-              style={{ background: colors.inkBg, borderColor: colors.inkLine }}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: idx * 0.1, duration: 0.4 }}
             >
-              <div>
-                <div className="relative w-full h-[200px] mb-6 rounded-xl overflow-hidden border"
-                  style={{ borderColor: colors.inkLine }}
-                >
-                  <Image
-                    src={item.imgUrl}
-                    alt={item.title}
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 33vw"
-                    className="object-cover transition-transform duration-500 hover:scale-[1.03]"
-                    loading="lazy"
-                  />
-                  <div className="absolute top-3 left-3 px-2 py-1 text-[10px] font-bold uppercase tracking-widest rounded bg-slate-900/80"
-                    style={{ color: colors.brass, fontFamily: fonts.mono }}
-                  >
-                    {item.label}
+              <Card className="h-full flex flex-col justify-between group p-6">
+                <div>
+                  <div className="relative w-full h-48 mb-6 rounded-xl overflow-hidden border border-border/80 shadow-xs">
+                    <Image
+                      src={item.imgUrl}
+                      alt={item.title}
+                      fill
+                      sizes="(max-width: 768px) 100vw, 33vw"
+                      className="object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                    <div className="absolute top-3 left-3">
+                      <Badge variant="brass" size="sm">
+                        {item.label}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
 
-                <h3
-                  className="text-xl font-medium mb-3"
-                  style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-                >
-                  {item.title}
-                </h3>
-                <p
-                  className="text-sm leading-relaxed mb-6"
-                  style={{ color: colors.textMuted, fontFamily: fonts.body }}
-                >
-                  {item.subtitle}
-                </p>
-              </div>
+                  <h3 className="text-lg font-bold text-foreground mb-2 group-hover:text-[var(--brass)] transition-colors">
+                    {item.title}
+                  </h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                    {item.subtitle}
+                  </p>
+                </div>
+              </Card>
             </motion.div>
           ))}
         </div>

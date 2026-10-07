@@ -1,6 +1,9 @@
 "use client";
 
-import { colors, fonts } from "@/lib/scryme-tokens";
+import React from "react";
+import { SectionHeader } from "@/components/ui/section-header";
+import { Card } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
 
 export function Testimonials({ testimonials }: { testimonials?: Array<{ quote: string; name: string; title: string; company: string; ticker: string; initials: string }> }) {
   const testimonialList = testimonials && testimonials.length > 0 ? testimonials : [
@@ -34,109 +37,40 @@ export function Testimonials({ testimonials }: { testimonials?: Array<{ quote: s
   ];
 
   return (
-    <section
-      className="py-24"
-      style={{ background: colors.inkBg }}
-      aria-labelledby="testimonials-heading"
-    >
-      <div className="container mx-auto">
-        <div className="text-center mb-14">
-          <span
-            className="text-[11px] uppercase tracking-widest"
-            style={{ color: colors.brass, fontFamily: fonts.mono }}
-          >
-            On the record
-          </span>
-          <h2
-            id="testimonials-heading"
-            className="mt-3 text-3xl sm:text-4xl font-medium text-balance"
-            style={{ color: colors.textPrimary, fontFamily: fonts.display }}
-          >
-            Trusted by industry leaders
-          </h2>
-          <p
-            className="mt-4 text-base max-w-xl mx-auto leading-relaxed"
-            style={{ color: colors.textMuted, fontFamily: fonts.body }}
-          >
-            Businesses across retail, wholesale, and distribution rely on Scryme
-            every day.
-          </p>
-        </div>
+    <section className="py-20 lg:py-28 bg-muted/20 border-t border-border/80" aria-labelledby="testimonials-heading">
+      <div className="container mx-auto px-4 lg:px-8">
+        <SectionHeader
+          eyebrow="On the Ledger"
+          title="Trusted by High-Growth Retailers and Wholesalers"
+          description="See how commerce operators rely on Scryme to streamline store operations, inventory management, and multi-channel scale."
+          align="center"
+        />
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {testimonialList.map((t) => (
-            <blockquote
-              key={t.name}
-              className="group rounded-xl p-7 flex flex-col transition-colors duration-300"
-              style={{
-                background: colors.inkPanelAlt,
-                border: `1px solid ${colors.inkLine}`,
-              }}
-            >
-              <div className="flex items-center justify-between mb-5">
-                <span
-                  className="text-[28px] leading-none"
-                  style={{
-                    color: colors.brass,
-                    fontFamily: fonts.display,
-                    fontStyle: "italic",
-                  }}
-                  aria-hidden="true"
-                >
-                  &ldquo;
-                </span>
-                <span
-                  className="text-[10px] px-1.5 py-0.5 rounded tracking-wider"
-                  style={{
-                    color: colors.brass,
-                    background: colors.brassDim,
-                    fontFamily: fonts.mono,
-                  }}
-                >
-                  {t.ticker}
-                </span>
+            <Card key={t.name} className="flex flex-col justify-between p-7">
+              <div>
+                <div className="flex items-center justify-between mb-4">
+                  <span className="text-3xl font-serif text-[var(--brass)] leading-none">&ldquo;</span>
+                  <Badge variant="brass" size="sm">
+                    {t.ticker}
+                  </Badge>
+                </div>
+                <p className="text-sm text-muted-foreground leading-relaxed italic">
+                  {t.quote}
+                </p>
               </div>
 
-              <p
-                className="text-sm leading-relaxed flex-1"
-                style={{ color: colors.textMuted, fontFamily: fonts.body }}
-              >
-                {t.quote}
-              </p>
-
-              <footer
-                className="mt-6 flex items-center gap-3 pt-5 border-t"
-                style={{ borderColor: colors.inkLine }}
-              >
-                <div
-                  className="w-10 h-10 rounded-md flex items-center justify-center text-xs font-semibold shrink-0"
-                  style={{
-                    color: colors.brass,
-                    border: `1px solid ${colors.brassLine}`,
-                    fontFamily: fonts.mono,
-                  }}
-                >
+              <footer className="mt-6 pt-5 border-t border-border/60 flex items-center gap-3">
+                <div className="w-10 h-10 rounded-lg bg-[var(--brass-dim)] border border-[var(--brass-line)] text-[var(--brass)] flex items-center justify-center text-xs font-mono font-bold shrink-0">
                   {t.initials}
                 </div>
                 <div>
-                  <cite
-                    className="not-italic text-sm font-semibold block"
-                    style={{
-                      color: colors.textPrimary,
-                      fontFamily: fonts.body,
-                    }}
-                  >
-                    {t.name}
-                  </cite>
-                  <div
-                    className="text-xs mt-0.5"
-                    style={{ color: colors.textFaint, fontFamily: fonts.body }}
-                  >
-                    {t.title}, {t.company}
-                  </div>
+                  <div className="text-sm font-bold text-foreground">{t.name}</div>
+                  <div className="text-xs text-muted-foreground">{t.title}, {t.company}</div>
                 </div>
               </footer>
-            </blockquote>
+            </Card>
           ))}
         </div>
       </div>
