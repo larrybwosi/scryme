@@ -127,14 +127,28 @@ pub async fn generate_batch_number(
         .fetch_one(pool)
         .await?;
 
-    let sequence = format!("{:0>width$}", count + 1, width = sequence_length);
+    let gen_type = settings
+        .batch_generation_type
+        .unwrap_or_else(|| "SEQUENCE".to_string());
+
+    let code_part = if gen_type == "RANDOM" {
+        const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        (0..sequence_length)
+            .map(|_| {
+                let idx = fastrand::usize(..CHARS.len());
+                CHARS[idx] as char
+            })
+            .collect::<String>()
+    } else {
+        format!("{:0>width$}", count + 1, width = sequence_length)
+    };
 
     let mut parts = Vec::new();
     parts.push(prefix);
     if !date_str.is_empty() {
         parts.push(date_str);
     }
-    parts.push(sequence);
+    parts.push(code_part);
 
     Ok(parts.join(&separator))
 }

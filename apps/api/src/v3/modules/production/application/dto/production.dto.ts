@@ -681,6 +681,11 @@ export class UpdateProductionSettingsDto {
   @IsString()
   batchSequence?: string;
 
+  @ApiPropertyOptional({ description: "Batch generation type (SEQUENCE or RANDOM)", default: "SEQUENCE" })
+  @IsOptional()
+  @IsString()
+  batchGenerationType?: string;
+
   @ApiPropertyOptional({ description: "Auto approve batches", default: false })
   @IsOptional()
   @IsBoolean()

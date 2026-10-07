@@ -584,6 +584,7 @@ export class ProductionService {
     const separator = settings?.batchSeparator || "-";
     const dateFormat = settings?.batchDateFormat || "YYYYMMDD";
     const sequenceLength = parseInt(settings?.batchSequence || "4");
+    const genType = settings?.batchGenerationType || "SEQUENCE";
 
     let dateStr = "";
     const now = new Date();
@@ -595,10 +596,20 @@ export class ProductionService {
         (now.getMonth() + 1).toString().padStart(2, "0");
     }
 
-    const count = await prisma.batch.count({ where: { organizationId } });
-    const sequence = (count + 1).toString().padStart(sequenceLength, "0");
+    let codePart = "";
+    if (genType === "RANDOM") {
+      const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+      let rand = "";
+      for (let i = 0; i < sequenceLength; i++) {
+        rand += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      codePart = rand;
+    } else {
+      const count = await prisma.batch.count({ where: { organizationId } });
+      codePart = (count + 1).toString().padStart(sequenceLength, "0");
+    }
 
-    const parts = [prefix, dateStr, sequence].filter(Boolean);
+    const parts = [prefix, dateStr, codePart].filter(Boolean);
     return parts.join(separator);
   }
 

@@ -73,6 +73,7 @@ pub async fn update_settings(
          batch_separator = COALESCE(?, batch_separator),
          batch_date_format = COALESCE(?, batch_date_format),
          batch_sequence = COALESCE(?, batch_sequence),
+         batch_generation_type = COALESCE(?, batch_generation_type),
          updated_at = ?
          WHERE id = ?",
     )
@@ -93,6 +94,7 @@ pub async fn update_settings(
     .bind(settings.get("batchSeparator").and_then(|v| v.as_str()))
     .bind(settings.get("batchDateFormat").and_then(|v| v.as_str()))
     .bind(settings.get("batchSequence").and_then(|v| v.as_str()))
+    .bind(settings.get("batchGenerationType").and_then(|v| v.as_str()))
     .bind(Utc::now())
     .bind(id)
     .execute(&*pool)
