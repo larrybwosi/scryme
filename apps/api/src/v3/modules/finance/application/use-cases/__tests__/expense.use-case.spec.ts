@@ -22,7 +22,9 @@ describe("ExpenseUseCase", () => {
       count: vi.fn(),
       create: vi.fn(),
       findFirst: vi.fn(),
+      findFirstOrThrow: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
     },
     expenseCategory: {
       count: vi.fn(),
@@ -42,6 +44,7 @@ describe("ExpenseUseCase", () => {
     pettyCashFund: {
       findFirst: vi.fn(),
       update: vi.fn(),
+      updateMany: vi.fn(),
       count: vi.fn(),
     },
     pettyCashTransaction: {
@@ -175,7 +178,11 @@ describe("ExpenseUseCase", () => {
 
       await useCase.createExpense(orgId, memberId, pettyDto);
 
-      expect(mockPrismaClient.pettyCashFund.update).toHaveBeenCalled();
+      expect(mockPrismaClient.pettyCashFund.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "fund-1", organizationId: orgId },
+        }),
+      );
       expect(mockPrismaClient.pettyCashTransaction.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
@@ -213,7 +220,8 @@ describe("ExpenseUseCase", () => {
         organizationId: orgId,
       });
 
-      mockPrismaClient.expense.update.mockResolvedValue({
+      mockPrismaClient.expense.updateMany.mockResolvedValue({ count: 1 });
+      mockPrismaClient.expense.findFirstOrThrow.mockResolvedValue({
         id: expenseId,
         status: ExpenseStatus.APPROVED,
       });
@@ -225,13 +233,17 @@ describe("ExpenseUseCase", () => {
       const result = await useCase.approveExpense(orgId, memberId, expenseId);
 
       expect(result.status).toBe(ExpenseStatus.APPROVED);
-      expect(mockPrismaClient.expense.update).toHaveBeenCalledWith(
+      expect(mockPrismaClient.expense.updateMany).toHaveBeenCalledWith(
         expect.objectContaining({
-          where: { id: expenseId },
+          where: { id: expenseId, organizationId: orgId },
           data: expect.objectContaining({ status: ExpenseStatus.APPROVED }),
         }),
       );
-      expect(mockPrismaClient.pettyCashFund.update).toHaveBeenCalled();
+      expect(mockPrismaClient.pettyCashFund.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "fund-1", organizationId: orgId },
+        }),
+      );
     });
   });
 });

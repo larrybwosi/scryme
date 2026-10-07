@@ -49,3 +49,7 @@
 ## 2026-10-12 - Physical Reconciliation Status Mutation Tenant Isolation
 **Learning:** In `PhysicalReconciliationUseCase.approve`, the `StockReconciliation` model lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `stockReconciliation.update({ where: { id } })` ignores non-unique `organizationId` filters in `where` parameters at database execution time. Relying solely on pre-checks leaves potential BOLA/IDOR vulnerability risks if single-ID lookups are targeted directly or raced against.
 **Action:** Always use `stockReconciliation.updateMany({ where: { id: reconciliationId, organizationId }, data })` followed by `stockReconciliation.findFirstOrThrow({ where: { id: reconciliationId, organizationId } })` to enforce database-level multi-tenant isolation during physical reconciliation approvals.
+
+## 2026-10-15 - Expense & Petty Cash Fund Mutation Tenant Isolation
+**Learning:** In `ExpenseUseCase` (`approveExpense` and `decrementPettyCash`), `Expense` and `PettyCashFund` models lack composite unique constraints on `[id, organizationId]`. Standard Prisma `update({ where: { id } })` ignores non-unique `organizationId` filters in `where` parameters at database execution time.
+**Action:** Always use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) for database-level multi-tenant isolation on expense approvals and petty cash balance adjustments.
