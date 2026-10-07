@@ -277,7 +277,7 @@ const LoginContent = () => {
   const handleForgotPassword = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      const { data: result, error } = await authClient.forgetPassword({
+      const { data: result, error } = await authClient.requestPasswordReset({
         email: data.email,
         redirectTo: typeof window !== "undefined" ? `${window.location.origin}/reset-password` : "/reset-password",
       });
