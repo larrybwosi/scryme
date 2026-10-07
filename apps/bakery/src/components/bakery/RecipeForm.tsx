@@ -21,6 +21,7 @@ import {
   useGenerateRecipeAi,
   useBakerySettings,
   useRecipes,
+  useRecipe,
 } from '@/hooks/bakery';
 import { recipeSchema } from '@/validations/bakery';
 import { ProductVariantsSelect } from '@/components/common/product-variant-select';
@@ -72,6 +73,8 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
   const { data: ingredients, isLoading: loadingIngredients } = useListIngredients();
   const { data: settings } = useBakerySettings() as any;
   const { data: availableRecipes } = useRecipes();
+  const { data: fullRecipe } = useRecipe(recipe?.id || "");
+  const currentRecipe = mode === "edit" ? (fullRecipe || recipe) : null;
 
   const [activeTab, setActiveTab] = useState('manual');
   const [aiPrompt, setAiPrompt] = useState('');
@@ -178,7 +181,7 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
         costPrice: undefined,
       });
     }
-  }, [recipe, mode, reset]);
+  }, [currentRecipe, mode, reset]);
 
   const onSubmit = async (data: any) => {
     try {
@@ -490,6 +493,18 @@ function CreateEditRecipeDialog({ open, onOpenChange, recipe, mode }: CreateEdit
 
 
                 <FormSection title="Bill of Materials (BOM)" icon={Layers}>
+                  <div className="flex justify-end mb-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      onClick={addIngredientRow}
+                      disabled={isSubmitting}
+                      className="gap-1 text-xs"
+                    >
+                      <Plus className="h-3.5 w-3.5" /> Add Material / Component
+                    </Button>
+                  </div>
                   {(() => {
                     const totalFlour = watchIngredients?.filter((i: any) => i?.isFlour)?.reduce((acc: number, i: any) => acc + (Number(i?.quantity) || 0), 0) || 0;
                     return (
