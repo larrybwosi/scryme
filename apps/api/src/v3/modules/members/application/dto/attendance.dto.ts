@@ -1,6 +1,22 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsOptional, IsDateString, IsBoolean } from "class-validator";
+import { IsString, IsOptional, IsDateString, IsBoolean, IsNumber, IsEnum } from "class-validator";
 import { PaginationQueryDto } from "@/v3/common/dto/pagination.dto";
+
+export enum ShiftAttendanceStatus {
+  ON_TIME = "ON_TIME",
+  LATE = "LATE",
+  EARLY = "EARLY",
+  UNSCHEDULED = "UNSCHEDULED",
+  NO_SHOW = "NO_SHOW",
+}
+
+export enum AttendanceVerificationMethod {
+  POS_DEVICE = "POS_DEVICE",
+  GPS_GEOFENCE = "GPS_GEOFENCE",
+  QR_SCAN = "QR_SCAN",
+  MANAGER_OVERRIDE = "MANAGER_OVERRIDE",
+  WEB_PORTAL = "WEB_PORTAL",
+}
 
 export class AttendanceQueryDto extends PaginationQueryDto {
   @ApiPropertyOptional()
@@ -25,9 +41,30 @@ export class AttendanceQueryDto extends PaginationQueryDto {
 }
 
 export class CheckInDto {
-  @ApiProperty()
+  @ApiPropertyOptional()
+  @IsOptional()
   @IsString()
-  locationId: string;
+  locationId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  branchCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  latitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  longitude?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsEnum(AttendanceVerificationMethod)
+  verificationMethod?: AttendanceVerificationMethod;
 
   @ApiPropertyOptional()
   @IsOptional()
@@ -76,4 +113,19 @@ export class AttendanceLogResponseDto {
 
   @ApiPropertyOptional()
   notes?: string;
+
+  @ApiPropertyOptional()
+  shiftId?: string;
+
+  @ApiPropertyOptional()
+  shiftStatus?: ShiftAttendanceStatus;
+
+  @ApiPropertyOptional()
+  verificationMethod?: AttendanceVerificationMethod;
+
+  @ApiPropertyOptional()
+  isLocationVerified?: boolean;
+
+  @ApiPropertyOptional()
+  distanceMeters?: number;
 }

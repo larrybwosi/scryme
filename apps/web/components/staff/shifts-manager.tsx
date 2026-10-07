@@ -19,6 +19,11 @@ import {
   ShieldAlert,
   Trash2,
   Users,
+  MapPin,
+  QrCode,
+  CheckCircle,
+  XCircle,
+  Navigation,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/ui/alert";
@@ -48,6 +53,9 @@ import {
   requestShiftTrade,
   transitionScheduledBooking,
   updateStaffShift,
+  recordManualAttendanceCheckIn,
+  recordManualAttendanceCheckOut,
+  updateBranchLocationCoordinates,
 } from "../../app/actions/shifts";
 import { createStaffTask, updateStaffTask, deleteStaffTask } from "../../app/actions/tasks";
 
@@ -126,15 +134,37 @@ type StaffTaskItem = {
   member: Member | null;
   location: { id: string; name: string } | null;
 };
+type AttendanceLogItem = {
+  id: string;
+  memberId: string;
+  checkInTime: string | Date;
+  checkOutTime: string | Date | null;
+  checkInLocationId: string;
+  checkOutLocationId: string | null;
+  durationMinutes: number | null;
+  shiftId: string | null;
+  shiftStatus?: "ON_TIME" | "LATE" | "EARLY" | "UNSCHEDULED" | "NO_SHOW";
+  verificationMethod?: "POS_DEVICE" | "GPS_GEOFENCE" | "QR_SCAN" | "MANAGER_OVERRIDE" | "WEB_PORTAL";
+  isLocationVerified?: boolean;
+  latitude?: number | null;
+  longitude?: number | null;
+  distanceMeters?: number | null;
+  notes?: string | null;
+  member: Member;
+  checkInLocation: { id: string; name: string; branchCode?: string | null };
+  shift?: { id: string; startTime: string; endTime: string } | null;
+};
+
 type Workspace = {
   bookings: Booking[];
   overrides: Override[];
   services: { id: string; name: string; estimatedDuration: number | null; price: string }[];
-  locations: { id: string; name: string }[];
+  locations: { id: string; name: string; branchCode?: string | null; latitude?: number | null; longitude?: number | null; radiusMeters?: number | null }[];
   timezone: string;
   tradeRequests?: ShiftTrade[];
   tasks?: StaffTaskItem[];
   departments?: { id: string; name: string }[];
+  attendanceLogs?: AttendanceLogItem[];
 };
 
 interface ShiftsManagerProps {
@@ -201,6 +231,20 @@ export function ShiftsManager({
     reason: "",
   });
   const [leaveForm, setLeaveForm] = useState({ memberId: allMembers[0]?.id || "", type: "LEAVE", startTime: "", endTime: "", reason: "" });
+  const [manualCheckInOpen, setManualCheckInOpen] = useState(false);
+  const [manualCheckInForm, setManualCheckInForm] = useState({
+    memberId: allMembers[0]?.id || "",
+    locationId: workspace.locations[0]?.id || "",
+    notes: "",
+  });
+  const [branchConfigOpen, setBranchConfigOpen] = useState(false);
+  const [selectedBranchForConfig, setSelectedBranchForConfig] = useState<any>(null);
+  const [branchConfigForm, setBranchConfigForm] = useState({
+    latitude: "",
+    longitude: "",
+    radiusMeters: "100",
+    branchCode: "",
+  });
   const [bookingForm, setBookingForm] = useState({
     memberId: allMembers[0]?.id || "",
     serviceId: workspace.services[0]?.id || "",
@@ -572,6 +616,7 @@ export function ShiftsManager({
               <TabsTrigger value="roster"><Users data-icon="inline-start" />Roster</TabsTrigger>
               <TabsTrigger value="tasks"><CheckSquare data-icon="inline-start" />Tasks ({activeTasks.length})</TabsTrigger>
               <TabsTrigger value="trades"><ArrowLeftRight data-icon="inline-start" />Shift Trades ({pendingTrades.length})</TabsTrigger>
+              <TabsTrigger value="attendance"><Clock3 data-icon="inline-start" />Shift Attendance ({(workspace.attendanceLogs || []).filter(l => !l.checkOutTime).length})</TabsTrigger>
             </TabsList>
             <div className="flex flex-wrap items-center gap-2">
               <Button onClick={() => setTaskDialogOpen(true)} variant="outline">
@@ -836,6 +881,220 @@ export function ShiftsManager({
           </Card>
         </TabsContent>
 
+        <TabsContent value="attendance">
+          <Card>
+            <CardHeader className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Clock3 className="h-5 w-5 text-primary" />
+                  Real-time Shift Attendance & Physical Branch Verification
+                </CardTitle>
+                <CardDescription>
+                  Monitor active member sign-ins, shift punctuality, and GPS / POS branch location verification in real time.
+                </CardDescription>
+              </div>
+              <div className="flex items-center gap-2">
+                {canManage && (
+                  <>
+                    <Button variant="outline" size="sm" onClick={() => {
+                      const loc = workspace.locations[0];
+                      if (loc) {
+                        setSelectedBranchForConfig(loc);
+                        setBranchConfigForm({
+                          latitude: loc.latitude?.toString() || "",
+                          longitude: loc.longitude?.toString() || "",
+                          radiusMeters: loc.radiusMeters?.toString() || "100",
+                          branchCode: loc.branchCode || `BRANCH-${loc.id.slice(-6).toUpperCase()}`,
+                        });
+                        setBranchConfigOpen(true);
+                      }
+                    }}>
+                      <MapPin className="mr-1.5 h-4 w-4" />
+                      Configure Geofence & QR
+                    </Button>
+                    <Button size="sm" onClick={() => setManualCheckInOpen(true)}>
+                      <Plus className="mr-1.5 h-4 w-4" />
+                      Manager Check-in
+                    </Button>
+                  </>
+                )}
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              {/* Summary Stats */}
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <Card className="p-4 border bg-muted/20">
+                  <div className="text-xs font-medium text-muted-foreground">Currently Signed In</div>
+                  <div className="mt-1 text-2xl font-bold">
+                    {(workspace.attendanceLogs || []).filter(l => !l.checkOutTime).length} Staff
+                  </div>
+                </Card>
+
+                <Card className="p-4 border bg-muted/20">
+                  <div className="text-xs font-medium text-muted-foreground">On-Time Rate Today</div>
+                  <div className="mt-1 text-2xl font-bold text-green-600">
+                    {(() => {
+                      const logs = workspace.attendanceLogs || [];
+                      if (!logs.length) return "100%";
+                      const onTime = logs.filter(l => l.shiftStatus === "ON_TIME").length;
+                      return `${Math.round((onTime / logs.length) * 100)}%`;
+                    })()}
+                  </div>
+                </Card>
+
+                <Card className="p-4 border bg-muted/20">
+                  <div className="text-xs font-medium text-muted-foreground">Late Arrival Flagged</div>
+                  <div className="mt-1 text-2xl font-bold text-amber-600">
+                    {(workspace.attendanceLogs || []).filter(l => l.shiftStatus === "LATE").length} Shifts
+                  </div>
+                </Card>
+
+                <Card className="p-4 border bg-muted/20">
+                  <div className="text-xs font-medium text-muted-foreground">Location Verified</div>
+                  <div className="mt-1 text-2xl font-bold text-primary">
+                    {(() => {
+                      const logs = workspace.attendanceLogs || [];
+                      if (!logs.length) return "100%";
+                      const verified = logs.filter(l => l.isLocationVerified).length;
+                      return `${Math.round((verified / logs.length) * 100)}%`;
+                    })()}
+                  </div>
+                </Card>
+              </div>
+
+              {/* Attendance Table */}
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Staff Member</TableHead>
+                      <TableHead>Branch Location</TableHead>
+                      <TableHead>Check-in Time</TableHead>
+                      <TableHead>Check-out Time</TableHead>
+                      <TableHead>Punctuality</TableHead>
+                      <TableHead>Location Verification</TableHead>
+                      <TableHead className="text-right">Action</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {(workspace.attendanceLogs || []).length === 0 ? (
+                      <TableRow>
+                        <TableCell colSpan={7} className="py-8 text-center text-muted-foreground">
+                          No attendance logs recorded for this period.
+                        </TableCell>
+                      </TableRow>
+                    ) : (
+                      (workspace.attendanceLogs || []).map(log => {
+                        const memberName = log.member.user?.name || log.member.user?.email || "Unknown";
+                        const isCheckedIn = !log.checkOutTime;
+
+                        return (
+                          <TableRow key={log.id}>
+                            <TableCell className="font-medium">
+                              <div className="flex items-center gap-2">
+                                <Avatar className="h-7 w-7">
+                                  <AvatarImage src={log.member.user?.image || undefined} />
+                                  <AvatarFallback>{initials(log.member.user?.name, log.member.user?.email || "")}</AvatarFallback>
+                                </Avatar>
+                                <div>
+                                  <p className="text-sm font-medium">{memberName}</p>
+                                  <p className="text-xs text-muted-foreground">{log.member.user?.email}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+
+                            <TableCell>
+                              <div className="flex items-center gap-1.5 text-sm">
+                                <MapPin className="h-3.5 w-3.5 text-muted-foreground" />
+                                <span>{log.checkInLocation?.name || "Branch"}</span>
+                              </div>
+                            </TableCell>
+
+                            <TableCell className="text-xs font-mono">
+                              {format(new Date(log.checkInTime), "MMM d, HH:mm")}
+                            </TableCell>
+
+                            <TableCell className="text-xs font-mono">
+                              {log.checkOutTime ? format(new Date(log.checkOutTime), "MMM d, HH:mm") : (
+                                <Badge variant="outline" className="text-green-600 bg-green-500/10 border-green-500/20">
+                                  Active Now
+                                </Badge>
+                              )}
+                            </TableCell>
+
+                            <TableCell>
+                              {log.shiftStatus === "ON_TIME" && (
+                                <Badge className="bg-green-600 hover:bg-green-700 text-white">On Time</Badge>
+                              )}
+                              {log.shiftStatus === "LATE" && (
+                                <Badge variant="destructive">Late Arrival</Badge>
+                              )}
+                              {log.shiftStatus === "EARLY" && (
+                                <Badge variant="secondary">Early Arrival</Badge>
+                              )}
+                              {(!log.shiftStatus || log.shiftStatus === "UNSCHEDULED") && (
+                                <Badge variant="outline">Unscheduled</Badge>
+                              )}
+                            </TableCell>
+
+                            <TableCell>
+                              <div className="flex items-center gap-1.5">
+                                {log.isLocationVerified ? (
+                                  <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">
+                                    <CheckCircle className="mr-1 h-3 w-3 text-emerald-600" />
+                                    {log.verificationMethod === "GPS_GEOFENCE" ? "GPS Verified" :
+                                     log.verificationMethod === "POS_DEVICE" ? "POS Terminal" :
+                                     log.verificationMethod === "QR_SCAN" ? "QR Scanned" :
+                                     log.verificationMethod === "MANAGER_OVERRIDE" ? "Manager Verified" : "Verified"}
+                                  </Badge>
+                                ) : (
+                                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400">
+                                    <XCircle className="mr-1 h-3 w-3 text-amber-600" />
+                                    Unverified / Remote
+                                  </Badge>
+                                )}
+                                {log.distanceMeters !== null && log.distanceMeters !== undefined && (
+                                  <span className="text-[11px] font-mono text-muted-foreground">
+                                    ({log.distanceMeters}m)
+                                  </span>
+                                )}
+                              </div>
+                            </TableCell>
+
+                            <TableCell className="text-right">
+                              {isCheckedIn && canManage && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="text-xs text-destructive hover:text-destructive"
+                                  onClick={() => {
+                                    startTransition(async () => {
+                                      const res = await recordManualAttendanceCheckOut({ memberId: log.memberId });
+                                      if (res.success) {
+                                        toast.success("Member checked out successfully");
+                                        const updated = await getSchedulingWorkspace(weekStart.toISOString(), new Date(weekStart.getTime() + 7 * 86400000).toISOString());
+                                        if (updated.success && updated.data) setWorkspace(updated.data as any);
+                                      } else {
+                                        toast.error(res.error || "Failed to check out");
+                                      }
+                                    });
+                                  }}
+                                >
+                                  Sign Out
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
         <TabsContent value="roster">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between gap-4">
@@ -949,7 +1208,201 @@ export function ShiftsManager({
         </TabsContent>
       </Tabs>
 
-      <Sheet open={Boolean(selectedBooking)} onOpenChange={open => !open && setSelectedBooking(null)}>
+
+      {/* Manual Check-in Dialog */}
+      <Dialog open={manualCheckInOpen} onOpenChange={setManualCheckInOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Manual Manager Attendance Check-in</DialogTitle>
+            <DialogDescription>
+              Override and sign in a member directly to a branch location.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <Field>
+              <FieldLabel>Staff Member</FieldLabel>
+              <Select
+                value={manualCheckInForm.memberId}
+                onValueChange={val => setManualCheckInForm(f => ({ ...f, memberId: val }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Select member" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {allMembers.map(m => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.user?.name || m.user?.email || m.id}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel>Branch Location</FieldLabel>
+              <Select
+                value={manualCheckInForm.locationId}
+                onValueChange={val => setManualCheckInForm(f => ({ ...f, locationId: val }))}
+              >
+                <SelectTrigger><SelectValue placeholder="Select location" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {workspace.locations.map(l => (
+                      <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <Field>
+              <FieldLabel>Notes / Reason</FieldLabel>
+              <Input
+                placeholder="Manager override reason..."
+                value={manualCheckInForm.notes}
+                onChange={e => setManualCheckInForm(f => ({ ...f, notes: e.target.value }))}
+              />
+            </Field>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setManualCheckInOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                startTransition(async () => {
+                  const res = await recordManualAttendanceCheckIn(manualCheckInForm);
+                  if (res.success) {
+                    toast.success("Member checked in successfully");
+                    setManualCheckInOpen(false);
+                    const updated = await getSchedulingWorkspace(weekStart.toISOString(), new Date(weekStart.getTime() + 7 * 86400000).toISOString());
+                    if (updated.success && updated.data) setWorkspace(updated.data as any);
+                  } else {
+                    toast.error(res.error || "Failed to check in");
+                  }
+                });
+              }}
+            >
+              Sign In Member
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Branch Geofence & QR Config Dialog */}
+      <Dialog open={branchConfigOpen} onOpenChange={setBranchConfigOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Branch Geofence & Mobile QR Settings</DialogTitle>
+            <DialogDescription>
+              Configure GPS coordinates and store QR code for Android mobile sign-ins.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <Field>
+              <FieldLabel>Select Branch</FieldLabel>
+              <Select
+                value={selectedBranchForConfig?.id || workspace.locations[0]?.id}
+                onValueChange={val => {
+                  const loc = workspace.locations.find(l => l.id === val);
+                  if (loc) {
+                    setSelectedBranchForConfig(loc);
+                    setBranchConfigForm({
+                      latitude: loc.latitude?.toString() || "",
+                      longitude: loc.longitude?.toString() || "",
+                      radiusMeters: loc.radiusMeters?.toString() || "100",
+                      branchCode: loc.branchCode || `BRANCH-${loc.id.slice(-6).toUpperCase()}`,
+                    });
+                  }
+                }}
+              >
+                <SelectTrigger><SelectValue placeholder="Select branch" /></SelectTrigger>
+                <SelectContent>
+                  <SelectGroup>
+                    {workspace.locations.map(l => (
+                      <SelectItem key={l.id} value={l.id}>{l.name}</SelectItem>
+                    ))}
+                  </SelectGroup>
+                </SelectContent>
+              </Select>
+            </Field>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel>Latitude</FieldLabel>
+                <Input
+                  placeholder="e.g. 40.7128"
+                  value={branchConfigForm.latitude}
+                  onChange={e => setBranchConfigForm(f => ({ ...f, latitude: e.target.value }))}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Longitude</FieldLabel>
+                <Input
+                  placeholder="e.g. -74.0060"
+                  value={branchConfigForm.longitude}
+                  onChange={e => setBranchConfigForm(f => ({ ...f, longitude: e.target.value }))}
+                />
+              </Field>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field>
+                <FieldLabel>Geofence Radius (Meters)</FieldLabel>
+                <Input
+                  type="number"
+                  placeholder="100"
+                  value={branchConfigForm.radiusMeters}
+                  onChange={e => setBranchConfigForm(f => ({ ...f, radiusMeters: e.target.value }))}
+                />
+              </Field>
+              <Field>
+                <FieldLabel>Branch QR Code</FieldLabel>
+                <Input
+                  placeholder="e.g. BRANCH-MAIN-01"
+                  value={branchConfigForm.branchCode}
+                  onChange={e => setBranchConfigForm(f => ({ ...f, branchCode: e.target.value }))}
+                />
+              </Field>
+            </div>
+
+            {branchConfigForm.branchCode && (
+              <div className="rounded-lg border bg-muted/30 p-3 text-center">
+                <p className="text-xs font-medium text-muted-foreground mb-1">Mobile Scan Verification Code</p>
+                <p className="text-lg font-mono font-bold tracking-wider">{branchConfigForm.branchCode}</p>
+              </div>
+            )}
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setBranchConfigOpen(false)}>Cancel</Button>
+            <Button
+              onClick={() => {
+                if (!selectedBranchForConfig?.id) return;
+                startTransition(async () => {
+                  const res = await updateBranchLocationCoordinates(selectedBranchForConfig.id, {
+                    latitude: branchConfigForm.latitude ? parseFloat(branchConfigForm.latitude) : undefined,
+                    longitude: branchConfigForm.longitude ? parseFloat(branchConfigForm.longitude) : undefined,
+                    radiusMeters: branchConfigForm.radiusMeters ? parseInt(branchConfigForm.radiusMeters, 10) : undefined,
+                    branchCode: branchConfigForm.branchCode || undefined,
+                  });
+                  if (res.success) {
+                    toast.success("Branch location settings updated");
+                    setBranchConfigOpen(false);
+                    const updated = await getSchedulingWorkspace(weekStart.toISOString(), new Date(weekStart.getTime() + 7 * 86400000).toISOString());
+                    if (updated.success && updated.data) setWorkspace(updated.data as any);
+                  } else {
+                    toast.error(res.error || "Failed to update branch settings");
+                  }
+                });
+              }}
+            >
+              Save Settings
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+<Sheet open={Boolean(selectedBooking)} onOpenChange={open => !open && setSelectedBooking(null)}>
         <SheetContent className="w-full sm:max-w-lg">
           {selectedBooking && <div className="flex h-full flex-col gap-6">
             <SheetHeader><div className="flex items-center gap-2"><Badge variant={statusVariant(selectedBooking.status)}>{STATUS_LABELS[selectedBooking.status]}</Badge><span className="font-mono text-xs text-muted-foreground">rev {selectedBooking.revision}</span></div><SheetTitle className="text-balance">{selectedBooking.serviceName}</SheetTitle><SheetDescription>{format(new Date(selectedBooking.scheduledStartTime), "EEEE, MMMM d 'at' HH:mm")} · {workspace.timezone}</SheetDescription></SheetHeader>

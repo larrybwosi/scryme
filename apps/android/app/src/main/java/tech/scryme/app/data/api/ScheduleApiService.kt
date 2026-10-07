@@ -60,4 +60,16 @@ interface ScheduleApiService {
         @Path("id") id: String,
         @Body dto: UpdateStaffTaskDto
     ): Response<V3ApiResponse<StaffTaskDto>>
+
+    @POST("v3/{orgSlug}/members/attendance/check-in")
+    suspend fun checkInAttendance(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: CheckInAttendanceRequestDto
+    ): Response<V3ApiResponse<AttendanceLogDto>>
+
+    @POST("v3/{orgSlug}/members/attendance/check-out")
+    suspend fun checkOutAttendance(
+        @Path("orgSlug") orgSlug: String,
+        @Body dto: CheckOutAttendanceRequestDto
+    ): Response<V3ApiResponse<AttendanceLogDto>>
 }

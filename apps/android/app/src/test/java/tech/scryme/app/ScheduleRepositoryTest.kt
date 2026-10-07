@@ -48,6 +48,36 @@ class ScheduleRepositoryTest {
     }
 
     @Test
+    fun checkInAttendance_success_returnsAttendanceLog() = runBlocking {
+        val logDto = AttendanceLogDto(
+            id = "log_123",
+            memberId = "mem_1",
+            checkInTime = "2026-10-07T09:00:00Z",
+            checkInLocationId = "loc_1",
+            shiftStatus = "ON_TIME",
+            verificationMethod = "GPS_GEOFENCE",
+            isLocationVerified = true,
+            distanceMeters = 25.0
+        )
+
+        coEvery {
+            scheduleApiService.checkInAttendance("scryme-org", any())
+        } returns Response.success(V3ApiResponse(success = true, data = logDto))
+
+        val result = repository.checkInAttendance(
+            orgSlug = "scryme-org",
+            latitude = 40.7128,
+            longitude = -74.0060
+        )
+
+        assertTrue(result.isSuccess)
+        val log = result.getOrNull()!!
+        assertEquals("log_123", log.id)
+        assertTrue(log.isLocationVerified)
+        assertEquals("ON_TIME", log.shiftStatus)
+    }
+
+    @Test
     fun getStaffTasks_success_returnsTasks() = runBlocking {
         val tasksDto = listOf(
             StaffTaskDto(

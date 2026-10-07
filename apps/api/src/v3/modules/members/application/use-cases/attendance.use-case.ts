@@ -8,8 +8,28 @@ import {
   CheckInDto,
   CheckOutDto,
   AttendanceQueryDto,
+  ShiftAttendanceStatus,
+  AttendanceVerificationMethod,
 } from "../dto/attendance.dto";
-import { AuditLogAction, AuditEntityType } from "@repo/db";
+
+export function calculateHaversineDistance(
+  lat1: number,
+  lon1: number,
+  lat2: number,
+  lon2: number,
+): number {
+  const R = 6371000; // Earth radius in meters
+  const dLat = ((lat2 - lat1) * Math.PI) / 180;
+  const dLon = ((lon2 - lon1) * Math.PI) / 180;
+  const a =
+    Math.sin(dLat / 2) * Math.sin(dLat / 2) +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) *
+      Math.sin(dLon / 2);
+  const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  return Math.round(R * c);
+}
 
 @Injectable()
 export class AttendanceUseCase {
@@ -39,7 +59,6 @@ export class AttendanceUseCase {
       this.prisma.client.attendanceLog.count({ where }),
       this.prisma.client.attendanceLog.findMany({
         where,
-        // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' to reduce payload size and DB I/O.
         select: {
           id: true,
           memberId: true,
@@ -48,6 +67,13 @@ export class AttendanceUseCase {
           checkInLocationId: true,
           checkOutLocationId: true,
           durationMinutes: true,
+          shiftId: true,
+          shiftStatus: true,
+          verificationMethod: true,
+          isLocationVerified: true,
+          latitude: true,
+          longitude: true,
+          distanceMeters: true,
           notes: true,
           isAutoCheckout: true,
           createdAt: true,
@@ -55,11 +81,12 @@ export class AttendanceUseCase {
           member: {
             select: {
               id: true,
-              user: { select: { name: true } },
+              user: { select: { name: true, email: true, image: true } },
             },
           },
-          checkInLocation: { select: { name: true } },
-          checkOutLocation: { select: { name: true } },
+          checkInLocation: { select: { id: true, name: true, branchCode: true } },
+          checkOutLocation: { select: { id: true, name: true } },
+          shift: { select: { id: true, startTime: true, endTime: true, dayOfWeek: true } },
         },
         skip,
         take: limit,
@@ -74,10 +101,28 @@ export class AttendanceUseCase {
   }
 
   async checkIn(organizationId: string, memberId: string, dto: CheckInDto) {
-    // SECURITY (Sentinel): Verify location ownership to prevent cross-tenant check-ins
+    if (!dto.locationId && !dto.branchCode) {
+      throw new BadRequestException("Either locationId or branchCode must be provided");
+    }
+
+    // SECURITY (Sentinel): Verify location ownership & details
+    const locationWhere: any = { organizationId };
+    if (dto.locationId) {
+      locationWhere.id = dto.locationId;
+    } else if (dto.branchCode) {
+      locationWhere.branchCode = dto.branchCode;
+    }
+
     const location = await this.prisma.client.inventoryLocation.findFirst({
-      where: { id: dto.locationId, organizationId },
-      select: { id: true },
+      where: locationWhere,
+      select: {
+        id: true,
+        name: true,
+        branchCode: true,
+        latitude: true,
+        longitude: true,
+        radiusMeters: true,
+      },
     });
 
     if (!location) {
@@ -92,13 +137,87 @@ export class AttendanceUseCase {
       throw new BadRequestException("Member is already checked in");
     }
 
+    const checkInTime = new Date();
+
+    // 1. Determine Physical Verification
+    let isLocationVerified = false;
+    let distanceMeters: number | null = null;
+    let verificationMethod = dto.verificationMethod || AttendanceVerificationMethod.WEB_PORTAL;
+
+    if (dto.verificationMethod === AttendanceVerificationMethod.POS_DEVICE) {
+      isLocationVerified = true;
+    } else if (dto.verificationMethod === AttendanceVerificationMethod.MANAGER_OVERRIDE) {
+      isLocationVerified = true;
+    } else if (dto.branchCode && location.branchCode && dto.branchCode === location.branchCode) {
+      isLocationVerified = true;
+      verificationMethod = dto.verificationMethod || AttendanceVerificationMethod.QR_SCAN;
+    } else if (
+      dto.latitude !== undefined &&
+      dto.longitude !== undefined &&
+      location.latitude !== null &&
+      location.latitude !== undefined &&
+      location.longitude !== null &&
+      location.longitude !== undefined
+    ) {
+      distanceMeters = calculateHaversineDistance(
+        dto.latitude,
+        dto.longitude,
+        location.latitude,
+        location.longitude,
+      );
+      const allowedRadius = location.radiusMeters || 100;
+      isLocationVerified = distanceMeters <= allowedRadius;
+      verificationMethod = dto.verificationMethod || AttendanceVerificationMethod.GPS_GEOFENCE;
+    }
+
+    // 2. Determine Automatic Shift Matching & Status
+    const dayOfWeek = checkInTime.getDay(); // 0 = Sunday, 6 = Saturday
+    const candidateShifts = await this.prisma.client.staffShift.findMany({
+      where: {
+        organizationId,
+        memberId,
+        isActive: true,
+        dayOfWeek,
+        OR: [{ locationId: location.id }, { locationId: null }],
+      },
+    });
+
+    let matchedShiftId: string | null = null;
+    let shiftStatus: ShiftAttendanceStatus = ShiftAttendanceStatus.UNSCHEDULED;
+
+    if (candidateShifts.length > 0) {
+      const shift = candidateShifts[0];
+      matchedShiftId = shift.id;
+
+      const [startHours, startMins] = shift.startTime.split(":").map(Number);
+      const scheduledStart = new Date(checkInTime);
+      scheduledStart.setHours(startHours, startMins, 0, 0);
+
+      const diffMins = (checkInTime.getTime() - scheduledStart.getTime()) / 60000;
+
+      if (diffMins > 15) {
+        shiftStatus = ShiftAttendanceStatus.LATE;
+      } else if (diffMins < -15) {
+        shiftStatus = ShiftAttendanceStatus.EARLY;
+      } else {
+        shiftStatus = ShiftAttendanceStatus.ON_TIME;
+      }
+    }
+
     return this.prisma.client.$transaction(async tx => {
       const log = await tx.attendanceLog.create({
         data: {
           organizationId,
           memberId,
-          checkInTime: new Date(),
-          checkInLocationId: dto.locationId,
+          checkInTime,
+          checkInLocationId: location.id,
+          shiftId: matchedShiftId,
+          shiftStatus,
+          verificationMethod,
+          isLocationVerified,
+          latitude: dto.latitude ?? null,
+          longitude: dto.longitude ?? null,
+          distanceMeters,
           notes: dto.notes,
         },
       });
@@ -107,8 +226,8 @@ export class AttendanceUseCase {
         where: { id: memberId },
         data: {
           isCheckedIn: true,
-          lastCheckInTime: new Date(),
-          currentCheckInLocationId: dto.locationId,
+          lastCheckInTime: checkInTime,
+          currentCheckInLocationId: location.id,
           currentAttendanceLogId: log.id,
           status: "ONLINE",
         },
@@ -119,7 +238,6 @@ export class AttendanceUseCase {
   }
 
   async checkOut(organizationId: string, memberId: string, dto: CheckOutDto) {
-    // SECURITY (Sentinel): Verify location ownership if provided
     if (dto.locationId) {
       const location = await this.prisma.client.inventoryLocation.findFirst({
         where: { id: dto.locationId, organizationId },
@@ -171,8 +289,6 @@ export class AttendanceUseCase {
   }
 
   async getMemberStatus(organizationId: string, memberId: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
-    // Member lacks a composite unique index on [id, organizationId]
     const member = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId },
       select: {
@@ -181,10 +297,76 @@ export class AttendanceUseCase {
         isCheckedIn: true,
         lastCheckInTime: true,
         currentCheckInLocationId: true,
+        currentAttendanceLog: {
+          select: {
+            id: true,
+            checkInTime: true,
+            checkInLocation: { select: { id: true, name: true } },
+            shiftStatus: true,
+            verificationMethod: true,
+            isLocationVerified: true,
+          },
+        },
       },
     });
 
     if (!member) throw new NotFoundException("Member not found");
     return member;
+  }
+
+  async getLiveAdherence(organizationId: string, locationId?: string) {
+    const now = new Date();
+    const dayOfWeek = now.getDay();
+    const startOfDay = new Date(now);
+    startOfDay.setHours(0, 0, 0, 0);
+
+    const shiftWhere: any = {
+      organizationId,
+      isActive: true,
+      dayOfWeek,
+    };
+    if (locationId) {
+      shiftWhere.OR = [{ locationId }, { locationId: null }];
+    }
+
+    const [todayShifts, todayLogs] = await Promise.all([
+      this.prisma.client.staffShift.findMany({
+        where: shiftWhere,
+        include: {
+          member: {
+            select: {
+              id: true,
+              isCheckedIn: true,
+              user: { select: { name: true, email: true, image: true } },
+            },
+          },
+        },
+      }),
+      this.prisma.client.attendanceLog.findMany({
+        where: {
+          organizationId,
+          checkInTime: { gte: startOfDay },
+          ...(locationId ? { checkInLocationId: locationId } : {}),
+        },
+        include: {
+          member: {
+            select: {
+              id: true,
+              isCheckedIn: true,
+              user: { select: { name: true, email: true, image: true } },
+            },
+          },
+          checkInLocation: { select: { id: true, name: true } },
+        },
+        orderBy: { checkInTime: "desc" },
+      }),
+    ]);
+
+    return {
+      date: now.toISOString(),
+      dayOfWeek,
+      shifts: todayShifts,
+      logs: todayLogs,
+    };
   }
 }

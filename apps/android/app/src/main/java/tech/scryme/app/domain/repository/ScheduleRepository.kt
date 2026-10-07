@@ -1,5 +1,6 @@
 package tech.scryme.app.domain.repository
 
+import tech.scryme.app.data.dto.AttendanceLogDto
 import tech.scryme.app.domain.model.ShiftBreak
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
@@ -16,4 +17,20 @@ interface ScheduleRepository {
     suspend fun getStaffTasks(orgSlug: String, memberId: String? = null, status: String? = null): Result<List<StaffTask>>
     suspend fun createStaffTask(orgSlug: String, title: String, description: String? = null, assignedMemberId: String? = null, priority: String? = "MEDIUM", dueDate: String? = null): Result<StaffTask>
     suspend fun updateStaffTask(orgSlug: String, taskId: String, status: String? = null, title: String? = null, description: String? = null): Result<StaffTask>
+
+    suspend fun checkInAttendance(
+        orgSlug: String,
+        locationId: String? = null,
+        branchCode: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        verificationMethod: String? = null,
+        notes: String? = null
+    ): Result<AttendanceLogDto>
+
+    suspend fun checkOutAttendance(
+        orgSlug: String,
+        locationId: String? = null,
+        notes: String? = null
+    ): Result<AttendanceLogDto>
 }

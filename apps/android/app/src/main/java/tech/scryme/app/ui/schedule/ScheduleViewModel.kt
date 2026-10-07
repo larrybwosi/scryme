@@ -78,6 +78,70 @@ class ScheduleViewModel @Inject constructor(
         }
     }
 
+    fun checkInAttendance(
+        locationId: String? = null,
+        branchCode: String? = null,
+        latitude: Double? = null,
+        longitude: Double? = null,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+            val result = scheduleRepository.checkInAttendance(
+                orgSlug = orgSlug,
+                locationId = locationId,
+                branchCode = branchCode,
+                latitude = latitude,
+                longitude = longitude,
+                verificationMethod = if (branchCode != null) "QR_SCAN" else "GPS_GEOFENCE"
+            )
+            result.fold(
+                onSuccess = { log ->
+                    val statusMsg = if (log.isLocationVerified) "Checked in & Verified!" else "Checked in (Location Unverified)"
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "Attendance Signed In",
+                        statusMsg
+                    )
+                    onSuccess(statusMsg)
+                    val currentTab = (_uiState.value as? ScheduleUiState.Success)?.selectedTab ?: 0
+                    loadSchedule(currentTab)
+                },
+                onFailure = { error ->
+                    val msg = error.message ?: "Failed to check in"
+                    onError(msg)
+                }
+            )
+        }
+    }
+
+    fun checkOutAttendance(
+        locationId: String? = null,
+        onSuccess: (String) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+            val result = scheduleRepository.checkOutAttendance(orgSlug, locationId)
+            result.fold(
+                onSuccess = {
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "Attendance Signed Out",
+                        "You have checked out successfully."
+                    )
+                    onSuccess("Checked out successfully")
+                    val currentTab = (_uiState.value as? ScheduleUiState.Success)?.selectedTab ?: 0
+                    loadSchedule(currentTab)
+                },
+                onFailure = { error ->
+                    onError(error.message ?: "Failed to check out")
+                }
+            )
+        }
+    }
+
     fun requestShiftTrade(shiftId: String, targetMemberId: String?, reason: String?) {
         viewModelScope.launch {
             val orgSlug = sessionManager.getOrgSlug() ?: return@launch

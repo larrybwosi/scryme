@@ -207,6 +207,55 @@ class ScheduleRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun checkInAttendance(
+        orgSlug: String,
+        locationId: String?,
+        branchCode: String?,
+        latitude: Double?,
+        longitude: Double?,
+        verificationMethod: String?,
+        notes: String?
+    ): Result<AttendanceLogDto> {
+        return try {
+            val dto = CheckInAttendanceRequestDto(
+                locationId = locationId,
+                branchCode = branchCode,
+                latitude = latitude,
+                longitude = longitude,
+                verificationMethod = verificationMethod ?: "GPS_GEOFENCE",
+                notes = notes
+            )
+            val res = scheduleApiService.checkInAttendance(orgSlug, dto)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val log = res.body()?.data ?: return Result.failure(Exception("Null response"))
+                Result.success(log)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun checkOutAttendance(
+        orgSlug: String,
+        locationId: String?,
+        notes: String?
+    ): Result<AttendanceLogDto> {
+        return try {
+            val dto = CheckOutAttendanceRequestDto(locationId = locationId, notes = notes)
+            val res = scheduleApiService.checkOutAttendance(orgSlug, dto)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val log = res.body()?.data ?: return Result.failure(Exception("Null response"))
+                Result.success(log)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun StaffShiftDto.toDomain() = StaffShift(
         id = id,
         memberId = memberId,
