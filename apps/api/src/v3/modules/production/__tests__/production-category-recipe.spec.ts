@@ -350,5 +350,34 @@ describe("ProductionService - Category and Recipe Validation", () => {
       expect(result).toEqual(mockCreatedRecipe);
       expect(prismaMock.client.recipe.create).toHaveBeenCalled();
     });
+      it("should allow updating recipe with ingredient payload containing id field", async () => {
+      prismaMock.client.recipe.findFirst.mockResolvedValue({
+        id: "rec-1",
+        organizationId: "org-1",
+        systemUnitId: "unit-1",
+      });
+      prismaMock.client.systemUnit.findUnique.mockResolvedValue({ id: "unit-1" });
+      prismaMock.client.recipe.update.mockResolvedValue({
+        id: "rec-1",
+        name: "Updated Recipe",
+        organizationId: "org-1",
+      });
+
+      const updateDto: UpdateRecipeDto = {
+        name: "Updated Recipe",
+        ingredients: [
+          {
+            id: "cmuqi2eqg000b01rnlu2v8cz9",
+            ingredientVariantId: "var-1",
+            quantity: 500,
+            systemUnitId: "unit-1",
+          },
+        ],
+      };
+
+      const result = await service.updateRecipe("org-1", "rec-1", updateDto);
+      expect(result).toBeDefined();
+      expect(prismaMock.client.recipe.update).toHaveBeenCalled();
+    });
   });
 });

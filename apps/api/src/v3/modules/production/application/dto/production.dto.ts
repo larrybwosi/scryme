@@ -12,6 +12,55 @@ import {
 } from "class-validator";
 import { Type } from "class-transformer";
 
+export class UpdateRecipeIngredientDto {
+  @ApiPropertyOptional({ description: "Ingredient record ID (if updating existing)" })
+  @IsOptional()
+  @IsString()
+  id?: string;
+
+  @ApiPropertyOptional({ description: "Product variant ID of the ingredient" })
+  @IsOptional()
+  @IsString()
+  ingredientVariantId?: string;
+
+  @ApiPropertyOptional({ description: "Sub-recipe ID if this ingredient is a pre-made batch/recipe component" })
+  @IsOptional()
+  @IsString()
+  subRecipeId?: string;
+
+  @ApiPropertyOptional({ description: "Whether this ingredient is flour (used as baseline for Baker's Percentage)" })
+  @IsOptional()
+  @IsBoolean()
+  isFlour?: boolean;
+
+  @ApiPropertyOptional({ description: "Baker's percentage relative to flour baseline" })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  bakersPercentage?: number;
+
+  @ApiPropertyOptional({ description: "Quantity required" })
+  @IsOptional()
+  @IsNumber()
+  @Type(() => Number)
+  quantity?: number;
+
+  @ApiPropertyOptional({ description: "System unit ID" })
+  @IsOptional()
+  @IsString()
+  systemUnitId?: string;
+
+  @ApiPropertyOptional({ description: "Org unit ID" })
+  @IsOptional()
+  @IsString()
+  orgUnitId?: string;
+
+  @ApiPropertyOptional({ description: "Preparation notes" })
+  @IsOptional()
+  @IsString()
+  preparationNotes?: string;
+}
+
 export class CreateRecipeIngredientDto {
   @ApiPropertyOptional({ description: "Product variant ID of the ingredient" })
   @IsOptional()
@@ -258,13 +307,13 @@ export class UpdateRecipeDto {
   @IsBoolean()
   isArchived?: boolean;
 
-  @ApiPropertyOptional({ description: "List of recipe ingredients", type: [CreateRecipeIngredientDto] })
+  @ApiPropertyOptional({ description: "List of recipe ingredients", type: [UpdateRecipeIngredientDto] })
   @IsOptional()
   @IsArray()
   @ArrayMinSize(1, { message: "Ingredients list cannot be empty" })
   @ValidateNested({ each: true })
-  @Type(() => CreateRecipeIngredientDto)
-  ingredients?: CreateRecipeIngredientDto[];
+  @Type(() => UpdateRecipeIngredientDto)
+  ingredients?: UpdateRecipeIngredientDto[];
 }
 
 export class CreateBatchDto {
