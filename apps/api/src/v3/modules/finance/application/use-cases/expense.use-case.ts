@@ -224,8 +224,11 @@ export class ExpenseUseCase {
     if (fund.amount.lessThan(amount))
       throw new BadRequestException("Insufficient funds in petty cash");
 
-    await tx.pettyCashFund.update({
-      where: { id: fundId },
+    // SECURITY (Sentinel): PettyCashFund lacks a composite unique constraint on [id, organizationId].
+    // Standard Prisma update ignores non-unique fields in where clauses at runtime.
+    // Using updateMany strictly enforces database-level multi-tenant isolation during balance adjustments.
+    await tx.pettyCashFund.updateMany({
+      where: { id: fundId, organizationId },
       data: { amount: { decrement: amount } },
     });
 
@@ -406,13 +409,20 @@ export class ExpenseUseCase {
         );
       }
 
-      const updatedExpense = await tx.expense.update({
-        where: { id: expenseId },
+      // SECURITY (Sentinel): Expense model lacks a composite unique constraint on [id, organizationId].
+      // Standard Prisma update ignores non-unique fields in where clauses at runtime.
+      // Using updateMany strictly enforces database-level multi-tenant isolation during status updates.
+      await tx.expense.updateMany({
+        where: { id: expenseId, organizationId },
         data: {
           status: ExpenseStatus.APPROVED,
           approverId: memberId,
           approvalDate: new Date(),
         },
+      });
+
+      const updatedExpense = await tx.expense.findFirstOrThrow({
+        where: { id: expenseId, organizationId },
       });
 
       await this.handlePostApprovalActions(
