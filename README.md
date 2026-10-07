@@ -1,8 +1,8 @@
 <div align="center">
 
-# ⚡ SCRYME Enterprise ERP & Retail Operations Suite
+#  SCRYME Enterprise ERP & Retail Operations Suite
 
-**Next-Generation Multi-Tenant Retail, Bakery Production, Point of Sale & Supply Chain OS**
+**Next-Generation Multi-Tenant Retail, Production, Point of Sale & Supply Chain OS**
 
 <p align="center">
   <img src="apps/pos/public/logo.jpg" alt="Scryme Logo" width="160" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);" />
@@ -49,7 +49,7 @@ Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https
 ### 🖥️ Applications (`apps/`)
 
 * 🏢 **[Scryme Web](./apps/web)**: Central enterprise back-office management console for purchasing, multi-location stock movements, purchase order receptions, analytics, and staff scheduling.
-* ⚡ **[Scryme API](./apps/api)**: Core NestJS RESTful engine processing multi-tenancy, queueing (RabbitMQ), caching (Redis), transaction safety, and WebSockets/Ably events.
+*  **[Scryme API](./apps/api)**: Core NestJS RESTful engine processing multi-tenancy, queueing (RabbitMQ), caching (Redis), transaction safety, and WebSockets/Ably events.
 * 👥 **[Scryme CRM](./apps/crm)**: Next.js multi-channel CRM for contact management, lead pipeline tracking, deal stages, loyalty, and automated messaging workflows.
 * 🛒 **[Scryme POS](./apps/pos)**: High-availability, offline-first Tauri v2 desktop checkout workstation. Includes native thermal printer drivers (ESC/POS), hardware barcode scanners, cash drawers, and second-screen customer displays.
 * 🥖 **[Scryme Bakery](./apps/bakery)**: Specialized Tauri v2 production management workstation for commercial bakeries, scaling recipe formulations, batch scheduling, ingredient tracking, and baker shift management.
