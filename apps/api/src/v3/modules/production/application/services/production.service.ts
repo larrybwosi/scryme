@@ -460,60 +460,28 @@ export class ProductionService {
   async getRecipes(organizationId: string) {
     return this.prisma.client.recipe.findMany({
       where: { organizationId },
-      select: {
-        id: true,
-        name: true,
-        description: true,
-        categoryId: true,
-        producesVariantId: true,
-        yieldQuantity: true,
-        systemUnitId: true,
-        orgUnitId: true,
-        prepTime: true,
-        bakeTime: true,
-        totalTime: true,
-        costPrice: true,
-        difficulty: true,
-        temperatureCelsius: true,
-        servingSize: true,
-        instructions: true,
-        notes: true,
-        tags: true,
-        organizationId: true,
-        createdAt: true,
-        updatedAt: true,
-        category: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-        systemUnit: {
-          select: {
-            id: true,
-            name: true,
-            symbol: true,
-          },
-        },
-        orgUnit: {
-          select: {
-            id: true,
-            name: true,
-            symbol: true,
-          },
-        },
+      include: {
+        category: true,
+        systemUnit: true,
+        orgUnit: true,
         producesVariant: {
-          select: {
-            id: true,
-            name: true,
-            sku: true,
-            product: {
-              select: {
-                id: true,
-                name: true,
-                imageUrls: true,
+          include: {
+            product: true,
+          },
+        },
+        ingredients: {
+          include: {
+            ingredientVariant: {
+              include: { product: true },
+            },
+            subRecipe: {
+              include: {
+                category: true,
+                producesVariant: { include: { product: true } },
               },
             },
+            systemUnit: true,
+            orgUnit: true,
           },
         },
       },
