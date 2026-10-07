@@ -28,7 +28,7 @@ import {
 } from "../../application/dto/android-auth.dto";
 
 @ApiTags("V3 Android POS")
-@Controller("v3/android/pos")
+@Controller("android/pos")
 @UseInterceptors(StandardResponseInterceptor)
 export class AndroidPosController {
   constructor(private readonly androidPosUseCase: AndroidPosUseCase) {}
