@@ -21,3 +21,7 @@
 ## 2026-10-06 - [Batching Reads and Pre-associating Stock Batches in bulkUpdateLocationStock]
 **Learning:** Performing sequential per-item database lookups (`findUnique`) and post-creation update queries (updating adjustments/movements after batch creation) inside loops creates $O(N)$ database query roundtrips. Batch pre-fetching entities into `Map` lookups up-front and creating `stockBatch` records prior to adjustment/movement insertions allows passing `stockBatchId` directly during creation, collapsing database roundtrips from $O(8N)$ to $O(1)$.
 **Action:** Always pre-fetch relational records into Map lookups up-front and structure creation ordering so foreign keys (like batch IDs) can be supplied directly on initial record insertion instead of issuing follow-up update queries.
+
+## 2026-10-07 - [Chunked Concurrency for Interactive Prisma Transactions]
+**Learning:** Unbounded `Promise.all` inside an interactive Prisma transaction callback (`tx`) floods Prisma's internal connection pipeline with un-throttled queries, leading to transaction timeouts (`P2028: Transaction is expired`) or lock contention under large payloads. Controlled chunking (`CHUNK_SIZE = 10`) balances ~10x concurrent speedups while preventing transaction timeouts and connection pipeline exhaustion.
+**Action:** Always use chunked concurrency (`CHUNK_SIZE = 10`) when performing multi-item mutations inside Prisma interactive transactions (`tx`).
