@@ -1,83 +1,66 @@
 "use client";
 
+import React from "react";
 import { motion } from "framer-motion";
-import { colors, fonts } from "@/lib/scryme-tokens";
 
-export function StatsStrip({ stats }: { stats?: Array<{ value: string; label: string; sublabel: string }> }) {
-  const statList = stats && stats.length > 0 ? stats : [
-    {
-      value: "500+",
-      label: "Enterprise businesses",
-      sublabel: "across 12 countries",
-    },
-    {
-      value: "$2B+",
-      label: "Transactions processed",
-      sublabel: "annually on the platform",
-    },
-    {
-      value: "99.9%",
-      label: "Platform uptime SLA",
-      sublabel: "guaranteed & monitored",
-    },
-    {
-      value: "24/7",
-      label: "Expert support",
-      sublabel: "dedicated account teams",
-    },
-  ];
+export function StatsStrip({
+  stats,
+}: {
+  stats?: Array<{ value: string; label: string; sublabel: string }>;
+}) {
+  const statList =
+    stats && stats.length > 0
+      ? stats
+      : [
+          {
+            value: "500+",
+            label: "Enterprise Businesses",
+            sublabel: "Active across 12 countries",
+          },
+          {
+            value: "$2B+",
+            label: "Annual Gross Volume",
+            sublabel: "Processed through Scryme POS & web",
+          },
+          {
+            value: "99.99%",
+            label: "Uptime SLA",
+            sublabel: "24/7 Monitored infrastructure",
+          },
+          {
+            value: "<100ms",
+            label: "Register Sync Speed",
+            sublabel: "Multi-branch transaction posting",
+          },
+        ];
 
   return (
     <section
-      className="py-20"
-      style={{ background: colors.inkPanelAlt }}
-      aria-label="Platform statistics"
+      className="py-16 sm:py-20 bg-muted/40 border-y border-border/80"
+      aria-label="Platform scale statistics"
     >
-      <div className="container mx-auto">
-        <div
-          className="flex items-center justify-center gap-2 mb-10"
-          aria-hidden="true"
-        >
-          <span
-            className="text-[11px] uppercase tracking-widest"
-            style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-          >
-            Totals — as of today
-          </span>
-        </div>
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-y-10 gap-x-4">
+      <div className="container mx-auto px-4 lg:px-8">
+        <p className="text-center text-[11px] font-mono font-bold uppercase tracking-widest text-muted-foreground mb-10">
+          Scryme Platform Metrics & Scale
+        </p>
+
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">
           {statList.map((stat, i) => (
             <motion.div
               key={stat.label}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 15 }}
               whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true, margin: "-80px" }}
-              transition={{
-                delay: i * 0.08,
-                duration: 0.5,
-                ease: [0.22, 1, 0.36, 1],
-              }}
-              className={
-                i !== 0 ? "text-center lg:border-l lg:pl-4" : "text-center"
-              }
-              style={i !== 0 ? { borderColor: colors.inkLine } : undefined}
+              viewport={{ once: true, margin: "-50px" }}
+              transition={{ delay: i * 0.08, duration: 0.4 }}
+              className="flex flex-col items-center text-center p-6 rounded-xl bg-card border border-border/80 shadow-xs"
             >
-              <div
-                className="text-4xl lg:text-5xl font-semibold tracking-tight mb-2 tabular-nums"
-                style={{ color: colors.brass, fontFamily: fonts.mono }}
-              >
+              <div className="text-3xl sm:text-4xl lg:text-5xl font-mono font-bold tracking-tight text-[var(--brass)] mb-2">
                 {stat.value}
               </div>
-              <div
-                className="text-sm font-medium mb-0.5"
-                style={{ color: colors.textPrimary, fontFamily: fonts.body }}
-              >
+              <div className="text-sm font-semibold text-foreground mb-1">
                 {stat.label}
               </div>
-              <div
-                className="text-xs"
-                style={{ color: colors.textFaint, fontFamily: fonts.mono }}
-              >
+              <div className="text-xs text-muted-foreground font-mono">
                 {stat.sublabel}
               </div>
             </motion.div>

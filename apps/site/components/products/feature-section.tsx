@@ -1,6 +1,8 @@
-import type { ReactNode } from "react";
-import { colors, fonts } from "@/lib/scryme-tokens";
-import { Eyebrow } from "@/components/products/eyebrow";
+"use client";
+
+import React, { type ReactNode } from "react";
+import { Badge } from "@/components/ui/badge";
+import { CheckCircle2 } from "lucide-react";
 
 interface FeatureSectionProps {
   id?: string;
@@ -26,50 +28,54 @@ export function FeatureSection({
   return (
     <section
       id={id}
-      className="border-b py-24"
-      style={{
-        borderColor: colors.inkLine,
-        background: dark ? colors.inkPanelAlt : "transparent",
-      }}
+      className={`py-20 lg:py-28 border-b border-border/80 ${
+        dark ? "bg-muted/30" : "bg-background"
+      }`}
     >
-      <div
-        className={`mx-auto grid max-w-6xl grid-cols-1 items-center gap-10 px-6 lg:gap-18 ${
-          reverse ? "lg:grid-cols-[1.1fr_0.9fr]" : "lg:grid-cols-[0.9fr_1.1fr]"
-        }`}
-      >
-        <div className={reverse ? "lg:order-2" : "lg:order-1"}>
-          <Eyebrow>{eyebrow}</Eyebrow>
-          <h3
-            className="mt-4 text-[1.7rem] leading-[1.14] sm:text-[2.15rem]"
-            style={{ fontFamily: fonts.display, color: colors.paper }}
+      <div className="container mx-auto px-4 lg:px-8">
+        <div
+          className={`grid grid-cols-1 lg:grid-cols-12 items-center gap-12 lg:gap-16 ${
+            reverse ? "lg:flex-row-reverse" : ""
+          }`}
+        >
+          <div
+            className={`lg:col-span-5 flex flex-col items-start space-y-6 ${
+              reverse ? "lg:order-2" : "lg:order-1"
+            }`}
           >
-            {title}
-          </h3>
-          <p
-            className="mt-4 max-w-[46ch] text-[15.5px]"
-            style={{ color: colors.textMuted }}
-          >
-            {description}
-          </p>
-          <ul className="mt-6 flex flex-col gap-3.5">
-            {bullets.map((b) => (
-              <li
-                key={b.text}
-                className="flex items-start gap-3 text-[14.5px]"
-                style={{ color: colors.textMuted }}
-              >
-                <span
-                  className="mt-0.5 text-xs"
-                  style={{ fontFamily: fonts.mono, color: colors.brass }}
+            <Badge variant="brass" size="md">
+              {eyebrow}
+            </Badge>
+
+            <h3 className="text-3xl sm:text-4xl font-bold tracking-tight text-foreground leading-[1.12]">
+              {title}
+            </h3>
+
+            <p className="text-base text-muted-foreground leading-relaxed">
+              {description}
+            </p>
+
+            <ul className="space-y-3 pt-2 w-full">
+              {bullets.map((b) => (
+                <li
+                  key={b.text}
+                  className="flex items-start gap-3 text-xs sm:text-sm text-foreground"
                 >
-                  §
-                </span>
-                {b.text}
-              </li>
-            ))}
-          </ul>
+                  <CheckCircle2 size={16} className="text-[var(--brass)] shrink-0 mt-0.5" />
+                  <span>{b.text}</span>
+                </li>
+              ))}
+            </ul>
+          </div>
+
+          <div
+            className={`lg:col-span-7 w-full ${
+              reverse ? "lg:order-1" : "lg:order-2"
+            }`}
+          >
+            {children}
+          </div>
         </div>
-        <div className={reverse ? "lg:order-1" : "lg:order-2"}>{children}</div>
       </div>
     </section>
   );

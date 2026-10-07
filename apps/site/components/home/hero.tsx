@@ -1,10 +1,12 @@
 "use client";
 
+import React from "react";
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
-import { ArrowRight, Check, CircleDot, ShieldCheck, Sparkles } from "lucide-react";
+import { ArrowRight, Check, ShieldCheck, Sparkles, CircleDot } from "lucide-react";
 import { useOpenPanel } from "@openpanel/nextjs";
-import { colors, fonts } from "@/lib/scryme-tokens";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { HeroMedia, type HeroMediaData } from "./hero-media";
 
 const webUrl =
@@ -13,10 +15,10 @@ const webUrl =
   "https://app.scryme.tech";
 
 const capabilities = [
-  "Offline-first POS",
-  "Multi-branch control",
-  "Live inventory",
-  "Automated storefronts",
+  "Offline-first POS terminal sync",
+  "Multi-branch stock reconciliation",
+  "Live automated e-commerce storefronts",
+  "Unified financial balance sheet & ledger",
 ];
 
 export function Hero({
@@ -54,115 +56,122 @@ export function Hero({
 
   return (
     <section
-      className="relative overflow-hidden bg-inkBg pb-16 pt-28 sm:pb-24 sm:pt-36 lg:min-h-[900px] lg:pt-44"
+      className="relative overflow-hidden bg-background pt-28 pb-16 sm:pt-36 sm:pb-24 lg:pt-40"
       aria-labelledby="hero-title"
     >
-      <div className="enterprise-grid absolute inset-0" aria-hidden="true" />
-      <div className="container relative mx-auto">
-        <div className="grid items-center gap-14 lg:grid-cols-[0.92fr_1.08fr] lg:gap-16">
-          <div className="flex max-w-2xl flex-col items-start gap-7">
+      <div className="enterprise-grid absolute inset-0 pointer-events-none opacity-30" aria-hidden="true" />
+      <div className="container relative mx-auto px-4 lg:px-8">
+        <div className="grid items-center gap-12 lg:grid-cols-12">
+          {/* Left Hero Content */}
+          <div className="lg:col-span-6 flex flex-col items-start space-y-6">
             <motion.div
               initial={reduceMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.55 }}
-              className="flex items-center gap-2 rounded-full border border-brassLine bg-brassDim px-3 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.18em] text-brass"
+              transition={{ duration: 0.5 }}
             >
-              <CircleDot aria-hidden="true" />
-              The commerce operating ledger
+              <Badge variant="brass" size="md">
+                <CircleDot size={12} className="animate-pulse text-[var(--brass)]" />
+                The Enterprise Commerce Operating Ledger
+              </Badge>
             </motion.div>
+
             <motion.h1
               id="hero-title"
-              initial={reduceMotion ? false : { opacity: 0, y: 20 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 18 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.08, duration: 0.7 }}
-              className="max-w-3xl text-balance font-sans text-4xl font-semibold leading-[1.05] tracking-[-0.035em] text-textPrimary sm:text-5xl lg:text-6xl"
+              transition={{ delay: 0.08, duration: 0.6 }}
+              className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance"
             >
               {title}
             </motion.h1>
+
             <motion.p
-              initial={reduceMotion ? false : { opacity: 0, y: 16 }}
+              initial={reduceMotion ? false : { opacity: 0, y: 14 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.16, duration: 0.65 }}
-              className="max-w-xl text-pretty font-sans text-base sm:text-lg leading-relaxed text-textMuted"
+              transition={{ delay: 0.16, duration: 0.6 }}
+              className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl text-pretty"
             >
               {subtitle}
             </motion.p>
+
             <motion.div
               initial={reduceMotion ? false : { opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.24, duration: 0.6 }}
-              className="flex flex-col gap-3 sm:flex-row"
+              transition={{ delay: 0.24, duration: 0.5 }}
+              className="flex flex-col sm:flex-row gap-3 w-full sm:w-auto pt-2"
             >
-              <Link
+              <Button
+                size="lg"
+                variant="brass"
                 href={`${webUrl}/sign-up`}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md bg-brass px-6 font-sans text-sm font-semibold text-inkBg transition-transform hover:-translate-y-0.5"
+                icon={<Sparkles size={18} />}
                 onClick={() => trackClick("Try Scryme Free", `${webUrl}/sign-up`)}
               >
-                <span>Try Scryme Free</span>
-                <Sparkles size={16} aria-hidden="true" />
-              </Link>
-              <a
-                href={`${webUrl}/sign-up`}
-                className="inline-flex min-h-12 items-center justify-center gap-2 rounded-md border border-inkLine bg-inkPanel/50 px-6 font-sans text-sm font-semibold text-textPrimary transition-colors hover:bg-inkPanel"
-                onClick={() => trackClick("Create Account", `${webUrl}/sign-up`)}
+                Try Scryme Free
+              </Button>
+              <Button
+                size="lg"
+                variant="outline"
+                href="/products"
+                icon={<ArrowRight size={18} />}
+                onClick={() => trackClick("Explore Platform", "/products")}
               >
-                <span>Create Account</span>
-                <ArrowRight size={16} aria-hidden="true" />
-              </a>
+                Explore Platform
+              </Button>
             </motion.div>
+
             <motion.ul
               initial={reduceMotion ? false : { opacity: 0 }}
               animate={{ opacity: 1 }}
-              transition={{ delay: 0.32, duration: 0.7 }}
-              className="grid gap-x-6 gap-y-3 sm:grid-cols-2"
-              aria-label="Platform capabilities"
+              transition={{ delay: 0.32, duration: 0.6 }}
+              className="grid grid-cols-1 sm:grid-cols-2 gap-x-6 gap-y-2.5 pt-4 text-xs sm:text-sm font-medium text-muted-foreground"
             >
               {capabilities.map((item) => (
-                <li
-                  key={item}
-                  className="flex items-center gap-2 font-sans text-sm text-textMuted"
-                >
-                  <Check className="text-ledgerGreen" aria-hidden="true" />
-                  {item}
+                <li key={item} className="flex items-center gap-2">
+                  <span className="w-4 h-4 rounded-full bg-[var(--ledger-green)]/15 text-[var(--ledger-green)] flex items-center justify-center shrink-0">
+                    <Check size={11} />
+                  </span>
+                  <span>{item}</span>
                 </li>
               ))}
             </motion.ul>
           </div>
 
+          {/* Right Hero Media Showcase */}
           <motion.div
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.97, y: 24 }}
+            initial={reduceMotion ? false : { opacity: 0, scale: 0.98, y: 20 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            transition={{
-              delay: 0.18,
-              duration: 0.8,
-              ease: [0.22, 1, 0.36, 1],
-            }}
-            className="relative"
+            transition={{ delay: 0.15, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+            className="lg:col-span-6 relative"
           >
-            <HeroMedia image={data?.heroImage} video={data?.heroVideo} />
-            <div className="relative -mt-6 mx-4 grid gap-px overflow-hidden rounded-lg border border-inkLine bg-inkLine shadow-2xl sm:mx-8 sm:grid-cols-3">
-              <div className="bg-inkPanelAlt p-4">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-textFaint">
-                  Reconciled today
+            <div className="relative rounded-2xl p-2 bg-gradient-to-b from-border/80 to-border/30 border shadow-2xl">
+              <HeroMedia image={data?.heroImage} video={data?.heroVideo} />
+            </div>
+
+            {/* Live Metrics Overlay Card */}
+            <div className="mt-4 grid grid-cols-3 gap-px bg-border rounded-xl overflow-hidden border shadow-lg text-card-foreground">
+              <div className="bg-card p-3 sm:p-4 text-center sm:text-left">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Reconciled Today
                 </p>
-                <p className="mt-2 font-mono text-xl font-semibold text-brass">
+                <p className="mt-1 font-mono text-base sm:text-lg font-bold text-[var(--brass)]">
                   ${total.toLocaleString("en-US")}
                 </p>
               </div>
-              <div className="bg-inkPanelAlt p-4">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-textFaint">
-                  Systems online
+              <div className="bg-card p-3 sm:p-4 text-center sm:text-left">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Systems Online
                 </p>
-                <p className="mt-2 font-mono text-xl font-semibold text-textPrimary">
-                  24 / 24
+                <p className="mt-1 font-mono text-base sm:text-lg font-bold text-foreground">
+                  24 / 24 Active
                 </p>
               </div>
-              <div className="bg-inkPanelAlt p-4">
-                <p className="font-mono text-[10px] uppercase tracking-widest text-textFaint">
-                  Data integrity
+              <div className="bg-card p-3 sm:p-4 text-center sm:text-left">
+                <p className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
+                  Data Integrity
                 </p>
-                <p className="mt-2 flex items-center gap-2 font-mono text-sm font-semibold text-ledgerGreen">
-                  <ShieldCheck aria-hidden="true" /> Verified
+                <p className="mt-1 flex items-center justify-center sm:justify-start gap-1 font-mono text-xs sm:text-sm font-semibold text-[var(--ledger-green)]">
+                  <ShieldCheck size={14} /> Verified
                 </p>
               </div>
             </div>

@@ -1,9 +1,10 @@
 "use client";
 
-import type { ReactNode } from "react";
+import React, { type ReactNode } from "react";
 import { captureCtaClicked } from "@/lib/posthog-tracking";
-import { colors, fonts } from "@/lib/scryme-tokens";
-import { Eyebrow } from "@/components/products/eyebrow";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { ArrowRight } from "lucide-react";
 
 interface Cta {
   label: string;
@@ -17,7 +18,6 @@ interface ProductHeroProps {
   primaryCta?: Cta;
   secondaryCta?: Cta;
   module: string;
-  /** Optional right-column visual (e.g. a ledger stub). Falls back to a centered layout without it. */
   visual?: ReactNode;
 }
 
@@ -31,55 +31,35 @@ export function ProductHero({
   visual,
 }: ProductHeroProps) {
   return (
-    <header
-      className="relative overflow-hidden border-b py-24"
-      style={{ borderColor: colors.inkLine, background: colors.inkBg }}
-    >
-      {/* faint ledger rule texture */}
-      <div
-        className="pointer-events-none absolute inset-0 opacity-60"
-        style={{
-          backgroundImage: `repeating-linear-gradient(180deg, ${colors.inkLine} 0px, ${colors.inkLine} 1px, transparent 1px, transparent 64px)`,
-        }}
-      />
+    <header className="relative overflow-hidden bg-background pt-28 pb-16 sm:pt-36 sm:pb-20 border-b border-border/80">
+      <div className="enterprise-grid absolute inset-0 pointer-events-none opacity-30" />
 
       <div
-        className={`relative mx-auto max-w-6xl px-6 ${
+        className={`relative container mx-auto px-4 lg:px-8 ${
           visual
-            ? "grid grid-cols-1 items-center gap-16 lg:grid-cols-[1.05fr_0.95fr]"
-            : "max-w-3xl text-center"
+            ? "grid grid-cols-1 lg:grid-cols-12 items-center gap-12 lg:gap-16"
+            : "max-w-3xl mx-auto text-center"
         }`}
       >
-        <div>
-          <Eyebrow center={!visual}>{eyebrow}</Eyebrow>
-          <h1
-            className="mt-5 text-[2.4rem] leading-[1.06] sm:text-[3rem] lg:text-[3.6rem]"
-            style={{
-              fontFamily: fonts.display,
-              fontWeight: 500,
-              color: colors.paper,
-              letterSpacing: "-0.01em",
-            }}
-          >
+        <div className={visual ? "lg:col-span-6 flex flex-col items-start space-y-6" : "flex flex-col items-center space-y-6"}>
+          <Badge variant="brass" size="md">
+            {eyebrow}
+          </Badge>
+
+          <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-foreground leading-[1.08] text-balance">
             {title}
           </h1>
-          <p
-            className={`mt-5 text-[16.5px] ${visual ? "max-w-[46ch]" : "mx-auto max-w-[50ch]"}`}
-            style={{ color: colors.textMuted }}
-          >
+
+          <p className="text-base sm:text-lg text-muted-foreground leading-relaxed max-w-xl">
             {description}
           </p>
-          <div
-            className={`mt-8 flex flex-wrap items-center gap-4 ${visual ? "" : "justify-center"}`}
-          >
-            <a
+
+          <div className="flex flex-wrap items-center gap-4 pt-2">
+            <Button
+              variant="brass"
+              size="lg"
               href={primaryCta.href}
-              className="inline-block rounded-[2px] px-5 py-3 text-[13px] transition-transform hover:-translate-y-px"
-              style={{
-                fontFamily: fonts.mono,
-                background: colors.brass,
-                color: colors.inkBg,
-              }}
+              icon={<ArrowRight size={16} />}
               onClick={() =>
                 captureCtaClicked("product_hero_cta_clicked", {
                   location: "product_hero",
@@ -90,17 +70,14 @@ export function ProductHero({
                 })
               }
             >
-              {primaryCta.label} →
-            </a>
+              {primaryCta.label}
+            </Button>
+
             {secondaryCta && (
-              <a
+              <Button
+                variant="outline"
+                size="lg"
                 href={secondaryCta.href}
-                className="border-b px-1 py-3 text-[13px] transition-colors"
-                style={{
-                  fontFamily: fonts.mono,
-                  color: colors.textMuted,
-                  borderColor: colors.inkLine,
-                }}
                 onClick={() =>
                   captureCtaClicked("product_hero_cta_clicked", {
                     location: "product_hero",
@@ -112,12 +89,12 @@ export function ProductHero({
                 }
               >
                 {secondaryCta.label}
-              </a>
+              </Button>
             )}
           </div>
         </div>
 
-        {visual && <div>{visual}</div>}
+        {visual && <div className="lg:col-span-6 w-full">{visual}</div>}
       </div>
     </header>
   );
