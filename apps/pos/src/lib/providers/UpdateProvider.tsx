@@ -170,8 +170,6 @@ export const UpdaterProvider = ({
         let downloadedBytes = 0;
         let totalBytes = 0;
 
-        const enableAutoUpdate = usePosStore.getState().settings?.enableAutoUpdate ?? true;
-
         await updateObj.downloadAndInstall(progress => {
           switch (progress.event) {
             case 'Started':
