@@ -141,7 +141,7 @@ export class V3RealtimeGateway
 
       if (!payload) {
         if (token === "socket-io-realtime" || token === "socketio-placeholder-token") {
-          (client as any).v3Context = null;
+          (client as any).v3Context = { isSystem: true };
           console.log(`V3 Client connected with public placeholder token: ${client.id}`);
           return;
         }
@@ -196,6 +196,10 @@ export class V3RealtimeGateway
       return true;
     }
 
+    if (context?.isSystem) {
+      return true;
+    }
+
     if (!context) return false;
 
     // Presence channel check (e.g., presence:locationId, presence:org:orgId)
@@ -209,7 +213,7 @@ export class V3RealtimeGateway
     }
 
     // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments, organization:orgId:orders)
-    if (channel.startsWith("organization:")) {
+    if (channel.startsWith("organization:") || channel.startsWith("org:")) {
       const parts = channel.split(":");
       const targetOrg = parts[1];
       if (targetOrg && (targetOrg === context.organizationId || targetOrg === context.orgSlug)) {

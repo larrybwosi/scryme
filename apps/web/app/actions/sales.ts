@@ -48,8 +48,8 @@ export async function getTransactions(params: {
   paymentStatus?: PaymentStatus | "all";
   paymentMethod?: PaymentMethod | "all";
   locationId?: string;
-  startDate?: Date;
-  endDate?: Date;
+  startDate?: Date | string;
+  endDate?: Date | string;
   sortBy?: string;
 }) {
   const { auth } = await checkPermission([
@@ -97,8 +97,16 @@ export async function getTransactions(params: {
 
   if (params.startDate || params.endDate) {
     where.createdAt = {};
-    if (params.startDate) where.createdAt.gte = params.startDate;
-    if (params.endDate) where.createdAt.lte = params.endDate;
+    if (params.startDate) {
+      const start = new Date(params.startDate);
+      start.setHours(0, 0, 0, 0);
+      where.createdAt.gte = start;
+    }
+    if (params.endDate) {
+      const end = new Date(params.endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
+    }
   }
 
   // Parse sortBy safely to avoid any Prisma injection

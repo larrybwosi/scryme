@@ -7,10 +7,19 @@ export class SocketIORealtimeProvider implements RealtimeProvider {
   private getSocket() {
     if (this.socket) return this.socket;
 
-    const url = process.env.NEXT_PUBLIC_SOCKET_URL || process.env.SOCKET_URL || 'http://localhost:3001';
+    const rawUrl =
+      process.env.NEXT_PUBLIC_SOCKET_URL ||
+      process.env.SOCKET_URL ||
+      'http://localhost:3002';
+    const cleanUrl = rawUrl.replace(/\/v3\/?$/, '');
+    const url = `${cleanUrl}/v3`;
+
     this.socket = io(url, {
       transports: ['websocket'],
       autoConnect: true,
+      auth: {
+        token: 'socket-io-realtime',
+      },
     });
 
     return this.socket;

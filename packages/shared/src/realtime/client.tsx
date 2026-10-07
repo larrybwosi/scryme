@@ -61,11 +61,13 @@ export const RealtimeProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     // Default to same origin if no URL provided
-    const socketUrl =
+    const rawSocketUrl =
       process.env.NEXT_PUBLIC_SOCKET_URL ||
       (typeof window !== "undefined"
         ? window.location.origin
-        : "http://localhost:3001");
+        : "http://localhost:3002");
+    const cleanSocketBaseUrl = rawSocketUrl.replace(/\/v3\/?$/, "");
+    const socketUrl = `${cleanSocketBaseUrl}/v3`;
 
     const sessionToken = getCookie("better-auth.session_token") || getCookie("dealio_member_token");
 
