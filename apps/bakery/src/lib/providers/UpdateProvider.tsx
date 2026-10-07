@@ -3,11 +3,8 @@
 import { createContext, useState, useEffect, useCallback, useContext, ReactNode } from 'react';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
-import { UpdateDialog } from '@/components/update.dialog';
-import { usePosStore } from '@/store/store';
-import { useAuthStore } from '@/store/pos-auth-store';
-
-// ─── Types ────────────────────────────────────────────────────────────────────
+import { UpdateDialog } from '@/components/common/update-dialog';
+import { isTauri } from '@/lib/sdk';
 
 export type UpdateStatus = 'IDLE' | 'CHECKING' | 'PENDING' | 'DOWNLOADING' | 'DONE' | 'ERROR';
 
@@ -25,17 +22,13 @@ export interface UpdaterContextType {
   closeModal: () => void;
   checkForUpdates: () => Promise<void>;
   startInstall: () => Promise<void>;
-  /** Dismiss until the next session check cycle (24 h snooze). */
   snoozeUpdate: () => void;
-  /** Never prompt for this specific version again. */
   skipVersion: () => void;
 }
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
-
 const STORAGE_KEYS = {
-  SKIPPED_VERSION: 'updater:skippedVersion',
-  SNOOZED_UNTIL: 'updater:snoozedUntil',
+  SKIPPED_VERSION: 'bakery_updater:skippedVersion',
+  SNOOZED_UNTIL: 'bakery_updater:snoozedUntil',
 } as const;
 
 function getSkippedVersion(): string | null {
@@ -78,11 +71,7 @@ function clearSnooze(): void {
   }
 }
 
-// ─── Context ──────────────────────────────────────────────────────────────────
-
 const UpdaterContext = createContext<UpdaterContextType | undefined>(undefined);
-
-// ─── Progress Toast ───────────────────────────────────────────────────────────
 
 const ProgressToast = ({ progress }: { progress: number }) => (
   <div className="fixed bottom-5 right-5 z-50 w-80 rounded-lg border border-gray-200 bg-white p-4 shadow-xl dark:border-gray-800 dark:bg-gray-900">
@@ -97,15 +86,10 @@ const ProgressToast = ({ progress }: { progress: number }) => (
   </div>
 );
 
-// ─── Provider ─────────────────────────────────────────────────────────────────
-
 interface UpdaterProviderProps {
   children: ReactNode;
-  /** How often to poll for updates in ms. Default: 1 hour. Pass 0 to disable. */
   checkInterval?: number;
-  /** Mark an update critical when the release is older than this many days. Default: 14. */
   deprecatedAfterDays?: number;
-  /** How long (ms) a "Later" snooze lasts. Default: 24 hours. */
   snoozeDuration?: number;
 }
 
@@ -113,7 +97,7 @@ export const UpdaterProvider = ({
   children,
   checkInterval = 3_600_000,
   deprecatedAfterDays = 14,
-  snoozeDuration = 86_400_000, // 24 h
+  snoozeDuration = 86_400_000,
 }: UpdaterProviderProps) => {
   const [update, setUpdate] = useState<Update | null>(null);
   const [availableVersion, setAvailableVersion] = useState<string | null>(null);
@@ -126,24 +110,18 @@ export const UpdaterProvider = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // ── Modal controls ──────────────────────────────────────────────────────────
-
   const openModal = useCallback(() => setIsModalOpen(true), []);
 
   const closeModal = useCallback(() => {
-    if (isCritical) return; // critical updates cannot be dismissed
+    if (isCritical) return;
     setIsModalOpen(false);
   }, [isCritical]);
-
-  // ── Snooze: hide for snoozeDuration, re-prompt on next interval ─────────────
 
   const snoozeUpdate = useCallback(() => {
     if (isCritical) return;
     setSnoozedUntil(Date.now() + snoozeDuration);
     setIsModalOpen(false);
   }, [isCritical, snoozeDuration]);
-
-  // ── Skip: never prompt for this specific version again ──────────────────────
 
   const skipVersion = useCallback(() => {
     if (isCritical) return;
@@ -152,8 +130,6 @@ export const UpdaterProvider = ({
     setIsUpdateAvailable(false);
     setStatus('IDLE');
   }, [isCritical, availableVersion]);
-
-  // ── Install ─────────────────────────────────────────────────────────────────
 
   const triggerRelaunch = useCallback(async () => {
     clearSnooze();
@@ -187,7 +163,6 @@ export const UpdaterProvider = ({
           }
         });
 
-        // Clear any snooze/skip state now that we've installed
         clearSnooze();
         setStatus('DONE');
         await triggerRelaunch();
@@ -197,15 +172,13 @@ export const UpdaterProvider = ({
         setIsModalOpen(true);
       }
     },
-    [isCritical]
+    [isCritical, triggerRelaunch]
   );
 
   const startInstall = useCallback(async () => {
     if (!update) return;
     await processUpdate(update);
   }, [update, processUpdate]);
-
-  // ── GitHub release notes fallback ──────────────────────────────────────────
 
   const fetchReleaseNotes = async (version: string): Promise<string | null> => {
     try {
@@ -219,11 +192,8 @@ export const UpdaterProvider = ({
     }
   };
 
-  // ── Core check ─────────────────────────────────────────────────────────────
-
   const checkForUpdates = useCallback(async () => {
-    const isConfigured = useAuthStore.getState().isConfigured;
-    if (import.meta.env.MODE === 'standalone' || !isConfigured) {
+    if (!isTauri()) {
       setStatus('IDLE');
       return;
     }
@@ -241,31 +211,25 @@ export const UpdaterProvider = ({
 
       const version = updateResult.version;
 
-      // 1. Skip: user permanently dismissed this version
       if (getSkippedVersion() === version) {
         setStatus('IDLE');
         return;
       }
 
-      // 2. Snooze: user clicked "Later" — respect the snooze window
-      //    UNLESS the update is critical (we'll evaluate that below first).
       const snoozedUntil = getSnoozedUntil();
       const isSnoozed = snoozedUntil > Date.now();
 
-      // Collect metadata
       let notes = updateResult.body ?? null;
       if (!notes) {
         notes = await fetchReleaseNotes(version);
       }
 
-      // Determine criticality before deciding whether to honour snooze
       let critical = !!notes?.includes('[CRITICAL]');
       if (!critical && updateResult.date) {
         const diffDays = Math.ceil(Math.abs(Date.now() - new Date(updateResult.date).getTime()) / 86_400_000);
         if (diffDays > deprecatedAfterDays) critical = true;
       }
 
-      // Store update state regardless so consumers can inspect it
       setUpdate(updateResult);
       setAvailableVersion(version);
       setIsUpdateAvailable(true);
@@ -273,22 +237,14 @@ export const UpdaterProvider = ({
       setReleaseDate(updateResult.date ?? null);
       setIsCritical(critical);
 
-      const enableAutoUpdate = usePosStore.getState().settings?.enableAutoUpdate ?? true;
-      if (enableAutoUpdate) {
-        await processUpdate(updateResult);
-        return;
-      }
-
       setStatus('PENDING');
 
-      // 3. Critical updates bypass snooze entirely
       if (critical) {
-        clearSnooze(); // reset snooze so next interval also prompts
+        clearSnooze();
         setIsModalOpen(true);
         return;
       }
 
-      // 4. Non-critical + snoozed: don't open modal
       if (isSnoozed) {
         return;
       }
@@ -300,19 +256,12 @@ export const UpdaterProvider = ({
     }
   }, [deprecatedAfterDays]);
 
-  // ── Polling ────────────────────────────────────────────────────────────────
-
-  const isConfigured = useAuthStore(state => state.isConfigured);
-
   useEffect(() => {
-    if (!isConfigured) return;
     checkForUpdates();
     if (checkInterval <= 0) return;
     const id = setInterval(checkForUpdates, checkInterval);
     return () => clearInterval(id);
-  }, [checkForUpdates, checkInterval, isConfigured]);
-
-  // ── Context value ──────────────────────────────────────────────────────────
+  }, [checkForUpdates, checkInterval]);
 
   const value: UpdaterContextType = {
     isUpdateAvailable,
@@ -354,14 +303,6 @@ export const UpdaterProvider = ({
   );
 };
 
-// ─── Hook ─────────────────────────────────────────────────────────────────────
-
-/**
- * Access the updater from anywhere inside <UpdaterProvider>.
- *
- * @example
- * const { status, checkForUpdates, snoozeUpdate, skipVersion } = useUpdater();
- */
 export function useUpdater(): UpdaterContextType {
   const ctx = useContext(UpdaterContext);
   if (!ctx) {

@@ -7,13 +7,25 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@repo/ui/components/ui/switch";
 import { toast } from "sonner";
 import { useOrganization } from "@/lib/providers/organization-context";
+import { useUpdater } from "@/lib/providers/UpdateProvider";
 import { useBakerySettingsManagement } from "@/hooks/bakery";
 import { resetBakeryDevice } from "@/utils/reset";
-import { Loader2, Settings, PackageCheck, RotateCcw, AlertTriangle, Hash, Save } from "lucide-react";
+import { 
+  AlertTriangle, 
+  Hash, 
+  Loader2, 
+  PackageCheck, 
+  RefreshCw, 
+  RotateCcw, 
+  Save, 
+  Settings, 
+  Sparkles 
+} from "lucide-react";
 
 export default function SettingsPage() {
   useOrganization();
   const { settings, updateSettingsAsync, isUpdating } = useBakerySettingsManagement();
+  const { checkForUpdates, status, availableVersion, isUpdateAvailable, openModal } = useUpdater();
 
   const [enableStaging, setEnableStaging] = useState(false);
   const [isResetting, setIsResetting] = useState(false);
@@ -80,6 +92,17 @@ export default function SettingsPage() {
       toast.error(err?.message || "Failed to save batch numbering configuration");
     } finally {
       setIsSavingBatchSettings(false);
+    }
+  };
+
+  const handleCheckUpdates = async () => {
+    try {
+      await checkForUpdates();
+      if (!isUpdateAvailable) {
+        toast.info('You are running the latest version of Scryme Bakery.');
+      }
+    } catch (err: any) {
+      toast.error(err?.message || 'Failed to check for updates');
     }
   };
 
@@ -256,6 +279,60 @@ export default function SettingsPage() {
                 onCheckedChange={handleToggleStaging}
                 disabled={isUpdating}
               />
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Application Updates */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base">
+            <RefreshCw className="h-5 w-5 text-primary" />
+            Software Updates
+          </CardTitle>
+          <CardDescription>
+            Check for and install application updates for Scryme Bakery Desktop.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="flex items-center justify-between p-4 border border-border rounded-lg bg-card">
+            <div className="space-y-0.5">
+              <label className="text-sm font-semibold text-foreground block">
+                Check for Updates
+              </label>
+              <p className="text-xs text-muted-foreground">
+                {isUpdateAvailable && availableVersion
+                  ? `Version ${availableVersion} is available for installation.`
+                  : 'Ensure your app is running the latest features and security updates.'}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              {isUpdateAvailable ? (
+                <Button variant="default" onClick={openModal} className="gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  View Update
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={handleCheckUpdates}
+                  disabled={status === 'CHECKING'}
+                  className="gap-2"
+                >
+                  {status === 'CHECKING' ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Checking...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="h-4 w-4" />
+                      Check Updates
+                    </>
+                  )}
+                </Button>
+              )}
             </div>
           </div>
         </CardContent>
