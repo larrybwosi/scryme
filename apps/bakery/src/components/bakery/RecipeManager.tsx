@@ -159,9 +159,6 @@ export default function RecipeManager() {
                   Classification
                 </TableHead>
                 <TableHead className="font-bold text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 text-right">
-                  Standard Cost
-                </TableHead>
-                <TableHead className="font-bold text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 text-right">
                   Target Yield
                 </TableHead>
                 <TableHead className="font-bold text-[10px] uppercase tracking-[0.1em] text-muted-foreground/70 text-center">
@@ -174,7 +171,7 @@ export default function RecipeManager() {
               {isLoading
                 ? Array.from({ length: 6 }).map((_, i) => (
                     <TableRow key={i}>
-                      <TableCell colSpan={6} className="py-6 px-8">
+                      <TableCell colSpan={5} className="py-6 px-8">
                         <Skeleton className="h-10 w-full" />
                       </TableCell>
                     </TableRow>
@@ -196,9 +193,6 @@ export default function RecipeManager() {
                         >
                           {recipe.category?.name || 'Unclassified'}
                         </Badge>
-                      </TableCell>
-                      <TableCell className="text-right font-bold tabular-nums text-[14px] text-foreground/80">
-                        {formatCurrency(recipe.totalCost || 0)}
                       </TableCell>
                       <TableCell className="text-right font-bold text-[14px] text-foreground/80">
                         {recipe.yieldQuantity}{' '}
@@ -295,14 +289,7 @@ export default function RecipeManager() {
                     </div>
                   </CardHeader>
                   <CardContent className="pb-4">
-                    <div className="flex items-baseline justify-between mt-2">
-                      <span className="text-[9px] uppercase font-black text-muted-foreground/50 tracking-tighter">
-                        Production Cost
-                      </span>
-                      <span className="text-lg font-black text-foreground tabular-nums tracking-tighter">
-                        {formatCurrency(recipe.totalCost || 0)}
-                      </span>
-                    </div>
+
                     <div className="mt-3 flex flex-wrap gap-1">
                       {recipe.tags?.slice(0, 3).map(tag => (
                         <Badge
