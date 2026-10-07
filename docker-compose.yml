@@ -52,7 +52,7 @@ services:
   redis:
     image: redis:alpine
     container_name: scryme-redis
-    restart: always
+    restart: "no"
     networks:
       - scryme-network
     healthcheck:
