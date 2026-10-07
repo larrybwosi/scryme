@@ -50,8 +50,8 @@ async function TransactionList({
     paymentMethod: searchParams.paymentMethod as any,
     locationId: searchParams.locationId,
     sortBy: searchParams.sortBy,
-    startDate: searchParams.startDate ? new Date(searchParams.startDate) : undefined,
-    endDate: searchParams.endDate ? new Date(searchParams.endDate) : undefined,
+    startDate: searchParams.startDate,
+    endDate: searchParams.endDate,
   });
 
   return (
@@ -81,10 +81,12 @@ export default async function TransactionsPage(props: {
     type?: string;
     status?: string;
     paymentStatus?: string;
+    paymentMethod?: string;
     locationId?: string;
     sortBy?: string;
     startDate?: string;
     endDate?: string;
+    realtime?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
