@@ -17,7 +17,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=${ADMIN_PORT:-3007}
-      - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@scryme-db:5432/${POSTGRES_DB:-app_db}?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-scryme-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://scryme-redis:6379}
       - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
       - NEXT_PUBLIC_ADMIN_URL=${NEXT_PUBLIC_ADMIN_URL:-http://localhost:3007}
       - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
