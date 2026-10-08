@@ -149,8 +149,6 @@ async function bootstrap() {
       { path: "api/public/download/:platform", method: RequestMethod.GET },
       { path: "api/public/download/:platform/:variant", method: RequestMethod.GET },
       { path: "api/public/*", method: RequestMethod.ALL },
-      { path: "v3/webhooks/*", method: RequestMethod.ALL },
-      { path: "api/v3/webhooks/*", method: RequestMethod.ALL },
       { path: "s/:shortCode", method: RequestMethod.GET },
       { path: ".well-known/openid-configuration", method: RequestMethod.GET },
       { path: ".well-known/oauth-authorization-server", method: RequestMethod.GET },

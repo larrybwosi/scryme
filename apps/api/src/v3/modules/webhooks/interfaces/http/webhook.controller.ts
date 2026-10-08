@@ -242,7 +242,7 @@ export class WebhookController {
 
 // Separate Public Controller for receiving external incoming webhooks
 @ApiTags("V3 Webhooks Receiver")
-@Controller(["v3/webhooks", "webhooks"])
+@Controller("webhooks")
 export class PublicIncomingWebhookController {
   constructor(private readonly webhookService: WebhookService) {}
 
