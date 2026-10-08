@@ -7,10 +7,12 @@ import dagger.hilt.components.SingletonComponent
 import tech.scryme.app.data.repository.AuthRepositoryImpl
 import tech.scryme.app.data.repository.BranchRepositoryImpl
 import tech.scryme.app.data.repository.ProfileRepositoryImpl
+import tech.scryme.app.data.repository.SalesRepositoryImpl
 import tech.scryme.app.data.repository.ScheduleRepositoryImpl
 import tech.scryme.app.domain.repository.AuthRepository
 import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ProfileRepository
+import tech.scryme.app.domain.repository.SalesRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import javax.inject.Singleton
 
@@ -41,4 +43,10 @@ abstract class RepositoryModule {
     abstract fun bindBranchRepository(
         branchRepositoryImpl: BranchRepositoryImpl
     ): BranchRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindSalesRepository(
+        salesRepositoryImpl: SalesRepositoryImpl
+    ): SalesRepository
 }
