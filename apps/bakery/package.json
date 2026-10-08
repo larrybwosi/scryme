@@ -21,7 +21,7 @@
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tanstack/react-query": "^5.100.7",
-    "@tauri-apps/api": "^2.10.1",
+    "@tauri-apps/api": "2.12.1",
     "@tauri-apps/plugin-dialog": "^2.7.0",
     "@tauri-apps/plugin-fs": "^2.5.0",
     "@tauri-apps/plugin-notification": "^2.3.3",
@@ -51,7 +51,7 @@
     "tailwindcss-animate": "^1.0.7",
     "zod": "^4.4.3",
     "zustand": "^5.0.12",
-    "@tauri-apps/plugin-updater": "^2.10.0"
+    "@tauri-apps/plugin-updater": "2.13.1"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
@@ -59,7 +59,7 @@
     "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/vite": "^4.3.0",
-    "@tauri-apps/cli": "^2.10.1",
+    "@tauri-apps/cli": "2.12.1",
     "@types/jest": "^30.0.0",
     "@types/lodash": "^4.17.15",
     "@types/react": "^19.0.0",
