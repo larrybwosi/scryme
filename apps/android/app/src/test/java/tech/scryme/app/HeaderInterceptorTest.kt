@@ -28,7 +28,7 @@ class HeaderInterceptorTest {
         coEvery { sessionManager.getLocationId() } returns "loc-123"
 
         val request = Request.Builder()
-            .url("https://api.scryme.tech/v3/members/login")
+            .url("https://api.scryme.tech/api/v3/members/login")
             .build()
 
         val capturedRequest = slot<Request>()
