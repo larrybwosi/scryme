@@ -80,6 +80,34 @@ fun ScheduleScreen(
                 }
             }
             is ScheduleUiState.Success -> {
+                var showCheckInDialog by remember { mutableStateOf(false) }
+
+                AttendanceStatusCard(
+                    status = state.attendanceStatus,
+                    onCheckInClick = { showCheckInDialog = true },
+                    onCheckOutClick = {
+                        viewModel.checkOutAttendance(locationId = state.attendanceStatus?.currentCheckInLocationId)
+                    }
+                )
+
+                if (showCheckInDialog) {
+                    CheckInAttendanceDialog(
+                        locations = state.locations,
+                        onDismiss = { showCheckInDialog = false },
+                        onSubmit = { locId, code, lat, lng ->
+                            viewModel.checkInAttendance(
+                                locationId = locId,
+                                branchCode = code,
+                                latitude = lat,
+                                longitude = lng
+                            )
+                            showCheckInDialog = false
+                        }
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(16.dp))
+
                 TabRow(selectedTabIndex = state.selectedTab) {
                     Tab(
                         selected = state.selectedTab == 0,
@@ -518,4 +546,213 @@ private fun getDayName(dayOfWeek: Int): String {
         7 -> "Sunday"
         else -> "Day $dayOfWeek"
     }
+}
+
+
+@Composable
+fun AttendanceStatusCard(
+    status: tech.scryme.app.data.dto.AttendanceStatusDto?,
+    onCheckInClick: () -> Unit,
+    onCheckOutClick: () -> Unit
+) {
+    val isCheckedIn = status?.isCheckedIn == true
+    val activeLog = status?.currentAttendanceLog
+
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(RoundedCornerShape(12.dp)),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isCheckedIn) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surfaceVariant
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Column {
+                    Text(
+                        text = "Attendance Status",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    Text(
+                        text = if (isCheckedIn) "✓ CHECKED IN" else "NOT CHECKED IN",
+                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                        color = if (isCheckedIn) Emerald500 else MaterialTheme.colorScheme.onSurface
+                    )
+                }
+
+                if (isCheckedIn) {
+                    Button(
+                        onClick = onCheckOutClick,
+                        colors = ButtonDefaults.buttonColors(containerColor = Rose500),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Check Out", fontSize = 12.sp)
+                    }
+                } else {
+                    Button(
+                        onClick = onCheckInClick,
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Text("Check In", fontSize = 12.sp)
+                    }
+                }
+            }
+
+            if (isCheckedIn && activeLog != null) {
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider()
+                Spacer(modifier = Modifier.height(10.dp))
+
+                val locationName = activeLog.checkInLocation?.name ?: "Branch Location"
+                Text(
+                    text = "Location: $locationName",
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                )
+
+                val verificationLabel = when {
+                    activeLog.isLocationVerified && activeLog.verificationMethod == "QR_SCAN" -> "✓ QR Code Verified"
+                    activeLog.isLocationVerified && activeLog.verificationMethod == "GPS_GEOFENCE" -> "✓ GPS Geofence Verified"
+                    activeLog.isLocationVerified -> "✓ Location Verified"
+                    else -> "⚠ Location Unverified"
+                }
+
+                Spacer(modifier = Modifier.height(4.dp))
+                Text(
+                    text = verificationLabel,
+                    style = MaterialTheme.typography.bodySmall,
+                    color = if (activeLog.isLocationVerified) Emerald500 else Rose500
+                )
+            } else if (!isCheckedIn) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Text(
+                    text = "Verify your attendance via GPS location geofence or scanning the branch QR code.",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            }
+        }
+    }
+}
+
+@Composable
+fun CheckInAttendanceDialog(
+    locations: List<tech.scryme.app.domain.model.BranchLocation>,
+    onDismiss: () -> Unit,
+    onSubmit: (locationId: String?, branchCode: String?, latitude: Double?, longitude: Double?) -> Unit
+) {
+    var checkInMode by remember { mutableStateOf(0) }
+    var selectedLocationId by remember { mutableStateOf(locations.firstOrNull()?.id ?: "") }
+    var branchCode by remember { mutableStateOf("") }
+    var latitudeText by remember { mutableStateOf("40.7128") }
+    var longitudeText by remember { mutableStateOf("-74.0060") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Member Check-In") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                TabRow(selectedTabIndex = checkInMode) {
+                    Tab(
+                        selected = checkInMode == 0,
+                        onClick = { checkInMode = 0 },
+                        text = { Text("GPS Location", fontSize = 11.sp) }
+                    )
+                    Tab(
+                        selected = checkInMode == 1,
+                        onClick = { checkInMode = 1 },
+                        text = { Text("QR Scan / Code", fontSize = 11.sp) }
+                    )
+                }
+
+                if (checkInMode == 0) {
+                    Text("Select Branch Location:", style = MaterialTheme.typography.labelSmall)
+
+                    if (locations.isNotEmpty()) {
+                        locations.forEach { loc ->
+                            Row(
+                                verticalAlignment = Alignment.CenterVertically,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 2.dp)
+                            ) {
+                                RadioButton(
+                                    selected = selectedLocationId == loc.id,
+                                    onClick = { selectedLocationId = loc.id }
+                                )
+                                Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
+                            }
+                        }
+                    } else {
+                        OutlinedTextField(
+                            value = selectedLocationId,
+                            onValueChange = { selectedLocationId = it },
+                            label = { Text("Location ID") },
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.height(4.dp))
+                    Text("Coordinates (GPS Geofence):", style = MaterialTheme.typography.labelSmall)
+                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        OutlinedTextField(
+                            value = latitudeText,
+                            onValueChange = { latitudeText = it },
+                            label = { Text("Latitude") },
+                            modifier = Modifier.weight(1f)
+                        )
+                        OutlinedTextField(
+                            value = longitudeText,
+                            onValueChange = { longitudeText = it },
+                            label = { Text("Latitude") },
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+                } else {
+                    Text(
+                        text = "Scan or enter the branch code from the store display QR code:",
+                        style = MaterialTheme.typography.bodySmall
+                    )
+
+                    OutlinedTextField(
+                        value = branchCode,
+                        onValueChange = { branchCode = it },
+                        label = { Text("Branch Code (e.g. BR-CENTRAL)") },
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (checkInMode == 0) {
+                        val lat = latitudeText.toDoubleOrNull()
+                        val lng = longitudeText.toDoubleOrNull()
+                        onSubmit(selectedLocationId.ifBlank { null }, null, lat, lng)
+                    } else {
+                        onSubmit(null, branchCode.ifBlank { null }, null, null)
+                    }
+                },
+                enabled = if (checkInMode == 0) selectedLocationId.isNotBlank() else branchCode.isNotBlank()
+            ) {
+                Text("Confirm Check-In")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }

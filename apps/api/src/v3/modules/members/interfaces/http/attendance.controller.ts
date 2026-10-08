@@ -26,7 +26,7 @@ import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
-@Controller(":orgSlug/members/attendance")
+@Controller([":orgSlug/members/attendance", "members/attendance"])
 @ApiParam({ name: "orgSlug", type: "string" })
 export class AttendanceController {
   constructor(private readonly attendanceUseCase: AttendanceUseCase) {}

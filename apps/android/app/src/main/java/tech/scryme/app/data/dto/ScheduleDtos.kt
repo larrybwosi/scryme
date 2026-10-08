@@ -96,3 +96,26 @@ data class AttendanceLogDto(
     @SerializedName("isLocationVerified") val isLocationVerified: Boolean = false,
     @SerializedName("distanceMeters") val distanceMeters: Double? = null
 )
+
+data class AttendanceStatusDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("status") val status: String? = null,
+    @SerializedName("isCheckedIn") val isCheckedIn: Boolean = false,
+    @SerializedName("lastCheckInTime") val lastCheckInTime: String? = null,
+    @SerializedName("currentCheckInLocationId") val currentCheckInLocationId: String? = null,
+    @SerializedName("currentAttendanceLog") val currentAttendanceLog: CurrentAttendanceLogDto? = null
+)
+
+data class CurrentAttendanceLogDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("checkInTime") val checkInTime: String,
+    @SerializedName("checkInLocation") val checkInLocation: AttendanceLocationDto? = null,
+    @SerializedName("shiftStatus") val shiftStatus: String? = null,
+    @SerializedName("verificationMethod") val verificationMethod: String? = null,
+    @SerializedName("isLocationVerified") val isLocationVerified: Boolean = false
+)
+
+data class AttendanceLocationDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String
+)
