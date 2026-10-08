@@ -281,6 +281,14 @@ pub fn get_migrations() -> Vec<Migration> {
                 ALTER TABLE ingredients ADD COLUMN units_per_container REAL;
             ",
             kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 7,
+            description: "add_batch_generation_type_to_bakery_settings",
+            sql: "
+                ALTER TABLE bakery_settings ADD COLUMN batch_generation_type TEXT DEFAULT 'SEQUENCE';
+            ",
+            kind: MigrationKind::Up,
         }
     ]
 }

@@ -520,7 +520,7 @@ mod tests {
 
         // Override default settings for test
         sqlx::query(
-            "INSERT OR REPLACE INTO bakery_settings (id, organization_id, is_enabled, auth_mode, api_key, batch_prefix, batch_separator, batch_date_format, batch_sequence) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)"
+            "INSERT OR REPLACE INTO bakery_settings (id, organization_id, is_enabled, auth_mode, api_key, batch_prefix, batch_separator, batch_date_format, batch_sequence, batch_generation_type) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
         )
         .bind(uuid::Uuid::new_v4().to_string())
         .bind("org1")
@@ -531,6 +531,7 @@ mod tests {
         .bind("-")
         .bind("YYYYMMDD")
         .bind("4")
+        .bind("SEQUENCE")
         .execute(&pool)
         .await?;
 

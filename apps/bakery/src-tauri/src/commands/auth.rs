@@ -210,6 +210,7 @@ impl BakeryAuthState {
     }
 
     /// Constructs a `scryme_sdk::ScrymeClient` using the current device config and active auth state.
+    #[allow(dead_code)]
     pub fn build_sdk_client(&self) -> BackendResult<scryme_sdk::ScrymeClient> {
         let (base_url, org_slug) = {
             let override_guard = self.base_url_override.lock().map_err(|_| BackendError::Internal("Failed to lock base url override".to_string()))?;

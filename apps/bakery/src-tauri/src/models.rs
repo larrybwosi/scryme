@@ -319,6 +319,7 @@ pub struct SyncItem {
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+#[allow(dead_code)]
 pub struct UnitsSyncResponse {
     pub system_units: Vec<SystemUnit>,
     pub organization_units: Vec<OrganizationUnit>,
