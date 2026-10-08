@@ -27,6 +27,7 @@ import {
 import { toast } from 'sonner';
 import { useStagedBatches, useDispatchStagedBatch, useDisposeStagedStock } from '@/hooks/bakery';
 import { LocationSelect } from '@/components/common/location-select';
+import { useListLocations } from '@/lib/api/locations';
 import { formatVariantName } from '@/lib/utils';
 import { format } from 'date-fns';
 
@@ -34,6 +35,12 @@ export function StagingManager() {
   const { data: stagedBatches, isLoading, isError } = useStagedBatches() as any;
   const dispatchMutation = useDispatchStagedBatch();
   const disposeMutation = useDisposeStagedStock();
+  const { data: locationsData } = useListLocations();
+  const locationsList = React.useMemo(() => {
+    if (!locationsData) return [];
+    if (Array.isArray(locationsData)) return locationsData;
+    return (locationsData as any).locations || (locationsData as any).data || [];
+  }, [locationsData]);
 
   const [selectedBatch, setSelectedBatch] = useState<any | null>(null);
   const [dispatchModalOpen, setDispatchModalOpen] = useState(false);
@@ -100,7 +107,9 @@ export function StagingManager() {
           notes,
         },
       });
-      toast.success(`Successfully dispatched ${quantity} items to Front Office`);
+      const targetLocation = locationsList.find((loc: any) => loc.id === targetLocationId);
+      const locName = targetLocation?.name || 'Front Office / POS';
+      toast.success(`Successfully dispatched ${quantity} items to ${locName}`);
       setDispatchModalOpen(false);
     } catch (err: any) {
       toast.error(err?.response?.data?.message || err?.message || 'Failed to dispatch items');
@@ -476,7 +485,7 @@ export function StagingManager() {
                       <div>
                         <p className="font-semibold text-foreground flex items-center gap-1">
                           <ArrowRight className="h-3 w-3 text-primary" />
-                          {log.quantity} units moved to {log.toLocation?.name || 'Front Office'}
+                          {log.quantity} units moved to {log.toLocation?.name || locationsList.find((l: any) => l.id === log.toLocationId)?.name || 'Front Office / POS'}
                         </p>
                         {log.notes && <p className="text-muted-foreground mt-0.5">{log.notes}</p>}
                       </div>

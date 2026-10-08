@@ -122,12 +122,14 @@ export const useRecipes = () => {
 export const useRecipe = (id: string) => {
   return useQuery({
     queryKey: ["recipe", id],
+    enabled: Boolean(id && id.trim().length > 0),
     queryFn: async () => {
+      if (!id || !id.trim()) return null;
       if (isTauri() && isOfflineMode()) {
         const recipes = await tauriInvoke<Recipe[]>("get_recipes");
         return recipes.find((r) => r.id === id) as Recipe;
       }
-      const data = await sdk.bakery.getRecipe(id);
+      const data = await sdk.bakery.getRecipe(id.trim());
       return data as unknown as Recipe;
     },
   });
