@@ -33,13 +33,46 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val AuthBackground = Color(0xFFF6F7F9)
-val PrimaryDarkButton = Color(0xFF1B1926)
+val AuthBackground = Color(0xFFF8FAFC)
+val PrimaryDarkButton = Color(0xFF0F172A)
 val PurpleAccent = Color(0xFF7C3AED)
 val FieldBackground = Color(0xFFFFFFFF)
-val FieldBorder = Color(0xFFE5E7EB)
-val LabelText = Color(0xFF374151)
-val SubtitleText = Color(0xFF6B7280)
+val FieldBorder = Color(0xFFE2E8F0)
+val LabelText = Color(0xFF334155)
+val SubtitleText = Color(0xFF64748B)
+
+@Composable
+fun ScrymeBrandHeader(
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = PurpleAccent.copy(alpha = 0.1f),
+        shape = RoundedCornerShape(20.dp),
+        border = BorderStroke(1.dp, PurpleAccent.copy(alpha = 0.2f)),
+        modifier = modifier
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.Center,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(8.dp)
+                    .clip(CircleShape)
+                    .background(PurpleAccent)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text(
+                text = "Scryme Enterprise",
+                fontSize = 12.sp,
+                fontWeight = FontWeight.Bold,
+                color = PurpleAccent,
+                letterSpacing = 0.5.sp
+            )
+        }
+    }
+}
 
 @Composable
 fun AuthTopBar(
@@ -63,7 +96,7 @@ fun AuthTopBar(
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = Color(0xFF1F2937),
+                tint = Color(0xFF1E293B),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -125,10 +158,9 @@ fun AuthSecondaryButton(
             .height(54.dp),
         shape = RoundedCornerShape(27.dp),
         colors = ButtonDefaults.outlinedButtonColors(
-            containerColor = Color.White,
-            contentColor = Color(0xFF1F2937)
+            contentColor = PrimaryDarkButton
         ),
-        border = BorderStroke(1.dp, Color(0xFFD1D5DB))
+        border = BorderStroke(1.5.dp, PrimaryDarkButton)
     ) {
         Text(
             text = text,
@@ -156,10 +188,10 @@ fun AuthTextField(
     Column(modifier = modifier.fillMaxWidth()) {
         Text(
             text = label,
-            fontSize = 14.sp,
-            fontWeight = FontWeight.Medium,
+            fontSize = 13.sp,
+            fontWeight = FontWeight.SemiBold,
             color = LabelText,
-            modifier = Modifier.padding(bottom = 6.dp, start = 2.dp)
+            modifier = Modifier.padding(bottom = 6.dp, start = 4.dp)
         )
         OutlinedTextField(
             value = value,
@@ -167,7 +199,7 @@ fun AuthTextField(
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = Color(0xFF9CA3AF),
+                    color = Color(0xFF94A3B8),
                     fontSize = 14.sp
                 )
             },
@@ -175,7 +207,7 @@ fun AuthTextField(
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = null,
-                    tint = Color(0xFF9CA3AF),
+                    tint = Color(0xFF94A3B8),
                     modifier = Modifier.size(20.dp)
                 )
             },
@@ -193,8 +225,8 @@ fun AuthTextField(
                 focusedBorderColor = PurpleAccent,
                 unfocusedBorderColor = FieldBorder,
                 errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedTextColor = Color(0xFF111827),
-                unfocusedTextColor = Color(0xFF111827)
+                focusedTextColor = Color(0xFF0F172A),
+                unfocusedTextColor = Color(0xFF0F172A)
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -223,17 +255,17 @@ fun OrDivider(
     ) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = Color(0xFFE5E7EB)
+            color = Color(0xFFE2E8F0)
         )
         Text(
             text = "Or Continue With",
             fontSize = 12.sp,
-            color = Color(0xFF9CA3AF),
+            color = Color(0xFF94A3B8),
             modifier = Modifier.padding(horizontal = 12.dp)
         )
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = Color(0xFFE5E7EB)
+            color = Color(0xFFE2E8F0)
         )
     }
 }
@@ -260,7 +292,7 @@ fun SocialAuthButtons(
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor = Color.White
             ),
-            border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -272,7 +304,7 @@ fun SocialAuthButtons(
                     text = "Google",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF1F2937)
+                    color = Color(0xFF1E293B)
                 )
             }
         }
@@ -289,7 +321,7 @@ fun SocialAuthButtons(
             colors = ButtonDefaults.outlinedButtonColors(
                 containerColor = Color.White
             ),
-            border = BorderStroke(1.dp, Color(0xFFE5E7EB))
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -301,7 +333,7 @@ fun SocialAuthButtons(
                     text = "Apple",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = Color(0xFF1F2937)
+                    color = Color(0xFF1E293B)
                 )
             }
         }
@@ -313,7 +345,6 @@ fun GoogleIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        // Render stylized G
         drawCircle(color = Color(0xFF4285F4), radius = w * 0.45f, center = Offset(w / 2, h / 2), style = Stroke(width = w * 0.18f))
         drawRect(color = Color.White, topLeft = Offset(w * 0.2f, h * 0.25f), size = Size(w * 0.35f, h * 0.5f))
         drawRect(color = Color(0xFF4285F4), topLeft = Offset(w * 0.45f, h * 0.42f), size = Size(w * 0.45f, h * 0.16f))
@@ -325,7 +356,6 @@ fun AppleIcon(modifier: Modifier = Modifier) {
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
-        // Render stylized Apple logo shape
         val path = Path().apply {
             moveTo(w * 0.5f, h * 0.15f)
             cubicTo(w * 0.4f, h * 0.05f, w * 0.25f, h * 0.15f, w * 0.2f, h * 0.35f)
@@ -352,14 +382,12 @@ fun Wallet3DIllustration(
             val cx = size.width / 2f
             val cy = size.height / 2f
 
-            // Shadow under wallet
             drawOval(
                 color = Color(0x15000000),
                 topLeft = Offset(cx - 110.dp.toPx(), cy + 70.dp.toPx()),
                 size = Size(220.dp.toPx(), 20.dp.toPx())
             )
 
-            // Credit Card behind wallet
             val cardWidth = 140.dp.toPx()
             val cardHeight = 90.dp.toPx()
             drawRoundRect(
@@ -373,7 +401,6 @@ fun Wallet3DIllustration(
                 cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx())
             )
 
-            // Wallet Body (Pinkish Violet)
             val walletWidth = 160.dp.toPx()
             val walletHeight = 120.dp.toPx()
             drawRoundRect(
@@ -387,7 +414,6 @@ fun Wallet3DIllustration(
                 cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx())
             )
 
-            // Wallet Snap Button / Clasp
             drawCircle(
                 color = Color(0xFFE2E8F0),
                 radius = 14.dp.toPx(),
@@ -399,8 +425,6 @@ fun Wallet3DIllustration(
                 center = Offset(cx - 30.dp.toPx(), cy + 35.dp.toPx())
             )
 
-            // Gold Coins floating on right
-            // Coin 1
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color(0xFFFDE047), Color(0xFFCA8A04)),
@@ -411,7 +435,6 @@ fun Wallet3DIllustration(
                 center = Offset(cx + 70.dp.toPx(), cy + 10.dp.toPx())
             )
 
-            // Coin 2
             drawCircle(
                 brush = Brush.radialGradient(
                     colors = listOf(Color(0xFFFEF08A), Color(0xFFEAB308)),
@@ -450,7 +473,7 @@ fun PageIndicatorDots(
                     modifier = Modifier
                         .size(8.dp)
                         .clip(CircleShape)
-                        .background(Color(0xFFE5E7EB))
+                        .background(Color(0xFFE2E8F0))
                 )
             }
         }

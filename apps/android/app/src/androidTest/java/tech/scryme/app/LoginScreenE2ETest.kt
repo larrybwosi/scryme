@@ -25,14 +25,18 @@ class LoginScreenE2ETest {
             ScrymeTheme {
                 LoginScreen(
                     viewModel = viewModel,
-                    onLoginSuccess = {}
+                    onLoginSuccess = {},
+                    onNavigateToSignUp = {},
+                    onBackClick = {}
                 )
             }
         }
 
-        composeTestRule.onNodeWithText("Scryme Mobile").assertIsDisplayed()
-        composeTestRule.onNodeWithText("Organization Slug").assertIsDisplayed().performTextInput("demo-bakery")
-        composeTestRule.onNodeWithText("Member PIN").assertIsDisplayed().performTextInput("1234")
+        composeTestRule.onNodeWithText("Welcome Back").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Email Address").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Enter Your Email").assertIsDisplayed().performTextInput("user@scryme.tech")
+        composeTestRule.onNodeWithText("Password").assertIsDisplayed()
+        composeTestRule.onNodeWithText("Enter Your Password").assertIsDisplayed().performTextInput("pass123")
         composeTestRule.onNodeWithText("Log In").assertIsDisplayed().performClick()
     }
 }

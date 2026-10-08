@@ -1,5 +1,6 @@
 package tech.scryme.app.ui.auth
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 
@@ -16,6 +17,11 @@ fun AuthScreen(
     modifier: Modifier = Modifier
 ) {
     var currentStep by remember { mutableStateOf(AuthStep.GET_STARTED) }
+
+    // Intercept back button press when in LOGIN or SIGN_UP step to smoothly navigate back to GET_STARTED
+    BackHandler(enabled = currentStep != AuthStep.GET_STARTED) {
+        currentStep = AuthStep.GET_STARTED
+    }
 
     when (currentStep) {
         AuthStep.GET_STARTED -> {
