@@ -285,6 +285,7 @@ model StaffShift {
   tradeRequests ShiftTradeRequest[] @relation("ShiftTradeShift")
   offeredTrades ShiftTradeRequest[] @relation("ShiftTradeOfferedShift")
   tasks        StaffTask[]
+  attendanceLogs AttendanceLog[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

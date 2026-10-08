@@ -484,6 +484,23 @@ enum EmploymentType {
   TEMPORARY
 }
 
+
+enum ShiftAttendanceStatus {
+  ON_TIME
+  LATE
+  EARLY
+  UNSCHEDULED
+  NO_SHOW
+}
+
+enum AttendanceVerificationMethod {
+  POS_DEVICE
+  GPS_GEOFENCE
+  QR_SCAN
+  MANAGER_OVERRIDE
+  WEB_PORTAL
+}
+
 model AttendanceLog {
   id                 String             @id @default(cuid())
   memberId           String
@@ -497,6 +514,14 @@ model AttendanceLog {
   checkOutLocationId String? // Optional: if checkout can happen at a different location
   checkOutLocation   InventoryLocation? @relation("CheckOutLocationLogs", fields: [checkOutLocationId], references: [id], onDelete: Restrict)
   durationMinutes    Int? // Calculated when member checks out
+  shiftId            String?
+  shift              StaffShift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
+  shiftStatus        ShiftAttendanceStatus        @default(UNSCHEDULED)
+  verificationMethod AttendanceVerificationMethod @default(POS_DEVICE)
+  isLocationVerified Boolean                      @default(false)
+  latitude           Float?
+  longitude          Float?
+  distanceMeters     Float?
   notes              String?
   isAutoCheckout     Boolean            @default(false) // To flag if this was an auto checkout
   createdAt          DateTime           @default(now())
@@ -509,6 +534,7 @@ model AttendanceLog {
   @@index([checkInTime])
   @@index([checkOutTime])
   @@index([checkInLocationId])
+  @@index([shiftId])
   @@map("attendance_log")
 }
 

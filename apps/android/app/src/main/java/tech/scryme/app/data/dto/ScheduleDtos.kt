@@ -70,3 +70,29 @@ data class UpdateStaffTaskDto(
     @SerializedName("description") val description: String? = null,
     @SerializedName("dueDate") val dueDate: String? = null
 )
+
+data class CheckInAttendanceRequestDto(
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("branchCode") val branchCode: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("verificationMethod") val verificationMethod: String? = null,
+    @SerializedName("notes") val notes: String? = null
+)
+
+data class CheckOutAttendanceRequestDto(
+    @SerializedName("locationId") val locationId: String? = null,
+    @SerializedName("notes") val notes: String? = null
+)
+
+data class AttendanceLogDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("memberId") val memberId: String,
+    @SerializedName("checkInTime") val checkInTime: String,
+    @SerializedName("checkOutTime") val checkOutTime: String? = null,
+    @SerializedName("checkInLocationId") val checkInLocationId: String,
+    @SerializedName("shiftStatus") val shiftStatus: String? = null,
+    @SerializedName("verificationMethod") val verificationMethod: String? = null,
+    @SerializedName("isLocationVerified") val isLocationVerified: Boolean = false,
+    @SerializedName("distanceMeters") val distanceMeters: Double? = null
+)

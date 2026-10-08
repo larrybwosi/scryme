@@ -41,6 +41,19 @@ export class AttendanceController {
     );
   }
 
+  @Get("live-adherence")
+  @Permissions("attendance:read")
+  @ApiOperation({ summary: "Get live shift adherence and attendance status" })
+  async getLiveAdherence(
+    @Request() req: any,
+    @Query("locationId") locationId?: string,
+  ) {
+    return this.attendanceUseCase.getLiveAdherence(
+      req.v3Context.organizationId,
+      locationId,
+    );
+  }
+
   @Post("check-in")
   @Permissions("attendance:write")
   @ApiOperation({ summary: "Check-in the current member" })

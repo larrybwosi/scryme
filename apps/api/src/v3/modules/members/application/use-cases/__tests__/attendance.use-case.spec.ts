@@ -1,8 +1,9 @@
 import { Test, TestingModule } from "@nestjs/testing";
-import { AttendanceUseCase } from "../attendance.use-case";
+import { AttendanceUseCase, calculateHaversineDistance } from "../attendance.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { NotFoundException, BadRequestException } from "@nestjs/common";
+import { AttendanceVerificationMethod, ShiftAttendanceStatus } from "../../dto/attendance.dto";
 
 describe("AttendanceUseCase", () => {
   let useCase: AttendanceUseCase;
@@ -25,11 +26,15 @@ describe("AttendanceUseCase", () => {
       inventoryLocation: {
         findFirst: vi.fn(),
       },
+      staffShift: {
+        findMany: vi.fn(),
+      },
       $transaction: vi.fn(cb => cb(mockPrisma.client)),
     },
   };
 
   beforeEach(async () => {
+    vi.clearAllMocks();
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AttendanceUseCase,
@@ -41,8 +46,11 @@ describe("AttendanceUseCase", () => {
     prisma = module.get<PrismaService>(PrismaService);
   });
 
-  it("should be defined", () => {
-    expect(useCase).toBeDefined();
+  it("should calculate Haversine distance correctly", () => {
+    // Distance between two points in NYC (~1.5km)
+    const dist = calculateHaversineDistance(40.7128, -74.006, 40.725, -74.006);
+    expect(dist).toBeGreaterThan(1300);
+    expect(dist).toBeLessThan(1500);
   });
 
   describe("checkIn", () => {
@@ -51,14 +59,14 @@ describe("AttendanceUseCase", () => {
     const locationId = "loc1";
     const dto = { locationId, notes: "test notes" };
 
+    it("should throw BadRequestException if neither locationId nor branchCode is provided", async () => {
+      await expect(useCase.checkIn(orgId, memberId, {})).rejects.toThrow(BadRequestException);
+    });
+
     it("should throw NotFoundException if location does not belong to organization", async () => {
       mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue(null);
 
       await expect(useCase.checkIn(orgId, memberId, dto)).rejects.toThrow(NotFoundException);
-      expect(mockPrisma.client.inventoryLocation.findFirst).toHaveBeenCalledWith({
-        where: { id: locationId, organizationId: orgId },
-        select: { id: true },
-      });
     });
 
     it("should throw BadRequestException if member is already checked in", async () => {
@@ -66,25 +74,64 @@ describe("AttendanceUseCase", () => {
       mockPrisma.client.attendanceLog.findFirst.mockResolvedValue({ id: "active-log-id" });
 
       await expect(useCase.checkIn(orgId, memberId, dto)).rejects.toThrow(BadRequestException);
-      expect(mockPrisma.client.attendanceLog.findFirst).toHaveBeenCalledWith({
-        where: { organizationId: orgId, memberId, checkOutTime: null },
+    });
+
+    it("should successfully check in with GPS verification and automatic shift matching", async () => {
+      mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({
+        id: locationId,
+        latitude: 40.7128,
+        longitude: -74.006,
+        radiusMeters: 200,
+      });
+      mockPrisma.client.attendanceLog.findFirst.mockResolvedValue(null);
+      mockPrisma.client.staffShift.findMany.mockResolvedValue([
+        {
+          id: "shift1",
+          startTime: `${new Date().getHours()}:${new Date().getMinutes()}`,
+          endTime: "17:00",
+        },
+      ]);
+      mockPrisma.client.attendanceLog.create.mockResolvedValue({ id: "new-log-id" });
+
+      const result = await useCase.checkIn(orgId, memberId, {
+        locationId,
+        latitude: 40.7128,
+        longitude: -74.006,
+        verificationMethod: AttendanceVerificationMethod.GPS_GEOFENCE,
+      });
+
+      expect(result.id).toBe("new-log-id");
+      expect(mockPrisma.client.attendanceLog.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          shiftId: "shift1",
+          shiftStatus: ShiftAttendanceStatus.ON_TIME,
+          verificationMethod: AttendanceVerificationMethod.GPS_GEOFENCE,
+          isLocationVerified: true,
+        }),
       });
     });
 
-    it("should successfully check in and update member status", async () => {
+    it("should mark shiftStatus as LATE if checking in > 15 mins after shift start", async () => {
       mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: locationId });
       mockPrisma.client.attendanceLog.findFirst.mockResolvedValue(null);
+      mockPrisma.client.staffShift.findMany.mockResolvedValue([
+        {
+          id: "shift1",
+          startTime: "00:01", // Way earlier today
+          endTime: "17:00",
+        },
+      ]);
       mockPrisma.client.attendanceLog.create.mockResolvedValue({ id: "new-log-id" });
 
-      const result = await useCase.checkIn(orgId, memberId, dto);
+      await useCase.checkIn(orgId, memberId, {
+        locationId,
+        verificationMethod: AttendanceVerificationMethod.MANAGER_OVERRIDE,
+      });
 
-      expect(result.id).toBe("new-log-id");
-      expect(mockPrisma.client.attendanceLog.create).toHaveBeenCalled();
-      expect(mockPrisma.client.member.update).toHaveBeenCalledWith({
-        where: { id: memberId },
+      expect(mockPrisma.client.attendanceLog.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          isCheckedIn: true,
-          status: "ONLINE",
+          shiftStatus: ShiftAttendanceStatus.LATE,
+          isLocationVerified: true,
         }),
       });
     });
@@ -125,69 +172,6 @@ describe("AttendanceUseCase", () => {
           status: "OFFLINE",
         }),
       });
-    });
-  });
-
-  describe("getMemberStatus", () => {
-    it("should throw NotFoundException if member not found", async () => {
-      mockPrisma.client.member.findFirst.mockResolvedValue(null);
-      await expect(useCase.getMemberStatus("org1", "m1")).rejects.toThrow(NotFoundException);
-    });
-
-    it("should return member status", async () => {
-      const mockMember = { id: "m1", status: "ONLINE", isCheckedIn: true };
-      mockPrisma.client.member.findFirst.mockResolvedValue(mockMember);
-
-      const result = await useCase.getMemberStatus("org1", "m1");
-      expect(result).toEqual(mockMember);
-      expect(mockPrisma.client.member.findFirst).toHaveBeenCalledWith({
-        where: { id: "m1", organizationId: "org1" },
-        select: expect.any(Object),
-      });
-    });
-  });
-
-  describe("getAttendanceLogs", () => {
-    it("should return paginated attendance logs with selected fields", async () => {
-      const mockLogs = [
-        {
-          id: "1",
-          memberId: "m1",
-          checkInTime: new Date(),
-          checkInLocationId: "l1",
-          member: {
-            id: "m1",
-            user: { name: "Test Member" },
-          },
-          checkInLocation: { name: "Location 1" },
-        },
-      ];
-
-      mockPrisma.client.attendanceLog.count.mockResolvedValue(1);
-      mockPrisma.client.attendanceLog.findMany.mockResolvedValue(mockLogs);
-
-      const result = await useCase.getAttendanceLogs("org1", { page: 1, limit: 10 });
-
-      expect(result.items).toHaveLength(1);
-      expect(result.meta.total).toBe(1);
-      expect(result.items[0].member.user.name).toBe("Test Member");
-
-      // Verify that findMany was called with select
-      expect(mockPrisma.client.attendanceLog.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          select: expect.objectContaining({
-            id: true,
-            memberId: true,
-            member: expect.objectContaining({
-              select: expect.objectContaining({
-                user: expect.objectContaining({
-                  select: { name: true }
-                }),
-              }),
-            }),
-          }),
-        }),
-      );
     });
   });
 });

@@ -392,6 +392,10 @@ model InventoryLocation {
   contact             Json?
   capacity            Json?
   settings            Json?
+  latitude            Float?
+  longitude           Float?
+  radiusMeters        Int?                    @default(100)
+  branchCode          String?                 @unique
   parentLocationId    String?
   parentLocation      InventoryLocation?      @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
   childLocations      InventoryLocation[]     @relation("LocationHierarchy")

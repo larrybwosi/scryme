@@ -298,20 +298,59 @@ export class V3AuthCoreService {
     memberId: string,
     locationId: string,
   ) {
-    await this.prisma.client.attendanceLog.create({
+    const checkInTime = new Date();
+    const dayOfWeek = checkInTime.getDay();
+    const candidateShifts = await this.prisma.client.staffShift.findMany({
+      where: {
+        organizationId,
+        memberId,
+        isActive: true,
+        dayOfWeek,
+        OR: [{ locationId }, { locationId: null }],
+      },
+    });
+
+    let matchedShiftId: string | null = null;
+    let shiftStatus = "UNSCHEDULED";
+
+    if (candidateShifts.length > 0) {
+      const shift = candidateShifts[0];
+      matchedShiftId = shift.id;
+
+      const [startHours, startMins] = shift.startTime.split(":").map(Number);
+      const scheduledStart = new Date(checkInTime);
+      scheduledStart.setHours(startHours, startMins, 0, 0);
+
+      const diffMins = (checkInTime.getTime() - scheduledStart.getTime()) / 60000;
+
+      if (diffMins > 15) {
+        shiftStatus = "LATE";
+      } else if (diffMins < -15) {
+        shiftStatus = "EARLY";
+      } else {
+        shiftStatus = "ON_TIME";
+      }
+    }
+
+    const log = await this.prisma.client.attendanceLog.create({
       data: {
         memberId,
         organizationId,
-        checkInTime: new Date(),
+        checkInTime,
         checkInLocationId: locationId,
+        shiftId: matchedShiftId,
+        shiftStatus: shiftStatus as any,
+        verificationMethod: "POS_DEVICE" as any,
+        isLocationVerified: true,
       },
     });
     await this.prisma.client.member.update({
       where: { id: memberId },
       data: {
         isCheckedIn: true,
-        lastCheckInTime: new Date(),
+        lastCheckInTime: checkInTime,
         currentCheckInLocationId: locationId,
+        currentAttendanceLogId: log.id,
       },
     });
   }

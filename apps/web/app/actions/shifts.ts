@@ -398,7 +398,7 @@ export async function getSchedulingWorkspace(from: string, to: string) {
   }
 
   try {
-    const [bookings, overrides, services, locations, settings, tradeRequests, tasks, departments] = await Promise.all([
+    const [bookings, overrides, services, locations, settings, tradeRequests, tasks, departments, attendanceLogs] = await Promise.all([
       db.serviceBooking.findMany({
         where: {
           organizationId: session.organizationId,
@@ -429,7 +429,7 @@ export async function getSchedulingWorkspace(from: string, to: string) {
       }),
       db.inventoryLocation.findMany({
         where: { organizationId: session.organizationId, isActive: true },
-        select: { id: true, name: true },
+        select: { id: true, name: true, branchCode: true, latitude: true, longitude: true, radiusMeters: true },
         orderBy: { name: "asc" },
       }),
       db.organizationSettings.findUnique({
@@ -459,6 +459,24 @@ export async function getSchedulingWorkspace(from: string, to: string) {
         select: { id: true, name: true },
         orderBy: { name: "asc" },
       }),
+      db.attendanceLog.findMany({
+        where: {
+          organizationId: session.organizationId,
+          checkInTime: { gte: start },
+        },
+        include: {
+          member: {
+            select: {
+              id: true,
+              user: { select: { name: true, email: true, image: true } },
+            },
+          },
+          checkInLocation: { select: { id: true, name: true, branchCode: true } },
+          shift: { select: { id: true, startTime: true, endTime: true } },
+        },
+        orderBy: { checkInTime: "desc" },
+        take: 200,
+      }),
     ]);
     return {
       success: true,
@@ -471,6 +489,7 @@ export async function getSchedulingWorkspace(from: string, to: string) {
         tradeRequests,
         tasks,
         departments,
+        attendanceLogs,
       },
     };
   } catch (error: any) {
@@ -873,5 +892,166 @@ export async function deleteStaffBreak(breakId: string) {
   } catch (error: any) {
     console.error("Error deleting break:", error);
     return { success: false, error: error.message || "Failed to delete break" };
+  }
+}
+
+
+export async function recordManualAttendanceCheckIn(data: {
+  memberId: string;
+  locationId: string;
+  notes?: string;
+}) {
+  const session = await getServerAuth();
+  if (!session?.organizationId) return { success: false, error: "Unauthorized" };
+
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const location = await db.inventoryLocation.findFirst({
+      where: { id: data.locationId, organizationId: session.organizationId },
+    });
+    if (!location) return { success: false, error: "Location not found" };
+
+    const activeLog = await db.attendanceLog.findFirst({
+      where: { organizationId: session.organizationId, memberId: data.memberId, checkOutTime: null },
+    });
+    if (activeLog) return { success: false, error: "Member is already checked in" };
+
+    const checkInTime = new Date();
+    const dayOfWeek = checkInTime.getDay();
+    const candidateShifts = await db.staffShift.findMany({
+      where: {
+        organizationId: session.organizationId,
+        memberId: data.memberId,
+        isActive: true,
+        dayOfWeek,
+        OR: [{ locationId: data.locationId }, { locationId: null }],
+      },
+    });
+
+    let matchedShiftId: string | null = null;
+    let shiftStatus: any = "UNSCHEDULED";
+
+    if (candidateShifts.length > 0) {
+      const shift = candidateShifts[0];
+      matchedShiftId = shift.id;
+      const [startHours, startMins] = shift.startTime.split(":").map(Number);
+      const scheduledStart = new Date(checkInTime);
+      scheduledStart.setHours(startHours, startMins, 0, 0);
+
+      const diffMins = (checkInTime.getTime() - scheduledStart.getTime()) / 60000;
+      if (diffMins > 15) shiftStatus = "LATE";
+      else if (diffMins < -15) shiftStatus = "EARLY";
+      else shiftStatus = "ON_TIME";
+    }
+
+    const log = await db.attendanceLog.create({
+      data: {
+        organizationId: session.organizationId,
+        memberId: data.memberId,
+        checkInTime,
+        checkInLocationId: data.locationId,
+        shiftId: matchedShiftId,
+        shiftStatus,
+        verificationMethod: "MANAGER_OVERRIDE",
+        isLocationVerified: true,
+        notes: data.notes || "Manual manager check-in override",
+      },
+    });
+
+    await db.member.update({
+      where: { id: data.memberId },
+      data: {
+        isCheckedIn: true,
+        lastCheckInTime: checkInTime,
+        currentCheckInLocationId: data.locationId,
+        currentAttendanceLogId: log.id,
+        status: "ONLINE",
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    revalidatePath("/staff");
+    return { success: true, data: log };
+  } catch (error: any) {
+    console.error("Error in recordManualAttendanceCheckIn:", error);
+    return { success: false, error: error.message || "Failed to record check-in" };
+  }
+}
+
+export async function recordManualAttendanceCheckOut(data: {
+  memberId: string;
+  notes?: string;
+}) {
+  const session = await getServerAuth();
+  if (!session?.organizationId) return { success: false, error: "Unauthorized" };
+
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const activeLog = await db.attendanceLog.findFirst({
+      where: { organizationId: session.organizationId, memberId: data.memberId, checkOutTime: null },
+    });
+    if (!activeLog) return { success: false, error: "Member is not checked in" };
+
+    const checkOutTime = new Date();
+    const durationMinutes = Math.round((checkOutTime.getTime() - activeLog.checkInTime.getTime()) / 60000);
+
+    const log = await db.attendanceLog.update({
+      where: { id: activeLog.id },
+      data: {
+        checkOutTime,
+        durationMinutes,
+        notes: data.notes || activeLog.notes,
+      },
+    });
+
+    await db.member.update({
+      where: { id: data.memberId },
+      data: {
+        isCheckedIn: false,
+        currentCheckInLocationId: null,
+        currentAttendanceLogId: null,
+        status: "OFFLINE",
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    revalidatePath("/staff");
+    return { success: true, data: log };
+  } catch (error: any) {
+    console.error("Error in recordManualAttendanceCheckOut:", error);
+    return { success: false, error: error.message || "Failed to record check-out" };
+  }
+}
+
+export async function updateBranchLocationCoordinates(
+  locationId: string,
+  data: { latitude?: number; longitude?: number; radiusMeters?: number; branchCode?: string }
+) {
+  const session = await getServerAuth();
+  if (!session?.organizationId) return { success: false, error: "Unauthorized" };
+
+  const permission = await checkShiftManagementPermission(session);
+  if (!permission.success) return permission;
+
+  try {
+    const location = await db.inventoryLocation.update({
+      where: { id: locationId },
+      data: {
+        latitude: data.latitude !== undefined ? data.latitude : undefined,
+        longitude: data.longitude !== undefined ? data.longitude : undefined,
+        radiusMeters: data.radiusMeters !== undefined ? data.radiusMeters : undefined,
+        branchCode: data.branchCode !== undefined ? data.branchCode : undefined,
+      },
+    });
+
+    revalidatePath("/staff/shifts");
+    return { success: true, data: location };
+  } catch (error: any) {
+    console.error("Error updating branch location coordinates:", error);
+    return { success: false, error: error.message || "Failed to update branch settings" };
   }
 }
