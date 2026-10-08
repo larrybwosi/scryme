@@ -1,6 +1,6 @@
 {
   "name": "@repo/auth",
-  "version": "10.2.4",
+  "version": "10.2.5",
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
   "types": "./src/index.ts",
