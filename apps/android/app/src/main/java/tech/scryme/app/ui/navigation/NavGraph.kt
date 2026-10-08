@@ -14,6 +14,8 @@ import tech.scryme.app.ui.branch.BranchScreen
 import tech.scryme.app.ui.branch.BranchViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
 import tech.scryme.app.ui.profile.ProfileViewModel
+import tech.scryme.app.ui.sales.SalesScreen
+import tech.scryme.app.ui.sales.SalesViewModel
 import tech.scryme.app.ui.schedule.ScheduleScreen
 import tech.scryme.app.ui.schedule.ScheduleViewModel
 import tech.scryme.app.ui.settings.SettingsScreen
@@ -51,7 +53,18 @@ fun AppNavGraph(
         }
         composable(Screen.Admin.route) {
             val viewModel: AdminViewModel = hiltViewModel()
-            AdminScreen(viewModel = viewModel)
+            AdminScreen(
+                viewModel = viewModel,
+                onNavigateToSales = { navController.navigate(Screen.Sales.route) }
+            )
+        }
+        composable(Screen.Sales.route) {
+            val viewModel: SalesViewModel = hiltViewModel()
+            SalesScreen(
+                viewModel = viewModel,
+                onNavigateHome = { navController.navigate(Screen.Tasks.route) },
+                onNavigateSettings = { navController.navigate(Screen.Settings.route) }
+            )
         }
         composable(Screen.Branch.route) {
             val viewModel: BranchViewModel = hiltViewModel()

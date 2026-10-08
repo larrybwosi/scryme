@@ -12,6 +12,7 @@ import tech.scryme.app.BuildConfig
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.api.BranchApiService
 import tech.scryme.app.data.api.MemberApiService
+import tech.scryme.app.data.api.SalesApiService
 import tech.scryme.app.data.api.ScheduleApiService
 import tech.scryme.app.data.interceptor.HeaderInterceptor
 import java.security.SecureRandom
@@ -107,5 +108,11 @@ object NetworkModule {
     @Singleton
     fun provideBranchApiService(retrofit: Retrofit): BranchApiService {
         return retrofit.create(BranchApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideSalesApiService(retrofit: Retrofit): SalesApiService {
+        return retrofit.create(SalesApiService::class.java)
     }
 }
