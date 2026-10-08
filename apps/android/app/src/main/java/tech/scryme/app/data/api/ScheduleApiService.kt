@@ -61,6 +61,11 @@ interface ScheduleApiService {
         @Body dto: UpdateStaffTaskDto
     ): Response<V3ApiResponse<StaffTaskDto>>
 
+    @GET("{orgSlug}/members/attendance/me/status")
+    suspend fun getMyAttendanceStatus(
+        @Path("orgSlug") orgSlug: String
+    ): Response<V3ApiResponse<AttendanceStatusDto>>
+
     @POST("{orgSlug}/members/attendance/check-in")
     suspend fun checkInAttendance(
         @Path("orgSlug") orgSlug: String,

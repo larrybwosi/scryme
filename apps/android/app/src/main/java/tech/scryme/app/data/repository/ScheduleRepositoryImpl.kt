@@ -207,6 +207,20 @@ class ScheduleRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun getMyAttendanceStatus(orgSlug: String): Result<AttendanceStatusDto> {
+        return try {
+            val res = scheduleApiService.getMyAttendanceStatus(orgSlug)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val status = res.body()?.data ?: return Result.failure(Exception("Null status response"))
+                Result.success(status)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun checkInAttendance(
         orgSlug: String,
         locationId: String?,
