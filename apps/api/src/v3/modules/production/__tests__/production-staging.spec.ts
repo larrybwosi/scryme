@@ -1,4 +1,4 @@
-import { MovementType } from "@prisma/client";
+import { MovementType } from "@repo/db";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionService } from "../application/services/production.service";
 import { ProductionReportService } from "../reports/production-report.service";

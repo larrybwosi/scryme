@@ -9,7 +9,7 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { MovementType } from "@prisma/client";
+import { MovementType } from "@repo/db";
 
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
