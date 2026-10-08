@@ -10,6 +10,7 @@ import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.repository.AuthRepository
+import tech.scryme.app.util.CurrencyUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -29,6 +30,9 @@ class AuthRepositoryImpl @Inject constructor(
                 val userName = body?.user?.name
                 val userEmail = body?.user?.email ?: email
                 val userId = body?.user?.id
+                val orgName = body?.organization?.name
+                val orgCurrency = body?.organization?.effectiveCurrency ?: "USD"
+                val orgCurrencySymbol = body?.organization?.currencySymbol ?: CurrencyUtils.getSymbol(orgCurrency)
 
                 if (token.isNotEmpty()) {
                     sessionManager.saveSession(
@@ -37,7 +41,10 @@ class AuthRepositoryImpl @Inject constructor(
                         orgSlug = orgSlug,
                         memberId = userId,
                         userName = userName,
-                        userEmail = userEmail
+                        userEmail = userEmail,
+                        orgName = orgName,
+                        orgCurrency = orgCurrency,
+                        orgCurrencySymbol = orgCurrencySymbol
                     )
 
                     // Refresh context details via V3 Android Controller if available
@@ -49,6 +56,10 @@ class AuthRepositoryImpl @Inject constructor(
                             val defaultLocationId = meData?.locations?.firstOrNull { it.isDefault == true }?.id
                                 ?: meData?.locations?.firstOrNull()?.id
                             val memberId = meData?.member?.id ?: userId
+                            val activeOrgName = meData?.activeOrganization?.name ?: orgName
+                            val activeOrgLogo = meData?.activeOrganization?.logo
+                            val activeCurrency = meData?.activeOrganization?.effectiveCurrency ?: orgCurrency
+                            val activeCurrencySymbol = meData?.activeOrganization?.currencySymbol ?: CurrencyUtils.getSymbol(activeCurrency)
 
                             sessionManager.saveSession(
                                 accessToken = token,
@@ -57,7 +68,11 @@ class AuthRepositoryImpl @Inject constructor(
                                 locationId = defaultLocationId,
                                 memberId = memberId,
                                 userName = meData?.user?.name ?: userName,
-                                userEmail = meData?.user?.email ?: userEmail
+                                userEmail = meData?.user?.email ?: userEmail,
+                                orgName = activeOrgName,
+                                orgLogo = activeOrgLogo,
+                                orgCurrency = activeCurrency,
+                                orgCurrencySymbol = activeCurrencySymbol
                             )
                         }
                     }
@@ -86,6 +101,10 @@ class AuthRepositoryImpl @Inject constructor(
                     ?: data.locations?.firstOrNull()?.id
                     ?: sessionManager.getLocationId()
                 val memberId = data.member?.id ?: sessionManager.getMemberId()
+                val activeOrgName = data.activeOrganization?.name ?: sessionManager.getOrgName()
+                val activeOrgLogo = data.activeOrganization?.logo ?: sessionManager.getOrgLogo()
+                val activeCurrency = data.activeOrganization?.effectiveCurrency ?: sessionManager.getOrgCurrency()
+                val activeCurrencySymbol = data.activeOrganization?.currencySymbol ?: CurrencyUtils.getSymbol(activeCurrency)
 
                 sessionManager.saveSession(
                     accessToken = token,
@@ -94,7 +113,11 @@ class AuthRepositoryImpl @Inject constructor(
                     locationId = defaultLocationId,
                     memberId = memberId,
                     userName = data.user?.name,
-                    userEmail = data.user?.email
+                    userEmail = data.user?.email,
+                    orgName = activeOrgName,
+                    orgLogo = activeOrgLogo,
+                    orgCurrency = activeCurrency,
+                    orgCurrencySymbol = activeCurrencySymbol
                 )
                 Result.success(data)
             } else {

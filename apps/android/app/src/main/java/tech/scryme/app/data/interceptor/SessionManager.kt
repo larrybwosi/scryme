@@ -24,6 +24,10 @@ class SessionManager @Inject constructor(
         val ACCESS_TOKEN = stringPreferencesKey("access_token")
         val MEMBER_TOKEN = stringPreferencesKey("member_token")
         val ORG_SLUG = stringPreferencesKey("org_slug")
+        val ORG_NAME = stringPreferencesKey("org_name")
+        val ORG_LOGO = stringPreferencesKey("org_logo")
+        val ORG_CURRENCY = stringPreferencesKey("org_currency")
+        val ORG_CURRENCY_SYMBOL = stringPreferencesKey("org_currency_symbol")
         val LOCATION_ID = stringPreferencesKey("location_id")
         val MEMBER_ID = stringPreferencesKey("member_id")
         val USER_NAME = stringPreferencesKey("user_name")
@@ -38,6 +42,10 @@ class SessionManager @Inject constructor(
     val accessTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ACCESS_TOKEN] }
     val memberTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[MEMBER_TOKEN] }
     val orgSlugFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_SLUG] }
+    val orgNameFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_NAME] }
+    val orgLogoFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_LOGO] }
+    val orgCurrencyFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_CURRENCY] ?: "USD" }
+    val orgCurrencySymbolFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_CURRENCY_SYMBOL] ?: "$" }
     val locationIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[LOCATION_ID] }
     val memberIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[MEMBER_ID] }
     val userNameFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_NAME] }
@@ -51,6 +59,10 @@ class SessionManager @Inject constructor(
     suspend fun getAccessToken(): String? = accessTokenFlow.first()
     suspend fun getMemberToken(): String? = memberTokenFlow.first()
     suspend fun getOrgSlug(): String? = orgSlugFlow.first()
+    suspend fun getOrgName(): String? = orgNameFlow.first()
+    suspend fun getOrgLogo(): String? = orgLogoFlow.first()
+    suspend fun getOrgCurrency(): String = orgCurrencyFlow.first() ?: "USD"
+    suspend fun getOrgCurrencySymbol(): String = orgCurrencySymbolFlow.first() ?: "$"
     suspend fun getLocationId(): String? = locationIdFlow.first()
     suspend fun getMemberId(): String? = memberIdFlow.first()
 
@@ -61,7 +73,11 @@ class SessionManager @Inject constructor(
         memberId: String? = null,
         memberToken: String? = null,
         userName: String? = null,
-        userEmail: String? = null
+        userEmail: String? = null,
+        orgName: String? = null,
+        orgLogo: String? = null,
+        orgCurrency: String? = null,
+        orgCurrencySymbol: String? = null
     ) {
         context.dataStore.edit { prefs ->
             prefs[ACCESS_TOKEN] = accessToken
@@ -71,6 +87,10 @@ class SessionManager @Inject constructor(
             if (memberToken != null) prefs[MEMBER_TOKEN] = memberToken
             if (userName != null) prefs[USER_NAME] = userName
             if (userEmail != null) prefs[USER_EMAIL] = userEmail
+            if (orgName != null) prefs[ORG_NAME] = orgName
+            if (orgLogo != null) prefs[ORG_LOGO] = orgLogo
+            if (orgCurrency != null) prefs[ORG_CURRENCY] = orgCurrency
+            if (orgCurrencySymbol != null) prefs[ORG_CURRENCY_SYMBOL] = orgCurrencySymbol
         }
     }
 

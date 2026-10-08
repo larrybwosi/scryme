@@ -1,14 +1,37 @@
 package tech.scryme.app.ui.settings
 
-import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.*
-import androidx.compose.runtime.*
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.QrCodeScanner
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.FilterChip
+import androidx.compose.material3.FilterChipDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.Surface
+import androidx.compose.material3.Switch
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -26,8 +49,9 @@ fun SettingsScreen(
     if (uiState.showQrScanner) {
         QrScannerDialog(
             onDismissRequest = { viewModel.setShowQrScanner(false) },
-            onQrCodeScanned = { qrContent ->
-                viewModel.pairPosDevice(qrContent)
+            onQrCodeScanned = { code ->
+                viewModel.setShowQrScanner(false)
+                viewModel.pairPosDevice(code)
             }
         )
     }
@@ -35,21 +59,19 @@ fun SettingsScreen(
     LazyColumn(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.background)
             .padding(16.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
+        // Top Title
         item {
             Text(
-                text = "Settings & Preferences",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+                text = "Preferences & Workspace Settings",
+                style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.Bold),
+                color = MaterialTheme.colorScheme.onSurface
             )
         }
 
-        // POS Device Authentication Section
+        // POS Device Pairing Section
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -59,35 +81,40 @@ fun SettingsScreen(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(16.dp),
-                    verticalArrangement = Arrangement.spacedBy(10.dp)
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     Text(
-                        text = "POS Device Authentication",
+                        text = "POS Hardware & Terminal Pairing",
                         style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
                         color = MaterialTheme.colorScheme.primary
                     )
                     Text(
-                        text = "Scan QR Code on POS terminal to authorize and pair the device.",
-                        style = MaterialTheme.typography.bodyMedium,
+                        text = "Pair this Android mobile device with an active POS pairing session or authorization code.",
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
 
-                    Button(
+                    OutlinedButton(
                         onClick = { viewModel.setShowQrScanner(true) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(44.dp),
+                        modifier = Modifier.fillMaxWidth(),
                         shape = RoundedCornerShape(8.dp)
                     ) {
-                        Text("Scan QR Code to Pair POS")
+                        Icon(
+                            imageVector = Icons.Default.QrCodeScanner,
+                            contentDescription = null,
+                            modifier = Modifier.padding(end = 8.dp)
+                        )
+                        Text("Scan QR / Pair POS Terminal")
                     }
 
                     if (uiState.isPairingPos) {
-                        CircularProgressIndicator(
-                            modifier = Modifier
-                                .size(24.dp)
-                                .align(Alignment.CenterHorizontally)
-                        )
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            CircularProgressIndicator(modifier = Modifier.height(20.dp))
+                            Text("Authorizing device registration...", style = MaterialTheme.typography.bodySmall)
+                        }
                     }
 
                     uiState.posPairingMessage?.let { msg ->
@@ -280,7 +307,11 @@ fun SettingsScreen(
 
                     InfoRow("Account Name", uiState.userName)
                     InfoRow("Account Email", uiState.userEmail)
+                    if (uiState.orgName.isNotBlank() && uiState.orgName != uiState.orgSlug) {
+                        InfoRow("Organization Name", uiState.orgName)
+                    }
                     InfoRow("Organization Slug", uiState.orgSlug)
+                    InfoRow("Organization Currency", "${uiState.orgCurrency} (${uiState.orgCurrencySymbol})")
                     InfoRow("Active Location ID", uiState.locationId)
                     InfoRow("API Endpoint", "https://api.scryme.tech/v3/")
                     InfoRow("App Build Version", "v3.0.0 (Android Native)")

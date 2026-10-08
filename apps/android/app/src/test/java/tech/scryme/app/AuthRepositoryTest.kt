@@ -52,7 +52,11 @@ class AuthRepositoryTest {
                 locationId = any(),
                 memberId = any(),
                 userName = "Test User",
-                userEmail = "test@scryme.tech"
+                userEmail = "test@scryme.tech",
+                orgName = any(),
+                orgLogo = any(),
+                orgCurrency = any(),
+                orgCurrencySymbol = any()
             )
         }
     }
@@ -98,7 +102,13 @@ class AuthRepositoryTest {
                 memberToken = "jwt-member-token-123",
                 orgSlug = "org_test_1",
                 locationId = "loc_test_1",
-                memberId = "mem_123"
+                memberId = "mem_123",
+                userName = any(),
+                userEmail = any(),
+                orgName = any(),
+                orgLogo = any(),
+                orgCurrency = any(),
+                orgCurrencySymbol = any()
             )
         }
     }

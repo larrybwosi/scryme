@@ -36,11 +36,24 @@ data class EmailSessionDto(
     @SerializedName("activeOrganizationId") val activeOrganizationId: String? = null
 )
 
+data class OrgSettingsDto(
+    @SerializedName("defaultCurrency") val defaultCurrency: String? = "USD",
+    @SerializedName("defaultTimezone") val defaultTimezone: String? = "UTC",
+    @SerializedName("country") val country: String? = null
+)
+
 data class OrganizationDetailDto(
     @SerializedName("id") val id: String? = null,
     @SerializedName("slug") val slug: String? = null,
-    @SerializedName("name") val name: String? = null
-)
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("logo") val logo: String? = null,
+    @SerializedName("currency") val currency: String? = null,
+    @SerializedName("currencySymbol") val currencySymbol: String? = null,
+    @SerializedName("settings") val settings: OrgSettingsDto? = null
+) {
+    val effectiveCurrency: String
+        get() = currency ?: settings?.defaultCurrency ?: "USD"
+}
 
 data class TerminalLoginRequestDto(
     @SerializedName("pin") val pin: String? = null,
