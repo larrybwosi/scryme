@@ -20,5 +20,8 @@ export default defineConfig({
     url:
       process.env.DATABASE_URL ||
       "postgresql://postgres:postgres@localhost:5432/postgres",
+    shadowDatabaseUrl:
+      process.env.SHADOW_DATABASE_URL ||
+      "postgresql://postgres:postgres@localhost:5432/shadow_db",
   },
 });
