@@ -1,3 +1,4 @@
+import { MovementType } from "@prisma/client";
 import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionService } from "../application/services/production.service";
 import { ProductionReportService } from "../reports/production-report.service";
@@ -213,6 +214,14 @@ describe("ProductionService - Staging & Dispatching", () => {
         }),
       );
 
+
+      expect(prismaMock.client.stockMovement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            movementType: MovementType.TRANSFER,
+          }),
+        }),
+      );
       expect(result.dispatchLog.id).toBe("dispatch-1");
     });
   });
@@ -249,6 +258,14 @@ describe("ProductionService - Staging & Dispatching", () => {
           stagingStatus: "PARTIALLY_DISPATCHED",
         },
       });
+
+      expect(prismaMock.client.stockMovement.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            movementType: MovementType.ADJUSTMENT_OUT,
+          }),
+        }),
+      );
       expect(result.stagingWasteQuantity).toBe(10);
     });
   });
