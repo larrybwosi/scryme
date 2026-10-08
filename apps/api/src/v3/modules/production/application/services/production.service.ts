@@ -9,6 +9,8 @@ import {
   ConflictException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { MovementType } from "@repo/db";
+
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
 import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
@@ -1273,7 +1275,7 @@ export class ProductionService {
             stockBatchId: stockBatch.id,
             fromLocationId: stockBatch.locationId,
             quantity: consumption.quantity,
-            movementType: "PRODUCTION_OUT" as any,
+            movementType: MovementType.PRODUCTION_OUT,
             memberId: ctx.memberId!,
             organizationId,
             notes: `Consumed in Batch ${batch.batchNumber}`,
@@ -1370,7 +1372,7 @@ export class ProductionService {
               stockBatchId: producedStockBatch.id,
               toLocationId: locationId,
               quantity: netQuantity,
-              movementType: "PRODUCTION_IN" as any,
+              movementType: MovementType.PRODUCTION_IN,
               memberId: ctx.memberId!,
               organizationId,
               notes: `Produced from Batch ${batch.batchNumber} (Net yield after waste)`,
@@ -1539,7 +1541,7 @@ export class ProductionService {
             fromLocationId,
             toLocationId,
             quantity: dispatchQty,
-            movementType: "TRANSFER_IN" as any,
+            movementType: MovementType.TRANSFER,
             memberId: ctx.memberId!,
             organizationId,
             notes: notes || `Dispatched from Batch ${batch.batchNumber} to Front Office (${toLocation.name})`,
@@ -1622,7 +1624,7 @@ export class ProductionService {
               variantId: batch.recipe.producesVariantId,
               fromLocationId: locationId,
               quantity: wasteQty,
-              movementType: "WASTE" as any,
+              movementType: MovementType.ADJUSTMENT_OUT,
               memberId: ctx.memberId!,
               organizationId,
               notes: notes || `Staging disposal for Batch ${batch.batchNumber}: ${reason || "Spoiled/Damaged"}`,
@@ -2334,7 +2336,7 @@ export class ProductionService {
             stockBatchId: batch.id,
             quantity: line.quantity,
             toLocationId: locationId,
-            movementType: "PURCHASE_RECEIPT" as any,
+            movementType: MovementType.PURCHASE_RECEIPT,
             memberId: memberId!,
             referenceId: receipt.id,
             referenceType: "StockReceipt",
