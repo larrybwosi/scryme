@@ -6,8 +6,8 @@ set -e
 
 # --- Database Migrations ---
 # Start database and basic infra services
-echo "Starting core infrastructure (db, redis, rabbitmq)..."
-docker compose up -d db redis rabbitmq
+echo "Starting core infrastructure (db, rabbitmq)..."
+docker compose up -d db rabbitmq
 
 # Wait for database to be fully ready
 echo "Waiting for database to be ready..."
