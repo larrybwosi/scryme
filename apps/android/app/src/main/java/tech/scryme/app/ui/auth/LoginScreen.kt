@@ -74,17 +74,20 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "Welcome Back!",
-                    fontSize = 28.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF111827),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier.padding(top = 8.dp)
+                ScrymeBrandHeader(
+                    modifier = Modifier.padding(top = 4.dp, bottom = 12.dp)
                 )
 
                 Text(
-                    text = "Best Way to Manage\nYour Finances.",
+                    text = "Welcome Back",
+                    fontSize = 28.sp,
+                    fontWeight = FontWeight.Bold,
+                    color = Color(0xFF0F172A),
+                    textAlign = TextAlign.Center
+                )
+
+                Text(
+                    text = "The All-In-One Enterprise Platform\nFor Operations & Workflow Management.",
                     fontSize = 14.sp,
                     color = SubtitleText,
                     textAlign = TextAlign.Center,
@@ -116,7 +119,7 @@ fun LoginScreen(
                             Icon(
                                 imageVector = if (passwordVisible) Icons.Outlined.Visibility else Icons.Outlined.VisibilityOff,
                                 contentDescription = if (passwordVisible) "Hide password" else "Show password",
-                                tint = Color(0xFF9CA3AF)
+                                tint = Color(0xFF94A3B8)
                             )
                         }
                     },
@@ -154,7 +157,7 @@ fun LoginScreen(
                         Text(
                             text = "Remember me",
                             fontSize = 13.sp,
-                            color = Color(0xFF4B5563)
+                            color = Color(0xFF475569)
                         )
                     }
 

@@ -31,18 +31,22 @@ fun GetStartedScreen(
         // Top Header
         Column(
             horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 24.dp)
+            modifier = Modifier.padding(top = 16.dp)
         ) {
+            ScrymeBrandHeader(
+                modifier = Modifier.padding(bottom = 16.dp)
+            )
+
             Text(
-                text = "Get Started!",
+                text = "Get Started",
                 fontSize = 32.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF111827),
+                color = Color(0xFF0F172A),
                 textAlign = TextAlign.Center
             )
             Spacer(modifier = Modifier.height(8.dp))
             Text(
-                text = "Best Way to Manage\nYour Finances.",
+                text = "The All-In-One Enterprise Platform\nFor Operations & Workflow Management.",
                 fontSize = 14.sp,
                 color = SubtitleText,
                 textAlign = TextAlign.Center,
