@@ -13,6 +13,8 @@ import tech.scryme.app.data.dto.AttendanceLogDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
+import tech.scryme.app.data.dto.AttendanceStatusDto
+import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.ui.schedule.ScheduleUiState
 import tech.scryme.app.ui.schedule.ScheduleViewModel
@@ -22,6 +24,7 @@ class ScheduleViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val scheduleRepository = mockk<ScheduleRepository>()
+    private val branchRepository = mockk<BranchRepository>()
     private val sessionManager = mockk<SessionManager>()
     private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: ScheduleViewModel
@@ -29,7 +32,9 @@ class ScheduleViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = ScheduleViewModel(scheduleRepository, sessionManager, context)
+        coEvery { branchRepository.getBranchLocations(any()) } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getMyAttendanceStatus(any()) } returns Result.success(AttendanceStatusDto(id = "mem_1"))
+        viewModel = ScheduleViewModel(scheduleRepository, branchRepository, sessionManager, context)
     }
 
     @After
