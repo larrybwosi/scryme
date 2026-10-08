@@ -1,30 +1,39 @@
 package tech.scryme.app.data.repository
 
 import tech.scryme.app.data.api.SalesApiService
+import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.MetricItem
 import tech.scryme.app.domain.model.OrderItem
 import tech.scryme.app.domain.model.OrderStatus
 import tech.scryme.app.domain.model.SalesAnalytics
 import tech.scryme.app.domain.repository.SalesRepository
 import tech.scryme.app.domain.model.TransactionSummary
+import tech.scryme.app.util.CurrencyUtils
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class SalesRepositoryImpl @Inject constructor(
-    private val salesApiService: SalesApiService
+    private val salesApiService: SalesApiService,
+    private val sessionManager: SessionManager
 ) : SalesRepository {
 
     override suspend fun getSalesAnalytics(): Result<SalesAnalytics> {
         return try {
+            val currencyCode = sessionManager.getOrgCurrency()
+            val currencySymbol = sessionManager.getOrgCurrencySymbol()
             val response = salesApiService.getAnalytics()
             if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(response.body()!!.data!!)
+                val data = response.body()!!.data!!
+                val formattedBalance = CurrencyUtils.formatAmountString(data.totalBalance, currencyCode, currencySymbol)
+                Result.success(data.copy(totalBalance = formattedBalance))
             } else {
-                Result.success(getMockAnalytics())
+                Result.success(getMockAnalytics(currencyCode, currencySymbol))
             }
         } catch (e: Exception) {
-            Result.success(getMockAnalytics())
+            val currencyCode = sessionManager.getOrgCurrency()
+            val currencySymbol = sessionManager.getOrgCurrencySymbol()
+            Result.success(getMockAnalytics(currencyCode, currencySymbol))
         }
     }
 
@@ -46,15 +55,17 @@ class SalesRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun getMockAnalytics(): SalesAnalytics {
+    private fun getMockAnalytics(currencyCode: String, currencySymbol: String): SalesAnalytics {
+        val rawAmount = 150841.93
+        val formattedBalance = CurrencyUtils.formatAmount(rawAmount, currencyCode, currencySymbol)
         return SalesAnalytics(
             userName = "Jonathan",
-            totalBalance = "$150,841.93",
+            totalBalance = formattedBalance,
             metrics = listOf(
                 MetricItem(title = "Customer", value = "24,139", trend = "27%", isUp = true),
                 MetricItem(title = "Product", value = "53,401", trend = "8%", isUp = true),
-                MetricItem(title = "Revenue", value = "78,942", trend = "15%", isUp = true),
-                MetricItem(title = "Expense", value = "12,318", trend = "10%", isUp = false)
+                MetricItem(title = "Revenue", value = CurrencyUtils.formatAmount(78942.0, currencyCode, currencySymbol), trend = "15%", isUp = true),
+                MetricItem(title = "Expense", value = CurrencyUtils.formatAmount(12318.0, currencyCode, currencySymbol), trend = "10%", isUp = false)
             ),
             recentTransactions = listOf(
                 TransactionSummary(

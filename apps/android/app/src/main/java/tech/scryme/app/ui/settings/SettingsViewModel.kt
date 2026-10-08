@@ -23,6 +23,9 @@ data class SettingsUiState(
     val userName: String = "",
     val userEmail: String = "",
     val orgSlug: String = "",
+    val orgName: String = "",
+    val orgCurrency: String = "USD",
+    val orgCurrencySymbol: String = "$",
     val locationId: String = "",
     val showQrScanner: Boolean = false,
     val isPairingPos: Boolean = false,
@@ -37,10 +40,20 @@ private data class PrefsState(
     val taskNotifications: Boolean
 )
 
+private data class OrgConfigState(
+    val slug: String,
+    val name: String,
+    val currency: String,
+    val currencySymbol: String
+)
+
 private data class AccountState(
     val userName: String,
     val userEmail: String,
     val orgSlug: String,
+    val orgName: String,
+    val orgCurrency: String,
+    val orgCurrencySymbol: String,
     val locationId: String
 )
 
@@ -71,16 +84,33 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    private val orgConfigFlow = combine(
+        sessionManager.orgSlugFlow,
+        sessionManager.orgNameFlow,
+        sessionManager.orgCurrencyFlow,
+        sessionManager.orgCurrencySymbolFlow
+    ) { slug, name, curr, symbol ->
+        OrgConfigState(
+            slug = slug ?: "Default",
+            name = name ?: slug ?: "Default Organization",
+            currency = curr ?: "USD",
+            currencySymbol = symbol ?: "$"
+        )
+    }
+
     private val accountFlow = combine(
         sessionManager.userNameFlow,
         sessionManager.userEmailFlow,
-        sessionManager.orgSlugFlow,
-        sessionManager.locationIdFlow
-    ) { name, email, org, loc ->
+        sessionManager.locationIdFlow,
+        orgConfigFlow
+    ) { name, email, loc, orgConfig ->
         AccountState(
             userName = name ?: "User",
             userEmail = email ?: "user@scryme.tech",
-            orgSlug = org ?: "Default",
+            orgSlug = orgConfig.slug,
+            orgName = orgConfig.name,
+            orgCurrency = orgConfig.currency,
+            orgCurrencySymbol = orgConfig.currencySymbol,
             locationId = loc ?: "Primary Location"
         )
     }
@@ -101,6 +131,9 @@ class SettingsViewModel @Inject constructor(
             userName = account.userName,
             userEmail = account.userEmail,
             orgSlug = account.orgSlug,
+            orgName = account.orgName,
+            orgCurrency = account.orgCurrency,
+            orgCurrencySymbol = account.orgCurrencySymbol,
             locationId = account.locationId,
             showQrScanner = showScanner,
             isPairingPos = isPairing,

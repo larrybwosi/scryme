@@ -6,6 +6,27 @@ import { RegisterDeviceDto, SwitchOrgDto } from "../dto/android.dto";
 export class AndroidUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
+  private getCurrencySymbol(currency: string): string {
+    const symbolMap: Record<string, string> = {
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      KES: "KSh",
+      NGN: "₦",
+      JPY: "¥",
+      CAD: "CA$",
+      AUD: "A$",
+      INR: "₹",
+      GHS: "GH₵",
+      ZAR: "R",
+      UGX: "UGX",
+      TZS: "TZS",
+      RWF: "RF",
+      ETB: "Br",
+    };
+    return symbolMap[currency?.toUpperCase()] || currency || "$";
+  }
+
   async getMe(v3Context: any, user: any) {
     const { organizationId, memberId } = v3Context;
 
@@ -16,12 +37,36 @@ export class AndroidUseCase {
         name: true,
         slug: true,
         logo: true,
+        settings: {
+          select: {
+            defaultCurrency: true,
+            defaultTimezone: true,
+            country: true,
+          },
+        },
       },
     });
 
     if (!organization) {
       throw new NotFoundException("Organization not found");
     }
+
+    const currency = organization.settings?.defaultCurrency || "USD";
+    const currencySymbol = this.getCurrencySymbol(currency);
+
+    const activeOrganization = {
+      id: organization.id,
+      name: organization.name,
+      slug: organization.slug,
+      logo: organization.logo,
+      currency,
+      currencySymbol,
+      settings: organization.settings || {
+        defaultCurrency: currency,
+        defaultTimezone: "UTC",
+        country: null,
+      },
+    };
 
     let member = null;
     if (memberId) {
@@ -92,7 +137,7 @@ export class AndroidUseCase {
         image: user?.image || member?.user?.image || null,
       },
       member: member ? { id: member.id, role: member.role } : null,
-      activeOrganization: organization,
+      activeOrganization,
       memberships,
       locations,
     };
@@ -130,8 +175,36 @@ export class AndroidUseCase {
         name: true,
         slug: true,
         logo: true,
+        settings: {
+          select: {
+            defaultCurrency: true,
+            defaultTimezone: true,
+            country: true,
+          },
+        },
       },
     });
+
+    if (!targetOrg) {
+      throw new NotFoundException("Target organization not found");
+    }
+
+    const currency = targetOrg.settings?.defaultCurrency || "USD";
+    const currencySymbol = this.getCurrencySymbol(currency);
+
+    const activeOrganization = {
+      id: targetOrg.id,
+      name: targetOrg.name,
+      slug: targetOrg.slug,
+      logo: targetOrg.logo,
+      currency,
+      currencySymbol,
+      settings: targetOrg.settings || {
+        defaultCurrency: currency,
+        defaultTimezone: "UTC",
+        country: null,
+      },
+    };
 
     // Update user's activeOrganizationId in database
     await this.prisma.client.user.update({
@@ -141,7 +214,7 @@ export class AndroidUseCase {
 
     return {
       success: true,
-      activeOrganization: targetOrg,
+      activeOrganization,
       member: {
         id: member.id,
         role: member.role,
