@@ -360,6 +360,7 @@ pub struct BakerySettings {
     pub batch_separator: Option<String>,
     pub batch_date_format: Option<String>,
     pub batch_sequence: Option<String>,
+    pub batch_generation_type: Option<String>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }

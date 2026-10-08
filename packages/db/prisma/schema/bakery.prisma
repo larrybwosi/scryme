@@ -318,6 +318,7 @@ model BakerySettings {
   batchSeparator         String         @default("-")
   batchDateFormat        String         @default("YYYYMMDD")
   batchSequence          String         @default("4")
+  batchGenerationType    String         @default("SEQUENCE")
 
   // Operational Rules
   enableProductionStaging Boolean        @default(false)

@@ -32,6 +32,7 @@ export default function SettingsPage() {
 
   // Batch Numbering State
   const [batchPrefix, setBatchPrefix] = useState("BAT");
+  const [batchGenerationType, setBatchGenerationType] = useState("SEQUENCE");
   const [batchSeparator, setBatchSeparator] = useState("-");
   const [batchDateFormat, setBatchDateFormat] = useState("YYYYMMDD");
   const [batchSequence, setBatchSequence] = useState("4");
@@ -44,6 +45,7 @@ export default function SettingsPage() {
       if (settings.batchSeparator !== undefined) setBatchSeparator(settings.batchSeparator ?? "-");
       if (settings.batchDateFormat !== undefined) setBatchDateFormat(settings.batchDateFormat || "YYYYMMDD");
       if (settings.batchSequence !== undefined) setBatchSequence(String(settings.batchSequence || "4"));
+      if (settings.batchGenerationType !== undefined) setBatchGenerationType(settings.batchGenerationType || "SEQUENCE");
     }
   }, [settings]);
 
@@ -72,9 +74,9 @@ export default function SettingsPage() {
     }
 
     const seqLen = parseInt(batchSequence || "4") || 4;
-    const seqStr = "1".padStart(seqLen, "0");
+    const codePart = batchGenerationType === "RANDOM" ? "X".repeat(seqLen) : "1".padStart(seqLen, "0");
 
-    const parts = [batchPrefix, dateStr, seqStr].filter(Boolean);
+    const parts = [batchPrefix, dateStr, codePart].filter(Boolean);
     return parts.join(batchSeparator);
   };
 
@@ -86,6 +88,7 @@ export default function SettingsPage() {
         batchSeparator,
         batchDateFormat,
         batchSequence,
+        batchGenerationType,
       });
       toast.success("Batch numbering configuration updated successfully");
     } catch (err: any) {
@@ -208,8 +211,27 @@ export default function SettingsPage() {
             </div>
 
             <div className="space-y-1.5">
+              <Label htmlFor="batchGenerationType" className="text-xs font-semibold text-muted-foreground uppercase">
+                Generation Mode
+              </Label>
+              <Select
+                value={batchGenerationType}
+                onValueChange={setBatchGenerationType}
+                disabled={isSavingBatchSettings || isUpdating}
+              >
+                <SelectTrigger id="batchGenerationType">
+                  <SelectValue placeholder="Select mode" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="SEQUENCE">Sequence (Incremental)</SelectItem>
+                  <SelectItem value="RANDOM">Random (Alphanumeric)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
               <Label htmlFor="batchSequence" className="text-xs font-semibold text-muted-foreground uppercase">
-                Sequence Digits Length
+                Code Digits Length
               </Label>
               <Select
                 value={batchSequence}
@@ -220,10 +242,10 @@ export default function SettingsPage() {
                   <SelectValue placeholder="Select sequence length" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="3">3 Digits (001)</SelectItem>
-                  <SelectItem value="4">4 Digits (0001)</SelectItem>
-                  <SelectItem value="5">5 Digits (00001)</SelectItem>
-                  <SelectItem value="6">6 Digits (000001)</SelectItem>
+                  <SelectItem value="3">3 Digits / Chars</SelectItem>
+                  <SelectItem value="4">4 Digits / Chars</SelectItem>
+                  <SelectItem value="5">5 Digits / Chars</SelectItem>
+                  <SelectItem value="6">6 Digits / Chars</SelectItem>
                 </SelectContent>
               </Select>
             </div>

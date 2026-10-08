@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
-import sdk, { isTauri, isOfflineMode } from "@/lib/sdk";
+import sdk, { isOfflineMode } from "@/lib/sdk";
 
 export const useListLocations = () => {
   const { data, isLoading, error } = useQuery({
     queryKey: ["locations"],
     queryFn: async () => {
-      if (isTauri() || isOfflineMode()) {
+      if (isOfflineMode()) {
         return { locations: [] };
       }
       return sdk.pos.listLocations();
@@ -58,7 +58,9 @@ export const useGetLocation = (
     queryKey: ["location", locationId],
     queryFn: async () => {
       const res = await sdk.pos.listLocations();
-      const locations = res?.locations || res?.data || [];
+      const locations = Array.isArray(res)
+        ? res
+        : res?.locations || res?.data || [];
       const match = locations.find((l: any) => l.id === locationId);
       return match || null;
     },

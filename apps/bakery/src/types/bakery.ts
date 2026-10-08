@@ -254,6 +254,7 @@ export interface BakerySettings {
   batchSeparator?: string;
   batchDateFormat?: string;
   batchSequence?: string;
+  batchGenerationType?: string;
   autoApproveBatches?: boolean;
   lowStockAlerts?: boolean;
   timezone?: string;

@@ -61,15 +61,23 @@ export const LocationSelect: React.FC<LocationSelectProps> = ({
   onCheckoutAction,
 }) => {
   const [open, setOpen] = useState(false);
-  const { data: locations, isLoading, error } = useListLocations() as any;
+  const { data: rawLocationsData, isLoading, error } = useListLocations() as any;
+
+  // Normalize location list array from various response structures
+  const locationsList = useMemo(() => {
+    if (!rawLocationsData) return [];
+    if (Array.isArray(rawLocationsData)) return rawLocationsData;
+    if (Array.isArray(rawLocationsData.locations)) return rawLocationsData.locations;
+    if (Array.isArray(rawLocationsData.data)) return rawLocationsData.data;
+    return [];
+  }, [rawLocationsData]);
 
   // Filter out excluded locations
   const filteredLocations = useMemo(() => {
-    if (!locations?.locations) return [];
     return excludeLocation
-      ? locations.locations.filter((loc: any) => loc.id !== excludeLocation)
-      : locations.locations;
-  }, [locations, excludeLocation]);
+      ? locationsList.filter((loc: any) => loc.id !== excludeLocation)
+      : locationsList;
+  }, [locationsList, excludeLocation]);
 
   // Find the currently selected location object for display
   const selectedLocation = useMemo(() => {
