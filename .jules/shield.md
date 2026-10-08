@@ -53,3 +53,7 @@
 ## 2026-10-15 - Expense & Petty Cash Fund Mutation Tenant Isolation
 **Learning:** In `ExpenseUseCase` (`approveExpense` and `decrementPettyCash`), `Expense` and `PettyCashFund` models lack composite unique constraints on `[id, organizationId]`. Standard Prisma `update({ where: { id } })` ignores non-unique `organizationId` filters in `where` parameters at database execution time.
 **Action:** Always use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) for database-level multi-tenant isolation on expense approvals and petty cash balance adjustments.
+
+## 2026-10-18 - Delivery Partner Wallet Balance Mutation Tenant Isolation
+**Learning:** In `DeliveryReconciliationUseCase.reconcilePod`, `DeliveryPartner` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `deliveryPartner.update({ where: { id: partner.id } })` ignores `organizationId` at database execution runtime.
+**Action:** Always use `updateMany({ where: { id: partner.id, organizationId }, data })` for database-level multi-tenant isolation during delivery partner wallet balance updates.

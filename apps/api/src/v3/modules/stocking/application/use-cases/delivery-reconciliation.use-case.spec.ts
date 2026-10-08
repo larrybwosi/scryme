@@ -19,7 +19,7 @@ describe("DeliveryReconciliationUseCase", () => {
         update: vi.fn(),
       },
       deliveryPartner: {
-        update: vi.fn(),
+        updateMany: vi.fn(),
       },
       partnerWalletLog: {
         create: vi.fn(),
@@ -250,8 +250,8 @@ describe("DeliveryReconciliationUseCase", () => {
         }),
       });
 
-      expect(mockTx.deliveryPartner.update).toHaveBeenCalledWith({
-        where: { id: "dp-1" },
+      expect(mockTx.deliveryPartner.updateMany).toHaveBeenCalledWith({
+        where: { id: "dp-1", organizationId: mockOrgId },
         data: { walletBalance: 70 }, // 50 + 20 (10% of 200)
       });
 
