@@ -207,7 +207,7 @@ export const bakery = {
   duplicateBatch: (id: string) => client.post(`/batches/${id}/duplicate`),
 
   getRecipes: () => client.get('/recipes'),
-  getRecipe: (id: string) => client.get(`/recipes/${id}`),
+  getRecipe: (id: string) => (id && id.trim() ? client.get(`/recipes/${id.trim()}`) : client.get("/recipes")),
   createRecipe: (data: any) => client.post('/recipes', data),
   updateRecipe: (id: string, data: any) => client.patch(`/recipes/${id}`, data),
   deleteRecipe: (id: string) => client.delete(`/recipes/${id}`),

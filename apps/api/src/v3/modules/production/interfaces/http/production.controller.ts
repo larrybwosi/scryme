@@ -160,6 +160,9 @@ export class ProductionController {
     @v3Context() ctx: V3ApiContext,
     @Param("id") id: string,
   ) {
+    if (!id || !id.trim()) {
+      throw new BadRequestException("Recipe ID must be specified");
+    }
     return this.productionService.getRecipe(ctx.organizationId, id);
   }
 
