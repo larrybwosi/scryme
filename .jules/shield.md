@@ -57,3 +57,7 @@
 ## 2026-10-18 - Delivery Partner Wallet Balance Mutation Tenant Isolation
 **Learning:** In `DeliveryReconciliationUseCase.reconcilePod`, `DeliveryPartner` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `deliveryPartner.update({ where: { id: partner.id } })` ignores `organizationId` at database execution runtime.
 **Action:** Always use `updateMany({ where: { id: partner.id, organizationId }, data })` for database-level multi-tenant isolation during delivery partner wallet balance updates.
+
+## 2026-10-21 - Product Supplier Linking Tenant Isolation in Server Actions
+**Learning:** In `apps/web/app/actions/supplier.ts`, `ProductSupplier` model lacks a composite unique index on `[id, organizationId]`. Server actions `updateSupplierProductPrice` and `removeProductFromSupplier` previously executed `update` and `delete` directly by `id` or `productSupplierId` without verifying tenant ownership of `supplierId` or `productId`. An attacker could supply foreign IDs to mutate or delete supplier product links across tenants.
+**Action:** Always verify `supplierId` and `productId` belong to `auth.organizationId` via `findFirst` pre-checks, and use `updateMany({ where: { id: productSupplierId, supplierId }, data })` and `deleteMany({ where: { id: productSupplierId, supplierId } })` to enforce database-level multi-tenant isolation on product supplier links.
