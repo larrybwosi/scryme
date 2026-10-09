@@ -97,3 +97,17 @@ export const useMpesaVerifySafaricom = () => {
     },
   });
 };
+
+
+export const verifyMpesaPaymentApi = async (transactionId: string) => {
+  try {
+    const response = await invoke<any>('authenticated_api_request', {
+      method: 'GET',
+      path: `payments/verify/${encodeURIComponent(transactionId)}`,
+    });
+    return response;
+  } catch (err) {
+    console.error('Verify M-Pesa payment API error:', err);
+    return null;
+  }
+};

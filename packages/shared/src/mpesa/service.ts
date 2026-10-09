@@ -475,10 +475,21 @@ export class MpesaService {
    * Reliable payment verification for POS clients.
    */
   async verifyPayment(transactionId: string, organizationId?: string) {
-    // 1. Check if there is already a PAID payment for this transaction
+    // 1. Find transaction by ID or order number
+    const transaction = await db.transaction.findFirst({
+      where: {
+        OR: [{ id: transactionId }, { number: transactionId }],
+        ...(organizationId ? { organizationId } : {}),
+      },
+    });
+
+    const targetTxId = transaction?.id || transactionId;
+    const targetTxNumber = transaction?.number || transactionId;
+
+    // 2. Check if there is already a PAID payment for this transaction or paymentId
     const successfulPayment = await db.payment.findFirst({
       where: {
-        transactionId,
+        OR: [{ transactionId: targetTxId }, { id: transactionId }],
         status: 'PAID',
         ...(organizationId ? { organizationId } : {}),
       },
@@ -493,15 +504,9 @@ export class MpesaService {
       };
     }
 
-    // 2. Check the transaction status
-    const transaction = await db.transaction.findFirst({
-      where: {
-        id: transactionId,
-        ...(organizationId ? { organizationId } : {}),
-      },
-    });
-
-    if (!transaction) throw new Error('Transaction not found');
+    if (transaction && transaction.paymentStatus === 'PAID') {
+      return { status: 'PAID', amount: transaction.totalPaid };
+    }
 
     if (transaction.paymentStatus === 'PAID') {
       return { status: 'PAID', amount: transaction.totalPaid };
@@ -510,7 +515,12 @@ export class MpesaService {
     // 3. Check for pending STK Push requests
     const pendingRequest = await db.mpesaPaymentRequest.findFirst({
       where: {
-        saleNumber: transaction.number,
+        OR: [
+          { reference: targetTxId },
+          { reference: targetTxNumber },
+          { saleNumber: targetTxNumber },
+          { paymentId: transactionId }
+        ],
         status: 'PENDING',
         ...(organizationId ? { organizationId } : {}),
       },
