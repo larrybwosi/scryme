@@ -105,12 +105,16 @@ export class ProcessSaleUseCase {
         }
 
         const targetCustomerId = dto.customerId || dto.metadata?.customerId;
+        const effectivePhone = dto.customerPhone || dto.metadata?.customerPhone;
+        const effectiveEmail = dto.customerEmail || dto.metadata?.customerEmail;
+        const effectiveName = dto.customerName || dto.metadata?.customerName;
+
         const custRes = await this.getC(
           tx,
           orgId,
-          dto.customerPhone,
-          dto.customerEmail,
-          dto.customerName,
+          effectivePhone,
+          effectiveEmail,
+          effectiveName,
           dto.saveAsCustomer,
           targetCustomerId,
         );
@@ -149,7 +153,11 @@ export class ProcessSaleUseCase {
             baseCurrencyTotal: total,
             currencyCode: "KES",
             notes: dto.notes,
-            metadata: dto.metadata || undefined,
+            metadata: {
+              ...(dto.metadata || {}),
+              ...(effectivePhone ? { customerPhone: effectivePhone } : {}),
+              ...(effectiveName ? { customerName: effectiveName } : {}),
+            },
             items: hasProducts ? { create: items } : undefined,
             serviceItems: hasServices ? { create: serviceItemsToCreate } : undefined,
             payments: paymentsList.length > 0
@@ -290,6 +298,10 @@ export class ProcessSaleUseCase {
     saveAsCustomer?: boolean,
     explicitCustomerId?: string,
   ): Promise<{ id: string; isNew: boolean } | undefined> {
+    const trimmedPhone = phone && phone.trim() ? phone.trim() : undefined;
+    const trimmedEmail = email && email.trim() ? email.trim() : undefined;
+    const trimmedName = name && name.trim() ? name.trim() : undefined;
+
     if (
       explicitCustomerId &&
       explicitCustomerId !== "temp-custom-customer" &&
@@ -297,32 +309,48 @@ export class ProcessSaleUseCase {
     ) {
       const existing = await tx.customer.findFirst({
         where: { id: explicitCustomerId, organizationId: orgId },
-        select: { id: true },
+        select: { id: true, phone: true },
       });
-      if (existing) return { id: existing.id, isNew: false };
+      if (existing) {
+        if (trimmedPhone && existing.phone !== trimmedPhone) {
+          await tx.customer.update({
+            where: { id: existing.id },
+            data: { phone: trimmedPhone },
+          });
+        }
+        return { id: existing.id, isNew: false };
+      }
     }
 
-    if (!phone && !email && !name) return undefined;
+    if (!trimmedPhone && !trimmedEmail && !trimmedName) return undefined;
 
     const orConditions: any[] = [];
-    if (phone && phone.trim()) orConditions.push({ phone: phone.trim() });
-    if (email && email.trim()) orConditions.push({ email: email.trim() });
+    if (trimmedPhone) orConditions.push({ phone: trimmedPhone });
+    if (trimmedEmail) orConditions.push({ email: trimmedEmail });
 
     if (orConditions.length > 0) {
       const c = await tx.customer.findFirst({
         where: { organizationId: orgId, OR: orConditions },
-        select: { id: true },
+        select: { id: true, phone: true },
       });
-      if (c) return { id: c.id, isNew: false };
+      if (c) {
+        if (trimmedPhone && c.phone !== trimmedPhone) {
+          await tx.customer.update({
+            where: { id: c.id },
+            data: { phone: trimmedPhone },
+          });
+        }
+        return { id: c.id, isNew: false };
+      }
     }
 
-    if (saveAsCustomer === true || (saveAsCustomer !== false && (phone || email || name))) {
-      const customerName = name && name.trim() ? name.trim() : "POS Customer";
+    if (saveAsCustomer === true || (saveAsCustomer !== false && (trimmedPhone || trimmedEmail || trimmedName))) {
+      const customerName = trimmedName || "POS Customer";
       const nc = await tx.customer.create({
         data: {
           organizationId: orgId,
-          phone: phone && phone.trim() ? phone.trim() : undefined,
-          email: email && email.trim() ? email.trim() : undefined,
+          phone: trimmedPhone,
+          email: trimmedEmail,
           name: customerName,
           customerType: "B2C",
         },
