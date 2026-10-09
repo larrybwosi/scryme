@@ -102,7 +102,7 @@ describe("PosService.scanTransaction", () => {
         finalTotal: true,
         paymentStatus: true,
         createdAt: true,
-        customer: { select: { name: true } },
+        customer: { select: { name: true, phone: true } },
         items: {
           select: {
             productName: true,
