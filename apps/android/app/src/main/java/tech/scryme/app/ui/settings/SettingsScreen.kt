@@ -313,7 +313,7 @@ fun SettingsScreen(
                     InfoRow("Organization Slug", uiState.orgSlug)
                     InfoRow("Organization Currency", "${uiState.orgCurrency} (${uiState.orgCurrencySymbol})")
                     InfoRow("Active Location ID", uiState.locationId)
-                    InfoRow("API Endpoint", "https://api.scryme.tech/v3/")
+                    InfoRow("API Endpoint", "https://api.scryme.tech/api/v3/")
                     InfoRow("App Build Version", "v3.0.0 (Android Native)")
                 }
             }

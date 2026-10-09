@@ -23,7 +23,7 @@ android {
             useSupportLibrary = true
         }
 
-        buildConfigField("String", "BASE_URL", "\"https://api.scryme.tech/v3/\"")
+        buildConfigField("String", "BASE_URL", "\"https://api.scryme.tech/api/v3/\"")
 
         ndk {
             abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
