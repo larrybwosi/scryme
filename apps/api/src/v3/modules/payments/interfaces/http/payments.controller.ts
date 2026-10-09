@@ -1,4 +1,4 @@
-import { Controller, Post, Body, Param, Req, UseGuards, UseInterceptors } from "@nestjs/common";
+import { Controller, Post, Get, Body, Param, Req, UseGuards, UseInterceptors } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiParam, ApiBearerAuth, ApiResponse } from "@nestjs/swagger";
 import { MpesaService } from "@repo/shared/mpesa/server";
 import type { FastifyRequest } from "fastify";
@@ -44,6 +44,30 @@ export class PaymentsController {
   })
   async checkout(@Req() req: any, @Body() dto: CheckoutDto) {
     return this.checkoutUseCase.execute(req.organization.id, dto);
+  }
+
+  @Post("stkpush")
+  @Permissions("order:create")
+  @ApiOperation({ summary: "Initiate M-Pesa STK Push" })
+  @ApiResponse({ status: 201, description: "STK Push initiated successfully" })
+  async initiateStkPush(@Req() req: any, @Body() body: { transactionId: string; paymentId: string; phoneNumber: string; amount: number }) {
+    return this.mpesaService.initiateStkPush({
+      organizationId: req.organization.id,
+      transactionId: body.transactionId,
+      paymentId: body.paymentId,
+      phoneNumber: body.phoneNumber,
+      amount: body.amount,
+      userId: req.member?.id || "system",
+      orgSlug: req.params.orgSlug,
+    });
+  }
+
+  @Get("verify/:transactionId")
+  @Permissions("order:read")
+  @ApiOperation({ summary: "Verify M-Pesa Payment Status" })
+  @ApiResponse({ status: 200, description: "Payment status retrieved" })
+  async verifyPayment(@Req() req: any, @Param("transactionId") transactionId: string) {
+    return this.mpesaService.verifyPayment(transactionId, req.organization.id);
   }
 
   @AllowPublic()

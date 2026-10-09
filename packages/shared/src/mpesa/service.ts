@@ -77,7 +77,81 @@ export class MpesaService {
   /**
    * Initiates an STK Push (Lipa Na M-Pesa Online).
    */
-  async initiateStkPush(input: MpesaTriggerInput & { userId?: string }) {
+    /**
+   * Queries Safaricom STK Push status actively and updates DB accordingly.
+   */
+  async queryStkStatus(organizationId: string, checkoutRequestId: string) {
+    const config = await db.paymentCredentials.findUnique({
+      where: { organizationId },
+    });
+    if (!config) throw new Error("M-Pesa not configured for this organization");
+
+    const credentials: MpesaCredentials = {
+      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
+      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaShortCode: config.mpesaShortCode,
+      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : "",
+      mpesaType: config.mpesaType as any,
+      environment: config.environment as any,
+    };
+
+    const client = new MpesaClient(credentials);
+    const queryResponse = await client.querySTKStatus(checkoutRequestId);
+
+    const resultCode = Number(queryResponse.ResultCode);
+    const isSuccess = resultCode === 0;
+
+    const request = await db.mpesaPaymentRequest.findFirst({
+      where: { checkoutRequestId, organizationId },
+    });
+
+    if (request && request.status === "PENDING") {
+      await db.$transaction(async (tx: any) => {
+        await tx.mpesaPaymentRequest.updateMany({
+          where: { checkoutRequestId, organizationId },
+          data: {
+            status: isSuccess ? "SUCCESS" : "FAILED",
+            resultCode,
+            resultDescription: queryResponse.ResultDesc,
+            transactionDate: new Date(),
+          },
+        });
+
+        if (request.paymentId) {
+          const updatedPayment = await tx.payment.updateMany({
+            where: { id: request.paymentId, organizationId },
+            data: {
+              status: isSuccess ? "PAID" : "FAILED",
+              notes: queryResponse.ResultDesc,
+              processedAt: new Date(),
+            },
+          });
+
+          if (isSuccess && request.reference) {
+            await this.updateTransactionOnPayment(tx, request.reference, Number(request.amount));
+          }
+        }
+      });
+
+      await realtimeService.publish(`organization:${organizationId}:payments`, "payment-update", {
+        paymentId: request.paymentId,
+        status: isSuccess ? "COMPLETED" : "FAILED",
+        data: {
+          description: queryResponse.ResultDesc,
+        },
+      });
+    }
+
+    return {
+      success: isSuccess,
+      status: isSuccess ? "PAID" : "FAILED",
+      resultCode,
+      description: queryResponse.ResultDesc,
+      mpesaReceipt: undefined as string | undefined,
+    };
+  }
+
+  async initiateStkPush(input: MpesaTriggerInput & { userId?: string; orgSlug?: string }) {
     const parsed = mpesaTriggerSchema.safeParse(input);
     if (!parsed.success) {
       console.error('Invalid M-Pesa Trigger Input:', parsed.error);
@@ -88,6 +162,7 @@ export class MpesaService {
 
     const config = await db.paymentCredentials.findUnique({
       where: { organizationId },
+      include: { organization: { select: { slug: true } } },
     });
 
     if (!config) {
@@ -109,7 +184,13 @@ export class MpesaService {
       phoneNumber,
       accountReference: transactionId,
       transactionDesc: `Payment for Transaction ${transactionId}`,
-      callbackUrl: `${process.env.MPESA_CALLBACK_BASE_URL}/api/v2/payments/mpesa/webhooks/stkpush/${organizationId}/${paymentId}`,
+      callbackUrl: (() => {
+        const orgSlug = input.orgSlug || config.organization?.slug;
+        const callbackBase = process.env.MPESA_CALLBACK_BASE_URL || "https://api.scryme.tech";
+        return orgSlug
+          ? `${callbackBase}/api/v3/${orgSlug}/payments/webhooks/mpesa/stkpush/${paymentId}`
+          : `${callbackBase}/api/v2/payments/mpesa/webhooks/stkpush/${organizationId}/${paymentId}`;
+      })(),
     });
 
     // Record the request
@@ -437,12 +518,33 @@ export class MpesaService {
     });
 
     if (pendingRequest) {
-      // Optional: We could query Safaricom here to be absolutely sure
-      // For now, return processing
+      // Query Safaricom stkpushquery to actively resolve pending payment status
+      try {
+        const queryResult = await this.queryStkStatus(
+          pendingRequest.organizationId,
+          pendingRequest.checkoutRequestId
+        );
+        if (queryResult.status === "PAID") {
+          return {
+            status: "PAID",
+            amount: pendingRequest.amount,
+            receipt: queryResult.mpesaReceipt,
+            paidAt: new Date(),
+          };
+        } else if (queryResult.status === "FAILED") {
+          return {
+            status: "FAILED",
+            message: queryResult.description || "STK Push failed or was cancelled by user",
+          };
+        }
+      } catch (err) {
+        console.warn(`Active STK Push status query failed for ${pendingRequest.checkoutRequestId}: `, err);
+      }
+
       return {
-        status: 'PROCESSING',
+        status: "PROCESSING",
         checkoutRequestId: pendingRequest.checkoutRequestId,
-        message: 'STK Push is still pending',
+        message: "STK Push is still pending",
       };
     }
 
