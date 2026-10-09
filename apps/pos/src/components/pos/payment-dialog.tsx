@@ -282,6 +282,7 @@ const PaymentModal = ({
   const [mpesaWaiting, setMpesaWaiting] = useState(false);
   const [mpesaStatus, setMpesaStatus] = useState<MpesaStatus>('IDLE');
   const [detectedPayment, setDetectedPayment] = useState<any>(null);
+  const [verifyingManualCode, setVerifyingManualCode] = useState(false);
 
   const { mutateAsync: createSale, isPending: isProcessing } = useProcessSale();
 
@@ -526,6 +527,37 @@ const PaymentModal = ({
   }, []);
 
   // ── Handlers ──
+  const handleVerifyManualCode = async () => {
+    const code = mpesaCode.trim().toUpperCase();
+    if (code.length < 3) {
+      toast.error("Invalid Transaction Code", {
+        description: "M-Pesa transaction code must be at least 3 characters.",
+      });
+      return;
+    }
+    setVerifyingManualCode(true);
+    try {
+      const res = await verifyMpesaPaymentApi(code);
+      if (res && (res.status === "PAID" || res.verified || res.success)) {
+        const verifiedAmount = res.amount || res.payment?.amount || parseFloat(amountInput) || remainingBalance;
+        setAmountInput(verifiedAmount.toString());
+        toast.success("Transaction Code Verified", {
+          description: `Valid M-Pesa transaction found for KSh ${verifiedAmount}.`,
+        });
+      } else {
+        toast.info("Verification Pending / Not Found", {
+          description: "Transaction code not matched in backend. You can still attach it as payment reference.",
+        });
+      }
+    } catch (err: any) {
+      toast.warning("Verification Notice", {
+        description: "Backend check incomplete. Code will be attached as reference upon adding.",
+      });
+    } finally {
+      setVerifyingManualCode(false);
+    }
+  };
+
   const handleAddMpesaManual = () => {
     const code = mpesaCode.trim().toUpperCase();
     if (code.length < 3) {
@@ -1186,13 +1218,24 @@ const PaymentModal = ({
                               className="h-11 font-mono"
                             />
                           </div>
-                          <Button
-                            className="w-full h-12 font-semibold gap-2"
-                            onClick={handleAddMpesaManual}
-                            disabled={!mpesaCode.trim() || mpesaCode.trim().length < 3 || !amountInput || parseFloat(amountInput) <= 0}
-                          >
-                            <Plus className="w-4 h-4" /> Add Payment
-                          </Button>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="outline"
+                              className="flex-1 h-12 font-semibold gap-2"
+                              onClick={handleVerifyManualCode}
+                              disabled={verifyingManualCode || !mpesaCode.trim() || mpesaCode.trim().length < 3}
+                            >
+                              {verifyingManualCode ? <Loader2 className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                              Verify Code
+                            </Button>
+                            <Button
+                              className="flex-[2] h-12 font-semibold gap-2"
+                              onClick={handleAddMpesaManual}
+                              disabled={!mpesaCode.trim() || mpesaCode.trim().length < 3 || !amountInput || parseFloat(amountInput) <= 0}
+                            >
+                              <Plus className="w-4 h-4" /> Add Payment
+                            </Button>
+                          </div>
                         </div>
                       )}
                     </div>

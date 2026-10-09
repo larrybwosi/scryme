@@ -422,32 +422,60 @@ export class PosService {
   }
 
   async scanTransaction(ctx: V2ApiContext, code: string) {
-    const payload = verifyQRToken(code);
-    if (!payload || payload.organizationId !== ctx.organizationId)
-      throw new BadRequestException("Invalid or expired QR code");
+    let transactionId: string | undefined;
 
-    const transaction = await this.prisma.client.transaction.findFirst({
-      where: { id: payload.transactionId, organizationId: ctx.organizationId },
-      select: {
-        id: true,
-        number: true,
-        status: true,
-        finalTotal: true,
-        paymentStatus: true,
-        createdAt: true,
-        customer: { select: { name: true } },
-        items: {
-          select: {
-            productName: true,
-            sku: true,
-            quantity: true,
-            lineTotal: true,
-          },
+    try {
+      const payload = verifyQRToken(code);
+      if (payload && payload.organizationId === ctx.organizationId) {
+        transactionId = payload.transactionId;
+      }
+    } catch {
+      // Direct text / order code scan
+    }
+
+    const selectClause = {
+      id: true,
+      number: true,
+      status: true,
+      finalTotal: true,
+      paymentStatus: true,
+      createdAt: true,
+      customer: { select: { name: true, phone: true } },
+      items: {
+        select: {
+          productName: true,
+          sku: true,
+          quantity: true,
+          lineTotal: true,
         },
       },
-    });
+    };
 
-    if (!transaction) throw new NotFoundException("Transaction not found");
+    let transaction = transactionId
+      ? await this.prisma.client.transaction.findFirst({
+          where: { id: transactionId, organizationId: ctx.organizationId },
+          select: selectClause,
+        })
+      : null;
+
+    if (!transaction && code) {
+      const cleanCode = code.trim();
+      transaction = await this.prisma.client.transaction.findFirst({
+        where: {
+          organizationId: ctx.organizationId,
+          OR: [
+            { id: cleanCode },
+            { number: cleanCode },
+            { customer: { phone: cleanCode } },
+            { payments: { some: { gatewayTxnId: cleanCode } } },
+            { payments: { some: { referenceNumber: cleanCode } } },
+          ],
+        },
+        select: selectClause,
+      });
+    }
+
+    if (!transaction) throw new NotFoundException("Transaction or order not found");
 
     return {
       id: transaction.id,
