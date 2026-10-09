@@ -56,7 +56,6 @@ Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https
 * 🌐 **[Scryme Storefront & Site](./apps/site)**: Enterprise web landing page, download directory for native POS binaries, and headlessly-managed CMS catalog.
 * ⚙️ **[Scryme Admin Web](./apps/admin)**: Master administrative console for multi-tenant provisioning, subscription billing, system health diagnostics, and binary release sync.
 * 🤖 **[Scryme MCP Server](./apps/mcp)**: Model Context Protocol server exposing catalog, inventory, and CRM commands securely to LLMs (Claude Desktop, Cursor).
-* 📚 **[Scryme API Docs](./apps/docs)**: Light Vite-based OpenAPI 3.0 interactive documentation portal.
 
 ---
 
