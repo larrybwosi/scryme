@@ -28,7 +28,6 @@ import {
   ShoppingBag,
   Tag,
   Clock,
-  Search,
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
