@@ -657,6 +657,75 @@ describe("ProcessSaleUseCase", () => {
     );
   });
 
+  it("should save customer phone number and trigger CRM sync during a POS preorder sale", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      status: "PREORDER",
+      metadata: { isCustomOrder: true, saveAsCustomer: true },
+      customerName: "Alice Preorder",
+      customerPhone: "+254799887766",
+      customerEmail: "alice@example.com",
+      saveAsCustomer: true,
+      items: [{ variantId: "v1", quantity: 1, unitPrice: 150 }],
+      payments: [{ method: "CASH", amount: 50 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v1",
+        retailPrice: 150,
+        buyingPrice: 80,
+        name: "V1",
+        sku: "S1",
+        product: { name: "P1" },
+      },
+    ]);
+
+    prisma.client.customer.findFirst.mockResolvedValue(null);
+    prisma.client.customer.create.mockResolvedValue({ id: "preorder_cust_99" });
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_preorder_cust_99",
+        number: data.number,
+        customerId: data.customerId,
+        status: data.status,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    // Verify Customer Creation with Phone Number
+    expect(prisma.client.customer.create).toHaveBeenCalledWith({
+      data: {
+        organizationId: "org_1",
+        phone: "+254799887766",
+        email: "alice@example.com",
+        name: "Alice Preorder",
+        customerType: "B2C",
+      },
+      select: { id: true },
+    });
+
+    // Verify CRM sync was enqueued with customerId
+    expect(crmSyncService.enqueueSyncCustomer).toHaveBeenCalledWith(
+      "org_1",
+      "preorder_cust_99"
+    );
+
+    expect(result.status).toBe("PREORDER");
+  });
+
   it("should process sale successfully when customerId is provided without customerName, customerPhone, or customerEmail", async () => {
     invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
     const ctx = {
