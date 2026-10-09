@@ -233,7 +233,16 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
           </div>
           <div className="flex items-center gap-2.5 text-[12.5px]">
             <Phone size={13} className="text-muted-foreground shrink-0" />
-            <span className="text-foreground">{customer.phone || "N/A"}</span>
+            {customer.phone ? (
+              <a
+                href={`tel:${customer.phone}`}
+                className="text-primary hover:underline font-mono"
+              >
+                {customer.phone}
+              </a>
+            ) : (
+              <span className="text-muted-foreground">N/A</span>
+            )}
           </div>
           <div className="flex items-start gap-2.5 text-[12.5px]">
             <MapPin

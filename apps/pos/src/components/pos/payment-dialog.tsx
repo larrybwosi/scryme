@@ -594,7 +594,7 @@ const PaymentModal = ({
     const { customerName: curCustName, customerPhone: curCustPhone } = usePosStore.getState().currentOrder;
     const isCustomOrder = Boolean(metadata?.isCustomOrder);
     const custName = customer?.name || curCustName || undefined;
-    const custPhone = customer?.phone || curCustPhone || undefined;
+    const custPhone = customer?.phone || curCustPhone || metadata?.customerPhone || undefined;
     const custEmail = customer?.email || metadata?.customerEmail || undefined;
     const saveAsCust = metadata?.saveAsCustomer ?? (customer ? false : true);
 

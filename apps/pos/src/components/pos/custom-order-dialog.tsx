@@ -89,24 +89,22 @@ export function CustomOrderDialog() {
   const todayStr = new Date().toISOString().split('T')[0];
 
   const handleProceed = () => {
-    if (!isCustomerSelected) {
-      if (!customerName.trim()) {
-        toast.error('Customer name is required');
-        return;
-      }
-      if (!customerPhone.trim()) {
-        toast.error('Customer phone number is required');
-        return;
-      }
+    const finalName = isCustomerSelected ? (currentOrder.customerName || customerName) : customerName;
+    const finalPhone = isCustomerSelected ? (currentOrder.customerPhone || customerPhone) : customerPhone;
+    const finalEmail = isCustomerSelected ? (currentOrder.metadata?.customerEmail || customerEmail) : customerEmail;
+
+    if (!finalName || !finalName.trim()) {
+      toast.error('Customer name is required');
+      return;
+    }
+    if (!finalPhone || !finalPhone.trim()) {
+      toast.error('Customer phone number is required');
+      return;
     }
     if (!dueDate || !dueTime) {
       toast.error('Due date and time are required');
       return;
     }
-
-    const finalName = isCustomerSelected ? (currentOrder.customerName || customerName) : customerName;
-    const finalPhone = isCustomerSelected ? (currentOrder.customerPhone || customerPhone) : customerPhone;
-    const finalEmail = isCustomerSelected ? (currentOrder.metadata?.customerEmail || customerEmail) : customerEmail;
 
     // 1. Update customer profile in order context
     setCustomer({
@@ -195,8 +193,21 @@ export function CustomOrderDialog() {
                 <div className="font-semibold text-foreground">
                   {currentOrder.customerName || 'Selected Customer'}
                 </div>
-                {currentOrder.customerPhone && (
+                {currentOrder.customerPhone ? (
                   <div className="text-muted-foreground">Phone: {currentOrder.customerPhone}</div>
+                ) : (
+                  <div className="space-y-1">
+                    <Label htmlFor="cust-phone-selected" className="text-xs font-medium">
+                      Phone Number <span className="text-destructive">*</span>
+                    </Label>
+                    <Input
+                      id="cust-phone-selected"
+                      placeholder="e.g. +254712345678"
+                      value={customerPhone}
+                      onChange={e => setCustomerPhone(e.target.value)}
+                      className="h-9 text-xs"
+                    />
+                  </div>
                 )}
                 {currentOrder.metadata?.customerEmail && (
                   <div className="text-muted-foreground">Email: {currentOrder.metadata.customerEmail}</div>
