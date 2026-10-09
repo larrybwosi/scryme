@@ -1,3 +1,4 @@
+import { verifyMpesaPaymentApi } from '@/hooks/mpesa';
 import { useState, useEffect, useMemo, memo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { v4 as uuidv4 } from 'uuid';
@@ -27,7 +28,6 @@ import {
   ShoppingBag,
   Tag,
   Clock,
-  Search,
   Sparkles,
 } from 'lucide-react';
 import { toast } from 'sonner';
@@ -459,6 +459,48 @@ const PaymentModal = ({
         }
       }
     };
+
+
+  // ── M-Pesa STK Push Polling Fallback ──
+  useEffect(() => {
+    if (!isOpen || !mpesaWaiting || selectedTab !== 'MOBILE_PAYMENT') return;
+
+    let pollCount = 0;
+    const maxPolls = 20; // 20 polls * 3s = 60s
+    const pollInterval = setInterval(async () => {
+      pollCount++;
+      const verifyRes = await verifyMpesaPaymentApi(fullSaleNumber);
+      if (verifyRes) {
+        const resData = verifyRes.data || verifyRes;
+        if (resData.status === 'PAID' || resData.status === 'COMPLETED' || resData.success) {
+          clearInterval(pollInterval);
+          handlePaymentMatch({
+            receipt: resData.receipt || resData.mpesaReceipt || 'STK_VERIFIED',
+            amount: resData.amount || parseFloat(amountInput) || remainingBalance,
+            phone: mpesaPhone,
+          });
+          return;
+        } else if (resData.status === 'FAILED' || resData.status === 'CANCELLED') {
+          clearInterval(pollInterval);
+          setMpesaStatus('FAILED');
+          setMpesaWaiting(false);
+          toast.error('M-Pesa payment failed or was cancelled');
+          return;
+        }
+      }
+
+      if (pollCount >= maxPolls) {
+        clearInterval(pollInterval);
+        setMpesaWaiting(false);
+        setMpesaStatus('FAILED');
+        toast.error('STK Push verification timed out', {
+          description: 'No response received from Safaricom. You can retry or check payment status.',
+        });
+      }
+    }, 3000);
+
+    return () => clearInterval(pollInterval);
+  }, [isOpen, mpesaWaiting, selectedTab, fullSaleNumber, amountInput, remainingBalance, mpesaPhone, handlePaymentMatch]);
 
     const unsubUnclaimed = subscribe(paymentChannel, 'payment-unclaimed', handleUnclaimed);
     const unsubUpdate = subscribe(paymentChannel, 'payment-update', handleUpdate);

@@ -30,13 +30,13 @@ import { invoke } from '@tauri-apps/api/core';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { useRealtimeStore } from '@/store/realtimeStore';
 import { PaymentMethod } from '@/hooks/sales';
-import { cn, useFormattedCurrency } from '@/lib/utils';
+import { cn } from '@/lib/utils';
 import { getCurrentPhoneConfig } from '@/lib/phone.config';
 import { motion, AnimatePresence } from 'framer-motion';
 import { QRCodeSVG } from 'qrcode.react';
 import { usePosStore } from '@/store/store';
 
-type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'SEARCH';
+type MpesaMode = 'STK' | 'PAYBILL' | 'BUY_GOODS' | 'QR' | 'SEARCH' | 'MANUAL';
 type MpesaStatus = 'IDLE' | 'WAITING' | 'SUCCESS' | 'FAILED';
 
 interface PaymentDialogProps {
@@ -58,7 +58,6 @@ export function PaymentDialog({ open, onOpenChange, transactionId }: PaymentDial
   const queryClient = useQueryClient();
   const { currentMember } = useAuthStore();
   const memberId = currentMember?.id;
-  const formatCurrency = useFormattedCurrency();
   const PHONE_CONFIG = getCurrentPhoneConfig();
   const settings = usePosStore(state => state.settings);
 

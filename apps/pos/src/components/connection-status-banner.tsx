@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { Wifi, WifiOff, RefreshCw, AlertTriangle, X } from 'lucide-react';
+import { useEffect } from 'react';
+import { WifiOff, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncEngineStore } from '@/store/syncEngineStore';
 
@@ -20,59 +20,6 @@ interface ConnectionStatus {
   reason?: { message?: string };
 }
 
-const DEGRADED_STATES = new Set(['disconnected', 'suspended', 'failed', 'closed']);
-
-function getStatusConfig(state: ConnectionState) {
-  switch (state) {
-    case 'disconnected':
-      return {
-        icon: WifiOff,
-        label: 'Disconnected — real-time updates paused',
-        sublabel: 'Reconnecting…',
-        className: 'bg-amber-500/10 border-amber-400/30 text-amber-700 dark:text-amber-400',
-        iconClass: 'text-amber-500 animate-pulse',
-        spinning: false,
-      };
-    case 'suspended':
-      return {
-        icon: AlertTriangle,
-        label: 'Connection suspended — real-time updates paused',
-        sublabel: 'Will retry automatically',
-        className: 'bg-amber-500/10 border-amber-400/30 text-amber-700 dark:text-amber-400',
-        iconClass: 'text-amber-500',
-        spinning: false,
-      };
-    case 'failed':
-      return {
-        icon: WifiOff,
-        label: 'Connection failed — real-time updates unavailable',
-        sublabel: 'Reinitialising…',
-        className: 'bg-red-500/10 border-red-400/30 text-red-700 dark:text-red-400',
-        iconClass: 'text-red-500',
-        spinning: false,
-      };
-    case 'closed':
-      return {
-        icon: WifiOff,
-        label: 'Connection closed',
-        sublabel: 'Real-time updates unavailable',
-        className: 'bg-red-500/10 border-red-400/30 text-red-700 dark:text-red-400',
-        iconClass: 'text-red-500',
-        spinning: false,
-      };
-    case 'connecting':
-      return {
-        icon: RefreshCw,
-        label: 'Connecting to real-time service…',
-        sublabel: '',
-        className: 'bg-blue-500/10 border-blue-400/30 text-blue-700 dark:text-blue-400',
-        iconClass: 'text-blue-500',
-        spinning: true,
-      };
-    default:
-      return null;
-  }
-}
 
 /**
  * ConnectionStatusBanner
@@ -81,23 +28,16 @@ function getStatusConfig(state: ConnectionState) {
  * connection is degraded or when offline sync is active.
  */
 export function ConnectionStatusBanner() {
-  const [status, setStatus] = useState<ConnectionStatus | null>(null);
-  const [dismissed, setDismissed] = useState(false);
-
   const isSyncing = useSyncEngineStore((state) => state.isSyncing);
   const isOnline = useSyncEngineStore((state) => state.isOnline);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'standalone') return;
     const handleChange = (e: Event) => {
-      const { state, reason } = (e as CustomEvent<ConnectionStatus>).detail;
+      const { state } = (e as CustomEvent<ConnectionStatus>).detail;
 
       if (state === 'connected') {
-        setStatus(null);
-        setDismissed(false);
       } else {
-        setStatus({ state, reason });
-        setDismissed(false);
       }
     };
 
