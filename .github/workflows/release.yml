@@ -81,20 +81,14 @@ jobs:
             echo "hasChangesets=false" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Directly Version Prerelease on Nextgen
-        if: steps.branch-check.outputs.isPrerelease == 'true' && steps.check-changesets.outputs.hasChangesets == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          pnpm version-packages
-          git add .
-          git commit -m "chore(release): version prerelease packages"
-
       - name: Create Release Pull Request or Publish
         id: changesets
         uses: changesets/action@v1
         with:
+          version: pnpm version-packages
           publish: pnpm release
+          title: "Version Packages"
+          commit: "chore(release): version packages"
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
@@ -103,8 +97,7 @@ jobs:
         id: determine-published
         run: |
           if [ "${{ steps.changesets.outputs.published }}" = "true" ] || \
-             [ "${{ steps.exit-pre.outputs.exited }}" = "true" ] || \
-             ([ "${{ steps.branch-check.outputs.isPrerelease }}" = "false" ] && [ "${{ steps.check-changesets.outputs.hasChangesets }}" = "false" ]); then
+             [ "${{ steps.exit-pre.outputs.exited }}" = "true" ]; then
             echo "published=true" >> "$GITHUB_OUTPUT"
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
