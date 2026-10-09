@@ -645,7 +645,7 @@ describe("ProcessSaleUseCase", () => {
 
     expect(prisma.client.customer.findFirst).toHaveBeenCalledWith({
       where: { id: "reg_cust_789", organizationId: "org_1" },
-      select: { id: true },
+      select: { id: true, phone: true },
     });
 
     expect(prisma.client.transaction.create).toHaveBeenCalledWith(
@@ -778,7 +778,7 @@ describe("ProcessSaleUseCase", () => {
     expect(result.customerId).toBe("selected_cust_100");
     expect(prisma.client.customer.findFirst).toHaveBeenCalledWith({
       where: { id: "selected_cust_100", organizationId: "org_1" },
-      select: { id: true },
+      select: { id: true, phone: true },
     });
   });
 });
