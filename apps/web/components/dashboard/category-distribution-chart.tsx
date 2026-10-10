@@ -69,7 +69,7 @@ export function CategoryDistributionChart({ data }: CategoryDistributionChartPro
                   ))}
                 </Pie>
                 <Tooltip
-                  formatter={(value: number) => [`${value.toLocaleString()} units`, "Sales"]}
+                  formatter={(value) => [`${(Number(value) || 0).toLocaleString()} units`, "Sales"]}
                   contentStyle={{
                     backgroundColor: "hsl(var(--popover))",
                     borderColor: "hsl(var(--border))",
