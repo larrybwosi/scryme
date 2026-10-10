@@ -740,41 +740,45 @@ export class ProductionService {
       .filter((i) => i.isFlour)
       .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
 
-    const resolvedIngredients = [];
-    for (const ing of ingredients) {
-      if (!ing.ingredientVariantId && !ing.subRecipeId) {
-        throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
-      }
+    // ⚡ Bolt Optimization: Parallelize ingredient unit resolution using Promise.all.
+    // Replaces sequential async iteration with concurrent resolution, collapsing O(N)
+    // database roundtrips down to O(1) concurrent execution.
+    const resolvedIngredients = await Promise.all(
+      ingredients.map(async (ing) => {
+        if (!ing.ingredientVariantId && !ing.subRecipeId) {
+          throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
+        }
 
-      const ingSysId = cleanUnitId(ing.systemUnitId);
-      const ingOrgId = cleanUnitId(ing.orgUnitId);
+        const ingSysId = cleanUnitId(ing.systemUnitId);
+        const ingOrgId = cleanUnitId(ing.orgUnitId);
 
-      const resolvedIngUnit = await this.resolveUnitId(
-        ingSysId,
-        ingOrgId,
-        organizationId,
-        `ingredient unit`,
-      );
+        const resolvedIngUnit = await this.resolveUnitId(
+          ingSysId,
+          ingOrgId,
+          organizationId,
+          `ingredient unit`,
+        );
 
-      if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
-        throw new BadRequestException("Each ingredient must have a valid unit selected.");
-      }
+        if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+          throw new BadRequestException("Each ingredient must have a valid unit selected.");
+        }
 
-      const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
-        ? ing.bakersPercentage
-        : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
+        const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
+          ? ing.bakersPercentage
+          : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
 
-      resolvedIngredients.push({
-        ingredientVariantId: ing.ingredientVariantId || undefined,
-        subRecipeId: ing.subRecipeId || undefined,
-        isFlour: Boolean(ing.isFlour),
-        bakersPercentage: bakersPct,
-        quantity: ing.quantity,
-        systemUnitId: resolvedIngUnit.systemUnitId,
-        orgUnitId: resolvedIngUnit.orgUnitId,
-        preparationNotes: ing.preparationNotes,
-      });
-    }
+        return {
+          ingredientVariantId: ing.ingredientVariantId || undefined,
+          subRecipeId: ing.subRecipeId || undefined,
+          isFlour: Boolean(ing.isFlour),
+          bakersPercentage: bakersPct,
+          quantity: ing.quantity,
+          systemUnitId: resolvedIngUnit.systemUnitId,
+          orgUnitId: resolvedIngUnit.orgUnitId,
+          preparationNotes: ing.preparationNotes,
+        };
+      }),
+    );
 
     return this.prisma.client.recipe.create({
       data: {
@@ -873,45 +877,49 @@ export class ProductionService {
         .filter((i) => i.isFlour)
         .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
 
-      resolvedIngredients = [];
-      for (const ing of ingredients) {
-        if (!ing.ingredientVariantId && !ing.subRecipeId) {
-          throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
-        }
+      // ⚡ Bolt Optimization: Parallelize ingredient unit resolution using Promise.all.
+      // Replaces sequential async iteration with concurrent resolution, collapsing O(N)
+      // database roundtrips down to O(1) concurrent execution.
+      resolvedIngredients = await Promise.all(
+        ingredients.map(async (ing) => {
+          if (!ing.ingredientVariantId && !ing.subRecipeId) {
+            throw new BadRequestException("Each ingredient must specify either a product variant or a sub-recipe.");
+          }
 
-        const ingSysId = cleanUnitId(ing.systemUnitId);
-        const ingOrgId = cleanUnitId(ing.orgUnitId);
+          const ingSysId = cleanUnitId(ing.systemUnitId);
+          const ingOrgId = cleanUnitId(ing.orgUnitId);
 
-        if (!ingSysId && !ingOrgId) {
-          throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
-        }
+          if (!ingSysId && !ingOrgId) {
+            throw new BadRequestException("Each ingredient must have a unit (system or organization) selected.");
+          }
 
-        const resolvedIngUnit = await this.resolveUnitId(
-          ingSysId,
-          ingOrgId,
-          organizationId,
-          `ingredient unit`,
-        );
+          const resolvedIngUnit = await this.resolveUnitId(
+            ingSysId,
+            ingOrgId,
+            organizationId,
+            `ingredient unit`,
+          );
 
-        if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
-          throw new BadRequestException("Each ingredient must have a valid unit selected.");
-        }
+          if (!resolvedIngUnit.systemUnitId && !resolvedIngUnit.orgUnitId) {
+            throw new BadRequestException("Each ingredient must have a valid unit selected.");
+          }
 
-        const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
-          ? ing.bakersPercentage
-          : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
+          const bakersPct = ing.bakersPercentage !== undefined && ing.bakersPercentage !== null
+            ? ing.bakersPercentage
+            : (totalFlour > 0 ? (Number(ing.quantity) / totalFlour) * 100 : null);
 
-        resolvedIngredients.push({
-          ingredientVariantId: ing.ingredientVariantId || undefined,
-          subRecipeId: ing.subRecipeId || undefined,
-          isFlour: Boolean(ing.isFlour),
-          bakersPercentage: bakersPct,
-          quantity: ing.quantity,
-          systemUnitId: resolvedIngUnit.systemUnitId,
-          orgUnitId: resolvedIngUnit.orgUnitId,
-          preparationNotes: ing.preparationNotes,
-        });
-      }
+          return {
+            ingredientVariantId: ing.ingredientVariantId || undefined,
+            subRecipeId: ing.subRecipeId || undefined,
+            isFlour: Boolean(ing.isFlour),
+            bakersPercentage: bakersPct,
+            quantity: ing.quantity,
+            systemUnitId: resolvedIngUnit.systemUnitId,
+            orgUnitId: resolvedIngUnit.orgUnitId,
+            preparationNotes: ing.preparationNotes,
+          };
+        }),
+      );
     }
 
     return this.prisma.client.recipe.update({
