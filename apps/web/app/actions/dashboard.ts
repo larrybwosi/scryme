@@ -115,7 +115,7 @@ export async function getDashboardData(
     case "week":
       currentStart = startOfWeek(now);
       currentEnd = endOfWeek(now);
-      previousStart = startOfWeek(subMonths(now, 1)); // Simplified previous period
+      previousStart = startOfWeek(subMonths(now, 1));
       previousEnd = endOfWeek(subMonths(now, 1));
       periodLabel = "vs last week";
       break;
@@ -131,90 +131,116 @@ export async function getDashboardData(
       currentStart = startOfMonth(now);
       currentEnd = endOfMonth(now);
       previousStart = startOfMonth(subMonths(now, 1));
-      previousEnd = subMonths(now, 1); // Up to same day in last month
+      previousEnd = subMonths(now, 1);
       periodLabel = "vs last month";
       break;
   }
 
   const yearAgo = subYears(now, 1);
 
-  // Fetch transactions for current, previous, and past 1 year for heatmap in parallel
-  const [currentTransactions, previousTransactions, yearlyTransactions] = await Promise.all([
-    db.transaction.findMany({
-      where: {
-        organizationId: orgId,
-        createdAt: {
-          gte: currentStart,
-          lte: currentEnd,
-        },
-        status: {
-          in: ["COMPLETED", "CONFIRMED"],
-        },
-      },
-      select: {
-        id: true,
-        finalTotal: true,
-        createdAt: true,
-        items: {
-          select: {
-            quantity: true,
-            variantId: true,
-            productName: true,
-            variantName: true,
+  let currentTransactions: Array<{
+    id: string;
+    finalTotal: any;
+    createdAt: Date;
+    items: Array<{
+      quantity: number;
+      variantId: string;
+      productName: string | null;
+      variantName: string | null;
+    }>;
+  }> = [];
+
+  let previousTransactions: typeof currentTransactions = [];
+  let yearlyTransactions: Array<{
+    createdAt: Date;
+    finalTotal: any;
+  }> = [];
+
+  try {
+    // Fetch transactions for current, previous, and past 1 year for heatmap in parallel
+    const [currentRes, previousRes, yearlyRes] = await Promise.all([
+      db.transaction.findMany({
+        where: {
+          organizationId: orgId,
+          createdAt: {
+            gte: currentStart,
+            lte: currentEnd,
+          },
+          status: {
+            in: ["COMPLETED", "CONFIRMED"],
           },
         },
-      },
-    }),
-    db.transaction.findMany({
-      where: {
-        organizationId: orgId,
-        createdAt: {
-          gte: previousStart,
-          lte: previousEnd,
-        },
-        status: {
-          in: ["COMPLETED", "CONFIRMED"],
-        },
-      },
-      select: {
-        id: true,
-        finalTotal: true,
-        createdAt: true,
-        items: {
-          select: {
-            quantity: true,
-            variantId: true,
-            productName: true,
-            variantName: true,
+        select: {
+          id: true,
+          finalTotal: true,
+          createdAt: true,
+          items: {
+            select: {
+              quantity: true,
+              variantId: true,
+              productName: true,
+              variantName: true,
+            },
           },
         },
-      },
-    }),
-    db.transaction.findMany({
-      where: {
-        organizationId: orgId,
-        createdAt: {
-          gte: yearAgo,
-          lte: now,
+      }),
+      db.transaction.findMany({
+        where: {
+          organizationId: orgId,
+          createdAt: {
+            gte: previousStart,
+            lte: previousEnd,
+          },
+          status: {
+            in: ["COMPLETED", "CONFIRMED"],
+          },
         },
-        status: {
-          in: ["COMPLETED", "CONFIRMED"],
+        select: {
+          id: true,
+          finalTotal: true,
+          createdAt: true,
+          items: {
+            select: {
+              quantity: true,
+              variantId: true,
+              productName: true,
+              variantName: true,
+            },
+          },
         },
-      },
-      select: {
-        createdAt: true,
-        finalTotal: true,
-      },
-    }),
-  ]);
+      }),
+      db.transaction.findMany({
+        where: {
+          organizationId: orgId,
+          createdAt: {
+            gte: yearAgo,
+            lte: now,
+          },
+          status: {
+            in: ["COMPLETED", "CONFIRMED"],
+          },
+        },
+        select: {
+          createdAt: true,
+          finalTotal: true,
+        },
+      }),
+    ]);
+
+    currentTransactions = currentRes;
+    previousTransactions = previousRes;
+    yearlyTransactions = yearlyRes;
+  } catch (error) {
+    console.error("Failed to load dashboard transactions:", error);
+  }
 
   // Basic Stats Calculation
   const currentRevenue = currentTransactions.reduce(
-    (acc, t) => acc + Number(t.finalTotal),
+    (acc, t) => acc + Number(t.finalTotal || 0),
     0,
   );
   const previousRevenue = previousTransactions.reduce(
-    (acc, t) => acc + Number(t.finalTotal),
+    (acc, t) => acc + Number(t.finalTotal || 0),
     0,
   );
 
@@ -227,11 +253,11 @@ export async function getDashboardData(
     previousSalesCount > 0 ? previousRevenue / previousSalesCount : 0;
 
   const currentTotalItems = currentTransactions.reduce(
-    (acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0),
+    (acc, t) => acc + (t.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0),
     0,
   );
   const previousTotalItems = previousTransactions.reduce(
-    (acc, t) => acc + t.items.reduce((sum, item) => sum + item.quantity, 0),
+    (acc, t) => acc + (t.items || []).reduce((sum, item) => sum + (item.quantity || 0), 0),
     0,
   );
 
@@ -248,14 +274,15 @@ export async function getDashboardData(
   // Popular Products (by units sold) & Category breakdown
   const productSalesMap = new Map<string, { name: string; sales: number }>();
   currentTransactions.forEach(t => {
-    t.items.forEach(item => {
+    (t.items || []).forEach(item => {
       const name = item.productName || item.variantName || "Item";
-      const existing = productSalesMap.get(item.variantId) || {
+      const key = item.variantId || name;
+      const existing = productSalesMap.get(key) || {
         name: `${name} ${item.variantName && item.variantName !== name ? item.variantName : ""}`.trim(),
         sales: 0,
       };
-      existing.sales += item.quantity;
-      productSalesMap.set(item.variantId, existing);
+      existing.sales += item.quantity || 0;
+      productSalesMap.set(key, existing);
     });
   });
 
@@ -336,11 +363,11 @@ export async function getDashboardData(
     const prevDayTransactions = previousByDay.get(prevDayKey) || [];
 
     const currentDayRev = dayTransactions.reduce(
-      (acc, t) => acc + Number(t.finalTotal),
+      (acc, t) => acc + Number(t.finalTotal || 0),
       0,
     );
     const prevDayRev = prevDayTransactions.reduce(
-      (acc, t) => acc + Number(t.finalTotal),
+      (acc, t) => acc + Number(t.finalTotal || 0),
       0,
     );
 
@@ -375,7 +402,7 @@ export async function getDashboardData(
     const key = getDayKey(new Date(t.createdAt));
     const curr = yearlyByDay.get(key) || { count: 0, revenue: 0 };
     curr.count += 1;
-    curr.revenue += Number(t.finalTotal);
+    curr.revenue += Number(t.finalTotal || 0);
     yearlyByDay.set(key, curr);
   });
 
