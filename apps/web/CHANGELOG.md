@@ -1,5 +1,12 @@
 # web
 
+## 10.2.7-next.0
+
+### Patch Changes
+
+- Updated dependencies [fc3d56b]
+  - @scryme/sdk@10.2.7-next.0
+
 ## 7.1.0
 
 ### Patch Changes
