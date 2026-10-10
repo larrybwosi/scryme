@@ -15,10 +15,11 @@ describe("ReviewPriceChangeUseCase", () => {
         priceChangeRequest: {
           findUnique: vi.fn(),
           findFirst: vi.fn(),
-          update: vi.fn(),
+          updateMany: vi.fn(),
+          findFirstOrThrow: vi.fn(),
         },
         priceListItem: {
-          update: vi.fn(),
+          updateMany: vi.fn(),
         },
         priceHistory: {
           create: vi.fn(),
@@ -54,7 +55,9 @@ describe("ReviewPriceChangeUseCase", () => {
     };
 
     prisma.client.priceChangeRequest.findFirst.mockResolvedValue(request);
-    prisma.client.priceChangeRequest.update.mockResolvedValue({
+    prisma.client.priceListItem.updateMany.mockResolvedValue({ count: 1 });
+    prisma.client.priceChangeRequest.updateMany.mockResolvedValue({ count: 1 });
+    prisma.client.priceChangeRequest.findFirstOrThrow.mockResolvedValue({
       ...request,
       status: PriceChangeStatus.APPROVED,
     });
@@ -69,13 +72,20 @@ describe("ReviewPriceChangeUseCase", () => {
     expect(prisma.client.priceChangeRequest.findFirst).toHaveBeenCalledWith({
       where: { id: requestId, organizationId },
     });
-    expect(prisma.client.priceListItem.update).toHaveBeenCalledWith({
-      where: { id: request.priceListItemId },
+    expect(prisma.client.priceListItem.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: request.priceListItemId,
+        priceList: { organizationId },
+      },
       data: { price: request.newPrice },
     });
     expect(prisma.client.priceHistory.create).toHaveBeenCalled();
-    expect(prisma.client.priceChangeRequest.update).toHaveBeenCalledWith({
-      where: { id: requestId },
+    expect(prisma.client.priceChangeRequest.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: requestId,
+        organizationId,
+        status: PriceChangeStatus.PENDING,
+      },
       data: expect.objectContaining({
         status: PriceChangeStatus.APPROVED,
         reviewedBy: memberId,
@@ -96,7 +106,8 @@ describe("ReviewPriceChangeUseCase", () => {
     };
 
     prisma.client.priceChangeRequest.findFirst.mockResolvedValue(request);
-    prisma.client.priceChangeRequest.update.mockResolvedValue({
+    prisma.client.priceChangeRequest.updateMany.mockResolvedValue({ count: 1 });
+    prisma.client.priceChangeRequest.findFirstOrThrow.mockResolvedValue({
       ...request,
       status: PriceChangeStatus.REJECTED,
     });
@@ -109,10 +120,14 @@ describe("ReviewPriceChangeUseCase", () => {
       rejectionReason: "Too expensive",
     });
 
-    expect(prisma.client.priceListItem.update).not.toHaveBeenCalled();
+    expect(prisma.client.priceListItem.updateMany).not.toHaveBeenCalled();
     expect(prisma.client.priceHistory.create).not.toHaveBeenCalled();
-    expect(prisma.client.priceChangeRequest.update).toHaveBeenCalledWith({
-      where: { id: requestId },
+    expect(prisma.client.priceChangeRequest.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: requestId,
+        organizationId,
+        status: PriceChangeStatus.PENDING,
+      },
       data: expect.objectContaining({
         status: PriceChangeStatus.REJECTED,
         rejectionReason: "Too expensive",
@@ -144,6 +159,30 @@ describe("ReviewPriceChangeUseCase", () => {
         requestId: "req-1",
         memberId: "mem-1",
         status: PriceChangeStatus.APPROVED,
+      }),
+    ).rejects.toThrow(BadRequestException);
+  });
+
+  it("should throw BadRequestException if updateMany updates 0 records (e.g. concurrent state change)", async () => {
+    const requestId = "req-1";
+    const organizationId = "org-1";
+    const memberId = "mem-1";
+    const request = {
+      id: requestId,
+      organizationId,
+      priceListItemId: "pli-1",
+      status: PriceChangeStatus.PENDING,
+    };
+
+    prisma.client.priceChangeRequest.findFirst.mockResolvedValue(request);
+    prisma.client.priceChangeRequest.updateMany.mockResolvedValue({ count: 0 });
+
+    await expect(
+      useCase.execute({
+        organizationId,
+        requestId,
+        memberId,
+        status: PriceChangeStatus.REJECTED,
       }),
     ).rejects.toThrow(BadRequestException);
   });
