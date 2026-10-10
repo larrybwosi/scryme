@@ -326,8 +326,8 @@ export default async function LocationDetailPage({
           <Panel title="Physical location">
             <div className="p-3">
               <LocationMap
-                latitude={settings.latitude}
-                longitude={settings.longitude}
+                latitude={location.latitude ?? settings.latitude}
+                longitude={location.longitude ?? settings.longitude}
               />
             </div>
           </Panel>
