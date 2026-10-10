@@ -169,6 +169,12 @@ export function DeliveryTable({ fulfillments }: { fulfillments: any[] }) {
                         <CheckCircle2 className="mr-2 h-4 w-4" /> Mark as
                         Delivered
                       </DropdownMenuItem>
+                      {ful.type === "PICKUP" && (
+                        <DropdownMenuItem
+                          onClick={() => handleStatusUpdate(ful.id, "COMPLETED")}>
+                          <CheckCircle2 className="mr-2 h-4 w-4 text-emerald-600" /> Mark as Picked Up
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
                         onClick={() => handleReconcile(ful.id)}

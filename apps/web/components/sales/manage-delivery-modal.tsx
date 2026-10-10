@@ -217,7 +217,16 @@ export function ManageDeliveryModal({
                           </div>
 
                           <div className="flex gap-2 pt-2 border-t border-zinc-50">
-                            {f.status === "PENDING" && (
+                            {f.type === "PICKUP" && f.status !== "COMPLETED" && f.status !== "DELIVERED" && (
+                              <Button
+                                size="sm"
+                                className="h-8 text-[11px] flex-1 bg-emerald-600 hover:bg-emerald-700 text-white"
+                                onClick={() => handleStatusUpdate(f.id, "COMPLETED")}
+                              >
+                                Mark as Picked Up
+                              </Button>
+                            )}
+                            {f.status === "PENDING" && f.type !== "PICKUP" && (
                               <Button
                                 size="sm"
                                 variant="outline"

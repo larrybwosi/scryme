@@ -1,5 +1,8 @@
 'use client';
 
+import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
+
 import { useState } from 'react';
 import { usePosStore } from '@/store/store';
 import { Card } from '@repo/ui/components/ui/card';
@@ -139,6 +142,21 @@ export default function PendingOrdersList() {
                 </div>
 
                 {/* Action Button */}
+                {order.status !== 'completed' && order.paymentMethod !== 'pending' && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="w-full h-8 mt-1 text-xs font-semibold shadow-none border-emerald-600/30 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/20"
+                    onClick={e => {
+                      e.stopPropagation();
+                      usePosStore.getState().updateOrderStatus(order.id, 'completed');
+                      toast.success("Order marked as picked up!");
+                    }}
+                  >
+                    <CheckCircle2 className="w-3.5 h-3.5 mr-1" />
+                    Mark Picked Up
+                  </Button>
+                )}
                 {order.paymentMethod === 'pending' && (
                   <Button 
                     size="sm" 

@@ -1,4 +1,4 @@
-import { BenefitType, WalletTxType, DriverStatus, FulfillmentStatus, TransactionStatus } from "@repo/db";
+import { BenefitType, WalletTxType, DriverStatus, FulfillmentStatus, TransactionStatus, PaymentStatus } from "@repo/db";
 import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
@@ -333,6 +333,18 @@ export class DeliveriesService {
           deliveredAt: status === DeliveryStatus.DELIVERED ? new Date() : fulfillment.deliveredAt,
         },
       });
+
+      if (status === DeliveryStatus.DELIVERED && fulfillment.transaction) {
+        if (
+          fulfillment.transaction.paymentStatus === PaymentStatus.PAID &&
+          (fulfillment.transaction.status === TransactionStatus.PROCESSING || fulfillment.transaction.status === TransactionStatus.PREORDER)
+        ) {
+          await tx.transaction.update({
+            where: { id: fulfillment.transaction.id },
+            data: { status: TransactionStatus.COMPLETED },
+          });
+        }
+      }
 
       // If delivery is terminal (DELIVERED, FAILED, CANCELLED, RETURNED), free up internal driver
       if (
