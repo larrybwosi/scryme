@@ -31,7 +31,7 @@
   }
 
   body {
-    @apply bg-background text-foreground;
+    @apply bg-background text-foreground transition-colors duration-300 ease-in-out;
   }
 
   :focus-visible {
@@ -54,143 +54,175 @@
   ::backdrop,
   ::file-selector-button {
     border-color: var(--border, currentColor);
+    transition-property: color, background-color, border-color, shadow;
+    transition-duration: 200ms;
+    transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
   }
 }
 
 /* ========================================
-   DESIGN TOKENS — LIGHT
+   DESIGN TOKENS — LIGHT MODE (Modern OKLCH & Refined Contrast)
    ======================================== */
 :root {
-  /* Surfaces */
-  --background: oklch(0.985 0.005 265);
-  --foreground: oklch(0.2 0.02 265);
+  /* Core Surface Tokens */
+  --background: oklch(0.985 0.003 260);
+  --foreground: oklch(0.18 0.03 260);
 
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.2 0.02 265);
+  --card-foreground: oklch(0.18 0.03 260);
 
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.2 0.02 265);
+  --popover-foreground: oklch(0.18 0.03 260);
 
-  /* Brand */
-  --primary: oklch(0.55 0.18 265);
-  --primary-foreground: oklch(1 0 0);
+  /* Primary Brand & Accents */
+  --primary: oklch(0.52 0.17 250);
+  --primary-foreground: oklch(0.99 0 0);
 
-  --secondary: oklch(0.96 0.01 265);
-  --secondary-foreground: oklch(0.25 0.02 265);
+  --secondary: oklch(0.95 0.012 260);
+  --secondary-foreground: oklch(0.22 0.03 260);
 
-  --muted: oklch(0.96 0.01 265);
-  --muted-foreground: oklch(0.5 0.02 265);
+  --muted: oklch(0.95 0.01 260);
+  --muted-foreground: oklch(0.45 0.025 260);
 
-  --accent: oklch(0.95 0.02 265);
-  --accent-foreground: oklch(0.25 0.02 265);
+  --accent: oklch(0.94 0.015 260);
+  --accent-foreground: oklch(0.22 0.03 260);
 
-  --destructive: oklch(0.6 0.18 25);
-  --destructive-foreground: oklch(1 0 0);
+  --destructive: oklch(0.58 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
 
-  --border: oklch(0.92 0.01 265);
-  --input: oklch(0.92 0.01 265);
-  --ring: oklch(0.55 0.18 265);
+  --border: oklch(0.90 0.012 260);
+  --input: oklch(0.90 0.012 260);
+  --ring: oklch(0.52 0.17 250);
 
-  /* Site-specific: Dark hero/section backgrounds */
-  --site-dark: oklch(0.07 0.018 240);
-  --site-dark-surface: oklch(0.11 0.016 240);
-  --site-dark-card: oklch(0.14 0.018 240);
-  --site-dark-border: oklch(0.22 0.016 240);
-  --site-dark-muted: oklch(0.55 0.01 240);
+  /* Site-specific Section Tokens (Adaptive) */
+  --site-dark: oklch(0.12 0.02 260);
+  --site-dark-surface: oklch(0.15 0.022 260);
+  --site-dark-card: oklch(0.18 0.025 260);
+  --site-dark-border: oklch(0.26 0.02 260);
+  --site-dark-muted: oklch(0.60 0.015 260);
 
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 
-  /* Refined, sharper border radii scale (Base radius 4px) */
-  --radius: 0.25rem;
+  --radius: 0.375rem;
 
-  /* Premium Ambient Shadows */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.04);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.03);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.04), 0 2px 4px -2px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.6);
-  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -4px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.8);
-  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.06), 0 8px 10px -6px rgba(0, 0, 0, 0.03), inset 0 1px 0 rgba(255, 255, 255, 0.9);
-  --shadow-primary: 0 8px 24px -4px oklch(0.55 0.18 265 / 0.25);
+  /* Ambient Soft Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px -1px rgba(0, 0, 0, 0.04);
+  --shadow-md: 0 4px 8px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 12px 20px -3px rgba(0, 0, 0, 0.07), 0 4px 6px -4px rgba(0, 0, 0, 0.04);
+  --shadow-xl: 0 24px 32px -5px rgba(0, 0, 0, 0.09), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+  --shadow-primary: 0 8px 24px -4px oklch(0.52 0.17 250 / 0.22);
 
-  /* Scryme ledger variables — Light mode default values */
-  --ink-bg: #fbf9f4;
-  --ink-panel: #f4efe2;
-  --ink-panel-alt: #ece4d2;
-  --ink-line: rgba(11, 18, 32, 0.08);
-  --paper: #111827;
-  --brass: #9e742a;
-  --brass-dim: rgba(158, 116, 42, 0.08);
-  --brass-line: rgba(158, 116, 42, 0.2);
-  --ledger-green: #2f6a4f;
-  --ledger-rust: #933d25;
-  --text-primary: #111827;
-  --text-muted: rgba(11, 18, 32, 0.64);
-  --text-faint: rgba(11, 18, 32, 0.36);
+  /* Scryme Ledger Tokens */
+  --ink-bg: oklch(0.985 0.003 260);
+  --ink-panel: oklch(0.96 0.01 260);
+  --ink-panel-alt: oklch(0.93 0.015 260);
+  --ink-line: oklch(0.88 0.012 260);
+  --paper: oklch(0.18 0.03 260);
+  --brass: oklch(0.60 0.15 75);
+  --brass-dim: oklch(0.60 0.15 75 / 0.1);
+  --brass-line: oklch(0.60 0.15 75 / 0.25);
+  --ledger-green: oklch(0.55 0.14 150);
+  --ledger-rust: oklch(0.55 0.18 30);
+  --text-primary: oklch(0.18 0.03 260);
+  --text-muted: oklch(0.45 0.025 260);
+  --text-faint: oklch(0.65 0.015 260);
 
-  /* Theme-adaptive helper variables — Light mode values */
-  --hover-bg: rgba(11, 18, 32, 0.04);
-  --hover-bg-intense: rgba(11, 18, 32, 0.08);
-  --navbar-bg-scrolled: rgba(251, 249, 244, 0.85);
-  --mobile-menu-bg: rgba(251, 249, 244, 0.95);
+  /* Adaptive Helper Tokens */
+  --hover-bg: oklch(0.18 0.03 260 / 0.04);
+  --hover-bg-intense: oklch(0.18 0.03 260 / 0.08);
+  --navbar-bg-scrolled: oklch(0.985 0.003 260 / 0.85);
+  --mobile-menu-bg: oklch(0.985 0.003 260 / 0.96);
 
   /* Pricing CTA adaptive variables */
-  --pricing-cta-text-muted: rgba(241, 233, 216, 0.68);
-  --pricing-cta-text-body: rgba(241, 233, 216, 0.8);
-  --pricing-cta-border-dim: rgba(241, 233, 216, 0.3);
-  --pricing-cta-card-bg: rgba(241, 233, 216, 0.04);
-  --pricing-cta-card-border: rgba(241, 233, 216, 0.14);
-  --pricing-cta-text-faint: rgba(241, 233, 216, 0.4);
-  --pricing-cta-text-muted-alt: rgba(241, 233, 216, 0.65);
+  --pricing-cta-text-muted: oklch(0.45 0.025 260);
+  --pricing-cta-text-body: oklch(0.25 0.03 260);
+  --pricing-cta-border-dim: oklch(0.88 0.012 260);
+  --pricing-cta-card-bg: oklch(0.97 0.005 260);
+  --pricing-cta-card-border: oklch(0.90 0.012 260);
+  --pricing-cta-text-faint: oklch(0.65 0.015 260);
+  --pricing-cta-text-muted-alt: oklch(0.50 0.02 260);
 }
 
 /* ========================================
-   SCRYME LEDGER TOKENS — DARK MODE
+   DESIGN TOKENS — DARK MODE (Deep Navy & High Legibility)
    ======================================== */
 .dark,
 ::backdrop {
-  --background: #0b1220;
-  --foreground: #f1e9d8;
-  --card: #121b2e;
-  --card-foreground: #f1e9d8;
-  --popover: #121b2e;
-  --popover-foreground: #f1e9d8;
-  --border: rgba(241, 233, 216, 0.08);
+  /* Core Surface Tokens */
+  --background: oklch(0.12 0.025 260);
+  --foreground: oklch(0.96 0.01 260);
 
-  --ink-bg: #0b1220;
-  --ink-panel: #121b2e;
-  --ink-panel-alt: #0e1626;
-  --ink-line: rgba(241, 233, 216, 0.07);
-  --paper: #f1e9d8;
-  --brass: #c89a4b;
-  --brass-dim: rgba(200, 154, 75, 0.12);
-  --brass-line: rgba(200, 154, 75, 0.3);
-  --ledger-green: #4b9073;
-  --ledger-rust: #b4553a;
-  --text-primary: #f1e9d8;
-  --text-muted: rgba(241, 233, 216, 0.56);
-  --text-faint: rgba(241, 233, 216, 0.32);
+  --card: oklch(0.16 0.028 260);
+  --card-foreground: oklch(0.96 0.01 260);
 
-  /* Adjusted Dark Mode Shadows for Depth */
-  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.2);
-  --shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px -1px rgba(0, 0, 0, 0.2);
-  --shadow-md: 0 4px 12px -2px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(241, 233, 216, 0.08);
-  --shadow-lg: 0 12px 24px -4px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(241, 233, 216, 0.1);
-  --shadow-xl: 0 24px 48px -12px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(241, 233, 216, 0.12);
+  --popover: oklch(0.16 0.028 260);
+  --popover-foreground: oklch(0.96 0.01 260);
 
-  /* Theme-adaptive helper variables — Dark mode values */
-  --hover-bg: rgba(241, 233, 216, 0.04);
-  --hover-bg-intense: rgba(241, 233, 216, 0.08);
-  --navbar-bg-scrolled: rgba(11, 18, 32, 0.85);
-  --mobile-menu-bg: rgba(11, 18, 32, 0.95);
+  /* Primary Brand & Accents */
+  --primary: oklch(0.65 0.16 250);
+  --primary-foreground: oklch(0.10 0.02 260);
+
+  --secondary: oklch(0.20 0.025 260);
+  --secondary-foreground: oklch(0.96 0.01 260);
+
+  --muted: oklch(0.20 0.022 260);
+  --muted-foreground: oklch(0.70 0.02 260);
+
+  --accent: oklch(0.22 0.03 260);
+  --accent-foreground: oklch(0.96 0.01 260);
+
+  --destructive: oklch(0.62 0.22 25);
+  --destructive-foreground: oklch(0.99 0 0);
+
+  --border: oklch(0.24 0.022 260);
+  --input: oklch(0.24 0.022 260);
+  --ring: oklch(0.65 0.16 250);
+
+  /* Site-specific Section Tokens */
+  --site-dark: oklch(0.10 0.022 260);
+  --site-dark-surface: oklch(0.14 0.025 260);
+  --site-dark-card: oklch(0.18 0.028 260);
+  --site-dark-border: oklch(0.26 0.022 260);
+  --site-dark-muted: oklch(0.68 0.02 260);
+
+  /* Depth Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.5), 0 1px 2px -1px rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 6px 14px -2px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  --shadow-lg: 0 16px 28px -4px rgba(0, 0, 0, 0.7), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --shadow-xl: 0 30px 50px -12px rgba(0, 0, 0, 0.85), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+
+  /* Scryme Ledger Tokens */
+  --ink-bg: oklch(0.12 0.025 260);
+  --ink-panel: oklch(0.16 0.028 260);
+  --ink-panel-alt: oklch(0.14 0.024 260);
+  --ink-line: oklch(0.24 0.022 260);
+  --paper: oklch(0.96 0.01 260);
+  --brass: oklch(0.72 0.16 75);
+  --brass-dim: oklch(0.72 0.16 75 / 0.15);
+  --brass-line: oklch(0.72 0.16 75 / 0.35);
+  --ledger-green: oklch(0.68 0.15 150);
+  --ledger-rust: oklch(0.68 0.18 30);
+  --text-primary: oklch(0.96 0.01 260);
+  --text-muted: oklch(0.70 0.02 260);
+  --text-faint: oklch(0.48 0.015 260);
+
+  /* Adaptive Helper Tokens */
+  --hover-bg: oklch(0.96 0.01 260 / 0.05);
+  --hover-bg-intense: oklch(0.96 0.01 260 / 0.10);
+  --navbar-bg-scrolled: oklch(0.12 0.025 260 / 0.85);
+  --mobile-menu-bg: oklch(0.12 0.025 260 / 0.96);
 
   /* Pricing CTA adaptive variables */
-  --pricing-cta-text-muted: rgba(11, 18, 32, 0.68);
-  --pricing-cta-text-body: rgba(11, 18, 32, 0.8);
-  --pricing-cta-border-dim: rgba(11, 18, 32, 0.3);
-  --pricing-cta-card-bg: rgba(11, 18, 32, 0.04);
-  --pricing-cta-card-border: rgba(11, 18, 32, 0.14);
-  --pricing-cta-text-faint: rgba(11, 18, 32, 0.4);
-  --pricing-cta-text-muted-alt: rgba(11, 18, 32, 0.65);
+  --pricing-cta-text-muted: oklch(0.70 0.02 260);
+  --pricing-cta-text-body: oklch(0.90 0.015 260);
+  --pricing-cta-border-dim: oklch(0.26 0.022 260);
+  --pricing-cta-card-bg: oklch(0.16 0.028 260);
+  --pricing-cta-card-border: oklch(0.24 0.022 260);
+  --pricing-cta-text-faint: oklch(0.48 0.015 260);
+  --pricing-cta-text-muted-alt: oklch(0.65 0.018 260);
 }
 
 /* ========================================
@@ -243,8 +275,6 @@
   --font-sans: var(--font-sans);
   --font-mono: var(--font-mono);
 
-  /* Scaled down border radii definitions:
-     sm: 2px | md: 3px | lg: 4px | xl: 6px | 2xl: 8px */
   --radius-sm: calc(var(--radius) - 2px);
   --radius-md: calc(var(--radius) - 1px);
   --radius-lg: var(--radius);

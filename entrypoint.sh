@@ -209,8 +209,8 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       $PRISMA_BIN migrate deploy
     fi
 
-    echo "Seeding database..."
-    $PRISMA_BIN db seed
+    echo "Database migrations deployed successfully. Skipping automatic seeding."
+
   else
     echo "⚠️ DATABASE_URL not set, skipping migrations."
   fi
@@ -232,23 +232,7 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
   fi
 fi
 
-# ---------------------------------------------------------
-# 3. Site App (Next.js) Sanity Seeding
-# ---------------------------------------------------------
-if [ -f "apps/site/server.js" ]; then
-  echo "Detected Site App (Next.js) environment..."
 
-  if [ -n "$SANITY_API_TOKEN" ]; then
-    echo "Running Sanity seeding..."
-    if [ -f "apps/site/sanity/run-seed.mjs" ]; then
-      node apps/site/sanity/run-seed.mjs || echo "⚠️ Sanity seeding failed, continuing anyway."
-    else
-      echo "⚠️ Sanity seed script not found at apps/site/sanity/run-seed.mjs"
-    fi
-  else
-    echo "ℹ️ SANITY_API_TOKEN not set, skipping Sanity seeding."
-  fi
-fi
 
 # ---------------------------------------------------------
 # 4. Running Frontend or API App CMD
