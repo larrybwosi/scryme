@@ -1,6 +1,6 @@
 {
   "name": "create-scryme-app",
-  "version": "10.2.8",
+  "version": "10.2.9",
   "description": "CLI to bootstrap a Scryme-powered Next.js application",
   "bin": {
     "create-scryme-app": "./bin/cli.js"
