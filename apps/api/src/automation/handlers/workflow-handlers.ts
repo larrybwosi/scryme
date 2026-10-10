@@ -122,6 +122,9 @@ export class WorkflowHandlers {
     this.logger.log(`Executing handler '${handler}' for job ${ctx.jobId} (Org: ${ctx.organizationId})`);
 
     switch (handler) {
+      case "expiry_cleanup":
+      case "f/dealio/expiry_cleanup":
+        return this.handleExpiryCleanup(ctx);
       case "lowstock_alert":
       case "f/dealio/inventory_alert":
         return this.handleLowStockAlert(ctx);
@@ -830,4 +833,216 @@ export class WorkflowHandlers {
       payload: ctx.payload,
     };
   }
+
+  private async handleExpiryCleanup(ctx: WorkflowJobHandlerContext) {
+    const batchId = ctx.payload?.batchId;
+    const batchNumber = ctx.payload?.batchNumber || batchId || "N/A";
+    const productName = ctx.payload?.productName || "Product";
+    const variantName = ctx.payload?.variantName || "Default";
+    const displayName = variantName.toLowerCase() === "default" || !variantName
+      ? productName
+      : `${productName} - ${variantName}`;
+
+    const currentQuantity = ctx.payload?.currentQuantity ?? 0;
+    const expiryDate = ctx.payload?.expiryDate ? new Date(ctx.payload.expiryDate).toLocaleDateString() : "N/A";
+    const isExpired = ctx.payload?.isExpired ?? false;
+    const daysUntilExpiry = ctx.payload?.daysUntilExpiry ?? 0;
+    const locationName = ctx.payload?.locationName || "Default Location";
+    const notificationEmail = ctx.definitionConfig?.notificationEmail || ctx.payload?.notificationEmail || "";
+
+    this.logger.log(
+      `[ExpiryCleanup] Processing batch ${batchNumber} (${displayName}): qty ${currentQuantity}, expiry ${expiryDate}, isExpired: ${isExpired}, daysUntil: ${daysUntilExpiry}`,
+    );
+
+    let scrymeSent = false;
+    let emailSent = false;
+
+    if (isExpired) {
+      const alertMsg =
+        `🚨 **Expired Stock Clean-Up Required**\n\n` +
+        `• **Item:** ${displayName}\n` +
+        `• **Batch Number:** **${batchNumber}**\n` +
+        `• **Current Stock:** **${currentQuantity}**\n` +
+        `• **Location:** ${locationName}\n` +
+        `• **Expiration Date:** **${expiryDate}** (Expired ${Math.abs(daysUntilExpiry)} day(s) ago)`;
+
+      const actions: ScrymeChatAction[] = [
+        {
+          id: `remove_expired_${batchId}`,
+          label: "⚡ Remove Expired Stock",
+          type: "button",
+          style: "danger",
+          value: JSON.stringify({
+            action: "remove_expired_stock",
+            batchId,
+            variantId: ctx.payload?.variantId,
+            locationId: ctx.payload?.locationId,
+            currentQuantity,
+            organizationId: ctx.organizationId,
+          }),
+        },
+        {
+          id: `view_batch_${batchId}`,
+          label: "🔍 View Batch Details",
+          type: "button",
+          style: "secondary",
+          value: JSON.stringify({
+            action: "view_batch",
+            batchId,
+          }),
+        },
+      ];
+
+      const expiredReport = createReportMessage({
+        title: `CRITICAL: Expired Stock Batch - ${displayName}`,
+        reportId: `expired_batch_${batchId}_${Date.now()}`,
+        summary: `Stock batch ${batchNumber} has reached its expiration date (${expiryDate}). Human review is required to confirm removal of ${currentQuantity} expired unit(s).`,
+        metrics: [
+          { label: "Item Name", value: displayName },
+          { label: "Batch Number", value: batchNumber },
+          { label: "Current Stock", value: String(currentQuantity) },
+          { label: "Storage Location", value: locationName },
+          { label: "Expiration Date", value: expiryDate },
+          { label: "Status", value: "EXPIRED" },
+        ],
+        theme: { accentColor: "#ef4444", borderColor: "#fecaca", backgroundColor: "#fef2f2" },
+      });
+
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "expiry_alerts", alertMsg, {
+        actions,
+        customMessage: expiredReport,
+        metadata: {
+          batchId,
+          batchNumber,
+          currentQuantity,
+          isExpired: true,
+          alertType: "EXPIRY_CLEANUP_REQUIRED",
+        },
+      });
+
+      try {
+        await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
+          title: `Expired Stock: ${displayName}`,
+          body: `Batch ${batchNumber} expired on ${expiryDate} (${currentQuantity} units remaining). Clean-up required.`,
+          data: {
+            eventType: "EXPIRED_STOCK_ALERT",
+            batchId: batchId || "",
+            batchNumber,
+            productName: displayName,
+            organizationId: ctx.organizationId,
+          },
+        });
+      } catch (fcmError: any) {
+        this.logger.warn(`FCM push for expired stock failed: ${fcmError.message}`);
+      }
+
+      if (notificationEmail) {
+        const emailHtml = `
+          <h2>Expired Stock Alert</h2>
+          <p>The following stock batch has expired and requires immediate clean-up:</p>
+          <ul>
+            <li><strong>Item:</strong> ${displayName}</li>
+            <li><strong>Batch Number:</strong> ${batchNumber}</li>
+            <li><strong>Current Quantity:</strong> ${currentQuantity}</li>
+            <li><strong>Location:</strong> ${locationName}</li>
+            <li><strong>Expiration Date:</strong> ${expiryDate}</li>
+          </ul>
+        `;
+        emailSent = await this.dispatchWorkflowEmail(
+          notificationEmail,
+          `🚨 Expired Stock Alert: ${displayName} (Batch #${batchNumber})`,
+          emailHtml,
+          `Expired Stock Alert: ${displayName}\nBatch Number: ${batchNumber}\nQuantity: ${currentQuantity}\nExpired Date: ${expiryDate}`,
+        );
+      }
+    } else {
+      const alertMsg =
+        `⚠️ **Upcoming Stock Expiration Warning**\n\n` +
+        `• **Item:** ${displayName}\n` +
+        `• **Batch Number:** **${batchNumber}**\n` +
+        `• **Current Stock:** **${currentQuantity}**\n` +
+        `• **Location:** ${locationName}\n` +
+        `• **Expiration Date:** **${expiryDate}** (${daysUntilExpiry} day(s) remaining)`;
+
+      const actions: ScrymeChatAction[] = [
+        {
+          id: `view_batch_${batchId}`,
+          label: "🔍 View Batch Details",
+          type: "button",
+          style: "primary",
+          value: JSON.stringify({
+            action: "view_batch",
+            batchId,
+          }),
+        },
+      ];
+
+      const nearExpiryReport = createReportMessage({
+        title: `Pre-Expiry Alert: ${displayName}`,
+        reportId: `near_expiry_batch_${batchId}_${Date.now()}`,
+        summary: `Stock batch ${batchNumber} is approaching expiration on ${expiryDate} (${daysUntilExpiry} day(s) remaining). Consider discounting or prioritizing usage.`,
+        metrics: [
+          { label: "Item Name", value: displayName },
+          { label: "Batch Number", value: batchNumber },
+          { label: "Current Stock", value: String(currentQuantity) },
+          { label: "Storage Location", value: locationName },
+          { label: "Expiration Date", value: expiryDate },
+          { label: "Days Remaining", value: `${daysUntilExpiry} day(s)` },
+        ],
+        theme: { accentColor: "#f59e0b", borderColor: "#fef3c7", backgroundColor: "#fffbeb" },
+      });
+
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "expiry_alerts", alertMsg, {
+        actions,
+        customMessage: nearExpiryReport,
+        metadata: {
+          batchId,
+          batchNumber,
+          currentQuantity,
+          daysUntilExpiry,
+          isExpired: false,
+          alertType: "PRE_EXPIRY_WARNING",
+        },
+      });
+
+      if (notificationEmail) {
+        const emailHtml = `
+          <h2>Pre-Expiry Stock Warning</h2>
+          <p>The following stock batch will expire in ${daysUntilExpiry} day(s):</p>
+          <ul>
+            <li><strong>Item:</strong> ${displayName}</li>
+            <li><strong>Batch Number:</strong> ${batchNumber}</li>
+            <li><strong>Current Quantity:</strong> ${currentQuantity}</li>
+            <li><strong>Location:</strong> ${locationName}</li>
+            <li><strong>Expiration Date:</strong> ${expiryDate}</li>
+          </ul>
+        `;
+        emailSent = await this.dispatchWorkflowEmail(
+          notificationEmail,
+          `⚠️ Pre-Expiry Stock Warning: ${displayName} (Batch #${batchNumber})`,
+          emailHtml,
+          `Pre-Expiry Stock Warning: ${displayName}\nBatch Number: ${batchNumber}\nQuantity: ${currentQuantity}\nExpiration Date: ${expiryDate}`,
+        );
+      }
+    }
+
+    return {
+      success: true,
+      isExpired,
+      scrymeNotificationSent: scrymeSent,
+      emailSent,
+      details: {
+        batchId,
+        batchNumber,
+        productName,
+        variantName,
+        currentQuantity,
+        expiryDate,
+        isExpired,
+        daysUntilExpiry,
+        processedAt: new Date().toISOString(),
+      },
+    };
+  }
+
 }

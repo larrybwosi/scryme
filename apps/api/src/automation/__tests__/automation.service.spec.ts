@@ -161,4 +161,80 @@ describe("AutomationService", () => {
     expect(result.execution.id).toBe("exec_2");
     expect(mockWebhookDispatcher.verifyIncomingSignature).toHaveBeenCalled();
   });
+
+  it("should remove expired stock and create adjustment, zero batch, and record movement", async () => {
+    const mockBatch = {
+      id: "batch_100",
+      batchNumber: "BATCH-EXP-001",
+      variantId: "var_100",
+      locationId: "loc_100",
+      currentQuantity: 20,
+      variant: { name: "Whole Milk", product: { name: "Dairy" } },
+      location: { name: "Cold Room" },
+    };
+
+    mockPrisma.client.stockBatch = {
+      findFirst: vi.fn().mockResolvedValue(mockBatch),
+      update: vi.fn().mockResolvedValue({ id: "batch_100", currentQuantity: 0 }),
+    };
+    mockPrisma.client.member = {
+      findFirst: vi.fn().mockResolvedValue({ id: "mem_1" }),
+    };
+
+    const txMock = {
+      stockAdjustment: {
+        create: vi.fn().mockResolvedValue({ id: "adj_100" }),
+      },
+      stockBatch: {
+        update: vi.fn().mockResolvedValue({ id: "batch_100", currentQuantity: 0 }),
+      },
+      productVariantStock: {
+        findUnique: vi.fn().mockResolvedValue({ id: "pvs_100", currentStock: 50, availableStock: 50 }),
+        update: vi.fn().mockResolvedValue({ id: "pvs_100" }),
+      },
+      stockMovement: {
+        create: vi.fn().mockResolvedValue({ id: "mov_100" }),
+      },
+    };
+
+    mockPrisma.client.$transaction = vi.fn().mockImplementation((cb) => cb(txMock));
+
+    const result = await service.removeExpiredStock("org_1", {
+      batchId: "batch_100",
+      notes: "Testing expired stock clean-up",
+    });
+
+    expect(result.success).toBe(true);
+    expect(result.batchId).toBe("batch_100");
+    expect(result.removedQuantity).toBe(20);
+    expect(txMock.stockAdjustment.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org_1",
+        variantId: "var_100",
+        stockBatchId: "batch_100",
+        locationId: "loc_100",
+        quantity: 20,
+        reason: "EXPIRED",
+        status: "APPROVED",
+      }),
+    });
+    expect(txMock.stockBatch.update).toHaveBeenCalledWith({
+      where: { id: "batch_100" },
+      data: { currentQuantity: 0 },
+    });
+    expect(txMock.productVariantStock.update).toHaveBeenCalledWith({
+      where: { id: "pvs_100" },
+      data: { currentStock: 30, availableStock: 30 },
+    });
+    expect(txMock.stockMovement.create).toHaveBeenCalledWith({
+      data: expect.objectContaining({
+        organizationId: "org_1",
+        variantId: "var_100",
+        stockBatchId: "batch_100",
+        quantity: 20,
+        movementType: "ADJUSTMENT_OUT",
+      }),
+    });
+  });
+
 });

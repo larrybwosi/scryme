@@ -175,4 +175,66 @@ export class AutomationController {
       body,
     );
   }
+
+  @Post("actions/hitl")
+  @Permissions("workflow:execute")
+  @ApiOperation({ summary: "Execute Human-In-The-Loop (HITL) action button from ScrymeChat or UI" })
+  async executeHitlAction(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: { action: string; batchId?: string; [key: string]: any },
+  ) {
+    if (body.action === "remove_expired_stock" && body.batchId) {
+      return this.automationService.removeExpiredStock(ctx.organizationId, {
+        batchId: body.batchId,
+        memberId: ctx.memberId,
+        notes: body.notes,
+      });
+    }
+
+    return {
+      success: true,
+      message: `Action ${body.action} processed.`,
+      action: body.action,
+    };
+  }
+
+  @AllowPublic()
+  @Post("actions/scryme-chat/:organizationId")
+  @ApiOperation({ summary: "Public webhook for ScrymeChat action button callbacks" })
+  async handleScrymeChatActionCallback(
+    @Param("organizationId") organizationId: string,
+    @Body() body: any,
+  ) {
+    let actionData: any = {};
+    if (typeof body.value === "string") {
+      try {
+        actionData = JSON.parse(body.value);
+      } catch {
+        actionData = { action: body.value };
+      }
+    } else if (typeof body.value === "object" && body.value !== null) {
+      actionData = body.value;
+    } else {
+      actionData = body;
+    }
+
+    if (actionData.action === "remove_expired_stock" && actionData.batchId) {
+      const result = await this.automationService.removeExpiredStock(organizationId, {
+        batchId: actionData.batchId,
+        memberId: body.userId || body.memberId,
+        notes: "ScrymeChat HITL button click",
+      });
+
+      return {
+        content: `✅ **Expired Stock Removed**\n\nStock batch **${result.batchNumber || result.batchId}** (${result.productName} - ${result.variantName}) has been zeroed out (${result.removedQuantity} units removed).`,
+        result,
+      };
+    }
+
+    return {
+      content: `Action ${actionData.action || "unknown"} executed successfully.`,
+      actionData,
+    };
+  }
+
 }
