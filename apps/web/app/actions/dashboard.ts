@@ -6,6 +6,8 @@ import {
   startOfMonth,
   endOfMonth,
   subMonths,
+  subDays,
+  subYears,
   eachDayOfInterval,
   format,
   isSameDay,
@@ -49,6 +51,20 @@ export type PopularProduct = {
   color: string;
 };
 
+export type HeatmapDay = {
+  date: string; // "YYYY-MM-DD"
+  count: number;
+  revenue: number;
+  level: 0 | 1 | 2 | 3 | 4;
+};
+
+export type CategoryDistribution = {
+  name: string;
+  value: number;
+  percentage: number;
+  color: string;
+};
+
 export type DashboardData = {
   stats: DashboardStats;
   totalRevenue: {
@@ -73,6 +89,8 @@ export type DashboardData = {
     chartData: ChartDataPoint[];
   };
   periodLabel: string;
+  heatmapData: HeatmapDay[];
+  categoryDistribution: CategoryDistribution[];
 };
 
 export async function getDashboardData(
@@ -118,9 +136,10 @@ export async function getDashboardData(
       break;
   }
 
-  // Fetch transactions for both current and previous periods concurrently in parallel using Promise.all
-  // and select only required fields for extreme optimization
-  const [currentTransactions, previousTransactions] = await Promise.all([
+  const yearAgo = subYears(now, 1);
+
+  // Fetch transactions for current, previous, and past 1 year for heatmap in parallel
+  const [currentTransactions, previousTransactions, yearlyTransactions] = await Promise.all([
     db.transaction.findMany({
       where: {
         organizationId: orgId,
@@ -171,6 +190,22 @@ export async function getDashboardData(
         },
       },
     }),
+    db.transaction.findMany({
+      where: {
+        organizationId: orgId,
+        createdAt: {
+          gte: yearAgo,
+          lte: now,
+        },
+        status: {
+          in: ["COMPLETED", "CONFIRMED"],
+        },
+      },
+      select: {
+        createdAt: true,
+        finalTotal: true,
+      },
+    }),
   ]);
 
   // Basic Stats Calculation
@@ -210,12 +245,13 @@ export async function getDashboardData(
     return ((current - previous) / previous) * 100;
   };
 
-  // Popular Products (by units sold)
+  // Popular Products (by units sold) & Category breakdown
   const productSalesMap = new Map<string, { name: string; sales: number }>();
   currentTransactions.forEach(t => {
     t.items.forEach(item => {
+      const name = item.productName || item.variantName || "Item";
       const existing = productSalesMap.get(item.variantId) || {
-        name: `${item.productName} ${item.variantName}`,
+        name: `${name} ${item.variantName && item.variantName !== name ? item.variantName : ""}`.trim(),
         sales: 0,
       };
       existing.sales += item.quantity;
@@ -223,7 +259,7 @@ export async function getDashboardData(
     });
   });
 
-  const colors = ["#F97316", "#A855F7", "#3B82F6", "#22C55E", "#EAB308"];
+  const colors = ["#F97316", "#A855F7", "#3B82F6", "#22C55E", "#EAB308", "#EC4899", "#14B8A6"];
   const popularProducts: PopularProduct[] = Array.from(
     productSalesMap.entries(),
   )
@@ -236,13 +272,21 @@ export async function getDashboardData(
     .sort((a, b) => b.sales - a.sales)
     .slice(0, 5);
 
+  // Category / Product Grouping Distribution
+  const totalUnits = popularProducts.reduce((acc, p) => acc + p.sales, 0);
+  const categoryDistribution: CategoryDistribution[] = popularProducts.map((p) => ({
+    name: p.name,
+    value: p.sales,
+    percentage: totalUnits > 0 ? Math.round((p.sales / totalUnits) * 100) : 0,
+    color: p.color,
+  }));
+
   // Chart Data preparation
   const intervalDays = eachDayOfInterval({
     start: currentStart,
     end: currentEnd < now ? currentEnd : now,
   });
 
-  // Optimize performance from O(N * D) to O(N + D) using Map-based date groupings
   const getDayKey = (date: Date) => {
     return format(date, "yyyy-MM-dd");
   };
@@ -279,10 +323,9 @@ export async function getDashboardData(
     const dayKey = getDayKey(day);
     const dayTransactions = currentByDay.get(dayKey) || [];
 
-    // For comparison in charts
     let prevDay: Date;
     if (timeframe === "week") {
-      prevDay = subMonths(day, 1); // Mocked match for simplicity
+      prevDay = subMonths(day, 1);
     } else if (timeframe === "year") {
       prevDay = subMonths(day, 12);
     } else {
@@ -324,6 +367,47 @@ export async function getDashboardData(
       current: 0,
       previous: 0,
     });
+  });
+
+  // Calculate Heatmap Data for past 365 days
+  const yearlyByDay = new Map<string, { count: number; revenue: number }>();
+  yearlyTransactions.forEach(t => {
+    const key = getDayKey(new Date(t.createdAt));
+    const curr = yearlyByDay.get(key) || { count: 0, revenue: 0 };
+    curr.count += 1;
+    curr.revenue += Number(t.finalTotal);
+    yearlyByDay.set(key, curr);
+  });
+
+  const yearInterval = eachDayOfInterval({
+    start: yearAgo,
+    end: now,
+  });
+
+  // Determine max count for level mapping
+  let maxDailyCount = 1;
+  yearlyByDay.forEach(val => {
+    if (val.count > maxDailyCount) maxDailyCount = val.count;
+  });
+
+  const heatmapData: HeatmapDay[] = yearInterval.map(day => {
+    const key = getDayKey(day);
+    const info = yearlyByDay.get(key) || { count: 0, revenue: 0 };
+    let level: 0 | 1 | 2 | 3 | 4 = 0;
+    if (info.count > 0) {
+      const ratio = info.count / maxDailyCount;
+      if (ratio <= 0.25) level = 1;
+      else if (ratio <= 0.5) level = 2;
+      else if (ratio <= 0.75) level = 3;
+      else level = 4;
+    }
+
+    return {
+      date: key,
+      count: info.count,
+      revenue: info.revenue,
+      level,
+    };
   });
 
   return {
@@ -370,5 +454,7 @@ export async function getDashboardData(
       chartData: totalSessionsChartData,
     },
     periodLabel,
+    heatmapData,
+    categoryDistribution,
   };
 }
