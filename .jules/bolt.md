@@ -33,3 +33,7 @@
 ## 2026-10-09 - [Concurrent Template Upserts in Meta Integration Sync]
 **Learning:** Sequential `for...of` loops performing database upserts during third-party integration template synchronization (such as Meta Graph API WhatsApp message templates) create $O(N)$ sequential blocking delays. Since Meta API returns unique `[name, language]` template entries per organization, parallelizing template upserts with `Promise.all` collapses sync latency from $O(N)$ sequential roundtrips to $O(1)$ concurrent execution.
 **Action:** Always parallelize third-party API template sync upserts with `Promise.all` when unique natural/composite keys guarantee no intra-batch lock contention or unique constraint collisions.
+
+## 2026-10-10 - [Parallelizing Ingredient Unit Resolution in ProductionService]
+**Learning:** Sequential `for...of` loops resolving relational or unit metadata (`resolveUnitId`) for multi-item entities (such as bakery recipe ingredients) generate $O(N)$ sequential database roundtrips. Parallelizing item unit resolution with `Promise.all` collapses execution time to $O(1)$ concurrent roundtrips while preserving exact item order and validation error behavior.
+**Action:** Always replace sequential `for...of` async unit/entity resolution loops in multi-item creation and update handlers with `Promise.all(items.map(async ...))`.
