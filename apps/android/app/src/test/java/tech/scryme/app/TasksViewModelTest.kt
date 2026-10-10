@@ -1,5 +1,6 @@
 package tech.scryme.app
 
+import android.content.Context
 import io.mockk.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -20,12 +21,13 @@ class TasksViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
     private val scheduleRepository = mockk<ScheduleRepository>()
     private val sessionManager = mockk<SessionManager>()
+    private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: TasksViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = TasksViewModel(scheduleRepository, sessionManager)
+        viewModel = TasksViewModel(scheduleRepository, sessionManager, context)
     }
 
     @After
@@ -60,6 +62,39 @@ class TasksViewModelTest {
         val successState = viewModel.uiState.value as TasksUiState.Success
         assertEquals(1, successState.tasks.size)
         assertEquals("Inventory Audit", successState.tasks[0].title)
+    }
+
+    @Test
+    fun createStaffTask_success_reloadsTasks() = runTest {
+        val createdTask = StaffTask(id = "t2", title = "Clean Station", status = "TODO", priority = "HIGH")
+        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { sessionManager.getMemberId() } returns "mem-123"
+        coEvery {
+            scheduleRepository.createStaffTask(
+                orgSlug = "scryme-org",
+                title = "Clean Station",
+                description = "Deep clean",
+                assignedMemberId = "mem-123",
+                priority = "HIGH",
+                dueDate = "2026-10-10"
+            )
+        } returns Result.success(createdTask)
+        coEvery { scheduleRepository.getStaffTasks("scryme-org", "mem-123", null) } returns Result.success(listOf(createdTask))
+
+        var returnedTask: StaffTask? = null
+        viewModel.createStaffTask(
+            title = "Clean Station",
+            description = "Deep clean",
+            assignedMemberId = "mem-123",
+            priority = "HIGH",
+            dueDate = "2026-10-10",
+            onSuccess = { newTask -> returnedTask = newTask }
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertNotNull(returnedTask)
+        assertEquals("Clean Station", returnedTask?.title)
+        coVerify { scheduleRepository.createStaffTask("scryme-org", "Clean Station", "Deep clean", "mem-123", "HIGH", "2026-10-10") }
     }
 
     @Test

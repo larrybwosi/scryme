@@ -13,6 +13,8 @@ import tech.scryme.app.R
 object NotificationHelper {
 
     const val SCHEDULE_CHANNEL_ID = "schedule_updates_channel"
+    const val TASKS_CHANNEL_ID = "tasks_updates_channel"
+    const val DAILY_SHIFT_CHANNEL_ID = "daily_shifts_channel"
     const val POS_CHANNEL_ID = "pos_alerts_channel"
 
     fun createNotificationChannels(context: Context) {
@@ -29,6 +31,22 @@ object NotificationHelper {
                     description = "Notifications for roster changes, shift assignments, and trades"
                 }
 
+                val tasksChannel = NotificationChannel(
+                    TASKS_CHANNEL_ID,
+                    "Task Assignments & Updates",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Notifications for new task assignments, updates, and deadlines"
+                }
+
+                val dailyShiftChannel = NotificationChannel(
+                    DAILY_SHIFT_CHANNEL_ID,
+                    "Daily Shifts & Roster Summary",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Daily shift reminders and scheduled task summaries"
+                }
+
                 val posChannel = NotificationChannel(
                     POS_CHANNEL_ID,
                     "POS & Pairing Alerts",
@@ -38,6 +56,8 @@ object NotificationHelper {
                 }
 
                 notificationManager?.createNotificationChannel(scheduleChannel)
+                notificationManager?.createNotificationChannel(tasksChannel)
+                notificationManager?.createNotificationChannel(dailyShiftChannel)
                 notificationManager?.createNotificationChannel(posChannel)
             }
         } catch (e: Throwable) {
@@ -47,6 +67,34 @@ object NotificationHelper {
 
     fun showScheduleNotification(
         context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, SCHEDULE_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showTaskNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, TASKS_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showDailyShiftNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, DAILY_SHIFT_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showNotification(
+        context: Context,
+        channelId: String,
         title: String,
         message: String,
         notificationId: Int = System.currentTimeMillis().toInt()
@@ -64,7 +112,7 @@ object NotificationHelper {
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )
 
-            val builder = NotificationCompat.Builder(context, SCHEDULE_CHANNEL_ID)
+            val builder = NotificationCompat.Builder(context, channelId)
                 .setSmallIcon(R.mipmap.ic_launcher)
                 .setContentTitle(title)
                 .setContentText(message)

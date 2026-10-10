@@ -1,8 +1,10 @@
 package tech.scryme.app.ui.tasks
 
+import android.content.Context
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
+import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -10,6 +12,7 @@ import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.repository.ScheduleRepository
+import tech.scryme.app.notifications.NotificationHelper
 import javax.inject.Inject
 
 sealed interface TasksUiState {
@@ -24,7 +27,8 @@ sealed interface TasksUiState {
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    @ApplicationContext private val context: Context
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow<TasksUiState>(TasksUiState.Loading)
@@ -53,6 +57,51 @@ class TasksViewModel @Inject constructor(
         }
     }
 
+    fun createStaffTask(
+        title: String,
+        description: String?,
+        assignedMemberId: String?,
+        priority: String?,
+        dueDate: String?,
+        onSuccess: (StaffTask) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug()
+            if (orgSlug.isNullOrEmpty()) {
+                onError("Session missing organization context")
+                return@launch
+            }
+            val currentMemberId = sessionManager.getMemberId()
+            val targetMemberId = assignedMemberId ?: currentMemberId
+
+            val result = scheduleRepository.createStaffTask(
+                orgSlug = orgSlug,
+                title = title,
+                description = description,
+                assignedMemberId = targetMemberId,
+                priority = priority,
+                dueDate = dueDate
+            )
+            result.fold(
+                onSuccess = { newTask ->
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "New Task Assigned",
+                        "Task '${newTask.title}' has been assigned."
+                    )
+                    onSuccess(newTask)
+                    val currentFilter = (_uiState.value as? TasksUiState.Success)?.selectedFilter ?: "ALL"
+                    loadTasks(currentFilter)
+                },
+                onFailure = { error ->
+                    val msg = error.message ?: "Failed to create task"
+                    onError(msg)
+                }
+            )
+        }
+    }
+
     fun updateTaskStatus(task: StaffTask, newStatus: String) {
         viewModelScope.launch {
             val orgSlug = sessionManager.getOrgSlug() ?: return@launch
@@ -62,7 +111,12 @@ class TasksViewModel @Inject constructor(
                 status = newStatus
             )
             result.fold(
-                onSuccess = {
+                onSuccess = { updatedTask ->
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Status Updated",
+                        "Task '${updatedTask.title}' set to $newStatus."
+                    )
                     val current = _uiState.value
                     if (current is TasksUiState.Success) {
                         loadTasks(current.selectedFilter)
