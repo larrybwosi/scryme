@@ -555,13 +555,15 @@ export class MpesaService {
     }
 
     // 4. Check Unclaimed Payments (C2B)
-    const unclaimed = await db.unclaimedPayment.findFirst({
-      where: {
-        billRefNumber: targetTxNumber,
-        claimed: false,
-        ...(organizationId ? { organizationId } : {}),
-      },
-    });
+    const unclaimed = transaction?.number
+      ? await db.unclaimedPayment.findFirst({
+          where: {
+            billRefNumber: transaction.number,
+            claimed: false,
+            ...(organizationId ? { organizationId } : {}),
+          },
+        })
+      : null;
 
     if (unclaimed) {
       return {
