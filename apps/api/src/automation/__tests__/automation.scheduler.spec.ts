@@ -200,4 +200,50 @@ describe("AutomationScheduler", () => {
       });
     });
   });
+
+  describe("handleExpiryCleanupCronCheck", () => {
+    it("should query active expiry cleanup definitions and trigger workflows for expiring batches", async () => {
+      mockPrisma.client.stockBatch = {
+        findMany: vi.fn(),
+      };
+
+      mockPrisma.client.workflowEngineDefinition.findMany.mockResolvedValue([
+        { id: "def_exp", key: "expiry_cleanup", organizationId: "org_1", config: { daysBeforeExpiry: 7 } },
+      ]);
+
+      const pastExpiryDate = new Date(Date.now() - 24 * 60 * 60 * 1000);
+
+      mockPrisma.client.stockBatch.findMany.mockResolvedValue([
+        {
+          id: "batch_1",
+          batchNumber: "BATCH-001",
+          variantId: "var_1",
+          currentQuantity: 15,
+          expiryDate: pastExpiryDate,
+          locationId: "loc_1",
+          variant: { name: "Whole Milk", product: { name: "Dairy" } },
+          location: { name: "Main Warehouse" },
+        },
+      ]);
+
+      await scheduler.handleExpiryCleanupCronCheck();
+
+      expect(mockPrisma.client.stockBatch.findMany).toHaveBeenCalled();
+      expect(mockAutomationService.triggerWorkflow).toHaveBeenCalledWith("org_1", {
+        key: "expiry_cleanup",
+        inputs: expect.objectContaining({
+          batchId: "batch_1",
+          batchNumber: "BATCH-001",
+          variantId: "var_1",
+          productName: "Dairy",
+          variantName: "Whole Milk",
+          currentQuantity: 15,
+          isExpired: true,
+          locationId: "loc_1",
+          locationName: "Main Warehouse",
+        }),
+      });
+    });
+  });
+
 });

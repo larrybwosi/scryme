@@ -71,4 +71,59 @@ describe("AutomationController", () => {
     expect(res).toEqual({ execution: { id: "exec_2" } });
     expect(mockAutomationService.handleIncomingWebhook).toHaveBeenCalledWith("org_1", "wh_1", {}, { event: "ping" });
   });
+
+  it("should execute HITL action for removing expired stock", async () => {
+    mockAutomationService.removeExpiredStock = vi.fn().mockResolvedValue({
+      success: true,
+      batchId: "batch_1",
+      removedQuantity: 10,
+    });
+
+    const v3Ctx: any = { organizationId: "org_1", memberId: "mem_1" };
+    const res = await controller.executeHitlAction(v3Ctx, {
+      action: "remove_expired_stock",
+      batchId: "batch_1",
+      notes: "Manual HITL removal",
+    });
+
+    expect(res).toEqual({
+      success: true,
+      batchId: "batch_1",
+      removedQuantity: 10,
+    });
+    expect(mockAutomationService.removeExpiredStock).toHaveBeenCalledWith("org_1", {
+      batchId: "batch_1",
+      memberId: "mem_1",
+      notes: "Manual HITL removal",
+    });
+  });
+
+  it("should handle public ScrymeChat action callback for removing expired stock", async () => {
+    mockAutomationService.removeExpiredStock = vi.fn().mockResolvedValue({
+      success: true,
+      batchId: "batch_2",
+      batchNumber: "BATCH-200",
+      productName: "Butter",
+      variantName: "Default",
+      removedQuantity: 25,
+    });
+
+    const callbackPayload = {
+      userId: "user_scryme",
+      value: JSON.stringify({
+        action: "remove_expired_stock",
+        batchId: "batch_2",
+      }),
+    };
+
+    const res = await controller.handleScrymeChatActionCallback("org_1", callbackPayload);
+
+    expect(res.content).toContain("Expired Stock Removed");
+    expect(mockAutomationService.removeExpiredStock).toHaveBeenCalledWith("org_1", {
+      batchId: "batch_2",
+      memberId: "user_scryme",
+      notes: "ScrymeChat HITL button click",
+    });
+  });
+
 });

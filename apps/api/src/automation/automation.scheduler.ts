@@ -180,4 +180,78 @@ export class AutomationScheduler {
       this.logger.error(`Error executing daily sales report cron check: ${error.message}`);
     }
   }
+
+  /**
+   * Daily check for inventory batches nearing expiration or already expired.
+   */
+  @Cron(CronExpression.EVERY_DAY_AT_MIDNIGHT)
+  async handleExpiryCleanupCronCheck() {
+    this.logger.log("Executing daily expiry cleanup cron check across organizations...");
+
+    try {
+      const activeDefinitions = await (this.prisma.client as any).workflowEngineDefinition.findMany({
+        where: {
+          key: { in: ["expiry_cleanup", "f/dealio/expiry_cleanup"] },
+          isActive: true,
+        },
+      });
+
+      const now = new Date();
+
+      await Promise.all(
+        activeDefinitions.map(async (def: any) => {
+          const daysBeforeExpiry = def.config?.daysBeforeExpiry ?? 7;
+          const warningCutoff = new Date(now.getTime() + daysBeforeExpiry * 24 * 60 * 60 * 1000);
+
+          const expiringBatches = await (this.prisma.client as any).stockBatch.findMany({
+            where: {
+              organizationId: def.organizationId,
+              currentQuantity: { gt: 0 },
+              expiryDate: {
+                not: null,
+                lte: warningCutoff,
+              },
+            },
+            include: {
+              variant: {
+                include: { product: true },
+              },
+              location: true,
+            },
+            take: 100,
+          });
+
+          await Promise.all(
+            expiringBatches.map(async (batch: any) => {
+              const expiry = new Date(batch.expiryDate);
+              const isExpired = expiry <= now;
+              const diffMs = expiry.getTime() - now.getTime();
+              const daysUntilExpiry = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+
+              await this.automationService.triggerWorkflow(def.organizationId, {
+                key: def.key,
+                inputs: {
+                  batchId: batch.id,
+                  batchNumber: batch.batchNumber || batch.id,
+                  variantId: batch.variantId,
+                  productName: batch.variant?.product?.name || "Product",
+                  variantName: batch.variant?.name || "Default",
+                  currentQuantity: Number(batch.currentQuantity) || 0,
+                  expiryDate: batch.expiryDate,
+                  daysUntilExpiry,
+                  isExpired,
+                  locationId: batch.locationId,
+                  locationName: batch.location?.name || "Default Warehouse",
+                  notificationEmail: def.config?.notificationEmail || "",
+                },
+              });
+            }),
+          );
+        }),
+      );
+    } catch (error: any) {
+      this.logger.error(`Error executing expiry cleanup cron check: ${error.message}`);
+    }
+  }
+
 }

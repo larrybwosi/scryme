@@ -31,6 +31,41 @@ export class AutomationService {
 
   public readonly builtInTemplates: WorkflowTemplate[] = [
     {
+      path: "f/dealio/expiry_cleanup",
+      key: "expiry_cleanup",
+      name: "Expiry Clean Up Workflow",
+      description: "Monitors inventory stock batches nearing or past expiration. Sends pre-expiry alerts and interactive HITL actions to remove expired stock.",
+      triggerType: "SCHEDULED",
+      schema: {
+        type: "object",
+        properties: {
+          daysBeforeExpiry: {
+            type: "number",
+            title: "Pre-Expiry Alert Threshold (Days)",
+            default: 7,
+            description: "Trigger pre-expiry notifications this many days before batch expiration date.",
+            group: "Alert Triggers",
+          },
+          notificationEmail: {
+            type: "string",
+            title: "Notification Email",
+            default: "",
+            description: "Primary email recipient for batch expiration alerts.",
+            group: "Notifications",
+          },
+          enabled: {
+            type: "boolean",
+            title: "Workflow Enabled",
+            default: true,
+            description: "Enable or pause this automated schedule.",
+            group: "General Settings",
+          },
+        },
+      },
+      defaultConfig: { daysBeforeExpiry: 7, notificationEmail: "", enabled: true },
+    },
+
+    {
       path: "f/dealio/preorder_notification",
       key: "preorder_notification",
       name: "Pre-Order Notification Workflow",
@@ -611,4 +646,120 @@ export class AutomationService {
       );
     }
   }
+
+  async removeExpiredStock(
+    organizationId: string,
+    data: {
+      batchId: string;
+      variantId?: string;
+      locationId?: string;
+      notes?: string;
+      memberId?: string;
+    },
+  ) {
+    const { batchId, notes, memberId } = data;
+
+    const batch = await (this.prisma.client as any).stockBatch.findFirst({
+      where: { id: batchId, organizationId },
+      include: {
+        variant: { include: { product: true } },
+        location: true,
+      },
+    });
+
+    if (!batch) {
+      throw new NotFoundException(`Stock batch ${batchId} not found in organization.`);
+    }
+
+    const currentQty = Number(batch.currentQuantity) || 0;
+    if (currentQty <= 0) {
+      return {
+        success: true,
+        message: `Stock batch ${batch.batchNumber || batch.id} already has 0 stock.`,
+        batchId: batch.id,
+        removedQuantity: 0,
+      };
+    }
+
+    let targetMemberId = memberId;
+    if (!targetMemberId) {
+      const defaultMember = await (this.prisma.client as any).member.findFirst({
+        where: { organizationId },
+        select: { id: true },
+      });
+      targetMemberId = defaultMember?.id || "system";
+    }
+
+    return (this.prisma.client as any).$transaction(async (tx: any) => {
+      const adjustment = await tx.stockAdjustment.create({
+        data: {
+          organizationId,
+          variantId: batch.variantId,
+          stockBatchId: batch.id,
+          locationId: batch.locationId,
+          memberId: targetMemberId,
+          quantity: currentQty,
+          reason: "EXPIRED",
+          status: "APPROVED",
+          notes: notes || `Expired stock clean-up via ScrymeChat HITL action for batch ${batch.batchNumber || batch.id}`,
+          adjustmentDate: new Date(),
+        },
+      });
+
+      await tx.stockBatch.update({
+        where: { id: batch.id },
+        data: { currentQuantity: 0 },
+      });
+
+      const stockRecord = await tx.productVariantStock.findUnique({
+        where: {
+          variantId_locationId: {
+            variantId: batch.variantId,
+            locationId: batch.locationId,
+          },
+        },
+      });
+
+      if (stockRecord) {
+        const newStock = Math.max(0, Number(stockRecord.currentStock) - currentQty);
+        const newAvailable = Math.max(0, Number(stockRecord.availableStock) - currentQty);
+        await tx.productVariantStock.update({
+          where: { id: stockRecord.id },
+          data: {
+            currentStock: newStock,
+            availableStock: newAvailable,
+          },
+        });
+      }
+
+      await tx.stockMovement.create({
+        data: {
+          organizationId,
+          memberId: targetMemberId,
+          variantId: batch.variantId,
+          stockBatchId: batch.id,
+          quantity: currentQty,
+          fromLocationId: batch.locationId,
+          movementType: "ADJUSTMENT_OUT",
+          adjustmentId: adjustment.id,
+          notes: notes || `Expired stock clean-up adjustment for batch ${batch.batchNumber || batch.id}`,
+        },
+      });
+
+      this.logger.log(
+        `Expired stock removed for batch ${batch.batchNumber || batch.id} (org ${organizationId}, qty: ${currentQty})`,
+      );
+
+      return {
+        success: true,
+        batchId: batch.id,
+        batchNumber: batch.batchNumber,
+        productName: batch.variant?.product?.name || "Product",
+        variantName: batch.variant?.name || "Default",
+        removedQuantity: currentQty,
+        adjustmentId: adjustment.id,
+      };
+    });
+  }
+
 }
