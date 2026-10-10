@@ -253,6 +253,8 @@ export async function createLocation(data: {
   contact?: any;
   capacity?: LocationCapacity;
   settings?: LocationSettings;
+  latitude?: number | null;
+  longitude?: number | null;
   customFields?: any;
 }): Promise<any> {
   const context = await getOrganizationContext();
@@ -309,6 +311,8 @@ export async function updateLocation(
     contact?: any;
     capacity?: LocationCapacity;
     settings?: LocationSettings;
+    latitude?: number | null;
+    longitude?: number | null;
     customFields?: any;
   },
 ): Promise<any> {

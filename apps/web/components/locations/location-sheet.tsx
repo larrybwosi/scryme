@@ -86,6 +86,8 @@ const locationSchema = z.object({
       unit: z.string().optional(),
     })
     .optional(),
+  latitude: z.number().optional().nullable(),
+  longitude: z.number().optional().nullable(),
   settings: z
     .object({
       imageUrl: z.string().optional().nullable(),
@@ -145,10 +147,12 @@ export function LocationSheet({
         total: location?.capacity?.total || 0,
         unit: location?.capacity?.unit || "units",
       },
+      latitude: location?.latitude ?? locationSettings.latitude ?? null,
+      longitude: location?.longitude ?? locationSettings.longitude ?? null,
       settings: {
         imageUrl: locationSettings.imageUrl || "",
-        latitude: locationSettings.latitude || null,
-        longitude: locationSettings.longitude || null,
+        latitude: location?.latitude ?? locationSettings.latitude ?? null,
+        longitude: location?.longitude ?? locationSettings.longitude ?? null,
       },
     },
   });
@@ -179,9 +183,13 @@ export function LocationSheet({
       parentLocationId:
         values.parentLocationId === "none" ? null : values.parentLocationId,
       managerId: values.managerId === "none" ? null : values.managerId,
+      latitude: values.latitude ?? values.settings?.latitude ?? null,
+      longitude: values.longitude ?? values.settings?.longitude ?? null,
       settings: {
         ...((location?.settings as any) || {}),
         ...values.settings,
+        latitude: values.latitude ?? values.settings?.latitude ?? null,
+        longitude: values.longitude ?? values.settings?.longitude ?? null,
       },
     };
 
@@ -572,10 +580,12 @@ export function LocationSheet({
                     <div className="space-y-1.5">
                       <FormLabel>Select Location & Pin on Map</FormLabel>
                       <LocationMap
-                        latitude={form.watch("settings.latitude")}
-                        longitude={form.watch("settings.longitude")}
+                        latitude={form.watch("latitude")}
+                        longitude={form.watch("longitude")}
                         onPinChange={coords => {
+                          form.setValue("latitude", coords.latitude);
                           form.setValue("settings.latitude", coords.latitude);
+                          form.setValue("longitude", coords.longitude);
                           form.setValue("settings.longitude", coords.longitude);
                         }}
                         editable
@@ -589,7 +599,7 @@ export function LocationSheet({
                     <div className="grid grid-cols-2 gap-4">
                       <FormField
                         control={form.control}
-                        name="settings.latitude"
+                        name="latitude"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Latitude</FormLabel>
@@ -614,7 +624,7 @@ export function LocationSheet({
                       />
                       <FormField
                         control={form.control}
-                        name="settings.longitude"
+                        name="longitude"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Longitude</FormLabel>
