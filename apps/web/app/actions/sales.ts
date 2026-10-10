@@ -742,13 +742,32 @@ export async function updateFulfillmentStatus(
 ) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
+  const isDelivered = status === FulfillmentStatus.DELIVERED || status === FulfillmentStatus.COMPLETED;
+
   const fulfillment = await db.fulfillment.update({
     where: { id },
-    data: { status },
-    include: { transaction: true },
+    data: {
+      status,
+      ...(isDelivered ? { deliveredAt: new Date() } : {}),
+    },
+    include: { transaction: { include: { payments: true } } },
   });
 
+  if (isDelivered && fulfillment.transaction) {
+    const txn = fulfillment.transaction;
+    const isPaid = txn.paymentStatus === PaymentStatus.PAID;
+    if (isPaid && (txn.status === TransactionStatus.PROCESSING || txn.status === TransactionStatus.PREORDER)) {
+      await db.transaction.update({
+        where: { id: txn.id },
+        data: { status: TransactionStatus.COMPLETED },
+      });
+    }
+  }
+
   revalidatePath("/sales/deliveries");
+  if (fulfillment.transactionId) {
+    revalidatePath(`/sales/transactions/${fulfillment.transactionId}`);
+  }
   return fulfillment;
 }
 

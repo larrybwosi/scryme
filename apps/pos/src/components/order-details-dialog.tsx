@@ -1,5 +1,8 @@
 'use client';
 
+import { toast } from "sonner";
+import { CheckCircle2 } from "lucide-react";
+
 import { useState, useEffect } from 'react';
 import type { Order } from '@/store/store';
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@repo/ui/components/ui/dialog';
@@ -236,6 +239,19 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
           </div>
 
           <div className="flex flex-col gap-3">
+            {order.status !== "completed" && (
+              <Button
+                onClick={() => {
+                  usePosStore.getState().updateOrderStatus(order.id, "completed");
+                  toast.success("Order marked as picked up!");
+                  onOpenChange(false);
+                }}
+                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold"
+              >
+                <CheckCircle2 className="w-4 h-4 mr-2" />
+                Mark as Picked Up
+              </Button>
+            )}
             <div className="flex gap-3">
               <Button
                 onClick={onPrintReceipt}

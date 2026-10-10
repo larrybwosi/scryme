@@ -1,9 +1,11 @@
 "use client";
 
-import React from "react";
-import { ShieldCheck } from "lucide-react";
+import React, { useState } from "react";
+import { ShieldCheck, CheckCircle2, Loader2 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@repo/ui/components/ui/card";
+import { updateFulfillmentStatus } from "@/app/actions/sales";
+import { toast } from "sonner";
 
 interface ActionsCardProps {
   transaction: any;
@@ -12,9 +14,28 @@ interface ActionsCardProps {
 }
 
 export function ActionsCard({ transaction, onStatusUpdate, onRecordPaymentClick }: ActionsCardProps) {
-  // POS_SALE might not need regular status flows, or we can handle them gracefully.
   const isPosSale = transaction.type === "POS_SALE";
   const currentStatus = transaction.status;
+  const [isUpdatingPickup, setIsUpdatingPickup] = useState(false);
+
+  const pendingPickup = transaction.fulfillments?.find(
+    (f: any) => f.type === "PICKUP" && f.status !== "COMPLETED" && f.status !== "DELIVERED"
+  );
+
+  const handleMarkPickedUp = async () => {
+    if (!pendingPickup) return;
+    setIsUpdatingPickup(true);
+    try {
+      await updateFulfillmentStatus(pendingPickup.id, "COMPLETED" as any);
+      toast.success("Order marked as picked up!");
+      await onStatusUpdate("COMPLETED");
+    } catch (err) {
+      toast.error("Failed to mark order as picked up");
+      console.error(err);
+    } finally {
+      setIsUpdatingPickup(false);
+    }
+  };
 
   return (
     <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
@@ -31,16 +52,33 @@ export function ActionsCard({ transaction, onStatusUpdate, onRecordPaymentClick 
             : "Move this order to the next stage, or cancel it. Only the actions available for the current status are shown."}
         </div>
 
+        {pendingPickup && (
+          <Button
+            className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white rounded-none shadow flex items-center justify-center gap-2"
+            onClick={handleMarkPickedUp}
+            disabled={isUpdatingPickup}
+          >
+            {isUpdatingPickup ? (
+              <Loader2 className="w-4 h-4 animate-spin" />
+            ) : (
+              <CheckCircle2 className="w-4 h-4" />
+            )}
+            Mark Order as Picked Up
+          </Button>
+        )}
+
         {(currentStatus === "PREORDER" || !isPosSale) && (
           <div className="space-y-2 pt-2">
             {currentStatus === "PREORDER" && (
               <>
-                <Button
-                  className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white rounded-none shadow mb-2"
-                  onClick={() => onStatusUpdate("COMPLETED")}
-                >
-                  Convert Preorder to Completed Order
-                </Button>
+                {!pendingPickup && (
+                  <Button
+                    className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-emerald-600 hover:bg-emerald-700 text-white rounded-none shadow mb-2"
+                    onClick={() => onStatusUpdate("COMPLETED")}
+                  >
+                    Convert Preorder to Completed Order
+                  </Button>
+                )}
                 {transaction.paymentStatus !== "PAID" && onRecordPaymentClick && (
                   <Button
                     variant="outline"
@@ -68,7 +106,7 @@ export function ActionsCard({ transaction, onStatusUpdate, onRecordPaymentClick 
                 Start processing
               </Button>
             )}
-            {currentStatus === "PROCESSING" && (
+            {currentStatus === "PROCESSING" && !pendingPickup && (
               <Button
                 className="w-full h-10 text-xs font-bold uppercase tracking-wider bg-primary text-primary-foreground hover:bg-primary/90 rounded-none shadow"
                 onClick={() => onStatusUpdate("COMPLETED")}
