@@ -11,7 +11,7 @@ export function ErrorPage() {
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 text-center py-4">
-      <div className="w-12 h-12 rounded-full bg-[#B3352A]/10 text-[#B3352A] flex items-center justify-center mx-auto mb-4">
+      <div className="w-12 h-12 rounded-full bg-[#B3352A]/10 text-[#B3352A] flex items-center justify-center mx-auto mb-4 border border-[#B3352A]/20">
         <AlertCircle className="h-6 w-6" />
       </div>
 
@@ -25,7 +25,7 @@ export function ErrorPage() {
 
       <Link
         to="/sign-in"
-        className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-md hover:bg-[#16283F] transition-all gap-2"
+        className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-lg hover:bg-[#16283F] transition-all gap-2 cursor-pointer shadow-sm"
       >
         <ArrowLeft className="h-3.5 w-3.5" />
         Return to Sign In

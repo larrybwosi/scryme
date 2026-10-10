@@ -69,30 +69,38 @@ export function ConsentPage() {
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <div className="flex items-center gap-2.5 mb-8">
-        <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
-          S
+      <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E7E2D9]">
+        <div className="flex items-center gap-2.5">
+          <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
+            S
+          </div>
+          <div>
+            <span className="text-[#0F1B2E] font-bold text-lg tracking-tight block leading-none">
+              Scryme
+            </span>
+            <span className="text-[10px] font-mono text-[#A9824C] uppercase tracking-wider block mt-0.5">
+              OAuth2 Consent
+            </span>
+          </div>
         </div>
-        <span className="text-[#0F1B2E] font-bold text-xl tracking-tight">
-          Scryme
-        </span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full text-[10px] font-mono text-[#8A6A3E]">
+          <Shield className="w-3 h-3 text-[#A9824C]" />
+          <span>Delegated Access</span>
+        </div>
       </div>
 
       <div className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
-          <Shield className="w-3 h-3" /> OAuth2 Authorization
-        </div>
         <h1 className="font-serif text-[1.8rem] font-medium text-[#0F1B2E] leading-tight">
           Authorize Application
         </h1>
-        <p className="text-[#5B6B7C] text-sm mt-1.5">
-          <strong className="text-[#0F1B2E]">{clientInfo?.clientName || clientId}</strong> is requesting access to your Scryme account.
+        <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
+          <strong className="text-[#0F1B2E]">{clientInfo?.clientName || clientId}</strong> is requesting authorization to access your Scryme account.
         </p>
       </div>
 
-      <div className="bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-md p-4 mb-6 space-y-3">
-        <p className="text-[11px] font-mono font-semibold uppercase tracking-wider text-[#5B6B7C]">
-          Requested Permissions
+      <div className="bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-lg p-4 mb-6 space-y-3">
+        <p className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5B6B7C]">
+          Requested Permissions & Scopes
         </p>
         <ul className="space-y-2 text-xs text-[#0F1B2E]">
           {scopes.map((scope) => (
@@ -113,7 +121,7 @@ export function ConsentPage() {
         <button
           onClick={() => handleConsentResponse(true)}
           disabled={loading}
-          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-md transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <>
@@ -131,15 +139,15 @@ export function ConsentPage() {
         <button
           onClick={() => handleConsentResponse(false)}
           disabled={loading}
-          className="w-full h-10 border border-[#E7E2D9] bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] font-semibold text-xs rounded-md transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          className="w-full h-10 border border-[#E7E2D9] bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           <X className="h-4 w-4 text-[#B3352A]" />
-          Deny
+          Deny Request
         </button>
       </div>
 
       <p className="mt-6 text-center text-[11px] text-[#9AA6B2] leading-relaxed">
-        By authorizing, you allow this application to access your information in accordance with their terms.
+        By authorizing, you allow this application to access your information in accordance with their privacy policy and terms of service.
       </p>
     </div>
   );

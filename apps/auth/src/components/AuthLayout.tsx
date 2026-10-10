@@ -6,7 +6,7 @@ const displayClass = "font-serif";
 
 function SealMark() {
   return (
-    <div className="absolute top-12 left-12 flex items-center gap-2.5 z-10">
+    <div className="flex items-center gap-2.5 z-10">
       <div className="w-8 h-8 rounded-lg bg-[#A9824C]/20 border border-[#A9824C]/40 flex items-center justify-center text-[#DDC49B] font-bold text-sm tracking-widest shadow-inner">
         S
       </div>
@@ -98,14 +98,14 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen w-full flex bg-[#FBFAF7] text-[#0F1B2E]">
       {/* Left Panel */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-12 lg:max-w-[560px] xl:max-w-[640px] relative z-10 overflow-y-auto">
-        <div className="w-full max-w-md mx-auto my-auto py-8">
+      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:max-w-[560px] xl:max-w-[620px] relative z-10 overflow-y-auto">
+        <div className="w-full max-w-md mx-auto my-auto py-6">
           {children}
 
-          {/* Trust badge */}
-          <div className="mt-8 flex items-center justify-center gap-2 text-[11px] text-[#9AA6B2]">
+          {/* Security & Compliance Footer */}
+          <div className="mt-8 pt-4 border-t border-[#E7E2D9]/60 flex items-center justify-center gap-2 text-[11px] text-[#9AA6B2]">
             <Shield className="h-3.5 w-3.5 text-[#A9824C]" />
-            <span className={`${monoClass} tracking-wide`}>
+            <span className={`${monoClass} tracking-wide uppercase`}>
               SOC 2 TYPE II · 256-BIT ENCRYPTION · GDPR COMPLIANT
             </span>
           </div>
@@ -114,7 +114,7 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 
       {/* Right Panel */}
       <div className="hidden lg:flex flex-1 bg-[#0F1B2E] text-white relative overflow-hidden flex-col justify-between p-12">
-        {/* Dot-grid instrument texture */}
+        {/* Dot-grid texture */}
         <div
           className="absolute inset-0 opacity-[0.10]"
           style={{
@@ -123,27 +123,27 @@ export function AuthLayout({ children }: { children: ReactNode }) {
           }}
         />
 
-        {/* Glow blobs */}
+        {/* Glow effects */}
         <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-[#A9824C]/10 blur-[80px] pointer-events-none" />
         <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-[#2F5D8A]/15 blur-[70px] pointer-events-none" />
 
-        <SealMark />
-
-        {/* Compliance credentials */}
-        <ComplianceBadge label="SOC 2 Type II" className="top-16 right-16" />
-        <ComplianceBadge label="ISO 27001" className="top-40 right-32" />
-        <ComplianceBadge label="GDPR Ready" className="bottom-76 left-12" />
-        <ComplianceBadge label="KYB Verified" className="top-60 left-16" />
-
-        {/* Session micro-label */}
-        <div
-          className={`${monoClass} relative z-10 flex items-center gap-2 text-[10px] tracking-wider text-white/40 uppercase`}
-        >
-          <span className="w-1.5 h-1.5 rounded-full bg-[#4FA871] animate-pulse" />
-          Secure session · TLS 1.3
+        {/* Top Header Bar */}
+        <div className="relative z-10 flex items-center justify-between">
+          <SealMark />
+          <div
+            className={`${monoClass} flex items-center gap-2 text-[10px] tracking-wider text-white/50 uppercase bg-white/5 px-3 py-1.5 rounded-full border border-white/10`}
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-[#4FA871] animate-pulse" />
+            TLS 1.3 · Passkey Native
+          </div>
         </div>
 
-        {/* Main copy */}
+        {/* Compliance Floating Badges */}
+        <ComplianceBadge label="SOC 2 Type II" className="top-24 right-12" />
+        <ComplianceBadge label="ISO 27001" className="top-40 right-28" />
+        <ComplianceBadge label="FIDO2 / WebAuthn" className="top-56 right-12" />
+
+        {/* Main hero panel content */}
         <div className="relative z-10 mt-auto">
           <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#A9824C]/15 border border-[#A9824C]/25 rounded-full mb-6">
             <div className="w-1.5 h-1.5 rounded-full bg-[#C9A876] animate-pulse" />
@@ -161,9 +161,9 @@ export function AuthLayout({ children }: { children: ReactNode }) {
             <br />
             <span className="italic text-[#C9A876]">Enterprise Security.</span>
           </h2>
-          <p className="text-base text-[#AEBBCB] leading-relaxed max-w-sm mb-6">
-            Scryme provides single sign-on, passkey authentication, and secure
-            OAuth2 delegation for all enterprise services.
+          <p className="text-sm text-[#AEBBCB] leading-relaxed max-w-sm mb-6">
+            Scryme provides single sign-on, biometrics passkey authentication, and secure
+            OAuth2 delegation for all enterprise workspace tools.
           </p>
 
           <VerificationLedger />

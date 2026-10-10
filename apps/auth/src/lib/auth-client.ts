@@ -46,8 +46,26 @@ export const consentOAuth2 = (accept: boolean) => {
   return authClient.oauth2.consent({ accept });
 };
 
-export const signInWithPasskey = () => {
-  return authClient.signIn.passkey();
+export interface PasskeySignInOptions {
+  callbackURL?: string;
+  autoFill?: boolean;
+}
+
+export const signInWithPasskey = (options?: PasskeySignInOptions) => {
+  return authClient.signIn.passkey({
+    callbackURL: options?.callbackURL || DEFAULT_WEB_URL,
+    ...(options?.autoFill ? { autoFill: options.autoFill } : {}),
+  });
+};
+
+export const addPasskey = (options?: { name?: string }) => {
+  if (typeof authClient.passkey?.addPasskey === "function") {
+    return authClient.passkey.addPasskey({ name: options?.name || "User Passkey" });
+  }
+  if (typeof authClient.addPasskey === "function") {
+    return authClient.addPasskey({ name: options?.name || "User Passkey" });
+  }
+  throw new Error("Passkey registration is not supported on this client.");
 };
 
 export const signInWithSSO = (domain: string, callbackURL?: string) => {
