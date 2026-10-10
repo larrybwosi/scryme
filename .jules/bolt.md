@@ -25,3 +25,11 @@
 ## 2026-10-07 - [Chunked Concurrency for Interactive Prisma Transactions]
 **Learning:** Unbounded `Promise.all` inside an interactive Prisma transaction callback (`tx`) floods Prisma's internal connection pipeline with un-throttled queries, leading to transaction timeouts (`P2028: Transaction is expired`) or lock contention under large payloads. Controlled chunking (`CHUNK_SIZE = 10`) balances ~10x concurrent speedups while preventing transaction timeouts and connection pipeline exhaustion.
 **Action:** Always use chunked concurrency (`CHUNK_SIZE = 10`) when performing multi-item mutations inside Prisma interactive transactions (`tx`).
+
+## 2026-10-08 - [Batched Verification and Concurrent Provisioning in AutomationService]
+**Learning:** Calling seeding/verification routines like `ensureBuiltInDefinitions` on hot paths (e.g., every `getDefinitions` request) with sequential `findUnique` queries causes $O(N)$ DB latency per request. Pre-fetching existing definitions in 1 batched `findMany` with key filtering and selectively inserting missing entities in parallel collapses read queries from $O(N)$ to $O(1)$.
+**Action:** Always replace per-item `findUnique` existence checks in hot path seeding/initialization helpers with a single batched `findMany` query.
+
+## 2026-10-09 - [Concurrent Template Upserts in Meta Integration Sync]
+**Learning:** Sequential `for...of` loops performing database upserts during third-party integration template synchronization (such as Meta Graph API WhatsApp message templates) create $O(N)$ sequential blocking delays. Since Meta API returns unique `[name, language]` template entries per organization, parallelizing template upserts with `Promise.all` collapses sync latency from $O(N)$ sequential roundtrips to $O(1)$ concurrent execution.
+**Action:** Always parallelize third-party API template sync upserts with `Promise.all` when unique natural/composite keys guarantee no intra-batch lock contention or unique constraint collisions.

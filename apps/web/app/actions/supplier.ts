@@ -207,13 +207,40 @@ export async function updateSupplierProductPrice(data: {
     throw new Error("Unauthorized");
   }
 
-  const ps = await db.productSupplier.update({
+  // Security Mitigation (BOLA/IDOR): Verify that supplier belongs to authenticated organization.
+  const supplier = await db.supplier.findFirst({
+    where: {
+      id: data.supplierId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!supplier) {
+    throw new Error("Supplier not found or unauthorized");
+  }
+
+  // Security Mitigation (BOLA/IDOR): ProductSupplier lacks a composite unique index on [id, organizationId].
+  // Scoping updateMany to { id, supplierId } ensures database-level multi-tenant isolation.
+  const result = await db.productSupplier.updateMany({
     where: {
       id: data.productSupplierId,
+      supplierId: supplier.id,
     },
     data: {
       costPrice: new Decimal(data.costPrice),
       supplierSku: data.supplierSku,
+    },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Product supplier link not found or unauthorized");
+  }
+
+  const ps = await db.productSupplier.findFirstOrThrow({
+    where: {
+      id: data.productSupplierId,
+      supplierId: supplier.id,
     },
   });
 
@@ -233,10 +260,35 @@ export async function addProductToSupplier(data: {
     throw new Error("Unauthorized");
   }
 
+  // Security Mitigation (BOLA/IDOR): Validate both supplierId and productId belong to authenticated organization.
+  const supplier = await db.supplier.findFirst({
+    where: {
+      id: data.supplierId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!supplier) {
+    throw new Error("Supplier not found or unauthorized");
+  }
+
+  const product = await db.product.findFirst({
+    where: {
+      id: data.productId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!product) {
+    throw new Error("Product not found or unauthorized");
+  }
+
   const ps = await db.productSupplier.create({
     data: {
-      supplierId: data.supplierId,
-      productId: data.productId,
+      supplierId: supplier.id,
+      productId: product.id,
       variantId: data.variantId,
       costPrice: new Decimal(data.costPrice),
       supplierSku: data.supplierSku,
@@ -263,13 +315,38 @@ export async function addVariantsToSupplier(
     throw new Error("Unauthorized");
   }
 
+  // Security Mitigation (BOLA/IDOR): Validate both supplierId and productId belong to authenticated organization.
+  const supplier = await db.supplier.findFirst({
+    where: {
+      id: data.supplierId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!supplier) {
+    throw new Error("Supplier not found or unauthorized");
+  }
+
+  const product = await db.product.findFirst({
+    where: {
+      id: data.productId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!product) {
+    throw new Error("Product not found or unauthorized");
+  }
+
   const ps = await db.$transaction(
     data.variants.map(v =>
       db.productSupplier.upsert({
         where: {
           variantId_supplierId: {
             variantId: v.variantId,
-            supplierId: data.supplierId,
+            supplierId: supplier.id,
           },
         },
         update: {
@@ -277,8 +354,8 @@ export async function addVariantsToSupplier(
           supplierSku: v.supplierSku,
         },
         create: {
-          supplierId: data.supplierId,
-          productId: data.productId,
+          supplierId: supplier.id,
+          productId: product.id,
           variantId: v.variantId,
           costPrice: new Decimal(v.costPrice),
           supplierSku: v.supplierSku,
@@ -300,8 +377,26 @@ export async function removeProductFromSupplier(
     throw new Error("Unauthorized");
   }
 
-  await db.productSupplier.delete({
-    where: { id: productSupplierId },
+  // Security Mitigation (BOLA/IDOR): Verify that supplier belongs to authenticated organization.
+  const supplier = await db.supplier.findFirst({
+    where: {
+      id: supplierId,
+      organizationId: auth.organizationId,
+    },
+    select: { id: true },
+  });
+
+  if (!supplier) {
+    throw new Error("Supplier not found or unauthorized");
+  }
+
+  // Security Mitigation (BOLA/IDOR): ProductSupplier lacks a composite unique index on [id, organizationId].
+  // Using deleteMany scoped to { id, supplierId } ensures database-level multi-tenant isolation.
+  await db.productSupplier.deleteMany({
+    where: {
+      id: productSupplierId,
+      supplierId: supplier.id,
+    },
   });
 
   revalidatePath(`/inventory/supplier/${supplierId}`);

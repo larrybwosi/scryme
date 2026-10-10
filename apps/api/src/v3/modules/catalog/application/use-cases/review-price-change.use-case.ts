@@ -40,11 +40,22 @@ export class ReviewPriceChangeUseCase {
 
     return this.prisma.client.$transaction(async (tx) => {
       if (status === PriceChangeStatus.APPROVED) {
-        // Apply the new price
-        await tx.priceListItem.update({
-          where: { id: request.priceListItemId },
+        // SECURITY (Sentinel): Using updateMany with priceList.organizationId scoping
+        // to strictly enforce database-level tenant isolation during price updates,
+        // preventing cross-tenant BOLA/IDOR mutations on PriceListItem.
+        const itemUpdateResult = await tx.priceListItem.updateMany({
+          where: {
+            id: request.priceListItemId,
+            priceList: { organizationId },
+          },
           data: { price: request.newPrice },
         });
+
+        if (itemUpdateResult.count === 0) {
+          throw new NotFoundException(
+            "Price list item not found for organization",
+          );
+        }
 
         // Record in history
         await tx.priceHistory.create({
@@ -64,8 +75,15 @@ export class ReviewPriceChangeUseCase {
         });
       }
 
-      return tx.priceChangeRequest.update({
-        where: { id: requestId },
+      // SECURITY (Sentinel): Using updateMany with organizationId and atomic status checks
+      // because PriceChangeRequest lacks a composite unique index on [id, organizationId].
+      // Standard Prisma update ignores non-unique fields in 'where' clauses at runtime.
+      const updateResult = await tx.priceChangeRequest.updateMany({
+        where: {
+          id: requestId,
+          organizationId,
+          status: PriceChangeStatus.PENDING,
+        },
         data: {
           status,
           reviewedBy: memberId,
@@ -73,6 +91,16 @@ export class ReviewPriceChangeUseCase {
           rejectionReason:
             status === PriceChangeStatus.REJECTED ? rejectionReason : undefined,
         },
+      });
+
+      if (updateResult.count === 0) {
+        throw new BadRequestException(
+          "Price change request could not be updated or is no longer pending",
+        );
+      }
+
+      return tx.priceChangeRequest.findFirstOrThrow({
+        where: { id: requestId, organizationId },
       });
     });
   }

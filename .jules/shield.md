@@ -53,3 +53,15 @@
 ## 2026-10-15 - Expense & Petty Cash Fund Mutation Tenant Isolation
 **Learning:** In `ExpenseUseCase` (`approveExpense` and `decrementPettyCash`), `Expense` and `PettyCashFund` models lack composite unique constraints on `[id, organizationId]`. Standard Prisma `update({ where: { id } })` ignores non-unique `organizationId` filters in `where` parameters at database execution time.
 **Action:** Always use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) for database-level multi-tenant isolation on expense approvals and petty cash balance adjustments.
+
+## 2026-10-18 - Delivery Partner Wallet Balance Mutation Tenant Isolation
+**Learning:** In `DeliveryReconciliationUseCase.reconcilePod`, `DeliveryPartner` model lacks a composite unique constraint on `[id, organizationId]`. Calling standard Prisma `deliveryPartner.update({ where: { id: partner.id } })` ignores `organizationId` at database execution runtime.
+**Action:** Always use `updateMany({ where: { id: partner.id, organizationId }, data })` for database-level multi-tenant isolation during delivery partner wallet balance updates.
+
+## 2026-10-21 - Product Supplier Linking Tenant Isolation in Server Actions
+**Learning:** In `apps/web/app/actions/supplier.ts`, `ProductSupplier` model lacks a composite unique index on `[id, organizationId]`. Server actions `updateSupplierProductPrice` and `removeProductFromSupplier` previously executed `update` and `delete` directly by `id` or `productSupplierId` without verifying tenant ownership of `supplierId` or `productId`. An attacker could supply foreign IDs to mutate or delete supplier product links across tenants.
+**Action:** Always verify `supplierId` and `productId` belong to `auth.organizationId` via `findFirst` pre-checks, and use `updateMany({ where: { id: productSupplierId, supplierId }, data })` and `deleteMany({ where: { id: productSupplierId, supplierId } })` to enforce database-level multi-tenant isolation on product supplier links.
+
+## 2026-10-24 - Price Change Request & Price List Item Tenant Isolation
+**Learning:** In `ReviewPriceChangeUseCase`, `PriceChangeRequest` and `PriceListItem` models lack composite unique constraints on `[id, organizationId]`. Using standard Prisma `update` with `{ where: { id } }` ignores non-unique `organizationId` or relational `priceList: { organizationId }` conditions at runtime.
+**Action:** Use `priceListItem.updateMany({ where: { id: request.priceListItemId, priceList: { organizationId } }, data })` and `priceChangeRequest.updateMany({ where: { id: requestId, organizationId, status: PENDING }, data })` followed by `findFirstOrThrow` to enforce strict database-level multi-tenant isolation and atomic state verification.

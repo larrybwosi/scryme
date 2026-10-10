@@ -241,8 +241,11 @@ export class DeliveryReconciliationUseCase {
 
           if (benefitAmount > 0) {
             const newBalance = Number(partner.walletBalance) + benefitAmount;
-            await tx.deliveryPartner.update({
-              where: { id: partner.id },
+            // Threat: BOLA / IDOR Cross-Tenant Wallet Modification.
+            // Mitigation: DeliveryPartner model lacks composite unique index [id, organizationId]. Prisma update ignores non-unique where filters.
+            // Using updateMany ensures database-level multi-tenant isolation during balance updates.
+            await tx.deliveryPartner.updateMany({
+              where: { id: partner.id, organizationId },
               data: { walletBalance: newBalance },
             });
 
