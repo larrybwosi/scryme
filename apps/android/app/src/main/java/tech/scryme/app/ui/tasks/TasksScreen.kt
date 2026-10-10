@@ -27,6 +27,7 @@ fun TasksScreen(
     viewModel: TasksViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showCreateTaskDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(Unit) {
         viewModel.loadTasks()
@@ -38,13 +39,26 @@ fun TasksScreen(
             .background(MaterialTheme.colorScheme.background)
             .padding(16.dp)
     ) {
-        Text(
-            text = "My Operational Tasks",
-            style = MaterialTheme.typography.headlineMedium.copy(
-                fontWeight = FontWeight.Bold,
-                color = MaterialTheme.colorScheme.onBackground
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Text(
+                text = "My Operational Tasks",
+                style = MaterialTheme.typography.headlineMedium.copy(
+                    fontWeight = FontWeight.Bold,
+                    color = MaterialTheme.colorScheme.onBackground
+                )
             )
-        )
+
+            Button(
+                onClick = { showCreateTaskDialog = true },
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("+ Add Task", fontSize = 12.sp)
+            }
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
@@ -95,7 +109,101 @@ fun TasksScreen(
                 }
             }
         }
+
+        if (showCreateTaskDialog) {
+            CreateTaskDialog(
+                onDismiss = { showCreateTaskDialog = false },
+                onSubmit = { title, desc, assignedMemberId, priority, dueDate ->
+                    viewModel.createStaffTask(
+                        title = title,
+                        description = desc.ifBlank { null },
+                        assignedMemberId = assignedMemberId.ifBlank { null },
+                        priority = priority,
+                        dueDate = dueDate.ifBlank { null },
+                        onSuccess = {
+                            showCreateTaskDialog = false
+                        }
+                    )
+                }
+            )
+        }
     }
+}
+
+@Composable
+fun CreateTaskDialog(
+    onDismiss: () -> Unit,
+    onSubmit: (title: String, description: String, assignedMemberId: String, priority: String, dueDate: String) -> Unit
+) {
+    var title by remember { mutableStateOf("") }
+    var description by remember { mutableStateOf("") }
+    var assignedMemberId by remember { mutableStateOf("") }
+    var priority by remember { mutableStateOf("MEDIUM") }
+    var dueDate by remember { mutableStateOf("") }
+
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text("Assign New Task") },
+        text = {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                OutlinedTextField(
+                    value = title,
+                    onValueChange = { title = it },
+                    label = { Text("Task Title *") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = description,
+                    onValueChange = { description = it },
+                    label = { Text("Description") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                OutlinedTextField(
+                    value = assignedMemberId,
+                    onValueChange = { assignedMemberId = it },
+                    label = { Text("Assigned Member ID (Optional)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+
+                Text("Priority:", style = MaterialTheme.typography.labelSmall)
+                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
+                        FilterChip(
+                            selected = priority == p,
+                            onClick = { priority = p },
+                            label = { Text(p, fontSize = 11.sp) }
+                        )
+                    }
+                }
+
+                OutlinedTextField(
+                    value = dueDate,
+                    onValueChange = { dueDate = it },
+                    label = { Text("Due Date (YYYY-MM-DD)") },
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        },
+        confirmButton = {
+            Button(
+                onClick = {
+                    if (title.isNotBlank()) {
+                        onSubmit(title, description, assignedMemberId, priority, dueDate)
+                    }
+                },
+                enabled = title.isNotBlank()
+            ) {
+                Text("Assign Task")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Cancel")
+            }
+        }
+    )
 }
 
 @Composable

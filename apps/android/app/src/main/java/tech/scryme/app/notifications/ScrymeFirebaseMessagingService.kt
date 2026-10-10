@@ -14,16 +14,32 @@ class ScrymeFirebaseMessagingService : FirebaseMessagingService() {
     override fun onMessageReceived(remoteMessage: RemoteMessage) {
         super.onMessageReceived(remoteMessage)
 
-        val title = remoteMessage.notification?.title
-            ?: remoteMessage.data["title"]
-            ?: "Schedule Update"
+        val data = remoteMessage.data
+        val notification = remoteMessage.notification
 
-        val body = remoteMessage.notification?.body
-            ?: remoteMessage.data["body"]
-            ?: remoteMessage.data["message"]
-            ?: "Your schedule or shift details have been updated."
+        val title = notification?.title
+            ?: data["title"]
+            ?: "Scryme Notification"
 
-        NotificationHelper.showScheduleNotification(applicationContext, title, body)
+        val body = notification?.body
+            ?: data["body"]
+            ?: data["message"]
+            ?: "You have a new update."
+
+        val type = (data["type"] ?: data["eventType"] ?: data["category"] ?: data["topic"] ?: "").uppercase()
+
+        when {
+            type.contains("TASK") -> {
+                NotificationHelper.showTaskNotification(applicationContext, title, body)
+            }
+            type.contains("DAILY") || type.contains("ROSTER") -> {
+                NotificationHelper.showDailyShiftNotification(applicationContext, title, body)
+            }
+            else -> {
+                // Default shift & schedule changes
+                NotificationHelper.showScheduleNotification(applicationContext, title, body)
+            }
+        }
     }
 
     companion object {
