@@ -508,10 +508,6 @@ export class MpesaService {
       return { status: 'PAID', amount: transaction.totalPaid };
     }
 
-    if (transaction.paymentStatus === 'PAID') {
-      return { status: 'PAID', amount: transaction.totalPaid };
-    }
-
     // 3. Check for pending STK Push requests
     const pendingRequest = await db.mpesaPaymentRequest.findFirst({
       where: {
@@ -561,7 +557,7 @@ export class MpesaService {
     // 4. Check Unclaimed Payments (C2B)
     const unclaimed = await db.unclaimedPayment.findFirst({
       where: {
-        billRefNumber: transaction.number,
+        billRefNumber: targetTxNumber,
         claimed: false,
         ...(organizationId ? { organizationId } : {}),
       },
