@@ -8,8 +8,8 @@ import {
   type ChartConfig,
 } from "@repo/ui/components/ui/chart";
 import {
-  Line,
-  LineChart,
+  Area,
+  AreaChart,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -19,7 +19,9 @@ import {
   Maximize2,
   MoreHorizontal,
   TrendingUp,
+  TrendingDown,
   HelpCircle,
+  DollarSign,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import {
@@ -27,6 +29,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@repo/ui/components/ui/tooltip";
+import { getCurrencySymbol } from "../../lib/utils";
 
 interface RevenueChartProps {
   data: { date: string; current: number; previous: number }[];
@@ -39,15 +42,13 @@ interface RevenueChartProps {
 const chartConfig = {
   current: {
     label: "Current period",
-    color: "hsl(var(--primary))",
+    color: "#3B82F6",
   },
   previous: {
     label: "Previous period",
-    color: "hsl(var(--muted))",
+    color: "#94A3B8",
   },
 } satisfies ChartConfig;
-
-import { getCurrencySymbol } from "../../lib/utils";
 
 export function RevenueChart({
   data,
@@ -60,140 +61,153 @@ export function RevenueChart({
   const symbol = getCurrencySymbol(currency);
 
   return (
-    <Card className="p-6 bg-card border-border shadow-sm h-full">
-      <div className="flex justify-between items-start mb-6">
-        <div className="space-y-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-sm font-medium text-muted-foreground flex items-center gap-2">
-              <TrendingUp className="h-4 w-4" /> Total Revenue
-            </h3>
+    <Card className="p-6 bg-card border-border shadow-sm h-full flex flex-col justify-between">
+      <div>
+        <div className="flex justify-between items-start mb-4">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
+                <DollarSign className="h-4 w-4" />
+              </span>
+              <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
+                Total Revenue
+              </h3>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button type="button" aria-label="Revenue information">
+                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Revenue trends comparing current period to previous timeframe.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <div className="flex items-baseline gap-2.5 pt-1">
+              <span className="text-3xl font-extrabold tracking-tight text-foreground">
+                {totalValue}
+              </span>
+              <div
+                className={`flex items-center text-xs font-semibold ${
+                  isPositive
+                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
+                    : "text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20"
+                } px-2 py-0.5 rounded-full`}>
+                {isPositive ? (
+                  <TrendingUp className="h-3 w-3 mr-1" />
+                ) : (
+                  <TrendingDown className="h-3 w-3 mr-1" />
+                )}
+                {Math.abs(change).toFixed(1)}%
+              </div>
+              <span className="text-muted-foreground text-xs font-medium">
+                {periodLabel}
+              </span>
+            </div>
+          </div>
+          <div className="flex gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button type="button" aria-label="Revenue information">
-                  <HelpCircle className="h-3 w-3 text-muted-foreground/50" />
-                </button>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  aria-label="Maximize chart">
+                  <Maximize2 className="h-4 w-4" />
+                </Button>
               </TooltipTrigger>
-              <TooltipContent>
-                <p>Total revenue generated from all sources.</p>
-              </TooltipContent>
+              <TooltipContent>Maximize</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
+                  aria-label="More options">
+                  <MoreHorizontal className="h-4 w-4" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>More options</TooltipContent>
             </Tooltip>
           </div>
-          <div className="flex items-baseline gap-2">
-            <span className="text-2xl font-bold text-foreground">
-              {totalValue}
-            </span>
-            <div
-              className={`flex items-center text-xs font-medium ${
-                isPositive
-                  ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10"
-                  : "text-red-600 dark:text-red-400 bg-red-500/10"
-              } px-1.5 py-0.5 rounded-full`}>
-              <TrendingUp
-                className={`h-3 w-3 mr-1 ${!isPositive && "rotate-180"}`}
-              />
-              {Math.abs(change).toFixed(1)}%
-            </div>
-            <span className="text-muted-foreground text-xs font-normal">
-              {periodLabel}
-            </span>
+        </div>
+
+        <div className="flex items-center justify-end gap-4 mb-3 text-xs">
+          <div className="flex items-center gap-1.5 font-medium">
+            <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
+            <span className="text-foreground">Current Period</span>
+          </div>
+          <div className="flex items-center gap-1.5 font-medium">
+            <div className="h-2.5 w-2.5 rounded-full bg-slate-400 dark:bg-slate-600" />
+            <span className="text-muted-foreground">Previous Period</span>
           </div>
         </div>
-        <div className="flex gap-2">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
-                aria-label="Maximize chart">
-                <Maximize2 className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Maximize</TooltipContent>
-          </Tooltip>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-accent"
-                aria-label="More options">
-                <MoreHorizontal className="h-4 w-4" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>More options</TooltipContent>
-          </Tooltip>
-        </div>
       </div>
 
-      <div className="flex items-center justify-end gap-4 mb-4 text-xs">
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-primary" />
-          <span className="text-muted-foreground">Current</span>
-        </div>
-        <div className="flex items-center gap-1.5">
-          <div className="h-2 w-2 rounded-full bg-muted" />
-          <span className="text-muted-foreground">Previous</span>
-        </div>
-      </div>
-
-      <div className="h-[200px] w-full">
-        <ChartContainer config={chartConfig}>
-          <LineChart data={data}>
+      <div className="h-[220px] w-full pt-2">
+        <ChartContainer config={chartConfig} className="h-full w-full">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="currentRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.35} />
+                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
+              </linearGradient>
+              <linearGradient id="previousRevenueGradient" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.15} />
+                <stop offset="95%" stopColor="#94A3B8" stopOpacity={0.0} />
+              </linearGradient>
+            </defs>
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
               stroke="hsl(var(--border))"
+              opacity={0.6}
             />
             <XAxis
               dataKey="date"
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              interval="preserveStartEnd"
-              ticks={
-                data.length > 0
-                  ? [
-                      data[0]?.date,
-                      data[Math.floor(data.length / 2)]?.date,
-                      data[data.length - 1]?.date,
-                    ]
-                  : []
-              }
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              dy={6}
             />
             <YAxis
               axisLine={false}
               tickLine={false}
-              tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-              tickFormatter={value =>
+              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
+              tickFormatter={(value) =>
                 `${symbol}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
               }
             />
             <ChartTooltip content={<ChartTooltipContent />} />
-            <Line
-              type="monotone"
-              dataKey="current"
-              stroke="var(--color-current)"
-              strokeWidth={2}
-              dot={false}
-              activeDot={{ r: 4 }}
-            />
-            <Line
+            <Area
               type="monotone"
               dataKey="previous"
-              stroke="var(--color-previous)"
-              strokeWidth={2}
-              dot={false}
+              stroke="#94A3B8"
+              strokeWidth={1.5}
+              strokeDasharray="4 4"
+              fillOpacity={1}
+              fill="url(#previousRevenueGradient)"
             />
-          </LineChart>
+            <Area
+              type="monotone"
+              dataKey="current"
+              stroke="#3B82F6"
+              strokeWidth={2.5}
+              fillOpacity={1}
+              fill="url(#currentRevenueGradient)"
+              activeDot={{ r: 5, strokeWidth: 2, fill: "#3B82F6" }}
+            />
+          </AreaChart>
         </ChartContainer>
       </div>
 
-      <div className="mt-4 flex justify-end">
+      <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center text-xs text-muted-foreground">
+        <span>Real-time POS & Web revenue sync</span>
         <Button
           variant="link"
           className="text-xs font-semibold text-primary p-0 h-auto hover:text-primary/80">
-          View More
+          View Detailed Report →
         </Button>
       </div>
     </Card>
