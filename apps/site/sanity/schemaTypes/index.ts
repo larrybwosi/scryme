@@ -1,5 +1,7 @@
 import { type SchemaTypeDefinition } from 'sanity'
 
+import {accessibleImageType} from './accessibleImage'
+import {linkType} from './link'
 import {blockContentType} from './blockContentType'
 import {categoryType} from './categoryType'
 import {postType} from './postType'
@@ -13,6 +15,8 @@ import {pageType, productPageType} from './page'
 
 export const schema: { types: SchemaTypeDefinition[] } = {
   types: [
+    accessibleImageType,
+    linkType,
     pageType,
     productPageType,
     blockContentType,
