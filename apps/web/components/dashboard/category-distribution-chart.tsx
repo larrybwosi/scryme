@@ -52,7 +52,7 @@ export function CategoryDistributionChart({ data }: CategoryDistributionChartPro
 
         {data.length > 0 ? (
           <div className="relative h-[180px] w-full flex items-center justify-center my-2">
-            <ResponsiveContainer width="100%" height="100%">
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={0}>
               <PieChart>
                 <Pie
                   data={data}
