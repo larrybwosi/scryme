@@ -123,7 +123,7 @@ export function TotalSessionsChart({
       </div>
 
       <div className="h-[135px] w-full">
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
           <BarChart data={data}>
             <CartesianGrid
               vertical={false}

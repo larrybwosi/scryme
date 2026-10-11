@@ -138,7 +138,7 @@ export function RevenueChart({
       </div>
 
       <div className="h-[200px] w-full">
-        <ChartContainer config={chartConfig}>
+        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
           <LineChart data={data}>
             <CartesianGrid
               vertical={false}
