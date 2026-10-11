@@ -1,6 +1,6 @@
 [package]
 name = "bakery"
-version = "10.2.11"
+version = "10.2.12-next.0"
 description = "Scryme Bakery Desktop App"
 authors = ["Scryme Team"]
 edition = "2021"

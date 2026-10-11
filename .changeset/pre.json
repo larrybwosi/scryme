@@ -1,0 +1,33 @@
+{
+  "mode": "pre",
+  "tag": "next",
+  "initialVersions": {
+    "admin": "10.2.11",
+    "api": "10.2.11",
+    "auth": "10.2.11",
+    "bakery": "10.2.11",
+    "cms": "10.2.11",
+    "crm": "10.2.11",
+    "docs": "10.2.11",
+    "mcp": "10.2.11",
+    "pos": "10.2.11",
+    "site": "10.2.11",
+    "tasks": "10.2.11",
+    "web": "10.2.11",
+    "@repo/auth": "10.2.11",
+    "@repo/chat": "10.2.11",
+    "@repo/eslint-config": "10.2.11",
+    "@repo/prettier-config": "10.2.11",
+    "@repo/typescript-config": "10.2.11",
+    "create-scryme-app": "10.2.11",
+    "@repo/db": "10.2.11",
+    "@repo/documents": "10.2.11",
+    "@repo/env": "10.2.11",
+    "@scryme/sdk": "10.2.11",
+    "@repo/shared": "10.2.11",
+    "@repo/ui": "10.2.11"
+  },
+  "changesets": [
+    "release-10-2-8"
+  ]
+}

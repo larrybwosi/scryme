@@ -1,6 +1,6 @@
 {
   "name": "site",
-  "version": "10.2.11",
+  "version": "10.2.12-next.0",
   "private": true,
   "packageManager": "pnpm@10.34.1",
   "type": "module",
