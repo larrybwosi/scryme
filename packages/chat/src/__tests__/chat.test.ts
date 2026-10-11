@@ -5,6 +5,7 @@ import {
   createReportMessage,
   createFormMessage,
   createTaskCardMessage,
+  createSentryErrorMessage,
   CustomMessageSchema,
 } from "../index";
 import { chat } from "../client";
@@ -75,6 +76,27 @@ describe("ScrymeChatApiClient", () => {
         callbackId: "task_001",
       });
       expect(task.type).toBe("TASK_CARD");
+    });
+
+    it("should build and validate createSentryErrorMessage component", () => {
+      const sentryError = createSentryErrorMessage({
+        issueTitle: "Unhandled TypeError: null is not an object",
+        issueUrl: "https://sentry.io/organizations/scryme/issues/12345",
+        projectName: "Scryme Web App",
+        culprit: "app/dashboard/page.tsx:42",
+        level: "error",
+        environment: "production",
+        action: "created",
+        issueId: "12345",
+        eventCount: 15,
+        userCount: 4,
+        tags: { browser: "Chrome", os: "macOS" },
+      });
+
+      expect(sentryError.type).toBe("REPORT");
+      expect(sentryError.context.title).toBe("Sentry Error Alert: Scryme Web App");
+      const validation = CustomMessageSchema.safeParse(sentryError);
+      expect(validation.success).toBe(true);
     });
 
     it("should include customMessage in metadata when sending a message", async () => {

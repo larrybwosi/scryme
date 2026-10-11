@@ -1,4 +1,5 @@
 import { chat } from "./client";
+import { createReportMessage } from "@scryme/chat";
 import type { CustomMessage } from "@scryme/chat";
 
 export {
@@ -27,6 +28,110 @@ export {
   type CreateTaskCardMessageOptions,
   type FormFieldConfig,
 } from "@scryme/chat";
+
+export interface CreateSentryErrorMessageOptions {
+  /** Title or error message of the Sentry issue */
+  issueTitle: string;
+  /** Web URL to view the Sentry issue or trace */
+  issueUrl: string;
+  /** Name or slug of the project */
+  projectName: string;
+  /** Culprit / source code location where error occurred */
+  culprit?: string;
+  /** Severity level: 'fatal' | 'error' | 'warning' | 'info' | 'debug' */
+  level?: string;
+  /** Environment e.g. 'production', 'staging', 'development' */
+  environment?: string;
+  /** Webhook trigger action e.g. 'created', 'resolved', 'assigned' */
+  action?: string;
+  /** Sentry Issue ID e.g. '123456' */
+  issueId?: string;
+  /** Number of total events/occurrences */
+  eventCount?: number | string;
+  /** Number of affected users */
+  userCount?: number | string;
+  /** Key-value tags associated with the error event */
+  tags?: Record<string, string>;
+  /** Additional custom metadata or context */
+  extra?: Record<string, any>;
+}
+
+/**
+ * Builds a structured Sentry error CustomMessage component for Scryme Chat.
+ */
+export function createSentryErrorMessage(
+  options: CreateSentryErrorMessageOptions,
+): CustomMessage {
+  const level = (options.level || "error").toLowerCase();
+  const isFatal = level === "fatal";
+  const isWarning = level === "warning";
+  const isInfo = level === "info" || level === "debug";
+
+  // Theme colors according to error severity
+  let accentColor = "#dc2626"; // red-600
+  let borderColor = "#fecaca"; // red-200
+  let backgroundColor = "#fef2f2"; // red-50
+
+  if (isFatal) {
+    accentColor = "#991b1b"; // red-800
+    borderColor = "#fca5a5"; // red-300
+    backgroundColor = "#fff1f2"; // rose-50
+  } else if (isWarning) {
+    accentColor = "#d97706"; // amber-600
+    borderColor = "#fde68a"; // amber-200
+    backgroundColor = "#fffbeb"; // amber-50
+  } else if (isInfo) {
+    accentColor = "#2563eb"; // blue-600
+    borderColor = "#bfdbfe"; // blue-200
+    backgroundColor = "#eff6ff"; // blue-50
+  }
+
+  const metrics: { label: string; value: string }[] = [
+    { label: "Project", value: options.projectName },
+    { label: "Environment", value: options.environment || "production" },
+    { label: "Severity", value: level.toUpperCase() },
+  ];
+
+  if (options.culprit && options.culprit !== "N/A") {
+    metrics.push({ label: "Location", value: options.culprit });
+  }
+
+  if (options.action) {
+    metrics.push({ label: "Event Action", value: options.action });
+  }
+
+  if (options.eventCount !== undefined) {
+    metrics.push({ label: "Events", value: String(options.eventCount) });
+  }
+
+  if (options.userCount !== undefined) {
+    metrics.push({ label: "Users Affected", value: String(options.userCount) });
+  }
+
+  if (options.tags) {
+    for (const [tagKey, tagVal] of Object.entries(options.tags)) {
+      if (metrics.length >= 8) break; // Limit metrics list length
+      metrics.push({ label: `Tag: ${tagKey}`, value: String(tagVal) });
+    }
+  }
+
+  const summary =
+    `🚨 [Sentry ${level.toUpperCase()}] ${options.issueTitle}\n` +
+    `Occurred in ${options.projectName} (${options.environment || "production"})` +
+    (options.culprit && options.culprit !== "N/A" ? ` at ${options.culprit}` : "");
+
+  return createReportMessage({
+    title: `Sentry Error Alert: ${options.projectName}`,
+    reportId: options.issueId ? `sentry_issue_${options.issueId}` : `sentry_err_${Date.now()}`,
+    summary,
+    metrics,
+    theme: {
+      accentColor,
+      borderColor,
+      backgroundColor,
+    },
+  });
+}
 
 export interface ScrymeChatWorkspace {
   id: string;
