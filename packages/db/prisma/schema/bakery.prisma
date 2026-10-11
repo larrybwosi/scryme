@@ -181,6 +181,7 @@ model Batch {
   stagingWasteQuantity  Decimal?             @default(0) @db.Decimal(10, 4)
   stagingStatus         BatchStagingStatus?  @default(NOT_STAGED)
   dispatches            BatchDispatch[]
+  fulfillmentItems      FulfillmentItem[]
 
   createdAt             DateTime             @default(now())
   updatedAt             DateTime             @updatedAt
