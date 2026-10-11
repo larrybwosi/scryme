@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono } from "next/font/google";
+import { Roboto, Geist_Mono } from "next/font/google";
 import { StructuredData } from "@/components/seo/structured-data";
 import { ThemeProvider } from "@/components/providers/theme-provider";
 import { LayoutContent } from "@/components/layout/layout-content";
@@ -8,9 +8,10 @@ import { OpenPanelProvider } from "@/components/openpanel-provider";
 import "./globals.css";
 import { env } from "@repo/env";
 
-const inter = Inter({
+const roboto = Roboto({
   subsets: ["latin"],
-  variable: "--font-inter",
+  weight: ["400", "500", "700"],
+  variable: "--font-roboto",
   display: "swap",
 });
 
@@ -154,7 +155,7 @@ export default function RootLayout({
   return (
     <html
       lang="en"
-      className={`${inter.variable} ${geistMono.variable} bg-background`}
+      className={`${roboto.variable} ${geistMono.variable} bg-background`}
       suppressHydrationWarning
     >
       <head>
