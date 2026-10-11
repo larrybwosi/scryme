@@ -14,7 +14,7 @@ function checkIsTauri(): boolean {
 
 /**
  * Resolves a product or variant image URL for POS display.
- * Handles relative API paths, http/https, blob/data URLs, and Tauri local files.
+ * Handles relative API paths, http/https, blob/data, asset/tauri protocols, and Tauri local files.
  */
 export function getPOSImageUrl(imageUrl?: string | null): string {
   if (!imageUrl) return '';
@@ -22,39 +22,42 @@ export function getPOSImageUrl(imageUrl?: string | null): string {
   const trimmed = imageUrl.trim();
   if (!trimmed) return '';
 
-  // Data URLs, Blob URLs, or absolute HTTP/HTTPS URLs
+  // Data URLs, Blob URLs, absolute HTTP/HTTPS URLs, or custom Tauri protocol URLs
   if (
     trimmed.startsWith('data:') ||
     trimmed.startsWith('blob:') ||
     trimmed.startsWith('http://') ||
-    trimmed.startsWith('https://')
+    trimmed.startsWith('https://') ||
+    trimmed.startsWith('asset:') ||
+    trimmed.startsWith('tauri:')
   ) {
     return trimmed;
   }
 
-  const apiEndpoint = getApiEndpoint().replace(/\/$/, '');
-  const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
+  // Local disk filesystem paths in Tauri desktop app (e.g. cached product images)
+  const isWindowsPath = /^[a-zA-Z]:[\\/]/.test(trimmed) || trimmed.startsWith('\\\\');
+  const isCachedImage = trimmed.includes('product_images');
+  const isUnixAbsolutePath =
+    trimmed.startsWith('/') &&
+    !trimmed.startsWith('/uploads/') &&
+    !trimmed.startsWith('/storage/') &&
+    !trimmed.startsWith('/api/') &&
+    !trimmed.startsWith('/static/') &&
+    !trimmed.startsWith('/public/') &&
+    !trimmed.startsWith('/assets/') &&
+    !trimmed.startsWith('/media/');
 
-  // Relative storage / upload paths from backend API
-  if (
-    trimmed.startsWith('/uploads/') ||
-    trimmed.startsWith('uploads/') ||
-    trimmed.startsWith('/api/') ||
-    trimmed.startsWith('/storage/') ||
-    trimmed.startsWith('storage/')
-  ) {
-    return apiEndpoint + cleanPath;
-  }
-
-  // Absolute local disk path in Tauri desktop app
-  if (checkIsTauri()) {
+  if (checkIsTauri() && (isWindowsPath || isCachedImage || isUnixAbsolutePath)) {
     try {
       return convertFileSrc(trimmed);
     } catch {
-      // Fallback
+      // Fall back to API host path resolution if conversion fails
     }
   }
 
-  // Fallback relative path against API host
+  // Relative storage / upload / API paths from backend
+  const apiEndpoint = getApiEndpoint().replace(/\/$/, '');
+  const cleanPath = trimmed.startsWith('/') ? trimmed : '/' + trimmed;
+
   return apiEndpoint + cleanPath;
 }
