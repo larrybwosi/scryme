@@ -26,6 +26,7 @@ import tech.scryme.app.domain.model.TransactionSummary
 @Composable
 fun AnalyticsScreen(
     analytics: SalesAnalytics,
+    onRefresh: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
@@ -56,7 +57,7 @@ fun AnalyticsScreen(
                     )
                 }
                 Box {
-                    IconButton(onClick = { }) {
+                    IconButton(onClick = { onRefresh?.invoke() }) {
                         Icon(
                             imageVector = Icons.Outlined.Notifications,
                             contentDescription = "Notifications",
@@ -117,16 +118,11 @@ fun AnalyticsScreen(
                                 )
                             }
                             Text(
-                                text = "Total Balance",
+                                text = "Total Revenue",
                                 fontSize = 13.sp,
                                 color = Color(0xFF94A3B8)
                             )
                         }
-                        Text(
-                            text = "See details >",
-                            fontSize = 12.sp,
-                            color = Color(0xFF94A3B8)
-                        )
                     }
 
                     Text(
@@ -147,12 +143,12 @@ fun AnalyticsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     MetricCard(
-                        metric = analytics.metrics.getOrNull(0) ?: MetricItem("Customer", "24,139", "27%", true),
+                        metric = analytics.metrics.getOrNull(0) ?: MetricItem("Customer", "0", "0%", true),
                         icon = Icons.Default.Person,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCard(
-                        metric = analytics.metrics.getOrNull(1) ?: MetricItem("Product", "53,401", "8%", true),
+                        metric = analytics.metrics.getOrNull(1) ?: MetricItem("Product", "0", "0%", true),
                         icon = Icons.Default.Inventory2,
                         modifier = Modifier.weight(1f)
                     )
@@ -162,12 +158,12 @@ fun AnalyticsScreen(
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
                 ) {
                     MetricCard(
-                        metric = analytics.metrics.getOrNull(2) ?: MetricItem("Revenue", "78,942", "15%", true),
+                        metric = analytics.metrics.getOrNull(2) ?: MetricItem("Revenue", "0", "0%", true),
                         icon = Icons.Default.CreditCard,
                         modifier = Modifier.weight(1f)
                     )
                     MetricCard(
-                        metric = analytics.metrics.getOrNull(3) ?: MetricItem("Expense", "12,318", "10%", false),
+                        metric = analytics.metrics.getOrNull(3) ?: MetricItem("Expense", "0", "0%", false),
                         icon = Icons.Default.CreditCardOff,
                         modifier = Modifier.weight(1f)
                     )
@@ -190,18 +186,29 @@ fun AnalyticsScreen(
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface
                 )
-                IconButton(onClick = { }) {
-                    Icon(
-                        imageVector = Icons.Default.MoreHoriz,
-                        contentDescription = "More"
-                    )
-                }
             }
         }
 
         // Recent Transactions List
-        items(analytics.recentTransactions) { txn ->
-            RecentTransactionItem(transaction = txn)
+        if (analytics.recentTransactions.isEmpty()) {
+            item {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = "No recent transactions found",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        fontSize = 14.sp
+                    )
+                }
+            }
+        } else {
+            items(analytics.recentTransactions) { txn ->
+                RecentTransactionItem(transaction = txn)
+            }
         }
     }
 }

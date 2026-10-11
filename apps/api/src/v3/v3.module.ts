@@ -27,6 +27,7 @@ import { ServicesModule } from "./modules/services/services.module";
 import { AnalyticsModule } from "./modules/analytics/analytics.module";
 import { ProductionModule } from "./modules/production/production.module";
 import { DeliveriesModule } from "./modules/deliveries/deliveries.module";
+import { SalesModule } from "./modules/sales/sales.module";
 
 export const V3_SUB_MODULES = [
   AgentModule,
@@ -57,6 +58,7 @@ export const V3_SUB_MODULES = [
   DeliveriesModule,
   TasksModule,
   AndroidModule,
+  SalesModule,
 ];
 
 @Module({

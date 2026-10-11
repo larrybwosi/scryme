@@ -62,8 +62,7 @@ fun AppNavGraph(
             val viewModel: SalesViewModel = hiltViewModel()
             SalesScreen(
                 viewModel = viewModel,
-                onNavigateHome = { navController.navigate(Screen.Tasks.route) },
-                onNavigateSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.Branch.route) {

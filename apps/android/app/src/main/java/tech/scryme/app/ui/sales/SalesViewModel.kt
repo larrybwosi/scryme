@@ -24,9 +24,9 @@ data class SalesUiState(
     val isAuthorized: Boolean = true
 )
 
-enum class SalesTab {
-    ANALYTICS,
-    ORDERS
+enum class SalesTab(val title: String) {
+    ANALYTICS("Analytics"),
+    ORDERS("Orders")
 }
 
 @HiltViewModel
@@ -44,13 +44,13 @@ class SalesViewModel @Inject constructor(
 
     private fun checkUserAuthorizationAndLoad() {
         viewModelScope.launch {
-            _uiState.update { it.copy(isLoading = true) }
+            _uiState.update { it.copy(isLoading = true, error = null) }
             val sessionResult = authRepository.validateSession()
             val isAuth = sessionResult.getOrNull()?.let { meData ->
                 val role = meData.member?.role ?: meData.memberships?.firstOrNull()?.role ?: "ADMIN"
                 val upperRole = role.uppercase()
                 upperRole == "ADMIN" || upperRole == "OWNER"
-            } ?: true // Fallback to true if offline/mock mode
+            } ?: true
 
             _uiState.update { it.copy(isAuthorized = isAuth) }
 
@@ -74,6 +74,7 @@ class SalesViewModel @Inject constructor(
 
     fun refresh() {
         if (_uiState.value.isAuthorized) {
+            _uiState.update { it.copy(isLoading = true, error = null) }
             loadAnalytics()
             loadOrders(_uiState.value.searchQuery)
         }
@@ -83,7 +84,7 @@ class SalesViewModel @Inject constructor(
         viewModelScope.launch {
             val result = salesRepository.getSalesAnalytics()
             result.onSuccess { analytics ->
-                _uiState.update { it.copy(analytics = analytics, isLoading = false) }
+                _uiState.update { it.copy(analytics = analytics, isLoading = false, error = null) }
             }.onFailure { error ->
                 _uiState.update { it.copy(error = error.message, isLoading = false) }
             }
@@ -94,9 +95,9 @@ class SalesViewModel @Inject constructor(
         viewModelScope.launch {
             val result = salesRepository.getOrders(query)
             result.onSuccess { orders ->
-                _uiState.update { it.copy(orders = orders) }
+                _uiState.update { it.copy(orders = orders, isLoading = false) }
             }.onFailure { error ->
-                _uiState.update { it.copy(error = error.message) }
+                _uiState.update { it.copy(error = error.message, isLoading = false) }
             }
         }
     }
