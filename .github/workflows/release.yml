@@ -96,8 +96,10 @@ jobs:
       - name: Determine Published Status
         id: determine-published
         run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
           if [ "${{ steps.changesets.outputs.published }}" = "true" ] || \
-             [ "${{ steps.exit-pre.outputs.exited }}" = "true" ]; then
+             [ "${{ steps.exit-pre.outputs.exited }}" = "true" ] || \
+             echo "$COMMIT_MSG" | grep -qE "chore\(release\): version packages|Version Packages"; then
             echo "published=true" >> "$GITHUB_OUTPUT"
           else
             echo "published=false" >> "$GITHUB_OUTPUT"

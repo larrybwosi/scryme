@@ -45,14 +45,7 @@ if [ "$MIGRATE_FAILED" = "true" ]; then
   docker compose exec -T api prisma migrate deploy
 fi
 
-# Run database seeding
-echo "Seeding database..."
-docker compose exec -T api prisma db seed
-
-# --- Site Seeding ---
-# Seed the site app content without overwriting the data (Only seed when deploying!)
-echo "Seeding site app content..."
-npx tsx --env-file=.env apps/site/sanity/run-seed.ts
+# Automatic seeding disabled for deployments
 
 # --- Start All Other Services ---
 echo "Starting all remaining services..."
