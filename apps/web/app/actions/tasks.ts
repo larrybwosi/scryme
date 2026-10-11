@@ -66,6 +66,38 @@ export async function createStaffTask(data: {
       return { success: false, error: "Title is required" };
     }
 
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+    // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
+    if (data.memberId) {
+      const member = await db.member.findFirst({
+        where: { id: data.memberId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!member) {
+        return { success: false, error: "Assigned staff member not found or belongs to another organization" };
+      }
+    }
+
+    if (data.shiftId) {
+      const shift = await db.staffShift.findFirst({
+        where: { id: data.shiftId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!shift) {
+        return { success: false, error: "Shift not found or belongs to another organization" };
+      }
+    }
+
+    if (data.locationId) {
+      const location = await db.inventoryLocation.findFirst({
+        where: { id: data.locationId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!location) {
+        return { success: false, error: "Location not found or belongs to another organization" };
+      }
+    }
+
     const task = await db.staffTask.create({
       data: {
         organizationId: session.organizationId,
@@ -131,8 +163,43 @@ export async function updateStaffTask(
       return { success: false, error: "Task not found" };
     }
 
-    const updated = await db.staffTask.update({
-      where: { id: taskId },
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+    // MITIGATION: Validate updated foreign relational IDs against current organizationId before updating.
+    if (data.memberId) {
+      const member = await db.member.findFirst({
+        where: { id: data.memberId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!member) {
+        return { success: false, error: "Assigned staff member not found or belongs to another organization" };
+      }
+    }
+
+    if (data.shiftId) {
+      const shift = await db.staffShift.findFirst({
+        where: { id: data.shiftId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!shift) {
+        return { success: false, error: "Shift not found or belongs to another organization" };
+      }
+    }
+
+    if (data.locationId) {
+      const location = await db.inventoryLocation.findFirst({
+        where: { id: data.locationId, organizationId: session.organizationId },
+        select: { id: true },
+      });
+      if (!location) {
+        return { success: false, error: "Location not found or belongs to another organization" };
+      }
+    }
+
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: StaffTask model lacks a composite unique index on [id, organizationId].
+    // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await db.staffTask.updateMany({
+      where: { id: taskId, organizationId: session.organizationId },
       data: {
         ...(data.title !== undefined ? { title: data.title.trim() } : {}),
         ...(data.description !== undefined ? { description: data.description } : {}),
@@ -145,6 +212,14 @@ export async function updateStaffTask(
         ...(data.notes !== undefined ? { notes: data.notes } : {}),
         ...(data.checklist !== undefined ? { checklist: data.checklist as any } : {}),
       },
+    });
+
+    if (updateResult.count === 0) {
+      return { success: false, error: "Task not found" };
+    }
+
+    const updated = await db.staffTask.findFirstOrThrow({
+      where: { id: taskId, organizationId: session.organizationId },
       include: {
         member: {
           select: {
@@ -181,7 +256,16 @@ export async function deleteStaffTask(taskId: string) {
       return { success: false, error: "Task not found" };
     }
 
-    await db.staffTask.delete({ where: { id: taskId } });
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: StaffTask model lacks a composite unique index on [id, organizationId].
+    // Using deleteMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const deleteResult = await db.staffTask.deleteMany({
+      where: { id: taskId, organizationId: session.organizationId },
+    });
+
+    if (deleteResult.count === 0) {
+      return { success: false, error: "Task not found" };
+    }
 
     revalidatePath("/staff/shifts");
     revalidatePath("/staff");
