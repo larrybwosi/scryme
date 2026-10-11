@@ -15,6 +15,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
+import tech.scryme.app.ui.components.StyledFormDialog
+import tech.scryme.app.ui.components.DatePickerTextField
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
 
@@ -396,32 +398,30 @@ fun RequestTradeDialog(
 ) {
     var reason by remember { mutableStateOf("") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Request Shift Swap",
         onDismissRequest = onDismiss,
-        title = { Text("Request Shift Swap") },
-        text = {
-            Column {
-                Text("Requesting trade for shift on ${getDayName(shift.dayOfWeek)} (${shift.startTime} - ${shift.endTime})")
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = reason,
-                    onValueChange = { reason = it },
-                    label = { Text("Reason for trade") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onSubmit(reason) }) {
-                Text("Submit Request")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+        confirmButtonText = "Submit Request",
+        onConfirm = { onSubmit(reason) },
+        confirmEnabled = reason.isNotBlank()
+    ) {
+        Text(
+            text = "Requesting trade for shift on ${getDayName(shift.dayOfWeek)} (${shift.startTime} - ${shift.endTime})",
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        OutlinedTextField(
+            value = reason,
+            onValueChange = { reason = it },
+            label = { Text("Reason for trade *") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -434,45 +434,49 @@ fun AddBreakDialog(
     var endTime by remember { mutableStateOf("12:30") }
     var description by remember { mutableStateOf("Meal break") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Add Break (${getDayName(shift.dayOfWeek)})",
         onDismissRequest = onDismiss,
-        title = { Text("Add Break (${getDayName(shift.dayOfWeek)})") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = startTime,
-                    onValueChange = { startTime = it },
-                    label = { Text("Start Time (e.g. 12:00)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = endTime,
-                    onValueChange = { endTime = it },
-                    label = { Text("End Time (e.g. 12:30)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = description,
-                    onValueChange = { description = it },
-                    label = { Text("Description") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onSubmit(startTime, endTime, description.ifBlank { null }) },
-                enabled = startTime.isNotBlank() && endTime.isNotBlank()
-            ) {
-                Text("Add Break")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+        confirmButtonText = "Add Break",
+        onConfirm = { onSubmit(startTime, endTime, description.ifBlank { null }) },
+        confirmEnabled = startTime.isNotBlank() && endTime.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = startTime,
+            onValueChange = { startTime = it },
+            label = { Text("Start Time *") },
+            placeholder = { Text("e.g. 12:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = endTime,
+            onValueChange = { endTime = it },
+            label = { Text("End Time *") },
+            placeholder = { Text("e.g. 12:30") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -485,54 +489,63 @@ fun CreateShiftDialog(
     var startTime by remember { mutableStateOf("09:00") }
     var endTime by remember { mutableStateOf("17:00") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Create Staff Shift",
         onDismissRequest = onDismiss,
-        title = { Text("Create Staff Shift") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = memberId,
-                    onValueChange = { memberId = it },
-                    label = { Text("Staff Member ID") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = dayOfWeek,
-                    onValueChange = { dayOfWeek = it },
-                    label = { Text("Day of Week (1-7, Mon-Sun)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = startTime,
-                    onValueChange = { startTime = it },
-                    label = { Text("Start Time (09:00)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-                OutlinedTextField(
-                    value = endTime,
-                    onValueChange = { endTime = it },
-                    label = { Text("End Time (17:00)") },
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
+        confirmButtonText = "Create Shift",
+        onConfirm = {
+            val dayInt = dayOfWeek.toIntOrNull() ?: 1
+            onSubmit(memberId, dayInt, startTime, endTime)
         },
-        confirmButton = {
-            Button(
-                onClick = {
-                    val dayInt = dayOfWeek.toIntOrNull() ?: 1
-                    onSubmit(memberId, dayInt, startTime, endTime)
-                },
-                enabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
-            ) {
-                Text("Create Shift")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
+        confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = memberId,
+            onValueChange = { memberId = it },
+            label = { Text("Staff Member ID *") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = dayOfWeek,
+            onValueChange = { dayOfWeek = it },
+            label = { Text("Day of Week (1-7, Mon-Sun) *") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = startTime,
+            onValueChange = { startTime = it },
+            label = { Text("Start Time *") },
+            placeholder = { Text("e.g. 09:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = endTime,
+            onValueChange = { endTime = it },
+            label = { Text("End Time *") },
+            placeholder = { Text("e.g. 17:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 private fun getDayName(dayOfWeek: Int): String {
@@ -657,102 +670,108 @@ fun CheckInAttendanceDialog(
     var latitudeText by remember { mutableStateOf("40.7128") }
     var longitudeText by remember { mutableStateOf("-74.0060") }
 
-    AlertDialog(
+        StyledFormDialog(
+        title = "Member Check-In",
         onDismissRequest = onDismiss,
-        title = { Text("Member Check-In") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                TabRow(selectedTabIndex = checkInMode) {
-                    Tab(
-                        selected = checkInMode == 0,
-                        onClick = { checkInMode = 0 },
-                        text = { Text("GPS Location", fontSize = 11.sp) }
-                    )
-                    Tab(
-                        selected = checkInMode == 1,
-                        onClick = { checkInMode = 1 },
-                        text = { Text("QR Scan / Code", fontSize = 11.sp) }
-                    )
-                }
-
-                if (checkInMode == 0) {
-                    Text("Select Branch Location:", style = MaterialTheme.typography.labelSmall)
-
-                    if (locations.isNotEmpty()) {
-                        locations.forEach { loc ->
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 2.dp)
-                            ) {
-                                RadioButton(
-                                    selected = selectedLocationId == loc.id,
-                                    onClick = { selectedLocationId = loc.id }
-                                )
-                                Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
-                            }
-                        }
-                    } else {
-                        OutlinedTextField(
-                            value = selectedLocationId,
-                            onValueChange = { selectedLocationId = it },
-                            label = { Text("Location ID") },
-                            modifier = Modifier.fillMaxWidth()
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text("Coordinates (GPS Geofence):", style = MaterialTheme.typography.labelSmall)
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedTextField(
-                            value = latitudeText,
-                            onValueChange = { latitudeText = it },
-                            label = { Text("Latitude") },
-                            modifier = Modifier.weight(1f)
-                        )
-                        OutlinedTextField(
-                            value = longitudeText,
-                            onValueChange = { longitudeText = it },
-                            label = { Text("Latitude") },
-                            modifier = Modifier.weight(1f)
-                        )
-                    }
-                } else {
-                    Text(
-                        text = "Scan or enter the branch code from the store display QR code:",
-                        style = MaterialTheme.typography.bodySmall
-                    )
-
-                    OutlinedTextField(
-                        value = branchCode,
-                        onValueChange = { branchCode = it },
-                        label = { Text("Branch Code (e.g. BR-CENTRAL)") },
-                        modifier = Modifier.fillMaxWidth()
-                    )
-                }
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = {
-                    if (checkInMode == 0) {
-                        val lat = latitudeText.toDoubleOrNull()
-                        val lng = longitudeText.toDoubleOrNull()
-                        onSubmit(selectedLocationId.ifBlank { null }, null, lat, lng)
-                    } else {
-                        onSubmit(null, branchCode.ifBlank { null }, null, null)
-                    }
-                },
-                enabled = if (checkInMode == 0) selectedLocationId.isNotBlank() else branchCode.isNotBlank()
-            ) {
-                Text("Confirm Check-In")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
+        confirmButtonText = "Check In",
+        onConfirm = {
+            if (checkInMode == 0) {
+                val lat = latitudeText.toDoubleOrNull()
+                val lng = longitudeText.toDoubleOrNull()
+                onSubmit(selectedLocationId.ifBlank { null }, null, lat, lng)
+            } else {
+                onSubmit(null, branchCode.ifBlank { null }, null, null)
             }
         }
-    )
+    ) {
+        TabRow(selectedTabIndex = checkInMode) {
+            Tab(
+                selected = checkInMode == 0,
+                onClick = { checkInMode = 0 },
+                text = { Text("GPS Location", fontSize = 11.sp) }
+            )
+            Tab(
+                selected = checkInMode == 1,
+                onClick = { checkInMode = 1 },
+                text = { Text("QR Scan / Code", fontSize = 11.sp) }
+            )
+        }
+
+        if (checkInMode == 0) {
+            Text("Select Branch Location:", style = MaterialTheme.typography.labelSmall)
+
+            if (locations.isNotEmpty()) {
+                locations.forEach { loc ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                    ) {
+                        RadioButton(
+                            selected = selectedLocationId == loc.id,
+                            onClick = { selectedLocationId = loc.id }
+                        )
+                        Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            } else {
+                OutlinedTextField(
+                    value = selectedLocationId,
+                    onValueChange = { selectedLocationId = it },
+                    label = { Text("Location ID") },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            Spacer(modifier = Modifier.height(4.dp))
+            Text("Coordinates (GPS Geofence):", style = MaterialTheme.typography.labelSmall)
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedTextField(
+                    value = latitudeText,
+                    onValueChange = { latitudeText = it },
+                    label = { Text("Latitude") },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+                OutlinedTextField(
+                    value = longitudeText,
+                    onValueChange = { longitudeText = it },
+                    label = { Text("Longitude") },
+                    shape = RoundedCornerShape(10.dp),
+                    colors = OutlinedTextFieldDefaults.colors(
+                        focusedBorderColor = MaterialTheme.colorScheme.primary,
+                        unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                    ),
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        } else {
+            Text(
+                text = "Scan or enter the branch code from the store display QR code:",
+                style = MaterialTheme.typography.bodySmall
+            )
+
+            OutlinedTextField(
+                value = branchCode,
+                onValueChange = { branchCode = it },
+                label = { Text("Branch Code (e.g. BR-CENTRAL)") },
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+                ),
+                modifier = Modifier.fillMaxWidth()
+            )
+        }
+    }
 }
