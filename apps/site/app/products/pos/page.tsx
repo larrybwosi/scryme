@@ -1,3 +1,4 @@
+import { colors, fonts } from "@/lib/scryme-tokens";
 import type { Metadata } from "next";
 import {
   ShoppingCart,

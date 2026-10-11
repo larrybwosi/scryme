@@ -7,16 +7,13 @@
 //
 // Fonts (add to app/layout.tsx via next/font/google, or a <link> in <head>):
 //
-//   import { Fraunces, IBM_Plex_Mono, Inter } from "next/font/google";
+//   import { Fraunces, IBM_Plex_Mono, Roboto } from "next/font/google";
 //
 //   const fraunces = Fraunces({ subsets: ["latin"], variable: "--font-display", weight: ["400","500","600"] });
 //   const plexMono = IBM_Plex_Mono({ subsets: ["latin"], variable: "--font-mono", weight: ["400","500"] });
-//   const inter = Inter({ subsets: ["latin"], variable: "--font-body" });
+//   const roboto = Roboto({ subsets: ["latin"], variable: "--font-roboto", weight: ["400","500","700"] });
 //
-//   <body className={`${fraunces.variable} ${plexMono.variable} ${inter.variable}`}>
-//
-// If you'd rather not touch layout.tsx yet, the components below fall back
-// to literal font-family strings so they render correctly either way.
+//   <body className={`${fraunces.variable} ${plexMono.variable} ${roboto.variable}`}>
 
 export const colors = {
   inkBg: "var(--ink-bg, #0B1220)", // primary background — deep ledger-ink navy
@@ -37,7 +34,7 @@ export const colors = {
 export const fonts = {
   display: "var(--font-display), Fraunces, 'Times New Roman', serif",
   mono: "var(--font-mono), 'IBM Plex Mono', ui-monospace, monospace",
-  body: "var(--font-body), Inter, system-ui, sans-serif",
+  body: "var(--font-roboto), Roboto, system-ui, sans-serif",
 };
 
 export type ModuleCode = "CRM" | "POS" | "INV" | "FIN" | "HR" | "BI";

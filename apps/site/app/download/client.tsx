@@ -5,7 +5,7 @@ import { colors, fonts } from "@/lib/scryme-tokens";
 
 export function DownloadPageClient() {
   return (
-    <main className="min-h-screen bg-[#0B1220] pt-20">
+    <main className="min-h-screen pt-20" style={{ background: colors.inkBg }}>
       <div className="mx-auto max-w-4xl px-6 pt-12 pb-6 text-center">
         <h1
           className="text-3xl sm:text-5xl font-bold tracking-tight text-white mb-4"
