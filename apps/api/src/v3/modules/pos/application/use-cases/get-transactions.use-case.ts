@@ -2,7 +2,7 @@ import { Injectable } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { V3ApiContext } from "@repo/shared/api/v3";
 import { Decimal } from "@repo/db";
-import { getDocumentUrl } from "@repo/shared/api/v2";
+import { getDocumentUrl } from "@repo/shared/api/v3";
 
 @Injectable()
 export class GetTransactionsUseCase {
@@ -120,7 +120,7 @@ export class GetTransactionsUseCase {
           try {
             return getDocumentUrl("invoice", t.id, ctx.organizationId);
           } catch {
-            return `/api/v2/public/documents/invoice/${t.id}`;
+            return `/api/v3/public/documents/invoice/${t.id}`;
           }
         })(),
         items: (t.items || []).map((i: any) => ({

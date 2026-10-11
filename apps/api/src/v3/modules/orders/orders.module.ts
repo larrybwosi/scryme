@@ -14,7 +14,7 @@ import { WebhooksModule } from "../webhooks/webhooks.module";
 import { LoyaltyModule } from "../loyalty/loyalty.module";
 import { CatalogModule } from "../catalog/catalog.module";
 import { FinanceModule } from "../finance/finance.module";
-import { ScrymeModule } from "../../../v2/scryme/scryme.module";
+import { ScrymeModule } from "../scryme/scryme.module";
 import { ServicesModule } from "../services/services.module";
 
 @Module({

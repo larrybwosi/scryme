@@ -1,8 +1,8 @@
 import { Injectable, BadRequestException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
-import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
-import { PosCustomerService } from "@/v2/pos/pos-customer.service";
+import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v3";
+import { PosCustomerService } from "../services/v3-pos-customer.service";
 
 @Injectable()
 export class SyncUseCase {

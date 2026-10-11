@@ -7,9 +7,9 @@ import { GetTransactionsUseCase } from "../../../application/use-cases/get-trans
 import { RegisterPettyCashUseCase } from "../../../application/use-cases/register-petty-cash.use-case";
 import { PosLoginDto } from "../../../application/dto/pos.dto";
 import { PrismaService } from "@/prisma/prisma.service";
-import { PosService } from "@/v2/pos/pos.service";
-import { PosCustomerService } from "@/v2/pos/pos-customer.service";
-import { PosSaleService } from "@/v2/pos/pos-sale.service";
+import { V3PosService, PosService } from "../../../application/services/v3-pos.service";
+import { V3PosCustomerService, PosCustomerService } from "../../../application/services/v3-pos-customer.service";
+import { V3PosSaleService, PosSaleService } from "../../../application/services/v3-pos-sale.service";
 import { validate } from "class-validator";
 import { plainToInstance } from "class-transformer";
 import { BadRequestException } from "@nestjs/common";
@@ -66,6 +66,37 @@ describe("PosController (V3)", () => {
           useValue: { execute: vi.fn(), getFunds: vi.fn(), getRecentTransactions: vi.fn() },
         },
         {
+          provide: V3PosService,
+          useValue: {
+            checkOut: vi.fn(),
+            getAttendanceStatus: vi.fn(),
+            listLocations: vi.fn(),
+            getProducts: vi.fn(),
+            recordPayment: vi.fn(),
+            getIncoming: vi.fn(),
+            scanTransaction: vi.fn(),
+            ablyAuth: vi.fn(),
+            getInventory: vi.fn(),
+            adjustStock: vi.fn(),
+            getCustomersDelta: vi.fn(),
+            createCustomer: vi.fn(),
+            dispatchDelivery: vi.fn(),
+            reconcileDelivery: vi.fn(),
+            listStockRequests: vi.fn(),
+            createStockRequest: vi.fn(),
+            cancelStockRequest: vi.fn(),
+            getPricing: vi.fn(),
+            syncShifts: vi.fn(),
+            getWaybill: vi.fn(),
+            getPackingList: vi.fn(),
+            receivePurchase: vi.fn(),
+            receiveTransfer: vi.fn(),
+            getDrivers: vi.fn(),
+            createStockTransfer: vi.fn(),
+            registerBarcode: vi.fn(),
+          },
+        },
+        {
           provide: PosService,
           useValue: {
             checkOut: vi.fn(),
@@ -97,9 +128,27 @@ describe("PosController (V3)", () => {
           },
         },
         {
+          provide: V3PosSaleService,
+          useValue: {
+            handleOrder: vi.fn(),
+          },
+        },
+        {
           provide: PosSaleService,
           useValue: {
             handleOrder: vi.fn(),
+          },
+        },
+        {
+          provide: V3PosCustomerService,
+          useValue: {
+            getCustomersDelta: vi.fn(),
+          },
+        },
+        {
+          provide: PosCustomerService,
+          useValue: {
+            getCustomersDelta: vi.fn(),
           },
         },
       ],

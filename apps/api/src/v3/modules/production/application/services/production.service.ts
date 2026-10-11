@@ -13,7 +13,7 @@ import { MovementType } from "@repo/db";
 
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { type V3ApiContext } from "@repo/shared/api/v3";
-import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v2";
+import { validateDeviceKey, createMemberToken } from "@repo/shared/api/v3";
 import { FastifyRequest } from "fastify";
 import { CookieSerializeOptions } from "@fastify/cookie";
 import axios from "axios";

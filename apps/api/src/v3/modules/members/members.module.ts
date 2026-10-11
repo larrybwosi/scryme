@@ -15,7 +15,7 @@ import { RoleManagementUseCase } from "./application/use-cases/role-management.u
 import { DepartmentUseCase } from "./application/use-cases/department.use-case";
 import { AttendanceUseCase } from "./application/use-cases/attendance.use-case";
 import { AttendanceScheduler } from "./application/services/attendance.scheduler";
-import { ScrymeModule } from "@/v2/scryme/scryme.module";
+import { ScrymeModule } from "../scryme/scryme.module";
 
 @Module({
   imports: [ScrymeModule],

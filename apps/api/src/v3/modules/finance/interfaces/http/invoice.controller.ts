@@ -20,7 +20,7 @@ import {
   ApiBearerAuth,
   ApiParam,
 } from "@nestjs/swagger";
-import { verifyDocumentToken } from "@repo/shared/api/v2";
+import { verifyDocumentToken } from "@repo/shared/api/v3";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
 import { InvoiceUseCase } from "../../application/use-cases/invoice.use-case";

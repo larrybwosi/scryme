@@ -14,7 +14,7 @@ import { AuditLogAction, AuditEntityType } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/chat";
 import { PlaneApiClient } from "@repo/shared";
 import { Logger } from "@nestjs/common";
-import { ScrymeService } from "@/v2/scryme/scryme.service";
+import { ScrymeService } from "@/v3/modules/scryme/scryme.service";
 
 @Injectable()
 export class DepartmentUseCase {

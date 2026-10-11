@@ -22,7 +22,7 @@ import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { type V3ApiContext } from "@repo/shared/api/v3";
-import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v2";
+import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v3";
 import { ProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
@@ -50,9 +50,9 @@ import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { RequireMember } from "@/v3/common/decorators/require-member.decorator";
 import { PrismaService } from "@/prisma/prisma.service";
-import { PosService } from "@/v2/pos/pos.service";
-import { PosSaleService } from "@/v2/pos/pos-sale.service";
-import { PosCustomerService } from "@/v2/pos/pos-customer.service";
+import { PosService } from "../../application/services/v3-pos.service";
+import { PosSaleService } from "../../application/services/v3-pos-sale.service";
+import { PosCustomerService } from "../../application/services/v3-pos-customer.service";
 import { AllowPublic } from "@/v3/common/auth";
 
 @ApiTags("V3 POS")

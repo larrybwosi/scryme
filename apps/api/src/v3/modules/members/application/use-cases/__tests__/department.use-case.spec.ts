@@ -1,7 +1,7 @@
 import { Test, TestingModule } from "@nestjs/testing";
 import { DepartmentUseCase } from "../department.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ScrymeService } from "@/v2/scryme/scryme.service";
+import { ScrymeService } from "@/v3/modules/scryme/scryme.service";
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 
 describe("DepartmentUseCase", () => {
