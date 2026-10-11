@@ -22,6 +22,12 @@ import tech.scryme.app.ui.auth.AuthViewModel
 import tech.scryme.app.ui.navigation.AppNavGraph
 import tech.scryme.app.ui.navigation.Screen
 import tech.scryme.app.ui.theme.ScrymeTheme
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.AdminPanelSettings
+import androidx.compose.material.icons.automirrored.filled.Assignment
+import androidx.compose.material.icons.filled.Event
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Storefront
 import javax.inject.Inject
 
 @AndroidEntryPoint
@@ -66,8 +72,7 @@ fun MainAppScreen(
         Screen.Schedule,
         Screen.Admin,
         Screen.Branch,
-        Screen.Profile,
-        Screen.Settings
+        Screen.Profile
     )
 
     Scaffold(
@@ -89,16 +94,17 @@ fun MainAppScreen(
                             },
                             label = { Text(screen.title) },
                             icon = {
-                                Text(
-                                    text = when (screen) {
-                                        Screen.Tasks -> "📋"
-                                        Screen.Schedule -> "📅"
-                                        Screen.Admin -> "⚡"
-                                        Screen.Branch -> "🏢"
-                                        Screen.Profile -> "👤"
-                                        Screen.Settings -> "⚙️"
-                                        else -> "•"
-                                    }
+                                val imageVector = when (screen) {
+                                    Screen.Tasks -> Icons.AutoMirrored.Filled.Assignment
+                                    Screen.Schedule -> Icons.Default.Event
+                                    Screen.Admin -> Icons.Default.AdminPanelSettings
+                                    Screen.Branch -> Icons.Default.Storefront
+                                    Screen.Profile -> Icons.Default.Person
+                                    else -> Icons.Default.Person
+                                }
+                                Icon(
+                                    imageVector = imageVector,
+                                    contentDescription = screen.title
                                 )
                             }
                         )
