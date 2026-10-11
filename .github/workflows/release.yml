@@ -4,7 +4,6 @@ on:
   push:
     branches:
       - main
-      - nextgen
 
 permissions:
   contents: write
@@ -18,7 +17,7 @@ jobs:
     outputs:
       published: ${{ steps.determine-published.outputs.published }}
       hasChangesets: ${{ steps.check-changesets.outputs.hasChangesets }}
-      isPrerelease: ${{ steps.branch-check.outputs.isPrerelease }}
+      isPrerelease: 'false'
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
@@ -37,39 +36,6 @@ jobs:
 
       - name: Install Dependencies
         run: pnpm install --no-frozen-lockfile
-
-      - name: Determine Release Type
-        id: branch-check
-        run: |
-          if [ "${{ github.ref_name }}" = "nextgen" ]; then
-            echo "isPrerelease=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "isPrerelease=false" >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Enter Prerelease Mode
-        if: steps.branch-check.outputs.isPrerelease == 'true'
-        run: |
-          if [ ! -f .changeset/pre.json ]; then
-            npx changeset pre enter next
-          fi
-
-      - name: Exit Prerelease Mode (safety net for main)
-        id: exit-pre
-        if: steps.branch-check.outputs.isPrerelease == 'false'
-        run: |
-          if [ -f .changeset/pre.json ]; then
-            echo "Exiting prerelease mode..."
-            npx changeset pre exit || true
-            pnpm version-packages
-            git config user.name "github-actions[bot]"
-            git config user.email "github-actions[bot]@users.noreply.github.com"
-            git add .
-            git commit -m "chore(release): exit prerelease mode on main" || true
-            echo "exited=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "exited=false" >> "$GITHUB_OUTPUT"
-          fi
 
       - name: Check for Pending Changesets
         id: check-changesets
@@ -97,10 +63,14 @@ jobs:
         id: determine-published
         run: |
           COMMIT_MSG=$(git log -1 --pretty=%B)
-          if [ "${{ steps.changesets.outputs.published }}" = "true" ] || \
-             [ "${{ steps.exit-pre.outputs.exited }}" = "true" ] || \
-             echo "$COMMIT_MSG" | grep -qE "chore\(release\): version packages|Version Packages"; then
+          if [ "${{ steps.changesets.outputs.published }}" = "true" ]; then
             echo "published=true" >> "$GITHUB_OUTPUT"
+          elif echo "$COMMIT_MSG" | grep -qE "chore\(release\): version packages|Version Packages"; then
+            if [ "${{ steps.check-changesets.outputs.hasChangesets }}" = "false" ]; then
+              echo "published=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "published=false" >> "$GITHUB_OUTPUT"
+            fi
           else
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
