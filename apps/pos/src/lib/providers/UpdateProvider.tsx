@@ -4,7 +4,8 @@ import { createContext, useState, useEffect, useCallback, useContext, ReactNode 
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { UpdateDialog } from '@/components/update.dialog';
-import { useAuthStore, usePosStore } from '@/store/store';
+import { usePosStore } from '@/store/store';
+import { useAuthStore } from '@/store/pos-auth-store';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
