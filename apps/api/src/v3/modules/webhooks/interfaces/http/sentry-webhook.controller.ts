@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import * as crypto from "crypto";
+import type { ScrymeChatAction } from "@repo/chat";
 import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
@@ -101,7 +102,7 @@ export class PublicSentryWebhookController {
 • **Details & Trace**: ${issueUrl}`;
 
     try {
-      const { ScrymeChatApiClient, createSentryErrorMessage, ScrymeChatAction } = await import("@repo/chat");
+      const { ScrymeChatApiClient, createSentryErrorMessage } = await import("@repo/chat");
       const scrymeClient = new ScrymeChatApiClient();
 
       const customMessage = createSentryErrorMessage({
