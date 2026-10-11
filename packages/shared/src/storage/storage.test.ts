@@ -35,7 +35,7 @@ vi.mock("@aws-sdk/client-s3", () => {
     }),
     PutObjectCommand: vi.fn(),
     DeleteObjectCommand: vi.fn(),
-    GetObjectCommand: vi.fn().mockImplementation(function(input) { this.input = input; }),
+    GetObjectCommand: vi.fn().mockImplementation(function(this: any, input: any) { this.input = input; }),
     CreateMultipartUploadCommand: vi.fn().mockImplementation(() => ({})),
     UploadPartCommand: vi.fn().mockImplementation(() => ({})),
     CompleteMultipartUploadCommand: vi.fn().mockImplementation(() => ({})),
