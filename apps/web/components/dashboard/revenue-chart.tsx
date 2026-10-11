@@ -147,7 +147,7 @@ export function RevenueChart({
 
       <div className="h-[200px] w-full">
         <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-          <LineChart data={data}>
+          <AreaChart data={data}>
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
