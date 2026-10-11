@@ -16,7 +16,7 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
-import { MoreHorizontal, AlertCircle, History, RotateCw } from "lucide-react";
+import { MoreHorizontal, AlertCircle, History, RotateCw, Archive, ArchiveRestore } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { AuditStockModal } from "./audit-stock-modal";
 import { StockAlertModal } from "./stock-alert-modal";
@@ -25,6 +25,8 @@ import {
   type InventoryProduct,
   reorderProduct,
   deleteProduct,
+  archiveProduct,
+  unarchiveProduct,
   getCategories,
 } from "../../app/actions/inventory";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
@@ -72,6 +74,7 @@ export function InventoryTable({
   const [isDeleting, setIsDeleting] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [reorderingId, setReorderingId] = useState<string | null>(null);
+  const [archivingId, setArchivingId] = useState<string | null>(null);
   const [categories, setCategories] = useState<{ id: string; name: string }[]>(
     [],
   );
@@ -289,6 +292,51 @@ export function InventoryTable({
                           <span>Edit Details</span>
                         </Link>
                       </DropdownMenuItem>
+                      {item.isArchived ? (
+                        <DropdownMenuItem
+                          disabled={archivingId === item.id}
+                          onClick={async () => {
+                            setArchivingId(item.id);
+                            try {
+                              await unarchiveProduct(item.id);
+                              toast.success("Product unarchived successfully");
+                              router.refresh();
+                            } catch (e) {
+                              toast.error("Failed to unarchive product");
+                            } finally {
+                              setArchivingId(null);
+                            }
+                          }}>
+                          {archivingId === item.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <ArchiveRestore className="mr-2 h-4 w-4 text-emerald-600" />
+                          )}
+                          <span>Unarchive Item</span>
+                        </DropdownMenuItem>
+                      ) : (
+                        <DropdownMenuItem
+                          disabled={archivingId === item.id}
+                          onClick={async () => {
+                            setArchivingId(item.id);
+                            try {
+                              await archiveProduct(item.id);
+                              toast.success("Product archived successfully");
+                              router.refresh();
+                            } catch (e) {
+                              toast.error("Failed to archive product");
+                            } finally {
+                              setArchivingId(null);
+                            }
+                          }}>
+                          {archivingId === item.id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Archive className="mr-2 h-4 w-4 text-amber-600" />
+                          )}
+                          <span>Archive Item</span>
+                        </DropdownMenuItem>
+                      )}
                       <DropdownMenuItem
                         className="text-red-600 focus:text-red-600"
                         onClick={() => {

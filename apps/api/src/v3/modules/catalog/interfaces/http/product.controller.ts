@@ -94,6 +94,7 @@ export class ProductController {
     const where: any = {
       product: {
         organizationId,
+        isArchived: false,
       },
     };
 

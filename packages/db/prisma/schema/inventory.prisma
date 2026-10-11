@@ -36,6 +36,7 @@ model Product {
   categoryId  String
   category    Category    @relation(fields: [categoryId], references: [id])
   isActive    Boolean     @default(true)
+  isArchived  Boolean     @default(false)
   imageUrls   String[]
   createdAt   DateTime    @default(now())
   updatedAt   DateTime    @updatedAt
@@ -79,6 +80,7 @@ model Product {
   @@index([slug])
   @@index([organizationId])
   @@index([organizationId, id])
+  @@index([organizationId, isArchived])
   cartItems       CartItem[] @relation("ProductToCartItems")
   @@unique([organizationId, barcode])
   @@unique([organizationId, slug])

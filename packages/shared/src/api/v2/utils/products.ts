@@ -49,6 +49,7 @@ export async function getPosProducts({
       organizationId,
       type: 'FINISHED_GOOD',
       isActive: true,
+      isArchived: false,
       ...searchFilter,
       ...categoryFilter,
     };
@@ -249,6 +250,7 @@ export async function getPosProductsDelta({
       organizationId,
       type: 'FINISHED_GOOD',
       isActive: true,
+      isArchived: false,
       OR: [
         { updatedAt: { gt: lastSyncDate } },
         { createdAt: { gt: lastSyncDate } },

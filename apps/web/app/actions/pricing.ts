@@ -254,7 +254,7 @@ export async function getProductsForPricing() {
   if (!context?.organizationId) return [];
 
   return db.product.findMany({
-    where: { organizationId: context.organizationId },
+    where: { organizationId: context.organizationId, isArchived: false },
     include: {
       variants: {
         include: {

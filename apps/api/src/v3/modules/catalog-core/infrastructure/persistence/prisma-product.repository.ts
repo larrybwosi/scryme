@@ -13,7 +13,7 @@ export class PrismaProductRepository implements IProductRepository {
     pagination?: PaginationQueryDto,
   ): Promise<Product[]> {
     const products = await this.prisma.client.product.findMany({
-      where: { organizationId },
+      where: { organizationId, isArchived: false },
       take: pagination?.limit,
       skip: pagination?.offset,
       select: {
