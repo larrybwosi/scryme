@@ -23,8 +23,6 @@ export class SalesService {
       });
       if (member?.user?.name) {
         userName = member.user.name;
-      } else if (member?.name) {
-        userName = member.name;
       }
     }
 
@@ -46,7 +44,7 @@ export class SalesService {
         where: { organizationId },
       }),
       this.prisma.client.productVariant.count({
-        where: { product: { organizationId, deletedAt: null } },
+        where: { product: { organizationId, isArchived: false } },
       }),
       this.prisma.client.pettyCashTransaction.aggregate({
         where: { fund: { organizationId } },
