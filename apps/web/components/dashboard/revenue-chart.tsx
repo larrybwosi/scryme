@@ -145,19 +145,9 @@ export function RevenueChart({
         </div>
       </div>
 
-      <div className="h-[220px] w-full pt-2">
-        <ChartContainer config={chartConfig} className="h-full w-full">
-          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <defs>
-              <linearGradient id="currentRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#3B82F6" stopOpacity={0.35} />
-                <stop offset="95%" stopColor="#3B82F6" stopOpacity={0.0} />
-              </linearGradient>
-              <linearGradient id="previousRevenueGradient" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#94A3B8" stopOpacity={0.15} />
-                <stop offset="95%" stopColor="#94A3B8" stopOpacity={0.0} />
-              </linearGradient>
-            </defs>
+      <div className="h-[200px] w-full">
+        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
+          <LineChart data={data}>
             <CartesianGrid
               vertical={false}
               strokeDasharray="3 3"
