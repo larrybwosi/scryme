@@ -878,17 +878,22 @@ export class BookingService {
       (booking.service.estimatedDuration || 30) * 60_000,
     );
     const staffIds = data.staffIds || booking.staff.map(item => item.memberId);
-    for (const memberId of staffIds) {
-      const result = await this.staffSchedulingService.checkStaffAvailability(
-        memberId,
-        data.scheduledStartTime,
-        endTime,
-        { organizationId: orgId, locationId: booking.locationId || undefined, excludeBookingId: bookingId },
-      );
-      if (!result.available) {
-        throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
-      }
-    }
+    // ⚡ Bolt Optimization: Parallelize staff availability checks using Promise.all.
+    // Sequential await calls inside a for...of loop cause an O(N) database/scheduling latency bottleneck.
+    // Parallelizing checks collapses latency to O(1) flat concurrent roundtrip execution.
+    await Promise.all(
+      staffIds.map(async (memberId) => {
+        const result = await this.staffSchedulingService.checkStaffAvailability(
+          memberId,
+          data.scheduledStartTime,
+          endTime,
+          { organizationId: orgId, locationId: booking.locationId || undefined, excludeBookingId: bookingId },
+        );
+        if (!result.available) {
+          throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
+        }
+      })
+    );
 
     const resourceIds = data.resourceIds || booking.resources.map(item => item.resourceId);
     const resourceConflict = await this.prisma.client.serviceBooking.findFirst({
