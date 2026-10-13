@@ -198,20 +198,18 @@ export class WhatsappService {
       const phoneNumberId = msg.metadata?.phoneNumberId;
       if (!phoneNumberId) continue;
 
-      let integration = integrationCache.get(phoneNumberId);
-      if (!integration) {
+      if (!integrationCache.has(phoneNumberId)) {
         // Match organization by stored phoneNumberId in credentials
-        integration = await this.prisma.client.organizationIntegration.findFirst({
+        const found = await this.prisma.client.organizationIntegration.findFirst({
           where: {
             integrationDefinition: { slug: "whatsapp" },
             isActive: true,
             credentials: { path: ["phoneNumberId"], equals: phoneNumberId },
           },
         });
-        if (integration) {
-          integrationCache.set(phoneNumberId, integration);
-        }
+        integrationCache.set(phoneNumberId, found || null);
       }
+      const integration = integrationCache.get(phoneNumberId);
 
       if (!integration) {
         this.logger.warn(`No active organization found for WhatsApp phoneNumberId: ${phoneNumberId}`);
