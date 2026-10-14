@@ -884,8 +884,6 @@ export class BookingService {
       (booking.service.estimatedDuration || 30) * 60_000,
     );
     const staffIds = data.staffIds || booking.staff.map(item => item.memberId);
-    // ⚡ Bolt Optimization: Parallelize staff availability checks during rescheduling via Promise.all.
-    // Replaces sequential checking loops with concurrent execution, collapsing latency from O(N) to O(1).
     await Promise.all(
       staffIds.map(async (memberId) => {
         const result = await this.staffSchedulingService.checkStaffAvailability(
@@ -897,7 +895,7 @@ export class BookingService {
         if (!result.available) {
           throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
         }
-      }),
+      })
     );
 
     const resourceIds = data.resourceIds || booking.resources.map(item => item.resourceId);

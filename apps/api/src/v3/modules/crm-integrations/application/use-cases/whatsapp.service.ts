@@ -220,7 +220,7 @@ export class WhatsappService {
       const cleanPhone = msg.metadata.from.replace(/[^\d]/g, "");
 
       // Try to associate with CRM record by phone number if available
-      let crmRecord = await this.prisma.client.crmRecord.findFirst({
+      const crmRecord = await this.prisma.client.crmRecord.findFirst({
         where: {
           organizationId,
           OR: [

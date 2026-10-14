@@ -46,7 +46,7 @@ export class AndroidAuthUseCase {
         throw new UnauthorizedException("Session creation failed");
       }
 
-      let orgSlug = dto.orgSlug;
+      const orgSlug = dto.orgSlug;
       let activeOrgId = user.activeOrganizationId;
 
       if (orgSlug) {
