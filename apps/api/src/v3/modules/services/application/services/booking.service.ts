@@ -137,17 +137,23 @@ export class BookingService {
     }
 
     if ((!dto.staffIds || dto.staffIds.length === 0) && service.staff?.length) {
-      for (const candidate of service.staff) {
-        const availability = await this.staffSchedulingService.checkStaffAvailability(
-          candidate.memberId,
-          startTime,
-          endTime,
-          { organizationId: orgId, locationId: dto.locationId },
-        );
-        if (availability.available) {
-          dto.staffIds = [candidate.memberId];
-          break;
-        }
+      // ⚡ Bolt Optimization: Parallelize candidate staff availability checks via Promise.all.
+      // Replaces sequential for...of checks with concurrent execution to reduce candidate auto-assignment latency from O(N) to O(1).
+      const availabilities = await Promise.all(
+        service.staff.map(async (candidate) => {
+          const availability =
+            await this.staffSchedulingService.checkStaffAvailability(
+              candidate.memberId,
+              startTime,
+              endTime,
+              { organizationId: orgId, locationId: dto.locationId },
+            );
+          return { memberId: candidate.memberId, available: availability.available };
+        }),
+      );
+      const availableCandidate = availabilities.find((a) => a.available);
+      if (availableCandidate) {
+        dto.staffIds = [availableCandidate.memberId];
       }
     }
     if (requireAssignment && !dto.staffIds?.length) {
@@ -878,17 +884,21 @@ export class BookingService {
       (booking.service.estimatedDuration || 30) * 60_000,
     );
     const staffIds = data.staffIds || booking.staff.map(item => item.memberId);
-    for (const memberId of staffIds) {
-      const result = await this.staffSchedulingService.checkStaffAvailability(
-        memberId,
-        data.scheduledStartTime,
-        endTime,
-        { organizationId: orgId, locationId: booking.locationId || undefined, excludeBookingId: bookingId },
-      );
-      if (!result.available) {
-        throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
-      }
-    }
+    // ⚡ Bolt Optimization: Parallelize staff availability checks during rescheduling via Promise.all.
+    // Replaces sequential checking loops with concurrent execution, collapsing latency from O(N) to O(1).
+    await Promise.all(
+      staffIds.map(async (memberId) => {
+        const result = await this.staffSchedulingService.checkStaffAvailability(
+          memberId,
+          data.scheduledStartTime,
+          endTime,
+          { organizationId: orgId, locationId: booking.locationId || undefined, excludeBookingId: bookingId },
+        );
+        if (!result.available) {
+          throw new ConflictException(`Staff ${memberId} unavailable: ${result.reasons.join(", ")}`);
+        }
+      }),
+    );
 
     const resourceIds = data.resourceIds || booking.resources.map(item => item.resourceId);
     const resourceConflict = await this.prisma.client.serviceBooking.findFirst({

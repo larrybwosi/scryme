@@ -475,22 +475,27 @@ export class MemberUseCase {
   }
 
   async deleteMember(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Validate member belongs to organization before deletion.
-    const currentMember = await this.prisma.client.member.findFirst({
-      where: { id, organizationId, deletedAt: null },
-    });
-
-    if (!currentMember) throw new NotFoundException("Member not found");
-
     // SECURITY (Sentinel): Prevent self-deletion to avoid orphaned organizations
     // and accidental loss of administrative access.
     if (id === actorId) {
       throw new BadRequestException("You cannot delete your own membership");
     }
 
-    const member = await this.prisma.client.member.update({
-      where: { id: currentMember.id },
+    // THREAT MODEL / MITIGATION (Sentinel):
+    // IDOR/BOLA Protection: Member model lacks a composite unique index on [id, organizationId].
+    // Using standard member.update({ where: { id } }) ignores organizationId at database execution runtime.
+    // updateMany strictly enforces multi-tenant organization ownership at the database query level.
+    const updateResult = await this.prisma.client.member.updateMany({
+      where: { id, organizationId, deletedAt: null },
       data: { deletedAt: new Date(), isActive: false },
+    });
+
+    if (updateResult.count === 0) {
+      throw new NotFoundException("Member not found");
+    }
+
+    const member = await this.prisma.client.member.findFirstOrThrow({
+      where: { id, organizationId },
       include: { user: true },
     });
 
@@ -572,16 +577,21 @@ export class MemberUseCase {
     status: Status,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Validate member belongs to organization before update.
-    const currentMember = await this.prisma.client.member.findFirst({
+    // THREAT MODEL / MITIGATION (Sentinel):
+    // IDOR/BOLA Protection: Member model lacks a composite unique index on [id, organizationId].
+    // Using standard member.update({ where: { id } }) ignores organizationId at database execution runtime.
+    // updateMany strictly enforces multi-tenant organization ownership at the database query level.
+    const updateResult = await this.prisma.client.member.updateMany({
       where: { id, organizationId, deletedAt: null },
+      data: { status },
     });
 
-    if (!currentMember) throw new NotFoundException("Member not found");
+    if (updateResult.count === 0) {
+      throw new NotFoundException("Member not found");
+    }
 
-    const member = await this.prisma.client.member.update({
-      where: { id: currentMember.id },
-      data: { status },
+    const member = await this.prisma.client.member.findFirstOrThrow({
+      where: { id, organizationId, deletedAt: null },
     });
 
     await this.prisma.client.auditLog.create({
