@@ -30,9 +30,11 @@ describe("MemberUseCase", () => {
       member: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
+        findFirstOrThrow: vi.fn(),
         count: vi.fn(),
         create: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
         findUnique: vi.fn(),
       },
       user: {
@@ -219,14 +221,59 @@ describe("MemberUseCase", () => {
 
     describe("deleteMember", () => {
       it("should prevent a member from deleting themselves", async () => {
-        mockPrisma.client.member.findFirst.mockResolvedValue({
-          id: "m1",
-          role: MemberRole.ADMIN,
-        });
-
         await expect(useCase.deleteMember("org1", "m1", "m1")).rejects.toThrow(
           "You cannot delete your own membership",
         );
+      });
+
+      it("should delete member using updateMany scoped to organizationId", async () => {
+        mockPrisma.client.member.updateMany.mockResolvedValue({ count: 1 });
+        mockPrisma.client.member.findFirstOrThrow.mockResolvedValue({
+          id: "m2",
+          user: { name: "Target Member" },
+        });
+
+        const result = await useCase.deleteMember("org1", "m2", "m1");
+
+        expect(mockPrisma.client.member.updateMany).toHaveBeenCalledWith({
+          where: { id: "m2", organizationId: "org1", deletedAt: null },
+          data: expect.objectContaining({ isActive: false }),
+        });
+        expect(result.id).toBe("m2");
+      });
+
+      it("should throw NotFoundException if updateMany matches 0 records", async () => {
+        mockPrisma.client.member.updateMany.mockResolvedValue({ count: 0 });
+
+        await expect(useCase.deleteMember("org1", "foreign-m", "m1")).rejects.toThrow(
+          "Member not found",
+        );
+      });
+    });
+
+    describe("updateMemberStatus", () => {
+      it("should update member status using updateMany scoped to organizationId", async () => {
+        mockPrisma.client.member.updateMany.mockResolvedValue({ count: 1 });
+        mockPrisma.client.member.findFirstOrThrow.mockResolvedValue({
+          id: "m2",
+          status: "ONLINE",
+        });
+
+        const result = await useCase.updateMemberStatus("org1", "m2", "ONLINE" as any, "m1");
+
+        expect(mockPrisma.client.member.updateMany).toHaveBeenCalledWith({
+          where: { id: "m2", organizationId: "org1", deletedAt: null },
+          data: { status: "ONLINE" },
+        });
+        expect(result.status).toBe("ONLINE");
+      });
+
+      it("should throw NotFoundException if updateMany matches 0 records", async () => {
+        mockPrisma.client.member.updateMany.mockResolvedValue({ count: 0 });
+
+        await expect(
+          useCase.updateMemberStatus("org1", "foreign-m", "ONLINE" as any, "m1"),
+        ).rejects.toThrow("Member not found");
       });
     });
 

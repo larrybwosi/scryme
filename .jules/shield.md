@@ -65,3 +65,7 @@
 ## 2026-10-24 - Price Change Request & Price List Item Tenant Isolation
 **Learning:** In `ReviewPriceChangeUseCase`, `PriceChangeRequest` and `PriceListItem` models lack composite unique constraints on `[id, organizationId]`. Using standard Prisma `update` with `{ where: { id } }` ignores non-unique `organizationId` or relational `priceList: { organizationId }` conditions at runtime.
 **Action:** Use `priceListItem.updateMany({ where: { id: request.priceListItemId, priceList: { organizationId } }, data })` and `priceChangeRequest.updateMany({ where: { id: requestId, organizationId, status: PENDING }, data })` followed by `findFirstOrThrow` to enforce strict database-level multi-tenant isolation and atomic state verification.
+
+## 2026-10-27 - Member Deletion and Status Mutation Tenant Isolation
+**Learning:** In `MemberUseCase` (`deleteMember` and `updateMemberStatus`), `Member` lacks a composite unique constraint on `[id, organizationId]`. Standard Prisma `member.update({ where: { id } })` ignores non-unique `organizationId` parameters in `where` parameters at database execution time.
+**Action:** Use `member.updateMany({ where: { id, organizationId, deletedAt: null }, data })` followed by `member.findFirstOrThrow({ where: { id, organizationId } })` to enforce database-level multi-tenant isolation during member deletion and status updates.
