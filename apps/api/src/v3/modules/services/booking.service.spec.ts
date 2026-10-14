@@ -62,6 +62,7 @@ describe('BookingService', () => {
           provide: StaffSchedulingService,
           useValue: {
             isStaffAvailable: vi.fn().mockResolvedValue(true),
+            checkStaffAvailability: vi.fn().mockResolvedValue({ available: true, reasons: [] }),
           },
         },
         {
@@ -164,6 +165,51 @@ describe('BookingService', () => {
           customerId: 'cust-new',
         })
       }));
+    });
+  });
+
+  describe('createBooking candidate staff auto-selection', () => {
+    it('should auto-assign the first available candidate staff when staffIds are omitted', async () => {
+      const mockService = {
+        id: 'srv1',
+        name: 'Service 1',
+        price: new Decimal(100),
+        pricingModel: PricingModel.FIXED,
+        estimatedDuration: 60,
+        bufferTimeBefore: 0,
+        bufferTimeAfter: 0,
+        requiresDeposit: false,
+        staff: [
+          { memberId: 'm1' },
+          { memberId: 'm2' },
+        ],
+      };
+
+      vi.spyOn(prisma.client.service, 'findFirst').mockResolvedValue(mockService as any);
+      vi.spyOn(prisma.client.serviceBooking, 'create').mockResolvedValue({ id: 'booking1' } as any);
+
+      const staffSchedulingService = (service as any).staffSchedulingService;
+      vi.spyOn(staffSchedulingService, 'checkStaffAvailability')
+        .mockImplementation(async (memberId: string) => {
+          if (memberId === 'm2') return { available: true, reasons: [] };
+          return { available: false, reasons: ['busy'] };
+        });
+
+      const dto = {
+        serviceId: 'srv1',
+        scheduledStartTime: new Date().toISOString(),
+      };
+
+      await service.createBooking('org1', dto);
+
+      expect(staffSchedulingService.checkStaffAvailability).toHaveBeenCalledTimes(3);
+      expect(prisma.client.serviceBooking.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            staff: { create: [{ memberId: 'm2' }] },
+          }),
+        }),
+      );
     });
   });
 
@@ -454,6 +500,38 @@ describe('BookingService', () => {
 
       await expect(service.completeBooking('org1', 'booking1', 'member1', {}))
         .rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe('rescheduleBooking', () => {
+    it('should check staff availability concurrently and throw ConflictException if staff is unavailable', async () => {
+      const mockBooking = {
+        id: 'booking1',
+        organizationId: 'org1',
+        status: BookingStatus.SCHEDULED,
+        revision: 1,
+        locationId: 'loc1',
+        scheduledStartTime: new Date(),
+        service: { estimatedDuration: 60 },
+        staff: [{ memberId: 'm1' }, { memberId: 'm2' }],
+        resources: [],
+      };
+
+      vi.spyOn(prisma.client.serviceBooking, 'findFirst').mockResolvedValue(mockBooking as any);
+
+      const staffSchedulingService = (service as any).staffSchedulingService;
+      vi.spyOn(staffSchedulingService, 'checkStaffAvailability')
+        .mockImplementation(async (memberId: string) => {
+          if (memberId === 'm2') return { available: false, reasons: ['on leave'] };
+          return { available: true, reasons: [] };
+        });
+
+      await expect(
+        service.rescheduleBooking('org1', 'booking1', {
+          scheduledStartTime: new Date(),
+          revision: 1,
+        }),
+      ).rejects.toThrow('Staff m2 unavailable: on leave');
     });
   });
 });
