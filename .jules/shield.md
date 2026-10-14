@@ -65,3 +65,7 @@
 ## 2026-10-24 - Price Change Request & Price List Item Tenant Isolation
 **Learning:** In `ReviewPriceChangeUseCase`, `PriceChangeRequest` and `PriceListItem` models lack composite unique constraints on `[id, organizationId]`. Using standard Prisma `update` with `{ where: { id } }` ignores non-unique `organizationId` or relational `priceList: { organizationId }` conditions at runtime.
 **Action:** Use `priceListItem.updateMany({ where: { id: request.priceListItemId, priceList: { organizationId } }, data })` and `priceChangeRequest.updateMany({ where: { id: requestId, organizationId, status: PENDING }, data })` followed by `findFirstOrThrow` to enforce strict database-level multi-tenant isolation and atomic state verification.
+
+## 2026-10-27 - Multi-Tenant Isolation in Device and API Key Server Actions
+**Learning:** In `apps/web/app/actions/devices.ts`, models `DeviceRegistry`, `ApiKey`, and `V3ApiClient` lack composite unique constraints on `[id, organizationId]`. Calling standard Prisma `findUnique`, `update`, or `delete` with `{ where: { id, organizationId } }` ignores non-unique `organizationId` filters at database execution time, creating potential BOLA/IDOR risks if single-ID targets are manipulated.
+**Action:** Always use `findFirst({ where: { id, organizationId } })`, `updateMany({ where: { id, organizationId }, data })`, and `deleteMany({ where: { id, organizationId } })` to enforce strict database-level tenant isolation on device and API key mutations.
