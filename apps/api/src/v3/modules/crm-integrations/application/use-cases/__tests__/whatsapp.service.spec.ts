@@ -16,10 +16,20 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
     },
     organizationIntegration: {
       findUnique: vi.fn(),
+      findFirst: vi.fn(),
     },
     whatsappTemplate: {
       upsert: vi.fn(),
       findMany: vi.fn(),
+    },
+    crmRecord: {
+      findFirst: vi.fn(),
+    },
+    communicationThread: {
+      upsert: vi.fn(),
+    },
+    communicationMessage: {
+      upsert: vi.fn(),
     },
   };
 
@@ -131,6 +141,71 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
       });
 
       expect(result).toEqual(mockSyncedResult);
+    });
+  });
+
+  describe("processIncomingWebhook Optimization Tests", () => {
+    it("should cache organizationIntegration queries by phoneNumberId and call findFirst only once for multiple messages", async () => {
+      const mockWebhookPayload = { entry: [{ id: "123" }] };
+      const mockParsedMessages = [
+        {
+          externalId: "wmid.1",
+          text: "Hello message 1",
+          metadata: {
+            phoneNumberId: "phone-id-999",
+            from: "1234567890",
+            contactName: "Alice",
+          },
+        },
+        {
+          externalId: "wmid.2",
+          text: "Hello message 2",
+          metadata: {
+            phoneNumberId: "phone-id-999",
+            from: "1234567890",
+            contactName: "Alice",
+          },
+        },
+        {
+          externalId: "wmid.3",
+          text: "Hello message 3",
+          metadata: {
+            phoneNumberId: "phone-id-999",
+            from: "0987654321",
+            contactName: "Bob",
+          },
+        },
+      ];
+
+      const mockIntegration = {
+        id: "int-wh-1",
+        organizationId: "org-whatsapp-test",
+        isActive: true,
+        credentials: { phoneNumberId: "phone-id-999" },
+      };
+
+      mockProvider.parseWebhookEvent.mockResolvedValue(mockParsedMessages);
+      mockPrisma.organizationIntegration.findFirst.mockResolvedValue(mockIntegration);
+      mockPrisma.crmRecord.findFirst.mockResolvedValue(null);
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-1" });
+      mockPrisma.communicationMessage.upsert.mockResolvedValue({ id: "msg-1" });
+
+      const res = await service.processIncomingWebhook(mockWebhookPayload);
+
+      expect(res).toEqual({ ok: true });
+
+      // Verify that organizationIntegration.findFirst was called ONLY ONCE despite 3 messages in the batch
+      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledTimes(1);
+      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledWith({
+        where: {
+          integrationDefinition: { slug: "whatsapp" },
+          isActive: true,
+          credentials: { path: ["phoneNumberId"], equals: "phone-id-999" },
+        },
+      });
+
+      // Verify message upsert was processed 3 times
+      expect(mockPrisma.communicationMessage.upsert).toHaveBeenCalledTimes(3);
     });
   });
 });

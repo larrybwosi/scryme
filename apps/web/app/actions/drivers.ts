@@ -48,6 +48,34 @@ export async function createDriver(data: {
   }
 
   try {
+    // SECURITY MITIGATION (BOLA/IDOR): Validate relational vehicle ownership to prevent cross-tenant assignment
+    if (data.vehicleId) {
+      const vehicle = await db.vehicle.findFirst({
+        where: {
+          id: data.vehicleId,
+          organizationId: session.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!vehicle) {
+        return { success: false, error: "Vehicle not found or belongs to another organization" };
+      }
+    }
+
+    // SECURITY MITIGATION (BOLA/IDOR): Validate relational delivery partner ownership to prevent cross-tenant assignment
+    if (data.deliveryPartnerId) {
+      const partner = await db.deliveryPartner.findFirst({
+        where: {
+          id: data.deliveryPartnerId,
+          organizationId: session.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!partner) {
+        return { success: false, error: "Delivery partner not found or belongs to another organization" };
+      }
+    }
+
     const driver = await db.driver.create({
       data: {
         name: data.name,
@@ -84,7 +112,42 @@ export async function updateDriver(
   }
 
   try {
-    const driver = await db.driver.update({
+    // SECURITY MITIGATION (BOLA/IDOR): Validate relational vehicle ownership to prevent cross-tenant assignment
+    if (data.vehicleId && data.vehicleId !== "") {
+      const vehicle = await db.vehicle.findFirst({
+        where: {
+          id: data.vehicleId,
+          organizationId: session.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!vehicle) {
+        return { success: false, error: "Vehicle not found or belongs to another organization" };
+      }
+    }
+
+    // SECURITY MITIGATION (BOLA/IDOR): Validate relational delivery partner ownership to prevent cross-tenant assignment
+    if (data.deliveryPartnerId && data.deliveryPartnerId !== "") {
+      const partner = await db.deliveryPartner.findFirst({
+        where: {
+          id: data.deliveryPartnerId,
+          organizationId: session.organizationId,
+        },
+        select: { id: true },
+      });
+      if (!partner) {
+        return { success: false, error: "Delivery partner not found or belongs to another organization" };
+      }
+    }
+
+    /**
+     * SECURITY MITIGATION (BOLA/IDOR Isolation):
+     * The `Driver` model lacks a composite unique constraint on `[id, organizationId]`.
+     * Standard Prisma `update({ where: { id, organizationId } })` ignores non-unique `organizationId`
+     * filters at database execution time. We use `updateMany` strictly scoped by `{ id, organizationId }`
+     * followed by `findFirstOrThrow` to guarantee database-level tenant isolation.
+     */
+    const result = await db.driver.updateMany({
       where: {
         id,
         organizationId: session.organizationId,
@@ -96,6 +159,17 @@ export async function updateDriver(
         availability: data.availability,
         vehicleId: data.vehicleId === "" ? null : data.vehicleId,
         deliveryPartnerId: data.deliveryPartnerId === "" ? null : data.deliveryPartnerId,
+      },
+    });
+
+    if (result.count === 0) {
+      return { success: false, error: "Driver not found or access denied" };
+    }
+
+    const driver = await db.driver.findFirstOrThrow({
+      where: {
+        id,
+        organizationId: session.organizationId,
       },
     });
 
@@ -115,12 +189,23 @@ export async function deleteDriver(id: string) {
   }
 
   try {
-    await db.driver.delete({
+    /**
+     * SECURITY MITIGATION (BOLA/IDOR Isolation):
+     * The `Driver` model lacks a composite unique constraint on `[id, organizationId]`.
+     * Standard Prisma `delete({ where: { id, organizationId } })` ignores non-unique `organizationId`
+     * filters at database execution time. We use `deleteMany` strictly scoped by `{ id, organizationId }`
+     * to guarantee database-level multi-tenant isolation.
+     */
+    const result = await db.driver.deleteMany({
       where: {
         id,
         organizationId: session.organizationId,
       },
     });
+
+    if (result.count === 0) {
+      return { success: false, error: "Driver not found or access denied" };
+    }
 
     revalidatePath("/staff/drivers");
     return { success: true };
@@ -137,7 +222,12 @@ export async function getDriverDetail(id: string) {
   }
 
   try {
-    const driver = await db.driver.findUnique({
+    /**
+     * SECURITY MITIGATION (BOLA/IDOR Isolation):
+     * Use `findFirst` with explicit `organizationId` filtering instead of `findUnique`
+     * because `Driver` lacks a composite unique key on `[id, organizationId]`.
+     */
+    const driver = await db.driver.findFirst({
       where: {
         id,
         organizationId: session.organizationId,
@@ -154,10 +244,10 @@ export async function getDriverDetail(id: string) {
                 number: true,
                 finalTotal: true,
                 currencyCode: true,
-              }
-            }
-          }
-        }
+              },
+            },
+          },
+        },
       },
     });
 

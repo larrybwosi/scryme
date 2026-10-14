@@ -137,17 +137,23 @@ export class BookingService {
     }
 
     if ((!dto.staffIds || dto.staffIds.length === 0) && service.staff?.length) {
-      for (const candidate of service.staff) {
-        const availability = await this.staffSchedulingService.checkStaffAvailability(
-          candidate.memberId,
-          startTime,
-          endTime,
-          { organizationId: orgId, locationId: dto.locationId },
-        );
-        if (availability.available) {
-          dto.staffIds = [candidate.memberId];
-          break;
-        }
+      // ⚡ Bolt Optimization: Parallelize candidate staff availability checks via Promise.all.
+      // Replaces sequential for...of checks with concurrent execution to reduce candidate auto-assignment latency from O(N) to O(1).
+      const availabilities = await Promise.all(
+        service.staff.map(async (candidate) => {
+          const availability =
+            await this.staffSchedulingService.checkStaffAvailability(
+              candidate.memberId,
+              startTime,
+              endTime,
+              { organizationId: orgId, locationId: dto.locationId },
+            );
+          return { memberId: candidate.memberId, available: availability.available };
+        }),
+      );
+      const availableCandidate = availabilities.find((a) => a.available);
+      if (availableCandidate) {
+        dto.staffIds = [availableCandidate.memberId];
       }
     }
     if (requireAssignment && !dto.staffIds?.length) {
@@ -878,9 +884,6 @@ export class BookingService {
       (booking.service.estimatedDuration || 30) * 60_000,
     );
     const staffIds = data.staffIds || booking.staff.map(item => item.memberId);
-    // ⚡ Bolt Optimization: Parallelize staff availability checks using Promise.all.
-    // Sequential await calls inside a for...of loop cause an O(N) database/scheduling latency bottleneck.
-    // Parallelizing checks collapses latency to O(1) flat concurrent roundtrip execution.
     await Promise.all(
       staffIds.map(async (memberId) => {
         const result = await this.staffSchedulingService.checkStaffAvailability(

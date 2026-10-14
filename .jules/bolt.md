@@ -33,3 +33,7 @@
 ## 2026-10-09 - [Concurrent Template Upserts in Meta Integration Sync]
 **Learning:** Sequential `for...of` loops performing database upserts during third-party integration template synchronization (such as Meta Graph API WhatsApp message templates) create $O(N)$ sequential blocking delays. Since Meta API returns unique `[name, language]` template entries per organization, parallelizing template upserts with `Promise.all` collapses sync latency from $O(N)$ sequential roundtrips to $O(1)$ concurrent execution.
 **Action:** Always parallelize third-party API template sync upserts with `Promise.all` when unique natural/composite keys guarantee no intra-batch lock contention or unique constraint collisions.
+
+## 2026-10-24 - [Unsafe Concurrency in Multi-Operation Services Within Interactive Prisma Transactions]
+**Learning:** Wrapping calls to complex services (like `InventoryMovementService.recordMovement`) in `Promise.all` inside an interactive Prisma transaction (`tx`) is unsafe when each call performs multi-step read-modify-write queries and inventory verification aggregations. Concurrent execution on the same transaction handle can trigger PostgreSQL deadlocks or race conditions on shared inventory stocks.
+**Action:** Avoid `Promise.all` over complex multi-query service methods inside active Prisma transaction callbacks (`tx`). Use batch database operations (like `createMany`) or sequential processing where strict order or row locking is required.
