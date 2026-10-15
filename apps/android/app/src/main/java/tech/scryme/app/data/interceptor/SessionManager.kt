@@ -29,6 +29,7 @@ class SessionManager @Inject constructor(
         val ORG_CURRENCY = stringPreferencesKey("org_currency")
         val ORG_CURRENCY_SYMBOL = stringPreferencesKey("org_currency_symbol")
         val LOCATION_ID = stringPreferencesKey("location_id")
+        val USER_ID = stringPreferencesKey("user_id")
         val MEMBER_ID = stringPreferencesKey("member_id")
         val USER_NAME = stringPreferencesKey("user_name")
         val USER_EMAIL = stringPreferencesKey("user_email")
@@ -49,6 +50,7 @@ class SessionManager @Inject constructor(
     val orgCurrencySymbolFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ORG_CURRENCY_SYMBOL] ?: "$" }
     val locationIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[LOCATION_ID] }
     val memberIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[MEMBER_ID] }
+    val userIdFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_ID] }
     val userNameFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_NAME] }
     val userEmailFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_EMAIL] }
     val userAvatarUrlFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_AVATAR_URL] }
@@ -67,11 +69,13 @@ class SessionManager @Inject constructor(
     suspend fun getOrgCurrencySymbol(): String = orgCurrencySymbolFlow.first() ?: "$"
     suspend fun getLocationId(): String? = locationIdFlow.first()
     suspend fun getMemberId(): String? = memberIdFlow.first()
+    suspend fun getUserId(): String? = userIdFlow.first()
 
     suspend fun saveSession(
         accessToken: String,
         orgSlug: String,
         locationId: String? = null,
+        userId: String? = null,
         memberId: String? = null,
         memberToken: String? = null,
         userName: String? = null,
@@ -85,6 +89,7 @@ class SessionManager @Inject constructor(
             prefs[ACCESS_TOKEN] = accessToken
             prefs[ORG_SLUG] = orgSlug
             if (locationId != null) prefs[LOCATION_ID] = locationId
+            if (userId != null) prefs[USER_ID] = userId
             if (memberId != null) prefs[MEMBER_ID] = memberId
             if (memberToken != null) prefs[MEMBER_TOKEN] = memberToken
             if (userName != null) prefs[USER_NAME] = userName

@@ -22,6 +22,9 @@ import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.DatePickerTextField
+import tech.scryme.app.ui.components.EmptyStateCard
+import tech.scryme.app.ui.components.ErrorMessageCard
+import tech.scryme.app.ui.components.ListSkeleton
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Amber500
@@ -81,26 +84,23 @@ fun TasksScreen(
 
         when (val state = uiState) {
             is TasksUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                ListSkeleton(count = 5)
             }
             is TasksUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.loadTasks() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                ErrorMessageCard(
+                    title = "Unable to load tasks",
+                    message = state.message,
+                    onRetry = { viewModel.loadTasks() }
+                )
             }
             is TasksUiState.Success -> {
                 if (state.tasks.isEmpty()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Text("No tasks found", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
+                    EmptyStateCard(
+                        title = "No Tasks Found",
+                        description = "There are no operational tasks assigned for the selected filter.",
+                        actionText = "+ Add Task",
+                        onAction = { showCreateTaskDialog = true }
+                    )
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp)
