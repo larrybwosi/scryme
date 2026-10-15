@@ -1,6 +1,6 @@
 {
   "name": "@repo/env",
-  "version": "10.2.17",
+  "version": "10.2.18",
   "private": true,
   "main": "./dist/index.cjs",
   "module": "./dist/index.js",
