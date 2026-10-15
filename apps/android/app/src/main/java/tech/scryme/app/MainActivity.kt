@@ -71,7 +71,6 @@ fun MainAppScreen(
         Screen.Tasks,
         Screen.Schedule,
         Screen.Admin,
-        Screen.Branch,
         Screen.Profile
     )
 

@@ -12,6 +12,8 @@ import tech.scryme.app.domain.model.ShiftBreak
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import javax.inject.Inject
 
@@ -20,7 +22,8 @@ sealed interface AdminUiState {
     data class Success(
         val allShifts: List<StaffShift>,
         val pendingTrades: List<ShiftTrade>,
-        val allTasks: List<StaffTask>
+        val allTasks: List<StaffTask>,
+        val members: List<UserProfile> = emptyList()
     ) : AdminUiState
     data class Error(val message: String) : AdminUiState
 }
@@ -28,6 +31,7 @@ sealed interface AdminUiState {
 @HiltViewModel
 class AdminViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -46,12 +50,14 @@ class AdminViewModel @Inject constructor(
             val shiftsRes = scheduleRepository.getOrganizationShifts(orgSlug)
             val tradesRes = scheduleRepository.getShiftTrades(orgSlug, status = "PENDING")
             val tasksRes = scheduleRepository.getStaffTasks(orgSlug)
+            val membersRes = profileRepository.getMembers(orgSlug)
 
             if (shiftsRes.isSuccess) {
                 _uiState.value = AdminUiState.Success(
                     allShifts = shiftsRes.getOrDefault(emptyList()),
                     pendingTrades = tradesRes.getOrDefault(emptyList()),
-                    allTasks = tasksRes.getOrDefault(emptyList())
+                    allTasks = tasksRes.getOrDefault(emptyList()),
+                    members = membersRes.getOrDefault(emptyList())
                 )
             } else {
                 _uiState.value = AdminUiState.Error(shiftsRes.exceptionOrNull()?.message ?: "Failed to load admin data")

@@ -1,7 +1,9 @@
 package tech.scryme.app.ui.admin
+
+import tech.scryme.app.ui.components.MemberDropdown
+import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.components.DatePickerTextField
-
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -21,6 +23,8 @@ import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+
 
 @Composable
 fun AdminScreen(
@@ -185,6 +189,7 @@ fun AdminScreen(
 
     if (showCreateShiftDialog) {
         CreateShiftDialog(
+            members = (uiState as? AdminUiState.Success)?.members ?: emptyList(),
             onDismiss = { showCreateShiftDialog = false },
             onSubmit = { memberId, dayOfWeek, startTime, endTime ->
                 viewModel.createShift(memberId, dayOfWeek, startTime, endTime)
@@ -195,6 +200,7 @@ fun AdminScreen(
 
     if (showCreateTaskDialog) {
         CreateTaskDialog(
+            members = (uiState as? AdminUiState.Success)?.members ?: emptyList(),
             onDismiss = { showCreateTaskDialog = false },
             onSubmit = { title, desc, memberId, priority, dueDate ->
                 viewModel.createTask(title, desc, memberId, priority, dueDate)
@@ -275,6 +281,7 @@ fun AdminShiftCard(
 
 @Composable
 fun CreateShiftDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
 ) {
@@ -293,16 +300,11 @@ fun CreateShiftDialog(
         },
         confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
     ) {
-        OutlinedTextField(
-            value = memberId,
-            onValueChange = { memberId = it },
-            label = { Text("Staff Member ID *") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            modifier = Modifier.fillMaxWidth()
+        MemberDropdown(
+            selectedMemberId = memberId,
+            onMemberSelected = { memberId = it },
+            members = members,
+            label = "Staff Member *"
         )
         OutlinedTextField(
             value = dayOfWeek,
@@ -344,6 +346,7 @@ fun CreateShiftDialog(
 
 @Composable
 fun CreateTaskDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (title: String, desc: String?, memberId: String?, priority: String, dueDate: String?) -> Unit
 ) {
@@ -390,16 +393,12 @@ fun CreateTaskDialog(
             ),
             modifier = Modifier.fillMaxWidth()
         )
-        OutlinedTextField(
-            value = memberId,
-            onValueChange = { memberId = it },
-            label = { Text("Assign Member ID (Optional)") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            modifier = Modifier.fillMaxWidth()
+        MemberDropdown(
+            selectedMemberId = memberId,
+            onMemberSelected = { memberId = it },
+            members = members,
+            label = "Assign Member (Optional)",
+            allowUnassigned = true
         )
         Column {
             Text(

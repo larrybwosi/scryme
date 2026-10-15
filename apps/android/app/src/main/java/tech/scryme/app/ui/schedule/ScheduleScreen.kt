@@ -1,5 +1,7 @@
 package tech.scryme.app.ui.schedule
 
+import tech.scryme.app.ui.components.MemberDropdown
+import tech.scryme.app.domain.model.UserProfile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +21,8 @@ import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.components.DatePickerTextField
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+
 
 @Composable
 fun ScheduleScreen(
@@ -174,6 +178,7 @@ fun ScheduleScreen(
 
     if (showCreateShiftDialog) {
         CreateShiftDialog(
+            members = (uiState as? ScheduleUiState.Success)?.members ?: emptyList(),
             onDismiss = { showCreateShiftDialog = false },
             onSubmit = { memberId, dayOfWeek, startTime, endTime ->
                 viewModel.createStaffShift(memberId, dayOfWeek, startTime, endTime)
@@ -481,6 +486,7 @@ fun AddBreakDialog(
 
 @Composable
 fun CreateShiftDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
 ) {
@@ -499,16 +505,11 @@ fun CreateShiftDialog(
         },
         confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
     ) {
-        OutlinedTextField(
-            value = memberId,
-            onValueChange = { memberId = it },
-            label = { Text("Staff Member ID *") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            modifier = Modifier.fillMaxWidth()
+        MemberDropdown(
+            selectedMemberId = memberId,
+            onMemberSelected = { memberId = it },
+            members = members,
+            label = "Staff Member *"
         )
         OutlinedTextField(
             value = dayOfWeek,

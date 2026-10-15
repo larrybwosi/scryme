@@ -1,5 +1,7 @@
 package tech.scryme.app.ui.tasks
 
+import tech.scryme.app.ui.components.MemberDropdown
+import tech.scryme.app.domain.model.UserProfile
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -47,6 +49,8 @@ import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+
 
 @Composable
 fun TasksScreen(
@@ -138,6 +142,7 @@ fun TasksScreen(
 
         if (showCreateTaskDialog) {
             CreateTaskDialog(
+                members = (uiState as? TasksUiState.Success)?.members ?: emptyList(),
                 onDismiss = { showCreateTaskDialog = false },
                 onSubmit = { title, desc, assignedMemberId, priority, dueDate ->
                     viewModel.createStaffTask(
@@ -158,6 +163,7 @@ fun TasksScreen(
 
 @Composable
 fun CreateTaskDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (title: String, description: String, assignedMemberId: String, priority: String, dueDate: String) -> Unit
 ) {
@@ -202,16 +208,12 @@ fun CreateTaskDialog(
             modifier = Modifier.fillMaxWidth()
         )
 
-        OutlinedTextField(
-            value = assignedMemberId,
-            onValueChange = { assignedMemberId = it },
-            label = { Text("Assigned Member ID (Optional)") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
-            modifier = Modifier.fillMaxWidth()
+        MemberDropdown(
+            selectedMemberId = assignedMemberId,
+            onMemberSelected = { assignedMemberId = it },
+            members = members,
+            label = "Assigned Member (Optional)",
+            allowUnassigned = true
         )
 
         Column {

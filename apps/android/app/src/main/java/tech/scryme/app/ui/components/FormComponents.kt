@@ -1,5 +1,20 @@
 package tech.scryme.app.ui.components
 
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.PersonOff
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.font.FontWeight
+import coil.compose.AsyncImage
+import tech.scryme.app.domain.model.UserProfile
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
@@ -42,6 +57,8 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import java.util.TimeZone
+
+
 
 /**
  * Reusable Form DatePicker field with a calendar selector for enhanced UX.
@@ -195,6 +212,166 @@ fun StyledFormDialog(
                         Text(confirmButtonText)
                     }
                 }
+            }
+        }
+    }
+}
+
+
+/**
+ * Avatar image helper for member list items and selected field icon.
+ */
+@Composable
+fun MemberAvatar(
+    avatarUrl: String?,
+    name: String,
+    modifier: Modifier = Modifier
+) {
+    if (!avatarUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = avatarUrl,
+            contentDescription = name,
+            modifier = modifier.clip(CircleShape),
+            contentScale = ContentScale.Crop
+        )
+    } else {
+        Box(
+            modifier = modifier
+                .clip(CircleShape)
+                .background(MaterialTheme.colorScheme.primaryContainer),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = Icons.Default.Person,
+                contentDescription = name,
+                tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                modifier = Modifier.fillMaxSize(0.7f)
+            )
+        }
+    }
+}
+
+/**
+ * Reusable Member Dropdown selection field displaying member user icons and roles.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun MemberDropdown(
+    selectedMemberId: String?,
+    onMemberSelected: (String) -> Unit,
+    members: List<UserProfile>,
+    label: String,
+    modifier: Modifier = Modifier,
+    allowUnassigned: Boolean = false,
+    placeholder: String = "Select member"
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedMember = remember(selectedMemberId, members) {
+        members.find { it.id == selectedMemberId }
+    }
+
+    val displayText = when {
+        selectedMember != null -> {
+            if (!selectedMember.role.isNullOrBlank()) {
+                "${selectedMember.name} (${selectedMember.role})"
+            } else {
+                selectedMember.name
+            }
+        }
+        allowUnassigned && selectedMemberId.isNullOrEmpty() -> "Unassigned"
+        else -> selectedMemberId ?: ""
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = displayText,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            leadingIcon = {
+                MemberAvatar(
+                    avatarUrl = selectedMember?.avatarUrl,
+                    name = selectedMember?.name ?: "",
+                    modifier = Modifier.size(24.dp)
+                )
+            },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            modifier = Modifier.heightIn(max = 280.dp)
+        ) {
+            if (allowUnassigned) {
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = "Unassigned",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    leadingIcon = {
+                        Icon(
+                            imageVector = Icons.Default.PersonOff,
+                            contentDescription = "Unassigned",
+                            modifier = Modifier.size(24.dp),
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    },
+                    onClick = {
+                        onMemberSelected("")
+                        expanded = false
+                    }
+                )
+            }
+
+            members.forEach { member ->
+                DropdownMenuItem(
+                    text = {
+                        Column {
+                            Text(
+                                text = member.name,
+                                style = MaterialTheme.typography.bodyMedium,
+                                fontWeight = FontWeight.Medium
+                            )
+                            if (!member.role.isNullOrBlank()) {
+                                Text(
+                                    text = member.role,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                                )
+                            }
+                        }
+                    },
+                    leadingIcon = {
+                        MemberAvatar(
+                            avatarUrl = member.avatarUrl,
+                            name = member.name,
+                            modifier = Modifier.size(28.dp)
+                        )
+                    },
+                    onClick = {
+                        onMemberSelected(member.id)
+                        expanded = false
+                    }
+                )
             }
         }
     }
