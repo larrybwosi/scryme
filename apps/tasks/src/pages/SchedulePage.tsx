@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { useTaskStore, taskStore } from '../lib/store';
 import { Shift, ScheduleOverride, ScheduleOverrideType } from '../lib/types';
-import { Calendar as CalendarIcon, Clock, Plus, Users, ChevronLeft, ChevronRight, AlertCircle, Loader2, Repeat, CalendarClock, Trash2 } from 'lucide-react';
+import { Calendar as CalendarIcon, Clock, Plus, Users, ChevronLeft, ChevronRight, AlertCircle, Loader2, Repeat, CalendarClock, Trash2, ArrowLeftRight, BookmarkCheck, Check, X } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Card } from '@repo/ui/components/ui/card';
 import { Badge } from '@repo/ui/components/ui/badge';
@@ -65,6 +65,8 @@ export default function SchedulePage() {
   const teamMembers = useTaskStore((state) => state.teamMembers);
   const shifts = useTaskStore((state) => state.shifts);
   const overrides = useTaskStore((state) => state.overrides);
+  const shiftTrades = useTaskStore((state) => state.shiftTrades);
+  const shiftTemplates = useTaskStore((state) => state.shiftTemplates);
   const isScheduleLoading = useTaskStore((state) => state.isScheduleLoading);
   const scheduleError = useTaskStore((state) => state.scheduleError);
 
@@ -82,6 +84,7 @@ export default function SchedulePage() {
   }, [weekStart.getTime(), weekEnd.getTime()]);
 
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [isTradesModalOpen, setIsTradesModalOpen] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedEntry, setSelectedEntry] = useState<
     | { kind: 'shift'; data: Shift }
@@ -89,7 +92,7 @@ export default function SchedulePage() {
     | null
   >(null);
 
-  // Form state
+  // Form state for new shift / override
   const [entryKind, setEntryKind] = useState<'recurring' | 'oneoff'>('recurring');
   const [memberId, setMemberId] = useState('');
   const [dayIndex, setDayIndex] = useState(0);
@@ -98,6 +101,13 @@ export default function SchedulePage() {
   const [startTime, setStartTime] = useState('09:00');
   const [endTime, setEndTime] = useState('17:00');
   const [reason, setReason] = useState('');
+
+  // Form state for requesting shift trade / swap
+  const [tradeShiftId, setTradeShiftId] = useState('');
+  const [targetMemberId, setTargetMemberId] = useState('');
+  const [tradeType, setTradeType] = useState<'TRADE' | 'SWAP'>('TRADE');
+  const [tradeReason, setTradeReason] = useState('');
+  const [isTradeSubmitting, setIsTradeSubmitting] = useState(false);
 
   useEffect(() => {
     if (!memberId && teamMembers.length > 0) {
@@ -205,121 +215,162 @@ export default function SchedulePage() {
           </p>
         </div>
 
-        <Dialog open={isAddModalOpen} onOpenChange={(open) => { setIsAddModalOpen(open); if (!open) resetForm(); }}>
-          <DialogTrigger asChild>
-            <Button className="gap-2 text-xs shadow-xs" disabled={teamMembers.length === 0}>
-              <Plus className="h-4 w-4" />
-              <span>Schedule Entry</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="sm:max-w-md">
-            <DialogHeader>
-              <DialogTitle className="text-base font-bold">New Schedule Entry</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateEntry} className="space-y-4 pt-2">
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  onClick={() => setEntryKind('recurring')}
-                  className={`flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
-                    entryKind === 'recurring' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'border-input text-muted-foreground'
-                  }`}
-                >
-                  <Repeat className="h-3.5 w-3.5" /> Recurring Shift
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setEntryKind('oneoff')}
-                  className={`flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
-                    entryKind === 'oneoff' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'border-input text-muted-foreground'
-                  }`}
-                >
-                  <CalendarClock className="h-3.5 w-3.5" /> One-off / Leave
-                </button>
-              </div>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            onClick={() => setIsTradesModalOpen(true)}
+            className="gap-2 text-xs h-9 relative"
+          >
+            <ArrowLeftRight className="h-4 w-4 text-indigo-500" />
+            <span>Shift Trades & Swaps</span>
+            {shiftTrades.filter((t) => t.status === 'PENDING').length > 0 && (
+              <Badge className="bg-indigo-600 text-white text-[9px] px-1.5 py-0 rounded-full h-4 min-w-4 flex items-center justify-center">
+                {shiftTrades.filter((t) => t.status === 'PENDING').length}
+              </Badge>
+            )}
+          </Button>
 
-              <div className="space-y-1">
-                <Label className="text-xs font-semibold">Team Member</Label>
-                <select
-                  value={memberId}
-                  onChange={(e) => setMemberId(e.target.value)}
-                  className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
-                  required
-                >
-                  {teamMembers.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {entryKind === 'recurring' ? (
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Day of Week</Label>
-                  <select
-                    value={dayIndex}
-                    onChange={(e) => setDayIndex(Number(e.target.value))}
-                    className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+          <Dialog open={isAddModalOpen} onOpenChange={(open) => { setIsAddModalOpen(open); if (!open) resetForm(); }}>
+            <DialogTrigger asChild>
+              <Button className="gap-2 text-xs shadow-xs" disabled={teamMembers.length === 0}>
+                <Plus className="h-4 w-4" />
+                <span>Schedule Entry</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="sm:max-w-md">
+              <DialogHeader>
+                <DialogTitle className="text-base font-bold">New Schedule Entry</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateEntry} className="space-y-4 pt-2">
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setEntryKind('recurring')}
+                    className={`flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+                      entryKind === 'recurring' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'border-input text-muted-foreground'
+                    }`}
                   >
-                    {weekDates.map((d, i) => (
-                      <option key={i} value={i}>
-                        {DAY_LABELS[i]} ({MONTH_LABELS[d.getMonth()]} {d.getDate()}) · repeats weekly
+                    <Repeat className="h-3.5 w-3.5" /> Recurring Shift
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setEntryKind('oneoff')}
+                    className={`flex items-center justify-center gap-1.5 rounded-md border px-3 py-2 text-xs font-medium transition-colors ${
+                      entryKind === 'oneoff' ? 'border-indigo-500 bg-indigo-50 text-indigo-700 dark:bg-indigo-950/50 dark:text-indigo-300' : 'border-input text-muted-foreground'
+                    }`}
+                  >
+                    <CalendarClock className="h-3.5 w-3.5" /> One-off / Leave
+                  </button>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-xs font-semibold">Team Member</Label>
+                  <select
+                    value={memberId}
+                    onChange={(e) => setMemberId(e.target.value)}
+                    className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                    required
+                  >
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
                       </option>
                     ))}
                   </select>
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-3">
+
+                {entryKind === 'recurring' ? (
                   <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Date</Label>
-                    <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="text-xs" required />
-                  </div>
-                  <div className="space-y-1">
-                    <Label className="text-xs font-semibold">Type</Label>
+                    <Label className="text-xs font-semibold">Day of Week</Label>
                     <select
-                      value={overrideType}
-                      onChange={(e) => setOverrideType(e.target.value as ScheduleOverrideType)}
+                      value={dayIndex}
+                      onChange={(e) => setDayIndex(Number(e.target.value))}
                       className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
                     >
-                      <option value="WORKING">Extra Shift</option>
-                      <option value="UNAVAILABLE">Unavailable</option>
-                      <option value="LEAVE">Leave / Time Off</option>
-                      <option value="BLACKOUT">Blackout</option>
+                      {weekDates.map((d, i) => (
+                        <option key={i} value={i}>
+                          {DAY_LABELS[i]} ({MONTH_LABELS[d.getMonth()]} {d.getDate()}) · repeats weekly
+                        </option>
+                      ))}
                     </select>
                   </div>
-                </div>
-              )}
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Date</Label>
+                      <Input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="text-xs" required />
+                    </div>
+                    <div className="space-y-1">
+                      <Label className="text-xs font-semibold">Type</Label>
+                      <select
+                        value={overrideType}
+                        onChange={(e) => setOverrideType(e.target.value as ScheduleOverrideType)}
+                        className="w-full bg-background border border-input rounded-md px-3 py-2 text-xs text-foreground outline-none focus:ring-2 focus:ring-ring"
+                      >
+                        <option value="WORKING">Extra Shift</option>
+                        <option value="UNAVAILABLE">Unavailable</option>
+                        <option value="LEAVE">Leave / Time Off</option>
+                        <option value="BLACKOUT">Blackout</option>
+                      </select>
+                    </div>
+                  </div>
+                )}
 
-              <div className="grid grid-cols-2 gap-3">
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Start Time</Label>
-                  <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs" required />
+                {/* Shift Templates Picker */}
+                <div className="space-y-1 p-2.5 rounded-lg border border-border bg-muted/30">
+                  <div className="flex items-center justify-between">
+                    <Label className="text-[11px] font-semibold flex items-center gap-1">
+                      <BookmarkCheck className="h-3.5 w-3.5 text-indigo-500" /> Quick Apply Shift Template
+                    </Label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-1.5 pt-1">
+                    {shiftTemplates.map((tpl) => (
+                      <button
+                        key={tpl.id}
+                        type="button"
+                        onClick={() => {
+                          setStartTime(tpl.startTime);
+                          setEndTime(tpl.endTime);
+                        }}
+                        className="p-1.5 rounded-md border border-border bg-card hover:border-indigo-500 hover:bg-indigo-50/50 dark:hover:bg-indigo-950/40 text-left transition-all"
+                      >
+                        <div className="font-bold text-[10px] text-foreground">{tpl.name}</div>
+                        <div className="text-[9px] text-muted-foreground">{tpl.startTime} - {tpl.endTime}</div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">End Time</Label>
-                  <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs" required />
-                </div>
-              </div>
 
-              {entryKind === 'oneoff' && (
-                <div className="space-y-1">
-                  <Label className="text-xs font-semibold">Reason (optional)</Label>
-                  <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Doctor's appointment" className="text-xs" />
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Start Time</Label>
+                    <Input type="time" value={startTime} onChange={(e) => setStartTime(e.target.value)} className="text-xs" required />
+                  </div>
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">End Time</Label>
+                    <Input type="time" value={endTime} onChange={(e) => setEndTime(e.target.value)} className="text-xs" required />
+                  </div>
                 </div>
-              )}
 
-              <DialogFooter className="pt-2">
-                <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)} className="text-xs">
-                  Cancel
-                </Button>
-                <Button type="submit" className="text-xs" disabled={isSubmitting || !memberId}>
-                  {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Entry'}
-                </Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
+                {entryKind === 'oneoff' && (
+                  <div className="space-y-1">
+                    <Label className="text-xs font-semibold">Reason (optional)</Label>
+                    <Input value={reason} onChange={(e) => setReason(e.target.value)} placeholder="e.g. Doctor's appointment" className="text-xs" />
+                  </div>
+                )}
+
+                <DialogFooter className="pt-2">
+                  <Button type="button" variant="outline" onClick={() => setIsAddModalOpen(false)} className="text-xs">
+                    Cancel
+                  </Button>
+                  <Button type="submit" className="text-xs" disabled={isSubmitting || !memberId}>
+                    {isSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : 'Save Entry'}
+                  </Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
       {scheduleError && (
@@ -535,6 +586,185 @@ export default function SchedulePage() {
           </DialogContent>
         </Dialog>
       )}
+
+      {/* Shift Trades & Swaps Modal */}
+      <Dialog open={isTradesModalOpen} onOpenChange={setIsTradesModalOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <div className="flex items-center gap-2">
+              <div className="p-1.5 rounded-lg bg-indigo-50 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400">
+                <ArrowLeftRight className="h-4 w-4" />
+              </div>
+              <DialogTitle className="text-base font-bold">Shift Trades & Swaps</DialogTitle>
+            </div>
+            <p className="text-xs text-muted-foreground pt-1">
+              Exchange shifts or request peer coverage for scheduled working slots.
+            </p>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2 text-xs">
+            {/* Request Trade Form */}
+            <form
+              onSubmit={async (e) => {
+                e.preventDefault();
+                if (!tradeShiftId) return;
+                setIsTradeSubmitting(true);
+                try {
+                  await taskStore.requestShiftTrade({
+                    shiftId: tradeShiftId,
+                    targetMemberId: targetMemberId || undefined,
+                    type: tradeType,
+                    reason: tradeReason.trim() || undefined,
+                  });
+                  setTradeShiftId('');
+                  setTradeReason('');
+                } finally {
+                  setIsTradeSubmitting(false);
+                }
+              }}
+              className="p-3 rounded-lg border border-border bg-muted/30 space-y-3"
+            >
+              <div className="font-bold text-xs text-foreground">Initiate Shift Trade or Swap</div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold">Select Shift to Trade</Label>
+                  <select
+                    value={tradeShiftId}
+                    onChange={(e) => setTradeShiftId(e.target.value)}
+                    className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs text-foreground outline-none"
+                    required
+                  >
+                    <option value="">Select shift...</option>
+                    {shifts.map((s) => (
+                      <option key={s.id} value={s.id}>
+                        {s.memberName} - Day {DAY_LABELS[(s.dayOfWeek + 6) % 7]} ({s.startTime}-{s.endTime})
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold">Target Team Member (Optional)</Label>
+                  <select
+                    value={targetMemberId}
+                    onChange={(e) => setTargetMemberId(e.target.value)}
+                    className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs text-foreground outline-none"
+                  >
+                    <option value="">Open to anyone</option>
+                    {teamMembers.map((m) => (
+                      <option key={m.id} value={m.id}>
+                        {m.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold">Type</Label>
+                  <select
+                    value={tradeType}
+                    onChange={(e) => setTradeType(e.target.value as any)}
+                    className="w-full bg-background border border-input rounded-md px-2 py-1.5 text-xs text-foreground outline-none"
+                  >
+                    <option value="TRADE">Trade (Giveaway / Coverage)</option>
+                    <option value="SWAP">Swap (Mutual Exchange)</option>
+                  </select>
+                </div>
+
+                <div className="space-y-1">
+                  <Label className="text-[11px] font-semibold">Reason</Label>
+                  <Input
+                    value={tradeReason}
+                    onChange={(e) => setTradeReason(e.target.value)}
+                    placeholder="e.g. Flight delay / Personal"
+                    className="text-xs h-8"
+                  />
+                </div>
+              </div>
+
+              <Button type="submit" size="sm" className="w-full text-xs gap-1.5" disabled={isTradeSubmitting || !tradeShiftId}>
+                {isTradeSubmitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <ArrowLeftRight className="h-3.5 w-3.5" />}
+                <span>Submit Request</span>
+              </Button>
+            </form>
+
+            {/* List of Trade Requests */}
+            <div className="space-y-2">
+              <div className="font-bold text-xs text-foreground flex items-center justify-between">
+                <span>Active Trade Requests</span>
+                <Badge variant="secondary" className="text-[10px] px-1.5 py-0">
+                  {shiftTrades.length} Requests
+                </Badge>
+              </div>
+
+              <div className="space-y-2 max-h-56 overflow-y-auto">
+                {shiftTrades.length === 0 ? (
+                  <p className="text-center py-6 text-[11px] text-muted-foreground italic">
+                    No shift trade or swap requests submitted yet.
+                  </p>
+                ) : (
+                  shiftTrades.map((t) => (
+                    <div key={t.id} className="p-2.5 rounded-lg border border-border bg-card flex items-center justify-between gap-2">
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-1.5">
+                          <span className="font-bold text-foreground truncate">{t.shiftMemberName || t.requesterName}</span>
+                          <Badge variant="outline" className="text-[9px] uppercase px-1 py-0">
+                            {t.type}
+                          </Badge>
+                        </div>
+                        <div className="text-[10px] text-muted-foreground line-clamp-1">
+                          {t.reason ? `Reason: ${t.reason}` : 'No reason provided'}
+                        </div>
+                      </div>
+
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        {t.status === 'PENDING' ? (
+                          <>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-7 w-7 text-emerald-600 hover:bg-emerald-50 dark:hover:bg-emerald-950/40"
+                              onClick={() => taskStore.processShiftTrade(t.id, 'APPROVE')}
+                            >
+                              <Check className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              className="h-7 w-7 text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-950/40"
+                              onClick={() => taskStore.processShiftTrade(t.id, 'REJECT')}
+                            >
+                              <X className="h-3.5 w-3.5" />
+                            </Button>
+                          </>
+                        ) : (
+                          <Badge
+                            variant="outline"
+                            className={`text-[9px] uppercase ${
+                              t.status === 'APPROVED' ? 'bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300' : 'bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                            }`}
+                          >
+                            {t.status}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsTradesModalOpen(false)} className="text-xs">
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

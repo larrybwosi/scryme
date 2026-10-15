@@ -6,7 +6,8 @@ import { Button } from '@repo/ui/components/ui/button';
 import { Badge } from '@repo/ui/components/ui/badge';
 import { Input } from '@repo/ui/components/ui/input';
 import { Avatar, AvatarFallback, AvatarImage } from '@repo/ui/components/ui/avatar';
-import { Send, Trash2 } from 'lucide-react';
+import { Send, Trash2, Award, Star } from 'lucide-react';
+import TaskAssessmentModal from './TaskAssessmentModal';
 
 interface TaskDetailModalProps {
   task: Task | null;
@@ -16,7 +17,10 @@ interface TaskDetailModalProps {
 export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps) {
   const updateTask = useTaskStore((state) => state.updateTask);
   const deleteTask = useTaskStore((state) => state.deleteTask);
+  const taskAssessment = useTaskStore((state) => (task ? state.taskAssessments[task.id] : undefined));
+
   const [commentInput, setCommentInput] = useState('');
+  const [isAssessmentOpen, setIsAssessmentOpen] = useState(false);
 
   if (!task) return null;
 
@@ -59,6 +63,34 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
         </DialogHeader>
 
         <div className="space-y-4 py-2 text-xs">
+          {/* Assessment Banner / Action */}
+          <div className="flex items-center justify-between p-3 rounded-lg border border-indigo-200 bg-indigo-50/50 dark:border-indigo-900/60 dark:bg-indigo-950/30">
+            <div className="space-y-0.5">
+              <div className="font-bold text-xs text-foreground flex items-center gap-1.5">
+                <Award className="h-4 w-4 text-indigo-600 dark:text-indigo-400" />
+                <span>Task Assessment & Review</span>
+              </div>
+              <div className="text-[10px] text-muted-foreground">
+                {taskAssessment ? (
+                  <span className="flex items-center gap-1">
+                    Quality: {taskAssessment.qualityScore}/5 Stars · Risk: {taskAssessment.riskLevel}
+                  </span>
+                ) : (
+                  'No formal assessment recorded yet'
+                )}
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setIsAssessmentOpen(true)}
+              className="text-xs h-7 gap-1 border-indigo-300 dark:border-indigo-800"
+            >
+              <Star className="h-3.5 w-3.5 text-amber-500 fill-amber-500" />
+              <span>{taskAssessment ? 'Edit Assessment' : 'Assess Task'}</span>
+            </Button>
+          </div>
+
           {/* Status & Priority Row */}
           <div className="grid grid-cols-2 gap-3 p-3 bg-muted/40 rounded-lg border border-border">
             <div>
@@ -149,6 +181,12 @@ export default function TaskDetailModal({ task, onClose }: TaskDetailModalProps)
           </Button>
         </DialogFooter>
       </DialogContent>
+
+      <TaskAssessmentModal
+        task={task}
+        isOpen={isAssessmentOpen}
+        onClose={() => setIsAssessmentOpen(false)}
+      />
     </Dialog>
   );
 }

@@ -279,4 +279,27 @@ export const scheduleApi = {
     const endpoint = await servicesEndpoint(`/schedule/overrides/${id}`);
     return fetchWithAuth(endpoint, { method: "DELETE" });
   },
+
+  // Shift Trade / Swap endpoints
+  async getShiftTrades(params: { memberId?: string; status?: string } = {}) {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    const endpoint = await servicesEndpoint(`/shifts/trades${query ? `?${query}` : ""}`);
+    return fetchWithAuth(endpoint, { method: "GET" });
+  },
+
+  async requestShiftTrade(data: {
+    shiftId: string;
+    targetMemberId?: string;
+    offeredShiftId?: string;
+    type?: "TRADE" | "SWAP";
+    reason?: string;
+  }) {
+    const endpoint = await servicesEndpoint("/shifts/trades");
+    return fetchWithAuth(endpoint, { method: "POST", body: JSON.stringify(data) });
+  },
+
+  async processShiftTrade(id: string, action: "APPROVE" | "REJECT" | "CANCEL") {
+    const endpoint = await servicesEndpoint(`/shifts/trades/${id}/process`);
+    return fetchWithAuth(endpoint, { method: "POST", body: JSON.stringify({ action }) });
+  },
 };

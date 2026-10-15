@@ -15,6 +15,9 @@ import {
   Shift,
   ScheduleOverride,
   ScheduleOverrideType,
+  ShiftTradeRequest,
+  ShiftTemplate,
+  TaskAssessment,
 } from './types';
 
 export interface ActiveTimer {
@@ -38,8 +41,11 @@ interface AppStoreState {
   isLoading: boolean;
   shifts: Shift[];
   overrides: ScheduleOverride[];
+  shiftTrades: ShiftTradeRequest[];
+  shiftTemplates: ShiftTemplate[];
   isScheduleLoading: boolean;
   scheduleError: string | null;
+  taskAssessments: Record<string, TaskAssessment>;
 }
 
 interface AppStoreActions {
@@ -49,6 +55,10 @@ interface AppStoreActions {
   deleteShift: (id: string) => Promise<void>;
   requestTimeOff: (data: { memberId: string; type: ScheduleOverrideType; startTime: string; endTime: string; reason?: string }) => Promise<void>;
   cancelOverride: (id: string) => Promise<void>;
+  fetchShiftTrades: () => Promise<void>;
+  requestShiftTrade: (data: { shiftId: string; targetMemberId?: string; offeredShiftId?: string; type?: 'TRADE' | 'SWAP'; reason?: string }) => Promise<void>;
+  processShiftTrade: (id: string, action: 'APPROVE' | 'REJECT' | 'CANCEL') => Promise<void>;
+  saveTaskAssessment: (assessment: TaskAssessment) => Promise<void>;
   addTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
@@ -164,8 +174,16 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
   isLoading: false,
   shifts: [],
   overrides: [],
+  shiftTrades: [],
+  shiftTemplates: [
+    { id: 'tpl-1', name: 'Morning Shift', startTime: '08:00', endTime: '16:00', description: 'Standard morning operational shift', color: '#3B82F6' },
+    { id: 'tpl-2', name: 'Day Shift', startTime: '09:00', endTime: '17:00', description: 'Regular business hours shift', color: '#10B981' },
+    { id: 'tpl-3', name: 'Swing / Evening', startTime: '16:00', endTime: '00:00', description: 'Evening coverage shift', color: '#8B5CF6' },
+    { id: 'tpl-4', name: 'Night Shift', startTime: '00:00', endTime: '08:00', description: 'Overnight operational shift', color: '#6366F1' },
+  ],
   isScheduleLoading: false,
   scheduleError: null,
+  taskAssessments: {},
 
   syncWithApi: async () => {
     if (isSyncing) return;
@@ -584,9 +602,10 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
   fetchSchedule: async (weekStart, weekEnd) => {
     set({ isScheduleLoading: true, scheduleError: null });
     try {
-      const [shiftsRes, overridesRes] = await Promise.all([
-        scheduleApi.getShifts(),
-        scheduleApi.getOverrides({ from: weekStart.toISOString(), to: weekEnd.toISOString() }),
+      const [shiftsRes, overridesRes, tradesRes] = await Promise.all([
+        scheduleApi.getShifts().catch(() => null),
+        scheduleApi.getOverrides({ from: weekStart.toISOString(), to: weekEnd.toISOString() }).catch(() => null),
+        scheduleApi.getShiftTrades().catch(() => null),
       ]);
 
       const shifts: Shift[] = Array.isArray(shiftsRes)
@@ -621,7 +640,24 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
           }))
         : [];
 
-      set({ shifts, overrides, isScheduleLoading: false });
+      const trades: ShiftTradeRequest[] = Array.isArray(tradesRes)
+        ? tradesRes.map((t: any) => ({
+            id: t.id,
+            shiftId: t.shiftId,
+            shiftMemberName: t.shift?.member?.user?.name || 'Staff Member',
+            requesterMemberId: t.requesterMemberId,
+            requesterName: t.requester?.user?.name || 'Requester',
+            targetMemberId: t.targetMemberId,
+            targetName: t.target?.user?.name || 'Peer Staff',
+            offeredShiftId: t.offeredShiftId,
+            type: t.type || 'TRADE',
+            status: t.status || 'PENDING',
+            reason: t.reason,
+            createdAt: t.createdAt || new Date().toISOString(),
+          }))
+        : [];
+
+      set({ shifts, overrides, shiftTrades: trades, isScheduleLoading: false });
     } catch (e: any) {
       console.error("Failed to load schedule from backend:", e);
       set({ isScheduleLoading: false, scheduleError: e?.message || 'Failed to load schedule' });
@@ -679,6 +715,94 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     } catch (e) {
       console.error("Failed to cancel override on backend:", e);
       set({ overrides: previous });
+    }
+  },
+
+  fetchShiftTrades: async () => {
+    try {
+      const tradesRes = await scheduleApi.getShiftTrades();
+      if (Array.isArray(tradesRes)) {
+        const trades: ShiftTradeRequest[] = tradesRes.map((t: any) => ({
+          id: t.id,
+          shiftId: t.shiftId,
+          shiftMemberName: t.shift?.member?.user?.name || 'Staff Member',
+          requesterMemberId: t.requesterMemberId,
+          requesterName: t.requester?.user?.name || 'Requester',
+          targetMemberId: t.targetMemberId,
+          targetName: t.target?.user?.name || 'Peer Staff',
+          offeredShiftId: t.offeredShiftId,
+          type: t.type || 'TRADE',
+          status: t.status || 'PENDING',
+          reason: t.reason,
+          createdAt: t.createdAt || new Date().toISOString(),
+        }));
+        set({ shiftTrades: trades });
+      }
+    } catch (e) {
+      console.error("Failed to fetch shift trades:", e);
+    }
+  },
+
+  requestShiftTrade: async (data) => {
+    try {
+      await scheduleApi.requestShiftTrade(data);
+      await get().fetchShiftTrades();
+    } catch (e) {
+      console.error("Failed to request shift trade on backend:", e);
+      const fallbackTrade: ShiftTradeRequest = {
+        id: `trade-${Date.now()}`,
+        shiftId: data.shiftId,
+        requesterMemberId: 'me',
+        targetMemberId: data.targetMemberId,
+        type: data.type || 'TRADE',
+        status: 'PENDING',
+        reason: data.reason,
+        createdAt: new Date().toISOString(),
+      };
+      set((state) => ({ shiftTrades: [fallbackTrade, ...state.shiftTrades] }));
+    }
+  },
+
+  processShiftTrade: async (id, action) => {
+    try {
+      await scheduleApi.processShiftTrade(id, action);
+      const now = new Date();
+      await get().fetchSchedule(now, new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
+    } catch (e) {
+      console.error("Failed to process shift trade on backend:", e);
+      const targetStatus = action === 'APPROVE' ? 'APPROVED' : action === 'REJECT' ? 'REJECTED' : 'CANCELLED';
+      set((state) => ({
+        shiftTrades: state.shiftTrades.map((t) => (t.id === id ? { ...t, status: targetStatus } : t)),
+      }));
+    }
+  },
+
+  saveTaskAssessment: async (assessment) => {
+    set((state) => ({
+      taskAssessments: {
+        ...state.taskAssessments,
+        [assessment.taskId]: assessment,
+      },
+      tasks: state.tasks.map((t) =>
+        t.id === assessment.taskId
+          ? {
+              ...t,
+              estimatedHours: assessment.estimatedHours,
+              actualHours: assessment.actualHours,
+            }
+          : t
+      ),
+    }));
+
+    try {
+      if (!assessment.taskId.startsWith('task-')) {
+        await taskApi.updateTask(assessment.taskId, {
+          estimatedHours: assessment.estimatedHours,
+          actualHours: assessment.actualHours,
+        });
+      }
+    } catch (e) {
+      console.error("Failed to sync task assessment update to backend:", e);
     }
   },
 
@@ -783,6 +907,10 @@ export const taskStore = {
   deleteShift: (id: string) => useTaskStore.getState().deleteShift(id),
   requestTimeOff: (data: { memberId: string; type: ScheduleOverrideType; startTime: string; endTime: string; reason?: string }) => useTaskStore.getState().requestTimeOff(data),
   cancelOverride: (id: string) => useTaskStore.getState().cancelOverride(id),
+  fetchShiftTrades: () => useTaskStore.getState().fetchShiftTrades(),
+  requestShiftTrade: (data: { shiftId: string; targetMemberId?: string; offeredShiftId?: string; type?: 'TRADE' | 'SWAP'; reason?: string }) => useTaskStore.getState().requestShiftTrade(data),
+  processShiftTrade: (id: string, action: 'APPROVE' | 'REJECT' | 'CANCEL') => useTaskStore.getState().processShiftTrade(id, action),
+  saveTaskAssessment: (assessment: TaskAssessment) => useTaskStore.getState().saveTaskAssessment(assessment),
   setMyTasksOnly: (val: boolean) => useTaskStore.getState().setMyTasksOnly(val),
   startTimer: (description: string, project: string) => useTaskStore.getState().startTimer(description, project),
   pauseTimer: () => useTaskStore.getState().pauseTimer(),

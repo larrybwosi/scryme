@@ -43,6 +43,19 @@ export interface TaskActivityLog {
   createdAt: string;
 }
 
+export interface TaskAssessment {
+  id?: string;
+  taskId: string;
+  complexity: 'LOW' | 'MEDIUM' | 'HIGH' | 'CRITICAL';
+  qualityScore: number; // 1 - 5 stars
+  riskLevel: 'LOW' | 'MEDIUM' | 'HIGH';
+  estimatedHours: number;
+  actualHours: number;
+  notes?: string;
+  assessedBy?: string;
+  assessedAt?: string;
+}
+
 export interface TaskDependency {
   id: string;
   taskId: string;
@@ -202,4 +215,31 @@ export interface ScheduleOverride {
   startTime: string; // ISO date-time
   endTime: string; // ISO date-time
   reason?: string;
+}
+
+export type ShiftTradeStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+export type ShiftTradeType = 'TRADE' | 'SWAP';
+
+export interface ShiftTradeRequest {
+  id: string;
+  shiftId: string;
+  shiftMemberName?: string;
+  requesterMemberId: string;
+  requesterName?: string;
+  targetMemberId?: string;
+  targetName?: string;
+  offeredShiftId?: string;
+  type: ShiftTradeType;
+  status: ShiftTradeStatus;
+  reason?: string;
+  createdAt: string;
+}
+
+export interface ShiftTemplate {
+  id: string;
+  name: string;
+  startTime: string; // "HH:mm"
+  endTime: string;   // "HH:mm"
+  description?: string;
+  color?: string;
 }
