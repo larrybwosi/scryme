@@ -1801,48 +1801,56 @@ export async function fixMissingUnits(): Promise<{
 
   let updatedCount = 0;
 
-  for (const variant of variants) {
-    await db.$transaction(async tx => {
-      const needsBaseUnit = !variant.baseUnitId && !variant.baseOrgUnitId;
-      const needsStockingUnit =
-        !variant.stockingUnitId && !variant.stockingOrgUnitId;
-      const needsSellingUnit = variant.sellingUnits.length === 0;
+  // ⚡ Bolt Optimization: Process variant unit updates in controlled chunks (CHUNK_SIZE = 10).
+  // Executing database transactions sequentially in a for...of loop creates an O(N) blocking network latency bottleneck.
+  // Using Promise.all over chunked slices collapses roundtrips from O(N) to O(N/10) while protecting database connection pool capacity.
+  const CHUNK_SIZE = 10;
+  for (let i = 0; i < variants.length; i += CHUNK_SIZE) {
+    const chunk = variants.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(async variant => {
+        await db.$transaction(async tx => {
+          const needsBaseUnit = !variant.baseUnitId && !variant.baseOrgUnitId;
+          const needsStockingUnit =
+            !variant.stockingUnitId && !variant.stockingOrgUnitId;
+          const needsSellingUnit = variant.sellingUnits.length === 0;
 
-      if (needsBaseUnit || needsStockingUnit) {
-        await tx.productVariant.update({
-          where: { id: variant.id },
-          data: {
-            baseUnitId: needsBaseUnit
-              ? pieceUnit.systemUnitId
-              : variant.baseUnitId,
-            baseOrgUnitId: needsBaseUnit
-              ? pieceUnit.orgUnitId
-              : variant.baseOrgUnitId,
-            stockingUnitId: needsStockingUnit
-              ? pieceUnit.systemUnitId
-              : variant.stockingUnitId,
-            stockingOrgUnitId: needsStockingUnit
-              ? pieceUnit.orgUnitId
-              : variant.stockingOrgUnitId,
-          },
+          if (needsBaseUnit || needsStockingUnit) {
+            await tx.productVariant.update({
+              where: { id: variant.id },
+              data: {
+                baseUnitId: needsBaseUnit
+                  ? pieceUnit.systemUnitId
+                  : variant.baseUnitId,
+                baseOrgUnitId: needsBaseUnit
+                  ? pieceUnit.orgUnitId
+                  : variant.baseOrgUnitId,
+                stockingUnitId: needsStockingUnit
+                  ? pieceUnit.systemUnitId
+                  : variant.stockingUnitId,
+                stockingOrgUnitId: needsStockingUnit
+                  ? pieceUnit.orgUnitId
+                  : variant.stockingOrgUnitId,
+              },
+            });
+          }
+
+          if (needsSellingUnit) {
+            await tx.variantSellingUnit.create({
+              data: {
+                variantId: variant.id,
+                systemUnitId: pieceUnit.systemUnitId,
+                orgUnitId: pieceUnit.orgUnitId,
+                retailPrice: variant.retailPrice,
+                conversionMultiplier: new Decimal(1),
+                isActive: true,
+              },
+            });
+          }
         });
-      }
-
-      if (needsSellingUnit) {
-        await tx.variantSellingUnit.create({
-          data: {
-            variantId: variant.id,
-            systemUnitId: pieceUnit.systemUnitId,
-            orgUnitId: pieceUnit.orgUnitId,
-            retailPrice: variant.retailPrice,
-            conversionMultiplier: new Decimal(1),
-            isActive: true,
-          },
-        });
-      }
-
-      updatedCount++;
-    });
+        updatedCount++;
+      }),
+    );
   }
 
   revalidatePath("/inventory");
