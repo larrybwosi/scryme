@@ -12,20 +12,48 @@ function getApiBaseUrl(): string {
   return "https://api.scryme.tech";
 }
 
+// The backend resolves the authenticated organization from the session/JWT
+// already. Routes that are tenant-scoped in their URL path (e.g. the staff
+// scheduling endpoints under `/:orgSlug/services/...`) additionally require
+// the real organization *slug* (not its id) either in the path or in the
+// `x-org-slug` header — sending the wrong value there causes the backend to
+// reject the request with "Organization slug mismatch". We resolve and cache
+// the real slug once per session via a dedicated workspace-context endpoint.
+interface WorkspaceContext {
+  organizationId: string;
+  orgSlug: string;
+  memberId: string | null;
+}
+
+let cachedWorkspace: WorkspaceContext | null = null;
+let workspacePromise: Promise<WorkspaceContext | null> | null = null;
+
+export function getWorkspaceContext(): Promise<WorkspaceContext | null> {
+  if (cachedWorkspace) return Promise.resolve(cachedWorkspace);
+  if (!workspacePromise) {
+    workspacePromise = fetchWithAuth("/api/v3/tasks/workspace", { method: "GET" })
+      .then((data: WorkspaceContext) => {
+        cachedWorkspace = data;
+        return data;
+      })
+      .catch(() => null)
+      .finally(() => {
+        workspacePromise = null;
+      });
+  }
+  return workspacePromise;
+}
+
 export async function fetchWithAuth(endpoint: string, options: RequestInit = {}) {
   const baseUrl = getApiBaseUrl();
   const cleanEndpoint = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${baseUrl}${cleanEndpoint}`;
 
   let sessionToken: string | undefined;
-  let orgSlug: string | undefined;
 
   try {
     const sessionRes = await authClient.getSession();
-    if (sessionRes?.data) {
-      sessionToken = sessionRes.data.session?.token;
-      orgSlug = sessionRes.data.session?.activeOrganizationId || sessionRes.data.user?.activeOrganizationId;
-    }
+    sessionToken = sessionRes?.data?.session?.token;
   } catch {
     // Session fetching failed or unauthenticated
   }
@@ -38,8 +66,13 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
   if (sessionToken) {
     headers["Authorization"] = `Bearer ${sessionToken}`;
   }
-  if (orgSlug) {
-    headers["x-org-slug"] = orgSlug;
+
+  // Avoid recursing into ourselves while resolving the workspace context.
+  if (!endpoint.includes("/tasks/workspace") && !("x-org-slug" in headers)) {
+    const workspace = await getWorkspaceContext();
+    if (workspace?.orgSlug) {
+      headers["x-org-slug"] = workspace.orgSlug;
+    }
   }
 
   const response = await fetch(url, {
@@ -53,7 +86,15 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
     throw new Error(errorData.message || `API request failed with status ${response.status}`);
   }
 
-  return response.json();
+  const json = await response.json().catch(() => null);
+
+  // The API wraps every successful response as { success, data, timestamp }.
+  // Unwrap it here so every call site works with the actual payload.
+  if (json && typeof json === "object" && "success" in json && "data" in json) {
+    return json.data;
+  }
+
+  return json;
 }
 
 export const taskApi = {
@@ -175,5 +216,67 @@ export const taskApi = {
   // Member / Team endpoints
   async getMembers() {
     return fetchWithAuth("/api/v3/members", { method: "GET" });
+  },
+};
+
+// Staff scheduling endpoints (recurring shifts + one-off leave/overrides).
+// These live under the tenant-scoped `/:orgSlug/services` module, so every
+// call first resolves the real organization slug via the workspace context.
+async function servicesEndpoint(path: string) {
+  const workspace = await getWorkspaceContext();
+  if (!workspace?.orgSlug) {
+    throw new Error("Unable to resolve the current workspace organization");
+  }
+  const cleanPath = path.startsWith("/") ? path : `/${path}`;
+  return `/api/v3/${workspace.orgSlug}/services${cleanPath}`;
+}
+
+export const scheduleApi = {
+  // Weekly recurring shifts
+  async getShifts(params: { memberId?: string; dayOfWeek?: number; isActive?: boolean } = {}) {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    const endpoint = await servicesEndpoint(`/shifts${query ? `?${query}` : ""}`);
+    return fetchWithAuth(endpoint, { method: "GET" });
+  },
+
+  async createShift(
+    memberId: string,
+    data: { dayOfWeek: number; startTime: string; endTime: string; locationId?: string },
+  ) {
+    const endpoint = await servicesEndpoint(`/staff/${memberId}/shifts`);
+    return fetchWithAuth(endpoint, { method: "POST", body: JSON.stringify(data) });
+  },
+
+  async updateShift(
+    id: string,
+    data: Partial<{ dayOfWeek: number; startTime: string; endTime: string; isActive: boolean; locationId: string | null }>,
+  ) {
+    const endpoint = await servicesEndpoint(`/shifts/${id}`);
+    return fetchWithAuth(endpoint, { method: "PATCH", body: JSON.stringify(data) });
+  },
+
+  async deleteShift(id: string) {
+    const endpoint = await servicesEndpoint(`/shifts/${id}`);
+    return fetchWithAuth(endpoint, { method: "DELETE" });
+  },
+
+  // One-off schedule overrides (leave, unavailability, blackouts, extra working time)
+  async getOverrides(params: { from: string; to: string; memberId?: string }) {
+    const query = new URLSearchParams(params as Record<string, string>).toString();
+    const endpoint = await servicesEndpoint(`/schedule/overrides?${query}`);
+    return fetchWithAuth(endpoint, { method: "GET" });
+  },
+
+  async createOverride(
+    memberId: string,
+    data: { type: "WORKING" | "UNAVAILABLE" | "LEAVE" | "BLACKOUT"; startTime: string; endTime: string; reason?: string },
+  ) {
+    const endpoint = await servicesEndpoint(`/staff/${memberId}/overrides`);
+    return fetchWithAuth(endpoint, { method: "POST", body: JSON.stringify(data) });
+  },
+
+  async deleteOverride(id: string) {
+    const endpoint = await servicesEndpoint(`/schedule/overrides/${id}`);
+    return fetchWithAuth(endpoint, { method: "DELETE" });
   },
 };

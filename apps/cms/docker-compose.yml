@@ -19,6 +19,7 @@ services:
       - PORT=${CMS_PORT:-3010}
       - DATABASE_URL=${DATABASE_URL:-postgresql://dbuser:dbpassword@db:5432/app_db?schema=public}
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
+      - PAYLOAD_DB_PUSH=${PAYLOAD_DB_PUSH:-false}
       - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_CMS_URL:-http://localhost:3010}
       - RUSTFS_ENDPOINT=${RUSTFS_ENDPOINT:-http://rustfs:9000}
       - RUSTFS_ACCESS_KEY=${RUSTFS_ACCESS_KEY:-your-access-key}

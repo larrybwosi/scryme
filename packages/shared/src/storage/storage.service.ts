@@ -105,19 +105,20 @@ export class StorageService implements StorageProvider {
   }
 
   async getDownloadStream(url: string) {
+    const normalizedUrl = url.replace(/([^:]\/)\/+/g, "$1");
     // @security SSRF Protection: Validate the URL before making any outbound request,
     // even if handled by a provider implementation.
-    if (!(await isSafeUrl(url))) {
+    if (!(await isSafeUrl(normalizedUrl))) {
       throw new Error("Potentially unsafe download URL blocked");
     }
 
     if (this.provider.getDownloadStream) {
-      return this.provider.getDownloadStream(url);
+      return this.provider.getDownloadStream(normalizedUrl);
     }
 
     // Default implementation using axios for providers that don't implement it natively
     const axios = (await import("axios")).default;
-    const response = await axios.get(url, { responseType: "stream" });
+    const response = await axios.get(normalizedUrl, { responseType: "stream" });
     return response.data;
   }
 }

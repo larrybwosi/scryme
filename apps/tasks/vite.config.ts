@@ -18,9 +18,15 @@ export default defineConfig({
     react(),
   ],
   resolve: {
-    alias: {
-      '@': path.resolve(__dirname, './src'),
-    },
+    alias: [
+      { find: '@', replacement: path.resolve(__dirname, './src') },
+      // `@repo/ui`'s package.json "exports" prefers a prebuilt `dist/` that
+      // isn't generated in this workspace, which breaks every subpath import
+      // (e.g. `@repo/ui/components/ui/button`). Resolve straight to source
+      // instead, matching how the package is actually consumed here.
+      { find: /^@repo\/ui\/(.*)/, replacement: path.resolve(__dirname, '../../packages/ui/src/$1') },
+      { find: '@repo/ui', replacement: path.resolve(__dirname, '../../packages/ui/src/index.tsx') },
+    ],
   },
   server: {
     port: 5002,

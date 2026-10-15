@@ -12,26 +12,39 @@ import { useAuthStore } from '@/store/pos-auth-store';
 export type UpdateStatus = 'IDLE' | 'CHECKING' | 'PENDING' | 'DOWNLOADING' | 'DONE' | 'ERROR';
 
 export interface UpdaterContextType {
+  /** True if a newer version exists on the server */
   isUpdateAvailable: boolean;
+  /** True if the update is mandatory ([CRITICAL] in notes or older than deprecation limit) */
   isCritical: boolean;
+  /** Release notes Markdown */
   releaseNotes: string | null;
+  /** ISO date string of the release */
   releaseDate: string | null;
+  /** Target version string e.g. "1.2.0" */
   availableVersion: string | null;
+  /** Current state of the updater state machine */
   status: UpdateStatus;
+  /** 0-100 download progress percentage */
   downloadProgress: number;
+  /** Whether the update modal is open */
   isModalOpen: boolean;
+  /** Error message string if status === 'ERROR' */
   error: string | null;
+  /** Open the update dialog manually (e.g. from Settings) */
   openModal: () => void;
+  /** Close the update dialog (calls snooze) */
   closeModal: () => void;
+  /** Manually check for updates */
   checkForUpdates: () => Promise<void>;
+  /** Start download & install manually (e.g. user clicked "Update Now") */
   startInstall: () => Promise<void>;
-  /** Dismiss until the next session check cycle (24 h snooze). */
+  /** Hide update for 24 h (snooze) */
   snoozeUpdate: () => void;
-  /** Never prompt for this specific version again. */
+  /** Skip this specific version permanently */
   skipVersion: () => void;
 }
 
-// ─── Storage helpers ──────────────────────────────────────────────────────────
+// ─── LocalStorage Helpers ─────────────────────────────────────────────────────
 
 const STORAGE_KEYS = {
   SKIPPED_VERSION: 'updater:skippedVersion',
@@ -163,7 +176,7 @@ export const UpdaterProvider = ({
   const processUpdate = useCallback(
     async (updateObj: Update) => {
       setStatus('DOWNLOADING');
-      if (!isCritical) setIsModalOpen(false);
+      setIsModalOpen(false);
       setError(null);
 
       try {
@@ -197,7 +210,7 @@ export const UpdaterProvider = ({
         setIsModalOpen(true);
       }
     },
-    [isCritical]
+    [triggerRelaunch]
   );
 
   const startInstall = useCallback(async () => {
@@ -298,7 +311,7 @@ export const UpdaterProvider = ({
       setError(e.message);
       setStatus('ERROR');
     }
-  }, [deprecatedAfterDays]);
+  }, [deprecatedAfterDays, processUpdate]);
 
   // ── Polling ────────────────────────────────────────────────────────────────
 

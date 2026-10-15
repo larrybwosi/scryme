@@ -541,6 +541,12 @@ model FulfillmentItem {
   transactionItemId String
   transactionItem   TransactionItem @relation(fields: [transactionItemId], references: [id], onDelete: Cascade)
 
+  batchId String?
+  batch   Batch?  @relation(fields: [batchId], references: [id], onDelete: SetNull)
+
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+
   quantity Int
 
   createdAt DateTime @default(now())
@@ -548,6 +554,8 @@ model FulfillmentItem {
 
   @@index([fulfillmentId])
   @@index([transactionItemId])
+  @@index([batchId])
+  @@index([stockBatchId])
   @@map("fulfillment_item")
 }
 

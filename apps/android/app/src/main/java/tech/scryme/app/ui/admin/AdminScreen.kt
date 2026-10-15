@@ -1,5 +1,9 @@
 package tech.scryme.app.ui.admin
 
+import tech.scryme.app.ui.components.MemberDropdown
+import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.ui.components.StyledFormDialog
+import tech.scryme.app.ui.components.DatePickerTextField
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -19,6 +23,8 @@ import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+
 
 @Composable
 fun AdminScreen(
@@ -183,6 +189,7 @@ fun AdminScreen(
 
     if (showCreateShiftDialog) {
         CreateShiftDialog(
+            members = (uiState as? AdminUiState.Success)?.members ?: emptyList(),
             onDismiss = { showCreateShiftDialog = false },
             onSubmit = { memberId, dayOfWeek, startTime, endTime ->
                 viewModel.createShift(memberId, dayOfWeek, startTime, endTime)
@@ -193,6 +200,7 @@ fun AdminScreen(
 
     if (showCreateTaskDialog) {
         CreateTaskDialog(
+            members = (uiState as? AdminUiState.Success)?.members ?: emptyList(),
             onDismiss = { showCreateTaskDialog = false },
             onSubmit = { title, desc, memberId, priority, dueDate ->
                 viewModel.createTask(title, desc, memberId, priority, dueDate)
@@ -273,6 +281,7 @@ fun AdminShiftCard(
 
 @Composable
 fun CreateShiftDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
 ) {
@@ -281,30 +290,63 @@ fun CreateShiftDialog(
     var startTime by remember { mutableStateOf("09:00") }
     var endTime by remember { mutableStateOf("17:00") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Create Staff Shift",
         onDismissRequest = onDismiss,
-        title = { Text("Create Staff Shift") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = memberId, onValueChange = { memberId = it }, label = { Text("Staff Member ID") })
-                OutlinedTextField(value = dayOfWeek, onValueChange = { dayOfWeek = it }, label = { Text("Day of Week (1-7)") })
-                OutlinedTextField(value = startTime, onValueChange = { startTime = it }, label = { Text("Start Time (e.g. 09:00)") })
-                OutlinedTextField(value = endTime, onValueChange = { endTime = it }, label = { Text("End Time (e.g. 17:00)") })
-            }
+        confirmButtonText = "Create Shift",
+        onConfirm = {
+            val dayInt = dayOfWeek.toIntOrNull() ?: 1
+            onSubmit(memberId, dayInt, startTime, endTime)
         },
-        confirmButton = {
-            Button(onClick = { onSubmit(memberId, dayOfWeek.toIntOrNull() ?: 1, startTime, endTime) }) {
-                Text("Create")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) { Text("Cancel") }
-        }
-    )
+        confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
+    ) {
+        MemberDropdown(
+            selectedMemberId = memberId,
+            onMemberSelected = { memberId = it },
+            members = members,
+            label = "Staff Member *"
+        )
+        OutlinedTextField(
+            value = dayOfWeek,
+            onValueChange = { dayOfWeek = it },
+            label = { Text("Day of Week (1-7, Mon-Sun) *") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = startTime,
+            onValueChange = { startTime = it },
+            label = { Text("Start Time *") },
+            placeholder = { Text("e.g. 09:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = endTime,
+            onValueChange = { endTime = it },
+            label = { Text("End Time *") },
+            placeholder = { Text("e.g. 17:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
 fun CreateTaskDialog(
+    members: List<UserProfile>,
     onDismiss: () -> Unit,
     onSubmit: (title: String, desc: String?, memberId: String?, priority: String, dueDate: String?) -> Unit
 ) {
@@ -314,25 +356,75 @@ fun CreateTaskDialog(
     var priority by remember { mutableStateOf("MEDIUM") }
     var dueDate by remember { mutableStateOf("") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Create Operational Task",
         onDismissRequest = onDismiss,
-        title = { Text("Create Operational Task") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = title, onValueChange = { title = it }, label = { Text("Title") })
-                OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
-                OutlinedTextField(value = memberId, onValueChange = { memberId = it }, label = { Text("Assign Member ID (Optional)") })
-                OutlinedTextField(value = priority, onValueChange = { priority = it }, label = { Text("Priority (HIGH, MEDIUM, LOW)") })
-                OutlinedTextField(value = dueDate, onValueChange = { dueDate = it }, label = { Text("Due Date (YYYY-MM-DD)") })
-            }
+        confirmButtonText = "Assign Task",
+        onConfirm = {
+            onSubmit(
+                title,
+                desc.ifBlank { null },
+                memberId.ifBlank { null },
+                priority,
+                dueDate.ifBlank { null }
+            )
         },
-        confirmButton = {
-            Button(onClick = { onSubmit(title, desc.ifBlank { null }, memberId.ifBlank { null }, priority, dueDate.ifBlank { null }) }) {
-                Text("Assign Task")
+        confirmEnabled = title.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Task Title *") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = desc,
+            onValueChange = { desc = it },
+            label = { Text("Description") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        MemberDropdown(
+            selectedMemberId = memberId,
+            onMemberSelected = { memberId = it },
+            members = members,
+            label = "Assign Member (Optional)",
+            allowUnassigned = true
+        )
+        Column {
+            Text(
+                text = "Priority",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Spacer(modifier = Modifier.height(4.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
+                    FilterChip(
+                        selected = priority == p,
+                        onClick = { priority = p },
+                        label = { Text(p, fontSize = 11.sp) }
+                    )
+                }
             }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+        }
+        DatePickerTextField(
+            value = dueDate,
+            onValueChange = { dueDate = it },
+            label = "Due Date",
+            placeholder = "Select due date",
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }
 
 @Composable
@@ -345,21 +437,47 @@ fun AddBreakDialog(
     var endTime by remember { mutableStateOf("12:30") }
     var desc by remember { mutableStateOf("Lunch Break") }
 
-    AlertDialog(
+    StyledFormDialog(
+        title = "Add Break to Shift",
         onDismissRequest = onDismiss,
-        title = { Text("Add Break to Shift") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(value = startTime, onValueChange = { startTime = it }, label = { Text("Start Time") })
-                OutlinedTextField(value = endTime, onValueChange = { endTime = it }, label = { Text("End Time") })
-                OutlinedTextField(value = desc, onValueChange = { desc = it }, label = { Text("Description") })
-            }
-        },
-        confirmButton = {
-            Button(onClick = { onSubmit(startTime, endTime, desc.ifBlank { null }) }) {
-                Text("Add Break")
-            }
-        },
-        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
-    )
+        confirmButtonText = "Add Break",
+        onConfirm = { onSubmit(startTime, endTime, desc.ifBlank { null }) },
+        confirmEnabled = startTime.isNotBlank() && endTime.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = startTime,
+            onValueChange = { startTime = it },
+            label = { Text("Start Time *") },
+            placeholder = { Text("e.g. 12:00") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = endTime,
+            onValueChange = { endTime = it },
+            label = { Text("End Time *") },
+            placeholder = { Text("e.g. 12:30") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+        OutlinedTextField(
+            value = desc,
+            onValueChange = { desc = it },
+            label = { Text("Description") },
+            shape = RoundedCornerShape(10.dp),
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            modifier = Modifier.fillMaxWidth()
+        )
+    }
 }

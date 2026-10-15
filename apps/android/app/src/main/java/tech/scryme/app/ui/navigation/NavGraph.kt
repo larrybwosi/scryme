@@ -62,8 +62,7 @@ fun AppNavGraph(
             val viewModel: SalesViewModel = hiltViewModel()
             SalesScreen(
                 viewModel = viewModel,
-                onNavigateHome = { navController.navigate(Screen.Tasks.route) },
-                onNavigateSettings = { navController.navigate(Screen.Settings.route) }
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.Branch.route) {
@@ -74,6 +73,7 @@ fun AppNavGraph(
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
                 viewModel = viewModel,
+                onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     authViewModel.logout()
                     onLogout()
@@ -84,6 +84,7 @@ fun AppNavGraph(
             val viewModel: SettingsViewModel = hiltViewModel()
             SettingsScreen(
                 viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
                 onLogout = {
                     authViewModel.logout()
                     onLogout()

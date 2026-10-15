@@ -112,11 +112,12 @@ export function getDocumentUrl(
   type: 'invoice' | 'waybill' | 'receipt' | 'quote' | 'packing-list' | 'delivery-note',
   id: string,
   organizationId: string,
-  baseUrl?: string
+  baseUrl?: string,
+  version: 'v2' | 'v3' = 'v3'
 ): string {
   const token = generateDocumentToken(type, id, organizationId);
   const effectiveBaseUrl = baseUrl || getSecret('NEXT_PUBLIC_APP_URL', 'http://localhost:3000');
-  return `${effectiveBaseUrl}/api/v2/public/documents/${type}/${id}?token=${token}`;
+  return `${effectiveBaseUrl}/api/${version}/public/documents/${type}/${id}?token=${token}`;
 }
 
 export { formatVariantDisplayName } from './client/formatting';

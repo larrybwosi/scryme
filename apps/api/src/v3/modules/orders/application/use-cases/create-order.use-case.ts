@@ -14,7 +14,7 @@ import { CreateOrderInput, OrderTransactionStatus } from "@repo/shared/lib";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
 import { IOrderRepository } from "../../domain/repositories/order-repository.interface";
 import { CreateOrderDto } from "../dto/create-order.dto";
-import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
+import { ScrymeNotificationService } from "@/v3/modules/scryme/scryme-notification.service";
 import { BookingService } from "@/v3/modules/services/application/services/booking.service";
 import {
   Prisma,

@@ -4,7 +4,7 @@ import { IOrderRepository } from "../../domain/repositories/order-repository.int
 import { PrismaService } from "@/prisma/prisma.service";
 import { ApiRealtimeService } from "@/common/services/realtime.service";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
-import { ScrymeNotificationService } from "@/v2/scryme/scryme-notification.service";
+import { ScrymeNotificationService } from "@/v3/modules/scryme/scryme-notification.service";
 import { BookingService } from "@/v3/modules/services/application/services/booking.service";
 import { CreateOrderDto } from "../dto/create-order.dto";
 import { BadRequestException } from "@nestjs/common";

@@ -17,6 +17,7 @@ import { LedgerCardGrid } from "@/components/products/ledger-card-grid";
 import { StructuredData } from "@/components/seo/structured-data";
 import { PricingCTA } from "@/components/home/pricing-cta";
 import { getCmsPage, getHomePageContent, getPageMetadata } from "@/lib/sanity";
+import { colors, fonts } from "@/lib/scryme-tokens";
 
 export const revalidate = 60;
 
@@ -137,7 +138,7 @@ export default async function HrPage() {
   };
 
   return (
-    <main className="bg-[#0B1220]">
+    <main style={{ background: colors.inkBg }}>
       <StructuredData data={structuredData} />
       <StructuredData data={breadcrumbData} />
 
@@ -147,7 +148,7 @@ export default async function HrPage() {
         title={
           <>
             Manage human capital,{" "}
-            <em className="not-italic text-[#C89A4B]">syncing labor cost</em>{" "}
+            <em className="not-italic" style={{ color: colors.brass }}>syncing labor cost</em>{" "}
             dynamically.
           </>
         }
@@ -155,24 +156,24 @@ export default async function HrPage() {
         primaryCta={{ label: "Start free trial", href: "#pricing" }}
         secondaryCta={{ label: "See details ↓", href: "#workforce" }}
         visual={
-          <div className="p-6 rounded-lg border border-[rgba(241,233,216,0.08)] bg-[#121B2E]">
-            <h4 className="text-xs font-semibold uppercase tracking-widest mb-4 font-mono text-[#C89A4B]">
+          <div className="p-6 rounded-lg border" style={{ borderColor: colors.inkLine, background: colors.inkPanel }}>
+            <h4 className="text-xs font-semibold uppercase tracking-widest mb-4 font-mono" style={{ color: colors.brass }}>
               Operating Payroll Journal
             </h4>
             <div className="space-y-3 font-mono text-xs">
-              <div className="flex justify-between border-b border-[rgba(241,233,216,0.04)] pb-2 text-[#F1E9D8]">
+              <div className="flex justify-between border-b pb-2" style={{ borderColor: colors.inkLine, color: colors.textPrimary }}>
                 <span>Salaries & Wages</span>
-                <span className="text-[#4B9073]">$48,250.00</span>
+                <span style={{ color: colors.ledgerGreen }}>$48,250.00</span>
               </div>
-              <div className="flex justify-between border-b border-[rgba(241,233,216,0.04)] pb-2 text-[#F1E9D8]">
+              <div className="flex justify-between border-b pb-2" style={{ borderColor: colors.inkLine, color: colors.textPrimary }}>
                 <span>Employer Taxes</span>
-                <span className="text-[#4B9073]">$4,825.00</span>
+                <span style={{ color: colors.ledgerGreen }}>$4,825.00</span>
               </div>
-              <div className="flex justify-between border-b border-[rgba(241,233,216,0.04)] pb-2 text-[#F1E9D8]">
+              <div className="flex justify-between border-b pb-2" style={{ borderColor: colors.inkLine, color: colors.textPrimary }}>
                 <span>Health Benefits</span>
-                <span className="text-[#4B9073]">$3,200.00</span>
+                <span style={{ color: colors.ledgerGreen }}>$3,200.00</span>
               </div>
-              <div className="flex justify-between pt-2 text-[#C89A4B]">
+              <div className="flex justify-between pt-2" style={{ color: colors.brass }}>
                 <span>Total Workforce Cost</span>
                 <span>$56,275.00</span>
               </div>
@@ -205,33 +206,33 @@ export default async function HrPage() {
           },
         ]}
       >
-        <div className="p-6 rounded-lg border border-[rgba(241,233,216,0.08)] bg-[#0E1626] font-mono text-xs space-y-4 text-[#F1E9D8]">
-          <div className="text-sm font-semibold border-b border-[rgba(241,233,216,0.08)] pb-2 text-[#C89A4B]">
+        <div className="p-6 rounded-lg border font-mono text-xs space-y-4" style={{ borderColor: colors.inkLine, background: colors.inkPanelAlt, color: colors.textPrimary }}>
+          <div className="text-sm font-semibold border-b pb-2" style={{ borderColor: colors.inkLine, color: colors.brass }}>
             Shift Schedule - Main Terminal
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between items-center bg-[#121B2E] p-2.5 rounded border border-[rgba(241,233,216,0.04)]">
+            <div className="flex justify-between items-center p-2.5 rounded border" style={{ background: colors.inkPanel, borderColor: colors.inkLine }}>
               <div>
                 <p className="font-semibold text-sm">Amara Mensah</p>
-                <p className="text-xs text-[rgba(241,233,216,0.5)]">
+                <p className="text-xs" style={{ color: colors.textMuted }}>
                   Retail Supervisor
                 </p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#4B9073]">08:00 - 16:30</p>
-                <p className="text-[10px] text-[rgba(241,233,216,0.4)]">
+                <p className="text-xs" style={{ color: colors.ledgerGreen }}>08:00 - 16:30</p>
+                <p className="text-[10px]" style={{ color: colors.textFaint }}>
                   8.5 hrs · Confirmed
                 </p>
               </div>
             </div>
-            <div className="flex justify-between items-center bg-[#121B2E] p-2.5 rounded border border-[rgba(241,233,216,0.04)]">
+            <div className="flex justify-between items-center p-2.5 rounded border" style={{ background: colors.inkPanel, borderColor: colors.inkLine }}>
               <div>
                 <p className="font-semibold text-sm">Samuel Carter</p>
-                <p className="text-xs text-[rgba(241,233,216,0.5)]">Cashier</p>
+                <p className="text-xs" style={{ color: colors.textMuted }}>Cashier</p>
               </div>
               <div className="text-right">
-                <p className="text-xs text-[#4B9073]">09:00 - 17:30</p>
-                <p className="text-[10px] text-[rgba(241,233,216,0.4)]">
+                <p className="text-xs" style={{ color: colors.ledgerGreen }}>09:00 - 17:30</p>
+                <p className="text-[10px]" style={{ color: colors.textFaint }}>
                   8.5 hrs · Confirmed
                 </p>
               </div>
@@ -262,20 +263,20 @@ export default async function HrPage() {
         reverse
         dark
       >
-        <div className="p-6 rounded-lg border border-[rgba(241,233,216,0.08)] bg-[#0E1626] font-mono text-xs space-y-4 text-[#F1E9D8]">
-          <div className="text-sm font-semibold border-b border-[rgba(241,233,216,0.08)] pb-2 text-[#B4553A]">
+        <div className="p-6 rounded-lg border font-mono text-xs space-y-4" style={{ borderColor: colors.inkLine, background: colors.inkPanelAlt, color: colors.textPrimary }}>
+          <div className="text-sm font-semibold border-b pb-2" style={{ borderColor: colors.inkLine, color: colors.ledgerRust }}>
             Compliance & License Monitors
           </div>
           <div className="space-y-2">
-            <div className="flex justify-between items-center bg-[#121B2E] p-2.5 rounded border border-[rgba(241,233,216,0.04)]">
+            <div className="flex justify-between items-center p-2.5 rounded border" style={{ background: colors.inkPanel, borderColor: colors.inkLine }}>
               <span>Food Handler Permit (A. Mensah)</span>
-              <span className="text-[#4B9073] bg-[rgba(75,144,115,0.15)] px-2 py-0.5 rounded text-[10px]">
+              <span className="px-2 py-0.5 rounded text-[10px]" style={{ color: colors.ledgerGreen, background: colors.brassDim }}>
                 Active
               </span>
             </div>
-            <div className="flex justify-between items-center bg-[#121B2E] p-2.5 rounded border border-[rgba(241,233,216,0.04)]">
+            <div className="flex justify-between items-center p-2.5 rounded border" style={{ background: colors.inkPanel, borderColor: colors.inkLine }}>
               <span>Forklift Certification (S. Carter)</span>
-              <span className="text-[#B4553A] bg-[rgba(180,85,58,0.15)] px-2 py-0.5 rounded text-[10px]">
+              <span className="px-2 py-0.5 rounded text-[10px]" style={{ color: colors.ledgerRust, background: colors.brassDim }}>
                 Expiring (12d)
               </span>
             </div>

@@ -168,3 +168,38 @@ export interface TimeOffRequest {
   status: 'PENDING' | 'APPROVED' | 'REJECTED';
   reason?: string;
 }
+
+export interface ShiftBreak {
+  id: string;
+  startTime: string; // "HH:mm"
+  endTime: string;
+  description?: string;
+}
+
+export interface Shift {
+  id: string;
+  memberId: string;
+  memberName: string;
+  memberAvatar?: string;
+  dayOfWeek: number; // 0 (Sunday) - 6 (Saturday)
+  startTime: string; // "HH:mm"
+  endTime: string;
+  isActive: boolean;
+  locationId?: string | null;
+  effectiveFrom?: string | null;
+  effectiveUntil?: string | null;
+  breaks: ShiftBreak[];
+}
+
+export type ScheduleOverrideType = 'WORKING' | 'UNAVAILABLE' | 'LEAVE' | 'BLACKOUT';
+
+export interface ScheduleOverride {
+  id: string;
+  memberId: string;
+  memberName: string;
+  memberAvatar?: string;
+  type: ScheduleOverrideType;
+  startTime: string; // ISO date-time
+  endTime: string; // ISO date-time
+  reason?: string;
+}

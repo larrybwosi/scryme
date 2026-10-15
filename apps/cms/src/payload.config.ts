@@ -15,6 +15,7 @@ import { Campaigns } from './collections/Campaigns';
 import { Pages } from './collections/Pages';
 import { Banners } from './collections/Banners';
 import { Testimonials } from './collections/Testimonials';
+import { migrations } from './migrations';
 
 const filename = fileURLToPath(import.meta.url);
 const dirname = path.dirname(filename);
@@ -78,6 +79,8 @@ export default buildConfig({
     push: process.env.PAYLOAD_DB_PUSH !== undefined
       ? process.env.PAYLOAD_DB_PUSH === 'true'
       : process.env.NODE_ENV !== 'production',
+    prodMigrations: migrations,
+    migrationDir: path.resolve(dirname, 'migrations'),
   }),
   plugins: [
     s3Storage({

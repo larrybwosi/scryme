@@ -232,7 +232,41 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
   fi
 fi
 
-
+# ---------------------------------------------------------
+# 3. Payload CMS Environment (e.g., cms app)
+# ---------------------------------------------------------
+if [ -f "apps/cms/server.js" ] || [ "$1" = "node" -a "$2" = "apps/cms/server.js" ]; then
+  echo "Detected Payload CMS environment..."
+  if [ -n "$DATABASE_URL" ]; then
+    echo "Waiting for CMS database to be reachable..."
+    MAX_RETRIES=60
+    COUNT=0
+    until node -e "
+      const dbUrl = process.env.DATABASE_URL;
+      if (!dbUrl) process.exit(0);
+      const url = new URL(dbUrl);
+      const host = url.hostname;
+      const port = url.port || 5432;
+      const net = require('net');
+      const socket = net.createConnection(port, host, () => {
+        socket.end();
+        process.exit(0);
+      });
+      socket.on('error', () => process.exit(1));
+    " 2>/dev/null; do
+      COUNT=$((COUNT + 1))
+      if [ $COUNT -eq $MAX_RETRIES ]; then
+        echo "❌ CMS database is not reachable after $MAX_RETRIES retries."
+        break
+      fi
+      echo "Retry $COUNT/$MAX_RETRIES: CMS database connection pending..."
+      sleep 2
+    done
+    if [ $COUNT -lt $MAX_RETRIES ]; then
+      echo "✅ CMS database is ready for Payload CMS startup and migrations!"
+    fi
+  fi
+fi
 
 # ---------------------------------------------------------
 # 4. Running Frontend or API App CMD

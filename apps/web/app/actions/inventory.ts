@@ -468,6 +468,128 @@ export async function deleteProduct(id: string): Promise<any> {
   revalidatePath("/inventory");
 }
 
+export async function archiveProduct(id: string): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.$transaction(async tx => {
+    const product = await tx.product.update({
+      where: { id, organizationId: context.organizationId },
+      data: {
+        isArchived: true,
+        isActive: false,
+      },
+    });
+
+    await tx.productVariant.updateMany({
+      where: { productId: id },
+      data: { isActive: false },
+    });
+
+    const member = context.memberId
+      ? await tx.member.findUnique({
+          where: { id: context.memberId },
+          include: { user: true },
+        })
+      : null;
+
+    const actorName = getMemberFullName(member) || context.user?.name || "System User";
+    const actorEmail = member?.user?.email || context.user?.email || "";
+
+    await tx.auditLog.create({
+      data: {
+        organizationId: context.organizationId,
+        memberId: context.memberId || null,
+        actorName,
+        actorEmail,
+        action: "UPDATE",
+        entityType: "PRODUCT",
+        entityId: id,
+        description: `Archived product "${product.name}"`,
+        details: {
+          archivedAt: new Date().toISOString(),
+        },
+        status: "SUCCESS",
+        severity: "INFO",
+      },
+    });
+
+    return product;
+  });
+
+  await realtimeService.publish(
+    `organization:${context.organizationId}:inventory`,
+    "product-archived",
+    { productId: id },
+  );
+
+  revalidatePath("/inventory");
+  revalidatePath("/inventory/archived");
+  revalidatePath(`/inventory/products/${id}`);
+  return result;
+}
+
+export async function unarchiveProduct(id: string): Promise<any> {
+  const context = await getServerAuth();
+  if (!context?.organizationId) throw new Error("Unauthorized");
+
+  const result = await db.$transaction(async tx => {
+    const product = await tx.product.update({
+      where: { id, organizationId: context.organizationId },
+      data: {
+        isArchived: false,
+        isActive: true,
+      },
+    });
+
+    await tx.productVariant.updateMany({
+      where: { productId: id },
+      data: { isActive: true },
+    });
+
+    const member = context.memberId
+      ? await tx.member.findUnique({
+          where: { id: context.memberId },
+          include: { user: true },
+        })
+      : null;
+
+    const actorName = getMemberFullName(member) || context.user?.name || "System User";
+    const actorEmail = member?.user?.email || context.user?.email || "";
+
+    await tx.auditLog.create({
+      data: {
+        organizationId: context.organizationId,
+        memberId: context.memberId || null,
+        actorName,
+        actorEmail,
+        action: "UPDATE",
+        entityType: "PRODUCT",
+        entityId: id,
+        description: `Unarchived product "${product.name}"`,
+        details: {
+          unarchivedAt: new Date().toISOString(),
+        },
+        status: "SUCCESS",
+        severity: "INFO",
+      },
+    });
+
+    return product;
+  });
+
+  await realtimeService.publish(
+    `organization:${context.organizationId}:inventory`,
+    "product-unarchived",
+    { productId: id },
+  );
+
+  revalidatePath("/inventory");
+  revalidatePath("/inventory/archived");
+  revalidatePath(`/inventory/products/${id}`);
+  return result;
+}
+
 export async function checkProductUniqueness(params: {
   sku?: string;
   slug?: string;
@@ -763,6 +885,7 @@ export async function getInventoryProducts(params: {
   sortBy?: string;
   sortOrder?: "asc" | "desc";
   groupByProduct?: boolean;
+  isArchived?: boolean;
 }): Promise<InventoryProduct[]> {
   const context = await getServerAuth();
   if (!context?.organizationId) return [];
@@ -776,11 +899,13 @@ export async function getInventoryProducts(params: {
     sortBy,
     sortOrder = "asc",
     groupByProduct = false,
+    isArchived = false,
   } = params;
 
   // Build the where clause
   const where: any = {
     organizationId: context.organizationId,
+    isArchived,
   };
 
   if (search) {
@@ -871,6 +996,7 @@ export async function getInventoryProducts(params: {
         maxPrice,
         image: product.imageUrls[0],
         type: product.type,
+        isArchived: product.isArchived,
       };
     });
   } else {
@@ -907,6 +1033,7 @@ export async function getInventoryProducts(params: {
           unitPrice: Number(variant.retailPrice) || Number(variant.buyingPrice),
           image: product.imageUrls[0],
           type: product.type,
+          isArchived: product.isArchived,
         };
       }),
     );
@@ -1373,6 +1500,7 @@ export type InventoryProduct = {
   image?: string;
   variantName?: string;
   type?: string;
+  isArchived?: boolean;
 };
 
 export async function bulkDeleteVariants(

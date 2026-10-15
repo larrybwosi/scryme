@@ -31,6 +31,8 @@ import * as z from "zod";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -42,7 +44,6 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
 } from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 import { Separator } from "@repo/ui/components/ui/separator";
@@ -84,6 +85,7 @@ const orderSchema = z.object({
   businessAccountId: z.string().optional(),
   locationId: z.string().min(1, "Location is required"),
   type: z.enum(["SALES_ORDER", "QUOTE", "POS_SALE"]),
+  toBeDelivered: z.boolean().default(false),
   expectedDeliveryDate: z.string().optional(),
   notes: z.string().optional(),
   termsAndConditions: z.string().optional(),
@@ -220,9 +222,6 @@ export function OrderForm({
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  // ⚡ Bolt Optimization: Pre-index relational arrays into Map structures using useMemo.
-  // This replaces linear O(N) array .find() scans inside render callbacks and select change handlers
-  // with O(1) constant-time lookups on every form re-render and keystroke.
   const variantMap = useMemo(
     () => new Map(variants.map(v => [v.id, v])),
     [variants],
@@ -249,6 +248,8 @@ export function OrderForm({
     resolver: zodResolver(orderSchema),
     defaultValues: {
       type: "SALES_ORDER",
+      toBeDelivered: false,
+      shippingFee: 0,
       items: [
         {
           variantId: "",
@@ -267,8 +268,8 @@ export function OrderForm({
   const watchItems = watch("items") || [];
   const watchType = watch("type") as keyof typeof ORDER_TYPE_META;
   const watchAttachments = watch("attachments") || [];
-
-  const watchShippingFee = watch("shippingFee") || 0;
+  const toBeDelivered = watch("toBeDelivered");
+  const watchShippingFee = toBeDelivered ? (watch("shippingFee") || 0) : 0;
 
   const subtotal = watchItems.reduce(
     (acc: number, item: any) => acc + (item.unitPrice * item.quantity || 0),
@@ -315,7 +316,15 @@ export function OrderForm({
   const onSubmit = async (data: OrderFormValues) => {
     setIsSubmitting(true);
     try {
-      const result = await createOrderAction(data);
+      const payload = {
+        ...data,
+        shippingFee: data.toBeDelivered ? (data.shippingFee || 0) : 0,
+        deliveryPartnerId: data.toBeDelivered ? data.deliveryPartnerId : undefined,
+        shippingAddressId: data.toBeDelivered ? data.shippingAddressId : undefined,
+        expectedDeliveryDate: data.toBeDelivered ? data.expectedDeliveryDate : undefined,
+      };
+
+      const result = await createOrderAction(payload);
       if (result.success) {
         setCreatedOrder(result.data);
         setShowSuccessModal(true);
@@ -409,7 +418,7 @@ export function OrderForm({
                   />
                 </CardHeader>
                 <CardContent>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
                     {/* Customer */}
                     <div className="space-y-1.5">
                       <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
@@ -497,129 +506,173 @@ export function OrderForm({
                         )}
                       />
                     </div>
-
-                    {/* Expected Delivery */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                        <CalendarIcon className="w-3 h-3" /> Expected Delivery
-                      </Label>
-                      <Input
-                        type="date"
-                        {...register("expectedDeliveryDate")}
-                        className="bg-background"
-                      />
-                    </div>
                   </div>
 
                   <Separator className="my-6 dark:bg-zinc-800" />
 
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
-                    {/* Business Account */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                        <Building2 className="w-3 h-3" /> Business Account
-                        (Enterprise)
-                      </Label>
-                      <Controller
-                        name="businessAccountId"
-                        control={control}
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={(val) => field.onChange(val === "none" ? undefined : val)}
-                            value={field.value || "none"}>
-                            <SelectTrigger className="bg-background">
-                              <SelectValue placeholder="Select business account" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="none">None</SelectItem>
-                              {businessAccounts.map(b => (
-                                <SelectItem key={b.id} value={b.id}>
-                                  {b.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    {/* Delivery Partner */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                        <Truck className="w-3 h-3" /> Delivery Partner
-                      </Label>
-                      <Controller
-                        name="deliveryPartnerId"
-                        control={control}
-                        render={({ field }) => (
-                          <Select
-                            onValueChange={field.onChange}
-                            value={field.value}>
-                            <SelectTrigger className="bg-background">
-                              <SelectValue placeholder="Select partner" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {deliveryPartners.map(p => (
-                                <SelectItem key={p.id} value={p.id}>
-                                  {p.name}
-                                </SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        )}
-                      />
-                    </div>
-
-                    {/* Shipping Address */}
-                    <div className="space-y-1.5">
-                      <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
-                        <MapPin className="w-3 h-3" /> Shipping Address
-                      </Label>
-                      <Controller
-                        name="shippingAddressId"
-                        control={control}
-                        render={({ field }) => {
-                          const selectedCustomerId = watch("customerId");
-                          const selectedBusinessId = watch("businessAccountId");
-                          const customer = selectedCustomerId
-                            ? customerMap.get(selectedCustomerId)
-                            : undefined;
-                          const business = selectedBusinessId
-                            ? businessMap.get(selectedBusinessId)
-                            : undefined;
-                          const addresses = [
-                            ...(customer?.addresses || []),
-                            ...(business?.addresses || []),
-                          ];
-
-                          return (
+                  {/* Business Account & Delivery Options */}
+                  <div className="space-y-5">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                      {/* Business Account */}
+                      <div className="space-y-1.5">
+                        <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                          <Building2 className="w-3 h-3" /> Business Account
+                          (Enterprise)
+                        </Label>
+                        <Controller
+                          name="businessAccountId"
+                          control={control}
+                          render={({ field }) => (
                             <Select
-                              onValueChange={field.onChange}
-                              value={field.value}
-                              disabled={
-                                !selectedCustomerId && !selectedBusinessId
-                              }>
+                              onValueChange={(val) => field.onChange(val === "none" ? undefined : val)}
+                              value={field.value || "none"}>
                               <SelectTrigger className="bg-background">
-                                <SelectValue placeholder="Select shipping address" />
+                                <SelectValue placeholder="Select business account" />
                               </SelectTrigger>
                               <SelectContent>
-                                {addresses.map(a => (
-                                  <SelectItem key={a.id} value={a.id}>
-                                    {a.street1}, {a.city} (
-                                    {a.label || "Address"})
+                                <SelectItem value="none">None</SelectItem>
+                                {businessAccounts.map(b => (
+                                  <SelectItem key={b.id} value={b.id}>
+                                    {b.name}
                                   </SelectItem>
                                 ))}
-                                {addresses.length === 0 && (
-                                  <SelectItem value="none" disabled>
-                                    No addresses found
-                                  </SelectItem>
-                                )}
                               </SelectContent>
                             </Select>
-                          );
-                        }}
-                      />
+                          )}
+                        />
+                      </div>
+
+                      {/* To Be Delivered Checkbox */}
+                      <div className="flex items-center space-x-2 pt-6">
+                        <Controller
+                          name="toBeDelivered"
+                          control={control}
+                          render={({ field }) => (
+                            <Checkbox
+                              id="toBeDelivered"
+                              checked={field.value}
+                              onCheckedChange={(checked) => {
+                                field.onChange(checked);
+                                if (!checked) {
+                                  setValue("deliveryPartnerId", undefined);
+                                  setValue("shippingAddressId", undefined);
+                                  setValue("expectedDeliveryDate", undefined);
+                                  setValue("shippingFee", 0);
+                                }
+                              }}
+                            />
+                          )}
+                        />
+                        <Label
+                          htmlFor="toBeDelivered"
+                          className="text-xs font-semibold uppercase tracking-wide text-foreground cursor-pointer flex items-center gap-1.5">
+                          <Truck className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" /> To be delivered
+                        </Label>
+                      </div>
                     </div>
+
+                    {/* Conditional Delivery Fields */}
+                    {toBeDelivered && (
+                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 p-4 rounded-lg bg-muted/40 border border-border dark:border-zinc-800">
+                        {/* Delivery Partner */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                            <Truck className="w-3 h-3" /> Delivery Partner
+                          </Label>
+                          <Controller
+                            name="deliveryPartnerId"
+                            control={control}
+                            render={({ field }) => (
+                              <Select
+                                onValueChange={field.onChange}
+                                value={field.value}>
+                                <SelectTrigger className="bg-background">
+                                  <SelectValue placeholder="Select partner" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {deliveryPartners.map(p => (
+                                    <SelectItem key={p.id} value={p.id}>
+                                      {p.name}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          />
+                        </div>
+
+                        {/* Shipping Address */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                            <MapPin className="w-3 h-3" /> Shipping Address
+                          </Label>
+                          <Controller
+                            name="shippingAddressId"
+                            control={control}
+                            render={({ field }) => {
+                              const selectedCustomerId = watch("customerId");
+                              const selectedBusinessId = watch("businessAccountId");
+                              const customer = selectedCustomerId
+                                ? customerMap.get(selectedCustomerId)
+                                : undefined;
+                              const business = selectedBusinessId
+                                ? businessMap.get(selectedBusinessId)
+                                : undefined;
+                              const addresses = [
+                                ...(customer?.addresses || []),
+                                ...(business?.addresses || []),
+                              ];
+
+                              return (
+                                <Select
+                                  onValueChange={field.onChange}
+                                  value={field.value}
+                                  disabled={
+                                    !selectedCustomerId && !selectedBusinessId
+                                  }>
+                                  <SelectTrigger className="bg-background">
+                                    <SelectValue placeholder="Select shipping address" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {addresses.map(a => (
+                                      <SelectItem key={a.id} value={a.id}>
+                                        {a.street1}, {a.city} (
+                                        {a.label || "Address"})
+                                      </SelectItem>
+                                    ))}
+                                    {addresses.length === 0 && (
+                                      <SelectItem value="none" disabled>
+                                        No addresses found
+                                      </SelectItem>
+                                    )}
+                                  </SelectContent>
+                                </Select>
+                              );
+                            }}
+                          />
+                        </div>
+
+                        {/* Expected Delivery */}
+                        <div className="space-y-1.5">
+                          <Label className="text-xs font-semibold uppercase tracking-wide text-muted-foreground flex items-center gap-1.5">
+                            <CalendarIcon className="w-3 h-3" /> Expected Delivery
+                          </Label>
+                          <Controller
+                            name="expectedDeliveryDate"
+                            control={control}
+                            render={({ field }) => (
+                              <DatePicker
+                                value={field.value}
+                                onChange={(date) =>
+                                  field.onChange(date ? date.toISOString().split("T")[0] : undefined)
+                                }
+                                placeholder="Select delivery date"
+                              />
+                            )}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -953,23 +1006,25 @@ export function OrderForm({
                       value={`− ${fmt(discountTotal, currency)}`}
                       muted
                     />
-                    <div className="pt-2">
-                      <Label className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block">
-                        Transport / Shipping Fee
-                      </Label>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          step="0.01"
-                          min={0}
-                          className="pl-7 h-9 text-sm font-semibold bg-background border-border dark:border-zinc-700"
-                          {...register("shippingFee", { valueAsNumber: true })}
-                        />
-                        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
-                          $
-                        </span>
+                    {toBeDelivered && (
+                      <div className="pt-2">
+                        <Label className="text-[10px] font-bold uppercase text-muted-foreground mb-1.5 block">
+                          Transport / Shipping Fee (Optional)
+                        </Label>
+                        <div className="relative">
+                          <Input
+                            type="number"
+                            step="0.01"
+                            min={0}
+                            className="pl-7 h-9 text-sm font-semibold bg-background border-border dark:border-zinc-700"
+                            {...register("shippingFee", { valueAsNumber: true })}
+                          />
+                          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-bold text-muted-foreground">
+                            $
+                          </span>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
 
                   <Separator className="dark:bg-zinc-800" />

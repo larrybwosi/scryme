@@ -11,6 +11,7 @@ import {
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import { Label } from "@repo/ui/components/ui/label";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Select,
@@ -174,20 +175,16 @@ export function PriceListDialog({
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="validFrom">Valid From</Label>
-              <Input
-                id="validFrom"
-                type="date"
+              <DatePicker
                 value={formData.validFrom}
-                onChange={e => setFormData({ ...formData, validFrom: e.target.value })}
+                onChange={(d) => setFormData({ ...formData, validFrom: d ? d.toISOString().split('T')[0] : "" })}
               />
             </div>
             <div className="space-y-2">
               <Label htmlFor="validTo">Valid To</Label>
-              <Input
-                id="validTo"
-                type="date"
+              <DatePicker
                 value={formData.validTo}
-                onChange={e => setFormData({ ...formData, validTo: e.target.value })}
+                onChange={(d) => setFormData({ ...formData, validTo: d ? d.toISOString().split('T')[0] : "" })}
               />
             </div>
           </div>

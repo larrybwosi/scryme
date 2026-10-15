@@ -22,6 +22,7 @@ import {
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
 import { Button } from "@repo/ui/components/ui/button";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
 import {
   Select,
   SelectContent,
@@ -275,7 +276,10 @@ export function UtilityDialog({
                     <FormItem>
                       <FormLabel>Bill Date</FormLabel>
                       <FormControl>
-                        <Input type="date" {...field} />
+                        <DatePicker
+                          value={field.value}
+                          onChange={(d) => field.onChange(d ? d.toISOString().split("T")[0] : "")}
+                        />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

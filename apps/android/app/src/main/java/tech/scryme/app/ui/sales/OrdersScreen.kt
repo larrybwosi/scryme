@@ -37,20 +37,11 @@ fun OrdersScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        // Top Title
-        Text(
-            text = "Orders",
-            fontSize = 24.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            modifier = Modifier.padding(top = 16.dp, bottom = 12.dp)
-        )
-
         // Search & Filter Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(bottom = 16.dp),
+                .padding(vertical = 16.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -84,8 +75,9 @@ fun OrdersScreen(
                 },
                 singleLine = true,
                 shape = RoundedCornerShape(10.dp),
-                colors = TextFieldDefaults.outlinedTextFieldColors(
-                    containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f),
                     unfocusedBorderColor = Color.Transparent,
                     focusedBorderColor = MaterialTheme.colorScheme.primary
                 )
@@ -107,22 +99,37 @@ fun OrdersScreen(
         }
 
         // Orders List Grouped by Date
-        LazyColumn(
-            verticalArrangement = Arrangement.spacedBy(16.dp),
-            contentPadding = PaddingValues(bottom = 24.dp)
-        ) {
-            groupedOrders.forEach { (groupDate, orderGroup) ->
-                item {
-                    Text(
-                        text = groupDate,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.onSurface,
-                        modifier = Modifier.padding(vertical = 4.dp)
-                    )
-                }
-                items(orderGroup) { order ->
-                    OrderItemCard(order = order)
+        if (orders.isEmpty()) {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(24.dp),
+                contentAlignment = Alignment.Center
+            ) {
+                Text(
+                    text = "No sales orders found",
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    fontSize = 14.sp
+                )
+            }
+        } else {
+            LazyColumn(
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                contentPadding = PaddingValues(bottom = 24.dp)
+            ) {
+                groupedOrders.forEach { (groupDate, orderGroup) ->
+                    item {
+                        Text(
+                            text = groupDate,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
+                    }
+                    items(orderGroup) { order ->
+                        OrderItemCard(order = order)
+                    }
                 }
             }
         }

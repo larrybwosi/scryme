@@ -11,6 +11,7 @@ import org.junit.Before
 import org.junit.Test
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.ui.tasks.TasksUiState
 import tech.scryme.app.ui.tasks.TasksViewModel
@@ -20,6 +21,7 @@ class TasksViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val scheduleRepository = mockk<ScheduleRepository>()
+    private val profileRepository = mockk<ProfileRepository>()
     private val sessionManager = mockk<SessionManager>()
     private val context = mockk<Context>(relaxed = true)
     private lateinit var viewModel: TasksViewModel
@@ -27,7 +29,8 @@ class TasksViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = TasksViewModel(scheduleRepository, sessionManager, context)
+        coEvery { profileRepository.getMembers(any()) } returns Result.success(emptyList())
+        viewModel = TasksViewModel(scheduleRepository, profileRepository, sessionManager, context)
     }
 
     @After

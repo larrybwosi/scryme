@@ -86,7 +86,7 @@ export class RustfsStorageProvider implements StorageProvider {
 
     await client.send(command);
 
-    const publicUrlBase = env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT;
+    const publicUrlBase = (env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT || "").replace(/\/+$/, "");
     const url = `${publicUrlBase}/${bucketName}/${filename}`;
 
     return {
@@ -187,12 +187,43 @@ export class RustfsStorageProvider implements StorageProvider {
 
     await client.send(command);
 
-    const publicUrlBase = env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT;
+    const publicUrlBase = (env.RUSTFS_PUBLIC_URL || env.RUSTFS_ENDPOINT || "").replace(/\/+$/, "");
     const url = `${publicUrlBase}/${bucketName}/${filename}`;
 
     return {
       url,
       id: filename,
     };
+  }
+  async getDownloadStream(url: string): Promise<any> {
+    const client = this.getClient();
+    try {
+      const parsedUrl = new URL(url);
+      const cleanPath = parsedUrl.pathname.replace(/\/+/g, "/");
+      const segments = cleanPath.split("/").filter(Boolean);
+
+      if (segments.length >= 2) {
+        const bucket = segments[0];
+        const key = segments.slice(1).join("/");
+
+        const command = new GetObjectCommand({
+          Bucket: bucket,
+          Key: key,
+        });
+
+        const response = await client.send(command);
+        return response.Body;
+      }
+    } catch (error) {
+      console.warn(
+        `[RustfsStorageProvider] GetObjectCommand stream failed for ${url}, falling back to axios`,
+        error,
+      );
+    }
+
+    const normalizedUrl = url.replace(/([^:]\/)\/+/g, "$1");
+    const axios = (await import("axios")).default;
+    const response = await axios.get(normalizedUrl, { responseType: "stream" });
+    return response.data;
   }
 }

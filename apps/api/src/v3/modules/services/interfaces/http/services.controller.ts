@@ -646,6 +646,53 @@ export class ServicesController {
     return this.staffScheduling.getStaffShifts(req.organization.id, memberId);
   }
 
+  @Patch("shifts/:id")
+  @Permissions("services:manage")
+  @ApiOperation({
+    summary: "Update a staff shift",
+    description: "Modifies the day, time boundaries, location, effective date range, or active status of an existing staff shift.",
+    operationId: "Services_UpdateShift",
+  })
+  @ApiParam({ name: "id", type: "string", description: "The ID of the staff shift to update" })
+  @ApiResponse({ status: 200, description: "Staff shift successfully updated" })
+  @ApiResponse({ status: 400, type: ApiErrorResponseDto, description: "Invalid shift boundaries" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Shift not found" })
+  async updateShift(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: {
+      dayOfWeek?: number;
+      startTime?: string;
+      endTime?: string;
+      locationId?: string | null;
+      effectiveFrom?: string | null;
+      effectiveUntil?: string | null;
+      isActive?: boolean;
+    },
+  ) {
+    return this.staffScheduling.updateShift(req.organization.id, id, {
+      ...dto,
+      effectiveFrom: dto.effectiveFrom !== undefined ? (dto.effectiveFrom ? new Date(dto.effectiveFrom) : null) : undefined,
+      effectiveUntil: dto.effectiveUntil !== undefined ? (dto.effectiveUntil ? new Date(dto.effectiveUntil) : null) : undefined,
+    });
+  }
+
+  @Delete("shifts/:id")
+  @Permissions("services:manage")
+  @ApiOperation({
+    summary: "Delete a staff shift",
+    description: "Permanently removes a scheduled staff shift.",
+    operationId: "Services_DeleteShift",
+  })
+  @ApiParam({ name: "id", type: "string", description: "The ID of the staff shift to delete" })
+  @ApiResponse({ status: 200, description: "Staff shift successfully deleted" })
+  @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
+  @ApiResponse({ status: 404, type: ApiErrorResponseDto, description: "Shift not found" })
+  async deleteShift(@Req() req: any, @Param("id") id: string) {
+    return this.staffScheduling.deleteShift(req.organization.id, id);
+  }
+
   @Post("shifts/:shiftId/breaks")
   @Permissions("services:manage")
   @ApiOperation({

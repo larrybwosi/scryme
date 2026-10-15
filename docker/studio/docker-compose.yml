@@ -1,8 +1,5 @@
 services:
   prisma-studio:
-    build:
-      context: ../..
-      dockerfile: docker/studio/Dockerfile
     image: ghcr.io/larrybwosi/scryme/prisma-studio:${SCRYME_VERSION:-latest}
     container_name: scryme-prisma-studio
     restart: always

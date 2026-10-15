@@ -1,4 +1,5 @@
 'use client';
+import { getPOSImageUrl } from '@/lib/image-helper';
 
 import * as React from 'react';
 import {
@@ -282,7 +283,7 @@ export function GlobalSearch() {
                   <div className="flex items-center justify-center w-10 h-10 bg-muted rounded-md shrink-0">
                     {product.imageUrl ? (
                       <img
-                        src={product.imageUrl}
+                        src={getPOSImageUrl(product.imageUrl)}
                         alt={product.productName}
                         className="w-full h-full object-cover rounded-md"
                       />

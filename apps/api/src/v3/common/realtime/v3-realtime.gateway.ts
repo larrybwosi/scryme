@@ -10,7 +10,7 @@ import {
 import { Server, Socket } from "socket.io";
 import { V3AuthService } from "../../modules/auth/infrastructure/services/v3-auth.service";
 import { PrismaService } from "@/prisma/prisma.service";
-import { RealtimeRedisService } from "../../../v2/realtime/realtime-redis.service";
+import { RealtimeRedisService } from "./realtime-redis.service";
 import { auth } from "@repo/auth/nest";
 
 @WebSocketGateway({

@@ -15,6 +15,8 @@ import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.data.dto.AttendanceStatusDto
 import tech.scryme.app.domain.model.BranchLocation
+import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.notifications.NotificationHelper
@@ -28,7 +30,8 @@ sealed interface ScheduleUiState {
         val trades: List<ShiftTrade>,
         val selectedTab: Int = 0, // 0: My Shifts, 1: Team Roster, 2: Shift Trades
         val attendanceStatus: AttendanceStatusDto? = null,
-        val locations: List<BranchLocation> = emptyList()
+        val locations: List<BranchLocation> = emptyList(),
+        val members: List<UserProfile> = emptyList()
     ) : ScheduleUiState
     data class Error(val message: String) : ScheduleUiState
 }
@@ -37,6 +40,7 @@ sealed interface ScheduleUiState {
 class ScheduleViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
     private val branchRepository: BranchRepository,
+    private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -58,6 +62,7 @@ class ScheduleViewModel @Inject constructor(
             val tradesResult = scheduleRepository.getShiftTrades(orgSlug)
             val attendanceStatusResult = scheduleRepository.getMyAttendanceStatus(orgSlug)
             val locationsResult = branchRepository.getBranchLocations(orgSlug)
+            val membersResult = profileRepository.getMembers(orgSlug)
 
             myShiftsResult.fold(
                 onSuccess = { myShifts ->
@@ -65,13 +70,15 @@ class ScheduleViewModel @Inject constructor(
                     val trades = tradesResult.getOrDefault(emptyList())
                     val attendanceStatus = attendanceStatusResult.getOrNull()
                     val locations = locationsResult.getOrDefault(emptyList())
+                    val members = membersResult.getOrDefault(emptyList())
                     _uiState.value = ScheduleUiState.Success(
                         myShifts = myShifts,
                         teamShifts = teamShifts,
                         trades = trades,
                         selectedTab = tabIndex,
                         attendanceStatus = attendanceStatus,
-                        locations = locations
+                        locations = locations,
+                        members = members
                     )
                 },
                 onFailure = { error ->

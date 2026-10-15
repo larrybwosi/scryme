@@ -31,7 +31,7 @@ import { IStockBatchRepository } from "./domain/repositories/stock-batch-reposit
 import { PrismaStockBatchRepository } from "./infrastructure/persistence/prisma-stock-batch.repository";
 import { PrismaModule } from "../../../prisma/prisma.module";
 import { RedisModule } from "../../../redis/redis.module";
-import { ScrymeModule } from "../../../v2/scryme/scryme.module";
+import { ScrymeModule } from "../scryme/scryme.module";
 
 @Global()
 @Module({

@@ -727,8 +727,21 @@ export async function getFulfillments(params: {
           customer: true,
         },
       },
-      driver: true,
-      items: true,
+      driver: {
+        include: {
+          vehicle: true,
+          deliveryPartner: true,
+        },
+      },
+      shippingAddress: true,
+      pickupLocation: true,
+      items: {
+        include: {
+          transactionItem: true,
+          batch: true,
+          stockBatch: true,
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
@@ -1185,4 +1198,186 @@ export async function uploadFulfillmentAttachment(
 
   revalidatePath("/sales/deliveries");
   return attachment;
+}
+
+export async function assignDriverToFulfillment(fulfillmentId: string, driverId: string | null) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findFirst({
+    where: {
+      id: fulfillmentId,
+      transaction: { organizationId: auth.organizationId },
+    },
+  });
+
+  if (!fulfillment) {
+    return { success: false, error: "Fulfillment not found or unauthorized" };
+  }
+
+  const updated = await db.fulfillment.update({
+    where: { id: fulfillmentId },
+    data: {
+      driverId: driverId || null,
+      dispatchedAt: driverId ? new Date() : null,
+      status: driverId ? FulfillmentStatus.IN_TRANSIT : FulfillmentStatus.PENDING,
+    },
+    include: {
+      driver: true,
+      transaction: true,
+    },
+  });
+
+  if (driverId) {
+    await db.driver.updateMany({
+      where: { id: driverId, organizationId: auth.organizationId },
+      data: { availability: "ON_DELIVERY" },
+    });
+  }
+
+  revalidatePath("/sales/deliveries");
+  return { success: true, data: updated };
+}
+
+export async function linkBatchToFulfillmentItem(fulfillmentItemId: string, batchId?: string | null, stockBatchId?: string | null) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const item = await db.fulfillmentItem.findFirst({
+    where: {
+      id: fulfillmentItemId,
+      fulfillment: {
+        transaction: { organizationId: auth.organizationId },
+      },
+    },
+  });
+
+  if (!item) {
+    return { success: false, error: "Fulfillment item not found or unauthorized" };
+  }
+
+  const updated = await db.fulfillmentItem.update({
+    where: { id: fulfillmentItemId },
+    data: {
+      batchId: batchId || null,
+      stockBatchId: stockBatchId || null,
+    },
+  });
+
+  revalidatePath("/sales/deliveries");
+  return { success: true, data: updated };
+}
+
+export async function getBatchesForDelivery() {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "REPORTER"], true);
+
+  const [batches, stockBatches] = await Promise.all([
+    db.batch.findMany({
+      where: { organizationId: auth.organizationId },
+      select: {
+        id: true,
+        batchNumber: true,
+        recipe: { select: { name: true } },
+        actualQuantity: true,
+        status: true,
+      },
+      take: 100,
+      orderBy: { createdAt: "desc" },
+    }),
+    db.stockBatch.findMany({
+      where: { organizationId: auth.organizationId },
+      select: {
+        id: true,
+        batchNumber: true,
+        currentQuantity: true,
+        variant: { select: { name: true, sku: true, product: { select: { name: true } } } },
+      },
+      take: 100,
+      orderBy: { createdAt: "desc" },
+    }),
+  ]);
+
+  return { success: true, batches, stockBatches };
+}
+
+export async function reconcileDelivery(data: {
+  fulfillmentId: string;
+  isReconciled: boolean;
+  receivedBy?: string;
+  reconciliationNotes?: string;
+  returnedItems?: Array<{ fulfillmentItemId: string; quantityReturned: number; returnReason: "RESTOCK" | "WASTE" }>;
+}) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const fulfillment = await db.fulfillment.findFirst({
+    where: {
+      id: data.fulfillmentId,
+      transaction: { organizationId: auth.organizationId },
+    },
+    include: {
+      driver: { include: { deliveryPartner: true } },
+      items: { include: { transactionItem: true } },
+    },
+  });
+
+  if (!fulfillment) {
+    return { success: false, error: "Fulfillment not found or unauthorized" };
+  }
+
+  const updated = await db.fulfillment.update({
+    where: { id: data.fulfillmentId },
+    data: {
+      isReconciled: data.isReconciled,
+      reconciledAt: data.isReconciled ? new Date() : null,
+      reconciledBy: auth.memberId,
+      receivedBy: data.receivedBy || fulfillment.receivedBy,
+      deliveryNotes: data.reconciliationNotes ? `${fulfillment.deliveryNotes || ''}\nReconciliation Note: ${data.reconciliationNotes}`.trim() : fulfillment.deliveryNotes,
+      status: data.isReconciled ? FulfillmentStatus.COMPLETED : fulfillment.status,
+    },
+  });
+
+  if (fulfillment.driverId) {
+    const activeFulfillments = await db.fulfillment.count({
+      where: {
+        driverId: fulfillment.driverId,
+        isReconciled: false,
+        status: { in: [FulfillmentStatus.IN_TRANSIT, FulfillmentStatus.SHIPPED] },
+      },
+    });
+
+    if (activeFulfillments === 0) {
+      await db.driver.updateMany({
+        where: { id: fulfillment.driverId, organizationId: auth.organizationId },
+        data: { availability: "ONLINE" },
+      });
+    }
+
+    if (fulfillment.driver?.deliveryPartner) {
+      const partner = fulfillment.driver.deliveryPartner;
+      let feeAmount = new Decimal(0);
+      if (partner.benefitType === "FIXED_FEE" && partner.fixedFee) {
+        feeAmount = new Decimal(partner.fixedFee);
+      }
+
+      if (feeAmount.gt(0)) {
+        await db.partnerWalletLog.create({
+          data: {
+            partnerId: partner.id,
+            amount: feeAmount,
+            balanceAfter: partner.walletBalance.add(feeAmount),
+            transactionType: "BENEFIT_ACCRUAL",
+            referenceId: fulfillment.id,
+            referenceType: "FULFILLMENT",
+            notes: `Delivery payout for fulfillment #${fulfillment.id}`,
+          },
+        });
+
+        await db.deliveryPartner.updateMany({
+          where: { id: partner.id, organizationId: auth.organizationId },
+          data: { walletBalance: { increment: feeAmount } },
+        });
+      }
+    }
+  }
+
+  revalidatePath("/sales/deliveries");
+  return { success: true, data: updated };
 }

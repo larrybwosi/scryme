@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { V3RealtimeGateway } from '../v3-realtime.gateway';
 import { V3AuthService } from '../../../modules/auth/infrastructure/services/v3-auth.service';
 import { PrismaService } from '@/prisma/prisma.service';
-import { RealtimeRedisService } from '../../../../v2/realtime/realtime-redis.service';
+import { RealtimeRedisService } from '../realtime-redis.service';
 import { Socket } from 'socket.io';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 

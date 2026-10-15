@@ -11,6 +11,8 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.notifications.NotificationHelper
 import javax.inject.Inject
@@ -19,7 +21,8 @@ sealed interface TasksUiState {
     object Loading : TasksUiState
     data class Success(
         val tasks: List<StaffTask>,
-        val selectedFilter: String = "ALL"
+        val selectedFilter: String = "ALL",
+        val members: List<UserProfile> = emptyList()
     ) : TasksUiState
     data class Error(val message: String) : TasksUiState
 }
@@ -27,6 +30,7 @@ sealed interface TasksUiState {
 @HiltViewModel
 class TasksViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
@@ -46,9 +50,15 @@ class TasksViewModel @Inject constructor(
             val statusParam = if (filterStatus == "ALL") null else filterStatus
 
             val result = scheduleRepository.getStaffTasks(orgSlug, memberId = memberId, status = statusParam)
+            val membersResult = profileRepository.getMembers(orgSlug)
+            val members = membersResult.getOrDefault(emptyList())
             result.fold(
                 onSuccess = { tasks ->
-                    _uiState.value = TasksUiState.Success(tasks = tasks, selectedFilter = filterStatus)
+                    _uiState.value = TasksUiState.Success(
+                        tasks = tasks,
+                        selectedFilter = filterStatus,
+                        members = members
+                    )
                 },
                 onFailure = { error ->
                     _uiState.value = TasksUiState.Error(error.message ?: "Failed to load tasks")

@@ -18,6 +18,8 @@ import {
   Scale,
   Image as ImageIcon,
   Star,
+  Archive,
+  ArchiveRestore,
 } from "lucide-react";
 import { Button } from "@repo/ui/components/ui/button";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -53,6 +55,8 @@ import { PowerOff } from "lucide-react";
 import {
   updateProduct,
   deleteProduct,
+  archiveProduct,
+  unarchiveProduct,
   bulkDeleteVariants,
   updateVariantStatus,
   createVariant,
@@ -336,6 +340,7 @@ export function ProductPageClient({
   const [isProductActionDialogOpen, setIsProductActionDialogOpen] = useState(false);
   const [isUpdatingProductStatus, setIsUpdatingProductStatus] = useState(false);
   const [isDeletingProduct, setIsDeletingProduct] = useState(false);
+  const [isArchiving, setIsArchiving] = useState(false);
 
   const [selectedVariants, setSelectedVariants] = useState<string[]>([]);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -503,6 +508,32 @@ export function ProductPageClient({
     setProduct({ ...product, slug });
   };
 
+  const handleArchiveProduct = async () => {
+    setIsArchiving(true);
+    try {
+      await archiveProduct(product.id);
+      setProduct((prev: any) => ({ ...prev, isArchived: true, isActive: false }));
+      toast.success("Product archived successfully");
+    } catch (err) {
+      toast.error("Failed to archive product");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
+  const handleUnarchiveProduct = async () => {
+    setIsArchiving(true);
+    try {
+      await unarchiveProduct(product.id);
+      setProduct((prev: any) => ({ ...prev, isArchived: false, isActive: true }));
+      toast.success("Product unarchived successfully");
+    } catch (err) {
+      toast.error("Failed to unarchive product");
+    } finally {
+      setIsArchiving(false);
+    }
+  };
+
   const handleBulkStatusUpdate = async (isActive: boolean) => {
     if (selectedVariants.length === 0) return;
     try {
@@ -566,6 +597,11 @@ export function ProductPageClient({
               <Badge variant="outline" className="bg-background border-border">
                 {product.sku}
               </Badge>
+              {product.isArchived && (
+                <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300">
+                  Archived
+                </Badge>
+              )}
               <Select
                 value={product.isActive ? "active" : "inactive"}
                 onValueChange={async (value) => {
@@ -606,6 +642,25 @@ export function ProductPageClient({
           </div>
         </div>
         <div className="flex items-center gap-3">
+          {product.isArchived ? (
+            <Button
+              variant="outline"
+              disabled={isArchiving}
+              onClick={handleUnarchiveProduct}
+              className="gap-2 text-emerald-600 border-emerald-200 hover:bg-emerald-50 dark:border-emerald-800 dark:hover:bg-emerald-950">
+              {isArchiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArchiveRestore className="w-4 h-4" />}
+              Unarchive Product
+            </Button>
+          ) : (
+            <Button
+              variant="outline"
+              disabled={isArchiving}
+              onClick={handleArchiveProduct}
+              className="gap-2 text-amber-600 border-amber-200 hover:bg-amber-50 dark:border-amber-800 dark:hover:bg-amber-950">
+              {isArchiving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Archive className="w-4 h-4" />}
+              Archive Product
+            </Button>
+          )}
           <Button
             variant="outline"
             onClick={() => setIsProductActionDialogOpen(true)}

@@ -1,4 +1,5 @@
 'use client';
+import { getPOSImageUrl } from '@/lib/image-helper';
 
 import { toast } from "sonner";
 import { CheckCircle2 } from "lucide-react";
@@ -185,7 +186,7 @@ export function OrderDetailsDialog({ order, open, onOpenChange }: OrderDetailsDi
                   <div className="flex gap-3">
                     <div className="relative w-16 h-16 rounded-md overflow-hidden bg-muted flex-shrink-0">
                       <img
-                        src={item.imageUrl || '/placeholder.svg?height=64&width=64'}
+                        src={getPOSImageUrl(item.imageUrl) || '/placeholder.svg?height=64&width=64'}
                         alt={item.productName}
                         className="object-cover"
                       />

@@ -289,15 +289,38 @@ pub async fn run_sync(
         (parsed, None)
     };
 
+    // Resolve base_url for relative image URLs
+    let base_url = {
+        let override_guard = auth_state.base_url_override.lock().ok();
+        let config_guard = auth_state.device_config.lock().ok();
+        if let Some(over) = override_guard.and_then(|g| g.clone()) {
+            over
+        } else if let Some(config) = config_guard.and_then(|g| g.as_ref().map(|c| c.base_url.clone())) {
+            config
+        } else if cfg!(debug_assertions) {
+            "http://localhost:3002".to_string()
+        } else {
+            "https://api.scryme.tech".to_string()
+        }
+    };
+
     // Parallelize image caching for better performance
     let mut image_tasks = Vec::new();
     for product in &res_body.products {
         if let Some(url) = &product.image_url {
-            if !url.starts_with('/') && !url.starts_with("C:") && url.starts_with("http") {
+            let trimmed = url.trim();
+            if !trimmed.is_empty() && !trimmed.contains("product_images") && !trimmed.starts_with("C:") {
+                let full_download_url = if trimmed.starts_with("http://") || trimmed.starts_with("https://") {
+                    trimmed.to_string()
+                } else {
+                    let clean_path = if trimmed.starts_with('/') { trimmed.to_string() } else { format!("/{}", trimmed) };
+                    format!("{}{}", base_url.trim_end_matches('/'), clean_path)
+                };
+
                 let app_handle = app.clone();
-                let url_clone = url.clone();
+                let original_url = url.clone();
                 image_tasks.push(tokio::spawn(async move {
-                    (url_clone.clone(), cache_image(&app_handle, &url_clone).await)
+                    (original_url, cache_image(&app_handle, &full_download_url).await)
                 }));
             }
         }

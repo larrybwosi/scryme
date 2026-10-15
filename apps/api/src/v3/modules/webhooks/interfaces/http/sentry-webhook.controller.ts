@@ -11,6 +11,7 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiResponse } from "@nestjs/swagger";
 import * as crypto from "crypto";
+import type { ScrymeChatAction } from "@repo/chat";
 import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
@@ -86,6 +87,9 @@ export class PublicSentryWebhookController {
     const culprit = issue.culprit || issue.location || "N/A";
     const level = (issue.level || "error").toUpperCase();
     const environment = issue.environment || data.environment || process.env.NODE_ENV || "production";
+    const issueId = issue.id || issue.issue_id || String(data.id || "");
+    const count = issue.count || issue.userCount || undefined;
+    const userCount = issue.userCount || issue.user_count || undefined;
 
     const workspaceSlug = settingsMap.get("system:admin:chat:workspaceSlug") || "system-admins";
     const channelSlug = settingsMap.get("system:admin:chat:channelSlug") || "system-alerts";
@@ -98,11 +102,44 @@ export class PublicSentryWebhookController {
 • **Details & Trace**: ${issueUrl}`;
 
     try {
-      const { ScrymeChatApiClient } = await import("@repo/chat");
+      const { ScrymeChatApiClient, createSentryErrorMessage } = await import("@repo/chat");
       const scrymeClient = new ScrymeChatApiClient();
+
+      const customMessage = createSentryErrorMessage({
+        issueTitle,
+        issueUrl,
+        projectName,
+        culprit,
+        level,
+        environment,
+        action,
+        issueId,
+        eventCount: count,
+        userCount,
+        extra: issue.metadata || data.metadata || undefined,
+      });
+
+      const actions: ScrymeChatAction[] = [
+        {
+          id: `view_sentry_${issueId || Date.now()}`,
+          label: "🔍 View Trace on Sentry",
+          type: "button",
+          style: level === "FATAL" || level === "ERROR" ? "danger" : "primary",
+          value: issueUrl,
+        },
+      ];
 
       await scrymeClient.sendMessage(workspaceSlug, channelSlug, {
         content: formattedMessage,
+        customMessage,
+        actions,
+        metadata: {
+          sentryIssueId: issueId,
+          sentryProject: projectName,
+          sentryLevel: level,
+          environment,
+          alertType: "SENTRY_ERROR_ALERT",
+        },
       });
 
       this.logger.log(`Dispatched Sentry error alert to Scryme Chat #${channelSlug} in workspace "${workspaceSlug}"`);

@@ -1,5 +1,5 @@
 import { createWithEqualityFn as create } from 'zustand/traditional';
-import { taskApi } from "./api";
+import { taskApi, scheduleApi } from "./api";
 import {
   Task,
   TimeEntry,
@@ -7,12 +7,14 @@ import {
   Client,
   Tag,
   TeamMember,
-  TimeOffRequest,
   TaskStatus,
   Subtask,
   TaskComment,
   TaskDependency,
-  TaskActivityLog
+  TaskActivityLog,
+  Shift,
+  ScheduleOverride,
+  ScheduleOverrideType,
 } from './types';
 
 export interface ActiveTimer {
@@ -30,15 +32,23 @@ interface AppStoreState {
   teamMembers: TeamMember[];
   tags: Tag[];
   timeEntries: TimeEntry[];
-  timeOffRequests: TimeOffRequest[];
   activeTimer: ActiveTimer;
   selectedProject: string;
   myTasksOnly: boolean;
   isLoading: boolean;
+  shifts: Shift[];
+  overrides: ScheduleOverride[];
+  isScheduleLoading: boolean;
+  scheduleError: string | null;
 }
 
 interface AppStoreActions {
   syncWithApi: () => Promise<void>;
+  fetchSchedule: (weekStart: Date, weekEnd: Date) => Promise<void>;
+  createShift: (data: { memberId: string; dayOfWeek: number; startTime: string; endTime: string }) => Promise<void>;
+  deleteShift: (id: string) => Promise<void>;
+  requestTimeOff: (data: { memberId: string; type: ScheduleOverrideType; startTime: string; endTime: string; reason?: string }) => Promise<void>;
+  cancelOverride: (id: string) => Promise<void>;
   addTask: (taskData: Omit<Task, 'id' | 'createdAt'>) => Promise<void>;
   updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
   updateTaskStatus: (taskId: string, status: TaskStatus) => Promise<void>;
@@ -53,7 +63,6 @@ interface AppStoreActions {
   addClient: (client: Omit<Client, 'id'>) => void;
   addTeamMember: (member: Omit<TeamMember, 'id'>) => void;
   addTag: (tag: Omit<Tag, 'id'>) => Promise<void>;
-  addTimeOff: (request: Omit<TimeOffRequest, 'id'>) => void;
   setMyTasksOnly: (val: boolean) => void;
   startTimer: (description: string, project: string) => void;
   pauseTimer: () => void;
@@ -149,11 +158,14 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     { id: 't-4', name: 'Back-end', color: '#F59E0B', usageCount: 2 },
   ],
   timeEntries: [],
-  timeOffRequests: [],
   activeTimer: loadSavedActiveTimer(),
   selectedProject: '',
   myTasksOnly: false,
   isLoading: false,
+  shifts: [],
+  overrides: [],
+  isScheduleLoading: false,
+  scheduleError: null,
 
   syncWithApi: async () => {
     if (isSyncing) return;
@@ -315,7 +327,7 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
       }
 
       const res = await taskApi.createTask(payload);
-      if (res && res.data) {
+      if (res && res.id) {
         await get().syncWithApi();
       } else {
         const newTask: Task = {
@@ -495,7 +507,7 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
       };
 
       const res = await taskApi.createProject(payload);
-      if (res && res.data) {
+      if (res && res.id) {
         await get().syncWithApi();
       } else {
         const newPrj: Project = {
@@ -569,9 +581,105 @@ export const useTaskStore = create<AppStore>()((set, get) => ({
     }
   },
 
-  addTimeOff: (request) => {
-    const newReq: TimeOffRequest = { ...request, id: `to-${Date.now()}` };
-    set((state) => ({ timeOffRequests: [newReq, ...state.timeOffRequests] }));
+  fetchSchedule: async (weekStart, weekEnd) => {
+    set({ isScheduleLoading: true, scheduleError: null });
+    try {
+      const [shiftsRes, overridesRes] = await Promise.all([
+        scheduleApi.getShifts(),
+        scheduleApi.getOverrides({ from: weekStart.toISOString(), to: weekEnd.toISOString() }),
+      ]);
+
+      const shifts: Shift[] = Array.isArray(shiftsRes)
+        ? shiftsRes.map((s: any) => ({
+            id: s.id,
+            memberId: s.memberId,
+            memberName: s.member?.user?.name || 'Team Member',
+            memberAvatar: s.member?.user?.image,
+            dayOfWeek: s.dayOfWeek,
+            startTime: s.startTime,
+            endTime: s.endTime,
+            isActive: s.isActive,
+            locationId: s.locationId,
+            effectiveFrom: s.effectiveFrom,
+            effectiveUntil: s.effectiveUntil,
+            breaks: Array.isArray(s.breaks)
+              ? s.breaks.map((b: any) => ({ id: b.id, startTime: b.startTime, endTime: b.endTime, description: b.description }))
+              : [],
+          }))
+        : [];
+
+      const overrides: ScheduleOverride[] = Array.isArray(overridesRes)
+        ? overridesRes.map((o: any) => ({
+            id: o.id,
+            memberId: o.memberId,
+            memberName: o.member?.user?.name || 'Team Member',
+            memberAvatar: o.member?.user?.image,
+            type: o.type,
+            startTime: o.startTime,
+            endTime: o.endTime,
+            reason: o.reason,
+          }))
+        : [];
+
+      set({ shifts, overrides, isScheduleLoading: false });
+    } catch (e: any) {
+      console.error("Failed to load schedule from backend:", e);
+      set({ isScheduleLoading: false, scheduleError: e?.message || 'Failed to load schedule' });
+    }
+  },
+
+  createShift: async (data) => {
+    try {
+      await scheduleApi.createShift(data.memberId, {
+        dayOfWeek: data.dayOfWeek,
+        startTime: data.startTime,
+        endTime: data.endTime,
+      });
+      const now = new Date();
+      await get().fetchSchedule(now, new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000));
+    } catch (e: any) {
+      console.error("Failed to create shift on backend:", e);
+      throw e;
+    }
+  },
+
+  deleteShift: async (id) => {
+    const previous = get().shifts;
+    set((state) => ({ shifts: state.shifts.filter((s) => s.id !== id) }));
+    try {
+      await scheduleApi.deleteShift(id);
+    } catch (e) {
+      console.error("Failed to delete shift on backend:", e);
+      set({ shifts: previous });
+    }
+  },
+
+  requestTimeOff: async (data) => {
+    try {
+      await scheduleApi.createOverride(data.memberId, {
+        type: data.type,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        reason: data.reason,
+      });
+      const from = new Date(data.startTime);
+      const to = new Date(data.endTime);
+      await get().fetchSchedule(from, to);
+    } catch (e: any) {
+      console.error("Failed to request time off on backend:", e);
+      throw e;
+    }
+  },
+
+  cancelOverride: async (id) => {
+    const previous = get().overrides;
+    set((state) => ({ overrides: state.overrides.filter((o) => o.id !== id) }));
+    try {
+      await scheduleApi.deleteOverride(id);
+    } catch (e) {
+      console.error("Failed to cancel override on backend:", e);
+      set({ overrides: previous });
+    }
   },
 
   setMyTasksOnly: (val) => {
@@ -670,7 +778,11 @@ export const taskStore = {
   addClient: (client: Omit<Client, 'id'>) => useTaskStore.getState().addClient(client),
   addTeamMember: (member: Omit<TeamMember, 'id'>) => useTaskStore.getState().addTeamMember(member),
   addTag: (tag: Omit<Tag, 'id'>) => useTaskStore.getState().addTag(tag),
-  addTimeOff: (request: Omit<TimeOffRequest, 'id'>) => useTaskStore.getState().addTimeOff(request),
+  fetchSchedule: (weekStart: Date, weekEnd: Date) => useTaskStore.getState().fetchSchedule(weekStart, weekEnd),
+  createShift: (data: { memberId: string; dayOfWeek: number; startTime: string; endTime: string }) => useTaskStore.getState().createShift(data),
+  deleteShift: (id: string) => useTaskStore.getState().deleteShift(id),
+  requestTimeOff: (data: { memberId: string; type: ScheduleOverrideType; startTime: string; endTime: string; reason?: string }) => useTaskStore.getState().requestTimeOff(data),
+  cancelOverride: (id: string) => useTaskStore.getState().cancelOverride(id),
   setMyTasksOnly: (val: boolean) => useTaskStore.getState().setMyTasksOnly(val),
   startTimer: (description: string, project: string) => useTaskStore.getState().startTimer(description, project),
   pauseTimer: () => useTaskStore.getState().pauseTimer(),

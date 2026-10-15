@@ -497,7 +497,7 @@ export function SupermarketPOS() {
                 >
                   <div className="w-12 h-12 rounded-lg bg-zinc-100 dark:bg-zinc-700 overflow-hidden border shrink-0">
                     {item.imageUrl ? (
-                      <img src={convertFileSrc(item.imageUrl)} className="w-full h-full object-cover" />
+                      <img src={getPOSImageUrl(item.imageUrl)} className="w-full h-full object-cover" />
                     ) : (
                       <div className="w-full h-full flex items-center justify-center text-zinc-300">
                         <Package className="w-8 h-8" />

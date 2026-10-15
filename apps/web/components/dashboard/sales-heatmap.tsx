@@ -57,7 +57,7 @@ export function SalesHeatmap({ data, currency = "USD" }: SalesHeatmapProps) {
 
     let weekIndex = 0;
 
-    while (curr <= lastDate || currentWeek.length > 0) {
+    while (curr <= lastDate || (currentWeek.length > 0 && getDay(curr) !== 0)) {
       const dateStr = format(curr, "yyyy-MM-dd");
       const dayOfWeek = getDay(curr);
       const month = curr.getMonth();
@@ -84,10 +84,6 @@ export function SalesHeatmap({ data, currency = "USD" }: SalesHeatmapProps) {
       });
 
       curr = addDays(curr, 1);
-
-      if (curr > addDays(lastDate, 7) && currentWeek.length === 0) {
-        break;
-      }
     }
 
     if (currentWeek.length > 0) {

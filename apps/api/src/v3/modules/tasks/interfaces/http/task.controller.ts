@@ -151,4 +151,18 @@ export class TaskController {
   ) {
     return this.taskUseCase.listLabels(ctx.organizationId, projectId);
   }
+
+  @Get('workspace')
+  @Permissions('tasks:read')
+  @ApiOperation({
+    summary: 'Get current workspace context',
+    description: 'Resolves the authenticated session into its organization id, slug, and member id, so clients can build org-scoped requests to other v3 modules without hardcoding the slug.',
+  })
+  async getWorkspaceContext(@v3Context() ctx: V3ApiContext) {
+    return {
+      organizationId: ctx.organizationId,
+      orgSlug: ctx.orgSlug,
+      memberId: ctx.memberId || null,
+    };
+  }
 }

@@ -1,7 +1,11 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Scryme",
+<<<<<<< HEAD
   "version": "10.2.17",
+=======
+  "version": "10.2.14",
+>>>>>>> main
   "identifier": "com.scryme.pos",
   "build": {
     "beforeDevCommand": "pnpm dev",

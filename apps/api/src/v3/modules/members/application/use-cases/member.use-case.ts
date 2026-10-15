@@ -29,7 +29,7 @@ import {
   emitMemberRoleChanged,
   emitEvent,
 } from "@repo/shared/server";
-import { createMemberToken } from "@repo/shared/api/v2";
+import { createMemberToken } from "@repo/shared/api/v3";
 
 @Injectable()
 export class MemberUseCase {

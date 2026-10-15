@@ -43,6 +43,7 @@ model StockBatch {
   adjustments    StockAdjustment[]
   movements      StockMovement[]
   atachments     Attachment[]
+  fulfillmentItems FulfillmentItem[]
   stockTakeItems StockTakeItem[]
   transferItems  StockTransferItem[]
 

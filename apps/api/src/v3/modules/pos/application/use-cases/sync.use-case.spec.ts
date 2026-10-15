@@ -2,10 +2,10 @@ import { describe, it, expect, beforeEach, vi } from "vitest";
 import { Test, TestingModule } from "@nestjs/testing";
 import { SyncUseCase } from "./sync.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
-import { PosCustomerService } from "@/v2/pos/pos-customer.service";
+import { V3PosCustomerService, PosCustomerService } from "../services/v3-pos-customer.service";
 
 // Mock the shared modules so we don't import actual dynamic helpers
-vi.mock("@repo/shared/api/v2", () => ({
+vi.mock("@repo/shared/api/v3", () => ({
   getPosProducts: vi.fn().mockResolvedValue([{ id: "prod-1" }]),
   getPosProductsDelta: vi.fn().mockResolvedValue([{ id: "prod-2" }]),
 }));
@@ -31,7 +31,7 @@ describe("SyncUseCase", () => {
       providers: [
         SyncUseCase,
         { provide: PrismaService, useValue: prisma },
-        { provide: PosCustomerService, useValue: posCustomerService },
+        { provide: V3PosCustomerService, useValue: posCustomerService }, { provide: PosCustomerService, useValue: posCustomerService },
       ],
     }).compile();
 

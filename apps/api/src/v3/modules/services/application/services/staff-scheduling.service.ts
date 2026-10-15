@@ -168,6 +168,92 @@ export class StaffSchedulingService {
     });
   }
 
+  async updateShift(
+    orgId: string,
+    shiftId: string,
+    data: {
+      dayOfWeek?: number;
+      startTime?: string;
+      endTime?: string;
+      locationId?: string | null;
+      effectiveFrom?: Date | null;
+      effectiveUntil?: Date | null;
+      isActive?: boolean;
+    },
+  ) {
+    const shift = await this.prisma.client.staffShift.findFirst({
+      where: { id: shiftId, organizationId: orgId },
+    });
+    if (!shift) throw new NotFoundException("Shift not found");
+
+    const nextStartTime = data.startTime ?? shift.startTime;
+    const nextEndTime = data.endTime ?? shift.endTime;
+    if (data.startTime || data.endTime) {
+      this.validateTimeRange(nextStartTime, nextEndTime);
+    }
+    if (
+      data.dayOfWeek !== undefined &&
+      (data.dayOfWeek < 0 || data.dayOfWeek > 6)
+    ) {
+      throw new BadRequestException("dayOfWeek must be between 0 and 6");
+    }
+
+    const overlap = await this.prisma.client.staffShift.findFirst({
+      where: {
+        id: { not: shiftId },
+        organizationId: orgId,
+        memberId: shift.memberId,
+        dayOfWeek: data.dayOfWeek ?? shift.dayOfWeek,
+        isActive: true,
+        startTime: { lt: nextEndTime },
+        endTime: { gt: nextStartTime },
+      },
+    });
+    if (overlap) throw new ConflictException("Shift overlaps an active shift");
+
+    const updatedShift = await this.prisma.client.staffShift.update({
+      where: { id: shiftId },
+      data,
+    });
+
+    this.firebaseMessagingService
+      .sendToMembers(shift.memberId, {
+        title: "Shift Updated",
+        body: `Your shift on ${DAY_NAMES[updatedShift.dayOfWeek] || "Day"} was updated to ${updatedShift.startTime} - ${updatedShift.endTime}.`,
+        data: {
+          eventType: "SHIFT_UPDATED",
+          shiftId: updatedShift.id,
+          organizationId: orgId,
+        },
+      })
+      .catch(() => {});
+
+    return updatedShift;
+  }
+
+  async deleteShift(orgId: string, shiftId: string) {
+    const shift = await this.prisma.client.staffShift.findFirst({
+      where: { id: shiftId, organizationId: orgId },
+    });
+    if (!shift) throw new NotFoundException("Shift not found");
+
+    await this.prisma.client.staffShift.delete({ where: { id: shiftId } });
+
+    this.firebaseMessagingService
+      .sendToMembers(shift.memberId, {
+        title: "Shift Removed",
+        body: `Your shift on ${DAY_NAMES[shift.dayOfWeek] || "Day"} (${shift.startTime} - ${shift.endTime}) was removed.`,
+        data: {
+          eventType: "SHIFT_DELETED",
+          shiftId: shift.id,
+          organizationId: orgId,
+        },
+      })
+      .catch(() => {});
+
+    return { success: true, id: shiftId };
+  }
+
   async addBreak(
     orgId: string,
     shiftId: string,
