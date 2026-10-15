@@ -1,6 +1,6 @@
 "use server";
 
-import { db, Decimal, UnitType, IndustryCategory, Prisma } from "@repo/db";
+import { db, Decimal, UnitType, IndustryCategory } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { getServerAuth } from "@repo/auth/server";
 
@@ -75,7 +75,15 @@ export async function updateOrganizationUnit(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const unit = await db.organizationUnit.update({
+  // 🛡️ Sentinel: BOLA/IDOR Hardening - OrganizationUnit lacks a composite unique constraint on [id, organizationId].
+  // Standard Prisma update with non-unique where filters ignores non-unique fields at database level.
+  // First verify existence/ownership, then update using updateMany scoped by organizationId.
+  const existing = await db.organizationUnit.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existing) throw new Error("Organization unit not found");
+
+  await db.organizationUnit.updateMany({
     where: { id, organizationId: context.organizationId },
     data: {
       ...data,
@@ -92,6 +100,11 @@ export async function updateOrganizationUnit(
     },
   });
 
+  const unit = await db.organizationUnit.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
+    include: { baseSystemUnit: true },
+  });
+
   revalidatePath("/inventory/units");
   return unit;
 }
@@ -100,11 +113,14 @@ export async function deleteOrganizationUnit(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // Check if it's being used?
-  // For now, let's just delete, but in a real enterprise app we might want to check relations.
-  // The schema has relations to ProductVariant, StockBatch, etc.
+  // 🛡️ Sentinel: BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
+  // because OrganizationUnit lacks a composite unique constraint on [id, organizationId].
+  const existing = await db.organizationUnit.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existing) throw new Error("Organization unit not found");
 
-  await db.organizationUnit.delete({
+  await db.organizationUnit.deleteMany({
     where: { id, organizationId: context.organizationId },
   });
 
@@ -154,6 +170,21 @@ export async function createOrgUnitConversion(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // 🛡️ Sentinel: BOLA/IDOR Prevention - Validate that both fromUnitId and toUnitId
+  // belong to context.organizationId before creating unit conversion links across tenants.
+  const [fromUnit, toUnit] = await Promise.all([
+    db.organizationUnit.findFirst({
+      where: { id: data.fromUnitId, organizationId: context.organizationId },
+    }),
+    db.organizationUnit.findFirst({
+      where: { id: data.toUnitId, organizationId: context.organizationId },
+    }),
+  ]);
+
+  if (!fromUnit || !toUnit) {
+    throw new Error("Invalid fromUnit or toUnit for this organization");
+  }
+
   const conversion = await db.orgUnitConversion.create({
     data: {
       ...data,
@@ -180,13 +211,25 @@ export async function updateOrgUnitConversion(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const conversion = await db.orgUnitConversion.update({
+  // 🛡️ Sentinel: BOLA/IDOR Hardening - OrgUnitConversion lacks a composite unique constraint on [id, organizationId].
+  // Use findFirst pre-check followed by updateMany scoped by organizationId.
+  const existing = await db.orgUnitConversion.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existing) throw new Error("Conversion not found");
+
+  await db.orgUnitConversion.updateMany({
     where: { id, organizationId: context.organizationId },
     data: {
       ...data,
       factor: data.factor !== undefined ? new Decimal(data.factor) : undefined,
       offset: data.offset !== undefined ? new Decimal(data.offset) : undefined,
     },
+  });
+
+  const conversion = await db.orgUnitConversion.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
+    include: { fromUnit: true, toUnit: true },
   });
 
   revalidatePath("/inventory/units");
@@ -197,7 +240,14 @@ export async function deleteOrgUnitConversion(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.orgUnitConversion.delete({
+  // 🛡️ Sentinel: BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
+  // because OrgUnitConversion lacks a composite unique constraint on [id, organizationId].
+  const existing = await db.orgUnitConversion.findFirst({
+    where: { id, organizationId: context.organizationId },
+  });
+  if (!existing) throw new Error("Conversion not found");
+
+  await db.orgUnitConversion.deleteMany({
     where: { id, organizationId: context.organizationId },
   });
 
