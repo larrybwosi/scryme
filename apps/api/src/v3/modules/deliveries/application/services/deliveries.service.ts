@@ -162,19 +162,34 @@ export class DeliveriesService {
     const { transactionId, partnerId, driverId, notes } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
-      const transaction = await tx.transaction.findFirst({
-        where: { id: transactionId, organizationId },
-        include: { customer: true, deliveryPartner: true },
-      });
+      // ⚡ Bolt Optimization: Parallelize independent validation lookups
+      // (transaction, driver, deliveryPartner, existingFulfillment) inside the $transaction
+      // callback using Promise.all. This reduces database latency from 4 sequential roundtrips (O(4))
+      // down to 1 concurrent roundtrip (O(1)), minimizing active connection hold duration and pool lock contention.
+      const [transaction, driver, partner, existingFulfillment] = await Promise.all([
+        tx.transaction.findFirst({
+          where: { id: transactionId, organizationId },
+          include: { customer: true, deliveryPartner: true },
+        }),
+        driverId
+          ? tx.driver.findFirst({
+              where: { id: driverId, organizationId },
+            })
+          : Promise.resolve(null),
+        partnerId
+          ? tx.deliveryPartner.findFirst({
+              where: { id: partnerId, organizationId },
+            })
+          : Promise.resolve(null),
+        tx.fulfillment.findFirst({
+          where: { transactionId },
+        }),
+      ]);
 
       if (!transaction) throw new NotFoundException("Transaction not found");
 
       // Validate internal driver if provided
-      let driver = null;
       if (driverId) {
-        driver = await tx.driver.findFirst({
-          where: { id: driverId, organizationId },
-        });
         if (!driver) throw new NotFoundException("Driver not found");
         if (driver.availability === DriverStatus.OFFLINE) {
           throw new BadRequestException("Assigned driver is currently offline");
@@ -182,11 +197,7 @@ export class DeliveriesService {
       }
 
       // Validate external delivery partner if provided
-      let partner = null;
       if (partnerId) {
-        partner = await tx.deliveryPartner.findFirst({
-          where: { id: partnerId, organizationId },
-        });
         if (!partner) throw new NotFoundException("Delivery partner not found");
         if (!partner.isActive) {
           throw new BadRequestException("Delivery partner is not active");
@@ -194,9 +205,7 @@ export class DeliveriesService {
       }
 
       // Check existing fulfillment or create a new one
-      let fulfillment = await tx.fulfillment.findFirst({
-        where: { transactionId },
-      });
+      let fulfillment = existingFulfillment;
 
       if (fulfillment) {
         fulfillment = await tx.fulfillment.update({
@@ -268,27 +277,33 @@ export class DeliveriesService {
     const { driverId, partnerId } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
-      const fulfillment = await tx.fulfillment.findFirst({
-        where: {
-          id: fulfillmentId,
-          transaction: { organizationId },
-        },
-        include: { transaction: true },
-      });
+      // ⚡ Bolt Optimization: Parallelize independent lookups (fulfillment, driver, deliveryPartner)
+      // inside the $transaction callback using Promise.all to reduce database latency from O(3)
+      // sequential roundtrips to O(1) concurrent roundtrip.
+      const [fulfillment, driver, partner] = await Promise.all([
+        tx.fulfillment.findFirst({
+          where: {
+            id: fulfillmentId,
+            transaction: { organizationId },
+          },
+          include: { transaction: true },
+        }),
+        driverId
+          ? tx.driver.findFirst({
+              where: { id: driverId, organizationId },
+            })
+          : Promise.resolve(null),
+        partnerId
+          ? tx.deliveryPartner.findFirst({
+              where: { id: partnerId, organizationId },
+            })
+          : Promise.resolve(null),
+      ]);
 
       if (!fulfillment) throw new NotFoundException("Fulfillment not found");
-
-      if (driverId) {
-        const driver = await tx.driver.findFirst({
-          where: { id: driverId, organizationId },
-        });
-        if (!driver) throw new NotFoundException("Driver not found");
-      }
+      if (driverId && !driver) throw new NotFoundException("Driver not found");
 
       if (partnerId) {
-        const partner = await tx.deliveryPartner.findFirst({
-          where: { id: partnerId, organizationId },
-        });
         if (!partner) throw new NotFoundException("Delivery partner not found");
         await tx.transaction.update({
           where: { id: fulfillment.transactionId },
