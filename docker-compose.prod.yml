@@ -339,6 +339,60 @@ services:
       - "traefik.http.services.api.loadbalancer.server.port=${API_PORT:-4000}"
       - "logging_job=api"
 
+  cms:
+    build:
+      context: .
+      dockerfile: apps/cms/Dockerfile
+    image: scryme-cms:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${CMS_PORT:-3010}",
+        ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
+      PAYLOAD_SECRET: ${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
+      PAYLOAD_DB_PUSH: ${PAYLOAD_DB_PUSH:-false}
+      NEXT_PUBLIC_SERVER_URL: https://${CMS_DOMAIN:-cms.scryme.tech}
+      PORT: ${CMS_PORT:-3010}
+      NODE_ENV: production
+      RUSTFS_ENDPOINT: http://rustfs:9000
+      RUSTFS_ACCESS_KEY: ${RUSTFS_ACCESS_KEY}
+      RUSTFS_SECRET_KEY: ${RUSTFS_SECRET_KEY}
+      RUSTFS_BUCKET: ${RUSTFS_BUCKET:-dealio-uploads}
+    depends_on:
+      db:
+        condition: service_healthy
+      rustfs:
+        condition: service_healthy
+    networks:
+      - scryme-prod-network
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
+      - "traefik.http.routers.cms.rule=Host(`${CMS_DOMAIN:-cms.scryme.tech}`)"
+      - "traefik.http.routers.cms.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.cms.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.cms.loadbalancer.server.port=${CMS_PORT:-3010}"
+      - "logging_job=cms"
+
   crm:
     build:
       context: .
