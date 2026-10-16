@@ -20,6 +20,9 @@ services:
       - NODE_ENV=production
       - PORT=${CMS_PORT:-3010}
       - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@scryme-db:5432/${POSTGRES_DB:-app_db}?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-scryme-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://scryme-redis:6379}
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
       - PAYLOAD_DB_PUSH=${PAYLOAD_DB_PUSH:-false}
       - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_CMS_URL:-http://localhost:3010}
@@ -30,6 +33,21 @@ services:
     networks:
       - scryme-network
       - proxy-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--timeout=3",
+          "--spider",
+          "http://localhost:${CMS_PORT:-3010}/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
 
 networks:
   scryme-network:
