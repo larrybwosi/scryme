@@ -5,11 +5,13 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
 import androidx.compose.material.icons.outlined.VisibilityOff
@@ -92,8 +94,54 @@ fun LoginScreen(
                     color = SubtitleText,
                     textAlign = TextAlign.Center,
                     lineHeight = 20.sp,
-                    modifier = Modifier.padding(top = 8.dp, bottom = 28.dp)
+                    modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
                 )
+
+                // Primary Web Auto-Login (GitHub Mobile Style) Button
+                Button(
+                    onClick = {
+                        focusManager.clearFocus()
+                        viewModel.loginWithBrowser(context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .padding(bottom = 8.dp),
+                    shape = RoundedCornerShape(27.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = PurpleAccent,
+                        contentColor = Color.White
+                    ),
+                    elevation = ButtonDefaults.buttonElevation(defaultElevation = 4.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Language,
+                            contentDescription = "Browser Login",
+                            modifier = Modifier.size(20.dp),
+                            tint = Color.White
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Sign in with Auth Web App",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+
+                Text(
+                    text = "Auto-logs in if you're already signed in on your web browser",
+                    fontSize = 12.sp,
+                    color = SubtitleText,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.padding(bottom = 16.dp)
+                )
+
+                OrDivider()
 
                 AuthTextField(
                     value = email,
@@ -185,7 +233,7 @@ fun LoginScreen(
                 }
 
                 AuthPrimaryButton(
-                    text = "Log In",
+                    text = "Log In with Email",
                     onClick = {
                         focusManager.clearFocus()
                         viewModel.loginWithEmail(email, password)

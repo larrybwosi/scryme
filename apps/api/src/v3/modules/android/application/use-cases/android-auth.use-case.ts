@@ -260,3 +260,81 @@ export class AndroidAuthUseCase {
     return { success: true, message: "Logged out successfully" };
   }
 }
+
+  async exchangeOAuthCode(dto: { code: string; codeVerifier?: string; redirectUri?: string; clientId?: string }) {
+    try {
+      // Find valid code in oauthAuthorizationCode database table managed by Better Auth oauthProvider
+      const oauthCode = await this.prisma.client.oAuthAuthorizationCode.findUnique({
+        where: { code: dto.code },
+      });
+
+      if (!oauthCode) {
+        throw new UnauthorizedException("Invalid or expired OAuth authorization code");
+      }
+
+      if (oauthCode.expiresAt && new Date(oauthCode.expiresAt) < new Date()) {
+        throw new UnauthorizedException("OAuth authorization code has expired");
+      }
+
+      const userId = oauthCode.userId;
+      if (!userId) {
+        throw new UnauthorizedException("No user associated with authorization code");
+      }
+
+      const user = await this.prisma.client.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
+
+      // Retrieve or create active session token for the user
+      let session = await this.prisma.client.session.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { token: true },
+      });
+
+      let token = session?.token;
+      if (!token) {
+        const newSession = await this.prisma.client.session.create({
+          data: {
+            userId: user.id,
+            token: `s_${user.id}_${Date.now()}`,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+          },
+        });
+        token = newSession.token;
+      }
+
+      // Cleanup consumed OAuth code
+      await this.prisma.client.oAuthAuthorizationCode.delete({
+        where: { id: oauthCode.id },
+      }).catch(() => null);
+
+      const member = await this.prisma.client.member.findFirst({
+        where: { userId: user.id, deletedAt: null },
+        include: { organization: true },
+      });
+
+      const effectiveOrgSlug = member?.organization?.slug || "default";
+
+      return {
+        effectiveToken: token,
+        token: token,
+        effectiveOrgSlug,
+        orgSlug: effectiveOrgSlug,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        },
+        member: member ? { id: member.id, role: member.role } : null,
+      };
+    } catch (error: any) {
+      if (error instanceof UnauthorizedException || error instanceof NotFoundException) throw error;
+      throw new UnauthorizedException(error.message || "OAuth code exchange failed");
+    }
+  }

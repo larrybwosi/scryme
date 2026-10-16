@@ -6,6 +6,7 @@ import kotlinx.coroutines.flow.map
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
+import tech.scryme.app.data.dto.OAuthCodeExchangeRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.interceptor.SessionManager
@@ -86,6 +87,83 @@ class AuthRepositoryImpl @Inject constructor(
             } else {
                 val errorMsg = response.body()?.error?.message ?: response.message()
                 Result.failure(Exception("Login failed: $errorMsg"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun exchangeOAuthCode(code: String, codeVerifier: String?): Result<Unit> {
+        return try {
+            val request = OAuthCodeExchangeRequestDto(
+                code = code,
+                codeVerifier = codeVerifier,
+                redirectUri = "https://auth.scryme.tech/mobile-callback",
+                clientId = "scryme-android-app"
+            )
+            val response = authApiService.exchangeOAuthCode(request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                val body = response.body()?.data
+                val token = body?.effectiveToken ?: body?.token ?: ""
+                val orgSlug = body?.effectiveOrgSlug ?: body?.orgSlug ?: "default"
+                val userName = body?.user?.name
+                val userEmail = body?.user?.email
+                val userId = body?.user?.id
+                val orgName = body?.organization?.name
+                val orgCurrency = body?.organization?.effectiveCurrency ?: "USD"
+                val orgCurrencySymbol = body?.organization?.currencySymbol ?: CurrencyUtils.getSymbol(orgCurrency)
+
+                if (token.isNotEmpty()) {
+                    sessionManager.saveSession(
+                        accessToken = token,
+                        memberToken = token,
+                        orgSlug = orgSlug,
+                        userId = userId,
+                        memberId = null,
+                        userName = userName,
+                        userEmail = userEmail,
+                        orgName = orgName,
+                        orgCurrency = orgCurrency,
+                        orgCurrencySymbol = orgCurrencySymbol
+                    )
+
+                    runCatching {
+                        val meResponse = authApiService.getAndroidMe()
+                        if (meResponse.isSuccessful && meResponse.body()?.success == true) {
+                            val meData = meResponse.body()?.data
+                            val activeOrgSlug = meData?.activeOrganization?.slug ?: orgSlug
+                            val defaultLocationId = meData?.locations?.firstOrNull { it.isDefault == true }?.id
+                                ?: meData?.locations?.firstOrNull()?.id
+                            val memberId = meData?.member?.id
+                            val activeOrgName = meData?.activeOrganization?.name ?: orgName
+                            val activeOrgLogo = meData?.activeOrganization?.logo
+                            val activeCurrency = meData?.activeOrganization?.effectiveCurrency ?: orgCurrency
+                            val activeCurrencySymbol = meData?.activeOrganization?.currencySymbol ?: CurrencyUtils.getSymbol(activeCurrency)
+
+                            sessionManager.saveSession(
+                                accessToken = token,
+                                memberToken = token,
+                                orgSlug = activeOrgSlug,
+                                locationId = defaultLocationId,
+                                userId = meData?.user?.id ?: userId,
+                                memberId = memberId,
+                                userName = meData?.user?.name ?: userName,
+                                userEmail = meData?.user?.email ?: userEmail,
+                                orgName = activeOrgName,
+                                orgLogo = activeOrgLogo,
+                                orgCurrency = activeCurrency,
+                                orgCurrencySymbol = activeCurrencySymbol
+                            )
+                        }
+                    }
+
+                    Result.success(Unit)
+                } else {
+                    Result.failure(Exception("OAuth authorization code exchange succeeded but no token was returned"))
+                }
+            } else {
+                val errorMsg = response.body()?.error?.message ?: response.message()
+                Result.failure(Exception("OAuth code exchange failed: $errorMsg"))
             }
         } catch (e: Exception) {
             Result.failure(e)

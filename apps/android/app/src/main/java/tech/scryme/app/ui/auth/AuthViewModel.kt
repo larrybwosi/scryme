@@ -1,5 +1,9 @@
 package tech.scryme.app.ui.auth
 
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import androidx.browser.customtabs.CustomTabsIntent
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -8,6 +12,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tech.scryme.app.domain.repository.AuthRepository
+import tech.scryme.app.util.PkceUtils
 import javax.inject.Inject
 
 sealed interface AuthUiState {
@@ -28,10 +33,67 @@ class AuthViewModel @Inject constructor(
     private val _isLoggedIn = MutableStateFlow(false)
     val isLoggedIn: StateFlow<Boolean> = _isLoggedIn.asStateFlow()
 
+    private var pendingCodeVerifier: String? = null
+
     init {
         viewModelScope.launch {
             authRepository.isLoggedIn().collect { loggedIn ->
                 _isLoggedIn.value = loggedIn
+            }
+        }
+    }
+
+    fun loginWithBrowser(context: Context) {
+        viewModelScope.launch {
+            try {
+                val codeVerifier = PkceUtils.generateCodeVerifier()
+                val codeChallenge = PkceUtils.generateCodeChallenge(codeVerifier)
+                pendingCodeVerifier = codeVerifier
+
+                val redirectUri = Uri.encode("https://auth.scryme.tech/mobile-callback")
+                val authUrl = Uri.parse("https://auth.scryme.tech/oauth2/authorize")
+                    .buildUpon()
+                    .appendQueryParameter("client_id", "scryme-android-app")
+                    .appendQueryParameter("response_type", "code")
+                    .appendQueryParameter("redirect_uri", "https://auth.scryme.tech/mobile-callback")
+                    .appendQueryParameter("scope", "openid profile email org_info membership")
+                    .appendQueryParameter("code_challenge", codeChallenge)
+                    .appendQueryParameter("code_challenge_method", "S256")
+                    .build()
+
+                val customTabsIntent = CustomTabsIntent.Builder().build()
+                customTabsIntent.intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                customTabsIntent.launchUrl(context, authUrl)
+            } catch (e: Exception) {
+                _uiState.value = AuthUiState.Error("Failed to launch web sign-in: ${e.message}")
+            }
+        }
+    }
+
+    fun handleDeepLinkIntent(uri: Uri?) {
+        if (uri == null) return
+        val code = uri.getQueryParameter("code")
+        val error = uri.getQueryParameter("error")
+        val errorDescription = uri.getQueryParameter("error_description")
+
+        if (!error.isNullOrEmpty()) {
+            _uiState.value = AuthUiState.Error(errorDescription ?: error)
+            return
+        }
+
+        if (!code.isNullOrEmpty()) {
+            viewModelScope.launch {
+                _uiState.value = AuthUiState.Loading
+                val result = authRepository.exchangeOAuthCode(code, pendingCodeVerifier)
+                result.fold(
+                    onSuccess = {
+                        _uiState.value = AuthUiState.Success
+                        pendingCodeVerifier = null
+                    },
+                    onFailure = { err ->
+                        _uiState.value = AuthUiState.Error(err.message ?: "Failed to authenticate via browser link.")
+                    }
+                )
             }
         }
     }
