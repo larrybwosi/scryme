@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+
+<html lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_standard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;family=JetBrains+Mono:wght@500&amp;family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config={darkMode:"class",theme:{extend:{"colors":{"surface-container-lowest":"#ffffff","on-tertiary-container":"#70a487","on-surface":"#1a1c1a","tertiary":"#002113","surface-dim":"#dbdad7","surface-bright":"#faf9f6","secondary-container":"#bef529","on-primary-fixed":"#002116","on-secondary-container":"#526d00","tertiary-container":"#003923","on-error-container":"#93000a","primary-container":"#12372a","tertiary-fixed":"#b8efce","surface-container":"#efeeeb","on-secondary":"#ffffff","on-tertiary-fixed-variant":"#1d5038","on-background":"#1a1c1a","secondary-fixed-dim":"#a4d700","primary-fixed":"#c3ebd8","on-tertiary-fixed":"#002112","surface-container-highest":"#e3e2e0","error-container":"#ffdad6","primary-fixed-dim":"#a8cfbd","surface-variant":"#e3e2e0","background":"#faf9f6","secondary-fixed":"#bef529","inverse-on-surface":"#f2f1ee","on-primary-fixed-variant":"#2a4e3f","tertiary-fixed-dim":"#9dd2b3","error":"#ba1a1a","on-secondary-fixed-variant":"#394d00","on-primary-container":"#7ba190","on-secondary-fixed":"#151f00","inverse-surface":"#2f312f","primary":"#002116","surface-container-low":"#f4f3f0","surface-tint":"#416656","on-surface-variant":"#414844","outline-variant":"#c1c8c3","on-primary":"#ffffff","on-tertiary":"#ffffff","surface":"#faf9f6","inverse-primary":"#a8cfbd","on-error":"#ffffff","surface-container-high":"#e9e8e5","secondary":"#4d6700","outline":"#717974"},"borderRadius":{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},"spacing":{"space-xs":"0.25rem","space-lg":"1.5rem","margin":"2rem","gutter-sm":"1rem","space-sm":"0.5rem","space-md":"1rem","gutter":"1.5rem","space-xl":"2.5rem","margin-sm":"1rem"},"fontFamily":{"title-md":["Inter"],"body-lg":["Inter"],"body-sm":["Inter"],"label-xs":["Inter"],"headline-lg":["Newsreader"],"data-mono":["JetBrains Mono"],"headline-lg-mobile":["Newsreader"],"body-md":["Inter"],"title-sm":["Inter"],"display-xl":["Newsreader"],"headline-sm":["Newsreader"],"headline-md":["Newsreader"],"display-xl-mobile":["Newsreader"],"label-md":["Inter"]},"fontSize":{"title-md":["16px",{"lineHeight":"24px","letterSpacing":"-0.01em","fontWeight":"600"}],"body-lg":["16px",{"lineHeight":"24px","letterSpacing":"0em","fontWeight":"400"}],"body-sm":["12px",{"lineHeight":"16px","letterSpacing":"0.01em","fontWeight":"400"}],"label-xs":["10px",{"lineHeight":"12px","letterSpacing":"0.06em","fontWeight":"700"}],"headline-lg":["40px",{"lineHeight":"48px","letterSpacing":"-0.015em","fontWeight":"400"}],"data-mono":["13px",{"lineHeight":"18px","letterSpacing":"-0.02em","fontWeight":"500"}],"headline-lg-mobile":["30px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"400"}],"body-md":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"400"}],"title-sm":["14px",{"lineHeight":"20px","letterSpacing":"0em","fontWeight":"600"}],"display-xl":["56px",{"lineHeight":"64px","letterSpacing":"-0.02em","fontWeight":"400"}],"headline-sm":["22px",{"lineHeight":"28px","letterSpacing":"-0.005em","fontWeight":"500"}],"headline-md":["28px",{"lineHeight":"36px","letterSpacing":"-0.01em","fontWeight":"500"}],"display-xl-mobile":["38px",{"lineHeight":"44px","letterSpacing":"-0.015em","fontWeight":"400"}],"label-md":["12px",{"lineHeight":"16px","letterSpacing":"0.02em","fontWeight":"600"}]}}}}</script></head><body class="bg-surface font-body-md text-on-surface antialiased selection:bg-secondary-container selection:text-on-secondary-container"><header class="fixed top-0 w-full z-50 bg-surface-container-lowest/90 backdrop-blur-xl shadow-[0_1px_8px_rgba(18,55,42,0.04)]"><div class="h-20 w-full px-margin flex items-center justify-between gap-space-md"><div class="flex items-center gap-space-lg"><a class="flex items-center gap-space-sm group" data-path="overview" href="#"><span class="font-headline-md text-headline-md tracking-tight text-primary font-medium">Scryme</span><div class="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-surface-container-low border border-primary-container/10 shadow-[0_1px_3px_rgba(18,55,42,0.03)]"><span class="relative flex h-2 w-2"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed-dim opacity-75"></span><span class="relative inline-flex rounded-full h-2 w-2 bg-secondary-container"></span></span><span class="font-data-mono text-[10px] leading-tight tracking-wider uppercase text-on-surface-variant font-medium">ERP OS 3.2</span></div></a><nav class="hidden lg:flex items-center gap-space-lg" data-active-classes="text-primary font-semibold"><div class="relative group py-space-sm"><button class="flex items-center gap-1 font-body-md text-body-md text-on-surface-variant group-hover:text-primary transition-colors cursor-pointer">Solutions<span class="material-symbols-outlined text-[16px] transition-transform duration-200 group-hover:rotate-180">expand_more</span></button><div class="absolute left-0 top-full pt-2 opacity-0 translate-y-1 invisible group-hover:opacity-100 group-hover:translate-y-0 group-hover:visible transition-all duration-150 z-50"><div class="w-72 p-space-sm rounded-xl bg-surface-container-lowest shadow-[0_20px_48px_rgba(18,55,42,0.12),0_4px_12px_rgba(18,55,42,0.04)] border border-primary-container/10 flex flex-col gap-1"><a class="flex flex-col px-space-sm py-2 rounded-lg hover:bg-surface-container-low transition-colors" data-path="sales-automation" href="#"><span class="font-title-sm text-title-sm text-on-surface">Sales Automation</span><span class="font-body-sm text-body-sm text-on-surface-variant">Revenue engines &amp; pipeline velocity</span></a><a class="flex flex-col px-space-sm py-2 rounded-lg hover:bg-surface-container-low transition-colors" data-path="multi-location-inventory" href="#"><span class="font-title-sm text-title-sm text-on-surface">Multi-Location Inventory</span><span class="font-body-sm text-body-sm text-on-surface-variant">Real-time node synchronisation</span></a><a class="flex flex-col px-space-sm py-2 rounded-lg hover:bg-surface-container-low transition-colors" data-path="360-crm" href="#"><span class="font-title-sm text-title-sm text-on-surface">360° CRM</span><span class="font-body-sm text-body-sm text-on-surface-variant">Unified global partner telemetry</span></a><a class="flex flex-col px-space-sm py-2 rounded-lg hover:bg-surface-container-low transition-colors" data-path="headless-cms" href="#"><span class="font-title-sm text-title-sm text-on-surface">Headless CMS</span><span class="font-body-sm text-body-sm text-on-surface-variant">Decoupled omnichannel catalog</span></a></div></div></div><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="platform" href="#">Platform</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Architecture</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="pricing" href="#">Pricing</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="resources" href="#">Resources</a><a class="font-body-md text-body-md text-on-surface-variant hover:text-on-surface transition-colors" data-path="enterprise" href="#">Enterprise</a></nav></div><div class="flex items-center gap-space-md"><a class="hidden sm:inline-flex font-body-md text-body-md text-on-surface-variant hover:text-primary transition-colors px-2 py-1.5" data-path="login" href="#">Log In</a><a class="relative inline-flex items-center justify-center px-4 py-2 rounded-lg bg-primary text-on-primary font-title-sm text-title-sm hover:bg-primary-container hover:text-on-primary shadow-[0_1px_3px_rgba(18,55,42,0.03),0_4px_16px_rgba(18,55,42,0.02)] transition-all" data-path="book-demo" href="#"><span class="w-1.5 h-1.5 rounded-full bg-secondary-fixed mr-2"></span>Book Demo</a><a class="hidden xl:inline-flex items-center justify-center px-4 py-2 rounded-full bg-secondary-container text-on-secondary-fixed font-title-sm text-title-sm hover:bg-secondary-fixed-dim hover:text-on-secondary-fixed transition-colors shadow-sm" data-path="start-trial" href="#">Start Free Trial</a><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></div></header><main class="w-full pt-20 bg-surface"><div class="flex flex-col w-full">
+<!-- Top Marquee Ticker -->
+<div class="w-full bg-surface-container-high py-2.5 overflow-hidden">
+<div class="flex items-center justify-between px-margin text-on-surface-variant font-data-mono text-body-sm">
+<div class="flex items-center gap-space-lg overflow-x-auto no-scrollbar">
+<span class="flex items-center gap-2 shrink-0">
+<span class="w-2 h-2 rounded-full bg-secondary-container animate-pulse"></span>
+<span>CLUSTER STATUS: NORMAL</span>
+</span>
+<span class="shrink-0 text-outline-variant">/</span>
+<span class="shrink-0">GLOBAL INVENTORY NODES: 4,812 ACTIVE</span>
+<span class="shrink-0 text-outline-variant">/</span>
+<span class="shrink-0">P99 DISPATCH LATENCY: 11.4ms</span>
+<span class="shrink-0 text-outline-variant">/</span>
+<span class="shrink-0">REVOPS MESH: 100% HEALTH</span>
+</div>
+<div class="hidden md:flex items-center gap-space-md shrink-0 font-body-sm text-on-surface">
+<span class="font-title-sm text-title-sm text-primary">ISO/IEC 27001 Certified</span>
+<span class="text-outline-variant">•</span>
+<span>SOC 2 Type II Audited</span>
+</div>
+</div>
+</div>
+<!-- Hero Section -->
+<section class="relative w-full px-margin py-space-xl lg:py-24 bg-surface">
+<div class="max-w-7xl mx-auto flex flex-col items-center text-center">
+<!-- Eyebrow Pill -->
+<div class="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-surface-container-lowest shadow-sm mb-space-lg">
+<span class="relative flex h-2 w-2">
+<span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-secondary-fixed opacity-75"></span>
+<span class="relative inline-flex rounded-full h-2 w-2 bg-secondary-container"></span>
+</span>
+<span class="font-data-mono text-body-sm uppercase tracking-wider text-on-surface-variant font-medium">SCRYME ERP OS V3.2 • UNIFIED OPERATIONAL KERNEL</span>
+</div>
+<!-- Main Editorial Headline with inline badge highlight -->
+<h1 class="font-display-xl text-display-xl text-on-surface max-w-5xl tracking-tight leading-none mb-space-lg">
+        Can one smarter engine scale your
+        <span class="inline-flex items-center align-middle mx-1 px-4 py-1 rounded-full bg-secondary-container text-on-secondary-fixed font-title-md text-title-md -rotate-1 shadow-sm">
+          entire enterprise?
+        </span>
+</h1>
+<!-- Editorial Subtitle -->
+<p class="font-body-lg text-body-lg text-on-surface-variant max-w-3xl leading-relaxed mb-space-xl">
+        Scryme orchestrates sales velocity pipelines, multi-warehouse global stock, 360° telemetry CRM, and decoupled catalog engines across an immutable sub-millisecond mesh. Zero fragmented connectors. Boundless execution.
+      </p>
+<!-- Action Cluster -->
+<div class="flex flex-wrap items-center justify-center gap-space-md mb-space-xl">
+<a class="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-secondary-container text-on-secondary-fixed font-title-sm text-title-sm hover:bg-secondary-fixed-dim transition-all shadow-md hover:shadow-lg" href="#demo">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">bolt</span>
+<span>Start 14-Day Enterprise Trial</span>
+</a>
+<a class="inline-flex items-center gap-2.5 px-6 py-3.5 rounded-full bg-surface-container-lowest text-on-surface font-title-sm text-title-sm hover:bg-surface-container-low transition-all shadow-sm" href="#architecture">
+<span class="material-symbols-outlined text-[20px] text-primary">play_circle</span>
+<span>Watch Architecture Tour (2 min)</span>
+</a>
+</div>
+<!-- Quantitative Proof Line -->
+<div class="flex flex-wrap items-center justify-center gap-y-2 gap-x-space-lg text-on-surface-variant font-data-mono text-body-sm pb-space-lg">
+<span class="flex items-center gap-1.5 text-on-surface">
+<span class="material-symbols-outlined text-secondary text-[18px]">verified</span>
+<span>$4.8B+ GMV Synchronized</span>
+</span>
+<span class="text-outline-variant">•</span>
+<span>2,400+ Enterprise Warehouses</span>
+<span class="text-outline-variant">•</span>
+<span class="text-primary font-semibold">99.999% Historical Uptime</span>
+</div>
+<!-- Live Command Center Interactive Canvas Mockup -->
+<div class="w-full mt-4 bg-surface-container-lowest rounded-xl shadow-xl overflow-hidden p-space-md lg:p-space-lg text-left">
+<!-- Dashboard Top Control Header -->
+<div class="flex flex-wrap items-center justify-between pb-space-md gap-4">
+<div class="flex items-center gap-3">
+<div class="w-3 h-3 rounded-full bg-secondary-container"></div>
+<div>
+<span class="font-title-sm text-title-sm text-on-surface block">Live Operations Kernel — Node US-East-Primary</span>
+<span class="font-data-mono text-body-sm text-on-surface-variant">TELEMETRY STREAM: STABLE • LATENCY: 11.8ms</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm bg-surface-container-low px-3 py-1.5 rounded-lg">
+<span class="font-data-mono text-body-sm text-primary font-semibold">AUTONOMOUS ORCHESTRATION</span>
+<span class="px-2 py-0.5 rounded-full bg-secondary-container text-on-secondary-container font-label-xs text-label-xs uppercase">ACTIVE</span>
+</div>
+</div>
+<!-- 3-Column Core Stat Tiles -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-space-md pt-space-md">
+<!-- Run Rate Card with Sparkline SVG -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col justify-between">
+<div class="flex items-start justify-between">
+<div>
+<span class="font-label-xs text-label-xs uppercase tracking-wider text-on-surface-variant block mb-1">Quarterly RevOps Run Rate</span>
+<span class="font-headline-md text-headline-md text-primary font-semibold">$14,892,400</span>
+</div>
+<span class="px-2 py-1 rounded bg-surface-container-lowest font-data-mono text-body-sm text-secondary font-bold">+38.4% YoY</span>
+</div>
+<div class="mt-4 pt-2">
+<div class="flex items-end justify-between h-14 w-full gap-1">
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[35%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[48%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[42%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[60%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[55%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[72%]"></div>
+<div class="w-full bg-surface-container-highest rounded-t-sm h-[68%]"></div>
+<div class="w-full bg-secondary-container rounded-t-sm h-[94%]"></div>
+</div>
+<span class="font-data-mono text-body-sm text-on-surface-variant block mt-2">Rolling 8-week execution trajectory</span>
+</div>
+</div>
+<!-- Multi-Location Fulfillment Velocity -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col justify-between">
+<div>
+<div class="flex items-start justify-between mb-2">
+<span class="font-label-xs text-label-xs uppercase tracking-wider text-on-surface-variant">Global Stock Capacity</span>
+<span class="font-data-mono text-body-sm text-primary font-medium">1.4s P95 Dispatch</span>
+</div>
+<div class="space-y-3 mt-3">
+<div>
+<div class="flex justify-between font-body-sm text-body-sm mb-1 text-on-surface">
+<span>US-East Hub (New Jersey)</span>
+<span class="font-data-mono text-primary font-semibold">88%</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[88%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-body-sm text-body-sm mb-1 text-on-surface">
+<span>EU Central (Frankfurt)</span>
+<span class="font-data-mono text-primary font-semibold">64%</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[64%]"></div>
+</div>
+</div>
+<div>
+<div class="flex justify-between font-body-sm text-body-sm mb-1 text-on-surface">
+<span>APAC North (Tokyo)</span>
+<span class="font-data-mono text-primary font-semibold">41%</span>
+</div>
+<div class="w-full h-2 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="h-full bg-primary rounded-full w-[41%]"></div>
+</div>
+</div>
+</div>
+</div>
+<span class="font-data-mono text-body-sm text-on-surface-variant mt-3 block">Dynamic route redistribution: ON</span>
+</div>
+<!-- Autonomous Action Feed -->
+<div class="p-space-md rounded-xl bg-surface-container-low flex flex-col justify-between">
+<div class="flex items-center justify-between mb-3">
+<span class="font-label-xs text-label-xs uppercase tracking-wider text-on-surface-variant">Auto-Pilot Triggers</span>
+<span class="font-data-mono text-body-sm text-secondary font-semibold">100% ACCURACY</span>
+</div>
+<div class="space-y-2.5">
+<div class="p-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[18px]">autorenew</span>
+<div class="text-body-sm">
+<p class="font-title-sm text-title-sm text-on-surface leading-tight">PO-8821 Reorder Issued</p>
+<span class="text-on-surface-variant font-data-mono">SKU-99042 • Supplier FastTrack</span>
+</div>
+</div>
+<span class="font-data-mono text-body-sm text-on-surface-variant">Just now</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">verified_user</span>
+<div class="text-body-sm">
+<p class="font-title-sm text-title-sm text-on-surface leading-tight">CRM Tier-1 Escalation</p>
+<span class="text-on-surface-variant font-data-mono">Arcturus Ltd • $450k Contract</span>
+</div>
+</div>
+<span class="font-data-mono text-body-sm text-on-surface-variant">4m ago</span>
+</div>
+<div class="p-2.5 rounded-lg bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-on-surface-variant text-[18px]">cloud_sync</span>
+<div class="text-body-sm">
+<p class="font-title-sm text-title-sm text-on-surface leading-tight">Catalog Matrix Synced</p>
+<span class="text-on-surface-variant font-data-mono">42 Omnichannel endpoints</span>
+</div>
+</div>
+<span class="font-data-mono text-body-sm text-on-surface-variant">12m ago</span>
+</div>
+</div>
+<div class="mt-3 flex items-center justify-between font-data-mono text-body-sm text-on-surface-variant">
+<span>ZERO HUMAN BOTTLENECK</span>
+<span class="text-primary font-semibold">AUDIT LOG #8911-B</span>
+</div>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Editorial Manifesto Band (Inspired by Reference Composition) -->
+<section class="w-full bg-primary text-on-primary py-space-xl px-margin">
+<div class="max-w-7xl mx-auto flex flex-col lg:flex-row items-start justify-between gap-space-xl">
+<div class="lg:w-1/2 flex flex-col gap-space-md">
+<div class="flex items-center gap-3">
+<span class="font-data-mono text-secondary-fixed text-headline-sm">01</span>
+<span class="h-px w-12 bg-on-primary-container"></span>
+<span class="font-label-xs uppercase tracking-widest text-on-primary-container">ARCHITECTURAL PARADIGM</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg leading-tight text-on-primary">
+          Traditional enterprise software wasn't designed to communicate. It was designed to bill you for integration consultants.
+        </h2>
+</div>
+<div class="lg:w-5/12 flex flex-col gap-space-md font-body-lg text-body-lg text-on-primary-container leading-relaxed">
+<p>
+          Point-solution fragmentation costs fast-growing firms an average of 14.8 hours per employee weekly in manual reconciliation, broken Zapier connections, and inventory discrepancy adjustments.
+        </p>
+<p>
+          Scryme re-engineers enterprise infrastructure around a single reactive state graph. When a quote converts to an invoice in RevOps, stock is reserved in transit across 3 fulfillment hubs, CRM scores re-index, and your storefront manifests update automatically in 12ms.
+        </p>
+<div class="pt-2 flex items-center gap-4">
+<div class="px-3 py-1 rounded bg-primary-container text-secondary-fixed font-data-mono text-body-sm">
+            0 INTEGRATION MIDDLEWARE
+          </div>
+<div class="px-3 py-1 rounded bg-primary-container text-on-primary font-data-mono text-body-sm">
+            1 IMMUTABLE AUDIT LOG
+          </div>
+</div>
+</div>
+</div>
+</section>
+<!-- The 4 Pillars of Operational Truth -->
+<section class="w-full px-margin py-space-xl bg-surface-container-low">
+<div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
+<!-- Section Header -->
+<div class="flex flex-col md:flex-row md:items-end justify-between gap-space-md">
+<div>
+<span class="font-data-mono text-secondary font-semibold text-body-sm block mb-1">UNIFIED ARCHITECTURE SUITE</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">The Four Pillars of Operational Command</h2>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-md">
+          Engineered natively without third-party middleware. Every core module is an extension of the same low-latency transaction ledger.
+        </p>
+</div>
+<!-- 4 Pillars Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-space-md">
+<!-- Pillar 01: Sales Automation & RevOps -->
+<div class="group p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-display-xl text-display-xl text-outline-variant font-light group-hover:text-primary transition-colors">01</span>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-fixed font-data-mono text-body-sm font-semibold">+42% Win-Rate</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Sales Automation &amp; RevOps</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed">
+              Algorithmic quote-to-cash velocity. Trigger customized deal approvals, instant line-item CPQ, and automated subscription ledger postings.
+            </p>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant mb-space-lg">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Deterministic dynamic CPQ generator</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Multi-currency real-time ledger sync</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Automated contract renewals &amp; churn alert</span>
+</li>
+</ul>
+</div>
+<a class="inline-flex items-center justify-between pt-space-sm text-primary font-title-sm text-title-sm group-hover:text-secondary transition-colors" data-path="sales-automation" href="#">
+<span>Explore RevOps Kernel</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+<!-- Pillar 02: Multi-Location Inventory -->
+<div class="group p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-display-xl text-display-xl text-outline-variant font-light group-hover:text-primary transition-colors">02</span>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-fixed font-data-mono text-body-sm font-semibold">0.02% Stockout</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Multi-Location Inventory</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed">
+              Decentralized node tracking across physical warehouses, 3PL networks, and retail backrooms with sub-second synchronization.
+            </p>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant mb-space-lg">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Continuous virtual stock rebalancing</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Batch, serial, and expiration isolation</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Intelligent automated PO dispatch</span>
+</li>
+</ul>
+</div>
+<a class="inline-flex items-center justify-between pt-space-sm text-primary font-title-sm text-title-sm group-hover:text-secondary transition-colors" data-path="multi-location-inventory" href="#">
+<span>Explore Inventory Hub</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+<!-- Pillar 03: 360° Relationship CRM -->
+<div class="group p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-display-xl text-display-xl text-outline-variant font-light group-hover:text-primary transition-colors">03</span>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-fixed font-data-mono text-body-sm font-semibold">89.4% Retention</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">360° Relationship CRM</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed">
+              Holistic enterprise partner telemetry. Consolidate every shipment status, outstanding PO, and stakeholder interaction in real time.
+            </p>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant mb-space-lg">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Complete financial &amp; fulfillment history</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Deterministic sentiment &amp; margin alerts</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Stakeholder communication threads</span>
+</li>
+</ul>
+</div>
+<a class="inline-flex items-center justify-between pt-space-sm text-primary font-title-sm text-title-sm group-hover:text-secondary transition-colors" data-path="360-crm" href="#">
+<span>Explore Partner CRM</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+<!-- Pillar 04: Headless CMS & Catalog Cloud -->
+<div class="group p-space-lg rounded-xl bg-surface-container-lowest shadow-sm hover:shadow-md transition-all flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between mb-space-md">
+<span class="font-display-xl text-display-xl text-outline-variant font-light group-hover:text-primary transition-colors">04</span>
+<span class="px-2.5 py-1 rounded-full bg-secondary-container text-on-secondary-fixed font-data-mono text-body-sm font-semibold">38ms TTFB</span>
+</div>
+<h3 class="font-headline-sm text-headline-sm text-on-surface mb-2">Headless CMS &amp; Catalog</h3>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md leading-relaxed">
+              Decouple your customer touchpoints. Feed B2B portals, native mobile apps, and edge storefronts directly from core ERP truth.
+            </p>
+<ul class="space-y-2 font-body-sm text-body-sm text-on-surface-variant mb-space-lg">
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>GraphQL &amp; gRPC native APIs</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Real-time dynamic tiered pricing tables</span>
+</li>
+<li class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">check_circle</span>
+<span>Localized assets with versioned branching</span>
+</li>
+</ul>
+</div>
+<a class="inline-flex items-center justify-between pt-space-sm text-primary font-title-sm text-title-sm group-hover:text-secondary transition-colors" data-path="headless-cms" href="#">
+<span>Explore Catalog Cloud</span>
+<span class="material-symbols-outlined text-[18px]">arrow_forward</span>
+</a>
+</div>
+</div>
+</div>
+</section>
+<!-- Side-by-Side Paradigm Comparison: Legacy Sprawl vs Scryme Mesh -->
+<section class="w-full px-margin py-space-xl bg-surface">
+<div class="max-w-7xl mx-auto flex flex-col gap-space-lg">
+<div class="text-center max-w-3xl mx-auto mb-space-md">
+<span class="font-data-mono text-secondary font-semibold text-body-sm uppercase tracking-wider block mb-1">ARCHITECTURAL EVOLUTION</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Can one unified mesh replace 9 fragmented SaaS tools?</h2>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-space-lg">
+<!-- Legacy Approach Card -->
+<div class="p-space-lg rounded-xl bg-surface-container-high flex flex-col justify-between">
+<div>
+<div class="flex items-center justify-between pb-space-md">
+<span class="font-label-xs uppercase tracking-widest text-on-surface-variant font-bold">THE LEGACY SPRAWL</span>
+<span class="px-2.5 py-0.5 rounded bg-error-container text-on-error-container font-data-mono text-body-sm font-semibold">FRAGILE MIDDLEWARE</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface-variant mb-space-md">
+              Independent systems glued together by scheduled batch cron jobs and asynchronous Webhooks that fail silently under high order volumes.
+            </p>
+<div class="space-y-3 font-data-mono text-body-sm">
+<div class="p-3 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface">
+<span>Inventory Drift Rate</span>
+<span class="text-error font-semibold">4.8% — 8.2%</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface">
+<span>Inter-tool Sync Latency</span>
+<span class="text-on-surface-variant">15 min to 4 hours</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface">
+<span>Annual Integration Maintenance</span>
+<span class="text-error font-semibold">$184,000 / year</span>
+</div>
+<div class="p-3 rounded-lg bg-surface-container-lowest flex items-center justify-between text-on-surface">
+<span>ERP Migration Timeline</span>
+<span class="text-on-surface-variant">9 — 18 Months</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md mt-space-md">
+<span class="font-data-mono text-body-sm text-error flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">warning</span>
+              High risk of invoice disputes &amp; ghost stock
+            </span>
+</div>
+</div>
+<!-- Scryme Mesh Card -->
+<div class="p-space-lg rounded-xl bg-primary text-on-primary flex flex-col justify-between shadow-xl">
+<div>
+<div class="flex items-center justify-between pb-space-md">
+<span class="font-label-xs uppercase tracking-widest text-secondary-fixed font-bold">THE SCRYME OPERATING KERNEL</span>
+<span class="px-2.5 py-0.5 rounded bg-secondary-container text-on-secondary-fixed font-data-mono text-body-sm font-semibold">ZERO GLUE CODE</span>
+</div>
+<p class="font-body-md text-body-md text-on-primary-container mb-space-md">
+              A unified high-speed state graph where every operational record updates synchronously. Built from the ground up for instantaneous scale.
+            </p>
+<div class="space-y-3 font-data-mono text-body-sm">
+<div class="p-3 rounded-lg bg-primary-container flex items-center justify-between text-on-primary">
+<span>Inventory Drift Rate</span>
+<span class="text-secondary-fixed font-semibold">0.00% (Guaranteed)</span>
+</div>
+<div class="p-3 rounded-lg bg-primary-container flex items-center justify-between text-on-primary">
+<span>Inter-tool Sync Latency</span>
+<span class="text-secondary-fixed font-semibold">&lt; 12ms (Sub-second)</span>
+</div>
+<div class="p-3 rounded-lg bg-primary-container flex items-center justify-between text-on-primary">
+<span>Annual Integration Maintenance</span>
+<span class="text-secondary-fixed font-semibold">$0.00 (Native Kernel)</span>
+</div>
+<div class="p-3 rounded-lg bg-primary-container flex items-center justify-between text-on-primary">
+<span>ERP Migration Timeline</span>
+<span class="text-secondary-fixed font-semibold">14 Days via Teleport Engine</span>
+</div>
+</div>
+</div>
+<div class="pt-space-md mt-space-md">
+<span class="font-data-mono text-body-sm text-secondary-fixed flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[18px]">verified</span>
+              Full audit trail with SOC2 immutable ledger proofs
+            </span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Real Operational Proof & Case Study -->
+<section class="w-full px-margin py-space-xl bg-surface-container-low">
+<div class="max-w-7xl mx-auto flex flex-col gap-space-xl">
+<!-- Key Operational Metrics Grid -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-space-md text-center">
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<span class="font-headline-lg text-headline-lg text-primary block font-medium">88%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Manual Reconciliation Cut</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<span class="font-headline-lg text-headline-lg text-primary block font-medium">12ms</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Global Sync Edge Latency</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<span class="font-headline-lg text-headline-lg text-primary block font-medium">$1.2B+</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Annual Veloce Group GMV</span>
+</div>
+<div class="p-space-md rounded-xl bg-surface-container-lowest shadow-sm">
+<span class="font-headline-lg text-headline-lg text-secondary block font-medium">99.999%</span>
+<span class="font-body-sm text-body-sm text-on-surface-variant">Operational SLA Record</span>
+</div>
+</div>
+<!-- Executive Testimonial Card (Editorial Split) -->
+<div class="p-space-lg lg:p-space-xl rounded-xl bg-surface-container-lowest shadow-md flex flex-col lg:flex-row items-center gap-space-xl">
+<div class="w-full lg:w-1/3 shrink-0">
+<div class="relative w-full h-80 rounded-xl overflow-hidden shadow-sm">
+<img class="w-full h-full object-cover" data-alt="High-contrast black-and-white editorial portrait of a modern European female Chief Operating Officer in an architectural office setting, warm natural light, cinematic depth of field, reflecting poise, strategic clarity, and contemporary industrial design." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAyOEfj2jF1Q2fhTEWmruTWdOz5sYeZTIVWvCFVJapzasfd9vsQcLE5y3FTvRz087r2Ck9Jst7VvoAvc50Ol5YVPW69aEIjq5_upTLHcGVJ_MsieTM52ra2KPw12bNh9HgStOYkGvnd8O595YRI0DYk8yfObuO3SLFpJ-8QPKWzTbJGM4nR3XFvI78yeDIbDx3Nxe5iRD-628mtLZhlT76fIg34W-lU1y_hf0uVevDOq_hQLkeKGYI"/>
+<div class="absolute bottom-3 left-3 px-3 py-1.5 rounded-lg bg-surface-container-lowest/90 backdrop-blur-md">
+<span class="font-data-mono text-body-sm text-primary font-bold">VERIFIED PRODUCTION AUDIT</span>
+</div>
+</div>
+</div>
+<div class="w-full lg:w-2/3 flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-3 h-3 rounded-full bg-secondary-container"></span>
+<span class="font-data-mono text-body-sm uppercase tracking-wider text-on-surface-variant">CASE STUDY 049 // VELOCE GLOBAL LOGISTICS</span>
+</div>
+<blockquote class="font-headline-md text-headline-md text-on-surface leading-snug">
+            "We retired SAP and six disparate point solutions over a single weekend with Scryme's migration engine. Today, our 18 global fulfillment depots and 400 sales representatives operate with zero data latency. It is the most reliable operational substrate we have ever touched."
+          </blockquote>
+<div class="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+<div>
+<p class="font-title-md text-title-md text-primary font-semibold">Elena Rostova</p>
+<p class="font-body-sm text-body-sm text-on-surface-variant">Chief Operating Officer, Veloce Global Logistics AG</p>
+</div>
+<a class="inline-flex items-center gap-2 font-title-sm text-title-sm text-secondary hover:text-primary transition-colors" href="#">
+<span>Read complete architectural teardown</span>
+<span class="material-symbols-outlined text-[18px]">arrow_outward</span>
+</a>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- Interactive Technical FAQ Accordion Section -->
+<section class="w-full px-margin py-space-xl bg-surface">
+<div class="max-w-4xl mx-auto flex flex-col gap-space-xl">
+<div class="text-center">
+<span class="font-data-mono text-secondary font-semibold text-body-sm uppercase tracking-wider block mb-1">TECHNICAL SCRUTINY</span>
+<h2 class="font-headline-lg text-headline-lg text-on-surface">Frequently Analyzed Inquiries</h2>
+<p class="font-body-md text-body-md text-on-surface-variant mt-2">Everything your VP of Engineering and CFO need to review before provisioning.</p>
+</div>
+<div class="flex flex-col gap-space-sm" id="faq-accordion">
+<!-- FAQ 1 -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden transition-all duration-200">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface hover:text-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+<span class="font-title-md text-title-md">How does Scryme guarantee sub-millisecond sync across 4 decoupled modules?</span>
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200">expand_more</span>
+</button>
+<div class="hidden px-space-md pb-space-md text-on-surface-variant font-body-md text-body-md leading-relaxed">
+            Scryme uses an internal event-sourced Raft consensus cluster built in Rust. Rather than pushing batch updates via external REST APIs, RevOps, Inventory, CRM, and Headless CMS run as co-located actors on the same underlying transaction memory ring. Changes replicate across our multi-region fabric within 12ms P99.
+          </div>
+</div>
+<!-- FAQ 2 -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden transition-all duration-200">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface hover:text-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+<span class="font-title-md text-title-md">What does the 14-day Teleport ERP migration entail?</span>
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200">expand_more</span>
+</button>
+<div class="hidden px-space-md pb-space-md text-on-surface-variant font-body-md text-body-md leading-relaxed">
+            Our Teleport Engine directly mirrors data tables from NetSuite, SAP, Salesforce, or Microsoft Dynamics into Scryme in read-only shadow mode for 7 days. Once transactional parity is proven down to the cent, we perform cutover during off-peak hours with automated rollback guarantees.
+          </div>
+</div>
+<!-- FAQ 3 -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden transition-all duration-200">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface hover:text-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+<span class="font-title-md text-title-md">Can we maintain sovereign on-premise or sovereign private cloud tenancy?</span>
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200">expand_more</span>
+</button>
+<div class="hidden px-space-md pb-space-md text-on-surface-variant font-body-md text-body-md leading-relaxed">
+            Yes. Scryme is available as managed multi-tenant SaaS, dedicated single-tenant VPC on AWS/GCP, or self-hosted air-gapped Kubernetes deployments for defense, banking, and high-compliance healthcare customers.
+          </div>
+</div>
+<!-- FAQ 4 -->
+<div class="rounded-xl bg-surface-container-low overflow-hidden transition-all duration-200">
+<button class="w-full p-space-md text-left flex items-center justify-between text-on-surface hover:text-primary transition-colors cursor-pointer" onclick="toggleFaq(this)">
+<span class="font-title-md text-title-md">What are the native authentication and compliance provisions?</span>
+<span class="material-symbols-outlined text-[20px] transition-transform duration-200">expand_more</span>
+</button>
+<div class="hidden px-space-md pb-space-md text-on-surface-variant font-body-md text-body-md leading-relaxed">
+            SAML 2.0 / OIDC with SCIM automatic user provisioning, automated SOC 2 Type II audit streaming, HIPAA compliance bundles, fine-grained attribute-based access control (ABAC), and immutable cryptographic audit ledgers.
+          </div>
+</div>
+</div>
+</div>
+</section>
+<!-- High-Impact Bottom Call to Action -->
+<section class="w-full px-margin py-space-xl bg-surface">
+<div class="max-w-7xl mx-auto rounded-xl bg-primary text-on-primary p-space-lg lg:p-space-xl shadow-xl overflow-hidden relative">
+<!-- Faint Ambient Gradient Overlay -->
+<div class="absolute -right-24 -top-24 w-96 h-96 rounded-full bg-secondary-container opacity-10 blur-3xl pointer-events-none"></div>
+<div class="relative z-10 flex flex-col lg:flex-row items-start lg:items-center justify-between gap-space-xl">
+<div class="max-w-2xl flex flex-col gap-space-md">
+<div class="flex items-center gap-2">
+<span class="w-2.5 h-2.5 rounded-full bg-secondary-container"></span>
+<span class="font-data-mono text-body-sm text-secondary-fixed uppercase tracking-wider">INSTANT DEPLOYMENT AVAILABLE</span>
+</div>
+<h2 class="font-headline-lg text-headline-lg text-on-primary leading-tight">
+            Ready to operate with absolute operational clarity?
+          </h2>
+<p class="font-body-lg text-body-lg text-on-primary-container leading-relaxed">
+            Provision a live Scryme enterprise staging cluster in 60 seconds. Test multi-warehouse inventory, simulated RevOps pipelines, and CMS latency risk-free.
+          </p>
+</div>
+<div class="flex flex-col sm:flex-row lg:flex-col gap-space-md shrink-0 w-full lg:w-auto">
+<a class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-secondary-container text-on-secondary-fixed font-title-sm text-title-sm hover:bg-secondary-fixed-dim transition-all shadow-md text-center" href="#trial">
+<span class="material-symbols-outlined text-primary text-[20px]" style="font-variation-settings: 'FILL' 1;">rocket_launch</span>
+<span>Launch Free Production Staging</span>
+</a>
+<a class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-full bg-primary-container text-on-primary font-title-sm text-title-sm hover:bg-surface-container-low hover:text-on-surface transition-all text-center" href="#contact-sales">
+<span class="material-symbols-outlined text-[20px]">calendar_month</span>
+<span>Schedule Architecture Review</span>
+</a>
+</div>
+</div>
+<!-- Trust Badges Row -->
+<div class="relative z-10 mt-space-xl pt-space-lg flex flex-wrap items-center justify-between gap-4 font-data-mono text-body-sm text-on-primary-container">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">lock</span>
+<span>End-to-End Field-Level Encryption</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">verified_user</span>
+<span>SOC 2 Type II Certified</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">public</span>
+<span>EU GDPR &amp; CCPA Data Sovereignty</span>
+</div>
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary-fixed text-[18px]">speed</span>
+<span>99.999% High Availability SLA</span>
+</div>
+</div>
+</div>
+</section>
+</div>
+<script>
+  function toggleFaq(btn) {
+    const content = btn.nextElementSibling;
+    const icon = btn.querySelector('.material-symbols-outlined');
+    const isHidden = content.classList.contains('hidden');
+
+    // Close all other items in this accordion
+    const parent = btn.closest('#faq-accordion');
+    if (parent) {
+      parent.querySelectorAll('.font-body-md').forEach(el => {
+        if (el !== content) el.classList.add('hidden');
+      });
+      parent.querySelectorAll('.material-symbols-outlined').forEach(ic => {
+        if (ic !== icon) ic.style.transform = 'rotate(0deg)';
+      });
+    }
+
+    if (isHidden) {
+      content.classList.remove('hidden');
+      icon.style.transform = 'rotate(180deg)';
+    } else {
+      content.classList.add('hidden');
+      icon.style.transform = 'rotate(0deg)';
+    }
+  }
+</script></main><footer class="w-full bg-surface-container-low border-t border-primary-container/5"><div class="w-full px-margin py-space-xl"><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-space-lg mb-space-xl"><div class="lg:col-span-2 flex flex-col gap-space-md"><div class="flex items-center gap-space-sm"><span class="font-headline-sm text-headline-sm tracking-tight text-primary font-medium">Scryme</span><span class="font-label-xs text-label-xs uppercase tracking-widest px-1.5 py-0.5 rounded bg-surface-container font-semibold text-on-surface-variant">Core Suite</span></div><p class="font-body-md text-body-md text-on-surface-variant max-w-sm">High-fidelity enterprise operating kernel coordinating sales velocity, multi-node inventories, and multi-tenant telemetry with sub-millisecond precision.</p><div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-surface-container-lowest border border-primary-container/10 w-fit"><span class="w-2 h-2 rounded-full bg-secondary-container"></span><span class="font-data-mono text-data-mono text-on-surface-variant">99.99% Operational - All global regions live</span></div></div><div class="flex flex-col gap-space-sm"><span class="font-label-xs text-label-xs uppercase tracking-widest text-on-surface font-bold">Solutions</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="sales-automation" href="#">Sales Automation</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="multi-location-inventory" href="#">Multi-Location Inventory</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="360-crm" href="#">360° CRM Intelligence</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="headless-cms" href="#">Headless CMS Gateway</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="supply-chain" href="#">Automated Procurement</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-xs text-label-xs uppercase tracking-widest text-on-surface font-bold">Platform</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="platform" href="#">Core Kernel</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="architecture" href="#">Global Architecture</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="security" href="#">SOC2 &amp; Sovereignty</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="audit-telemetry" href="#">Audit Telemetry</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="integrations" href="#">Ecosystem Hub</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-xs text-label-xs uppercase tracking-widest text-on-surface font-bold">Governance</span><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="privacy" href="#">Privacy Architecture</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="terms" href="#">Terms of Provisioning</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="sla" href="#">Enterprise SLA (99.99%)</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="compliance" href="#">ISO/IEC 27001 Standard</a><a class="font-body-sm text-body-sm text-on-surface-variant hover:text-on-surface transition-colors" data-path="data-residency" href="#">Data Residency Matrix</a></div><div class="flex flex-col gap-space-sm"><span class="font-label-xs text-label-xs uppercase tracking-widest text-on-surface font-bold">Dispatch</span><p class="font-body-sm text-body-sm text-on-surface-variant">Executive analysis, kernel release logs, and architectural briefs delivered weekly.</p><div class="flex items-center mt-1"><input class="w-full h-10 px-3 rounded-l-lg bg-surface-container-lowest border border-outline-variant/60 font-body-sm text-body-sm text-on-surface placeholder:text-on-surface-variant/60 focus:outline-none focus:border-primary" placeholder="executive@enterprise.com" type="email"/><button class="h-10 px-3 bg-primary text-on-primary rounded-r-lg font-title-sm text-title-sm hover:bg-primary-container transition-colors flex items-center justify-center"><span class="material-symbols-outlined text-[18px]">arrow_forward</span></button></div></div></div><div class="pt-space-md border-t border-primary-container/10 flex flex-col md:flex-row items-center justify-between gap-space-sm"><span class="font-body-sm text-body-sm text-on-surface-variant">© 2025 Scryme ERP AG. All rights reserved. Registered Enterprise OS.</span><div class="flex items-center gap-space-md"><span class="font-data-mono text-[11px] text-on-surface-variant">NODE_LATENCY: 12ms</span><span class="font-data-mono text-[11px] text-on-surface-variant">TLS 1.3 / ENCRYPTED</span></div></div></div></footer></body></html>
