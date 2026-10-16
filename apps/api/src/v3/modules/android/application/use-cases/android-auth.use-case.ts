@@ -253,20 +253,22 @@ export class AndroidAuthUseCase {
 
   async exchangeOAuthCode(dto: { code: string; codeVerifier?: string; redirectUri?: string; clientId?: string }) {
     try {
-      // Find valid code in oauthAuthorizationCode database table managed by Better Auth oauthProvider
-      const oauthCode = await this.prisma.client.oAuthAuthorizationCode.findUnique({
-        where: { code: dto.code },
+      // Find valid code in verification database table managed by Better Auth
+      const verificationRecord = await this.prisma.client.verification.findFirst({
+        where: {
+          value: dto.code,
+        },
       });
 
-      if (!oauthCode) {
+      if (!verificationRecord) {
         throw new UnauthorizedException("Invalid or expired OAuth authorization code");
       }
 
-      if (oauthCode.expiresAt && new Date(oauthCode.expiresAt) < new Date()) {
+      if (verificationRecord.expiresAt && new Date(verificationRecord.expiresAt) < new Date()) {
         throw new UnauthorizedException("OAuth authorization code has expired");
       }
 
-      const userId = oauthCode.userId;
+      const userId = verificationRecord.identifier;
       if (!userId) {
         throw new UnauthorizedException("No user associated with authorization code");
       }
@@ -290,17 +292,20 @@ export class AndroidAuthUseCase {
       if (!token) {
         const newSession = await this.prisma.client.session.create({
           data: {
+            id: `s_${user.id}_${Date.now()}`,
             userId: user.id,
             token: `s_${user.id}_${Date.now()}`,
             expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            createdAt: new Date(),
+            updatedAt: new Date(),
           },
         });
         token = newSession.token;
       }
 
-      // Cleanup consumed OAuth code
-      await this.prisma.client.oAuthAuthorizationCode.delete({
-        where: { id: oauthCode.id },
+      // Cleanup consumed verification code record
+      await this.prisma.client.verification.delete({
+        where: { id: verificationRecord.id },
       }).catch(() => null);
 
       const member = await this.prisma.client.member.findFirst({
