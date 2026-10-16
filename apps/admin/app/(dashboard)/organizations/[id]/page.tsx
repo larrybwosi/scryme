@@ -7,6 +7,7 @@ import {
   getOrganizationMembers,
   getEffectiveQuota,
   getOrganizationStorageUsage,
+  getOrganizationPaymentCredentials,
 } from "@/app/actions/organizations"
 import { getOrganizationActivityLogs, getOrganizationUsage } from "@/app/actions/dashboard"
 import { getOrganizationSubscription, listTiers } from "@/app/actions/billing"
@@ -16,6 +17,7 @@ import { StorageControl } from "@/components/organizations/storage-control"
 import { SubscriptionEditor } from "@/components/organizations/subscription-editor"
 import { MembersTable } from "@/components/organizations/members-table"
 import { OrganizationActivityPanel } from "@/components/organizations/organization-activity-panel"
+import { OrganizationPaymentCredentialsCard } from "@/components/organizations/payment-credentials-card"
 
 export default async function OrganizationDetailPage({
   params,
@@ -27,15 +29,17 @@ export default async function OrganizationDetailPage({
   const org = await getOrganizationDetails(id).catch(() => null)
   if (!org) notFound()
 
-  const [members, quota, subscription, tiers, storage, usage, activityLogs] = await Promise.all([
-    getOrganizationMembers(id),
-    getEffectiveQuota(id),
-    getOrganizationSubscription(id),
-    listTiers(),
-    getOrganizationStorageUsage(id),
-    getOrganizationUsage(id),
-    getOrganizationActivityLogs(id, 15),
-  ])
+  const [members, quota, subscription, tiers, storage, usage, activityLogs, credentials] =
+    await Promise.all([
+      getOrganizationMembers(id),
+      getEffectiveQuota(id),
+      getOrganizationSubscription(id),
+      listTiers(),
+      getOrganizationStorageUsage(id),
+      getOrganizationUsage(id),
+      getOrganizationActivityLogs(id, 15),
+      getOrganizationPaymentCredentials(id),
+    ])
 
   return (
     <div className="flex flex-col gap-8">
@@ -84,6 +88,8 @@ export default async function OrganizationDetailPage({
         <SubscriptionEditor organizationId={org.id} subscription={subscription} tiers={tiers} />
         <QuotaEditor organizationId={org.id} quota={quota} />
       </div>
+
+      <OrganizationPaymentCredentialsCard organizationId={org.id} credentials={credentials} />
 
       <MembersTable members={members} />
     </div>

@@ -37,6 +37,10 @@ const PREDEFINED_LIMIT_KEYS = [
   { key: "maxLocations", label: "Max Locations", placeholder: "e.g. 2" },
   { key: "maxStorageGB", label: "Max Storage (GB)", placeholder: "e.g. 50" },
   { key: "maxOrdersPerMonth", label: "Max Orders / Mo", placeholder: "e.g. 1000" },
+  { key: "maxApiRequestsPerDay", label: "Max API Requests / Day", placeholder: "e.g. 10000" },
+  { key: "maxWebhookSubscriptions", label: "Max Webhook Subscriptions", placeholder: "e.g. 5" },
+  { key: "maxWorkflowEngineDefinitions", label: "Max Workflows", placeholder: "e.g. 10" },
+  { key: "maxCustomDomains", label: "Max Custom Domains", placeholder: "e.g. 1" },
 ]
 
 function limitsToObj(limits?: Record<string, any>): Record<string, string> {
@@ -88,7 +92,11 @@ export function TierFormDialog({
   const [name, setName] = useState("")
   const [slug, setSlug] = useState("")
   const [price, setPrice] = useState("0")
+  const [currency, setCurrency] = useState("USD")
   const [description, setDescription] = useState("")
+  const [trialDays, setTrialDays] = useState("")
+  const [annualDiscountPercent, setAnnualDiscountPercent] = useState("")
+  const [taxPercent, setTaxPercent] = useState("")
   const [featuresList, setFeaturesList] = useState<string[]>([])
   const [customFeatureInput, setCustomFeatureInput] = useState("")
   const [predefinedLimits, setPredefinedLimits] = useState<Record<string, string>>({})
@@ -99,7 +107,11 @@ export function TierFormDialog({
       setName(tier?.name ?? "")
       setSlug(tier?.slug ?? "")
       setPrice(tier?.price?.toString() ?? "0")
+      setCurrency(tier?.currency ?? "USD")
       setDescription(tier?.description ?? "")
+      setTrialDays(tier?.trialDays?.toString() ?? "")
+      setAnnualDiscountPercent(tier?.annualDiscountPercent?.toString() ?? "")
+      setTaxPercent(tier?.taxPercent?.toString() ?? "")
       setFeaturesList(tier?.features ?? [])
 
       const limitsObj = limitsToObj(tier?.limits)
@@ -149,7 +161,11 @@ export function TierFormDialog({
         slug,
         name,
         price: Number(price) || 0,
+        currency,
         description: description || undefined,
+        trialDays: trialDays ? Number(trialDays) : undefined,
+        annualDiscountPercent: annualDiscountPercent ? Number(annualDiscountPercent) : undefined,
+        taxPercent: taxPercent ? Number(taxPercent) : undefined,
         features: featuresList,
         limits: textToLimits(customLimitsText, predefinedLimits),
       })
@@ -170,7 +186,7 @@ export function TierFormDialog({
           <DialogHeader>
             <DialogTitle>{isEditing ? `Edit ${tier?.name}` : "Create tier"}</DialogTitle>
             <DialogDescription>
-              Define pricing, limits, and features for this plan tier.
+              Define pricing, tax rules, trial period, limits, and features for this plan tier.
             </DialogDescription>
           </DialogHeader>
 
@@ -199,16 +215,68 @@ export function TierFormDialog({
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
-              <Label htmlFor="tier-price">Monthly price (USD)</Label>
-              <Input
-                id="tier-price"
-                type="number"
-                min="0"
-                step="0.01"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-              />
+            <div className="grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tier-price">Price</Label>
+                <Input
+                  id="tier-price"
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={price}
+                  onChange={(e) => setPrice(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tier-currency">Currency</Label>
+                <Input
+                  id="tier-currency"
+                  placeholder="USD, KES, EUR..."
+                  value={currency}
+                  onChange={(e) => setCurrency(e.target.value.toUpperCase())}
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tier-trial">Free Trial (Days)</Label>
+                <Input
+                  id="tier-trial"
+                  type="number"
+                  min="0"
+                  placeholder="e.g. 14"
+                  value={trialDays}
+                  onChange={(e) => setTrialDays(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tier-discount">Annual Discount %</Label>
+                <Input
+                  id="tier-discount"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="e.g. 20"
+                  value={annualDiscountPercent}
+                  onChange={(e) => setAnnualDiscountPercent(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <Label htmlFor="tier-tax">Tax Rate %</Label>
+                <Input
+                  id="tier-tax"
+                  type="number"
+                  min="0"
+                  max="100"
+                  placeholder="e.g. 16"
+                  value={taxPercent}
+                  onChange={(e) => setTaxPercent(e.target.value)}
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-2">
@@ -226,7 +294,6 @@ export function TierFormDialog({
             <div className="flex flex-col gap-3 rounded-lg border border-border p-3 bg-muted/20">
               <Label className="font-semibold text-foreground">Tier Features</Label>
 
-              {/* Predefined Features Quick Select */}
               <div className="flex flex-col gap-1.5">
                 <span className="text-xs text-muted-foreground">Select pre-defined common features:</span>
                 <div className="flex flex-wrap gap-1.5">
@@ -247,7 +314,6 @@ export function TierFormDialog({
                 </div>
               </div>
 
-              {/* Active Selected Features */}
               {featuresList.length > 0 && (
                 <div className="flex flex-col gap-1.5 pt-1">
                   <span className="text-xs text-muted-foreground">Active features ({featuresList.length}):</span>
@@ -272,7 +338,6 @@ export function TierFormDialog({
                 </div>
               )}
 
-              {/* Add Custom Feature Input */}
               <div className="flex items-center gap-2 pt-1">
                 <Input
                   value={customFeatureInput}

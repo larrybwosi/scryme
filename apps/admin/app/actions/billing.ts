@@ -8,9 +8,53 @@ export type Tier = {
   slug: string;
   name: string;
   price: number;
+  currency?: string;
   description?: string;
   limits?: Record<string, any>;
   features?: string[];
+  trialDays?: number;
+  annualDiscountPercent?: number;
+  taxPercent?: number;
+};
+
+export type SystemPaymentConfigs = {
+  enabledMethods: string[];
+  mpesa?: {
+    consumerKey: string;
+    consumerSecret: string;
+    shortCode: string;
+    passKey?: string;
+    type: "PAYBILL" | "TILL";
+    environment: "SANDBOX" | "PRODUCTION";
+  };
+  stripe?: {
+    publishableKey?: string;
+    secretKey?: string;
+    webhookSecret?: string;
+  };
+  dodo?: {
+    apiKey?: string;
+    environment?: "sandbox" | "live";
+  };
+  bankTransfer?: {
+    bankName: string;
+    accountName: string;
+    accountNumber: string;
+    swiftCode?: string;
+    instructions?: string;
+  };
+};
+
+export type DefaultQuotaAllocations = {
+  maxUsers: number;
+  maxProducts: number;
+  maxLocations: number;
+  maxStorageGB: number;
+  maxOrdersPerMonth: number;
+  maxApiRequestsPerDay: number;
+  maxWebhookSubscriptions: number;
+  maxWorkflowEngineDefinitions: number;
+  maxCustomDomains: number;
 };
 
 export async function listTiers(): Promise<Tier[]> {
@@ -35,9 +79,13 @@ export async function defineTier(input: Tier) {
     slug: input.slug,
     name: input.name,
     price: input.price,
+    currency: input.currency || "USD",
     description: input.description || "",
     limits: input.limits || {},
     features: input.features || [],
+    trialDays: input.trialDays != null ? Number(input.trialDays) : undefined,
+    annualDiscountPercent: input.annualDiscountPercent != null ? Number(input.annualDiscountPercent) : undefined,
+    taxPercent: input.taxPercent != null ? Number(input.taxPercent) : undefined,
   };
 
   if (existingIndex > -1) {
@@ -247,7 +295,129 @@ export async function recordCustomPayment(input: {
   return payment;
 }
 
+export async function getSystemPaymentConfigs(): Promise<SystemPaymentConfigs> {
+  const setting = await db.globalSetting.findUnique({
+    where: { key: "system:payment_configs" },
+  });
+
+  const defaults: SystemPaymentConfigs = {
+    enabledMethods: ["mpesa", "card", "bank_transfer"],
+    mpesa: {
+      consumerKey: process.env.SYSTEM_MPESA_CONSUMER_KEY || process.env.MPESA_CONSUMER_KEY || "",
+      consumerSecret: process.env.SYSTEM_MPESA_CONSUMER_SECRET || process.env.MPESA_CONSUMER_SECRET || "",
+      shortCode: process.env.SYSTEM_MPESA_SHORTCODE || process.env.MPESA_SHORTCODE || process.env.MPESA_BUSINESS_SHORTCODE || "",
+      passKey: process.env.SYSTEM_MPESA_PASSKEY || process.env.MPESA_PASSKEY || "",
+      type: ((process.env.SYSTEM_MPESA_TYPE || process.env.MPESA_TYPE || "PAYBILL") as "PAYBILL" | "TILL"),
+      environment: ((process.env.MPESA_ENVIRONMENT || "SANDBOX") as "SANDBOX" | "PRODUCTION"),
+    },
+    stripe: {
+      publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
+      secretKey: process.env.STRIPE_SECRET_KEY || "",
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || "",
+    },
+    dodo: {
+      apiKey: process.env.DODO_PAYMENTS_API_KEY || "",
+      environment: (process.env.DODO_PAYMENTS_MODE || "sandbox") as "sandbox" | "live",
+    },
+    bankTransfer: {
+      bankName: "Standard Chartered Bank",
+      accountName: "Scryme Technologies Ltd",
+      accountNumber: "0100000000000",
+      swiftCode: "SCBLKENX",
+      instructions: "Include organization slug or invoice reference in payment remarks.",
+    },
+  };
+
+  if (!setting?.value) return defaults;
+
+  try {
+    const parsed = JSON.parse(setting.value);
+    return {
+      ...defaults,
+      ...parsed,
+      mpesa: { ...defaults.mpesa, ...(parsed.mpesa || {}) },
+      stripe: { ...defaults.stripe, ...(parsed.stripe || {}) },
+      dodo: { ...defaults.dodo, ...(parsed.dodo || {}) },
+      bankTransfer: { ...defaults.bankTransfer, ...(parsed.bankTransfer || {}) },
+    };
+  } catch {
+    return defaults;
+  }
+}
+
+export async function saveSystemPaymentConfigs(configs: SystemPaymentConfigs) {
+  await requireSuperAdmin();
+
+  await db.globalSetting.upsert({
+    where: { key: "system:payment_configs" },
+    update: { value: JSON.stringify(configs) },
+    create: { key: "system:payment_configs", value: JSON.stringify(configs) },
+  });
+
+  if (configs.mpesa) {
+    const mpesaLegacy = {
+      mpesaConsumerKey: configs.mpesa.consumerKey,
+      mpesaConsumerSecret: configs.mpesa.consumerSecret,
+      mpesaShortCode: configs.mpesa.shortCode,
+      mpesaPassKey: configs.mpesa.passKey,
+      mpesaType: configs.mpesa.type,
+      environment: configs.mpesa.environment,
+    };
+    await db.globalSetting.upsert({
+      where: { key: "system:mpesa" },
+      update: { value: JSON.stringify(mpesaLegacy) },
+      create: { key: "system:mpesa", value: JSON.stringify(mpesaLegacy) },
+    });
+  }
+
+  revalidatePath("/billing");
+  revalidatePath("/settings");
+  return configs;
+}
+
+export async function getDefaultQuotaAllocations(): Promise<DefaultQuotaAllocations> {
+  const setting = await db.globalSetting.findUnique({
+    where: { key: "system:default_quotas" },
+  });
+
+  const defaults: DefaultQuotaAllocations = {
+    maxUsers: 5,
+    maxProducts: 500,
+    maxLocations: 2,
+    maxStorageGB: 10,
+    maxOrdersPerMonth: 1000,
+    maxApiRequestsPerDay: 10000,
+    maxWebhookSubscriptions: 5,
+    maxWorkflowEngineDefinitions: 10,
+    maxCustomDomains: 1,
+  };
+
+  if (!setting?.value) return defaults;
+
+  try {
+    const parsed = JSON.parse(setting.value);
+    return { ...defaults, ...parsed };
+  } catch {
+    return defaults;
+  }
+}
+
+export async function saveDefaultQuotaAllocations(allocations: DefaultQuotaAllocations) {
+  await requireSuperAdmin();
+
+  await db.globalSetting.upsert({
+    where: { key: "system:default_quotas" },
+    update: { value: JSON.stringify(allocations) },
+    create: { key: "system:default_quotas", value: JSON.stringify(allocations) },
+  });
+
+  revalidatePath("/billing");
+  revalidatePath("/settings");
+  return allocations;
+}
+
 export async function getSystemMpesaCredentials() {
+
   const setting = await db.globalSetting.findUnique({
     where: { key: "system:mpesa" },
   });
