@@ -10,11 +10,47 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as CmsRouteImport } from './routes/cms'
+import { Route as CrmRouteImport } from './routes/crm'
+import { Route as InventoryRouteImport } from './routes/inventory'
+import { Route as LightRouteImport } from './routes/light'
+import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as SalesRouteImport } from './routes/sales'
 import { Route as StudioSplatRouteImport } from './routes/studio/$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CmsRoute = CmsRouteImport.update({
+  id: '/cms',
+  path: '/cms',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const CrmRoute = CrmRouteImport.update({
+  id: '/crm',
+  path: '/crm',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const InventoryRoute = InventoryRouteImport.update({
+  id: '/inventory',
+  path: '/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LightRoute = LightRouteImport.update({
+  id: '/light',
+  path: '/light',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SalesRoute = SalesRouteImport.update({
+  id: '/sales',
+  path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioSplatRoute = StudioSplatRouteImport.update({
@@ -25,27 +61,76 @@ const StudioSplatRoute = StudioSplatRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/cms': typeof CmsRoute
+  '/crm': typeof CrmRoute
+  '/inventory': typeof InventoryRoute
+  '/light': typeof LightRoute
+  '/pricing': typeof PricingRoute
+  '/sales': typeof SalesRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/cms': typeof CmsRoute
+  '/crm': typeof CrmRoute
+  '/inventory': typeof InventoryRoute
+  '/light': typeof LightRoute
+  '/pricing': typeof PricingRoute
+  '/sales': typeof SalesRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/cms': typeof CmsRoute
+  '/crm': typeof CrmRoute
+  '/inventory': typeof InventoryRoute
+  '/light': typeof LightRoute
+  '/pricing': typeof PricingRoute
+  '/sales': typeof SalesRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/studio/$'
+  fullPaths:
+    | '/'
+    | '/cms'
+    | '/crm'
+    | '/inventory'
+    | '/light'
+    | '/pricing'
+    | '/sales'
+    | '/studio/$'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/studio/$'
-  id: '__root__' | '/' | '/studio/$'
+  to:
+    | '/'
+    | '/cms'
+    | '/crm'
+    | '/inventory'
+    | '/light'
+    | '/pricing'
+    | '/sales'
+    | '/studio/$'
+  id:
+    | '__root__'
+    | '/'
+    | '/cms'
+    | '/crm'
+    | '/inventory'
+    | '/light'
+    | '/pricing'
+    | '/sales'
+    | '/studio/$'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  CmsRoute: typeof CmsRoute
+  CrmRoute: typeof CrmRoute
+  InventoryRoute: typeof InventoryRoute
+  LightRoute: typeof LightRoute
+  PricingRoute: typeof PricingRoute
+  SalesRoute: typeof SalesRoute
   StudioSplatRoute: typeof StudioSplatRoute
 }
 
@@ -56,6 +141,48 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/cms': {
+      id: '/cms'
+      path: '/cms'
+      fullPath: '/cms'
+      preLoaderRoute: typeof CmsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/crm': {
+      id: '/crm'
+      path: '/crm'
+      fullPath: '/crm'
+      preLoaderRoute: typeof CrmRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/inventory': {
+      id: '/inventory'
+      path: '/inventory'
+      fullPath: '/inventory'
+      preLoaderRoute: typeof InventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/light': {
+      id: '/light'
+      path: '/light'
+      fullPath: '/light'
+      preLoaderRoute: typeof LightRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/sales': {
+      id: '/sales'
+      path: '/sales'
+      fullPath: '/sales'
+      preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio/$': {
@@ -70,6 +197,12 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  CmsRoute: CmsRoute,
+  CrmRoute: CrmRoute,
+  InventoryRoute: InventoryRoute,
+  LightRoute: LightRoute,
+  PricingRoute: PricingRoute,
+  SalesRoute: SalesRoute,
   StudioSplatRoute: StudioSplatRoute,
 }
 export const routeTree = rootRouteImport

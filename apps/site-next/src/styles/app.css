@@ -1,1 +1,49 @@
 @import "tailwindcss";
+
+@layer base {
+  :root {
+    --color-electric-lime: #d2ff3a;
+    --color-precision-emerald: #10b981;
+    --color-chalk-cream: #f5f3ed;
+    --color-obsidian-void: #090a0b;
+    --color-obsidian-bg: #121314;
+    --color-surface-container: #1f2021;
+    --color-surface-low: #1b1c1d;
+    --color-surface-high: #292a2b;
+    --color-border-subtle: rgba(255, 255, 255, 0.08);
+  }
+
+  body {
+    background-color: var(--color-obsidian-bg);
+    color: #e3e2e3;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+  }
+
+  h1, h2, .font-serif-headline {
+    font-family: 'Newsreader', serif;
+  }
+
+  .font-label, .font-mono-label {
+    font-family: 'Space Grotesk', monospace;
+  }
+}
+
+.glass-panel {
+  background: rgba(26, 29, 33, 0.7);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5);
+}
+
+.glass-panel-elevated {
+  background: rgba(36, 40, 46, 0.8);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(210, 255, 58, 0.2);
+  box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(210, 255, 58, 0.2);
+}
+
+.glow-lime {
+  box-shadow: 0 0 20px rgba(210, 255, 58, 0.35);
+}
