@@ -74,7 +74,7 @@ class ProfileViewModel @Inject constructor(
             val orgSlug = sessionManager.getOrgSlug()
             val memberId = sessionManager.getMemberId()
             if (orgSlug.isNullOrEmpty() || memberId.isNullOrEmpty()) {
-                _uiState.value = ProfileUiState.Error("Missing session profile identifiers")
+                _uiState.value = ProfileUiState.Error("Organization member profile context missing. Please ensure your account has staff membership in this organization.")
                 return@launch
             }
 

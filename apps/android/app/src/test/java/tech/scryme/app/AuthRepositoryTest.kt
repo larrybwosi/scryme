@@ -50,6 +50,7 @@ class AuthRepositoryTest {
                 memberToken = "jwt-user-token-789",
                 orgSlug = "test-org",
                 locationId = any(),
+                userId = any(),
                 memberId = any(),
                 userName = "Test User",
                 userEmail = "test@scryme.tech",

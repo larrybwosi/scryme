@@ -1,5 +1,8 @@
 package tech.scryme.app.ui.admin
 
+import tech.scryme.app.ui.components.EmptyStateCard
+import tech.scryme.app.ui.components.ErrorMessageCard
+import tech.scryme.app.ui.components.ListSkeleton
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.StyledFormDialog
@@ -132,20 +135,14 @@ fun AdminScreen(
 
         when (val state = uiState) {
             is AdminUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                ListSkeleton(count = 4)
             }
             is AdminUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.loadAdminData() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                ErrorMessageCard(
+                    title = "Admin Portal Error",
+                    message = state.message,
+                    onRetry = { viewModel.loadAdminData() }
+                )
             }
             is AdminUiState.Success -> {
                 LazyColumn(

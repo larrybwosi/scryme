@@ -21,6 +21,9 @@ import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.ui.components.EmptyStateCard
+import tech.scryme.app.ui.components.ErrorMessageCard
+import tech.scryme.app.ui.components.ListSkeleton
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Amber500
@@ -74,20 +77,14 @@ fun ScheduleScreen(
 
         when (val state = uiState) {
             is ScheduleUiState.Loading -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    CircularProgressIndicator()
-                }
+                ListSkeleton(count = 4)
             }
             is ScheduleUiState.Error -> {
-                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Button(onClick = { viewModel.loadSchedule() }) {
-                            Text("Retry")
-                        }
-                    }
-                }
+                ErrorMessageCard(
+                    title = "Unable to load schedule",
+                    message = state.message,
+                    onRetry = { viewModel.loadSchedule() }
+                )
             }
             is ScheduleUiState.Success -> {
                 var showCheckInDialog by remember { mutableStateOf(false) }

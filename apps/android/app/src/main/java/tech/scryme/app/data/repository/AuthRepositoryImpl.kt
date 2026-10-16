@@ -39,7 +39,8 @@ class AuthRepositoryImpl @Inject constructor(
                         accessToken = token,
                         memberToken = token,
                         orgSlug = orgSlug,
-                        memberId = userId,
+                        userId = userId,
+                        memberId = null,
                         userName = userName,
                         userEmail = userEmail,
                         orgName = orgName,
@@ -55,7 +56,7 @@ class AuthRepositoryImpl @Inject constructor(
                             val activeOrgSlug = meData?.activeOrganization?.slug ?: orgSlug
                             val defaultLocationId = meData?.locations?.firstOrNull { it.isDefault == true }?.id
                                 ?: meData?.locations?.firstOrNull()?.id
-                            val memberId = meData?.member?.id ?: userId
+                            val memberId = meData?.member?.id
                             val activeOrgName = meData?.activeOrganization?.name ?: orgName
                             val activeOrgLogo = meData?.activeOrganization?.logo
                             val activeCurrency = meData?.activeOrganization?.effectiveCurrency ?: orgCurrency
@@ -66,6 +67,7 @@ class AuthRepositoryImpl @Inject constructor(
                                 memberToken = token,
                                 orgSlug = activeOrgSlug,
                                 locationId = defaultLocationId,
+                                userId = meData?.user?.id ?: userId,
                                 memberId = memberId,
                                 userName = meData?.user?.name ?: userName,
                                 userEmail = meData?.user?.email ?: userEmail,
@@ -100,7 +102,7 @@ class AuthRepositoryImpl @Inject constructor(
                 val defaultLocationId = data.locations?.firstOrNull { it.isDefault == true }?.id
                     ?: data.locations?.firstOrNull()?.id
                     ?: sessionManager.getLocationId()
-                val memberId = data.member?.id ?: sessionManager.getMemberId()
+                val memberId = data.member?.id
                 val activeOrgName = data.activeOrganization?.name ?: sessionManager.getOrgName()
                 val activeOrgLogo = data.activeOrganization?.logo ?: sessionManager.getOrgLogo()
                 val activeCurrency = data.activeOrganization?.effectiveCurrency ?: sessionManager.getOrgCurrency()
@@ -111,6 +113,7 @@ class AuthRepositoryImpl @Inject constructor(
                     memberToken = token,
                     orgSlug = activeOrgSlug,
                     locationId = defaultLocationId,
+                    userId = data.user?.id,
                     memberId = memberId,
                     userName = data.user?.name,
                     userEmail = data.user?.email,
