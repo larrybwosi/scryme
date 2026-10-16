@@ -251,16 +251,6 @@ export class AndroidAuthUseCase {
     };
   }
 
-  async logout(user: any) {
-    if (user?.id) {
-      await this.prisma.client.session.deleteMany({
-        where: { userId: user.id },
-      });
-    }
-    return { success: true, message: "Logged out successfully" };
-  }
-}
-
   async exchangeOAuthCode(dto: { code: string; codeVerifier?: string; redirectUri?: string; clientId?: string }) {
     try {
       // Find valid code in oauthAuthorizationCode database table managed by Better Auth oauthProvider
@@ -338,3 +328,13 @@ export class AndroidAuthUseCase {
       throw new UnauthorizedException(error.message || "OAuth code exchange failed");
     }
   }
+
+  async logout(user: any) {
+    if (user?.id) {
+      await this.prisma.client.session.deleteMany({
+        where: { userId: user.id },
+      });
+    }
+    return { success: true, message: "Logged out successfully" };
+  }
+}
