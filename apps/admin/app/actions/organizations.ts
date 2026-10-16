@@ -300,3 +300,75 @@ export async function getPlatformStats() {
     totalConnectedApps,
   };
 }
+
+export async function getOrganizationPaymentCredentials(orgId: string) {
+  await requireSuperAdmin();
+
+  const creds = await db.paymentCredentials.findUnique({
+    where: { organizationId: orgId },
+  });
+
+  return creds;
+}
+
+export async function upsertOrganizationPaymentCredentials(
+  orgId: string,
+  input: {
+    mpesaShortCode: string;
+    mpesaType?: string;
+    mpesaConsumerKey: string;
+    mpesaConsumerSecret: string;
+    mpesaPassKey?: string;
+    mpesaInitiatorPass?: string;
+    environment?: "SANDBOX" | "PRODUCTION";
+  },
+) {
+  await requireSuperAdmin();
+
+  const creds = await db.paymentCredentials.upsert({
+    where: { organizationId: orgId },
+    update: {
+      mpesaShortCode: input.mpesaShortCode,
+      mpesaType: input.mpesaType || "PAYBILL",
+      mpesaConsumerKey: input.mpesaConsumerKey,
+      mpesaConsumerSecret: input.mpesaConsumerSecret,
+      mpesaPassKey: input.mpesaPassKey || null,
+      mpesaInitiatorPass: input.mpesaInitiatorPass || null,
+      environment: input.environment || "SANDBOX",
+    },
+    create: {
+      organizationId: orgId,
+      mpesaShortCode: input.mpesaShortCode,
+      mpesaType: input.mpesaType || "PAYBILL",
+      mpesaConsumerKey: input.mpesaConsumerKey,
+      mpesaConsumerSecret: input.mpesaConsumerSecret,
+      mpesaPassKey: input.mpesaPassKey || null,
+      mpesaInitiatorPass: input.mpesaInitiatorPass || null,
+      environment: input.environment || "SANDBOX",
+    },
+  });
+
+  revalidatePath(`/organizations/${orgId}`);
+  return creds;
+}
+
+export async function syncTierDefaultsToOrganizationQuota(orgId: string) {
+  await requireSuperAdmin();
+
+  const sub = await db.subscription.findUnique({
+    where: { organizationId: orgId },
+  });
+  const tierSlug = sub?.dodoPriceId || "free";
+
+  const tiers = await listTiers();
+  const tier = tiers.find((t) => t.slug === tierSlug);
+  const tierLimits = tier?.limits || {};
+
+  await db.organization.update({
+    where: { id: orgId },
+    data: { quotaOverrides: tierLimits },
+  });
+
+  revalidatePath(`/organizations/${orgId}`);
+  return getEffectiveQuota(orgId);
+}
