@@ -172,15 +172,35 @@ export class AdminService {
     const tierSlug = subscription?.dodoPriceId || "free";
     const tiers = await this.listTiers();
     const tier = tiers.find((t) => t.slug === tierSlug);
+
+    let defaultAllocations: Record<string, number> = {};
+    try {
+      const setting = await this.prisma.client.globalSetting.findUnique({
+        where: { key: "system:default_quotas" },
+      });
+      if (setting?.value) {
+        defaultAllocations = JSON.parse(setting.value);
+      }
+    } catch {
+      // ignore
+    }
+
     const baseLimits = tier?.limits || {};
     const overrides = (org.quotaOverrides as Record<string, any>) || {};
+
+    const effectiveLimits = {
+      ...defaultAllocations,
+      ...baseLimits,
+      ...overrides,
+    };
 
     return {
       organizationId: id,
       tierSlug,
       baseLimits,
+      defaultAllocations,
       overrides,
-      effectiveLimits: { ...baseLimits, ...overrides },
+      effectiveLimits,
     };
   }
 

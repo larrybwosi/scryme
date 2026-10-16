@@ -30,7 +30,6 @@ export class MultiTenancyGuard implements CanActivate {
     if (isGql) {
       const gqlContext = GqlExecutionContext.create(context);
       const args = gqlContext.getArgs();
-      // Look for orgSlug in args directly or inside an 'input' object
       orgSlug = args.orgSlug || args.input?.orgSlug;
       request = gqlContext.getContext().reply.request;
     } else {
@@ -39,7 +38,6 @@ export class MultiTenancyGuard implements CanActivate {
     }
 
     if (!orgSlug) {
-      // If we still don't have orgSlug, maybe it's in the headers?
       orgSlug = request.headers["x-org-slug"] as string;
     }
 
@@ -50,7 +48,13 @@ export class MultiTenancyGuard implements CanActivate {
 
     const organization = await this.prisma.client.organization.findUnique({
       where: { slug: orgSlug },
-      select: { id: true, slug: true, name: true },
+      select: {
+        id: true,
+        slug: true,
+        name: true,
+        isSuspended: true,
+        suspensionReason: true,
+      },
     });
 
     if (!organization) {
@@ -94,6 +98,46 @@ export class MultiTenancyGuard implements CanActivate {
         throw new ForbiddenException(
           "Access denied: You are not an active member of this organization",
         );
+      }
+    }
+
+    // --- Payment & Suspension Enforcement ---
+    // Super admins are exempt from payment/suspension restrictions
+    if (!isSuperAdmin) {
+      const httpMethod = (request.method || "GET").toUpperCase();
+      const isMutatingMethod = ["POST", "PUT", "PATCH", "DELETE"].includes(httpMethod);
+
+      // 1. Suspension Check
+      if (organization.isSuspended) {
+        if (isMutatingMethod) {
+          throw new ForbiddenException({
+            statusCode: 403,
+            code: "ORGANIZATION_SUSPENDED",
+            error: "Forbidden",
+            message: `Organization access is suspended: ${organization.suspensionReason || "Contact administrator for assistance."}`,
+          });
+        }
+      }
+
+      // 2. Subscription Expiry / Payment Status Check
+      if (isMutatingMethod) {
+        const subscription = await this.prisma.client.subscription.findUnique({
+          where: { organizationId: organization.id },
+        });
+
+        if (subscription) {
+          const now = new Date();
+          // If a subscription period end exists and has passed, check if grace period or expired
+          if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
+            // Check if status is explicitly expired or inactive
+            throw new ForbiddenException({
+              statusCode: 403,
+              code: "SUBSCRIPTION_INACTIVE",
+              error: "Payment Required",
+              message: "Subscription is inactive or payment is overdue. Please update your billing details to resume changes.",
+            });
+          }
+        }
       }
     }
 
