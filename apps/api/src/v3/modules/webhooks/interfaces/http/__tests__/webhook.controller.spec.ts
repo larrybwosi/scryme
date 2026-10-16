@@ -3,6 +3,7 @@ import { WebhookController } from "../webhook.controller";
 import { WebhookService } from "../../../infrastructure/services/webhook.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { RedisService } from "@/redis/redis.service";
+import { QuotaService } from "@/v3/common/services/quota.service";
 import { Reflector } from "@nestjs/core";
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { PERMISSIONS_KEY } from "@/v3/common/decorators/permissions.decorator";
@@ -45,6 +46,7 @@ describe("WebhookController Security and Metadata", () => {
         { provide: PrismaService, useValue: mockPrisma },
         { provide: WebhookService, useValue: mockWebhookService },
         { provide: RedisService, useValue: mockRedis },
+        { provide: QuotaService, useValue: { checkQuota: vi.fn().mockResolvedValue({ allowed: true }) } },
         Reflector,
       ],
     }).compile();

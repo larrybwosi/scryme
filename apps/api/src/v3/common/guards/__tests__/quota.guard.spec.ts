@@ -10,11 +10,11 @@ describe("QuotaGuard", () => {
 
   beforeEach(() => {
     reflector = {
-      getAllAndOverride: jest.fn(),
+      getAllAndOverride: vi.fn(),
     } as any;
 
     quotaService = {
-      checkQuota: jest.fn(),
+      checkQuota: vi.fn(),
     } as any;
 
     guard = new QuotaGuard(reflector, quotaService);
@@ -30,7 +30,7 @@ describe("QuotaGuard", () => {
     }) as any;
 
   it("should allow request if no @EnforceQuota metric metadata is present", async () => {
-    (reflector.getAllAndOverride as jest.Mock).mockReturnValue(undefined);
+    (reflector.getAllAndOverride as any).mockReturnValue(undefined);
     const context = createMockContext({});
 
     const result = await guard.canActivate(context);
@@ -38,7 +38,7 @@ describe("QuotaGuard", () => {
   });
 
   it("should allow super admins regardless of quota limits", async () => {
-    (reflector.getAllAndOverride as jest.Mock).mockReturnValue("maxProducts");
+    (reflector.getAllAndOverride as any).mockReturnValue("maxProducts");
     const context = createMockContext({
       user: { role: "SUPER_ADMIN" },
     });
@@ -48,8 +48,8 @@ describe("QuotaGuard", () => {
   });
 
   it("should allow request if organization quota check passes", async () => {
-    (reflector.getAllAndOverride as jest.Mock).mockReturnValue("maxProducts");
-    (quotaService.checkQuota as jest.Mock).mockResolvedValue({
+    (reflector.getAllAndOverride as any).mockReturnValue("maxProducts");
+    (quotaService.checkQuota as any).mockResolvedValue({
       allowed: true,
       limit: 100,
       current: 5,
@@ -66,8 +66,8 @@ describe("QuotaGuard", () => {
   });
 
   it("should throw ForbiddenException QUOTA_EXCEEDED when quota is reached", async () => {
-    (reflector.getAllAndOverride as jest.Mock).mockReturnValue("maxProducts");
-    (quotaService.checkQuota as jest.Mock).mockResolvedValue({
+    (reflector.getAllAndOverride as any).mockReturnValue("maxProducts");
+    (quotaService.checkQuota as any).mockResolvedValue({
       allowed: false,
       limit: 100,
       current: 100,

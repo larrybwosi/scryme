@@ -316,6 +316,7 @@ describe("AdminService", () => {
         organizationId: "org-1",
         tierSlug: "growth",
         baseLimits: { members: 10, products: 100 },
+        defaultAllocations: {},
         overrides: { members: 25 },
         effectiveLimits: { members: 25, products: 100 },
       });
@@ -332,6 +333,7 @@ describe("AdminService", () => {
         organizationId: "org-1",
         tierSlug: "free",
         baseLimits: {},
+        defaultAllocations: {},
         overrides: {},
         effectiveLimits: {},
       });

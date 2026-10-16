@@ -9,31 +9,31 @@ describe("QuotaService", () => {
     prisma = {
       client: {
         globalSetting: {
-          findUnique: jest.fn(),
+          findUnique: vi.fn(),
         },
         organization: {
-          findUnique: jest.fn(),
+          findUnique: vi.fn(),
         },
         subscription: {
-          findUnique: jest.fn(),
+          findUnique: vi.fn(),
         },
         member: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
         product: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
         inventoryLocation: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
         webhookSubscription: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
         workflowEngineDefinition: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
         transaction: {
-          count: jest.fn(),
+          count: vi.fn(),
         },
       },
     } as any;
@@ -43,15 +43,15 @@ describe("QuotaService", () => {
 
   describe("getEffectiveQuota", () => {
     it("should merge default allocations, tier limits, and org overrides correctly", async () => {
-      (prisma.client.organization.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.client.organization.findUnique as any).mockResolvedValue({
         id: "org-1",
         quotaOverrides: { maxProducts: 250 },
       });
-      (prisma.client.subscription.findUnique as jest.Mock).mockResolvedValue({
+      (prisma.client.subscription.findUnique as any).mockResolvedValue({
         organizationId: "org-1",
         dodoPriceId: "free",
       });
-      (prisma.client.globalSetting.findUnique as jest.Mock).mockResolvedValue(null);
+      (prisma.client.globalSetting.findUnique as any).mockResolvedValue(null);
 
       const result = await service.getEffectiveQuota("org-1");
       expect(result.effectiveLimits.maxProducts).toBe(250);
@@ -61,7 +61,7 @@ describe("QuotaService", () => {
 
   describe("checkQuota", () => {
     it("should allow usage when under limit", async () => {
-      jest.spyOn(service, "getEffectiveQuota").mockResolvedValue({
+      vi.spyOn(service, "getEffectiveQuota").mockResolvedValue({
         organizationId: "org-1",
         tierSlug: "free",
         baseLimits: { maxProducts: 100 },
@@ -70,7 +70,7 @@ describe("QuotaService", () => {
         effectiveLimits: { maxProducts: 100 },
       });
 
-      (prisma.client.product.count as jest.Mock).mockResolvedValue(10);
+      (prisma.client.product.count as any).mockResolvedValue(10);
 
       const res = await service.checkQuota("org-1", "maxProducts");
       expect(res.allowed).toBe(true);
@@ -79,7 +79,7 @@ describe("QuotaService", () => {
     });
 
     it("should deny usage when at or above limit", async () => {
-      jest.spyOn(service, "getEffectiveQuota").mockResolvedValue({
+      vi.spyOn(service, "getEffectiveQuota").mockResolvedValue({
         organizationId: "org-1",
         tierSlug: "free",
         baseLimits: { maxProducts: 100 },
@@ -88,7 +88,7 @@ describe("QuotaService", () => {
         effectiveLimits: { maxProducts: 100 },
       });
 
-      (prisma.client.product.count as jest.Mock).mockResolvedValue(100);
+      (prisma.client.product.count as any).mockResolvedValue(100);
 
       const res = await service.checkQuota("org-1", "maxProducts");
       expect(res.allowed).toBe(false);
