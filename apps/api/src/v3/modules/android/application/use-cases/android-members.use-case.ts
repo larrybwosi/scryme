@@ -59,7 +59,7 @@ export class AndroidMembersUseCase {
 
     const member = await this.prisma.client.member.findFirst({
       where: {
-        id,
+        OR: [{ id }, { userId: id }],
         organizationId,
         deletedAt: null,
       },
@@ -100,7 +100,11 @@ export class AndroidMembersUseCase {
     const { organizationId } = v3Context;
 
     const member = await this.prisma.client.member.findFirst({
-      where: { id, organizationId, deletedAt: null },
+      where: {
+        OR: [{ id }, { userId: id }],
+        organizationId,
+        deletedAt: null,
+      },
     });
 
     if (!member) {
@@ -109,7 +113,7 @@ export class AndroidMembersUseCase {
 
     if (dto.role) {
       await this.prisma.client.member.update({
-        where: { id },
+        where: { id: member.id },
         data: { role: dto.role as any },
       });
     }
@@ -133,7 +137,11 @@ export class AndroidMembersUseCase {
     const { organizationId } = v3Context;
 
     const member = await this.prisma.client.member.findFirst({
-      where: { id, organizationId, deletedAt: null },
+      where: {
+        OR: [{ id }, { userId: id }],
+        organizationId,
+        deletedAt: null,
+      },
     });
 
     if (!member) {
@@ -143,7 +151,7 @@ export class AndroidMembersUseCase {
     const newStatus = dto.dutyStatus === "ONLINE" || dto.dutyStatus === "BUSY" ? "ONLINE" : "OFFLINE";
 
     const updated = await this.prisma.client.member.update({
-      where: { id },
+      where: { id: member.id },
       data: {
         status: newStatus as any,
       },

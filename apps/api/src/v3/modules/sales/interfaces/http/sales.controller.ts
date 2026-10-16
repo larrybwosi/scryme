@@ -27,7 +27,7 @@ import { SalesAnalyticsDto, OrderItemDto } from "../../dto/sales.dto";
 @ApiBearerAuth()
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(StandardResponseInterceptor)
-@Controller(":orgSlug/sales")
+@Controller("sales")
 @ApiParam({ name: "orgSlug", type: "string" })
 export class SalesController {
   constructor(private readonly salesService: SalesService) {}
