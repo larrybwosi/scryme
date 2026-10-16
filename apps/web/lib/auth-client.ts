@@ -30,7 +30,7 @@ export const authClient: any = createAuthClient({
     defaultAppUrl,
   ),
   plugins: [
-    passkeyClient(),
+    passkeyClient() as any,
     twoFactorClient({
       onTwoFactorRedirect() {
         if (typeof window !== "undefined") {
