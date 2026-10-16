@@ -1,80 +1,115 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
-import { Sun, ArrowRight, CheckCircle2, Shield, Layers } from 'lucide-react'
+import { ArrowRight, Layers, Sun, Zap, ShieldCheck, Box, DollarSign, Users, Database, CheckCircle2 } from 'lucide-react'
 
 export const Route = createFileRoute('/light')({
-  component: LightModeComponent,
+  component: LightComponent,
 })
 
-function LightModeComponent() {
+function LightComponent() {
   return (
-    <div className="min-h-screen bg-[#f5f3ed] text-[#121417] font-sans selection:bg-[#d2ff3a] selection:text-[#090a0b]">
-      {/* Custom Light Header */}
-      <header className="sticky top-0 z-50 backdrop-blur-xl bg-[#f5f3ed]/90 border-b border-black/10 px-4 md:px-8 py-4">
-        <div className="max-w-7xl mx-auto flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <div className="w-9 h-9 rounded-lg bg-[#121417] text-[#d2ff3a] flex items-center justify-center font-bold">
-              <Layers className="w-5 h-5 stroke-[2.5]" />
-            </div>
-            <span className="text-xl font-bold tracking-tight text-[#121417] font-sans">
-              SCRYME<span className="text-[#10b981]">.</span>
-            </span>
-          </Link>
+    <div className="min-h-screen bg-[#f8f9fa] text-[#121314] font-sans selection:bg-[#10b981] selection:text-white transition-colors">
+      <Header />
 
-          <nav className="hidden md:flex items-center gap-8 text-sm font-semibold text-[#30312d]">
-            <Link to="/" className="hover:text-black transition-colors">Platform</Link>
-            <Link to="/inventory" className="hover:text-black transition-colors">Inventory</Link>
-            <Link to="/sales" className="hover:text-black transition-colors">RevOps</Link>
-            <Link to="/pricing" className="hover:text-black transition-colors">Pricing</Link>
-          </nav>
-
-          <div className="flex items-center gap-3">
-            <Link
-              to="/"
-              className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold uppercase tracking-wider text-white bg-[#121417] rounded-full hover:bg-black transition"
-            >
-              <span>Back to Obsidian Dark</span>
-            </Link>
-          </div>
-        </div>
-      </header>
-
-      <main className="py-20 md:py-28 max-w-7xl mx-auto px-4 md:px-8">
-        <div className="text-center max-w-3xl mx-auto mb-16">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-black/5 border border-black/10 mb-6">
-            <Sun className="w-4 h-4 text-[#10b981]" />
-            <span className="text-xs font-bold uppercase tracking-wider text-[#121417] font-mono">
-              Executive Light Theme Mode
-            </span>
+      {/* Editorial Light Canvas Hero */}
+      <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 overflow-hidden px-4 md:px-8 max-w-7xl mx-auto text-center">
+        <div className="max-w-4xl mx-auto">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-slate-200 border border-slate-300 text-slate-800 text-xs font-mono mb-6">
+            <Sun className="w-3.5 h-3.5 text-amber-500" />
+            <span>High-Contrast Editorial Light Mode • Obsidian Kinetic Standard</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl font-serif text-[#121417] mb-6">
-            High-Contrast Clarity for Boardroom Reporting
+          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-serif text-[#121314] tracking-tight leading-[1.05] mb-8">
+            Can One Smarter Engine Scale Your Entire Enterprise?
           </h1>
-          <p className="text-base text-[#474743] leading-relaxed">
-            Switch effortlessly between dark and light operational workspaces designed for supreme typographic legibility and executive presentations.
-          </p>
-        </div>
 
-        <div className="bg-white border border-black/10 p-8 md:p-12 rounded-3xl shadow-xl max-w-4xl mx-auto mb-16">
-          <h3 className="text-2xl font-bold text-[#121417] mb-4">Executive Summary Dashboard</h3>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 pt-4 border-t border-black/10">
-            <div>
-              <span className="text-xs font-mono uppercase text-[#656560]">Global Valuation</span>
-              <div className="text-3xl font-bold text-[#121417] mt-1">$48.2M</div>
-            </div>
-            <div>
-              <span className="text-xs font-mono uppercase text-[#656560]">Active Outlets</span>
-              <div className="text-3xl font-bold text-[#121417] mt-1">128 Hubs</div>
-            </div>
-            <div>
-              <span className="text-xs font-mono uppercase text-[#656560]">Daily Throughput</span>
-              <div className="text-3xl font-bold text-[#10b981] mt-1">+34.2%</div>
-            </div>
+          <p className="text-lg md:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed mb-10">
+            Experience Scryme's high-contrast chalk-cream editorial interface. Unifying telemetry across inventory, sales, CRM, and catalog cloud with sub-second execution.
+          </p>
+
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href="https://app.scryme.tech/signup"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white bg-[#090a0b] rounded-full hover:bg-slate-800 transition"
+            >
+              <span>Deploy Light Canvas</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
           </div>
         </div>
-      </main>
+      </section>
+
+      {/* Four Pillars Grid */}
+      <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto border-t border-slate-200">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-xs font-mono uppercase tracking-widest text-[#10b981]">Core Capabilities</span>
+          <h2 className="text-3xl md:text-5xl font-serif text-[#121314] mt-2">
+            The Four Pillars of Operational Command
+          </h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div className="w-10 h-10 rounded-lg bg-emerald-100 flex items-center justify-center text-emerald-600 mb-5">
+              <DollarSign className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-bold text-[#121314] mb-3">Sales Automation & RevOps</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Automated quote-to-cash pipeline with 12ms ledger reconciliation.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div className="w-10 h-10 rounded-lg bg-blue-100 flex items-center justify-center text-blue-600 mb-5">
+              <Box className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-bold text-[#121314] mb-3">Multi-Location Inventory</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Sub-second inventory telemetry across 150+ regional warehouse nodes.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div className="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center text-purple-600 mb-5">
+              <Users className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-bold text-[#121314] mb-3">360° Relationship CRM</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Predictive customer health scores and bi-directional ERP data mesh.
+            </p>
+          </div>
+
+          <div className="bg-white p-8 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition">
+            <div className="w-10 h-10 rounded-lg bg-amber-100 flex items-center justify-center text-amber-600 mb-5">
+              <Database className="w-5 h-5" />
+            </div>
+            <h3 className="text-xl font-bold text-[#121314] mb-3">Headless Catalog Cloud</h3>
+            <p className="text-sm text-slate-600 leading-relaxed">
+              Edge-cached product catalog with sub-50ms TTFB worldwide.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto text-center">
+        <div className="bg-white p-10 md:p-16 rounded-3xl border border-slate-200 shadow-lg">
+          <h2 className="text-3xl md:text-5xl font-serif text-[#121314] mb-4">
+            Ready to Operate with Absolute Operational Clarity?
+          </h2>
+          <p className="text-base text-slate-600 max-w-xl mx-auto mb-8">
+            Deploy your workspace in less than 5 minutes on Scryme's light canvas.
+          </p>
+          <a
+            href="https://app.scryme.tech/signup"
+            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-white bg-[#090a0b] rounded-full hover:bg-slate-800 transition"
+          >
+            <span>Get Started Free</span>
+            <ArrowRight className="w-4 h-4" />
+          </a>
+        </div>
+      </section>
 
       <Footer />
     </div>

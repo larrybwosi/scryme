@@ -13,10 +13,35 @@
     --color-border-subtle: rgba(255, 255, 255, 0.08);
   }
 
+  /* Dark Theme Default */
+  html.dark, :root:not(.light) {
+    --bg-main: #121314;
+    --text-main: #e3e2e3;
+    --text-muted: #c5c9ae;
+    --card-bg: rgba(26, 29, 33, 0.7);
+    --card-border: rgba(255, 255, 255, 0.08);
+    --header-bg: rgba(18, 19, 20, 0.85);
+    --nav-text: #c5c9ae;
+    --nav-hover: #ffffff;
+  }
+
+  /* Light Theme Overrides */
+  html.light {
+    --bg-main: #f8f9fa;
+    --text-main: #121314;
+    --text-muted: #525866;
+    --card-bg: #ffffff;
+    --card-border: rgba(0, 0, 0, 0.08);
+    --header-bg: rgba(248, 249, 250, 0.85);
+    --nav-text: #525866;
+    --nav-hover: #090a0b;
+  }
+
   body {
-    background-color: var(--color-obsidian-bg);
-    color: #e3e2e3;
+    background-color: var(--bg-main);
+    color: var(--text-main);
     font-family: 'Plus Jakarta Sans', sans-serif;
+    transition: background-color 0.2s ease, color 0.2s ease;
   }
 
   h1, h2, .font-serif-headline {
@@ -28,20 +53,31 @@
   }
 }
 
+/* Glass Panels */
 .glass-panel {
-  background: rgba(26, 29, 33, 0.7);
+  background: var(--card-bg);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  border: 1px solid var(--card-border);
+  box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.05);
+}
+
+.dark .glass-panel {
   box-shadow: 0 16px 36px -12px rgba(0, 0, 0, 0.5);
 }
 
 .glass-panel-elevated {
-  background: rgba(36, 40, 46, 0.8);
+  background: rgba(36, 40, 46, 0.95);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(210, 255, 58, 0.2);
+  border: 1px solid rgba(210, 255, 58, 0.3);
   box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(210, 255, 58, 0.2);
+}
+
+html.light .glass-panel-elevated {
+  background: #ffffff;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);
 }
 
 .glow-lime {

@@ -13,9 +13,9 @@
     "type-check": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/oauth-provider": "latest",
-    "@better-auth/passkey": "^1.7.1",
-    "@better-auth/sso": "^1.7.6",
+    "@better-auth/oauth-provider": "^1.7.10",
+    "@better-auth/passkey": "^1.7.10",
+    "@better-auth/sso": "^1.7.10",
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",
@@ -24,7 +24,7 @@
     "@tanstack/react-start": "^1.168.59",
     "@tanstack/start": "^1.120.20",
     "axios": "latest",
-    "better-auth": "^1.6.23",
+    "better-auth": "^1.7.10",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "lucide-react": "^0.454.0",
