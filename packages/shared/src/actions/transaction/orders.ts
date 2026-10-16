@@ -215,8 +215,7 @@ export async function createOrder(
 
         // 4. --- Process Items (Pricing & Stock) ---
         let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: any[] =
-          [];
+        const transactionItemsCreateData: any[] = [];
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
@@ -248,8 +247,7 @@ export async function createOrder(
           transactionSubTotal = transactionSubTotal.add(lineSubtotal);
 
           // B. Stock Allocation using Service
-          const allocationsCreateData: any[] =
-            [];
+          const allocationsCreateData: any[] = [];
           let unitCost = new Prisma.Decimal(variant.buyingPrice ?? 0);
 
           const selectedSellingUnit = item.sellingUnitId
@@ -489,7 +487,10 @@ export async function createOrder(
           type: result.type,
           status: result.status,
           finalTotal: result.finalTotal,
-          customerName: result.customer?.name || result.businessAccount?.name || "Walk-in Customer",
+          customerName:
+            result.customer?.name ||
+            result.businessAccount?.name ||
+            "Walk-in Customer",
           createdAt: result.createdAt,
         })
         .catch((err) =>
@@ -635,7 +636,11 @@ export async function getPaginatedOrders(
       where.OR = [
         { number: { contains: searchTerm, mode: "insensitive" } },
         { customer: { name: { contains: searchTerm, mode: "insensitive" } } },
-        { businessAccount: { name: { contains: searchTerm, mode: "insensitive" } } },
+        {
+          businessAccount: {
+            name: { contains: searchTerm, mode: "insensitive" },
+          },
+        },
       ];
     }
     if (status) {
@@ -1104,32 +1109,43 @@ export async function cancelOrder(
 
         if (stockWasCommitted) {
           // 3. Aggregate Item Quantities (Converted to BASE units)
+          // ⚡ Bolt Optimization: Parallelize unit conversions across order items with Promise.all
+          // to convert sequential O(N) async conversion roundtrips into a single O(1) concurrent step.
           const variantBaseQuantities = new Map<string, number>();
 
-          for (const item of order.items) {
-            const variantId = item.variantId;
-            const baseUnitId = item.variant?.baseUnitId;
-            const sellingUnitId =
-              item.sellingUnit?.id ||
-              item.sellingUnitId ||
-              item.sellingOrgUnitId;
+          const convertedItems = await Promise.all(
+            order.items.map(async (item) => {
+              const variantId = item.variantId;
+              const baseUnitId = item.variant?.baseUnitId;
+              const sellingUnitId =
+                item.sellingUnit?.id ||
+                item.sellingUnitId ||
+                item.sellingOrgUnitId;
 
-            let qtyToReturn = item.quantity;
+              let qtyToReturn = item.quantity;
 
-            if (baseUnitId && sellingUnitId) {
-              try {
-                qtyToReturn = await unitCalculationService.convertUnit({
-                  value: item.quantity,
-                  fromUnitId: sellingUnitId,
-                  toUnitId: baseUnitId,
-                  organizationId,
-                  productId: (item.variant.product as any).id as any,
-                });
-              } catch (e) {
-                console.warn(`Conversion failed for variant ${variantId}:`, e);
+              if (baseUnitId && sellingUnitId) {
+                try {
+                  qtyToReturn = await unitCalculationService.convertUnit({
+                    value: item.quantity,
+                    fromUnitId: sellingUnitId,
+                    toUnitId: baseUnitId,
+                    organizationId,
+                    productId: (item.variant.product as any).id as any,
+                  });
+                } catch (e) {
+                  console.warn(
+                    `Conversion failed for variant ${variantId}:`,
+                    e,
+                  );
+                }
               }
-            }
 
+              return { variantId, qtyToReturn };
+            }),
+          );
+
+          for (const { variantId, qtyToReturn } of convertedItems) {
             const current = variantBaseQuantities.get(variantId) || 0;
             variantBaseQuantities.set(variantId, current + qtyToReturn);
           }
@@ -1145,6 +1161,12 @@ export async function cancelOrder(
           });
           const stockMap = new Map(
             stockAllocations.map((s) => [s.variantId, s]),
+          );
+
+          // ⚡ Bolt Optimization: Pre-index order items by variant ID into a Map
+          // to replace O(N) linear array searches (.find()) with O(1) Map lookups.
+          const itemByVariantMap = new Map(
+            order.items.map((i) => [i.variantId, i]),
           );
 
           // 5. Updates
@@ -1178,15 +1200,13 @@ export async function cancelOrder(
                 }),
               );
 
-              // Fix: Use 'referenceNumber' instead of 'transactionItemId'
+              const matchingItem = itemByVariantMap.get(variantId);
               stockAdjustments.push({
                 organizationId,
                 memberId,
                 variantId,
                 locationId: order.locationId,
-                referenceNumber: order.items.find(
-                  (i) => i.variantId === variantId,
-                )!.id,
+                referenceNumber: matchingItem?.id || transactionId,
                 reason: StockAdjustmentReason.ORDER_CANCEL,
                 quantity: quantityToRestock,
                 notes: `Order ${order.number} cancelled: ${reason}`,
