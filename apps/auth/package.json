@@ -13,7 +13,7 @@
     "type-check": "pnpm exec tsc --noEmit"
   },
   "dependencies": {
-    "@better-auth/oauth-provider": "latest",
+    "@better-auth/oauth-provider": "^1.6.23",
     "@better-auth/passkey": "^1.7.1",
     "@better-auth/sso": "^1.7.6",
     "@repo/db": "workspace:*",
