@@ -359,7 +359,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${CMS_PORT:-3010}",
+          "http://localhost:${CMS_PORT:-3010}/api/health",
         ]
       interval: 60s
       timeout: 10s
@@ -367,6 +367,9 @@ services:
       start_period: 60s
     environment:
       DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_URL: redis://redis:6379
       PAYLOAD_SECRET: ${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
       PAYLOAD_DB_PUSH: ${PAYLOAD_DB_PUSH:-false}
       NEXT_PUBLIC_SERVER_URL: https://${CMS_DOMAIN:-cms.scryme.tech}
@@ -378,6 +381,8 @@ services:
       RUSTFS_BUCKET: ${RUSTFS_BUCKET:-dealio-uploads}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       rustfs:
         condition: service_healthy

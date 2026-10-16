@@ -28,7 +28,7 @@ export const authClient: any = createAuthClient({
     [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_CRM_URL],
     defaultAppUrl,
   ),
-  plugins: [passkeyClient()],
+  plugins: [passkeyClient() as any],
 });
 
 export const signIn: typeof authClient.signIn = authClient.signIn;
