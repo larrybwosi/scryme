@@ -179,7 +179,10 @@ export class AdminService {
         where: { key: "system:default_quotas" },
       });
       if (setting?.value) {
-        defaultAllocations = JSON.parse(setting.value);
+        const parsed = JSON.parse(setting.value);
+        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
+          defaultAllocations = parsed;
+        }
       }
     } catch {
       // ignore
