@@ -168,12 +168,12 @@ export class QuotaService {
       }
       case "maxProducts": {
         return this.prisma.client.product.count({
-          where: { organizationId, deletedAt: null },
+          where: { organizationId, isArchived: false },
         });
       }
       case "maxLocations": {
         return this.prisma.client.inventoryLocation.count({
-          where: { organizationId, deletedAt: null },
+          where: { organizationId },
         });
       }
       case "maxWebhookSubscriptions": {
