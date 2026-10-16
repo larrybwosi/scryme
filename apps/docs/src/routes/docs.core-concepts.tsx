@@ -1,5 +1,5 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { BookOpen, ShieldCheck, Database, Building2 } from 'lucide-react'
+import { BookOpen, ShieldCheck, Database, Building2, Warehouse } from 'lucide-react'
 
 export const Route = createFileRoute('/docs/core-concepts')({
   component: CoreConceptsPage
@@ -12,9 +12,9 @@ function CoreConceptsPage() {
         <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200">
           <BookOpen className="w-3.5 h-3.5" /> Guides & Architecture
         </div>
-        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Core System Architecture</h1>
+        <h1 className="text-3xl font-extrabold text-slate-900 tracking-tight">Core platform concepts</h1>
         <p className="text-slate-600 text-base leading-relaxed">
-          Key architecture principles powering Scryme V3: Database-level tenant isolation, multi-location stock tracking, and BOLA security defenses.
+          Scryme is built around tenant-aware access, location-aware inventory, and event-driven operations that work across POS, stock control, and service booking.
         </p>
       </div>
 
@@ -23,19 +23,37 @@ function CoreConceptsPage() {
       <div className="space-y-6">
         <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-            <Building2 className="w-4 h-4 text-slate-700" /> Multi-Tenant Isolation & BOLA Defense
+            <Building2 className="w-4 h-4 text-slate-700" /> Multi-tenant security model
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            All database operations on models lacking composite unique constraints employ strict database-level filtering (`updateMany`, `deleteMany` scoped by `organizationId`) followed by entity verification to eliminate Broken Object Level Authorization (BOLA) risks.
+            Every major resource is tied to an organization context and filtered by membership, role, and tenant scope. This keeps staff, departments, and customer-facing apps from crossing boundaries without explicit authorization.
           </p>
         </div>
 
         <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
           <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
-            <Database className="w-4 h-4 text-slate-700" /> Multi-Location Variant Stocking
+            <Database className="w-4 h-4 text-slate-700" /> Inventory and stock operations
           </div>
           <p className="text-xs text-slate-600 leading-relaxed">
-            Product variants store stock levels per physical location inside the `variantStocks` relation. Low stock automation workflows aggregate total location balances in memory prior to firing alerts.
+            Product variants and stock levels are tracked at a location-aware level so a store, warehouse, or production site can reconcile supply independently. Stock calculations aggregate movement data before alerts and reorder logic are triggered.
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+            <Warehouse className="w-4 h-4 text-slate-700" /> Operational workflows
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            Scryme connects POS transactions, incoming stock, purchase orders, service bookings, and production scheduling in the same operational ledger. This lets teams manage both retail and back-office execution from a common data model.
+          </p>
+        </div>
+
+        <div className="bg-white p-6 rounded-2xl border border-slate-200 space-y-3">
+          <div className="flex items-center gap-2 text-slate-900 font-bold text-sm">
+            <ShieldCheck className="w-4 h-4 text-slate-700" /> BOLA defense patterns
+          </div>
+          <p className="text-xs text-slate-600 leading-relaxed">
+            High-risk mutation endpoints should scope updates by organization and then verify that the target object belongs to the same tenant before applying changes. This reduces the risk of unauthorized vertical or lateral access.
           </p>
         </div>
       </div>

@@ -5,7 +5,6 @@ import {
   BookOpen,
   Box,
   Code2,
-  SlidersHorizontal,
   Bell,
   Plug,
   Gauge,
@@ -19,11 +18,7 @@ import {
   X,
   Play,
   Layers,
-  ShoppingBag,
-  Package,
-  DollarSign,
-  Users,
-  Factory
+  Package
 } from 'lucide-react'
 import appCss from '../styles/app.css?url'
 
@@ -77,10 +72,11 @@ function RootComponent() {
 
   const searchResults = [
     { title: 'Getting Started', category: 'Guide', to: '/docs/getting-started' },
+    { title: 'Installation and SDK Setup', category: 'Guide', to: '/docs/installation' },
+    { title: 'Core Platform Concepts', category: 'Guide', to: '/docs/core-concepts' },
     { title: 'POS & Sales API', category: 'API Reference', to: '/api-reference/pos' },
     { title: 'Inventory & Stocking API', category: 'API Reference', to: '/api-reference/stocking' },
-    { title: 'Multi-Tenant Auth & Security', category: 'Guide', to: '/docs/core-concepts' },
-    { title: 'Scalar Interactive API Playground', category: 'API Reference', to: '/api-reference/playground' }
+    { title: 'Security Best Practices', category: 'Guide', to: '/docs/security' }
   ].filter(r => r.title.toLowerCase().includes(searchQuery.toLowerCase()) || r.category.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
@@ -90,24 +86,21 @@ function RootComponent() {
       </head>
       <body className="bg-slate-100 text-slate-900 min-h-screen font-sans antialiased">
         <div className="flex min-h-screen">
-          {/* Sidebar */}
           <aside className="w-64 bg-slate-50 border-r border-slate-200 flex flex-col justify-between p-4 shrink-0 fixed top-0 bottom-0 left-0 overflow-y-auto">
             <div className="space-y-4">
-              {/* Top Header Card */}
               <div className="flex items-center justify-between p-2 rounded-xl border border-slate-200 bg-white shadow-2xs">
                 <div className="flex items-center gap-2.5">
                   <div className="w-8 h-8 bg-slate-900 text-white rounded-lg flex items-center justify-center font-bold text-sm">
                     <Box className="w-5 h-5" />
                   </div>
                   <div>
-                    <h1 className="font-semibold text-sm leading-tight text-slate-900">Documentation</h1>
+                    <h1 className="font-semibold text-sm leading-tight text-slate-900">Scryme Docs</h1>
                     <span className="text-xs text-slate-500">v3.0.0</span>
                   </div>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400" />
               </div>
 
-              {/* Search Trigger */}
               <button
                 onClick={() => setSearchOpen(true)}
                 className="w-full flex items-center justify-between px-3 py-2 text-xs text-slate-500 bg-white border border-slate-200 rounded-lg hover:border-slate-300 transition-colors shadow-2xs"
@@ -121,7 +114,6 @@ function RootComponent() {
                 </kbd>
               </button>
 
-              {/* Top Navigation Options */}
               <div className="space-y-0.5 border-b border-slate-200 pb-3">
                 <Link
                   to="/"
@@ -131,20 +123,17 @@ function RootComponent() {
                   <BookOpen className="w-4 h-4 text-slate-500" />
                   Documentation
                 </Link>
-                <a
-                  href="#"
+                <Link
+                  to="/docs/getting-started"
                   className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-200/60 transition-colors"
                 >
                   <div className="flex items-center gap-2.5">
                     <Box className="w-4 h-4 text-slate-500" />
-                    Themes
+                    Platform Overview
                   </div>
-                  <span className="px-1.5 py-0.5 text-[10px] font-semibold text-orange-600 bg-orange-100 rounded-full">
-                    Hot
-                  </span>
-                </a>
+                </Link>
                 <a
-                  href="https://github.com"
+                  href="https://github.com/larrybwosi/scryme"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-200/60 transition-colors"
@@ -157,7 +146,6 @@ function RootComponent() {
                 </a>
               </div>
 
-              {/* Menu Section */}
               {navSections.map(section => (
                 <div key={section.title} className="space-y-1">
                   <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
@@ -187,13 +175,11 @@ function RootComponent() {
             </div>
           </aside>
 
-          {/* Main Content Area */}
           <div className="flex-1 ml-64 p-8 max-w-6xl">
-            {/* Breadcrumb Header */}
             <div className="flex items-center gap-2 text-xs text-slate-500 mb-6">
-              <span>My Application</span>
+              <span>Scryme</span>
               <ChevronRight className="w-3 h-3" />
-              <span className="text-slate-900 font-medium">Dashboard</span>
+              <span className="text-slate-900 font-medium">Developer Docs</span>
             </div>
 
             <main>
@@ -202,7 +188,6 @@ function RootComponent() {
           </div>
         </div>
 
-        {/* CMD+K Search Overlay */}
         {searchOpen && (
           <div className="fixed inset-0 bg-slate-900/40 backdrop-blur-xs flex items-start justify-center pt-24 z-50 p-4">
             <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-lg overflow-hidden">

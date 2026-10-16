@@ -5,7 +5,7 @@ import {
   Layers,
   Code2,
   BookOpen,
-  HelpCircle,
+  ShieldCheck,
   ArrowRight
 } from 'lucide-react'
 
@@ -17,57 +17,63 @@ function HomePage() {
   const startingCards = [
     {
       title: 'Getting Started',
-      desc: 'Enhance your project with our pre-built components and pages.',
+      desc: 'Understand the platform model, tenancy, and the first steps for integrating with Scryme V3.',
       icon: Play,
       to: '/docs/getting-started'
     },
     {
       title: 'Installation',
-      desc: 'Enhance your project with our pre-built components and pages.',
+      desc: 'Set up the SDK, CLI, and local environment for production-safe integrations and deployments.',
       icon: Package,
       to: '/docs/installation'
     },
     {
-      title: 'Components',
-      desc: 'Enhance your project with our pre-built components and pages.',
+      title: 'Core Concepts',
+      desc: 'Learn how multi-tenant access, location-aware stock, and resource-level security work together.',
       icon: Layers,
-      to: '/docs/components'
+      to: '/docs/core-concepts'
     },
     {
       title: 'API Reference',
-      desc: 'Enhance your project with our pre-built components and pages.',
+      desc: 'Review the V3 REST modules for POS, inventory, stock transfers, and public booking flows.',
       icon: Code2,
       to: '/api-reference'
     },
     {
+      title: 'Security',
+      desc: 'Follow the security patterns for tenant isolation, secrets management, and webhook validation.',
+      icon: ShieldCheck,
+      to: '/docs/security'
+    },
+    {
       title: 'Guides',
-      desc: 'Enhance your project with our pre-built components and pages.',
+      desc: 'Explore architectures for integrations, public booking, and operational workflows across apps.',
       icon: BookOpen,
-      to: '/docs/core-concepts'
+      to: '/docs/integrations'
     }
   ]
 
   return (
     <div className="space-y-10">
-      {/* Title & Description Header */}
       <div className="space-y-3">
-        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Documentation</h1>
-        <p className="text-slate-600 text-base max-w-2xl leading-relaxed">
-          This site is designed to help you get the most out of the platform. Here, you'll find a collection of
-          articles and tutorials covering all aspects of its features.
+        <h1 className="text-4xl font-extrabold text-slate-900 tracking-tight">Scryme Developer Documentation</h1>
+        <p className="text-slate-600 text-base max-w-3xl leading-relaxed">
+          Scryme is an enterprise ERP and retail operations platform for multi-location stores, bakeries,
+          supermarkets, and service businesses. This documentation is designed to help developers connect,
+          configure, and extend the platform with clear architecture guidance and implementation patterns.
         </p>
       </div>
 
       <hr className="border-slate-200" />
 
-      {/* Good Starting Point Section */}
       <div className="space-y-6">
         <div className="space-y-1">
-          <h2 className="text-xl font-bold text-slate-900">Good starting point</h2>
-          <p className="text-sm text-slate-500">Everything you need to start using the platform quickly and efficiently.</p>
+          <h2 className="text-xl font-bold text-slate-900">Start here</h2>
+          <p className="text-sm text-slate-500">
+            Choose the entry point that matches your work: platform setup, integrations, API access, or security configuration.
+          </p>
         </div>
 
-        {/* Cards Grid */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {startingCards.slice(0, 3).map((card) => {
             const Icon = card.icon
@@ -91,7 +97,7 @@ function HomePage() {
           })}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 max-w-2xl">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {startingCards.slice(3).map((card) => {
             const Icon = card.icon
             return (
@@ -115,11 +121,11 @@ function HomePage() {
         </div>
       </div>
 
-      {/* Need Help Footer Section */}
       <div className="pt-6 border-t border-slate-200 space-y-3">
         <h2 className="text-xl font-bold text-slate-900">Need help?</h2>
         <p className="text-sm text-slate-500">
-          Have a question, need some help or advice, reach out to out support team. We're here to help!
+          If you are implementing a new workflow, validating a production deployment, or troubleshooting a tenant issue,
+          use the support guide to route your request to the right team.
         </p>
         <p className="text-xs font-semibold text-slate-900 flex items-center gap-1">
           See: <Link to="/docs/support" className="text-slate-900 underline hover:text-slate-700">Getting Help</Link>
