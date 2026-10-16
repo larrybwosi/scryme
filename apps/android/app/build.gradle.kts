@@ -163,3 +163,8 @@ dependencies {
     androidTestImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
 }
+
+// Chrome Custom Tabs for OAuth Auth Web App browser authentication
+dependencies {
+    implementation("androidx.browser:browser:1.7.0")
+}

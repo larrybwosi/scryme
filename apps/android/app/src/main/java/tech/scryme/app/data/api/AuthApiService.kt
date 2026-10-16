@@ -9,6 +9,7 @@ import retrofit2.http.Path
 import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
 import tech.scryme.app.data.dto.EmailSignInResponseDto
+import tech.scryme.app.data.dto.OAuthCodeExchangeRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.PosPairResponseDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
@@ -22,6 +23,11 @@ interface AuthApiService {
     @POST("android/auth/login")
     suspend fun loginWithEmail(
         @Body request: EmailSignInRequestDto
+    ): Response<V3ApiResponse<EmailSignInResponseDto>>
+
+    @POST("android/auth/oauth/token")
+    suspend fun exchangeOAuthCode(
+        @Body request: OAuthCodeExchangeRequestDto
     ): Response<V3ApiResponse<EmailSignInResponseDto>>
 
     @POST("android/pos/members/login")

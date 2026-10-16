@@ -315,3 +315,25 @@ export class AndroidPosPairDto {
   @IsOptional()
   deviceType?: string;
 }
+
+export class AndroidOAuthCodeExchangeDto {
+  @ApiProperty({ description: "OAuth Authorization Code" })
+  @IsString()
+  @IsNotEmpty()
+  code: string;
+
+  @ApiPropertyOptional({ description: "PKCE Code Verifier" })
+  @IsString()
+  @IsOptional()
+  codeVerifier?: string;
+
+  @ApiPropertyOptional({ description: "Redirect URI", example: "https://auth.scryme.tech/mobile-callback" })
+  @IsString()
+  @IsOptional()
+  redirectUri?: string;
+
+  @ApiPropertyOptional({ description: "Client ID", example: "scryme-android-app" })
+  @IsString()
+  @IsOptional()
+  clientId?: string;
+}

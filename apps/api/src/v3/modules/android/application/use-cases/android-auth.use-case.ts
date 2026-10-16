@@ -251,6 +251,89 @@ export class AndroidAuthUseCase {
     };
   }
 
+  async exchangeOAuthCode(dto: { code: string; codeVerifier?: string; redirectUri?: string; clientId?: string }) {
+    try {
+      // Find valid code in verification database table managed by Better Auth
+      const verificationRecord = await this.prisma.client.verification.findFirst({
+        where: {
+          value: dto.code,
+        },
+      });
+
+      if (!verificationRecord) {
+        throw new UnauthorizedException("Invalid or expired OAuth authorization code");
+      }
+
+      if (verificationRecord.expiresAt && new Date(verificationRecord.expiresAt) < new Date()) {
+        throw new UnauthorizedException("OAuth authorization code has expired");
+      }
+
+      const userId = verificationRecord.identifier;
+      if (!userId) {
+        throw new UnauthorizedException("No user associated with authorization code");
+      }
+
+      const user = await this.prisma.client.user.findUnique({
+        where: { id: userId },
+      });
+
+      if (!user) {
+        throw new NotFoundException("User not found");
+      }
+
+      // Retrieve or create active session token for the user
+      let session = await this.prisma.client.session.findFirst({
+        where: { userId: user.id },
+        orderBy: { createdAt: "desc" },
+        select: { token: true },
+      });
+
+      let token = session?.token;
+      if (!token) {
+        const newSession = await this.prisma.client.session.create({
+          data: {
+            id: `s_${user.id}_${Date.now()}`,
+            userId: user.id,
+            token: `s_${user.id}_${Date.now()}`,
+            expiresAt: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          },
+        });
+        token = newSession.token;
+      }
+
+      // Cleanup consumed verification code record
+      await this.prisma.client.verification.delete({
+        where: { id: verificationRecord.id },
+      }).catch(() => null);
+
+      const member = await this.prisma.client.member.findFirst({
+        where: { userId: user.id, deletedAt: null },
+        include: { organization: true },
+      });
+
+      const effectiveOrgSlug = member?.organization?.slug || "default";
+
+      return {
+        effectiveToken: token,
+        token: token,
+        effectiveOrgSlug,
+        orgSlug: effectiveOrgSlug,
+        user: {
+          id: user.id,
+          email: user.email,
+          name: user.name,
+          image: user.image,
+        },
+        member: member ? { id: member.id, role: member.role } : null,
+      };
+    } catch (error: any) {
+      if (error instanceof UnauthorizedException || error instanceof NotFoundException) throw error;
+      throw new UnauthorizedException(error.message || "OAuth code exchange failed");
+    }
+  }
+
   async logout(user: any) {
     if (user?.id) {
       await this.prisma.client.session.deleteMany({

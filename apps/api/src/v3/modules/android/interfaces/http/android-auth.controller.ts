@@ -24,6 +24,7 @@ import { AndroidUseCase } from "../../application/use-cases/android.use-case";
 import {
   AndroidEmailLoginDto,
   AndroidEmailSignUpDto,
+  AndroidOAuthCodeExchangeDto,
 } from "../../application/dto/android-auth.dto";
 import { SwitchOrgDto } from "../../application/dto/android.dto";
 
@@ -56,6 +57,17 @@ export class AndroidAuthController {
   @ApiResponse({ status: 201, description: "Android user registration successful" })
   async signup(@Body() dto: AndroidEmailSignUpDto) {
     return this.androidAuthUseCase.signUpWithEmail(dto);
+  }
+
+  @AllowPublic()
+  @Post("oauth/token")
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({
+    summary: "Exchange OAuth authorization code for Android bearer session token",
+  })
+  @ApiResponse({ status: 200, description: "OAuth code exchange successful" })
+  async exchangeOAuthCode(@Body() dto: AndroidOAuthCodeExchangeDto) {
+    return this.androidAuthUseCase.exchangeOAuthCode(dto);
   }
 
   @Get("me")

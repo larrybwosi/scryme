@@ -140,3 +140,10 @@ data class LocationDetailDto(
     @SerializedName("code") val code: String? = null,
     @SerializedName("isDefault") val isDefault: Boolean? = false
 )
+
+data class OAuthCodeExchangeRequestDto(
+    @SerializedName("code") val code: String,
+    @SerializedName("codeVerifier") val codeVerifier: String? = null,
+    @SerializedName("redirectUri") val redirectUri: String = "https://auth.scryme.tech/mobile-callback",
+    @SerializedName("clientId") val clientId: String = "scryme-android-app"
+)
