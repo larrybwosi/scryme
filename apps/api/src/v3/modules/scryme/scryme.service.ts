@@ -62,18 +62,23 @@ export class ScrymeService {
         { name: "finance", topic: "Expense approvals and financial updates" },
       ];
 
-      for (const channel of defaultChannels) {
-        try {
-          await this.scrymeClient.createChannel(
-            workspaceSlug,
-            channel.name,
-            channel.name,
-            "public",
-          );
-        } catch (e: any) {
-          this.logger.warn(`Channel ${channel.name} creation skipped/exists: ${e.message}`);
-        }
-      }
+      // ⚡ Bolt Optimization: Parallelize default channel creation using Promise.all.
+      // This collapses execution time from 5 sequential blocking HTTP roundtrips to 1 flat concurrent roundtrip,
+      // reducing provisioning latency by up to ~80%.
+      await Promise.all(
+        defaultChannels.map(async (channel) => {
+          try {
+            await this.scrymeClient.createChannel(
+              workspaceSlug,
+              channel.name,
+              channel.name,
+              "public",
+            );
+          } catch (e: any) {
+            this.logger.warn(`Channel ${channel.name} creation skipped/exists: ${e.message}`);
+          }
+        }),
+      );
 
       const config = await this.prisma.client.scrymeConfiguration.upsert({
         where: { organizationId },
@@ -110,30 +115,35 @@ export class ScrymeService {
       include: { user: true },
     });
 
-    for (const member of members) {
-      if (!member.user || !member.user.email) continue;
+    // ⚡ Bolt Optimization: Parallelize member provisioning with Promise.all.
+    // Instead of awaiting external Scryme API calls and database updates sequentially per member,
+    // concurrent execution collapses latency from O(N) sequential blocking roundtrips to O(1) concurrent execution.
+    await Promise.all(
+      members.map(async (member) => {
+        if (!member.user || !member.user.email) return;
 
-      if (!member.user.scrymeUserId || force) {
-        try {
-          const scrymeUser = await this.scrymeClient.addWorkspaceMember(
-            config.workspaceSlug,
-            member.user.email,
-            member.role === "ADMIN" || member.role === "OWNER" ? "admin" : "member",
-          );
+        if (!member.user.scrymeUserId || force) {
+          try {
+            const scrymeUser = await this.scrymeClient.addWorkspaceMember(
+              config.workspaceSlug,
+              member.user.email,
+              member.role === "ADMIN" || member.role === "OWNER" ? "admin" : "member",
+            );
 
-          if (scrymeUser?.id) {
-            await this.prisma.client.user.update({
-              where: { id: member.user.id },
-              data: { scrymeUserId: scrymeUser.id },
-            });
+            if (scrymeUser?.id) {
+              await this.prisma.client.user.update({
+                where: { id: member.user.id },
+                data: { scrymeUserId: scrymeUser.id },
+              });
+            }
+          } catch (error: any) {
+            this.logger.error(
+              `Failed to provision Scryme user for ${member.user.email}: ${error.message}`,
+            );
           }
-        } catch (error: any) {
-          this.logger.error(
-            `Failed to provision Scryme user for ${member.user.email}: ${error.message}`,
-          );
         }
-      }
-    }
+      }),
+    );
   }
 
 
@@ -160,51 +170,60 @@ export class ScrymeService {
       return;
     }
 
-    const locations = await this.prisma.client.inventoryLocation.findMany({
-      where: { organizationId, isActive: true },
-    });
+    const [locations, accounts] = await Promise.all([
+      this.prisma.client.inventoryLocation.findMany({
+        where: { organizationId, isActive: true },
+      }),
+      this.prisma.client.businessAccount.findMany({
+        where: { organizationId },
+      }),
+    ]);
 
-    for (const loc of locations) {
-      if (!loc.scrymeChannelId) {
-        const channelName = `location-${loc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
-        try {
-          const ch = await this.scrymeClient.createChannel(
-            config.workspaceSlug,
-            channelName,
-            channelName,
-            "public",
-          );
-          await this.prisma.client.inventoryLocation.update({
-            where: { id: loc.id },
-            data: { scrymeChannelId: ch.slug || channelName },
-          });
-        } catch (err: any) {
-          this.logger.error(
-            `Failed to sync location channel for ${loc.name}: ${err.message}`,
-          );
-        }
-      }
-    }
-
-    const accounts = await this.prisma.client.businessAccount.findMany({
-      where: { organizationId },
-    });
-
-    for (const acc of accounts) {
-      const channelName = `client-${acc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
-      try {
-        await this.scrymeClient.createChannel(
-          config.workspaceSlug,
-          channelName,
-          channelName,
-          "private",
-        );
-      } catch (err: any) {
-        this.logger.error(
-          `Failed to sync account channel for ${acc.name}: ${err.message}`,
-        );
-      }
-    }
+    // ⚡ Bolt Optimization: Parallelize location and account channel creations with Promise.all.
+    // Grouping reads and executing channel creations concurrently collapses latency from
+    // O(N + M) sequential blocking roundtrips down to O(1) concurrent roundtrips.
+    await Promise.all([
+      Promise.all(
+        locations.map(async (loc) => {
+          if (!loc.scrymeChannelId) {
+            const channelName = `location-${loc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+            try {
+              const ch = await this.scrymeClient.createChannel(
+                config.workspaceSlug,
+                channelName,
+                channelName,
+                "public",
+              );
+              await this.prisma.client.inventoryLocation.update({
+                where: { id: loc.id },
+                data: { scrymeChannelId: ch.slug || channelName },
+              });
+            } catch (err: any) {
+              this.logger.error(
+                `Failed to sync location channel for ${loc.name}: ${err.message}`,
+              );
+            }
+          }
+        }),
+      ),
+      Promise.all(
+        accounts.map(async (acc) => {
+          const channelName = `client-${acc.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}`;
+          try {
+            await this.scrymeClient.createChannel(
+              config.workspaceSlug,
+              channelName,
+              channelName,
+              "private",
+            );
+          } catch (err: any) {
+            this.logger.error(
+              `Failed to sync account channel for ${acc.name}: ${err.message}`,
+            );
+          }
+        }),
+      ),
+    ]);
   }
 
   async handleWebhook(signature: string, payload: any) {
