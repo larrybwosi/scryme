@@ -95,9 +95,16 @@ export class ServiceManagementService {
       }
     }
 
-    return this.prisma.client.serviceCategory.update({
-        where: { id },
+    // 🛡️ Sentinel: ServiceCategory lacks a composite unique constraint on [id, organizationId].
+    // Standard Prisma update({ where: { id } }) ignores non-unique fields in where clauses at runtime.
+    // Using updateMany with organizationId guarantees database-level multi-tenant isolation.
+    await this.prisma.client.serviceCategory.updateMany({
+        where: { id, organizationId: orgId },
         data: dto
+    });
+
+    return this.prisma.client.serviceCategory.findFirstOrThrow({
+        where: { id, organizationId: orgId }
     });
   }
 
@@ -108,9 +115,12 @@ export class ServiceManagementService {
 
     if (!category) throw new NotFoundException("Category not found");
 
-    return this.prisma.client.serviceCategory.delete({
-        where: { id }
+    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    await this.prisma.client.serviceCategory.deleteMany({
+        where: { id, organizationId: orgId }
     });
+
+    return category;
   }
 
   async getCategories(orgId: string) {
@@ -262,29 +272,54 @@ export class ServiceManagementService {
       }
     }
 
-    return this.prisma.client.service.update({
-        where: { id },
+    // 🛡️ Sentinel: Service lacks a composite unique constraint on [id, organizationId].
+    // Standard Prisma update({ where: { id } }) ignores non-unique organizationId filters in where clauses at runtime.
+    // Using updateMany with organizationId strictly enforces multi-tenant BOLA isolation at database execution time.
+    await this.prisma.client.service.updateMany({
+        where: { id, organizationId: orgId },
         data: {
             ...serviceData,
             customFields: customFields as any,
-            staff: staffIds ? {
-                deleteMany: {},
-                create: staffIds.map(id => ({ memberId: id }))
-            } : undefined,
-            resources: resourceIds ? {
-                deleteMany: {},
-                create: resourceIds.map(id => ({ resourceId: id }))
-            } : undefined,
-            materials: materials ? {
-                deleteMany: {},
-                create: materials.map(m => ({ variantId: m.variantId, quantity: m.quantity }))
-            } : undefined,
-            taxRates: taxRateIds ? {
-                deleteMany: {},
-                create: taxRateIds.map(id => ({ taxRateId: id }))
-            } : undefined,
         }
     });
+
+    if (staffIds !== undefined) {
+      await this.prisma.client.serviceStaffAssignment.deleteMany({ where: { serviceId: id } });
+      if (staffIds.length > 0) {
+        await this.prisma.client.serviceStaffAssignment.createMany({
+          data: staffIds.map(memberId => ({ serviceId: id, memberId }))
+        });
+      }
+    }
+
+    if (resourceIds !== undefined) {
+      await this.prisma.client.serviceResourceAssignment.deleteMany({ where: { serviceId: id } });
+      if (resourceIds.length > 0) {
+        await this.prisma.client.serviceResourceAssignment.createMany({
+          data: resourceIds.map(resourceId => ({ serviceId: id, resourceId }))
+        });
+      }
+    }
+
+    if (materials !== undefined) {
+      await this.prisma.client.serviceMaterial.deleteMany({ where: { serviceId: id } });
+      if (materials.length > 0) {
+        await this.prisma.client.serviceMaterial.createMany({
+          data: materials.map(m => ({ serviceId: id, variantId: m.variantId, quantity: m.quantity }))
+        });
+      }
+    }
+
+    if (taxRateIds !== undefined) {
+      await this.prisma.client.serviceTaxRate.deleteMany({ where: { serviceId: id } });
+      if (taxRateIds.length > 0) {
+        await this.prisma.client.serviceTaxRate.createMany({
+          data: taxRateIds.map(taxRateId => ({ serviceId: id, taxRateId }))
+        });
+      }
+    }
+
+    return this.getServiceById(orgId, id);
   }
 
   async deleteService(orgId: string, id: string) {
@@ -294,9 +329,12 @@ export class ServiceManagementService {
 
     if (!service) throw new NotFoundException("Service not found");
 
-    return this.prisma.client.service.delete({
-        where: { id }
+    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    await this.prisma.client.service.deleteMany({
+        where: { id, organizationId: orgId }
     });
+
+    return service;
   }
 
   async getServices(orgId: string, options?: { isActive?: boolean }) {
@@ -364,9 +402,16 @@ export class ServiceManagementService {
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    return this.prisma.client.serviceResource.update({
-        where: { id },
+    // 🛡️ Sentinel: ServiceResource lacks a composite unique constraint on [id, organizationId].
+    // Standard Prisma update({ where: { id } }) ignores non-unique fields in where clauses at runtime.
+    // Using updateMany with organizationId guarantees database-level multi-tenant isolation.
+    await this.prisma.client.serviceResource.updateMany({
+        where: { id, organizationId: orgId },
         data: dto
+    });
+
+    return this.prisma.client.serviceResource.findFirstOrThrow({
+        where: { id, organizationId: orgId }
     });
   }
 
@@ -377,9 +422,12 @@ export class ServiceManagementService {
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    return this.prisma.client.serviceResource.delete({
-        where: { id }
+    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    await this.prisma.client.serviceResource.deleteMany({
+        where: { id, organizationId: orgId }
     });
+
+    return resource;
   }
 
   async getResources(orgId: string) {
