@@ -16,6 +16,7 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LightRouteImport } from './routes/light'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as DevelopersAppsRouteImport } from './routes/developers/apps'
 import { Route as StudioSplatRouteImport } from './routes/studio/$'
 
 const IndexRoute = IndexRouteImport.update({
@@ -53,6 +54,11 @@ const SalesRoute = SalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DevelopersAppsRoute = DevelopersAppsRouteImport.update({
+  id: '/developers/apps',
+  path: '/developers/apps',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudioSplatRoute = StudioSplatRouteImport.update({
   id: '/studio/$',
   path: '/studio/$',
@@ -67,6 +73,7 @@ export interface FileRoutesByFullPath {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/developers/apps': typeof DevelopersAppsRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +84,7 @@ export interface FileRoutesByTo {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/developers/apps': typeof DevelopersAppsRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRoutesById {
@@ -88,6 +96,7 @@ export interface FileRoutesById {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/developers/apps': typeof DevelopersAppsRoute
   '/studio/$': typeof StudioSplatRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +109,7 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/developers/apps'
     | '/studio/$'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +120,7 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/developers/apps'
     | '/studio/$'
   id:
     | '__root__'
@@ -120,6 +131,7 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/developers/apps'
     | '/studio/$'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +143,7 @@ export interface RootRouteChildren {
   LightRoute: typeof LightRoute
   PricingRoute: typeof PricingRoute
   SalesRoute: typeof SalesRoute
+  DevelopersAppsRoute: typeof DevelopersAppsRoute
   StudioSplatRoute: typeof StudioSplatRoute
 }
 
@@ -185,6 +198,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/developers/apps': {
+      id: '/developers/apps'
+      path: '/developers/apps'
+      fullPath: '/developers/apps'
+      preLoaderRoute: typeof DevelopersAppsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/studio/$': {
       id: '/studio/$'
       path: '/studio/$'
@@ -203,6 +223,7 @@ const rootRouteChildren: RootRouteChildren = {
   LightRoute: LightRoute,
   PricingRoute: PricingRoute,
   SalesRoute: SalesRoute,
+  DevelopersAppsRoute: DevelopersAppsRoute,
   StudioSplatRoute: StudioSplatRoute,
 }
 export const routeTree = rootRouteImport
