@@ -3,6 +3,9 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
+import { encryptV3, decryptV3 } from "@repo/shared/api/v3";
+
+const MASK_STRING = "••••••••";
 
 /**
  * Retrieves the active organization for the authenticated user, cached via unstable_cache.
@@ -32,7 +35,7 @@ export async function getActiveOrganization(): Promise<any> {
         async (targetOrgId: string) => {
           return db.organization.findUnique({
             where: { id: targetOrgId },
-            include: { settings: true },
+            include: { settings: true, paymentCredentials: true },
           });
         },
         [`active-org-${firstMember.organizationId}`],
@@ -49,7 +52,7 @@ export async function getActiveOrganization(): Promise<any> {
       async (targetOrgId: string) => {
         return db.organization.findUnique({
           where: { id: targetOrgId },
-          include: { settings: true },
+          include: { settings: true, paymentCredentials: true },
         });
       },
       [`active-org-${user.activeOrganizationId}`],
@@ -66,7 +69,7 @@ export async function getActiveOrganization(): Promise<any> {
     async (targetOrgId: string) => {
       return db.organization.findUnique({
         where: { id: targetOrgId },
-        include: { settings: true },
+        include: { settings: true, paymentCredentials: true },
       });
     },
     [`active-org-${orgId}`],
@@ -160,18 +163,21 @@ export async function updateOrganizationSettings(data: {
   address?: string;
   logo?: string;
   banner?: string;
-  defaultCurrency?: string;
-  defaultTimezone?: string;
-  country?: string;
-  lowStockThreshold?: number;
-  negativeStock?: boolean;
-  adminsCanManageStaff?: boolean;
-  managersCanManageShifts?: boolean;
+  paymentCredentials?: {
+    mpesaShortCode?: string;
+    mpesaType?: string;
+    mpesaConsumerKey?: string;
+    mpesaConsumerSecret?: string;
+    mpesaPassKey?: string;
+    mpesaInitiatorPass?: string;
+    environment?: "SANDBOX" | "PRODUCTION";
+  };
+  [key: string]: any;
 }): Promise<any> {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  const { name, email, phone, address, logo, banner, ...settingsData } = data;
+  const { name, email, phone, address, logo, banner, paymentCredentials, ...settingsData } = data;
 
   const result = await db.$transaction(async tx => {
     const org = await tx.organization.update({
@@ -186,16 +192,72 @@ export async function updateOrganizationSettings(data: {
       },
     });
 
-    const settings = await tx.organizationSettings.upsert({
-      where: { organizationId: auth.organizationId },
-      update: settingsData,
-      create: {
-        ...settingsData,
-        organizationId: auth.organizationId,
-      },
-    });
+    let settings = null;
+    if (Object.keys(settingsData).length > 0) {
+      settings = await tx.organizationSettings.upsert({
+        where: { organizationId: auth.organizationId },
+        update: settingsData,
+        create: {
+          ...settingsData,
+          organizationId: auth.organizationId,
+        },
+      });
+    }
 
-    return { ...org, settings };
+    let updatedPaymentCreds = null;
+    if (paymentCredentials) {
+      const existingCreds = await tx.paymentCredentials.findUnique({
+        where: { organizationId: auth.organizationId },
+      });
+
+      // Helper to determine string encryption update or preserve existing encrypted value
+      const getEncryptedValue = (newValue?: string, existingEncrypted?: string | null) => {
+        if (!newValue || newValue === MASK_STRING) {
+          return existingEncrypted || "";
+        }
+        return encryptV3(newValue);
+      };
+
+      const mpesaConsumerKey = getEncryptedValue(
+        paymentCredentials.mpesaConsumerKey,
+        existingCreds?.mpesaConsumerKey
+      );
+      const mpesaConsumerSecret = getEncryptedValue(
+        paymentCredentials.mpesaConsumerSecret,
+        existingCreds?.mpesaConsumerSecret
+      );
+      const mpesaPassKey = paymentCredentials.mpesaPassKey
+        ? getEncryptedValue(paymentCredentials.mpesaPassKey, existingCreds?.mpesaPassKey)
+        : existingCreds?.mpesaPassKey || null;
+      const mpesaInitiatorPass = paymentCredentials.mpesaInitiatorPass
+        ? getEncryptedValue(paymentCredentials.mpesaInitiatorPass, existingCreds?.mpesaInitiatorPass)
+        : existingCreds?.mpesaInitiatorPass || null;
+
+      updatedPaymentCreds = await tx.paymentCredentials.upsert({
+        where: { organizationId: auth.organizationId },
+        update: {
+          mpesaShortCode: paymentCredentials.mpesaShortCode || existingCreds?.mpesaShortCode || "",
+          mpesaType: paymentCredentials.mpesaType || existingCreds?.mpesaType || "PAYBILL",
+          environment: paymentCredentials.environment || existingCreds?.environment || "SANDBOX",
+          mpesaConsumerKey,
+          mpesaConsumerSecret,
+          mpesaPassKey,
+          mpesaInitiatorPass,
+        },
+        create: {
+          organizationId: auth.organizationId,
+          mpesaShortCode: paymentCredentials.mpesaShortCode || "",
+          mpesaType: paymentCredentials.mpesaType || "PAYBILL",
+          environment: paymentCredentials.environment || "SANDBOX",
+          mpesaConsumerKey,
+          mpesaConsumerSecret,
+          mpesaPassKey,
+          mpesaInitiatorPass,
+        },
+      });
+    }
+
+    return { ...org, settings, paymentCredentials: updatedPaymentCreds };
   });
 
   revalidateTag(`active-org:${auth.user.id}`, "max");
@@ -265,8 +327,19 @@ export async function getOrganizationSettings(): Promise<any> {
     where: { id: auth.organizationId },
     include: {
       settings: true,
+      paymentCredentials: true,
     },
   });
+
+  if (org && org.paymentCredentials) {
+    org.paymentCredentials = {
+      ...org.paymentCredentials,
+      mpesaConsumerKey: org.paymentCredentials.mpesaConsumerKey ? MASK_STRING : "",
+      mpesaConsumerSecret: org.paymentCredentials.mpesaConsumerSecret ? MASK_STRING : "",
+      mpesaPassKey: org.paymentCredentials.mpesaPassKey ? MASK_STRING : "",
+      mpesaInitiatorPass: org.paymentCredentials.mpesaInitiatorPass ? MASK_STRING : "",
+    };
+  }
 
   return org;
 }
