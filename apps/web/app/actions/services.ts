@@ -45,7 +45,9 @@ export async function updateServiceCategory(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const category = await db.serviceCategory.update({
+  // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
+  // because ServiceCategory model lacks a composite unique constraint on [id, organizationId].
+  const result = await db.serviceCategory.updateMany({
     where: {
       id,
       organizationId: context.organizationId,
@@ -56,6 +58,12 @@ export async function updateServiceCategory(
     },
   });
 
+  if (result.count === 0) throw new Error("Service category not found");
+
+  const category = await db.serviceCategory.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
+  });
+
   revalidatePath("/inventory/services");
   return category;
 }
@@ -64,12 +72,16 @@ export async function deleteServiceCategory(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.serviceCategory.delete({
+  // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
+  // because ServiceCategory model lacks a composite unique constraint on [id, organizationId].
+  const result = await db.serviceCategory.deleteMany({
     where: {
       id,
       organizationId: context.organizationId,
     },
   });
+
+  if (result.count === 0) throw new Error("Service category not found");
 
   revalidatePath("/inventory/services");
   return { success: true };
@@ -122,6 +134,15 @@ export async function createService(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure category belongs to the authenticated organization
+  const category = await db.serviceCategory.findFirst({
+    where: {
+      id: data.categoryId,
+      organizationId: context.organizationId,
+    },
+  });
+  if (!category) throw new Error("Invalid service category");
+
   const service = await db.service.create({
     data: {
       name: data.name,
@@ -165,7 +186,20 @@ export async function updateService(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const service = await db.service.update({
+  if (data.categoryId) {
+    // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure target category belongs to the authenticated organization
+    const category = await db.serviceCategory.findFirst({
+      where: {
+        id: data.categoryId,
+        organizationId: context.organizationId,
+      },
+    });
+    if (!category) throw new Error("Invalid service category");
+  }
+
+  // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
+  // because Service model lacks a composite unique constraint on [id, organizationId].
+  const result = await db.service.updateMany({
     where: {
       id,
       organizationId: context.organizationId,
@@ -187,6 +221,18 @@ export async function updateService(
     },
   });
 
+  if (result.count === 0) throw new Error("Service not found");
+
+  const service = await db.service.findFirstOrThrow({
+    where: {
+      id,
+      organizationId: context.organizationId,
+    },
+    include: {
+      category: true,
+    },
+  });
+
   revalidatePath("/inventory/services");
   revalidatePath(`/inventory/services/${id}`);
   return service;
@@ -196,12 +242,16 @@ export async function deleteService(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.service.delete({
+  // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
+  // because Service model lacks a composite unique constraint on [id, organizationId].
+  const result = await db.service.deleteMany({
     where: {
       id,
       organizationId: context.organizationId,
     },
   });
+
+  if (result.count === 0) throw new Error("Service not found");
 
   revalidatePath("/inventory/services");
   return { success: true };
