@@ -84,7 +84,7 @@ const server = http.createServer(async (req, res) => {
     }
     res.end();
   } catch (err) {
-    console.error('Error handling SSR request in docs server:', err);
+    console.error('Error handling SSR request in site-next server:', err);
     res.writeHead(500, { 'Content-Type': 'text/plain; charset=utf-8' });
     res.end('Internal Server Error');
   }
