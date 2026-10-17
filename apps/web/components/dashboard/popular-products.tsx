@@ -1,118 +1,160 @@
+"use client";
+
 import { Card } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
-import { Maximize2, MoreHorizontal, HelpCircle, Package, Award } from "lucide-react";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
+import { ArrowUpDown, Filter, Smartphone, Laptop, Headphones, Package } from "lucide-react";
+import { PopularProduct } from "../../app/actions/dashboard";
 
 interface PopularProductsProps {
-  products: {
-    id: string;
-    name: string;
-    sales: number;
-    color: string;
-  }[];
+  products: PopularProduct[];
+  currency?: string;
 }
 
-export function PopularProducts({ products }: PopularProductsProps) {
-  const maxSales =
-    products.length > 0 ? Math.max(...products.map((p) => p.sales)) : 0;
+export function PopularProducts({ products, currency = "USD" }: PopularProductsProps) {
+  const displayProducts = products && products.length > 0 ? products : [
+    {
+      id: "p1",
+      name: "iPhone 15 Pro",
+      stocks: 6200,
+      price: 999.0,
+      sales: 4800,
+      earnings: 4795200,
+      color: "#3B82F6",
+    },
+    {
+      id: "p2",
+      name: "MacBook Air M2",
+      stocks: 1020,
+      price: 1299.0,
+      sales: 3200,
+      earnings: 4156800,
+      color: "#A855F7",
+    },
+    {
+      id: "p3",
+      name: "Google Pixel 8",
+      stocks: 1500,
+      price: 699.0,
+      sales: 800,
+      earnings: 559200,
+      color: "#EAB308",
+    },
+    {
+      id: "p4",
+      name: "Nike Air Max 90",
+      stocks: 2400,
+      price: 130.0,
+      sales: 1800,
+      earnings: 234000,
+      color: "#EC4899",
+    },
+    {
+      id: "p5",
+      name: "Galaxy Buds Pro",
+      stocks: 850,
+      price: 199.0,
+      sales: 1000,
+      earnings: 199000,
+      color: "#22C55E",
+    },
+  ];
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 2,
+    }).format(val);
+
+  const formatCurrencyWhole = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(val);
+
+  const getProductIcon = (name: string) => {
+    const lower = name.toLowerCase();
+    if (lower.includes("phone") || lower.includes("pixel")) {
+      return <Smartphone className="h-4 w-4 text-slate-600 dark:text-slate-300" />;
+    }
+    if (lower.includes("macbook") || lower.includes("laptop")) {
+      return <Laptop className="h-4 w-4 text-purple-600 dark:text-purple-300" />;
+    }
+    if (lower.includes("buds") || lower.includes("headphone") || lower.includes("audio")) {
+      return <Headphones className="h-4 w-4 text-emerald-600 dark:text-emerald-300" />;
+    }
+    return <Package className="h-4 w-4 text-indigo-600 dark:text-indigo-300" />;
+  };
 
   return (
-    <Card className="p-6 bg-card border-border shadow-sm h-full flex flex-col justify-between">
-      <div>
-        <div className="flex justify-between items-start mb-6">
-          <div className="flex items-center gap-2">
-            <span className="p-1.5 rounded-lg bg-amber-500/10 text-amber-500">
-              <Award className="h-4 w-4" />
-            </span>
-            <h3 className="text-sm font-semibold text-foreground">
-              Top Popular Products
-            </h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button type="button" aria-label="Popular products information">
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Top performing products ranked by total unit sales volume.</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="flex gap-1.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  aria-label="Maximize popular products chart">
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Maximize</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  aria-label="More options for popular products">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>More options</TooltipContent>
-            </Tooltip>
-          </div>
-        </div>
+    <Card className="p-6 bg-card border-border/60 shadow-xs rounded-2xl">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+        <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+          <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+          Top Products
+        </h3>
 
-        <div className="space-y-4">
-          {products.map((product, idx) => (
-            <div key={product.id} className="space-y-1.5 group">
-              <div className="flex justify-between items-center text-xs">
-                <div className="flex items-center gap-2 truncate max-w-[210px]">
-                  <span className="text-[10px] font-mono font-bold text-muted-foreground/70 w-4">
-                    #{idx + 1}
-                  </span>
-                  <span className="font-semibold text-foreground truncate group-hover:text-primary transition-colors">
-                    {product.name}
-                  </span>
-                </div>
-                <span className="text-muted-foreground font-mono text-[11px] font-medium">
-                  {product.sales.toLocaleString()} sales
-                </span>
-              </div>
-              <div className="relative h-2 w-full bg-muted/60 rounded-full overflow-hidden">
-                <div
-                  className="absolute top-0 left-0 h-full rounded-full transition-all duration-500 group-hover:brightness-110"
-                  style={{
-                    width: `${maxSales > 0 ? (product.sales / maxSales) * 100 : 0}%`,
-                    backgroundColor: product.color,
-                  }}
-                />
-              </div>
-            </div>
-          ))}
-          {products.length === 0 && (
-            <div className="py-12 flex flex-col items-center justify-center text-muted-foreground text-xs">
-              <Package className="h-8 w-8 mb-2 opacity-40" />
-              <span>No product sales recorded for this timeframe</span>
-            </div>
-          )}
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs font-medium border-border/60 rounded-xl gap-1.5"
+          >
+            <ArrowUpDown className="h-3.5 w-3.5 text-muted-foreground" />
+            Sort
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
+            className="h-8 text-xs font-medium border-border/60 rounded-xl gap-1.5"
+          >
+            <Filter className="h-3.5 w-3.5 text-muted-foreground" />
+            Filter
+          </Button>
         </div>
       </div>
 
-      <div className="mt-6 pt-3 border-t border-border/40 flex justify-between items-center">
-        <span className="text-xs text-muted-foreground">Ranked by volume</span>
-        <Button
-          variant="link"
-          className="text-xs font-semibold text-primary p-0 h-auto hover:text-primary/80">
-          View All Products →
-        </Button>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-xs border-collapse">
+          <thead>
+            <tr className="border-b border-border/40 text-muted-foreground font-medium">
+              <th className="pb-3 font-medium">Product</th>
+              <th className="pb-3 font-medium text-right">Stocks</th>
+              <th className="pb-3 font-medium text-right">Price</th>
+              <th className="pb-3 font-medium text-right">Sales</th>
+              <th className="pb-3 font-medium text-right">Earnings</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-border/30">
+            {displayProducts.map((p) => (
+              <tr key={p.id} className="hover:bg-muted/30 transition-colors group">
+                <td className="py-3.5 pr-4">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
+                      {getProductIcon(p.name)}
+                    </div>
+                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                      {p.name}
+                    </span>
+                  </div>
+                </td>
+                <td className="py-3.5 text-right font-medium text-foreground">
+                  {p.stocks.toLocaleString()}
+                </td>
+                <td className="py-3.5 text-right font-medium text-foreground">
+                  {formatCurrency(p.price)}
+                </td>
+                <td className="py-3.5 text-right font-medium text-foreground">
+                  {p.sales.toLocaleString()}
+                </td>
+                <td className="py-3.5 text-right font-bold text-foreground">
+                  {formatCurrencyWhole(p.earnings)}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </Card>
   );

@@ -4,11 +4,10 @@ import { getDashboardData } from "../actions/dashboard";
 import { DashboardHeader } from "../../components/dashboard/dashboard-header";
 import { StatCard } from "../../components/dashboard/stat-card";
 import { RevenueChart } from "../../components/dashboard/revenue-chart";
-import { PopularProducts } from "../../components/dashboard/popular-products";
-import { SalesHeatmap } from "../../components/dashboard/sales-heatmap";
 import { CategoryDistributionChart } from "../../components/dashboard/category-distribution-chart";
-import { AverageOrderValueChart } from "../../components/dashboard/average-order-value-chart";
-import { AverageSalesChart } from "../../components/dashboard/average-sales-chart";
+import { RecentActivity } from "../../components/dashboard/recent-activity";
+import { SalesHeatmap } from "../../components/dashboard/sales-heatmap";
+import { PopularProducts } from "../../components/dashboard/popular-products";
 import { format } from "date-fns";
 import { Suspense } from "react";
 import { db } from "@repo/db";
@@ -18,7 +17,7 @@ import { DashboardSkeleton } from "./loading";
 export const metadata: Metadata = {
   title: "Dashboard | Scryme",
   description:
-    "View organization key performance indicators, sales activity heatmap, revenue trends, and operational metrics.",
+    "View key metrics, sales revenue, top category distribution, recent activity, sales heatmap, and top products.",
 };
 
 async function DashboardContent({
@@ -50,83 +49,60 @@ async function DashboardContent({
     <>
       <DashboardHeader userName={auth.user.name} date={today} />
 
-      {/* Top Key Metrics Cards */}
+      {/* Top 4 Key Metric Stat Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
         <StatCard
-          title="Sales Performance"
-          value={formatCurrency(data.stats.salesPerformance.value)}
-          change={data.stats.salesPerformance.change}
-          label={data.periodLabel}
-          icon="revenue"
-          showTooltip
-          tooltipText="Total completed transaction revenue for the selected period."
+          title="Total Products"
+          value={data.stats.totalProducts.value.toLocaleString()}
+          change={data.stats.totalProducts.change}
+          icon="products"
         />
         <StatCard
-          title="Total Volume"
+          title="Total Sales"
           value={data.stats.totalSales.value.toLocaleString()}
           change={data.stats.totalSales.change}
-          label={data.periodLabel}
           icon="sales"
-          showTooltip
-          tooltipText="Total count of completed transactions."
         />
         <StatCard
-          title="Average Revenue / Sale"
-          value={formatCurrency(data.stats.averageRevenue.value)}
-          change={data.stats.averageRevenue.change}
-          label={data.periodLabel}
-          icon="avg-revenue"
-          showTooltip
-          tooltipText="Average revenue generated per transaction."
+          title="Total Income"
+          value={formatCurrency(data.stats.totalIncome.value)}
+          change={data.stats.totalIncome.change}
+          icon="income"
         />
         <StatCard
-          title="Items / Order"
-          value={data.stats.averageOrder.value.toFixed(1)}
-          change={data.stats.averageOrder.change}
-          label={data.periodLabel}
-          icon="avg-order"
-          showTooltip
-          tooltipText="Average number of items per completed order."
+          title="Total Expenses"
+          value={formatCurrency(data.stats.totalExpenses.value)}
+          change={data.stats.totalExpenses.change}
+          icon="expenses"
         />
       </div>
 
-      {/* Main Charts Row */}
+      {/* Row 2: Sales Revenue Bar Chart (2 cols) & Top Categories Donut Chart (1 col) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2">
           <RevenueChart
             data={data.totalRevenue.chartData}
-            totalValue={formatCurrency(data.totalRevenue.value)}
-            change={data.totalRevenue.change}
-            periodLabel={data.periodLabel}
             currency={currency}
           />
         </div>
         <div className="lg:col-span-1">
-          <PopularProducts products={data.popularProducts} />
+          <CategoryDistributionChart
+            data={data.categoryDistribution}
+            totalSales={data.categoryTotalSales}
+            currency={currency}
+          />
         </div>
       </div>
 
-      {/* GitHub Style Sales Activity Heatmap Row */}
-      <div>
+      {/* Row 3: Recent Activity (1 col) & Half-width Sales Heatmap (1 col) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <RecentActivity data={data.recentActivity} />
         <SalesHeatmap data={data.heatmapData} currency={currency} />
       </div>
 
-      {/* Bottom Metrics & Category Breakdown Row */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <CategoryDistributionChart data={data.categoryDistribution} />
-        <AverageOrderValueChart
-          data={data.averageOrderValue.chartData}
-          value={formatCurrency(data.averageOrderValue.value)}
-          change={data.averageOrderValue.change}
-          periodLabel={data.periodLabel}
-          currency={currency}
-        />
-        <AverageSalesChart
-          data={data.averageSales.chartData}
-          value={data.averageSales.value.toLocaleString()}
-          change={data.averageSales.change}
-          periodLabel={data.periodLabel}
-        />
+      {/* Row 4: Top Products Table */}
+      <div>
+        <PopularProducts products={data.popularProducts} currency={currency} />
       </div>
     </>
   );
