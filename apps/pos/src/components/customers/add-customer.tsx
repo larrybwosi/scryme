@@ -4,7 +4,7 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle } from '
 import { toast } from 'sonner';
 import CustomerForm from './customer-form';
 import { useCreateCustomer, useUpdateCustomer } from '@/hooks/customers';
-import posthog from 'posthog-js';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 interface AddCustomerSheetProps {
   open: boolean;
@@ -20,11 +20,22 @@ export default function AddCustomerSheet({ open, onOpenChange, customer }: AddCu
     try {
       if (customer?.id) {
         await updateCustomer({ id: customer.id, ...data });
-        posthog.capture("customer_updated");
+        trackPosEvent(POS_EVENTS.CUSTOMER_UPDATED, {
+          customer_id: customer.id,
+          customer_type: data.customerType || 'B2C',
+          has_phone: !!data.phone,
+          has_email: !!data.email,
+          source: 'sheet',
+        });
         toast.success('Customer updated successfully!');
       } else {
         await createCustomer(data);
-        posthog.capture("customer_created");
+        trackPosEvent(POS_EVENTS.CUSTOMER_CREATED, {
+          customer_type: data.customerType || 'B2C',
+          has_phone: !!data.phone,
+          has_email: !!data.email,
+          source: 'sheet',
+        });
         toast.success('Customer added successfully!');
       }
       onOpenChange(false);

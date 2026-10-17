@@ -58,6 +58,34 @@ describe('OpenObserve Telemetry Client', () => {
     expect(openObserveClient.getQueueLength()).toBeGreaterThanOrEqual(1);
   });
 
+
+  it('should forward new telemetry events (preorder, order, customer) via trackPosEvent', () => {
+    trackPosEvent(POS_EVENTS.PREORDER_CONFIGURED, {
+      deposit_amount: 50,
+      total_amount: 100,
+    });
+    trackPosEvent(POS_EVENTS.PREORDER_CANCELLED, {
+      total_amount: 100,
+    });
+    trackPosEvent(POS_EVENTS.ORDER_CREATED, {
+      order_id: 'ord_123',
+    });
+    trackPosEvent(POS_EVENTS.ORDER_VALIDATION_FAILED, {
+      error_fields: ['customerId'],
+      form_context: 'create_order',
+    });
+    trackPosEvent(POS_EVENTS.CUSTOMER_CREATED, {
+      customer_type: 'B2C',
+      source: 'sheet',
+    });
+    trackPosEvent(POS_EVENTS.CUSTOMER_UPDATED, {
+      customer_id: 'cust_123',
+      source: 'sheet',
+    });
+
+    expect(openObserveClient.getQueueLength()).toBe(6);
+  });
+
   it('should handle clearing user context on session reset', () => {
     setOpenObserveUserContext({ staffId: 'staff_99' });
     clearOpenObserveUserContext();
