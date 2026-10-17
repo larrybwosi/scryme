@@ -1,6 +1,7 @@
 "use client";
 
 import * as React from "react";
+import { ThemeProvider } from "next-themes";
 import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
 import { RealtimeProvider } from "@repo/shared/realtime/client";
 import { NuqsAdapter } from "nuqs/adapters/next/app";
@@ -15,16 +16,18 @@ interface ProvidersProps {
 
 export function Providers({ children }: ProvidersProps) {
   return (
-    <NuqsAdapter>
-      <TooltipProvider>
-        <RealtimeProvider>
-          <OrganizationInitializer />
-          <OrgPresenceTracker />
-          <TopLoader />
-          {children}
-          <Toaster />
-        </RealtimeProvider>
-      </TooltipProvider>
-    </NuqsAdapter>
+    <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+      <NuqsAdapter>
+        <TooltipProvider>
+          <RealtimeProvider>
+            <OrganizationInitializer />
+            <OrgPresenceTracker />
+            <TopLoader />
+            {children}
+            <Toaster />
+          </RealtimeProvider>
+        </TooltipProvider>
+      </NuqsAdapter>
+    </ThemeProvider>
   );
 }
