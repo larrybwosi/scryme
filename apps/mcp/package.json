@@ -1,6 +1,6 @@
 {
   "name": "mcp",
-  "version": "10.2.18",
+  "version": "10.2.19",
   "private": true,
   "main": "dist/src/main.js",
   "type": "commonjs",

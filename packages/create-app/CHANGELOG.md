@@ -1,5 +1,11 @@
 # create-scryme-app
 
+## 10.2.19
+
+### Patch Changes
+
+- 7cf7dbe: Prepare release v10.2.8
+
 ## 10.2.18
 
 ### Patch Changes
