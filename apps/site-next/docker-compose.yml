@@ -1,16 +1,7 @@
 services:
-  site-next:
-    build:
-      context: ../../
-      dockerfile: apps/site-next/Dockerfile
-      args:
-        VITE_SANITY_PROJECT_ID: ${VITE_SANITY_PROJECT_ID}
-        VITE_SANITY_DATASET: ${VITE_SANITY_DATASET:-production}
-        VITE_API_URL: ${VITE_API_URL:-https://api.scryme.tech}
-        VITE_WEB_URL: ${VITE_WEB_URL:-https://app.scryme.tech}
-        VITE_POSTHOG_PROJECT_TOKEN: ${VITE_POSTHOG_PROJECT_TOKEN}
-        VITE_POSTHOG_HOST: ${VITE_POSTHOG_HOST:-https://eu.i.posthog.com}
-    container_name: scryme-site-next
+  site:
+    image: ghcr.io/larrybwosi/scryme/site:${SCRYME_VERSION:-latest}
+    container_name: scryme-site
     restart: always
     ports:
       - "${SITE_NEXT_PORT:-3006}:3006"

@@ -38,6 +38,30 @@ variable "OPENPANEL_HOST" {
   default = "APP_OPENPANEL_HOST_PLACEHOLDER"
 }
 
+variable "VITE_SANITY_PROJECT_ID" {
+  default = ""
+}
+
+variable "VITE_SANITY_DATASET" {
+  default = "production"
+}
+
+variable "VITE_API_URL" {
+  default = "https://api.scryme.tech"
+}
+
+variable "VITE_WEB_URL" {
+  default = "https://app.scryme.tech"
+}
+
+variable "VITE_POSTHOG_PROJECT_TOKEN" {
+  default = ""
+}
+
+variable "VITE_POSTHOG_HOST" {
+  default = "https://eu.i.posthog.com"
+}
+
 target "api" {
   context = "."
   dockerfile = "apps/api/Dockerfile"
@@ -141,16 +165,18 @@ target "web" {
 
 target "site" {
   context = "."
-  dockerfile = "apps/site/Dockerfile"
+  dockerfile = "apps/site-next/Dockerfile"
   tags = [
     "ghcr.io/${REPO_LOWER}/site:latest",
     "ghcr.io/${REPO_LOWER}/site:${VERSION}"
   ]
   args = {
-    NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
-    BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
-    NEXT_PUBLIC_OPENPANEL_CLIENT_ID = NEXT_PUBLIC_OPENPANEL_CLIENT_ID
-    NEXT_PUBLIC_OPENPANEL_HOST = NEXT_PUBLIC_OPENPANEL_HOST
+    VITE_SANITY_PROJECT_ID = VITE_SANITY_PROJECT_ID
+    VITE_SANITY_DATASET = VITE_SANITY_DATASET
+    VITE_API_URL = VITE_API_URL
+    VITE_WEB_URL = VITE_WEB_URL
+    VITE_POSTHOG_PROJECT_TOKEN = VITE_POSTHOG_PROJECT_TOKEN
+    VITE_POSTHOG_HOST = VITE_POSTHOG_HOST
   }
 }
 
