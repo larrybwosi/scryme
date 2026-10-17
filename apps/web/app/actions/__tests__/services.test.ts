@@ -10,6 +10,7 @@ vi.mock("@repo/db", () => {
       serviceCategory: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
+      findFirstOrThrow: vi.fn(),
         create: vi.fn(),
         updateMany: vi.fn(),
         deleteMany: vi.fn(),
@@ -17,6 +18,7 @@ vi.mock("@repo/db", () => {
       service: {
         findMany: vi.fn(),
         findFirst: vi.fn(),
+      findFirstOrThrow: vi.fn(),
         create: vi.fn(),
         updateMany: vi.fn(),
         deleteMany: vi.fn(),
@@ -96,7 +98,7 @@ describe("Services & Categories Server Actions", () => {
     it("updateServiceCategory uses updateMany scoped by organizationId", async () => {
       (getServerAuth as any).mockResolvedValue({ organizationId: "org-1" });
       (db.serviceCategory.updateMany as any).mockResolvedValue({ count: 1 });
-      (db.serviceCategory.findFirst as any).mockResolvedValue({
+      (db.serviceCategory.findFirstOrThrow as any).mockResolvedValue({
         id: "cat-1",
         name: "Updated Name",
         organizationId: "org-1",
@@ -192,7 +194,7 @@ describe("Services & Categories Server Actions", () => {
     it("updateService uses updateMany scoped by organizationId", async () => {
       (getServerAuth as any).mockResolvedValue({ organizationId: "org-1" });
       (db.service.updateMany as any).mockResolvedValue({ count: 1 });
-      (db.service.findFirst as any).mockResolvedValue({
+      (db.service.findFirstOrThrow as any).mockResolvedValue({
         id: "srv-1",
         name: "New Name",
         organizationId: "org-1",

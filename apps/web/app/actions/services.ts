@@ -60,7 +60,7 @@ export async function updateServiceCategory(
 
   if (result.count === 0) throw new Error("Service category not found");
 
-  const category = await db.serviceCategory.findFirst({
+  const category = await db.serviceCategory.findFirstOrThrow({
     where: { id, organizationId: context.organizationId },
   });
 
@@ -223,7 +223,7 @@ export async function updateService(
 
   if (result.count === 0) throw new Error("Service not found");
 
-  const service = await db.service.findFirst({
+  const service = await db.service.findFirstOrThrow({
     where: {
       id,
       organizationId: context.organizationId,
