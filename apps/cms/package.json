@@ -1,6 +1,6 @@
 {
   "name": "cms",
-  "version": "10.2.19",
+  "version": "10.2.20",
   "private": true,
   "type": "module",
   "scripts": {
