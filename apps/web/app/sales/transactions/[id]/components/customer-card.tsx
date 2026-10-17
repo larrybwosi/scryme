@@ -17,7 +17,7 @@ export function CustomerCard({ transaction }: CustomerCardProps) {
     customerId !== "temp-custom-customer" &&
     !customerId.startsWith("temp-");
 
-  const crmBaseUrl = (process.env.NEXT_PUBLIC_CRM_URL || "http://localhost:3001").replace(/\/$/, "");
+  const crmBaseUrl = (process.env.NEXT_PUBLIC_CRM_URL || "https://crm.scryme.tech").replace(/\/$/, "");
   const crmCustomerUrl = `${crmBaseUrl}/customers/${customerId}`;
 
   const name =
