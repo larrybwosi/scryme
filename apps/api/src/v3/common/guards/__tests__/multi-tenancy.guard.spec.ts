@@ -17,6 +17,9 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
       member: {
         findFirst: vi.fn(),
       },
+      subscription: {
+        findUnique: vi.fn(),
+      },
     },
   };
 
@@ -36,6 +39,8 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
     headers?: Record<string, string>;
     user?: any;
     v3Context?: any;
+    method?: string;
+    url?: string;
   }): ExecutionContext {
     const mockRequest = {
       params: { orgSlug: params.orgSlug },
@@ -43,6 +48,9 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
       user: params.user,
       v3Context: params.v3Context,
       organization: null,
+      method: params.method || "GET",
+      url: params.url || "/api/v3/test",
+      originalUrl: params.url || "/api/v3/test",
     };
 
     return {
@@ -148,6 +156,87 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
     const context = createMockHttpContext({
       orgSlug: "org-b",
       user: { id: "member_user", role: "MEMBER" },
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should allow GET requests when free trial is expired", async () => {
+    mockPrisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_b",
+      slug: "org-b",
+      name: "Organization B",
+    });
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member_id_123",
+      organizationId: "org_b",
+      userId: "member_user",
+      isActive: true,
+    });
+    mockPrisma.client.subscription.findUnique.mockResolvedValue({
+      status: "TRIALING",
+      trialEndsAt: new Date(Date.now() - 1000000),
+    });
+
+    const context = createMockHttpContext({
+      orgSlug: "org-b",
+      user: { id: "member_user", role: "MEMBER" },
+      method: "GET",
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
+
+  it("should throw ForbiddenException on POST mutating request when free trial is expired", async () => {
+    mockPrisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_b",
+      slug: "org-b",
+      name: "Organization B",
+    });
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member_id_123",
+      organizationId: "org_b",
+      userId: "member_user",
+      isActive: true,
+    });
+    mockPrisma.client.subscription.findUnique.mockResolvedValue({
+      status: "TRIALING",
+      trialEndsAt: new Date(Date.now() - 1000000),
+    });
+
+    const context = createMockHttpContext({
+      orgSlug: "org-b",
+      user: { id: "member_user", role: "MEMBER" },
+      method: "POST",
+      url: "/api/v3/org-b/sales",
+    });
+
+    await expect(guard.canActivate(context)).rejects.toThrow(ForbiddenException);
+  });
+
+  it("should allow POST mutating request on exempt payment routes when subscription is expired", async () => {
+    mockPrisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_b",
+      slug: "org-b",
+      name: "Organization B",
+    });
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member_id_123",
+      organizationId: "org_b",
+      userId: "member_user",
+      isActive: true,
+    });
+    mockPrisma.client.subscription.findUnique.mockResolvedValue({
+      status: "EXPIRED",
+    });
+
+    const context = createMockHttpContext({
+      orgSlug: "org-b",
+      user: { id: "member_user", role: "MEMBER" },
+      method: "POST",
+      url: "/api/v3/org-b/payments/subscribe",
     });
 
     const result = await guard.canActivate(context);

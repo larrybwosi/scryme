@@ -158,11 +158,21 @@ export const useProcessSale = () => {
         });
       }
     },
-    onError: error => {
+    onError: (error: any) => {
       console.error('Critical error processing sale:', error);
-      toast.error('System Error', {
-        description: 'Failed to process sale. Please check logs.',
-      });
+      const errMsg = typeof error === 'string' ? error : error?.message || '';
+      if (
+        errMsg.includes('SUBSCRIPTION_EXPIRED') ||
+        errMsg.includes('SUBSCRIPTION_INACTIVE') ||
+        errMsg.includes('free trial has expired') ||
+        errMsg.includes('Payment Required')
+      ) {
+        useAuthStore.getState().setSubscriptionExpired(true, errMsg);
+      } else {
+        toast.error('System Error', {
+          description: 'Failed to process sale. Please check logs.',
+        });
+      }
     },
   });
 };
