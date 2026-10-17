@@ -1,5 +1,12 @@
 # mcp
 
+## 10.2.19
+
+### Patch Changes
+
+- Updated dependencies [7cf7dbe]
+  - @scryme/sdk@10.2.19
+
 ## 10.2.18
 
 ### Patch Changes
