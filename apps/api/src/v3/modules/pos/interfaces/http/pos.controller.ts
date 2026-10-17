@@ -48,6 +48,8 @@ import {
 } from "../../application/dto/pos.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
+import { QuotaGuard } from "@/v3/common/guards/quota.guard";
+import { EnforceQuota } from "@/v3/common/decorators/quota.decorator";
 import { RequireMember } from "@/v3/common/decorators/require-member.decorator";
 import { PrismaService } from "@/prisma/prisma.service";
 import { PosService } from "../../application/services/v3-pos.service";

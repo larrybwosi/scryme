@@ -83,6 +83,10 @@ export async function fetchWithAuth(endpoint: string, options: RequestInit = {})
 
   if (!response.ok) {
     const errorData = await response.json().catch(() => ({ message: response.statusText }));
+    if (errorData?.code === "QUOTA_EXCEEDED" || errorData?.code === "ORGANIZATION_SUSPENDED" || errorData?.code === "SUBSCRIPTION_INACTIVE") {
+      const msg = errorData.message || "Quota or billing limit reached.";
+      throw new Error(msg);
+    }
     throw new Error(errorData.message || `API request failed with status ${response.status}`);
   }
 

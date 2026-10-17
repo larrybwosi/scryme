@@ -8,6 +8,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { ServiceManagementService } from "../../../../services/application/services/service-management.service";
 import { RedisService } from "@/redis/redis.service";
 import { AuditService } from "@/v3/common/services/audit.service";
+import { QuotaService } from "@/v3/common/services/quota.service";
 import { Reflector } from "@nestjs/core";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,6 +38,7 @@ describe("ProductController.getVariants (V3)", () => {
         { provide: ServiceManagementService, useValue: {} },
         { provide: RedisService, useValue: { get: vi.fn(), setex: vi.fn() } },
         { provide: AuditService, useValue: { log: vi.fn() } },
+        { provide: QuotaService, useValue: { checkQuota: vi.fn().mockResolvedValue({ allowed: true }) } },
         Reflector,
       ],
     }).compile();

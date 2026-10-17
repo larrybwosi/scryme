@@ -34,6 +34,8 @@ import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-r
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { QuotaGuard } from "@/v3/common/guards/quota.guard";
+import { EnforceQuota } from "@/v3/common/decorators/quota.decorator";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { AllowPublic } from "@/v3/common/auth";
 
@@ -41,7 +43,7 @@ import { AllowPublic } from "@/v3/common/auth";
 @ApiBearerAuth()
 @Controller(":orgSlug/webhooks")
 @ApiParam({ name: "orgSlug", type: "string" })
-@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard, QuotaGuard)
 @UseInterceptors(StandardResponseInterceptor)
 export class WebhookController {
   constructor(

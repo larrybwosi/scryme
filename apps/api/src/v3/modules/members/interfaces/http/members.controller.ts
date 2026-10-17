@@ -35,12 +35,14 @@ import {
 import { Status } from "@repo/db";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { QuotaGuard } from "@/v3/common/guards/quota.guard";
+import { EnforceQuota } from "@/v3/common/decorators/quota.decorator";
 import { AllowPublic } from "@/v3/common/auth";
 import { PrismaService } from "@/prisma/prisma.service";
 
 @ApiTags("V3 Members")
 @ApiBearerAuth()
-@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard, QuotaGuard)
 @UseInterceptors(StandardResponseInterceptor)
 @Controller([":orgSlug/members", "members"])
 @ApiParam({ name: "orgSlug", type: "string" })

@@ -27,6 +27,8 @@ import { GetProductsUseCase } from "../../application/use-cases/get-products.use
 import { CreateProductUseCase } from "../../application/use-cases/create-product.use-case";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
+import { QuotaGuard } from "@/v3/common/guards/quota.guard";
+import { EnforceQuota } from "@/v3/common/decorators/quota.decorator";
 import { AuditInterceptor } from "../../../../common/interceptors/audit.interceptor";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
@@ -53,7 +55,7 @@ import { ServiceManagementService } from "../../../services/application/services
 @ApiBearerAuth()
 @Controller([":orgSlug/catalog", "catalog"])
 @ApiParam({ name: "orgSlug", type: "string", description: "The unique organization slug", required: false })
-@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard, QuotaGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class ProductController {
   constructor(
@@ -491,6 +493,7 @@ export class ProductController {
   }
 
   @Post("products")
+  @EnforceQuota("maxProducts")
   @Permissions("catalog:product:create")
   @ApiOperation({
     summary: "Create a new product",
