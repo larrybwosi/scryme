@@ -86,6 +86,18 @@ export class AdminService {
         },
       });
 
+      // Create 14-day free trial subscription
+      const trialStartedAt = new Date();
+      const trialEndsAt = new Date(trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+      await tx.subscription.create({
+        data: {
+          organizationId: org.id,
+          status: "TRIALING",
+          trialStartedAt,
+          trialEndsAt,
+        },
+      });
+
       return org;
     });
   }

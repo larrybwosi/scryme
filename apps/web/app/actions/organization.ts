@@ -128,6 +128,18 @@ export async function createOrganization(data: {
       },
     });
 
+    // Create 14-day free trial subscription
+    const trialStartedAt = new Date();
+    const trialEndsAt = new Date(trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+    await tx.subscription.create({
+      data: {
+        organizationId: org.id,
+        status: "TRIALING",
+        trialStartedAt,
+        trialEndsAt,
+      },
+    });
+
     return tx.organization.update({
       where: { id: org.id },
       data: {

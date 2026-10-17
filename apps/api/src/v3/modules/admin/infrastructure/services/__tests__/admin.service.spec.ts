@@ -53,6 +53,7 @@ describe("AdminService", () => {
       subscription: {
         findUnique: vi.fn(),
         upsert: vi.fn(),
+        create: vi.fn(),
       },
       mpesaPaymentRequest: {
         findMany: vi.fn(),

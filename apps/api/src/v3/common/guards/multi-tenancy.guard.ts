@@ -54,6 +54,7 @@ export class MultiTenancyGuard implements CanActivate {
         name: true,
         isSuspended: true,
         suspensionReason: true,
+        createdAt: true,
       },
     });
 
@@ -120,23 +121,50 @@ export class MultiTenancyGuard implements CanActivate {
       }
 
       // 2. Subscription Expiry / Payment Status Check
-      if (isMutatingMethod) {
+      const url = (request.originalUrl || request.url || "").toLowerCase();
+      const isExemptRoute =
+        url.includes("/payments") ||
+        url.includes("/subscriptions") ||
+        url.includes("/billing") ||
+        url.includes("/webhooks");
+
+      if (isMutatingMethod && !isExemptRoute) {
         const subscription = await this.prisma.client.subscription.findUnique({
           where: { organizationId: organization.id },
         });
 
+        const now = new Date();
+        let isExpired = false;
+        let expireReason = "";
+
         if (subscription) {
-          const now = new Date();
-          // If a subscription period end exists and has passed, check if grace period or expired
-          if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
-            // Check if status is explicitly expired or inactive
-            throw new ForbiddenException({
-              statusCode: 403,
-              code: "SUBSCRIPTION_INACTIVE",
-              error: "Payment Required",
-              message: "Subscription is inactive or payment is overdue. Please update your billing details to resume changes.",
-            });
+          if (["EXPIRED", "CANCELED", "PAST_DUE"].includes(subscription.status)) {
+            isExpired = true;
+            expireReason = "Subscription is expired or canceled. Please renew your subscription to perform this action.";
+          } else if (subscription.status === "TRIALING" && subscription.trialEndsAt && new Date(subscription.trialEndsAt) < now) {
+            isExpired = true;
+            expireReason = "Your 14-day free trial has expired. Please update your billing details to resume changes.";
+          } else if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
+            isExpired = true;
+            expireReason = "Subscription payment is overdue or expired. Please update your billing information.";
           }
+        } else {
+          // Fallback check against Organization.createdAt (14 days trial)
+          const orgCreatedAt = organization.createdAt ? new Date(organization.createdAt) : new Date();
+          const trialEnd = new Date(orgCreatedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+          if (trialEnd < now) {
+            isExpired = true;
+            expireReason = "Your 14-day free trial has expired. Please subscribe to continue.";
+          }
+        }
+
+        if (isExpired) {
+          throw new ForbiddenException({
+            statusCode: 403,
+            code: "SUBSCRIPTION_EXPIRED",
+            error: "Payment Required",
+            message: expireReason,
+          });
         }
       }
     }

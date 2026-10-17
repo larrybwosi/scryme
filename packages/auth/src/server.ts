@@ -8,6 +8,7 @@ export interface GetServerAuthOptions {
   permission?: string;
   allowNoOrg?: boolean;
   targetOrganizationId?: string;
+  allowExpired?: boolean;
 }
 
 type SessionResult = Awaited<ReturnType<typeof auth.api.getSession>>;
@@ -15,7 +16,7 @@ type SessionUser = NonNullable<SessionResult>["user"];
 type SessionSession = NonNullable<SessionResult>["session"];
 
 export async function getServerAuth(
-  options: { allowNoOrg: true; permission?: string; targetOrganizationId?: string }
+  options: { allowNoOrg: true; permission?: string; targetOrganizationId?: string; allowExpired?: boolean }
 ): Promise<{
   user: SessionUser;
   session: SessionSession;
@@ -28,7 +29,7 @@ export async function getServerAuth(
 } | null>;
 
 export async function getServerAuth(
-  permissionOrOptions?: string | { allowNoOrg?: false | undefined; permission?: string; targetOrganizationId?: string }
+  permissionOrOptions?: string | { allowNoOrg?: false | undefined; permission?: string; targetOrganizationId?: string; allowExpired?: boolean }
 ): Promise<{
   user: SessionUser;
   session: SessionSession;
@@ -94,6 +95,41 @@ export async function getServerAuth(
   // Block access for organizations suspended by a platform administrator
   if (organizationId && (session.session as any).isOrgSuspended && !isSuperAdmin) {
     redirect("/suspended");
+  }
+
+  // Block access if organization subscription or free trial is expired
+  if (organizationId && !isSuperAdmin && !options.allowExpired) {
+    const subscription = await db.subscription.findUnique({
+      where: { organizationId },
+    });
+
+    const now = new Date();
+    let isExpired = false;
+
+    if (subscription) {
+      if (["EXPIRED", "CANCELED", "PAST_DUE"].includes(subscription.status)) {
+        isExpired = true;
+      } else if (subscription.status === "TRIALING" && subscription.trialEndsAt && new Date(subscription.trialEndsAt) < now) {
+        isExpired = true;
+      } else if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
+        isExpired = true;
+      }
+    } else {
+      const org = await db.organization.findUnique({
+        where: { id: organizationId },
+        select: { createdAt: true },
+      });
+      if (org?.createdAt) {
+        const trialEnd = new Date(org.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+        if (trialEnd < now) {
+          isExpired = true;
+        }
+      }
+    }
+
+    if (isExpired) {
+      redirect("/payment-expired");
+    }
   }
 
   if (options.permission) {

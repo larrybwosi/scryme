@@ -50,6 +50,8 @@ export type Member = {
 };
 
 interface PosAuthState {
+  isSubscriptionExpired: boolean;
+  subscriptionExpireReason: string | null;
   isConfigured: boolean;
   apiUrl: string;
   rawApiUrl: string;
@@ -70,6 +72,7 @@ interface PosAuthState {
 }
 
 interface PosAuthActions {
+  setSubscriptionExpired: (expired: boolean, reason?: string) => void;
   setMemberSession: (member: Member, isRestored?: boolean, token?: string) => void;
   clearMemberSession: () => void;
   switchMember: (memberId: string) => Promise<void>;
@@ -96,6 +99,8 @@ const ONE_HOUR_MS = 60 * 60 * 1000;
 const STORAGE_KEY = 'pos-auth-storage-v3';
 
 const initialState: PosAuthState = {
+  isSubscriptionExpired: false,
+  subscriptionExpireReason: null,
   isConfigured: false,
   apiUrl: API_ENDPOINT_DEFAULT,
   rawApiUrl: API_ENDPOINT_DEFAULT,
@@ -115,6 +120,13 @@ export const useAuthStore = create<PosAuthState & PosAuthActions>()(
   persist(
     (set, get) => ({
       ...initialState,
+
+      setSubscriptionExpired: (expired: boolean, reason?: string) => {
+        set({
+          isSubscriptionExpired: expired,
+          subscriptionExpireReason: reason || null,
+        });
+      },
 
       setDeviceConfig: (deviceType, hubIp = null) => {
         set({ deviceType, hubIp });
