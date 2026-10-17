@@ -27,6 +27,10 @@ export const POS_EVENTS = {
   SHIFT_ENDED: "pos_shift_ended",
 
   // Core Sales & Checkout Flow
+  PREORDER_CONFIGURED: "pos_preorder_configured",
+  PREORDER_CANCELLED: "pos_preorder_cancelled",
+  ORDER_CREATED: "pos_order_created",
+  ORDER_VALIDATION_FAILED: "pos_order_validation_failed",
   CART_ITEM_ADDED: "pos_cart_item_added",
   CART_ITEM_REMOVED: "pos_cart_item_removed",
   CART_ITEM_QTY_UPDATED: "pos_cart_item_qty_updated",

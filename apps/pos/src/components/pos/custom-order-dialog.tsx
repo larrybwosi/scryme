@@ -18,6 +18,7 @@ import { usePosStore } from '@/store/store';
 import { useUiStore } from '@/store/ui-store';
 import { CustomerSelector } from '@/components/customer-selector';
 import { toast } from 'sonner';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 export function CustomOrderDialog() {
   const { customOrderDialogOpen, setCustomOrderDialogOpen, setPaymentDialogOpen } = useUiStore();
@@ -145,6 +146,19 @@ export function CustomOrderDialog() {
         },
       },
     }));
+
+    trackPosEvent(POS_EVENTS.PREORDER_CONFIGURED, {
+      deposit_amount: Math.min(depositAmount, total),
+      total_amount: total,
+      items_count: itemsCount,
+      has_due_date: !!dueDate,
+      due_date: dueDate,
+      is_registered_customer: isCustomerSelected,
+      save_as_customer: isCustomerSelected ? false : saveAsCustomer,
+      has_customization_notes: !!customizationNotes,
+      has_item_specs: !!itemSpecs,
+      has_inscription: !!inscription,
+    });
 
     toast.success('Custom Order Configured', {
       description: `Due on ${dueDate} at ${dueTime}. Proceeding to deposit payment.`,
@@ -397,6 +411,10 @@ export function CustomOrderDialog() {
             <Button
               variant="destructive"
               onClick={() => {
+                trackPosEvent(POS_EVENTS.PREORDER_CANCELLED, {
+                  total_amount: total,
+                  items_count: itemsCount,
+                });
                 usePosStore.getState().cancelPreOrder();
                 toast.info('Pre-order cancelled. Switched to normal sale mode.');
                 setCustomOrderDialogOpen(false);

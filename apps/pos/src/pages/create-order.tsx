@@ -14,7 +14,7 @@ import {
   Search,
 } from 'lucide-react';
 import { useFormattedCurrency, cn } from '@/lib/utils';
-import posthog from 'posthog-js';
+import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@repo/ui/components/ui/select';
 import { Separator } from '@repo/ui/components/ui/separator';
@@ -537,9 +537,12 @@ export default function CreateOrderPage() {
       setCreatedInvoiceUrl(invoiceUrl);
       setSubmitStatus('success');
 
-      posthog.capture('order_created', {
+      trackPosEvent(POS_EVENTS.ORDER_CREATED, {
         order_id: orderId,
         has_invoice_url: !!invoiceUrl,
+        items_count: items?.length || 0,
+        fulfillment_type: fulfillmentType || 'PICKUP',
+        has_customer: !!customerId,
       });
 
       // AUTO-PRINT LOGIC
@@ -636,6 +639,12 @@ export default function CreateOrderPage() {
   const onError = (errs: any) => {
     console.error('Validation Errors:', errs);
     setSubmitStatus('error');
+    const errorFields = Object.keys(errs || {});
+    trackPosEvent(POS_EVENTS.ORDER_VALIDATION_FAILED, {
+      error_fields: errorFields,
+      form_context: 'create_order',
+      error_count: errorFields.length,
+    });
   };
 
   const handleReset = () => {
