@@ -68,7 +68,7 @@ ENV VITE_POSTHOG_HOST=${VITE_POSTHOG_HOST:-https://eu.i.posthog.com}
 RUN pnpm turbo run generate
 
 # Build the site-next app
-ENV NODE_OPTIONS="--max-old-space-size=1536"
+ENV NODE_OPTIONS="--max-old-space-size=4096"
 RUN --mount=type=cache,id=turbo,target=/app/.turbo \
     pnpm turbo build --filter=site-next --concurrency=1
 
