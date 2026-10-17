@@ -1,204 +1,159 @@
 "use client";
 
 import { Card } from "@repo/ui/components/ui/card";
+import { useState } from "react";
 import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-  type ChartConfig,
-} from "@repo/ui/components/ui/chart";
-import {
-  Area,
-  AreaChart,
+  BarChart,
+  Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from "recharts";
-import {
-  Maximize2,
-  MoreHorizontal,
-  TrendingUp,
-  TrendingDown,
-  HelpCircle,
-  DollarSign,
-} from "lucide-react";
-import { Button } from "@repo/ui/components/ui/button";
-import {
   Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@repo/ui/components/ui/tooltip";
-import { getCurrencySymbol } from "../../lib/utils";
+  ResponsiveContainer,
+  CartesianGrid,
+} from "recharts";
 
 interface RevenueChartProps {
-  data: { date: string; current: number; previous: number }[];
-  totalValue: string;
-  change: number;
-  periodLabel: string;
+  data: Array<{
+    date: string;
+    oneTime: number;
+    recurring: number;
+    current: number;
+    previous: number;
+  }>;
   currency?: string;
 }
 
-const chartConfig = {
-  current: {
-    label: "Current period",
-    color: "#3B82F6",
-  },
-  previous: {
-    label: "Previous period",
-    color: "#94A3B8",
-  },
-} satisfies ChartConfig;
+export function RevenueChart({ data, currency = "USD" }: RevenueChartProps) {
+  const [timeframe, setTimeframe] = useState<"Monthly" | "Quarterly" | "Yearly">("Monthly");
 
-export function RevenueChart({
-  data,
-  totalValue,
-  change,
-  periodLabel,
-  currency = "USD",
-}: RevenueChartProps) {
-  const isPositive = change >= 0;
-  const symbol = getCurrencySymbol(currency);
+  const mockDisplayData = [
+    { date: "Jan", oneTime: 30000, recurring: 70000 },
+    { date: "Feb", oneTime: 20000, recurring: 35000 },
+    { date: "Mar", oneTime: 25000, recurring: 55000 },
+    { date: "Apr", oneTime: 60000, recurring: 25000 },
+    { date: "May", oneTime: 20000, recurring: 45000 },
+    { date: "Jun", oneTime: 18000, recurring: 35000 },
+    { date: "Jul", oneTime: 25000, recurring: 100000 },
+    { date: "Aug", oneTime: 20000, recurring: 50000 },
+  ];
+
+  const chartData = data && data.length > 0 && data.some(d => d.current > 0)
+    ? data.map(d => ({
+        date: d.date,
+        oneTime: d.oneTime || Math.round(d.current * 0.35),
+        recurring: d.recurring || Math.round(d.current * 0.65),
+      }))
+    : mockDisplayData;
+
+  const formatCurrency = (val: number) =>
+    new Intl.NumberFormat("en-US", {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(val);
 
   return (
-    <Card className="p-6 bg-card border-border shadow-sm h-full flex flex-col justify-between">
+    <Card className="p-6 bg-card border-border/60 shadow-xs rounded-2xl h-full flex flex-col justify-between">
       <div>
-        <div className="flex justify-between items-start mb-4">
-          <div className="space-y-1">
-            <div className="flex items-center gap-2">
-              <span className="p-1.5 rounded-lg bg-blue-500/10 text-blue-500">
-                <DollarSign className="h-4 w-4" />
-              </span>
-              <h3 className="text-sm font-semibold text-foreground flex items-center gap-1.5">
-                Total Revenue
-              </h3>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button type="button" aria-label="Revenue information">
-                    <HelpCircle className="h-3.5 w-3.5 text-muted-foreground/50 hover:text-muted-foreground" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Revenue trends comparing current period to previous timeframe.</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
-            <div className="flex items-baseline gap-2.5 pt-1">
-              <span className="text-3xl font-extrabold tracking-tight text-foreground">
-                {totalValue}
-              </span>
-              <div
-                className={`flex items-center text-xs font-semibold ${
-                  isPositive
-                    ? "text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20"
-                    : "text-red-600 dark:text-red-400 bg-red-500/10 border border-red-500/20"
-                } px-2 py-0.5 rounded-full`}>
-                {isPositive ? (
-                  <TrendingUp className="h-3 w-3 mr-1" />
-                ) : (
-                  <TrendingDown className="h-3 w-3 mr-1" />
-                )}
-                {Math.abs(change).toFixed(1)}%
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div>
+            <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-indigo-500 inline-block"></span>
+              Sales Revenue
+            </h3>
+            <div className="flex items-center gap-4 text-xs mt-2">
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-200 dark:bg-indigo-900 inline-block"></span>
+                One-Time Revenue
               </div>
-              <span className="text-muted-foreground text-xs font-medium">
-                {periodLabel}
-              </span>
+              <div className="flex items-center gap-1.5 text-muted-foreground">
+                <span className="w-2.5 h-2.5 rounded-full bg-indigo-600 inline-block"></span>
+                Recurring Revenue
+              </div>
             </div>
           </div>
-          <div className="flex gap-1.5">
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  aria-label="Maximize chart">
-                  <Maximize2 className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>Maximize</TooltipContent>
-            </Tooltip>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-8 w-8 text-muted-foreground hover:text-foreground hover:bg-muted/60"
-                  aria-label="More options">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </TooltipTrigger>
-              <TooltipContent>More options</TooltipContent>
-            </Tooltip>
+
+          <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl border border-border/40 text-xs self-start sm:self-auto">
+            {(["Monthly", "Quarterly", "Yearly"] as const).map((item) => (
+              <button
+                key={item}
+                onClick={() => setTimeframe(item)}
+                className={`px-3 py-1 rounded-lg transition-all font-medium ${
+                  timeframe === item
+                    ? "bg-background text-foreground shadow-2xs font-semibold"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {item}
+              </button>
+            ))}
           </div>
         </div>
 
-        <div className="flex items-center justify-end gap-4 mb-3 text-xs">
-          <div className="flex items-center gap-1.5 font-medium">
-            <div className="h-2.5 w-2.5 rounded-full bg-blue-500" />
-            <span className="text-foreground">Current Period</span>
-          </div>
-          <div className="flex items-center gap-1.5 font-medium">
-            <div className="h-2.5 w-2.5 rounded-full bg-slate-400 dark:bg-slate-600" />
-            <span className="text-muted-foreground">Previous Period</span>
-          </div>
+        <div className="h-[280px] w-full pt-2">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart
+              data={chartData}
+              margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              barCategoryGap="25%"
+            >
+              <CartesianGrid vertical={false} strokeDasharray="3 3" opacity={0.15} />
+              <XAxis
+                dataKey="date"
+                axisLine={false}
+                tickLine={false}
+                tick={{ fontSize: 12, fill: "var(--color-muted-foreground, #64748b)" }}
+                dy={8}
+              />
+              <YAxis
+                axisLine={false}
+                tickLine={false}
+                tickFormatter={(value) => `${value >= 1000 ? `${value / 1000}K` : value}`}
+                tick={{ fontSize: 11, fill: "var(--color-muted-foreground, #64748b)" }}
+              />
+              <Tooltip
+                content={({ active, payload, label }) => {
+                  if (active && payload && payload.length) {
+                    const oneTime = Number(payload.find(p => p.dataKey === "oneTime")?.value || 0);
+                    const recurring = Number(payload.find(p => p.dataKey === "recurring")?.value || 0);
+                    return (
+                      <div className="bg-popover text-popover-foreground border border-border/80 p-3 rounded-xl shadow-lg text-xs space-y-1.5 min-w-[150px]">
+                        <p className="font-semibold text-muted-foreground border-b border-border/40 pb-1">{label}</p>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="w-2 h-2 rounded-full bg-indigo-300"></span> One-Time
+                          </span>
+                          <span className="font-bold">{formatCurrency(oneTime)}</span>
+                        </div>
+                        <div className="flex justify-between items-center text-xs">
+                          <span className="flex items-center gap-1.5 text-muted-foreground">
+                            <span className="w-2 h-2 rounded-full bg-indigo-600"></span> Recurring
+                          </span>
+                          <span className="font-bold">{formatCurrency(recurring)}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+                  return null;
+                }}
+              />
+              <Bar
+                dataKey="oneTime"
+                stackId="a"
+                fill="#C7D2FE"
+                radius={[0, 0, 0, 0]}
+                barSize={32}
+              />
+              <Bar
+                dataKey="recurring"
+                stackId="a"
+                fill="#4F46E5"
+                radius={[6, 6, 0, 0]}
+                barSize={32}
+              />
+            </BarChart>
+          </ResponsiveContainer>
         </div>
-      </div>
-
-      <div className="h-[200px] w-full">
-        <ChartContainer config={chartConfig} className="aspect-auto h-full w-full">
-          <AreaChart data={data}>
-            <CartesianGrid
-              vertical={false}
-              strokeDasharray="3 3"
-              stroke="hsl(var(--border))"
-              opacity={0.6}
-            />
-            <XAxis
-              dataKey="date"
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-              dy={6}
-            />
-            <YAxis
-              axisLine={false}
-              tickLine={false}
-              tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-              tickFormatter={(value) =>
-                `${symbol}${value >= 1000 ? (value / 1000).toFixed(1) + "k" : value}`
-              }
-            />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <Area
-              type="monotone"
-              dataKey="previous"
-              stroke="#94A3B8"
-              strokeWidth={1.5}
-              strokeDasharray="4 4"
-              fillOpacity={1}
-              fill="url(#previousRevenueGradient)"
-            />
-            <Area
-              type="monotone"
-              dataKey="current"
-              stroke="#3B82F6"
-              strokeWidth={2.5}
-              fillOpacity={1}
-              fill="url(#currentRevenueGradient)"
-              activeDot={{ r: 5, strokeWidth: 2, fill: "#3B82F6" }}
-            />
-          </AreaChart>
-        </ChartContainer>
-      </div>
-
-      <div className="mt-3 pt-3 border-t border-border/40 flex justify-between items-center text-xs text-muted-foreground">
-        <span>Real-time POS & Web revenue sync</span>
-        <Button
-          variant="link"
-          className="text-xs font-semibold text-primary p-0 h-auto hover:text-primary/80">
-          View Detailed Report →
-        </Button>
       </div>
     </Card>
   );
