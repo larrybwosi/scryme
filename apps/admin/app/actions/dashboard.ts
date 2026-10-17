@@ -53,12 +53,17 @@ export async function getDashboardAnalytics() {
   const thirtyDaysAgo = new Date();
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
+  // ⚡ Bolt Optimization: Group all independent analytics read queries into a single concurrent Promise.all execution.
+  // Previously, `allUsersWithSource` was awaited sequentially after the initial 5 database queries, causing
+  // an extra unnecessary database roundtrip delay. Parallelizing all 6 read queries reduces database latency
+  // from 2 sequential roundtrips to 1 concurrent roundtrip (~50% DB fetch time reduction).
   const [
     users,
     organizations,
     subscriptions,
     transactions,
     auditLogs,
+    allUsersWithSource,
   ] = await Promise.all([
     db.user.findMany({
       where: { createdAt: { gte: thirtyDaysAgo } },
@@ -91,12 +96,10 @@ export async function getDashboardAnalytics() {
         organizationId: true,
       },
     }),
+    db.user.findMany({
+      select: { acquisitionSource: true },
+    }),
   ]);
-
-  // Aggregate user & organization acquisition sources
-  const allUsersWithSource = await db.user.findMany({
-    select: { acquisitionSource: true },
-  });
 
   const acquisitionSourceCounts: Record<string, number> = {};
   for (const u of allUsersWithSource) {
