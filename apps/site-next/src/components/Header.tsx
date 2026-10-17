@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { ArrowRight, Layers, Sun, Moon, Menu, X } from 'lucide-react'
+import { ArrowRight, Layers, Sun, Moon, Menu, X, Code2 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect } from 'react'
 
@@ -32,7 +32,10 @@ export function Header() {
           <Link to="/crm" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">CRM</Link>
           <Link to="/cms" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Catalog Cloud</Link>
           <Link to="/pricing" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Pricing</Link>
-          <Link to="/light" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Light Mode</Link>
+          <Link to="/developers/apps" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold flex items-center gap-1.5">
+            <Code2 className="w-3.5 h-3.5 text-[#d2ff3a]" />
+            <span>Developers</span>
+          </Link>
         </nav>
 
         {/* Action Controls */}
@@ -83,7 +86,10 @@ export function Header() {
             <Link onClick={() => setMobileMenuOpen(false)} to="/crm" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">CRM</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/cms" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Catalog Cloud</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/pricing" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Pricing</Link>
-            <Link onClick={() => setMobileMenuOpen(false)} to="/light" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Light Mode</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/developers/apps" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold flex items-center gap-2">
+              <Code2 className="w-4 h-4 text-[#d2ff3a]" />
+              <span>Developers (Auth Clients)</span>
+            </Link>
           </nav>
           <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
             <a
