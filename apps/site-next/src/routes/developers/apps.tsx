@@ -58,14 +58,13 @@ const DEFAULT_SCOPES = [
 export function DevelopersAppsPage() {
   // Session Simulation / Demo Auth Guard State
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(true)
-  const [isDemoWorkspace, setIsDemoWorkspace] = useState<boolean>(false)
 
   // OAuth Clients State
   const [apps, setApps] = useState<OAuthClientApp[]>([
     {
       id: 'app_1',
-      clientId: 'scryme_client_live_8941a9f02b3c4d',
-      clientSecret: 'scryme_sec_991823ab45cd67ef8901234567890abcdef1',
+      clientId: 'scryme_client_demo_mobile_app_01',
+      clientSecret: 'scryme_sec_demo_placeholder_secret_key_01',
       name: 'Acme Mobile App',
       icon: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=100&h=100&fit=crop',
       uri: 'https://acme.com',
@@ -80,8 +79,8 @@ export function DevelopersAppsPage() {
     },
     {
       id: 'app_2',
-      clientId: 'scryme_client_live_7732b11c990a1f',
-      clientSecret: 'scryme_sec_1092838481230491820391820391823a',
+      clientId: 'scryme_client_demo_analytics_portal_02',
+      clientSecret: 'scryme_sec_demo_placeholder_secret_key_02',
       name: 'Aetheria Analytics Portal',
       uri: 'https://analytics.aetheria.io',
       redirectUris: ['https://analytics.aetheria.io/api/auth/callback/scryme'],
@@ -149,8 +148,8 @@ export function DevelopersAppsPage() {
       return
     }
 
-    const newClientId = `scryme_client_${Math.random().toString(36).substring(2, 10)}${Math.random().toString(36).substring(2, 8)}`
-    const newClientSecret = `scryme_sec_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+    const newClientId = `scryme_client_${Math.random().toString(36).substring(2, 10)}`
+    const newClientSecret = `scryme_sec_placeholder_${Math.random().toString(36).substring(2, 10)}`
 
     const newApp: OAuthClientApp = {
       id: `app_${Date.now()}`,
@@ -193,7 +192,7 @@ export function DevelopersAppsPage() {
 
   const handleRotateSecret = (appId: string) => {
     if (confirm('Are you sure you want to rotate the Client Secret? The existing secret will be invalidated immediately.')) {
-      const newSecret = `scryme_sec_${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`
+      const newSecret = `scryme_sec_placeholder_${Math.random().toString(36).substring(2, 10)}`
       setApps((prev) =>
         prev.map((a) => (a.id === appId ? { ...a, clientSecret: newSecret, updatedAt: new Date().toISOString() } : a))
       )
