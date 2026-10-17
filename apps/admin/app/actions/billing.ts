@@ -151,6 +151,14 @@ export async function getOrganizationSubscription(orgId: string) {
       dodoSubscriptionId: null,
       dodoPriceId: null,
       dodoCurrentPeriodEnd: null,
+      isCustomPrice: false,
+      customMonthlyPrice: null,
+      customYearlyPrice: null,
+      billingInterval: "monthly",
+      customCurrency: "USD",
+      customDiscountPercent: null,
+      customTaxPercent: null,
+      customNotes: null,
     };
   }
 
@@ -162,6 +170,14 @@ export async function getOrganizationSubscription(orgId: string) {
     dodoSubscriptionId: sub.dodoSubscriptionId,
     dodoPriceId: sub.dodoPriceId,
     dodoCurrentPeriodEnd: sub.dodoCurrentPeriodEnd,
+    isCustomPrice: sub.isCustomPrice ?? false,
+    customMonthlyPrice: sub.customMonthlyPrice ?? null,
+    customYearlyPrice: sub.customYearlyPrice ?? null,
+    billingInterval: sub.billingInterval ?? "monthly",
+    customCurrency: sub.customCurrency ?? "USD",
+    customDiscountPercent: sub.customDiscountPercent ?? null,
+    customTaxPercent: sub.customTaxPercent ?? null,
+    customNotes: sub.customNotes ?? null,
   };
 }
 
@@ -172,6 +188,14 @@ export async function updateOrganizationSubscription(
     dodoCustomerId?: string;
     dodoSubscriptionId?: string;
     dodoCurrentPeriodEnd?: string;
+    isCustomPrice?: boolean;
+    customMonthlyPrice?: number | null;
+    customYearlyPrice?: number | null;
+    billingInterval?: "monthly" | "yearly";
+    customCurrency?: string;
+    customDiscountPercent?: number | null;
+    customTaxPercent?: number | null;
+    customNotes?: string | null;
   },
 ) {
   await requireSuperAdmin();
@@ -180,26 +204,119 @@ export async function updateOrganizationSubscription(
     ? new Date(input.dodoCurrentPeriodEnd)
     : null;
 
+  const updateData: any = {
+    dodoPriceId: input.tierSlug,
+    dodoCustomerId: input.dodoCustomerId || null,
+    dodoSubscriptionId: input.dodoSubscriptionId || null,
+    dodoCurrentPeriodEnd: currentPeriodEnd,
+  };
+
+  if (input.isCustomPrice !== undefined) {
+    updateData.isCustomPrice = input.isCustomPrice;
+  }
+  if (input.customMonthlyPrice !== undefined) {
+    updateData.customMonthlyPrice = input.customMonthlyPrice;
+  }
+  if (input.customYearlyPrice !== undefined) {
+    updateData.customYearlyPrice = input.customYearlyPrice;
+  }
+  if (input.billingInterval !== undefined) {
+    updateData.billingInterval = input.billingInterval;
+  }
+  if (input.customCurrency !== undefined) {
+    updateData.customCurrency = input.customCurrency;
+  }
+  if (input.customDiscountPercent !== undefined) {
+    updateData.customDiscountPercent = input.customDiscountPercent;
+  }
+  if (input.customTaxPercent !== undefined) {
+    updateData.customTaxPercent = input.customTaxPercent;
+  }
+  if (input.customNotes !== undefined) {
+    updateData.customNotes = input.customNotes;
+  }
+
   const sub = await db.subscription.upsert({
     where: { organizationId: orgId },
-    update: {
-      dodoPriceId: input.tierSlug,
-      dodoCustomerId: input.dodoCustomerId || null,
-      dodoSubscriptionId: input.dodoSubscriptionId || null,
-      dodoCurrentPeriodEnd: currentPeriodEnd,
-    },
+    update: updateData,
     create: {
       organizationId: orgId,
-      dodoPriceId: input.tierSlug,
-      dodoCustomerId: input.dodoCustomerId || null,
-      dodoSubscriptionId: input.dodoSubscriptionId || null,
-      dodoCurrentPeriodEnd: currentPeriodEnd,
+      ...updateData,
     },
   });
 
   revalidatePath("/billing");
   revalidatePath(`/organizations/${orgId}`);
   return sub;
+}
+
+export async function getOrganizationEffectivePrice(
+  orgId: string,
+  durationMonths: number = 1,
+  tierSlug?: string,
+) {
+  await requireSuperAdmin();
+
+  const sub = await db.subscription.findUnique({
+    where: { organizationId: orgId },
+  });
+
+  const tiers = await listTiers();
+  const selectedTierSlug = tierSlug || sub?.dodoPriceId || "free";
+  const tier = tiers.find((t) => t.slug === selectedTierSlug);
+
+  if (sub?.isCustomPrice) {
+    let basePrice = 0;
+    if (durationMonths >= 12 && sub.customYearlyPrice != null && sub.customYearlyPrice > 0) {
+      basePrice = sub.customYearlyPrice * (durationMonths / 12);
+    } else if (sub.customMonthlyPrice != null && sub.customMonthlyPrice > 0) {
+      basePrice = sub.customMonthlyPrice * durationMonths;
+    } else if (tier) {
+      basePrice = tier.price * durationMonths;
+    }
+
+    let finalPrice = basePrice;
+    if (sub.customDiscountPercent && sub.customDiscountPercent > 0) {
+      finalPrice = finalPrice * (1 - sub.customDiscountPercent / 100);
+    }
+    if (sub.customTaxPercent && sub.customTaxPercent > 0) {
+      finalPrice = finalPrice * (1 + sub.customTaxPercent / 100);
+    }
+
+    return {
+      isCustomPrice: true,
+      price: Math.round(finalPrice * 100) / 100,
+      currency: sub.customCurrency || tier?.currency || "USD",
+      billingInterval: sub.billingInterval || "monthly",
+      monthlyRate: sub.customMonthlyPrice ?? null,
+      yearlyRate: sub.customYearlyPrice ?? null,
+      discountPercent: sub.customDiscountPercent ?? null,
+      taxPercent: sub.customTaxPercent ?? null,
+      tierSlug: selectedTierSlug,
+      tierName: tier?.name || "Custom Plan",
+    };
+  }
+
+  let basePrice = (tier?.price || 0) * durationMonths;
+  if (durationMonths >= 12 && tier?.annualDiscountPercent) {
+    basePrice = basePrice * (1 - tier.annualDiscountPercent / 100);
+  }
+  if (tier?.taxPercent) {
+    basePrice = basePrice * (1 + tier.taxPercent / 100);
+  }
+
+  return {
+    isCustomPrice: false,
+    price: Math.round(basePrice * 100) / 100,
+    currency: tier?.currency || "USD",
+    billingInterval: "monthly",
+    monthlyRate: tier?.price ?? 0,
+    yearlyRate: tier?.price ? tier.price * 12 : 0,
+    discountPercent: tier?.annualDiscountPercent ?? null,
+    taxPercent: tier?.taxPercent ?? null,
+    tierSlug: selectedTierSlug,
+    tierName: tier?.name || "Free",
+  };
 }
 
 export async function listSystemPayments() {

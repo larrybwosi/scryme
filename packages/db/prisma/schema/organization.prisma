@@ -787,6 +787,16 @@ model Subscription {
   dodoPriceId          String?      @map("dodo_price_id")
   dodoCurrentPeriodEnd DateTime?    @map("dodo_current_period_end")
 
+  // Custom Pricing Overrides
+  isCustomPrice         Boolean  @default(false) @map("is_custom_price")
+  customMonthlyPrice    Float?   @map("custom_monthly_price")
+  customYearlyPrice     Float?   @map("custom_yearly_price")
+  billingInterval       String?  @default("monthly") @map("billing_interval")
+  customCurrency        String?  @map("custom_currency")
+  customDiscountPercent Float?   @map("custom_discount_percent")
+  customTaxPercent      Float?   @map("custom_tax_percent")
+  customNotes           String?  @map("custom_notes")
+
   @@map("subscriptions")
 }
 

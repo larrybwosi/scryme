@@ -1,13 +1,14 @@
 "use client"
 
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
+import { Loader2, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 import { Button } from "@repo/ui/components/ui/button"
 import { Input } from "@repo/ui/components/ui/input"
 import { Label } from "@repo/ui/components/ui/label"
 import { Textarea } from "@repo/ui/components/ui/textarea"
+import { Badge } from "@repo/ui/components/ui/badge"
 import {
   Select,
   SelectContent,
@@ -27,6 +28,7 @@ import {
   initiateAdminMpesaPayment,
   checkAdminMpesaPaymentStatus,
   recordCustomPayment,
+  getOrganizationEffectivePrice,
   type Tier,
 } from "@/app/actions/billing"
 
@@ -50,27 +52,60 @@ export function RecordPaymentDialog({
 }) {
   const router = useRouter()
   const [paymentMode, setPaymentMode] = useState<"stk_push" | "manual">("stk_push")
-  const [isPending, setIsPending] = useState(false)
   const [organizationId, setOrganizationId] = useState(defaultOrgId || "")
   const [amount, setAmount] = useState("")
   const [phoneNumber, setPhoneNumber] = useState("")
   const [reference, setReference] = useState("")
-  const [tierSlug, setTierSlug] = useState<string>("none")
-  const [durationMonths, setDurationMonths] = useState<string>("12")
+  const [tierSlug, setTierSlug] = useState("none")
+  const [durationMonths, setDurationMonths] = useState("12")
   const [notes, setNotes] = useState("")
 
-  // Polling state for STK Push
+  const [isPending, setIsPending] = useState(false)
+  const [isCalculating, setIsCalculating] = useState(false)
+  const [customPriceInfo, setCustomPriceInfo] = useState<{
+    isCustomPrice: boolean
+    currency: string
+  } | null>(null)
   const [pollingCheckoutId, setPollingCheckoutId] = useState<string | null>(null)
   const [pollStatusMessage, setPollStatusMessage] = useState<string | null>(null)
 
-  function handleTierChange(selectedSlug: string) {
-    setTierSlug(selectedSlug)
-    if (selectedSlug !== "none") {
-      const selected = tiers.find((t) => t.slug === selectedSlug)
-      if (selected && selected.price !== undefined) {
-        setAmount(String(selected.price))
-      }
+  // Auto-calculate effective price when organization or duration changes
+  useEffect(() => {
+    if (!open || !organizationId) return
+
+    let isMounted = true
+    setIsCalculating(true)
+
+    getOrganizationEffectivePrice(
+      organizationId,
+      Number(durationMonths) || 12,
+      tierSlug === "none" ? undefined : tierSlug,
+    )
+      .then((res) => {
+        if (isMounted) {
+          if (res.price > 0) {
+            setAmount(String(res.price))
+          }
+          setCustomPriceInfo({
+            isCustomPrice: res.isCustomPrice,
+            currency: res.currency,
+          })
+        }
+      })
+      .catch((err) => {
+        console.error("Error fetching price calculation:", err)
+      })
+      .finally(() => {
+        if (isMounted) setIsCalculating(false)
+      })
+
+    return () => {
+      isMounted = false
     }
+  }, [open, organizationId, durationMonths, tierSlug])
+
+  function handleTierChange(slug: string) {
+    setTierSlug(slug)
   }
 
   async function handleStkPushSubmit(e: React.FormEvent) {
@@ -79,13 +114,14 @@ export function RecordPaymentDialog({
       toast.error("Please select an organization")
       return
     }
+
     if (!phoneNumber) {
-      toast.error("Please enter a phone number for M-Pesa STK push")
+      toast.error("Please enter M-Pesa phone number")
       return
     }
 
     setIsPending(true)
-    setPollStatusMessage("Sending STK push prompt...")
+    setPollStatusMessage("Initiating M-Pesa STK push...")
 
     try {
       const result = await initiateAdminMpesaPayment({
@@ -96,8 +132,8 @@ export function RecordPaymentDialog({
         durationMonths: Number(durationMonths) || 12,
       })
 
-      if (result.success && result.checkoutRequestId) {
-        toast.info(result.message || "STK Push sent! Awaiting customer PIN entry...")
+      if (result.success) {
+        toast.success(result.message || "STK Push sent! Awaiting customer PIN entry...")
         setPollingCheckoutId(result.checkoutRequestId)
         startPolling(result.checkoutRequestId)
       } else {
@@ -184,6 +220,7 @@ export function RecordPaymentDialog({
     setTierSlug("none")
     setDurationMonths("12")
     setNotes("")
+    setCustomPriceInfo(null)
     onOpenChange(false)
     router.refresh()
   }
@@ -283,7 +320,17 @@ export function RecordPaymentDialog({
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
-                <Label htmlFor="pay-amount">Amount</Label>
+                <div className="flex items-center justify-between">
+                  <Label htmlFor="pay-amount">Amount</Label>
+                  {isCalculating ? (
+                    <Loader2 className="size-3 animate-spin text-muted-foreground" />
+                  ) : customPriceInfo?.isCustomPrice ? (
+                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20 gap-1 px-1.5 py-0">
+                      <Sparkles className="size-2.5" />
+                      Custom
+                    </Badge>
+                  ) : null}
+                </div>
                 <Input
                   id="pay-amount"
                   type="number"
