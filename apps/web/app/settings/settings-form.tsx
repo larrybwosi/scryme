@@ -13,6 +13,13 @@ import {
   AlertCircle,
   CheckCircle2,
   Info,
+  CreditCard,
+  Clock,
+  Receipt,
+  TrendingUp,
+  ShieldCheck,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -29,7 +36,6 @@ import {
 } from "@repo/ui/components/ui/select";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { cn } from "@repo/ui/lib/utils";
 import { toast } from "sonner";
 import { updateOrganizationSettings } from "@/app/actions/organization";
@@ -38,26 +44,71 @@ import { OrganizationProfileHeader } from "./profile-header";
 // ─── Schema ────────────────────────────────────────────────────────────────────
 
 const settingsSchema = z.object({
+  // Profile
   name: z.string().min(1, "Organization name is required"),
   email: z.string().email("Enter a valid email").optional().or(z.literal("")),
   phone: z.string().optional().or(z.literal("")),
   address: z.string().optional().or(z.literal("")),
   logo: z.string().optional().or(z.literal("")),
   banner: z.string().optional().or(z.literal("")),
+
+  // Localization
   defaultCurrency: z.string().min(1, "Currency is required"),
   defaultTimezone: z.string().min(1, "Timezone is required"),
   country: z.string().min(1, "Country is required"),
+
+  // Payment Options (M-Pesa)
+  paymentCredentials: z.object({
+    mpesaShortCode: z.string().optional().or(z.literal("")),
+    mpesaType: z.enum(["PAYBILL", "TILL"]).default("PAYBILL"),
+    environment: z.enum(["SANDBOX", "PRODUCTION"]).default("SANDBOX"),
+    mpesaConsumerKey: z.string().optional().or(z.literal("")),
+    mpesaConsumerSecret: z.string().optional().or(z.literal("")),
+    mpesaPassKey: z.string().optional().or(z.literal("")),
+    mpesaInitiatorPass: z.string().optional().or(z.literal("")),
+  }),
+
+  // Inventory Policies
   lowStockThreshold: z.number().min(0).default(10),
   negativeStock: z.boolean().default(false),
-  adminsCanManageStaff: z.boolean().default(false),
   managersCanManageShifts: z.boolean().default(false),
+
+  // Operations & Attendance
+  enableAutoCheckout: z.boolean().default(false),
+  autoCheckoutTime: z.string().optional().or(z.literal("")),
+  enableBakerySystem: z.boolean().default(false),
+
+  // Tax & Compliance
+  taxIntegrationEnabled: z.boolean().default(false),
+  defaultTaxId: z.string().optional().or(z.literal("")),
+  highValueTaxThreshold: z.number().min(0).default(100000),
+
+  // Pricing Strategy
+  priceSyncMode: z.enum(["MANUAL", "AUTOMATIC", "REVIEW_REQUIRED"]).default("MANUAL"),
+  supplierSelectionStrategy: z.enum(["PREFERRED", "LOWEST_COST", "LATEST_DELIVERY"]).default("PREFERRED"),
+  minMarginThreshold: z.number().min(0).max(1).default(0.10),
+  priceApprovalThreshold: z.number().min(0).max(1).default(0.20),
+
+  // Security & Access
+  adminsCanManageStaff: z.boolean().default(false),
+  multiAdminRoleApproval: z.boolean().default(false),
+  auditLogRetentionDays: z.number().min(30).default(365),
+  enforceMfa: z.boolean().default(false),
 });
 
 type SettingsFormValues = z.infer<typeof settingsSchema>;
 
 // ─── Nav config ────────────────────────────────────────────────────────────────
 
-type SectionId = "profile" | "localization" | "inventory" | "security";
+type SectionId =
+  | "profile"
+  | "localization"
+  | "payments"
+  | "inventory"
+  | "operations"
+  | "tax"
+  | "pricing"
+  | "security";
 
 const NAV_SECTIONS: {
   id: SectionId;
@@ -75,14 +126,34 @@ const NAV_SECTIONS: {
     icon: <Globe className="w-4 h-4" />,
   },
   {
+    id: "payments",
+    label: "Payment Options",
+    icon: <CreditCard className="w-4 h-4" />,
+  },
+  {
     id: "inventory",
     label: "Inventory Policies",
     icon: <Warehouse className="w-4 h-4" />,
   },
   {
+    id: "operations",
+    label: "Operations & Attendance",
+    icon: <Clock className="w-4 h-4" />,
+  },
+  {
+    id: "tax",
+    label: "Tax & Compliance",
+    icon: <Receipt className="w-4 h-4" />,
+  },
+  {
+    id: "pricing",
+    label: "Pricing Strategy",
+    icon: <TrendingUp className="w-4 h-4" />,
+  },
+  {
     id: "security",
     label: "Security & Access",
-    icon: <AlertCircle className="w-4 h-4" />,
+    icon: <ShieldCheck className="w-4 h-4" />,
   },
 ];
 
@@ -133,53 +204,42 @@ function Field({
 function IconInput({
   icon,
   error,
+  type = "text",
+  allowTogglePassword,
   ...props
 }: React.InputHTMLAttributes<HTMLInputElement> & {
-  icon: React.ReactNode;
+  icon?: React.ReactNode;
   error?: boolean;
+  allowTogglePassword?: boolean;
 }) {
+  const [showPassword, setShowPassword] = useState(false);
+  const inputType = allowTogglePassword ? (showPassword ? "text" : "password") : type;
+
   return (
     <div className="relative">
-      <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60">
-        {icon}
-      </span>
+      {icon && (
+        <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground/60">
+          {icon}
+        </span>
+      )}
       <Input
         {...props}
+        type={inputType}
         className={cn(
-          "pl-9 bg-background border-border focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-ring transition-colors h-9 text-sm rounded-lg",
+          icon ? "pl-9" : "pl-3",
+          allowTogglePassword ? "pr-10" : "pr-3",
+          "bg-background border-border focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-ring transition-colors h-9 text-sm rounded-lg",
           error && "border-destructive focus-visible:ring-destructive/20",
           props.className,
         )}
       />
-    </div>
-  );
-}
-
-function SectionHeader({
-  title,
-  description,
-  badge,
-}: {
-  title: string;
-  description: string;
-  badge?: string;
-}) {
-  return (
-    <div className="flex items-start justify-between mb-8 pb-6 border-b border-border">
-      <div>
-        <h2 className="text-lg font-semibold text-foreground tracking-tight">
-          {title}
-        </h2>
-        <p className="text-sm text-muted-foreground mt-1 max-w-xl">
-          {description}
-        </p>
-      </div>
-      {badge && (
-        <Badge
-          variant="secondary"
-          className="text-xs bg-primary/10 text-primary border border-primary/20 font-medium">
-          {badge}
-        </Badge>
+      {allowTogglePassword && (
+        <button
+          type="button"
+          onClick={() => setShowPassword(!showPassword)}
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground">
+          {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+        </button>
       )}
     </div>
   );
@@ -242,15 +302,42 @@ export function SettingsForm({ initialData }: { initialData: any }) {
       address: initialData?.address || "",
       logo: initialData?.logo || "",
       banner: initialData?.banner || "",
+
       defaultCurrency: initialData?.settings?.defaultCurrency || "USD",
       defaultTimezone: initialData?.settings?.defaultTimezone || "UTC",
       country: initialData?.settings?.country || "Kenya",
-      lowStockThreshold: initialData?.settings?.lowStockThreshold || 10,
-      negativeStock: initialData?.settings?.negativeStock || false,
-      adminsCanManageStaff:
-        initialData?.settings?.adminsCanManageStaff || false,
-      managersCanManageShifts:
-        initialData?.settings?.managersCanManageShifts || false,
+
+      paymentCredentials: {
+        mpesaShortCode: initialData?.paymentCredentials?.mpesaShortCode || "",
+        mpesaType: initialData?.paymentCredentials?.mpesaType || "PAYBILL",
+        environment: initialData?.paymentCredentials?.environment || "SANDBOX",
+        mpesaConsumerKey: initialData?.paymentCredentials?.mpesaConsumerKey || "",
+        mpesaConsumerSecret: initialData?.paymentCredentials?.mpesaConsumerSecret || "",
+        mpesaPassKey: initialData?.paymentCredentials?.mpesaPassKey || "",
+        mpesaInitiatorPass: initialData?.paymentCredentials?.mpesaInitiatorPass || "",
+      },
+
+      lowStockThreshold: initialData?.settings?.lowStockThreshold ?? 10,
+      negativeStock: initialData?.settings?.negativeStock ?? false,
+      managersCanManageShifts: initialData?.settings?.managersCanManageShifts ?? false,
+
+      enableAutoCheckout: initialData?.settings?.enableAutoCheckout ?? false,
+      autoCheckoutTime: initialData?.settings?.autoCheckoutTime || "18:00",
+      enableBakerySystem: initialData?.settings?.enableBakerySystem ?? false,
+
+      taxIntegrationEnabled: initialData?.settings?.taxIntegrationEnabled ?? false,
+      defaultTaxId: initialData?.settings?.defaultTaxId || "",
+      highValueTaxThreshold: Number(initialData?.settings?.highValueTaxThreshold || 100000),
+
+      priceSyncMode: initialData?.settings?.priceSyncMode || "MANUAL",
+      supplierSelectionStrategy: initialData?.settings?.supplierSelectionStrategy || "PREFERRED",
+      minMarginThreshold: Number(initialData?.settings?.minMarginThreshold || 0.10),
+      priceApprovalThreshold: Number(initialData?.settings?.priceApprovalThreshold || 0.20),
+
+      adminsCanManageStaff: initialData?.settings?.adminsCanManageStaff ?? false,
+      multiAdminRoleApproval: initialData?.settings?.multiAdminRoleApproval ?? false,
+      auditLogRetentionDays: initialData?.settings?.auditLogRetentionDays ?? 365,
+      enforceMfa: initialData?.settings?.enforceMfa ?? false,
     },
   });
 
@@ -291,7 +378,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 Organization Settings
               </h1>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Manage your workspace configuration
+                Manage your workspace configuration and payment integration
               </p>
             </div>
           </div>
@@ -356,7 +443,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
         </div>
 
         {/* Horizontal tabs */}
-        <div className="flex items-center gap-0 -mb-px">
+        <div className="flex items-center gap-0 -mb-px overflow-x-auto no-scrollbar">
           {NAV_SECTIONS.map(section => {
             const isActive = activeSection === section.id;
             return (
@@ -386,11 +473,10 @@ export function SettingsForm({ initialData }: { initialData: any }) {
 
       {/* ── Scrollable content ── */}
       <div className="flex-1 overflow-y-auto">
-        <div className="mx-auto px-8 py-10">
+        <div className="mx-auto px-8 py-10 max-w-6xl">
           {/* ── Profile section ── */}
           {activeSection === "profile" && (
             <div className="space-y-8">
-              {/* Branding block */}
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -415,7 +501,6 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 </div>
               </div>
 
-              {/* Contact details block */}
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -471,15 +556,6 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   </FieldGroup>
                 </div>
               </div>
-
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-primary/10 border border-primary/20">
-                <Info className="w-4 h-4 text-primary mt-0.5 shrink-0" />
-                <p className="text-xs text-foreground/80 leading-relaxed">
-                  Contact details appear on customer-facing documents such as
-                  invoices and receipts. Keep them accurate to maintain trust
-                  with your clients.
-                </p>
-              </div>
             </div>
           )}
 
@@ -492,8 +568,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                     Regional Defaults
                   </h3>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Applied to all financial transactions, timestamps, and
-                    addresses across your organization
+                    Applied to all financial transactions, timestamps, and addresses across your organization
                   </p>
                 </div>
                 <div className="px-6 py-6">
@@ -515,13 +590,9 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="USD">USD — US Dollar</SelectItem>
-                          <SelectItem value="KES">
-                            KES — Kenyan Shilling
-                          </SelectItem>
+                          <SelectItem value="KES">KES — Kenyan Shilling</SelectItem>
                           <SelectItem value="EUR">EUR — Euro</SelectItem>
-                          <SelectItem value="GBP">
-                            GBP — British Pound
-                          </SelectItem>
+                          <SelectItem value="GBP">GBP — British Pound</SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>
@@ -555,50 +626,123 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                           <SelectValue placeholder="Select timezone" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="UTC">
-                            UTC — Universal Time
-                          </SelectItem>
-                          <SelectItem value="Africa/Nairobi">
-                            Africa/Nairobi — EAT (UTC+3)
-                          </SelectItem>
-                          <SelectItem value="Europe/London">
-                            Europe/London — GMT/BST
-                          </SelectItem>
-                          <SelectItem value="America/New_York">
-                            America/New_York — EST/EDT
-                          </SelectItem>
+                          <SelectItem value="UTC">UTC — Universal Time</SelectItem>
+                          <SelectItem value="Africa/Nairobi">Africa/Nairobi — EAT (UTC+3)</SelectItem>
+                          <SelectItem value="Europe/London">Europe/London — GMT/BST</SelectItem>
+                          <SelectItem value="America/New_York">America/New_York — EST/EDT</SelectItem>
                         </SelectContent>
                       </Select>
                     </Field>
                   </FieldGroup>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Active config preview */}
+          {/* ── Payment Options section (M-Pesa) ── */}
+          {activeSection === "payments" && (
+            <div className="space-y-8">
               <div className="bg-card rounded-xl border border-border overflow-hidden">
-                <div className="px-6 py-4 border-b border-border bg-muted/30">
-                  <p className="text-xs font-semibold uppercase tracking-widest text-muted-foreground">
-                    Active Configuration
-                  </p>
+                <div className="px-6 py-5 border-b border-border flex items-center justify-between">
+                  <div>
+                    <h3 className="text-sm font-semibold text-foreground">
+                      M-Pesa Integration Credentials
+                    </h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Configure Daraja API keys and credentials for STK Push & C2B payments
+                    </p>
+                  </div>
+                  <Badge className="text-xs bg-emerald-500/10 text-emerald-600 border-emerald-500/20 font-medium">
+                    Safaricom M-Pesa
+                  </Badge>
                 </div>
-                <div className="divide-y divide-border">
-                  {[
-                    { key: "Currency", value: form.watch("defaultCurrency") },
-                    { key: "Country", value: form.watch("country") },
-                    { key: "Timezone", value: form.watch("defaultTimezone") },
-                  ].map(({ key, value }) => (
-                    <div
-                      key={key}
-                      className="flex items-center justify-between px-6 py-3">
-                      <span className="text-xs text-muted-foreground font-medium">
-                        {key}
-                      </span>
-                      <span className="text-xs font-mono font-semibold text-foreground bg-muted px-2.5 py-1 rounded-md">
-                        {value || "—"}
-                      </span>
-                    </div>
-                  ))}
+
+                <div className="px-6 py-6 space-y-6">
+                  <FieldGroup>
+                    <Field label="Environment" required>
+                      <Select
+                        onValueChange={val =>
+                          form.setValue("paymentCredentials.environment", val as "SANDBOX" | "PRODUCTION", {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("paymentCredentials.environment")}>
+                        <SelectTrigger className="h-9 text-sm border-border bg-background focus:ring-2 focus:ring-ring/20 rounded-lg">
+                          <SelectValue placeholder="Select environment" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="SANDBOX">Sandbox (Testing)</SelectItem>
+                          <SelectItem value="PRODUCTION">Production (Live)</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+
+                    <Field label="M-Pesa Type" required>
+                      <Select
+                        onValueChange={val =>
+                          form.setValue("paymentCredentials.mpesaType", val as "PAYBILL" | "TILL", {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("paymentCredentials.mpesaType")}>
+                        <SelectTrigger className="h-9 text-sm border-border bg-background focus:ring-2 focus:ring-ring/20 rounded-lg">
+                          <SelectValue placeholder="Select M-Pesa type" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PAYBILL">Paybill Number</SelectItem>
+                          <SelectItem value="TILL">Buy Goods / Till Number</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+
+                    <Field label="ShortCode (Paybill / Till Number)" required fullWidth>
+                      <Input
+                        {...form.register("paymentCredentials.mpesaShortCode")}
+                        placeholder="e.g. 174379 or 600000"
+                        className="h-9 text-sm border-border bg-background focus-visible:ring-2 focus-visible:ring-ring/20 rounded-lg"
+                      />
+                    </Field>
+
+                    <Field label="Consumer Key" required hint="Obtained from Safaricom Developer Portal">
+                      <IconInput
+                        {...form.register("paymentCredentials.mpesaConsumerKey")}
+                        placeholder="Consumer Key"
+                        allowTogglePassword
+                      />
+                    </Field>
+
+                    <Field label="Consumer Secret" required hint="Obtained from Safaricom Developer Portal">
+                      <IconInput
+                        {...form.register("paymentCredentials.mpesaConsumerSecret")}
+                        placeholder="Consumer Secret"
+                        allowTogglePassword
+                      />
+                    </Field>
+
+                    <Field label="Pass Key (Lipa Na M-Pesa Online)" hint="Required for STK Push prompt triggers">
+                      <IconInput
+                        {...form.register("paymentCredentials.mpesaPassKey")}
+                        placeholder="Online Pass Key"
+                        allowTogglePassword
+                      />
+                    </Field>
+
+                    <Field label="Initiator Password (Optional)" hint="Required for B2C/B2B disbursements">
+                      <IconInput
+                        {...form.register("paymentCredentials.mpesaInitiatorPass")}
+                        placeholder="Initiator Password"
+                        allowTogglePassword
+                      />
+                    </Field>
+                  </FieldGroup>
                 </div>
+              </div>
+
+              <div className="flex items-start gap-3 p-4 rounded-lg bg-emerald-500/10 border border-emerald-500/20">
+                <Info className="w-4 h-4 text-emerald-600 dark:text-emerald-400 mt-0.5 shrink-0" />
+                <p className="text-xs text-emerald-800 dark:text-emerald-200 leading-relaxed">
+                  All M-Pesa credentials are standard V3 encrypted at rest. Updating keys here instantly applies to all POS terminals and checkout flows.
+                </p>
               </div>
             </div>
           )}
@@ -613,8 +757,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                       Stock Control Policies
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Global rules governing how inventory is tracked and
-                      enforced across all locations
+                      Global rules governing how inventory is tracked and enforced across all locations
                     </p>
                   </div>
                   <Badge className="text-xs bg-primary/10 text-primary border border-primary/20 font-medium">
@@ -623,10 +766,9 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 </div>
 
                 <div className="divide-y divide-border">
-                  {/* Negative stock */}
                   <PolicyRow
                     title="Allow Negative Stock"
-                    description="When enabled, sales can proceed even when recorded inventory reaches zero or below. Use with caution — this can mask shrinkage or data integrity issues."
+                    description="When enabled, sales can proceed even when recorded inventory reaches zero or below."
                     risk={form.watch("negativeStock") ? "high" : "low"}>
                     <Switch
                       checked={form.watch("negativeStock")}
@@ -635,13 +777,12 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                           shouldDirty: true,
                         })
                       }
-                      className="data-[state=checked]:bg-primary"
                     />
                   </PolicyRow>
 
                   <PolicyRow
                     title="Allow Managers to Manage Shifts"
-                    description="When enabled, users with the MANAGER role can create, update, and delete staff weekly shifts and breaks. By default, only owners and admins can manage shifts."
+                    description="When enabled, users with the MANAGER role can create, update, and delete staff weekly shifts and breaks."
                     risk="low">
                     <Switch
                       checked={form.watch("managersCanManageShifts")}
@@ -650,21 +791,16 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                           shouldDirty: true,
                         })
                       }
-                      className="data-[state=checked]:bg-primary"
                     />
                   </PolicyRow>
 
-                  {/* Low stock threshold */}
                   <div className="flex items-start justify-between gap-8 py-5 px-5">
                     <div className="flex-1 space-y-1">
                       <p className="text-sm font-medium text-foreground">
                         Low Stock Threshold
                       </p>
                       <p className="text-xs text-muted-foreground leading-relaxed max-w-lg">
-                        Products with stock at or below this quantity are
-                        flagged as &ldquo;Low Stock&rdquo; across dashboards and
-                        reports. Applies globally unless overridden per
-                        location.
+                        Products at or below this quantity trigger low stock alerts across dashboards.
                       </p>
                     </div>
                     <div className="shrink-0 w-32">
@@ -674,7 +810,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                           {...form.register("lowStockThreshold", {
                             valueAsNumber: true,
                           })}
-                          className="font-mono text-right pr-10 h-9 text-sm border-border bg-background focus-visible:ring-2 focus-visible:ring-ring/20 focus-visible:border-ring rounded-lg"
+                          className="font-mono text-right pr-10 h-9 text-sm border-border bg-background focus-visible:ring-2 focus-visible:ring-ring/20 rounded-lg"
                           min={0}
                         />
                         <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[11px] text-muted-foreground/60 pointer-events-none">
@@ -685,18 +821,206 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              <div className="flex items-start gap-3 p-4 rounded-lg border border-amber-500/20 bg-amber-500/10">
-                <AlertCircle className="w-4 h-4 text-amber-600 dark:text-amber-400 mt-0.5 shrink-0" />
-                <div>
-                  <p className="text-xs font-semibold text-amber-800 dark:text-amber-200 mb-0.5">
-                    Global scope
+          {/* ── Operations & Attendance section ── */}
+          {activeSection === "operations" && (
+            <div className="space-y-8">
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="px-6 py-5 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Operations &amp; Shift Automation
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Automated attendance checkout and specialized industry module toggles
                   </p>
-                  <p className="text-xs text-amber-700 dark:text-amber-300 leading-relaxed">
-                    These settings apply to all locations and product
-                    categories. Changes take effect immediately and may affect
-                    active sales flows.
+                </div>
+
+                <div className="divide-y divide-border">
+                  <PolicyRow
+                    title="Enable Attendance Auto-Checkout"
+                    description="Automatically check out active staff members who remain checked in past the designated end-of-day time."
+                    risk="low">
+                    <Switch
+                      checked={form.watch("enableAutoCheckout")}
+                      onCheckedChange={val =>
+                        form.setValue("enableAutoCheckout", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                  </PolicyRow>
+
+                  {form.watch("enableAutoCheckout") && (
+                    <div className="flex items-start justify-between gap-8 py-5 px-5">
+                      <div className="flex-1 space-y-1">
+                        <p className="text-sm font-medium text-foreground">
+                          Auto-Checkout Time
+                        </p>
+                        <p className="text-xs text-muted-foreground leading-relaxed max-w-lg">
+                          Local organization time (HH:mm) when daily auto-checkout executes.
+                        </p>
+                      </div>
+                      <div className="shrink-0 w-32">
+                        <Input
+                          type="time"
+                          {...form.register("autoCheckoutTime")}
+                          className="h-9 text-sm border-border bg-background focus-visible:ring-2 rounded-lg"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <PolicyRow
+                    title="Enable Bakery Batching Module"
+                    description="Activates baker's percentage, flour scaling, and sub-recipe batching tools across production."
+                    risk="low">
+                    <Switch
+                      checked={form.watch("enableBakerySystem")}
+                      onCheckedChange={val =>
+                        form.setValue("enableBakerySystem", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                  </PolicyRow>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Tax & Compliance section ── */}
+          {activeSection === "tax" && (
+            <div className="space-y-8">
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="px-6 py-5 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Tax Registration &amp; E-Invoicing Compliance
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Integrations for tax authorities (e.g., KRA TIMS/eTIMS) and threshold controls
                   </p>
+                </div>
+
+                <div className="divide-y divide-border">
+                  <PolicyRow
+                    title="Enable Tax Integration (eTIMS / KRA)"
+                    description="Transmits fiscalized invoice receipts directly to the regional tax authority."
+                    risk="medium">
+                    <Switch
+                      checked={form.watch("taxIntegrationEnabled")}
+                      onCheckedChange={val =>
+                        form.setValue("taxIntegrationEnabled", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                  </PolicyRow>
+
+                  <div className="p-6">
+                    <FieldGroup>
+                      <Field label="Tax Identification Number (PIN/Tax ID)">
+                        <Input
+                          {...form.register("defaultTaxId")}
+                          placeholder="e.g. A012345678Z"
+                          className="h-9 text-sm border-border bg-background focus-visible:ring-2 rounded-lg"
+                        />
+                      </Field>
+
+                      <Field
+                        label="High Value Tax Lock Threshold"
+                        hint="Sales exceeding this amount require active tax server confirmation.">
+                        <Input
+                          type="number"
+                          {...form.register("highValueTaxThreshold", {
+                            valueAsNumber: true,
+                          })}
+                          className="h-9 text-sm border-border bg-background focus-visible:ring-2 rounded-lg"
+                        />
+                      </Field>
+                    </FieldGroup>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ── Pricing Strategy section ── */}
+          {activeSection === "pricing" && (
+            <div className="space-y-8">
+              <div className="bg-card rounded-xl border border-border overflow-hidden">
+                <div className="px-6 py-5 border-b border-border">
+                  <h3 className="text-sm font-semibold text-foreground">
+                    Automated Pricing &amp; Margin Rules
+                  </h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    Define automated catalog price recalculations, margins, and supplier rules
+                  </p>
+                </div>
+
+                <div className="p-6">
+                  <FieldGroup>
+                    <Field label="Price Sync Mode">
+                      <Select
+                        onValueChange={val =>
+                          form.setValue("priceSyncMode", val as any, {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("priceSyncMode")}>
+                        <SelectTrigger className="h-9 text-sm border-border bg-background rounded-lg">
+                          <SelectValue placeholder="Select mode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="MANUAL">Manual Update Only</SelectItem>
+                          <SelectItem value="AUTOMATIC">Automatic Margin Recalculation</SelectItem>
+                          <SelectItem value="REVIEW_REQUIRED">Require Review Before Sync</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+
+                    <Field label="Supplier Selection Strategy">
+                      <Select
+                        onValueChange={val =>
+                          form.setValue("supplierSelectionStrategy", val as any, {
+                            shouldDirty: true,
+                          })
+                        }
+                        value={form.watch("supplierSelectionStrategy")}>
+                        <SelectTrigger className="h-9 text-sm border-border bg-background rounded-lg">
+                          <SelectValue placeholder="Select strategy" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="PREFERRED">Preferred Supplier First</SelectItem>
+                          <SelectItem value="LOWEST_COST">Lowest Cost Option</SelectItem>
+                          <SelectItem value="LATEST_DELIVERY">Latest Delivery Record</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </Field>
+
+                    <Field label="Minimum Margin Threshold" hint="e.g. 0.10 for 10% profit margin">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...form.register("minMarginThreshold", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-9 text-sm border-border bg-background rounded-lg"
+                      />
+                    </Field>
+
+                    <Field label="Price Change Approval Threshold" hint="e.g. 0.20 for 20% price shift trigger">
+                      <Input
+                        type="number"
+                        step="0.01"
+                        {...form.register("priceApprovalThreshold", {
+                          valueAsNumber: true,
+                        })}
+                        className="h-9 text-sm border-border bg-background rounded-lg"
+                      />
+                    </Field>
+                  </FieldGroup>
                 </div>
               </div>
             </div>
@@ -709,11 +1033,10 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                   <div>
                     <h3 className="text-sm font-semibold text-foreground">
-                      Access Control
+                      Access Control &amp; Enterprise Governance
                     </h3>
                     <p className="text-xs text-muted-foreground mt-0.5">
-                      Manage permissions and security policies for your
-                      organization
+                      Permissions, Multi-factor auth, and auditing policies
                     </p>
                   </div>
                   <Badge className="text-xs bg-primary text-primary-foreground border-primary font-medium">
@@ -724,7 +1047,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 <div className="divide-y divide-border">
                   <PolicyRow
                     title="Allow Admins to Manage Staff"
-                    description="When enabled, users with the ADMIN role can add, update, and remove staff members. By default, only the OWNER can perform these actions."
+                    description="When enabled, users with the ADMIN role can add, update, and remove staff members."
                     risk="medium">
                     <Switch
                       checked={form.watch("adminsCanManageStaff")}
@@ -733,19 +1056,58 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                           shouldDirty: true,
                         })
                       }
-                      className="data-[state=checked]:bg-primary"
                     />
                   </PolicyRow>
-                </div>
-              </div>
 
-              <div className="flex items-start gap-3 p-4 rounded-lg bg-muted border border-border">
-                <Info className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
-                <p className="text-xs text-muted-foreground leading-relaxed">
-                  Enabling certain administrative permissions for non-owners
-                  distributes management tasks but should be granted only to
-                  trusted individuals.
-                </p>
+                  <PolicyRow
+                    title="Require Multi-Admin Approval"
+                    description="Critical security policy changes require confirmation from at least two organization administrators."
+                    risk="high">
+                    <Switch
+                      checked={form.watch("multiAdminRoleApproval")}
+                      onCheckedChange={val =>
+                        form.setValue("multiAdminRoleApproval", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                  </PolicyRow>
+
+                  <PolicyRow
+                    title="Enforce Multi-Factor Authentication (MFA)"
+                    description="Require all organization members to configure TOTP or hardware MFA before accessing workspace."
+                    risk="high">
+                    <Switch
+                      checked={form.watch("enforceMfa")}
+                      onCheckedChange={val =>
+                        form.setValue("enforceMfa", val, {
+                          shouldDirty: true,
+                        })
+                      }
+                    />
+                  </PolicyRow>
+
+                  <div className="flex items-start justify-between gap-8 py-5 px-5">
+                    <div className="flex-1 space-y-1">
+                      <p className="text-sm font-medium text-foreground">
+                        Audit Log Retention Period
+                      </p>
+                      <p className="text-xs text-muted-foreground leading-relaxed max-w-lg">
+                        Number of days detailed system and action logs are retained for compliance audit trails.
+                      </p>
+                    </div>
+                    <div className="shrink-0 w-32">
+                      <Input
+                        type="number"
+                        {...form.register("auditLogRetentionDays", {
+                          valueAsNumber: true,
+                        })}
+                        className="font-mono text-right pr-10 h-9 text-sm border-border bg-background rounded-lg"
+                        min={30}
+                      />
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           )}

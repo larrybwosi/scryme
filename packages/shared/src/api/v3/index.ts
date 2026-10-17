@@ -1,4 +1,5 @@
 export * from "./types";
+export * from "./encryption";
 export * from "../v2/utils/products";
 export * from "../v2/utils/deliveries";
 export { createMemberToken, validateDeviceKey, verifyMemberToken } from "../v2/services/auth.service";
