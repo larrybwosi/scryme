@@ -160,7 +160,7 @@ export async function getDashboardData(
           imageUrls?: string[];
           category?: { name: string } | null;
         } | null;
-        stocks?: Array<{ currentStock: any }>;
+        variantStocks?: Array<{ currentStock: any }>;
       } | null;
     }>;
   }> = [];
@@ -212,7 +212,7 @@ export async function getDashboardData(
                       category: { select: { name: true } },
                     },
                   },
-                  stocks: {
+                  variantStocks: {
                     select: { currentStock: true },
                   },
                 },
@@ -323,7 +323,7 @@ export async function getDashboardData(
       const price = Number(item.unitPrice || 0);
       const earnings = qty * price;
 
-      const currentStockVal = (item.variant?.stocks || []).reduce(
+      const currentStockVal = (item.variant?.variantStocks || []).reduce(
         (sum, s) => sum + Number(s.currentStock || 0),
         0,
       );
