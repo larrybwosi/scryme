@@ -125,7 +125,7 @@ export class ReportsService {
       data: {
         organizationId,
         type: "SALES_WEEKLY",
-        data: reportData,
+        data: reportData as any,
         summary: aiInsights,
         startDate,
         endDate,
@@ -251,9 +251,9 @@ export class ReportsService {
         createdAt: { gte: startDate, lte: endDate },
       },
       select: {
-        type: true,
+        movementType: true,
         quantity: true,
-        product: { select: { name: true } },
+        variant: { select: { product: { select: { name: true } } } },
       },
     });
 
@@ -265,9 +265,9 @@ export class ReportsService {
 
     for (const m of movements) {
       const qty = Math.abs(Number(m.quantity || 0));
-      const productName = m.product?.name || "Inventory Item";
+      const productName = m.variant?.product?.name || "Inventory Item";
 
-      if (incomingTypes.includes(m.type)) {
+      if (incomingTypes.includes(m.movementType as string)) {
         totalIn += qty;
       } else {
         totalOut += qty;

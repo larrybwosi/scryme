@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { prisma } from "@repo/db";
-import { getOrganizationContext } from "./organization";
+import { getOrganizationContext } from "./auth";
 
 export async function getReportSettingsAction() {
   const context = await getOrganizationContext();
