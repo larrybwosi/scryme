@@ -1,6 +1,8 @@
 package tech.scryme.app.ui.navigation
 
 sealed class Screen(val route: String, val title: String) {
+    object Splash : Screen("splash", "Splash")
+    object Overview : Screen("overview", "Overview")
     object Login : Screen("login", "Login")
     object Tasks : Screen("tasks", "Tasks")
     object Schedule : Screen("schedule", "Schedule")

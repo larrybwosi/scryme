@@ -19,11 +19,13 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Dashboard
+import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.TaskAlt
 import androidx.compose.material.icons.outlined.CalendarMonth
 import androidx.compose.material.icons.outlined.Dashboard
+import androidx.compose.material.icons.outlined.Home
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material.icons.outlined.Storefront
 import androidx.compose.material.icons.outlined.TaskAlt
@@ -145,16 +147,19 @@ fun MainAppScreen(
     }
 
     val bottomNavScreens = listOf(
+        Screen.Overview,
         Screen.Tasks,
         Screen.Schedule,
         Screen.Admin,
         Screen.Profile
     )
 
+    val showBottomBar = isLoggedIn && currentRoute != Screen.Login.route && currentRoute != Screen.Splash.route
+
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
-            if (isLoggedIn && currentRoute != Screen.Login.route) {
+            if (showBottomBar) {
                 CompactEnterpriseBottomBar(
                     screens = bottomNavScreens,
                     currentRoute = currentRoute,
@@ -173,10 +178,10 @@ fun MainAppScreen(
     ) { innerPadding ->
         AppNavGraph(
             navController = navController,
-            startDestination = if (isLoggedIn) Screen.Tasks.route else Screen.Login.route,
+            startDestination = Screen.Splash.route,
             authViewModel = authViewModel,
             onLoginSuccess = {
-                navController.navigate(Screen.Tasks.route) {
+                navController.navigate(Screen.Overview.route) {
                     popUpTo(Screen.Login.route) { inclusive = true }
                 }
             },
@@ -216,6 +221,7 @@ fun CompactEnterpriseBottomBar(
             screens.forEach { screen ->
                 val selected = currentRoute == screen.route
                 val activeIcon = when (screen) {
+                    Screen.Overview -> Icons.Filled.Home
                     Screen.Tasks -> Icons.Filled.TaskAlt
                     Screen.Schedule -> Icons.Filled.CalendarMonth
                     Screen.Admin -> Icons.Filled.Dashboard
@@ -224,6 +230,7 @@ fun CompactEnterpriseBottomBar(
                     else -> Icons.Filled.Person
                 }
                 val inactiveIcon = when (screen) {
+                    Screen.Overview -> Icons.Outlined.Home
                     Screen.Tasks -> Icons.Outlined.TaskAlt
                     Screen.Schedule -> Icons.Outlined.CalendarMonth
                     Screen.Admin -> Icons.Outlined.Dashboard
