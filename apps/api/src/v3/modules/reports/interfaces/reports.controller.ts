@@ -1,11 +1,11 @@
 import { Controller, Get, Patch, Post, Body, UseGuards, Req } from "@nestjs/common";
-import { V3AuthGuard } from "@/auth/v2-auth.guard";
-import { MultiTenancyGuard } from "@/lib/api/v2/middleware";
+import { V2AuthGuard } from "@/auth/v2-auth.guard";
+import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { ReportsService } from "../application/services/reports.service";
 import { UpdateReportSettingsDto, GenerateReportDto } from "../dto/reports.dto";
 
 @Controller("reports")
-@UseGuards(V3AuthGuard, MultiTenancyGuard)
+@UseGuards(V3AuthGuard)
 export class ReportsController {
   constructor(private readonly reportsService: ReportsService) {}
 

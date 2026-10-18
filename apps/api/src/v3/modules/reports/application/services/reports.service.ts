@@ -208,19 +208,20 @@ export class ReportsService {
         status: { in: ["COMPLETED", "PAID"] as any[] },
       },
       select: {
-        amount: true,
-        items: true,
+        netAmount: true,
+        metadata: true,
       },
     });
 
-    const totalRevenue = transactions.reduce((acc, t) => acc + Number(t.amount || 0), 0);
+    const totalRevenue = transactions.reduce((acc, t) => acc + Number(t.netAmount || 0), 0);
     const transactionCount = transactions.length;
 
     const productSalesMap = new Map<string, { name: string; quantity: number; revenue: number }>();
 
     for (const t of transactions) {
-      if (Array.isArray(t.items)) {
-        for (const item of t.items as any[]) {
+      const metadata = t.metadata as any;
+      if (metadata && Array.isArray(metadata.items)) {
+        for (const item of metadata.items) {
           const name = item.name || item.productName || "Standard Item";
           const qty = Number(item.quantity || item.qty || 1);
           const price = Number(item.price || item.unitPrice || 0) * qty;

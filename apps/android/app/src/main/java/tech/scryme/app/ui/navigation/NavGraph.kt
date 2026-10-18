@@ -12,6 +12,8 @@ import tech.scryme.app.ui.auth.AuthScreen
 import tech.scryme.app.ui.auth.AuthViewModel
 import tech.scryme.app.ui.branch.BranchScreen
 import tech.scryme.app.ui.branch.BranchViewModel
+import tech.scryme.app.ui.overview.OverviewScreen
+import tech.scryme.app.ui.overview.OverviewViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
 import tech.scryme.app.ui.profile.ProfileViewModel
 import tech.scryme.app.ui.sales.SalesScreen
@@ -20,13 +22,15 @@ import tech.scryme.app.ui.schedule.ScheduleScreen
 import tech.scryme.app.ui.schedule.ScheduleViewModel
 import tech.scryme.app.ui.settings.SettingsScreen
 import tech.scryme.app.ui.settings.SettingsViewModel
+import tech.scryme.app.ui.splash.SplashScreen
+import tech.scryme.app.ui.splash.SplashViewModel
 import tech.scryme.app.ui.tasks.TasksScreen
 import tech.scryme.app.ui.tasks.TasksViewModel
 
 @Composable
 fun AppNavGraph(
     navController: NavHostController,
-    startDestination: String,
+    startDestination: String = Screen.Splash.route,
     authViewModel: AuthViewModel = hiltViewModel(),
     onLoginSuccess: () -> Unit,
     onLogout: () -> Unit,
@@ -37,10 +41,40 @@ fun AppNavGraph(
         startDestination = startDestination,
         modifier = modifier
     ) {
+        composable(Screen.Splash.route) {
+            val viewModel: SplashViewModel = hiltViewModel()
+            SplashScreen(
+                viewModel = viewModel,
+                onNavigateToOverview = {
+                    navController.navigate(Screen.Overview.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                },
+                onNavigateToLogin = {
+                    navController.navigate(Screen.Login.route) {
+                        popUpTo(Screen.Splash.route) { inclusive = true }
+                    }
+                }
+            )
+        }
         composable(Screen.Login.route) {
             AuthScreen(
                 viewModel = authViewModel,
-                onLoginSuccess = onLoginSuccess
+                onLoginSuccess = {
+                    onLoginSuccess()
+                    navController.navigate(Screen.Overview.route) {
+                        popUpTo(Screen.Login.route) { inclusive = true }
+                    }
+                }
+            )
+        }
+        composable(Screen.Overview.route) {
+            val viewModel: OverviewViewModel = hiltViewModel()
+            OverviewScreen(
+                viewModel = viewModel,
+                onNavigateToSchedule = { navController.navigate(Screen.Schedule.route) },
+                onNavigateToTasks = { navController.navigate(Screen.Tasks.route) },
+                onNavigateToAdminAnalytics = { navController.navigate(Screen.Sales.route) }
             )
         }
         composable(Screen.Tasks.route) {
