@@ -18,76 +18,64 @@ fun GetStartedScreen(
     onNavigateToLogin: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Column(
+    Box(
         modifier = modifier
             .fillMaxSize()
-            .background(AuthBackground)
-            .statusBarsPadding()
-            .navigationBarsPadding()
-            .padding(horizontal = 24.dp, vertical = 20.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.SpaceBetween
+            .background(Color(0xFF070A10))
     ) {
-        // Top Header
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.padding(top = 16.dp)
-        ) {
-            ScrymeBrandHeader(
-                modifier = Modifier.padding(bottom = 16.dp)
-            )
+        // Atmospheric Smoky Nebula Canvas
+        SmokyBackgroundCanvas()
 
-            Text(
-                text = "Get Started",
-                fontSize = 32.sp,
-                fontWeight = FontWeight.Bold,
-                color = Color(0xFF0F172A),
-                textAlign = TextAlign.Center
-            )
-            Spacer(modifier = Modifier.height(8.dp))
-            Text(
-                text = "The All-In-One Enterprise Platform\nFor Operations & Workflow Management.",
-                fontSize = 14.sp,
-                color = SubtitleText,
-                textAlign = TextAlign.Center,
-                lineHeight = 20.sp
-            )
-        }
-
-        // Illustration & Dots
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            modifier = Modifier.weight(1f),
-            verticalArrangement = Arrangement.Center
-        ) {
-            Wallet3DIllustration(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp)
-            )
-            Spacer(modifier = Modifier.height(24.dp))
-            PageIndicatorDots(
-                pageCount = 4,
-                selectedIndex = 1
-            )
-        }
-
-        // Action Buttons
+        // Content Stack
         Column(
             modifier = Modifier
-                .fillMaxWidth()
-                .padding(bottom = 12.dp),
-            verticalArrangement = Arrangement.spacedBy(14.dp)
+                .fillMaxSize()
+                .statusBarsPadding()
+                .navigationBarsPadding()
+                .padding(horizontal = 24.dp, vertical = 24.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.SpaceBetween
         ) {
-            AuthPrimaryButton(
-                text = "Sign Up",
-                onClick = onNavigateToSignUp
-            )
+            Spacer(modifier = Modifier.height(12.dp))
 
-            AuthSecondaryButton(
-                text = "Log In",
-                onClick = onNavigateToLogin
-            )
+            // Center Word Art Hero Section
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center,
+                modifier = Modifier.weight(1f)
+            ) {
+                ScrymeWordArt(
+                    modifier = Modifier.padding(bottom = 28.dp)
+                )
+
+                Text(
+                    text = "The All-In-One Enterprise Platform\nFor Unified Operations & Workflow Intelligence.",
+                    fontSize = 15.sp,
+                    color = Color(0xFFCBD5E1),
+                    textAlign = TextAlign.Center,
+                    lineHeight = 22.sp,
+                    fontWeight = FontWeight.Normal,
+                    modifier = Modifier.padding(horizontal = 12.dp)
+                )
+            }
+
+            // Action Buttons
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(bottom = 12.dp),
+                verticalArrangement = Arrangement.spacedBy(14.dp)
+            ) {
+                AuthPrimaryButton(
+                    text = "Sign Up",
+                    onClick = onNavigateToSignUp
+                )
+
+                AuthSecondaryButton(
+                    text = "Log In",
+                    onClick = onNavigateToLogin
+                )
+            }
         }
     }
 }
