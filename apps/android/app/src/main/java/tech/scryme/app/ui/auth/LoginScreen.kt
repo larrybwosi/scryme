@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.outlined.Email
+import androidx.compose.material.icons.outlined.Fingerprint
 import androidx.compose.material.icons.outlined.Language
 import androidx.compose.material.icons.outlined.Lock
 import androidx.compose.material.icons.outlined.Visibility
@@ -97,7 +98,40 @@ fun LoginScreen(
                     modifier = Modifier.padding(top = 8.dp, bottom = 24.dp)
                 )
 
-                // Primary Web Auto-Login (GitHub Mobile Style) Button
+                // Passkey Sign-In Button
+                OutlinedButton(
+                    onClick = {
+                        focusManager.clearFocus()
+                        viewModel.signInWithPasskey(context)
+                    },
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(54.dp)
+                        .padding(bottom = 12.dp),
+                    shape = RoundedCornerShape(27.dp),
+                    border = ButtonDefaults.outlinedButtonBorder.copy(width = 1.5.dp)
+                ) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Outlined.Fingerprint,
+                            contentDescription = "Passkey Sign In",
+                            modifier = Modifier.size(22.dp),
+                            tint = PurpleAccent
+                        )
+                        Spacer(modifier = Modifier.width(10.dp))
+                        Text(
+                            text = "Sign in with Passkey",
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = PurpleAccent
+                        )
+                    }
+                }
+
+                // Primary Web Auto-Login Button
                 Button(
                     onClick = {
                         focusManager.clearFocus()
