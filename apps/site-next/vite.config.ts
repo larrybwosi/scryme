@@ -19,15 +19,7 @@ export default defineConfig({
       '@portabletext/react',
       'styled-components',
     ],
-    noExternal: [
-      '@tanstack/react-start',
-      '@tanstack/react-router',
-      'lucide-react',
-      'next-themes',
-      'clsx',
-      'tailwind-merge',
-      'h3-v2',
-    ],
+    noExternal: true,
   },
   build: {
     sourcemap: false,
