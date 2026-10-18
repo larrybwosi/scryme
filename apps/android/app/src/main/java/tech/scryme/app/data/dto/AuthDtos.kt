@@ -147,3 +147,26 @@ data class OAuthCodeExchangeRequestDto(
     @SerializedName("redirectUri") val redirectUri: String = "https://auth.scryme.tech/mobile-callback",
     @SerializedName("clientId") val clientId: String = "scryme-android-app"
 )
+
+// Passkey DTOs
+data class PasskeyRegisterOptionsRequestDto(
+    @SerializedName("name") val name: String? = "Android Device Passkey"
+)
+
+data class PasskeyVerifyRegistrationRequestDto(
+    @SerializedName("response") val response: Any
+)
+
+data class PasskeyVerifyAuthenticationRequestDto(
+    @SerializedName("response") val response: Any
+)
+
+data class PasskeyItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String? = null,
+    @SerializedName("createdAt") val createdAt: String? = null
+)
+
+data class PasskeyDeleteRequestDto(
+    @SerializedName("id") val id: String
+)

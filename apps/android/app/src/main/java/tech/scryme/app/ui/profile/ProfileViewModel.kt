@@ -8,9 +8,12 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import tech.scryme.app.data.dto.PasskeyItemDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.domain.repository.AuthRepository
 import tech.scryme.app.domain.repository.ProfileRepository
+import tech.scryme.app.util.PasskeyManager
 import javax.inject.Inject
 
 data class UserPreferencesState(
@@ -25,8 +28,10 @@ sealed interface ProfileUiState {
     data class Success(
         val profile: UserProfile,
         val preferences: UserPreferencesState = UserPreferencesState(),
+        val passkeys: List<PasskeyItemDto> = emptyList(),
         val isEditing: Boolean = false,
         val isUpdating: Boolean = false,
+        val passkeyActionMessage: String? = null,
         val updateError: String? = null
     ) : ProfileUiState
     data class Error(val message: String) : ProfileUiState
@@ -35,6 +40,7 @@ sealed interface ProfileUiState {
 @HiltViewModel
 class ProfileViewModel @Inject constructor(
     private val profileRepository: ProfileRepository,
+    private val authRepository: AuthRepository,
     private val sessionManager: SessionManager
 ) : ViewModel() {
 
@@ -94,13 +100,102 @@ class ProfileViewModel @Inject constructor(
                         shiftNotifications = sessionManager.shiftNotificationsFlow.first(),
                         taskNotifications = sessionManager.taskNotificationsFlow.first()
                     )
+
+                    val passkeysResult = authRepository.listUserPasskeys()
+                    val passkeysList = passkeysResult.getOrDefault(emptyList())
+
                     _uiState.value = ProfileUiState.Success(
                         profile = profile,
-                        preferences = prefs
+                        preferences = prefs,
+                        passkeys = passkeysList
                     )
                 },
                 onFailure = { error ->
                     _uiState.value = ProfileUiState.Error(error.message ?: "Failed to load profile")
+                }
+            )
+        }
+    }
+
+    fun registerPasskey(context: Context, name: String) {
+        val currentState = _uiState.value as? ProfileUiState.Success ?: return
+        viewModelScope.launch {
+            _uiState.value = currentState.copy(isUpdating = true, passkeyActionMessage = null)
+            val optionsResult = authRepository.generatePasskeyRegisterOptions(name.ifBlank { "Android Device Passkey" })
+            optionsResult.fold(
+                onSuccess = { optionsJson ->
+                    val createResult = PasskeyManager.createPasskey(context, optionsJson)
+                    createResult.fold(
+                        onSuccess = { responseJson ->
+                            val verifyResult = authRepository.verifyPasskeyRegistration(responseJson)
+                            verifyResult.fold(
+                                onSuccess = {
+                                    val updatedPasskeys = authRepository.listUserPasskeys().getOrDefault(emptyList())
+                                    _uiState.value = currentState.copy(
+                                        isUpdating = false,
+                                        passkeys = updatedPasskeys,
+                                        passkeyActionMessage = "Passkey registered successfully!"
+                                    )
+                                },
+                                onFailure = { err ->
+                                    _uiState.value = currentState.copy(
+                                        isUpdating = false,
+                                        updateError = err.message ?: "Failed to verify passkey registration with server"
+                                    )
+                                }
+                            )
+                        },
+                        onFailure = { err ->
+                            _uiState.value = currentState.copy(
+                                isUpdating = false,
+                                updateError = err.message ?: "Passkey creation cancelled or failed"
+                            )
+                        }
+                    )
+                },
+                onFailure = { err ->
+                    _uiState.value = currentState.copy(
+                        isUpdating = false,
+                        updateError = err.message ?: "Failed to get registration options from server"
+                    )
+                }
+            )
+        }
+    }
+
+    fun deletePasskey(passkeyId: String) {
+        val currentState = _uiState.value as? ProfileUiState.Success ?: return
+        viewModelScope.launch {
+            _uiState.value = currentState.copy(isUpdating = true, passkeyActionMessage = null)
+            val result = authRepository.deletePasskey(passkeyId)
+            result.fold(
+                onSuccess = {
+                    val updatedPasskeys = authRepository.listUserPasskeys().getOrDefault(emptyList())
+                    _uiState.value = currentState.copy(
+                        isUpdating = false,
+                        passkeys = updatedPasskeys,
+                        passkeyActionMessage = "Passkey deleted successfully"
+                    )
+                },
+                onFailure = { err ->
+                    _uiState.value = currentState.copy(
+                        isUpdating = false,
+                        updateError = err.message ?: "Failed to delete passkey"
+                    )
+                }
+            )
+        }
+    }
+
+    fun authorizeWebSession(qrContent: String, onResult: (Boolean, String) -> Unit) {
+        viewModelScope.launch {
+            val result = authRepository.pairPosDevice(qrContent)
+            result.fold(
+                onSuccess = { msg ->
+                    onResult(true, msg)
+                },
+                onFailure = { err ->
+                    onResult(false, err.message ?: "Authorization failed")
                 }
             )
         }

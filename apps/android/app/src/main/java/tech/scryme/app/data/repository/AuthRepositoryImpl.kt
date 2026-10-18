@@ -7,6 +7,11 @@ import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
 import tech.scryme.app.data.dto.OAuthCodeExchangeRequestDto
+import tech.scryme.app.data.dto.PasskeyDeleteRequestDto
+import tech.scryme.app.data.dto.PasskeyItemDto
+import tech.scryme.app.data.dto.PasskeyRegisterOptionsRequestDto
+import tech.scryme.app.data.dto.PasskeyVerifyAuthenticationRequestDto
+import tech.scryme.app.data.dto.PasskeyVerifyRegistrationRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.interceptor.SessionManager
@@ -49,7 +54,6 @@ class AuthRepositoryImpl @Inject constructor(
                         orgCurrencySymbol = orgCurrencySymbol
                     )
 
-                    // Refresh context details via V3 Android Controller if available
                     runCatching {
                         val meResponse = authApiService.getAndroidMe()
                         if (meResponse.isSuccessful && meResponse.body()?.success == true) {
@@ -314,4 +318,99 @@ class AuthRepositoryImpl @Inject constructor(
     override fun getActiveOrgSlug(): Flow<String?> = sessionManager.orgSlugFlow
 
     override fun getActiveLocationId(): Flow<String?> = sessionManager.locationIdFlow
+
+    // Passkey Operations Implementation
+    override suspend fun generatePasskeyRegisterOptions(name: String?): Result<String> {
+        return try {
+            val response = authApiService.generatePasskeyRegisterOptions(PasskeyRegisterOptionsRequestDto(name = name ?: "Android Passkey"))
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body().toString())
+            } else {
+                Result.failure(Exception("Failed to generate passkey register options: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun verifyPasskeyRegistration(responseJson: String): Result<Unit> {
+        return try {
+            val parsedResponse = JsonParser.parseString(responseJson)
+            val response = authApiService.verifyPasskeyRegistration(PasskeyVerifyRegistrationRequestDto(response = parsedResponse))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to verify passkey registration: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun generatePasskeyAuthenticateOptions(): Result<String> {
+        return try {
+            val response = authApiService.generatePasskeyAuthenticateOptions()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body().toString())
+            } else {
+                Result.failure(Exception("Failed to generate passkey authenticate options: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun verifyPasskeyAuthentication(responseJson: String): Result<Unit> {
+        return try {
+            val parsedResponse = JsonParser.parseString(responseJson)
+            val response = authApiService.verifyPasskeyAuthentication(PasskeyVerifyAuthenticationRequestDto(response = parsedResponse))
+            if (response.isSuccessful) {
+                val body = response.body()
+                val token = body?.effectiveToken ?: body?.token ?: ""
+                val orgSlug = body?.effectiveOrgSlug ?: body?.orgSlug ?: "default"
+                if (token.isNotEmpty()) {
+                    sessionManager.saveSession(
+                        accessToken = token,
+                        memberToken = token,
+                        orgSlug = orgSlug,
+                        userId = body?.user?.id,
+                        userName = body?.user?.name,
+                        userEmail = body?.user?.email
+                    )
+                    runCatching { validateSession() }
+                }
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to verify passkey authentication: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun listUserPasskeys(): Result<List<PasskeyItemDto>> {
+        return try {
+            val response = authApiService.listUserPasskeys()
+            if (response.isSuccessful && response.body() != null) {
+                Result.success(response.body() ?: emptyList())
+            } else {
+                Result.failure(Exception("Failed to list passkeys: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deletePasskey(id: String): Result<Unit> {
+        return try {
+            val response = authApiService.deletePasskey(PasskeyDeleteRequestDto(id = id))
+            if (response.isSuccessful) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Failed to delete passkey: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 }
