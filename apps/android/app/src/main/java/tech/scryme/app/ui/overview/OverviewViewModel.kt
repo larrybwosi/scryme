@@ -73,8 +73,10 @@ class OverviewViewModel @Inject constructor(
                 var salesAmount = 0.0
                 var ordersCount = 0
                 salesResult.onSuccess { analytics ->
-                    salesAmount = analytics.netSales
-                    ordersCount = analytics.totalOrders
+                    // Parse total balance string to double if applicable
+                    val numericString = analytics.totalBalance.replace("[^0-9.]".toRegex(), "")
+                    salesAmount = numericString.toDoubleOrNull() ?: 0.0
+                    ordersCount = analytics.recentTransactions.size
                 }
 
                 var pendingTasks = 0
@@ -93,7 +95,7 @@ class OverviewViewModel @Inject constructor(
                     val attendanceResult = scheduleRepository.getMyAttendanceStatus(orgSlug = orgSlug)
                     attendanceResult.onSuccess { status ->
                         isShiftActive = status.isCheckedIn
-                        punctuality = status.punctualityStatus ?: if (status.isCheckedIn) "ON_TIME" else "NO_SHIFT"
+                        punctuality = status.status ?: if (status.isCheckedIn) "ON_TIME" else "NO_SHIFT"
                     }
                 }
 
