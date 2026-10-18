@@ -1,7 +1,10 @@
 package tech.scryme.app
 
 import android.Manifest
+import android.content.BroadcastReceiver
+import android.content.Context
 import android.content.Intent
+import android.content.IntentFilter
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -30,6 +33,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -40,7 +44,9 @@ import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
+import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
+import tech.scryme.app.notifications.ScrymeFirebaseMessagingService
 import tech.scryme.app.ui.auth.AuthViewModel
 import tech.scryme.app.ui.navigation.AppNavGraph
 import tech.scryme.app.ui.navigation.Screen
@@ -101,6 +107,42 @@ fun MainAppScreen(
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
     val navBackStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = navBackStackEntry?.destination?.route
+    val snackbarHostState = remember { SnackbarHostState() }
+    val coroutineScope = rememberCoroutineScope()
+    val context = LocalContext.current
+
+    DisposableEffect(context) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(ctx: Context?, intent: Intent?) {
+                val title = intent?.getStringExtra(ScrymeFirebaseMessagingService.EXTRA_NOTIFICATION_TITLE) ?: "Notification"
+                val body = intent?.getStringExtra(ScrymeFirebaseMessagingService.EXTRA_NOTIFICATION_BODY) ?: ""
+                val fullMessage = if (body.isNotEmpty()) "$title: $body" else title
+
+                coroutineScope.launch {
+                    snackbarHostState.showSnackbar(
+                        message = fullMessage,
+                        duration = SnackbarDuration.Short
+                    )
+                }
+            }
+        }
+
+        val filter = IntentFilter(ScrymeFirebaseMessagingService.ACTION_FOREGROUND_NOTIFICATION)
+        ContextCompat.registerReceiver(
+            context,
+            receiver,
+            filter,
+            ContextCompat.RECEIVER_NOT_EXPORTED
+        )
+
+        onDispose {
+            try {
+                context.unregisterReceiver(receiver)
+            } catch (e: Exception) {
+                // Ignore if not registered
+            }
+        }
+    }
 
     val bottomNavScreens = listOf(
         Screen.Tasks,
@@ -110,6 +152,7 @@ fun MainAppScreen(
     )
 
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         bottomBar = {
             if (isLoggedIn && currentRoute != Screen.Login.route) {
                 CompactEnterpriseBottomBar(

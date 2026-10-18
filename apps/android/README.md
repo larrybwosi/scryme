@@ -20,11 +20,13 @@ apps/android/
 │           ├── data/          # Retrofit API services, DTOs, OkHttp Interceptors, Repositories
 │           ├── domain/        # Domain Models & Repository Interfaces
 │           ├── di/            # Hilt Modules (NetworkModule, RepositoryModule)
+│           ├── notifications/ # FCM Messaging Service & Notification Channel Helper
 │           └── ui/            # Jetpack Compose Screens, ViewModels, & UI Components
 ├── build.gradle.kts
 ├── settings.gradle.kts
 ├── gradle.properties
 ├── keystore.properties.example
+├── FIREBASE_SETUP.md          # Comprehensive FCM Configuration & Testing Guide
 ├── README.md
 └── GUIDANCE.md
 ```
@@ -38,11 +40,17 @@ apps/android/
    - Shift Trade & Swap requests (`GET/POST /:orgSlug/services/shifts/trades`).
    - Operational Staff Tasks (`GET/POST/PATCH /:orgSlug/services/tasks`).
 
-2. **Profile Customization (`ProfileRepository`)**:
+2. **Firebase Push Notifications & FCM Sync (`ScrymeFirebaseMessagingService`)**:
+   - Multi-channel notification support across 6 Android channels (Schedule, Tasks, Daily Shifts, POS, Announcements, Attendance).
+   - In-app foreground Compose Snackbar alerts and background system notifications.
+   - Automatic FCM registration token synchronization with backend device registry (`POST /v3/android/register-device`).
+   - Setup and configuration guide in [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).
+
+3. **Profile Customization (`ProfileRepository`)**:
    - View and manage member profile details (`GET/PATCH /:orgSlug/members/:id`).
    - Update real-time duty status (`ONLINE`, `BUSY`, `OFFLINE`) (`PATCH /:orgSlug/members/:id/status`).
 
-3. **Branch & Location Management (`BranchRepository`)**:
+4. **Branch & Location Management (`BranchRepository`)**:
    - View active organization branches (`GET /:orgSlug/pos/locations`).
    - Switch active branch context dynamically, updating `x-location-id` headers on API requests.
 
@@ -74,4 +82,4 @@ The project adheres strictly to **Android Clean Architecture**:
 - **Domain Layer**: Core Business Entities (Domain Models) and Repository Interfaces.
 - **UI Layer**: Jetpack Compose Composables, Material 3 components, and StateFlow-based ViewModels (`@HiltViewModel`).
 
-For detailed implementation guidelines, state flow contracts, and UI screen integration specs, refer to [GUIDANCE.md](./GUIDANCE.md).
+For detailed implementation guidelines, state flow contracts, and UI screen integration specs, refer to [GUIDANCE.md](./GUIDANCE.md) and [FIREBASE_SETUP.md](./FIREBASE_SETUP.md).

@@ -1,8 +1,10 @@
 package tech.scryme.app.data.repository
 
+import android.os.Build
 import com.google.gson.JsonParser
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import tech.scryme.app.BuildConfig
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
@@ -13,6 +15,7 @@ import tech.scryme.app.data.dto.PasskeyRegisterOptionsRequestDto
 import tech.scryme.app.data.dto.PasskeyVerifyAuthenticationRequestDto
 import tech.scryme.app.data.dto.PasskeyVerifyRegistrationRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
+import tech.scryme.app.data.dto.RegisterDeviceRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.repository.AuthRepository
@@ -25,6 +28,28 @@ class AuthRepositoryImpl @Inject constructor(
     private val authApiService: AuthApiService,
     private val sessionManager: SessionManager
 ) : AuthRepository {
+
+    override suspend fun registerDeviceToken(pushToken: String?): Result<Unit> {
+        return try {
+            val token = pushToken ?: sessionManager.getFcmToken()
+            val deviceId = sessionManager.getUserId() ?: "android_device_${Build.MODEL.lowercase().replace(" ", "_")}"
+            val request = RegisterDeviceRequestDto(
+                deviceId = deviceId,
+                modelName = "${Build.MANUFACTURER} ${Build.MODEL}",
+                appVersion = BuildConfig.VERSION_NAME,
+                osVersion = "Android ${Build.VERSION.RELEASE}",
+                pushToken = token
+            )
+            val response = authApiService.registerDevice(request)
+            if (response.isSuccessful && response.body()?.success == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception("Device registration failed: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
 
     override suspend fun loginWithEmail(email: String, password: String): Result<Unit> {
         return try {
@@ -83,6 +108,8 @@ class AuthRepositoryImpl @Inject constructor(
                             )
                         }
                     }
+
+                    runCatching { registerDeviceToken() }
 
                     Result.success(Unit)
                 } else {
@@ -161,6 +188,8 @@ class AuthRepositoryImpl @Inject constructor(
                         }
                     }
 
+                    runCatching { registerDeviceToken() }
+
                     Result.success(Unit)
                 } else {
                     Result.failure(Exception("OAuth authorization code exchange succeeded but no token was returned"))
@@ -204,6 +233,9 @@ class AuthRepositoryImpl @Inject constructor(
                     orgCurrency = activeCurrency,
                     orgCurrencySymbol = activeCurrencySymbol
                 )
+
+                runCatching { registerDeviceToken() }
+
                 Result.success(data)
             } else {
                 val errorMsg = response.body()?.error?.message ?: response.message()
@@ -240,6 +272,9 @@ class AuthRepositoryImpl @Inject constructor(
                     userName = data.name,
                     userEmail = data.email
                 )
+
+                runCatching { registerDeviceToken() }
+
                 Result.success(Unit)
             } else {
                 val errorMsg = response.body()?.error?.message ?: response.message()
@@ -290,6 +325,7 @@ class AuthRepositoryImpl @Inject constructor(
             if (!sessionId.isNullOrEmpty()) {
                 val response = authApiService.authorizePosPairingSession(sessionId, pairReq)
                 if (response.isSuccessful && response.body()?.success == true) {
+                    runCatching { registerDeviceToken() }
                     return Result.success("POS Pairing authorized for session: $sessionId")
                 }
             }
@@ -297,6 +333,7 @@ class AuthRepositoryImpl @Inject constructor(
             val effectiveOrgSlug = orgSlug ?: "default"
             val response = authApiService.pairPosDevice(effectiveOrgSlug, pairReq)
             if (response.isSuccessful && response.body()?.success == true) {
+                runCatching { registerDeviceToken() }
                 Result.success("POS Device paired successfully for org: $effectiveOrgSlug")
             } else {
                 val errorMsg = response.body()?.error?.message ?: response.message()

@@ -39,6 +39,7 @@ class SessionManager @Inject constructor(
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val SHIFT_NOTIFICATIONS = booleanPreferencesKey("shift_notifications")
         val TASK_NOTIFICATIONS = booleanPreferencesKey("task_notifications")
+        val FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 
     val accessTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[ACCESS_TOKEN] }
@@ -59,6 +60,7 @@ class SessionManager @Inject constructor(
     val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[NOTIFICATIONS_ENABLED] ?: true }
     val shiftNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHIFT_NOTIFICATIONS] ?: true }
     val taskNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TASK_NOTIFICATIONS] ?: true }
+    val fcmTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[FCM_TOKEN] }
 
     suspend fun getAccessToken(): String? = accessTokenFlow.first()
     suspend fun getMemberToken(): String? = memberTokenFlow.first()
@@ -70,6 +72,13 @@ class SessionManager @Inject constructor(
     suspend fun getLocationId(): String? = locationIdFlow.first()
     suspend fun getMemberId(): String? = memberIdFlow.first()
     suspend fun getUserId(): String? = userIdFlow.first()
+    suspend fun getFcmToken(): String? = fcmTokenFlow.first()
+
+    suspend fun saveFcmToken(token: String) {
+        context.dataStore.edit { prefs ->
+            prefs[FCM_TOKEN] = token
+        }
+    }
 
     suspend fun saveSession(
         accessToken: String,
@@ -148,10 +157,14 @@ class SessionManager @Inject constructor(
     suspend fun clearSession() {
         context.dataStore.edit { prefs ->
             val currentTheme = prefs[THEME_MODE]
+            val currentFcmToken = prefs[FCM_TOKEN]
             prefs.clear()
-            // Retain theme choice on logout
+            // Retain theme choice and FCM token on logout
             if (currentTheme != null) {
                 prefs[THEME_MODE] = currentTheme
+            }
+            if (currentFcmToken != null) {
+                prefs[FCM_TOKEN] = currentFcmToken
             }
         }
     }
