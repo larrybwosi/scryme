@@ -50,7 +50,7 @@ function IndexComponent() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 mb-8">
             <span className="w-2 h-2 rounded-full bg-[#d2ff3a] animate-pulse" />
             <span className="text-xs font-semibold uppercase tracking-wider text-[#d2ff3a] font-mono">
-              Obsidian Kinetic Architecture • V3 Engine Released
+              Obsidian Kinetic Architecture • 14-Day Free Trial
             </span>
           </div>
 
@@ -64,10 +64,10 @@ function IndexComponent() {
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
             <a
-              href="https://app.scryme.tech/signup"
+              href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] hover:shadow-[0_0_30px_rgba(210,255,58,0.5)] transition-all transform active:scale-95"
             >
-              <span>Deploy Workspace Free</span>
+              <span>Start 14-Day Free Trial</span>
               <ArrowRight className="w-4 h-4" />
             </a>
             <a
@@ -406,14 +406,14 @@ function IndexComponent() {
             Ready to Operate with Absolute Clarity?
           </h2>
           <p className="text-base md:text-lg text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
-            Deploy your workspace in less than 5 minutes. No credit card required.
+            Start your 14-day free trial today. Deploy your workspace in less than 5 minutes with zero commitment.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
-              href="https://app.scryme.tech/signup"
+              href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] hover:shadow-[0_0_30px_rgba(210,255,58,0.5)] transition-all"
             >
-              <span>Get Started Now</span>
+              <span>Start 14-Day Free Trial</span>
               <ArrowRight className="w-4 h-4" />
             </a>
             <Link
