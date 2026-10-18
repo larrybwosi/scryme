@@ -16,6 +16,13 @@ object NotificationHelper {
     const val TASKS_CHANNEL_ID = "tasks_updates_channel"
     const val DAILY_SHIFT_CHANNEL_ID = "daily_shifts_channel"
     const val POS_CHANNEL_ID = "pos_alerts_channel"
+    const val ANNOUNCEMENTS_CHANNEL_ID = "announcements_channel"
+    const val ATTENDANCE_CHANNEL_ID = "attendance_alerts_channel"
+
+    const val EXTRA_TARGET_SCREEN = "extra_target_screen"
+    const val EXTRA_NOTIFICATION_TITLE = "extra_notification_title"
+    const val EXTRA_NOTIFICATION_BODY = "extra_notification_body"
+    const val EXTRA_PAYLOAD_DATA = "extra_payload_data"
 
     fun createNotificationChannels(context: Context) {
         try {
@@ -55,10 +62,28 @@ object NotificationHelper {
                     description = "Notifications for POS pairing and system alerts"
                 }
 
+                val announcementsChannel = NotificationChannel(
+                    ANNOUNCEMENTS_CHANNEL_ID,
+                    "General Announcements",
+                    NotificationManager.IMPORTANCE_DEFAULT
+                ).apply {
+                    description = "Company-wide broadcasts, updates, and announcements"
+                }
+
+                val attendanceChannel = NotificationChannel(
+                    ATTENDANCE_CHANNEL_ID,
+                    "Attendance Alerts",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Geofence check-in reminders, late alerts, and attendance updates"
+                }
+
                 notificationManager?.createNotificationChannel(scheduleChannel)
                 notificationManager?.createNotificationChannel(tasksChannel)
                 notificationManager?.createNotificationChannel(dailyShiftChannel)
                 notificationManager?.createNotificationChannel(posChannel)
+                notificationManager?.createNotificationChannel(announcementsChannel)
+                notificationManager?.createNotificationChannel(attendanceChannel)
             }
         } catch (e: Throwable) {
             // Ignored in test environment
@@ -69,27 +94,50 @@ object NotificationHelper {
         context: Context,
         title: String,
         message: String,
+        targetScreen: String? = "schedule",
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
-        showNotification(context, SCHEDULE_CHANNEL_ID, title, message, notificationId)
+        showNotification(context, SCHEDULE_CHANNEL_ID, title, message, targetScreen, notificationId)
     }
 
     fun showTaskNotification(
         context: Context,
         title: String,
         message: String,
+        targetScreen: String? = "tasks",
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
-        showNotification(context, TASKS_CHANNEL_ID, title, message, notificationId)
+        showNotification(context, TASKS_CHANNEL_ID, title, message, targetScreen, notificationId)
     }
 
     fun showDailyShiftNotification(
         context: Context,
         title: String,
         message: String,
+        targetScreen: String? = "schedule",
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
-        showNotification(context, DAILY_SHIFT_CHANNEL_ID, title, message, notificationId)
+        showNotification(context, DAILY_SHIFT_CHANNEL_ID, title, message, targetScreen, notificationId)
+    }
+
+    fun showAnnouncementNotification(
+        context: Context,
+        title: String,
+        message: String,
+        targetScreen: String? = "admin",
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, ANNOUNCEMENTS_CHANNEL_ID, title, message, targetScreen, notificationId)
+    }
+
+    fun showAttendanceNotification(
+        context: Context,
+        title: String,
+        message: String,
+        targetScreen: String? = "schedule",
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, ATTENDANCE_CHANNEL_ID, title, message, targetScreen, notificationId)
     }
 
     fun showNotification(
@@ -97,17 +145,21 @@ object NotificationHelper {
         channelId: String,
         title: String,
         message: String,
+        targetScreen: String? = null,
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
         try {
             createNotificationChannels(context)
 
             val intent = Intent(context, MainActivity::class.java).apply {
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_SINGLE_TOP
+                putExtra(EXTRA_TARGET_SCREEN, targetScreen)
+                putExtra(EXTRA_NOTIFICATION_TITLE, title)
+                putExtra(EXTRA_NOTIFICATION_BODY, message)
             }
             val pendingIntent = PendingIntent.getActivity(
                 context,
-                0,
+                notificationId,
                 intent,
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
             )

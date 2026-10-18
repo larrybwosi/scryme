@@ -24,4 +24,22 @@ class NotificationHelperTest {
         val context = mockk<Context>(relaxed = true)
         NotificationHelper.showDailyShiftNotification(context, "Daily Summary", "You have 1 shift scheduled today.")
     }
+
+    @Test
+    fun showAnnouncementNotification_doesNotCrash() {
+        val context = mockk<Context>(relaxed = true)
+        NotificationHelper.showAnnouncementNotification(context, "Company Meeting", "All hands meeting at 3 PM.")
+    }
+
+    @Test
+    fun showAttendanceNotification_doesNotCrash() {
+        val context = mockk<Context>(relaxed = true)
+        NotificationHelper.showAttendanceNotification(context, "Geofence Check-in", "You have entered Main Branch.")
+    }
+
+    @Test
+    fun createNotificationChannels_executesWithoutCrash() {
+        val context = mockk<Context>(relaxed = true)
+        NotificationHelper.createNotificationChannels(context)
+    }
 }
