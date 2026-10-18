@@ -8,7 +8,6 @@ import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.repository.SalesRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
-import tech.scryme.app.domain.repository.TasksRepository
 import java.util.Calendar
 import javax.inject.Inject
 
@@ -31,7 +30,6 @@ data class OverviewUiState(
 class OverviewViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val salesRepository: SalesRepository,
-    private val tasksRepository: TasksRepository,
     private val scheduleRepository: ScheduleRepository
 ) : ViewModel() {
 
@@ -68,10 +66,10 @@ class OverviewViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, errorMessage = null) }
             try {
-                val salesResult = salesRepository.getAnalytics("today")
-                val tasksResult = tasksRepository.getTasks()
-                val attendanceResult = scheduleRepository.getAttendanceStatus()
+                val orgSlug = sessionManager.getOrgSlug()
+                val memberId = sessionManager.getMemberId()
 
+                val salesResult = salesRepository.getSalesAnalytics()
                 var salesAmount = 0.0
                 var ordersCount = 0
                 salesResult.onSuccess { analytics ->
@@ -81,16 +79,22 @@ class OverviewViewModel @Inject constructor(
 
                 var pendingTasks = 0
                 var completedTasks = 0
-                tasksResult.onSuccess { tasks ->
-                    pendingTasks = tasks.count { it.status != "COMPLETED" }
-                    completedTasks = tasks.count { it.status == "COMPLETED" }
+                if (!orgSlug.isNullOrEmpty()) {
+                    val tasksResult = scheduleRepository.getStaffTasks(orgSlug = orgSlug, memberId = memberId)
+                    tasksResult.onSuccess { tasks ->
+                        pendingTasks = tasks.count { it.status != "COMPLETED" }
+                        completedTasks = tasks.count { it.status == "COMPLETED" }
+                    }
                 }
 
                 var isShiftActive = false
                 var punctuality = "NO_SHIFT"
-                attendanceResult.onSuccess { status ->
-                    isShiftActive = status.isCheckedIn
-                    punctuality = status.punctualityStatus ?: if (status.isCheckedIn) "ON_TIME" else "NO_SHIFT"
+                if (!orgSlug.isNullOrEmpty()) {
+                    val attendanceResult = scheduleRepository.getMyAttendanceStatus(orgSlug = orgSlug)
+                    attendanceResult.onSuccess { status ->
+                        isShiftActive = status.isCheckedIn
+                        punctuality = status.punctualityStatus ?: if (status.isCheckedIn) "ON_TIME" else "NO_SHIFT"
+                    }
                 }
 
                 _uiState.update {

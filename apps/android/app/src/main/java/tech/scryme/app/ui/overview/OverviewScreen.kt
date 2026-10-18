@@ -156,7 +156,7 @@ fun OverviewScreen(
                         ShortcutCard(
                             title = "Staff Tasks",
                             subtitle = "My Operational Tasks",
-                            icon = Icons.Default.AssignmentCheck,
+                            icon = Icons.Default.TaskAlt,
                             onClick = onNavigateToTasks,
                             modifier = Modifier.weight(1f)
                         )
