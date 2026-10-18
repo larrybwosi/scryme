@@ -18,6 +18,8 @@ import tech.scryme.app.data.dto.PasskeyVerifyAuthenticationRequestDto
 import tech.scryme.app.data.dto.PasskeyVerifyRegistrationRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.PosPairResponseDto
+import tech.scryme.app.data.dto.RegisterDeviceRequestDto
+import tech.scryme.app.data.dto.RegisterDeviceResponseDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.dto.TerminalLoginResponseDto
 import tech.scryme.app.data.dto.TokenExchangeRequestDto
@@ -50,6 +52,11 @@ interface AuthApiService {
 
     @GET("android/auth/me")
     suspend fun getAndroidMe(): Response<V3ApiResponse<AndroidMeResponseDto>>
+
+    @POST("android/register-device")
+    suspend fun registerDevice(
+        @Body request: RegisterDeviceRequestDto
+    ): Response<V3ApiResponse<RegisterDeviceResponseDto>>
 
     @POST("android/pos/pair")
     suspend fun pairPosDevice(

@@ -16,6 +16,8 @@ object NotificationHelper {
     const val TASKS_CHANNEL_ID = "tasks_updates_channel"
     const val DAILY_SHIFT_CHANNEL_ID = "daily_shifts_channel"
     const val POS_CHANNEL_ID = "pos_alerts_channel"
+    const val ANNOUNCEMENTS_CHANNEL_ID = "announcements_channel"
+    const val ATTENDANCE_CHANNEL_ID = "attendance_alerts_channel"
 
     fun createNotificationChannels(context: Context) {
         try {
@@ -49,16 +51,34 @@ object NotificationHelper {
 
                 val posChannel = NotificationChannel(
                     POS_CHANNEL_ID,
-                    "POS & Pairing Alerts",
-                    NotificationManager.IMPORTANCE_DEFAULT
+                    "POS & System Alerts",
+                    NotificationManager.IMPORTANCE_HIGH
                 ).apply {
-                    description = "Notifications for POS pairing and system alerts"
+                    description = "Notifications for POS pairing, system alerts, and sales updates"
+                }
+
+                val announcementsChannel = NotificationChannel(
+                    ANNOUNCEMENTS_CHANNEL_ID,
+                    "Company Announcements",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Important broadcasts, organization updates, and announcements"
+                }
+
+                val attendanceChannel = NotificationChannel(
+                    ATTENDANCE_CHANNEL_ID,
+                    "Attendance & Geofencing Alerts",
+                    NotificationManager.IMPORTANCE_HIGH
+                ).apply {
+                    description = "Clock-in reminders, geofence status, and attendance warnings"
                 }
 
                 notificationManager?.createNotificationChannel(scheduleChannel)
                 notificationManager?.createNotificationChannel(tasksChannel)
                 notificationManager?.createNotificationChannel(dailyShiftChannel)
                 notificationManager?.createNotificationChannel(posChannel)
+                notificationManager?.createNotificationChannel(announcementsChannel)
+                notificationManager?.createNotificationChannel(attendanceChannel)
             }
         } catch (e: Throwable) {
             // Ignored in test environment
@@ -90,6 +110,33 @@ object NotificationHelper {
         notificationId: Int = System.currentTimeMillis().toInt()
     ) {
         showNotification(context, DAILY_SHIFT_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showPosNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, POS_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showAnnouncementNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, ANNOUNCEMENTS_CHANNEL_ID, title, message, notificationId)
+    }
+
+    fun showAttendanceNotification(
+        context: Context,
+        title: String,
+        message: String,
+        notificationId: Int = System.currentTimeMillis().toInt()
+    ) {
+        showNotification(context, ATTENDANCE_CHANNEL_ID, title, message, notificationId)
     }
 
     fun showNotification(
