@@ -1,3 +1,4 @@
+import { ReportsModule } from "./modules/reports/reports.module";
 import { AndroidModule } from "./modules/android/android.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
 import { AgentModule } from "./modules/agent/agent.module";
@@ -59,6 +60,7 @@ export const V3_SUB_MODULES = [
   TasksModule,
   AndroidModule,
   SalesModule,
+  ReportsModule,
 ];
 
 @Module({

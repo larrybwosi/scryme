@@ -1,6 +1,7 @@
+import { ReportSettingsPanel } from "./report-settings-panel";
 "use client";
 
-import { useState, useTransition } from "react";
+import { FileText, useState, useTransition } from "react";
 import {
   Save,
   Globe,
@@ -108,7 +109,8 @@ type SectionId =
   | "operations"
   | "tax"
   | "pricing"
-  | "security";
+  | "security"
+  | "reports";
 
 const NAV_SECTIONS: {
   id: SectionId;
@@ -149,6 +151,11 @@ const NAV_SECTIONS: {
     id: "pricing",
     label: "Pricing Strategy",
     icon: <TrendingUp className="w-4 h-4" />,
+  },
+  {
+    id: "reports",
+    label: "Reports & Notifications",
+    icon: <FileText className="w-4 h-4" />,
   },
   {
     id: "security",
@@ -1024,6 +1031,12 @@ export function SettingsForm({ initialData }: { initialData: any }) {
                 </div>
               </div>
             </div>
+          )}
+
+
+          {/* ── Reports & Notifications section ── */}
+          {activeSection === "reports" && (
+            <ReportSettingsPanel />
           )}
 
           {/* ── Security section ── */}
