@@ -208,12 +208,12 @@ export class ReportsService {
         status: { in: ["COMPLETED", "PAID"] as any[] },
       },
       select: {
-        netAmount: true,
+        finalTotal: true,
         metadata: true,
       },
     });
 
-    const totalRevenue = transactions.reduce((acc, t) => acc + Number(t.netAmount || 0), 0);
+    const totalRevenue = transactions.reduce((acc, t) => acc + Number(t.finalTotal || 0), 0);
     const transactionCount = transactions.length;
 
     const productSalesMap = new Map<string, { name: string; quantity: number; revenue: number }>();
