@@ -1,26 +1,22 @@
 package tech.scryme.app.ui.profile
 
-import android.widget.Toast
+import tech.scryme.app.ui.components.ErrorMessageCard
+import tech.scryme.app.ui.components.ProfileSkeleton
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.Fingerprint
 import androidx.compose.material.icons.filled.Phone
-import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Shield
 import androidx.compose.material3.*
@@ -34,7 +30,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
-import tech.scryme.app.ui.components.QrScannerDialog
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
 
@@ -48,9 +43,6 @@ fun ProfileScreen(
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    var showAddPasskeyDialog by remember { mutableStateOf(false) }
-    var showQrScannerDialog by remember { mutableStateOf(false) }
-
     val imagePickerLauncher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
@@ -59,28 +51,6 @@ fun ProfileScreen(
 
     LaunchedEffect(Unit) {
         viewModel.loadProfile()
-    }
-
-    if (showQrScannerDialog) {
-        QrScannerDialog(
-            onDismissRequest = { showQrScannerDialog = false },
-            onQrCodeScanned = { qrContent ->
-                showQrScannerDialog = false
-                viewModel.authorizeWebSession(qrContent) { success, message ->
-                    Toast.makeText(context, message, if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG).show()
-                }
-            }
-        )
-    }
-
-    if (showAddPasskeyDialog) {
-        AddPasskeyDialog(
-            onDismiss = { showAddPasskeyDialog = false },
-            onConfirm = { name ->
-                showAddPasskeyDialog = false
-                viewModel.registerPasskey(context, name)
-            }
-        )
     }
 
     LazyColumn(
@@ -295,17 +265,8 @@ fun ProfileScreen(
                                     horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
                                     CircularProgressIndicator(modifier = Modifier.size(18.dp))
-                                    Text("Updating...", style = MaterialTheme.typography.bodySmall)
+                                    Text("Updating profile...", style = MaterialTheme.typography.bodySmall)
                                 }
-                            }
-
-                            state.passkeyActionMessage?.let { msg ->
-                                Spacer(modifier = Modifier.height(8.dp))
-                                Text(
-                                    text = msg,
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = Emerald500
-                                )
                             }
 
                             state.updateError?.let { err ->
@@ -315,136 +276,6 @@ fun ProfileScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error
                                 )
-                            }
-                        }
-                    }
-                }
-
-                // Passkeys & Web Authorization Card
-                item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        imageVector = Icons.Default.Fingerprint,
-                                        contentDescription = null,
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                    Text(
-                                        text = "Passkeys & Web Auth",
-                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                        color = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-
-                                IconButton(onClick = { showAddPasskeyDialog = true }) {
-                                    Icon(
-                                        imageVector = Icons.Default.Add,
-                                        contentDescription = "Add Passkey",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                }
-                            }
-
-                            Text(
-                                text = "Use passkeys to log in securely without passwords and authorize web apps by scanning QR codes.",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-
-                            // QR Web Authorization Action Button
-                            Button(
-                                onClick = { showQrScannerDialog = true },
-                                modifier = Modifier.fillMaxWidth(),
-                                shape = RoundedCornerShape(8.dp)
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.QrCodeScanner,
-                                    contentDescription = null,
-                                    modifier = Modifier.padding(end = 8.dp)
-                                )
-                                Text("Scan QR to Authorize Web App")
-                            }
-
-                            HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
-
-                            Text(
-                                text = "Registered Passkeys",
-                                style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
-                            )
-
-                            if (state.passkeys.isEmpty()) {
-                                Text(
-                                    text = "No passkeys registered yet on this account.",
-                                    style = MaterialTheme.typography.bodySmall,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            } else {
-                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-                                    state.passkeys.forEach { passkey ->
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .background(
-                                                    MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                                                    RoundedCornerShape(8.dp)
-                                                )
-                                                .padding(12.dp),
-                                            horizontalArrangement = Arrangement.SpaceBetween,
-                                            verticalAlignment = Alignment.CenterVertically
-                                        ) {
-                                            Row(
-                                                verticalAlignment = Alignment.CenterVertically,
-                                                horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                            ) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Fingerprint,
-                                                    contentDescription = null,
-                                                    modifier = Modifier.size(20.dp),
-                                                    tint = MaterialTheme.colorScheme.primary
-                                                )
-                                                Column {
-                                                    Text(
-                                                        text = passkey.name ?: "Android Device Passkey",
-                                                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium)
-                                                    )
-                                                    passkey.createdAt?.let { created ->
-                                                        Text(
-                                                            text = "Created: $created",
-                                                            style = MaterialTheme.typography.labelSmall,
-                                                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                                                        )
-                                                    }
-                                                }
-                                            }
-
-                                            IconButton(onClick = { viewModel.deletePasskey(passkey.id) }) {
-                                                Icon(
-                                                    imageVector = Icons.Default.Delete,
-                                                    contentDescription = "Delete Passkey",
-                                                    tint = Rose500,
-                                                    modifier = Modifier.size(20.dp)
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
                             }
                         }
                     }
@@ -490,7 +321,7 @@ fun ProfileScreen(
                     }
                 }
 
-                // User Preferences Card
+                // User Preferences Card (Direct Integration)
                 item {
                     Card(
                         modifier = Modifier.fillMaxWidth(),
@@ -673,47 +504,6 @@ fun ProfileScreen(
             }
         }
     }
-}
-
-@Composable
-fun AddPasskeyDialog(
-    onDismiss: () -> Unit,
-    onConfirm: (name: String) -> Unit
-) {
-    var name by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text("Register Passkey") },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Text(
-                    text = "Enter a label for this passkey (e.g., 'Pixel 8 Pro' or 'Work Android Phone').",
-                    style = MaterialTheme.typography.bodyMedium
-                )
-                OutlinedTextField(
-                    value = name,
-                    onValueChange = { name = it },
-                    label = { Text("Passkey Name") },
-                    placeholder = { Text("Android Device Passkey") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                onClick = { onConfirm(name) }
-            ) {
-                Text("Continue")
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
-    )
 }
 
 @Composable

@@ -12,7 +12,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tech.scryme.app.domain.repository.AuthRepository
-import tech.scryme.app.util.PasskeyManager
 import tech.scryme.app.util.PkceUtils
 import javax.inject.Inject
 
@@ -51,6 +50,7 @@ class AuthViewModel @Inject constructor(
                 val codeChallenge = PkceUtils.generateCodeChallenge(codeVerifier)
                 pendingCodeVerifier = codeVerifier
 
+                val redirectUri = Uri.encode("https://auth.scryme.tech/mobile-callback")
                 val authUrl = Uri.parse("https://auth.scryme.tech/oauth2/authorize")
                     .buildUpon()
                     .appendQueryParameter("client_id", "scryme-android-app")
@@ -95,37 +95,6 @@ class AuthViewModel @Inject constructor(
                     }
                 )
             }
-        }
-    }
-
-    fun signInWithPasskey(context: Context) {
-        viewModelScope.launch {
-            _uiState.value = AuthUiState.Loading
-            val optionsResult = authRepository.generatePasskeyAuthenticateOptions()
-            optionsResult.fold(
-                onSuccess = { optionsJson ->
-                    val credentialResult = PasskeyManager.getPasskey(context, optionsJson)
-                    credentialResult.fold(
-                        onSuccess = { responseJson ->
-                            val verifyResult = authRepository.verifyPasskeyAuthentication(responseJson)
-                            verifyResult.fold(
-                                onSuccess = {
-                                    _uiState.value = AuthUiState.Success
-                                },
-                                onFailure = { err ->
-                                    _uiState.value = AuthUiState.Error(err.message ?: "Passkey authentication failed")
-                                }
-                            )
-                        },
-                        onFailure = { err ->
-                            _uiState.value = AuthUiState.Error(err.message ?: "Passkey selection cancelled or failed")
-                        }
-                    )
-                },
-                onFailure = { err ->
-                    _uiState.value = AuthUiState.Error(err.message ?: "Could not initiate passkey authentication")
-                }
-            )
         }
     }
 

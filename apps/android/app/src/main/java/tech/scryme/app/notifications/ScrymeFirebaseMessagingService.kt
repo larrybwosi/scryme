@@ -54,6 +54,7 @@ class ScrymeFirebaseMessagingService : FirebaseMessagingService() {
 
         // Broadcast event for foreground in-app display
         val foregroundIntent = Intent(ACTION_FOREGROUND_NOTIFICATION).apply {
+            setPackage(packageName)
             putExtra(EXTRA_TITLE, title)
             putExtra(EXTRA_BODY, body)
             putExtra(EXTRA_TYPE, rawType)

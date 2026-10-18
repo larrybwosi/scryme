@@ -1,6 +1,5 @@
 package tech.scryme.app.data.api
 
-import com.google.gson.JsonObject
 import retrofit2.Response
 import retrofit2.http.Body
 import retrofit2.http.GET
@@ -11,11 +10,6 @@ import tech.scryme.app.data.dto.AndroidMeResponseDto
 import tech.scryme.app.data.dto.EmailSignInRequestDto
 import tech.scryme.app.data.dto.EmailSignInResponseDto
 import tech.scryme.app.data.dto.OAuthCodeExchangeRequestDto
-import tech.scryme.app.data.dto.PasskeyDeleteRequestDto
-import tech.scryme.app.data.dto.PasskeyItemDto
-import tech.scryme.app.data.dto.PasskeyRegisterOptionsRequestDto
-import tech.scryme.app.data.dto.PasskeyVerifyAuthenticationRequestDto
-import tech.scryme.app.data.dto.PasskeyVerifyRegistrationRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.PosPairResponseDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
@@ -62,31 +56,4 @@ interface AuthApiService {
         @Path("sessionId") sessionId: String,
         @Body request: PosPairRequestDto
     ): Response<V3ApiResponse<PosPairResponseDto>>
-
-    // Better-Auth Passkey Endpoints
-    @POST("/api/auth/passkey/generate-register-options")
-    suspend fun generatePasskeyRegisterOptions(
-        @Body request: PasskeyRegisterOptionsRequestDto = PasskeyRegisterOptionsRequestDto()
-    ): Response<JsonObject>
-
-    @POST("/api/auth/passkey/verify-registration")
-    suspend fun verifyPasskeyRegistration(
-        @Body request: PasskeyVerifyRegistrationRequestDto
-    ): Response<JsonObject>
-
-    @GET("/api/auth/passkey/generate-authenticate-options")
-    suspend fun generatePasskeyAuthenticateOptions(): Response<JsonObject>
-
-    @POST("/api/auth/passkey/verify-authentication")
-    suspend fun verifyPasskeyAuthentication(
-        @Body request: PasskeyVerifyAuthenticationRequestDto
-    ): Response<EmailSignInResponseDto>
-
-    @GET("/api/auth/passkey/list-user-passkeys")
-    suspend fun listUserPasskeys(): Response<List<PasskeyItemDto>>
-
-    @POST("/api/auth/passkey/delete-passkey")
-    suspend fun deletePasskey(
-        @Body request: PasskeyDeleteRequestDto
-    ): Response<JsonObject>
 }

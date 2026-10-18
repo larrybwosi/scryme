@@ -18,6 +18,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
+import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
@@ -26,179 +27,28 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
-val AuthBackground @Composable get() = MaterialTheme.colorScheme.background
-val FieldBackground @Composable get() = MaterialTheme.colorScheme.surface
-val FieldBorder @Composable get() = MaterialTheme.colorScheme.outline
-val LabelText @Composable get() = MaterialTheme.colorScheme.onBackground
-val SubtitleText @Composable get() = MaterialTheme.colorScheme.onSurfaceVariant
-
+val AuthBackground = Color(0xFFF8FAFC)
 val PrimaryDarkButton = Color(0xFF0F172A)
-val PurpleAccent = Color(0xFF6366F1)
-
-@Composable
-fun SmokyBackgroundCanvas(
-    modifier: Modifier = Modifier
-) {
-    Canvas(modifier = modifier.fillMaxSize()) {
-        val w = size.width
-        val h = size.height
-
-        // Base obsidian dark backdrop
-        drawRect(color = Color(0xFF070A10))
-
-        // Large top-right indigo smoky nebula
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0x406366F1), // Indigo glow
-                    Color(0x1C4F46E5),
-                    Color.Transparent
-                ),
-                center = Offset(w * 0.85f, h * 0.18f),
-                radius = w * 0.75f
-            ),
-            center = Offset(w * 0.85f, h * 0.18f),
-            radius = w * 0.75f
-        )
-
-        // Mid-left cyan smoky cloud
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0x3006B6D4), // Cyan glow
-                    Color(0x120284C7),
-                    Color.Transparent
-                ),
-                center = Offset(w * 0.15f, h * 0.45f),
-                radius = w * 0.65f
-            ),
-            center = Offset(w * 0.15f, h * 0.45f),
-            radius = w * 0.65f
-        )
-
-        // Center-bottom purple smoky ambient pulse
-        drawCircle(
-            brush = Brush.radialGradient(
-                colors = listOf(
-                    Color(0x388B5CF6), // Purple glow
-                    Color(0x146D28D9),
-                    Color.Transparent
-                ),
-                center = Offset(w * 0.5f, h * 0.8f),
-                radius = w * 0.8f
-            ),
-            center = Offset(w * 0.5f, h * 0.8f),
-            radius = w * 0.8f
-        )
-
-        // Subtle floating ambient smoke nodes
-        val smokeNodes = listOf(
-            Offset(w * 0.25f, h * 0.25f) to 40.dp.toPx(),
-            Offset(w * 0.7f, h * 0.4f) to 60.dp.toPx(),
-            Offset(w * 0.4f, h * 0.65f) to 50.dp.toPx(),
-            Offset(w * 0.8f, h * 0.75f) to 45.dp.toPx()
-        )
-
-        smokeNodes.forEach { (pos, r) ->
-            drawCircle(
-                brush = Brush.radialGradient(
-                    colors = listOf(
-                        Color(0x1AFFFFFF),
-                        Color.Transparent
-                    ),
-                    center = pos,
-                    radius = r
-                ),
-                center = pos,
-                radius = r
-            )
-        }
-    }
-}
-
-@Composable
-fun ScrymeWordArt(
-    modifier: Modifier = Modifier
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = modifier
-    ) {
-        // Enterprise Badge
-        Surface(
-            color = Color(0x256366F1),
-            shape = RoundedCornerShape(20.dp),
-            border = BorderStroke(1.dp, Color(0x456366F1)),
-            modifier = Modifier.padding(bottom = 16.dp)
-        ) {
-            Row(
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp)
-            ) {
-                Box(
-                    modifier = Modifier
-                        .size(8.dp)
-                        .clip(CircleShape)
-                        .background(Color(0xFF06B6D4))
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                Text(
-                    text = "NEXT-GEN ENTERPRISE",
-                    fontSize = 11.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = Color(0xFF38BDF8),
-                    letterSpacing = 1.5.sp
-                )
-            }
-        }
-
-        // SCRYME Word Art Heading
-        Text(
-            text = "SCRYME",
-            fontSize = 48.sp,
-            fontWeight = FontWeight.ExtraBold,
-            style = TextStyle(
-                brush = Brush.horizontalGradient(
-                    colors = listOf(
-                        Color(0xFF818CF8), // Light Indigo
-                        Color(0xFF38BDF8), // Bright Cyan
-                        Color(0xFFC084FC)  // Soft Violet
-                    )
-                )
-            ),
-            letterSpacing = 6.sp,
-            textAlign = TextAlign.Center
-        )
-
-        Spacer(modifier = Modifier.height(6.dp))
-
-        // Subtitle Word Art Line
-        Text(
-            text = "ENTERPRISE OPERATIONS CORE",
-            fontSize = 12.sp,
-            fontWeight = FontWeight.SemiBold,
-            color = Color(0xFF94A3B8),
-            letterSpacing = 3.sp,
-            textAlign = TextAlign.Center
-        )
-    }
-}
+val PurpleAccent = Color(0xFF7C3AED)
+val FieldBackground = Color(0xFFFFFFFF)
+val FieldBorder = Color(0xFFE2E8F0)
+val LabelText = Color(0xFF334155)
+val SubtitleText = Color(0xFF64748B)
 
 @Composable
 fun ScrymeBrandHeader(
     modifier: Modifier = Modifier
 ) {
     Surface(
-        color = PurpleAccent.copy(alpha = 0.15f),
+        color = PurpleAccent.copy(alpha = 0.1f),
         shape = RoundedCornerShape(20.dp),
-        border = BorderStroke(1.dp, PurpleAccent.copy(alpha = 0.3f)),
+        border = BorderStroke(1.dp, PurpleAccent.copy(alpha = 0.2f)),
         modifier = modifier
     ) {
         Row(
@@ -210,7 +60,7 @@ fun ScrymeBrandHeader(
                 modifier = Modifier
                     .size(8.dp)
                     .clip(CircleShape)
-                    .background(Color(0xFF06B6D4))
+                    .background(PurpleAccent)
             )
             Spacer(modifier = Modifier.width(8.dp))
             Text(
@@ -239,14 +89,14 @@ fun AuthTopBar(
                 .size(42.dp)
                 .shadow(2.dp, CircleShape)
                 .clip(CircleShape)
-                .background(MaterialTheme.colorScheme.surface)
+                .background(Color.White)
                 .clickable { onBackClick() },
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                 contentDescription = "Back",
-                tint = MaterialTheme.colorScheme.onSurface,
+                tint = Color(0xFF1E293B),
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -269,13 +119,13 @@ fun AuthPrimaryButton(
             .height(54.dp),
         shape = RoundedCornerShape(27.dp),
         colors = ButtonDefaults.buttonColors(
-            containerColor = PurpleAccent,
+            containerColor = PrimaryDarkButton,
             contentColor = Color.White,
-            disabledContainerColor = PurpleAccent.copy(alpha = 0.5f),
+            disabledContainerColor = PrimaryDarkButton.copy(alpha = 0.5f),
             disabledContentColor = Color.White.copy(alpha = 0.5f)
         ),
         elevation = ButtonDefaults.buttonElevation(
-            defaultElevation = 6.dp,
+            defaultElevation = 4.dp,
             pressedElevation = 2.dp
         )
     ) {
@@ -289,8 +139,7 @@ fun AuthPrimaryButton(
             Text(
                 text = text,
                 fontSize = 16.sp,
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 0.5.sp
+                fontWeight = FontWeight.SemiBold
             )
         }
     }
@@ -309,15 +158,14 @@ fun AuthSecondaryButton(
             .height(54.dp),
         shape = RoundedCornerShape(27.dp),
         colors = ButtonDefaults.outlinedButtonColors(
-            contentColor = Color.White
+            contentColor = PrimaryDarkButton
         ),
-        border = BorderStroke(1.5.dp, Color(0xFF38BDF8).copy(alpha = 0.8f))
+        border = BorderStroke(1.5.dp, PrimaryDarkButton)
     ) {
         Text(
             text = text,
             fontSize = 16.sp,
-            fontWeight = FontWeight.SemiBold,
-            letterSpacing = 0.5.sp
+            fontWeight = FontWeight.SemiBold
         )
     }
 }
@@ -351,7 +199,7 @@ fun AuthTextField(
             placeholder = {
                 Text(
                     text = placeholder,
-                    color = SubtitleText,
+                    color = Color(0xFF94A3B8),
                     fontSize = 14.sp
                 )
             },
@@ -359,7 +207,7 @@ fun AuthTextField(
                 Icon(
                     imageVector = leadingIcon,
                     contentDescription = null,
-                    tint = SubtitleText,
+                    tint = Color(0xFF94A3B8),
                     modifier = Modifier.size(20.dp)
                 )
             },
@@ -377,8 +225,8 @@ fun AuthTextField(
                 focusedBorderColor = PurpleAccent,
                 unfocusedBorderColor = FieldBorder,
                 errorBorderColor = MaterialTheme.colorScheme.error,
-                focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                unfocusedTextColor = MaterialTheme.colorScheme.onSurface
+                focusedTextColor = Color(0xFF0F172A),
+                unfocusedTextColor = Color(0xFF0F172A)
             ),
             modifier = Modifier
                 .fillMaxWidth()
@@ -407,17 +255,17 @@ fun OrDivider(
     ) {
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = FieldBorder
+            color = Color(0xFFE2E8F0)
         )
         Text(
             text = "Or Continue With",
             fontSize = 12.sp,
-            color = SubtitleText,
+            color = Color(0xFF94A3B8),
             modifier = Modifier.padding(horizontal = 12.dp)
         )
         HorizontalDivider(
             modifier = Modifier.weight(1f),
-            color = FieldBorder
+            color = Color(0xFFE2E8F0)
         )
     }
 }
@@ -442,9 +290,9 @@ fun SocialAuthButtons(
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = FieldBackground
+                containerColor = Color.White
             ),
-            border = BorderStroke(1.dp, FieldBorder)
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -456,7 +304,7 @@ fun SocialAuthButtons(
                     text = "Google",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color(0xFF1E293B)
                 )
             }
         }
@@ -471,9 +319,9 @@ fun SocialAuthButtons(
                 .height(50.dp),
             shape = RoundedCornerShape(25.dp),
             colors = ButtonDefaults.outlinedButtonColors(
-                containerColor = FieldBackground
+                containerColor = Color.White
             ),
-            border = BorderStroke(1.dp, FieldBorder)
+            border = BorderStroke(1.dp, Color(0xFFE2E8F0))
         ) {
             Row(
                 verticalAlignment = Alignment.CenterVertically,
@@ -485,7 +333,7 @@ fun SocialAuthButtons(
                     text = "Apple",
                     fontSize = 14.sp,
                     fontWeight = FontWeight.Medium,
-                    color = MaterialTheme.colorScheme.onSurface
+                    color = Color(0xFF1E293B)
                 )
             }
         }
@@ -505,7 +353,6 @@ fun GoogleIcon(modifier: Modifier = Modifier) {
 
 @Composable
 fun AppleIcon(modifier: Modifier = Modifier) {
-    val color = MaterialTheme.colorScheme.onSurface
     Canvas(modifier = modifier) {
         val w = size.width
         val h = size.height
@@ -517,6 +364,118 @@ fun AppleIcon(modifier: Modifier = Modifier) {
             cubicTo(w * 0.75f, h * 0.15f, w * 0.6f, h * 0.05f, w * 0.5f, h * 0.15f)
             close()
         }
-        drawPath(path = path, color = color)
+        drawPath(path = path, color = Color(0xFF000000))
+    }
+}
+
+@Composable
+fun Wallet3DIllustration(
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(260.dp),
+        contentAlignment = Alignment.Center
+    ) {
+        Canvas(modifier = Modifier.fillMaxSize()) {
+            val cx = size.width / 2f
+            val cy = size.height / 2f
+
+            drawOval(
+                color = Color(0x15000000),
+                topLeft = Offset(cx - 110.dp.toPx(), cy + 70.dp.toPx()),
+                size = Size(220.dp.toPx(), 20.dp.toPx())
+            )
+
+            val cardWidth = 140.dp.toPx()
+            val cardHeight = 90.dp.toPx()
+            drawRoundRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFF8B5CF6), Color(0xFF6366F1)),
+                    start = Offset(cx - 100.dp.toPx(), cy - 80.dp.toPx()),
+                    end = Offset(cx + 40.dp.toPx(), cy + 10.dp.toPx())
+                ),
+                topLeft = Offset(cx - 85.dp.toPx(), cy - 75.dp.toPx()),
+                size = Size(cardWidth, cardHeight),
+                cornerRadius = CornerRadius(16.dp.toPx(), 16.dp.toPx())
+            )
+
+            val walletWidth = 160.dp.toPx()
+            val walletHeight = 120.dp.toPx()
+            drawRoundRect(
+                brush = Brush.linearGradient(
+                    colors = listOf(Color(0xFFE879F9), Color(0xFFD946EF)),
+                    start = Offset(cx - 80.dp.toPx(), cy - 20.dp.toPx()),
+                    end = Offset(cx + 80.dp.toPx(), cy + 80.dp.toPx())
+                ),
+                topLeft = Offset(cx - 90.dp.toPx(), cy - 25.dp.toPx()),
+                size = Size(walletWidth, walletHeight),
+                cornerRadius = CornerRadius(24.dp.toPx(), 24.dp.toPx())
+            )
+
+            drawCircle(
+                color = Color(0xFFE2E8F0),
+                radius = 14.dp.toPx(),
+                center = Offset(cx - 30.dp.toPx(), cy + 35.dp.toPx())
+            )
+            drawCircle(
+                color = Color(0xFF94A3B8),
+                radius = 6.dp.toPx(),
+                center = Offset(cx - 30.dp.toPx(), cy + 35.dp.toPx())
+            )
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFFFDE047), Color(0xFFCA8A04)),
+                    center = Offset(cx + 70.dp.toPx(), cy + 10.dp.toPx()),
+                    radius = 22.dp.toPx()
+                ),
+                radius = 22.dp.toPx(),
+                center = Offset(cx + 70.dp.toPx(), cy + 10.dp.toPx())
+            )
+
+            drawCircle(
+                brush = Brush.radialGradient(
+                    colors = listOf(Color(0xFFFEF08A), Color(0xFFEAB308)),
+                    center = Offset(cx + 95.dp.toPx(), cy + 45.dp.toPx()),
+                    radius = 18.dp.toPx()
+                ),
+                radius = 18.dp.toPx(),
+                center = Offset(cx + 95.dp.toPx(), cy + 45.dp.toPx())
+            )
+        }
+    }
+}
+
+@Composable
+fun PageIndicatorDots(
+    pageCount: Int = 4,
+    selectedIndex: Int = 1,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        repeat(pageCount) { index ->
+            if (index == selectedIndex) {
+                Box(
+                    modifier = Modifier
+                        .width(28.dp)
+                        .height(8.dp)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(PurpleAccent)
+                )
+            } else {
+                Box(
+                    modifier = Modifier
+                        .size(8.dp)
+                        .clip(CircleShape)
+                        .background(Color(0xFFE2E8F0))
+                )
+            }
+        }
     }
 }
