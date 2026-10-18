@@ -39,11 +39,21 @@ val Rose100 = Color(0xFFFFE4E6)
 val Rose500 = Color(0xFFEF4444)
 val Rose600 = Color(0xFFDC2626)
 
-// Theme Specific Tokens
-val DarkBackground = Color(0xFF090D16)
-val DarkSurface = Color(0xFF131C2E)
-val DarkSurfaceVariant = Color(0xFF1E293B)
-val DarkCardBorder = Color(0xFF334155)
+// Obsidian Slate Dark Theme Tokens
+val DarkBackground = Color(0xFF0B0F17)
+val DarkSurface = Color(0xFF121824)
+val DarkSurfaceVariant = Color(0xFF1A2234)
+val DarkSurfaceElevated = Color(0xFF222C42)
+val DarkCardBorder = Color(0xFF1F293D)
+val DarkCardBorderLight = Color(0xFF2E3D5B)
+val DarkTextPrimary = Color(0xFFF8FAFC)
+val DarkTextSecondary = Color(0xFF94A3B8)
+val DarkTextMuted = Color(0xFF64748B)
+
+// Accent Glows & Highlights
+val DarkAccentGlow = Color(0xFF6366F1)
+val DarkAccentCyan = Color(0xFF06B6D4)
+val DarkAccentPurple = Color(0xFF8B5CF6)
 
 val LightBackground = Color(0xFFF8FAFC)
 val LightSurface = Color(0xFFFFFFFF)
