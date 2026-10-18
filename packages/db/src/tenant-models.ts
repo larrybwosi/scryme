@@ -107,6 +107,7 @@ export const TENANT_MODELS = new Set<string>([
   "ReorderAlert",
   "ReorderRule",
   "Report",
+  "ReportSettings",
   "ReportAutomation",
   "ReportChannel",
   "Return",

@@ -97,6 +97,7 @@ model Organization {
   permissionSets       PermissionSet[]
   roleGroups           RoleGroup[]
   reports              Report[]
+  reportSettings       ReportSettings?
   Subscription         Subscription?
   referrals            Referral[]
   referralPrograms     ReferralProgram[]
@@ -1001,4 +1002,38 @@ enum ReportType {
   EXPENSE_REPORT
   BAKERY_REPORT
   TAX_REPORT
+}
+
+
+model ReportSettings {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  // Channels
+  emailEnabled  Boolean  @default(true)
+  scrymeEnabled Boolean  @default(true)
+  recipients    String[] @default([])
+
+  // Delivery target
+  scrymeChannel String   @default("reports")
+
+  // Schedule Configuration
+  scheduleEnabled Boolean @default(true)
+  frequency       String  @default("WEEKLY")
+  dayOfWeek       Int     @default(1)
+  timeOfDay       String  @default("08:00")
+  timezone        String  @default("UTC")
+
+  // Content configuration
+  includeSales      Boolean @default(true)
+  includeInventory  Boolean @default(true)
+  includeProduction Boolean @default(true)
+  includeTax        Boolean @default(true)
+  includeAiInsights Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("report_settings")
 }
