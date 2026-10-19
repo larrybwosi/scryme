@@ -26,4 +26,4 @@ CREATE TABLE IF NOT EXISTS "report_settings" (
 CREATE UNIQUE INDEX IF NOT EXISTS "report_settings_organizationId_key" ON "report_settings"("organizationId");
 
 -- AddForeignKey
-ALTER TABLE "report_settings" ADD CONSTRAINT "report_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "Organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "report_settings" ADD CONSTRAINT "report_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
