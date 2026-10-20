@@ -1,5 +1,6 @@
 import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-router'
 import { ThemeProvider } from '../components/ThemeProvider'
+import { AnalyticsSnippet } from '../components/AnalyticsSnippet'
 import appCss from '../styles/app.css?url'
 
 export const Route = createRootRoute({
@@ -24,6 +25,7 @@ function RootComponent() {
     <html lang="en" suppressHydrationWarning>
       <head>
         <HeadContent />
+        <AnalyticsSnippet />
       </head>
       <body className="min-h-screen font-sans antialiased selection:bg-[#d2ff3a] selection:text-[#090a0b] bg-[var(--bg-main)] text-[var(--text-main)]">
         <ThemeProvider>
