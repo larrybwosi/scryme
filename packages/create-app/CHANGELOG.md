@@ -1,5 +1,11 @@
 # create-scryme-app
 
+## 10.2.23
+
+### Patch Changes
+
+- 391ddac: Prepare release v10.2.8
+
 ## 10.2.21
 
 ### Patch Changes
