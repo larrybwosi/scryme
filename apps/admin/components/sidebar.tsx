@@ -8,6 +8,7 @@ import {
   BarChart3,
   CreditCard,
   Users,
+  Activity,
   Plug,
   Settings,
   LogOut,
@@ -25,6 +26,7 @@ const NAV_ITEMS = [
   { href: "/organizations", label: "Organizations", icon: Building2 },
   { href: "/billing", label: "Billing", icon: CreditCard },
   { href: "/users", label: "Users", icon: Users },
+  { href: "/activity", label: "User Activity", icon: Activity },
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/settings", label: "Settings", icon: Settings },
 ]
