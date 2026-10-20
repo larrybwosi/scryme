@@ -1,4 +1,3 @@
-import tech.scryme.app.data.dto.SwitchOrgRequestDto
 package tech.scryme.app.data.repository
 
 import android.os.Build
@@ -17,6 +16,7 @@ import tech.scryme.app.data.dto.PasskeyVerifyAuthenticationRequestDto
 import tech.scryme.app.data.dto.PasskeyVerifyRegistrationRequestDto
 import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.RegisterDeviceRequestDto
+import tech.scryme.app.data.dto.SwitchOrgRequestDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.repository.AuthRepository

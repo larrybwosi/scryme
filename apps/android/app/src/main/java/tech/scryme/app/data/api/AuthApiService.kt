@@ -1,5 +1,3 @@
-import tech.scryme.app.data.dto.SwitchOrgRequestDto
-import tech.scryme.app.data.dto.SwitchOrgResponseDto
 package tech.scryme.app.data.api
 
 import com.google.gson.JsonObject
@@ -22,6 +20,8 @@ import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.PosPairResponseDto
 import tech.scryme.app.data.dto.RegisterDeviceRequestDto
 import tech.scryme.app.data.dto.RegisterDeviceResponseDto
+import tech.scryme.app.data.dto.SwitchOrgRequestDto
+import tech.scryme.app.data.dto.SwitchOrgResponseDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.dto.TerminalLoginResponseDto
 import tech.scryme.app.data.dto.TokenExchangeRequestDto
