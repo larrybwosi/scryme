@@ -208,6 +208,24 @@ export async function createStaffShift(data: {
       if (!overlap.success) return overlap;
     }
 
+    if (data.locationId) {
+      const loc = await db.inventoryLocation.findFirst({
+        where: { id: data.locationId, organizationId: session!.organizationId },
+      });
+      if (!loc) {
+        return { success: false, error: "Location not found or belongs to another organization" };
+      }
+    }
+
+    if (data.departmentId) {
+      const dept = await db.department.findFirst({
+        where: { id: data.departmentId, organizationId: session!.organizationId },
+      });
+      if (!dept) {
+        return { success: false, error: "Department not found or belongs to another organization" };
+      }
+    }
+
     const shift = await db.staffShift.create({
       data: {
         memberId: data.memberId,
@@ -262,6 +280,24 @@ export async function updateStaffShift(
     const mergedEndTime = data.endTime !== undefined ? data.endTime : shift.endTime;
     const mergedIsActive = data.isActive !== undefined ? data.isActive : shift.isActive;
 
+    if (data.locationId) {
+      const loc = await db.inventoryLocation.findFirst({
+        where: { id: data.locationId, organizationId: session!.organizationId },
+      });
+      if (!loc) {
+        return { success: false, error: "Location not found or belongs to another organization" };
+      }
+    }
+
+    if (data.departmentId) {
+      const dept = await db.department.findFirst({
+        where: { id: data.departmentId, organizationId: session!.organizationId },
+      });
+      if (!dept) {
+        return { success: false, error: "Department not found or belongs to another organization" };
+      }
+    }
+
     if (mergedIsActive) {
       const overlap = await validateShiftOverlap(
         shift.memberId,
@@ -295,8 +331,10 @@ export async function updateStaffShift(
       }
     }
 
-    const updated = await db.staffShift.update({
-      where: { id: shiftId },
+    // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by organizationId
+    // because StaffShift lacks a composite unique constraint on [id, organizationId]
+    const result = await db.staffShift.updateMany({
+      where: { id: shiftId, organizationId: session!.organizationId },
       data: {
         dayOfWeek: data.dayOfWeek,
         startTime: data.startTime,
@@ -306,6 +344,14 @@ export async function updateStaffShift(
         ...(data.departmentId !== undefined ? { departmentId: data.departmentId } : {}),
         ...(data.roleTags !== undefined ? { roleTags: data.roleTags } : {}),
       },
+    });
+
+    if (result.count === 0) {
+      return { success: false, error: "Shift not found" };
+    }
+
+    const updated = await db.staffShift.findFirstOrThrow({
+      where: { id: shiftId, organizationId: session!.organizationId },
     });
 
     revalidatePath("/staff");
@@ -332,9 +378,15 @@ export async function deleteStaffShift(shiftId: string) {
       return { success: false, error: "Shift not found" };
     }
 
-    await db.staffShift.delete({
-      where: { id: shiftId },
+    // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by organizationId
+    // because StaffShift lacks a composite unique constraint on [id, organizationId]
+    const result = await db.staffShift.deleteMany({
+      where: { id: shiftId, organizationId: session!.organizationId },
     });
+
+    if (result.count === 0) {
+      return { success: false, error: "Shift not found" };
+    }
 
     revalidatePath("/staff");
     revalidatePath(`/staff/${shift.memberId}`);
@@ -866,8 +918,12 @@ export async function deleteStaffBreak(breakId: string) {
   if (!permission.success) return permission;
 
   try {
-    const b = await db.staffBreak.findUnique({
-      where: { id: breakId },
+    // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure break belongs to shift in session's organizationId
+    const b = await db.staffBreak.findFirst({
+      where: {
+        id: breakId,
+        shift: { organizationId: session!.organizationId },
+      },
       include: {
         shift: {
           select: {
@@ -878,12 +934,15 @@ export async function deleteStaffBreak(breakId: string) {
       },
     });
 
-    if (!b || b.shift.organizationId !== session!.organizationId) {
+    if (!b) {
       return { success: false, error: "Break not found" };
     }
 
-    await db.staffBreak.delete({
-      where: { id: breakId },
+    await db.staffBreak.deleteMany({
+      where: {
+        id: breakId,
+        shift: { organizationId: session!.organizationId },
+      },
     });
 
     revalidatePath("/staff");
@@ -1038,14 +1097,24 @@ export async function updateBranchLocationCoordinates(
   if (!permission.success) return permission;
 
   try {
-    const location = await db.inventoryLocation.update({
-      where: { id: locationId },
+    // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by organizationId
+    // because InventoryLocation lacks a composite unique constraint on [id, organizationId]
+    const updated = await db.inventoryLocation.updateMany({
+      where: { id: locationId, organizationId: session.organizationId },
       data: {
         latitude: data.latitude !== undefined ? data.latitude : undefined,
         longitude: data.longitude !== undefined ? data.longitude : undefined,
         radiusMeters: data.radiusMeters !== undefined ? data.radiusMeters : undefined,
         branchCode: data.branchCode !== undefined ? data.branchCode : undefined,
       },
+    });
+
+    if (updated.count === 0) {
+      return { success: false, error: "Location not found" };
+    }
+
+    const location = await db.inventoryLocation.findFirstOrThrow({
+      where: { id: locationId, organizationId: session.organizationId },
     });
 
     revalidatePath("/staff/shifts");
