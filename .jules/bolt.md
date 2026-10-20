@@ -37,3 +37,7 @@
 ## 2026-10-24 - [Unsafe Concurrency in Multi-Operation Services Within Interactive Prisma Transactions]
 **Learning:** Wrapping calls to complex services (like `InventoryMovementService.recordMovement`) in `Promise.all` inside an interactive Prisma transaction (`tx`) is unsafe when each call performs multi-step read-modify-write queries and inventory verification aggregations. Concurrent execution on the same transaction handle can trigger PostgreSQL deadlocks or race conditions on shared inventory stocks.
 **Action:** Avoid `Promise.all` over complex multi-query service methods inside active Prisma transaction callbacks (`tx`). Use batch database operations (like `createMany`) or sequential processing where strict order or row locking is required.
+
+## 2026-10-25 - [Phased Concurrency for Relational Entity Schema Seeding]
+**Learning:** Executing multi-step schema initialization (such as seeding CRM object definitions, fields, and relationships) sequentially introduces $O(N)$ network query roundtrips. Splitting execution into 2 distinct concurrent phases (Phase 1: `Promise.all` creating parent entities; Phase 2: `Promise.all` creating child fields and relationship definitions using parent IDs) reduces 27 sequential roundtrips down to 2 concurrent query phases.
+**Action:** When seeding relational schemas, structure operations into distinct dependency-ordered phases and execute each phase concurrently with `Promise.all`.
