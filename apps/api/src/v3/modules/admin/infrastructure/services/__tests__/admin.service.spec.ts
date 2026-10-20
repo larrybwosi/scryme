@@ -33,7 +33,7 @@ describe("AdminService", () => {
         update: vi.fn(),
         count: vi.fn(),
       },
-      oAuthClient: {
+      oauthClient: {
         findMany: vi.fn(),
         count: vi.fn(),
       },
@@ -462,7 +462,7 @@ describe("AdminService", () => {
       mockPrisma.client.organization.count.mockResolvedValue(3);
       mockPrisma.client.member.count.mockResolvedValue(15);
       mockPrisma.client.deviceRegistry.count.mockResolvedValue(5);
-      mockPrisma.client.oAuthClient.count.mockResolvedValue(2);
+      mockPrisma.client.oauthClient.count.mockResolvedValue(2);
 
       const result = await service.getStats();
 

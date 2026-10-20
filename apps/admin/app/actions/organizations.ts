@@ -300,7 +300,7 @@ export async function getPlatformStats() {
       db.organization.count({ where: { deletedAt: null } }),
       db.member.count({ where: { isActive: true, deletedAt: null } }),
       db.deviceRegistry.count({ where: { status: "ACTIVE" } }),
-      db.oAuthClient.count(),
+      db.oauthClient.count(),
     ]);
 
   return {

@@ -41,6 +41,11 @@ model User {
   referralsMade Referral[] @relation("ReferredBy")
   referredBy    Referral?  @relation("ReferredUser")
 
+  oauthClients       OauthClient[]
+  oauthRefreshTokens OauthRefreshToken[]
+  oauthAccessTokens  OauthAccessToken[]
+  oauthConsents      OauthConsent[]
+
   @@unique([username])
   @@map("user")
 }
@@ -91,6 +96,9 @@ model Session {
 
   activeOrganizationId String?
 
+  oauthRefreshTokens OauthRefreshToken[]
+  oauthAccessTokens  OauthAccessToken[]
+
   @@map("session")
 }
 
@@ -122,10 +130,13 @@ model Apikey {
 }
 
 model Jwks {
-  id         String   @id
+  id         String    @id
   publicKey  String
   privateKey String
   createdAt  DateTime
+  expiresAt  DateTime?
+  alg        String?
+  crv        String?
 
   @@map("jwks")
 }
@@ -144,7 +155,6 @@ enum RateLimitTier {
   HIGH       // 2000 req/min
   UNLIMITED
 }
-
 
 // API key usage logs for rate limiting and analytics
 model ApiKeyUsageLog {
@@ -174,79 +184,174 @@ model ApiKeyUsageLog {
   @@map("api_key_usage_log")
 }
 
-model OAuthClient {
-  id                      String   @id @default(cuid())
-  clientId                String   @unique
-  clientSecret            String?
-  name                    String?
-  icon                    String?
-  uri                     String?
-  contacts                String[] @default([])
-  tos                     String?
-  policy                  String?
-  softwareId              String?
-  softwareVersion         String?
-  softwareStatement       String?
-  redirectUris            String[]
-  postLogoutRedirectUris  String[] @default([])
-  responseTypes           String[] @default(["code"])
-  grantTypes              String[] @default(["authorization_code", "refresh_token"])
-  tokenEndpointAuthMethod String?  @default("client_secret_post")
-  public                  Boolean? @default(false)
-  disabled                Boolean? @default(false)
-  skipConsent             Boolean? @default(false)
-  enableEndSession        Boolean? @default(false)
-  requirePKCE             Boolean? @default(true)
-  userId                  String?
-  referenceId             String?
-  metadata                Json?
-  createdAt               DateTime @default(now())
-  updatedAt               DateTime @updatedAt
+model OauthClient {
+  id                               String    @id @default(cuid())
+  clientId                         String    @unique
+  clientSecret                     String?
+  clientDiscoveryId                String?
+  disabled                         Boolean?  @default(false)
+  skipConsent                      Boolean?
+  enableEndSession                 Boolean?
+  subjectType                      String?
+  scopes                           String[]
+  clientCredentialsScopes          String[]  @default([])
+  userId                           String?
+  user                             User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt                        DateTime? @default(now())
+  updatedAt                        DateTime? @updatedAt
+  name                             String?
+  uri                              String?
+  icon                             String?
+  contacts                         String[]  @default([])
+  tos                              String?
+  policy                           String?
+  softwareId                       String?
+  softwareVersion                  String?
+  softwareStatement                String?
+  redirectUris                     String[]
+  postLogoutRedirectUris           String[]  @default([])
+  backchannelLogoutUri             String?
+  backchannelLogoutSessionRequired Boolean?
+  tokenEndpointAuthMethod          String?
+  applicationType                  String?
+  jwks                             String?
+  jwksUri                          String?
+  grantTypes                       String[]  @default(["authorization_code", "refresh_token"])
+  responseTypes                    String[]  @default(["code"])
+  requirePKCE                      Boolean?  @default(true)
+  dpopBoundAccessTokens            Boolean?  @default(false)
+  referenceId                      String?
+  metadata                         Json?
+
+  refreshTokens                    OauthRefreshToken[]
+  accessTokens                     OauthAccessToken[]
+  consents                         OauthConsent[]
+  clientResources                  OauthClientResource[]
 
   @@map("oauth_client")
 }
 
-model OAuthRefreshToken {
-  id          String    @id @default(cuid())
-  token       String    @unique
-  clientId    String
-  userId      String
-  referenceId String?
-  sessionId   String?
-  scopes      String[]
-  authTime    DateTime?
-  revoked     DateTime?
-  expiresAt   DateTime
-  createdAt   DateTime  @default(now())
+model OauthResource {
+  id                            String                @id @default(cuid())
+  identifier                    String                @unique
+  name                          String
+  accessTokenTtl               Int?
+  refreshTokenTtl              Int?
+  signingAlgorithm              String?
+  signingKeyId                  String?
+  allowedScopes                 String[]
+  customClaims                  Json?
+  dpopBoundAccessTokensRequired Boolean?              @default(false)
+  disabled                      Boolean?              @default(false)
+  createdAt                     DateTime?             @default(now())
+  updatedAt                     DateTime?             @updatedAt
+  policyVersion                 Int?                  @default(1)
+  metadata                      Json?
 
+  clientResources               OauthClientResource[]
+
+  @@map("oauth_resource")
+}
+
+model OauthClientResource {
+  id         String        @id @default(cuid())
+  clientId   String
+  client     OauthClient   @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  resourceId String
+  resource   OauthResource @relation(fields: [resourceId], references: [identifier], onDelete: Cascade)
+  metadata   Json?
+  createdAt  DateTime?     @default(now())
+
+  @@unique([clientId, resourceId])
+  @@index([clientId])
+  @@index([resourceId])
+  @@map("oauth_client_resource")
+}
+
+model OauthRefreshToken {
+  id                      String             @id @default(cuid())
+  token                   String             @unique
+  clientId                String
+  client                  OauthClient        @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  sessionId               String?
+  session                 Session?           @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  userId                  String
+  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceId             String?
+  authorizationCodeId     String?
+  resources               String[]
+  requestedUserInfoClaims String[]
+  expiresAt               DateTime?
+  createdAt               DateTime?          @default(now())
+  revoked                 DateTime?
+  rotatedAt               DateTime?
+  rotationReplayResponse  String?
+  rotationReplayExpiresAt DateTime?
+  authTime                DateTime?
+  confirmation            Json?
+  scopes                  String[]
+
+  accessTokens            OauthAccessToken[]
+
+  @@index([clientId])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([authorizationCodeId])
   @@map("oauth_refresh_token")
 }
 
-model OAuthAccessToken {
-  id          String   @id @default(cuid())
-  token       String   @unique
-  clientId    String
-  userId      String?
-  referenceId String?
-  sessionId   String?
-  refreshId   String?
-  scopes      String[]
-  expiresAt   DateTime
-  createdAt   DateTime @default(now())
+model OauthAccessToken {
+  id                      String             @id @default(cuid())
+  token                   String?            @unique
+  clientId                String
+  client                  OauthClient        @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  sessionId               String?
+  session                 Session?           @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  userId                  String?
+  user                    User?              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceId             String?
+  authorizationCodeId     String?
+  resources               String[]
+  requestedUserInfoClaims String[]
+  refreshId               String?
+  refreshToken            OauthRefreshToken? @relation(fields: [refreshId], references: [id], onDelete: SetNull)
+  expiresAt               DateTime?
+  createdAt               DateTime?          @default(now())
+  revoked                 DateTime?
+  confirmation            Json?
+  scopes                  String[]
 
+  @@index([clientId])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([authorizationCodeId])
+  @@index([refreshId])
   @@map("oauth_access_token")
 }
 
-model OAuthConsent {
-  id          String   @id @default(cuid())
-  userId      String
-  clientId    String
-  referenceId String?
-  scopes      String[]
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+model OauthConsent {
+  id                      String      @id @default(cuid())
+  clientId                String
+  client                  OauthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  userId                  String?
+  user                    User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  referenceId             String?
+  resources               String[]
+  requestedUserInfoClaims String[]
+  scopes                  String[]
+  createdAt               DateTime?   @default(now())
+  updatedAt               DateTime?   @updatedAt
 
+  @@index([clientId])
+  @@index([userId])
   @@map("oauth_consent")
+}
+
+model OauthClientAssertion {
+  id        String   @id @default(cuid())
+  expiresAt DateTime
+
+  @@map("oauth_client_assertion")
 }
 
 model Passkey {
@@ -268,13 +373,15 @@ model Passkey {
   @@map("passkey")
 }
 
-
 model TwoFactor {
-  id          String   @id
-  secret      String
-  backupCodes String
-  userId      String
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id                      String    @id
+  secret                  String
+  backupCodes             String
+  userId                  String
+  user                    User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  verified                Boolean?  @default(true)
+  failedVerificationCount Int?      @default(0)
+  lockedUntil             DateTime?
 
   @@index([userId])
   @@map("two_factor")
