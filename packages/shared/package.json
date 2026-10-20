@@ -1,6 +1,6 @@
 {
   "name": "@repo/shared",
-  "version": "10.2.22",
+  "version": "10.2.23",
   "main": "./dist/index.js",
   "types": "./src/index.ts",
   "type": "module",

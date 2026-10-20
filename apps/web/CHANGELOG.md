@@ -1,5 +1,12 @@
 # web
 
+## 10.2.23
+
+### Patch Changes
+
+- Updated dependencies [391ddac]
+  - @scryme/sdk@10.2.23
+
 ## 10.2.21
 
 ### Patch Changes
