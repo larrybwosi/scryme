@@ -201,30 +201,12 @@ const LoginContent = () => {
     setIsLoading(true);
     setLoginStatus(null);
     try {
-      const result = await authClient.signIn.passkey({
-        fetchOptions: {
-          onSuccess: () => {
-            if (callbackUrl) {
-              router.push(callbackUrl);
-            } else {
-              router.push("/customers");
-            }
-          },
-          onError: (ctx: { error?: { message?: string } }) => {
-            setLoginStatus("error");
-            toast.error(ctx.error?.message || "Passkey authentication failed.");
-          },
-        },
-      });
-
-      if (result?.error) {
-        setLoginStatus("error");
-        toast.error(result.error.message || "Passkey authentication failed.");
-      }
+      const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.scryme.tech";
+      const targetCallback = callbackUrl || `${window.location.origin}/customers`;
+      window.location.href = `${authUrl}/sign-in?callbackURL=${encodeURIComponent(targetCallback)}`;
     } catch (error: any) {
       setLoginStatus("error");
       toast.error(error?.message || "Passkey authentication failed.");
-    } finally {
       setIsLoading(false);
     }
   };
