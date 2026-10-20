@@ -10,6 +10,7 @@ ALTER TABLE "two_factor" ADD COLUMN IF NOT EXISTS "lockedUntil" TIMESTAMP(3);
 
 -- AlterTable: oauth_client
 ALTER TABLE "oauth_client" ADD COLUMN IF NOT EXISTS "clientDiscoveryId" TEXT;
+ALTER TABLE "oauth_client" ADD COLUMN IF NOT EXISTS "public" BOOLEAN DEFAULT false;
 ALTER TABLE "oauth_client" ADD COLUMN IF NOT EXISTS "subjectType" TEXT;
 ALTER TABLE "oauth_client" ADD COLUMN IF NOT EXISTS "clientCredentialsScopes" TEXT[] DEFAULT ARRAY[]::TEXT[];
 ALTER TABLE "oauth_client" ADD COLUMN IF NOT EXISTS "backchannelLogoutUri" TEXT;

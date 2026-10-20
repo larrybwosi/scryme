@@ -190,6 +190,7 @@ model OauthClient {
   clientSecret                     String?
   clientDiscoveryId                String?
   disabled                         Boolean?  @default(false)
+  public                           Boolean?  @default(false)
   skipConsent                      Boolean?
   enableEndSession                 Boolean?
   subjectType                      String?
