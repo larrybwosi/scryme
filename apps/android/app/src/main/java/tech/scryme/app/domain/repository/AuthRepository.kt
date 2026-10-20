@@ -23,4 +23,6 @@ interface AuthRepository {
     suspend fun verifyPasskeyAuthentication(responseJson: String): Result<Unit>
     suspend fun listUserPasskeys(): Result<List<PasskeyItemDto>>
     suspend fun deletePasskey(id: String): Result<Unit>
+
+    suspend fun switchOrganization(organizationId: String): Result<AndroidMeResponseDto>
 }

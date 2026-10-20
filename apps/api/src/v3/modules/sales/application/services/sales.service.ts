@@ -26,6 +26,9 @@ export class SalesService {
       }
     }
 
+    const todayStart = new Date();
+    todayStart.setHours(0, 0, 0, 0);
+
     const [
       aggregateResult,
       customerCount,
@@ -36,6 +39,7 @@ export class SalesService {
       this.prisma.client.transaction.aggregate({
         where: {
           organizationId,
+          createdAt: { gte: todayStart },
           status: { notIn: ["CANCELLED", "FAILED", "DRAFT"] },
         },
         _sum: { finalTotal: true },

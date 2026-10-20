@@ -20,6 +20,8 @@ import tech.scryme.app.data.dto.PosPairRequestDto
 import tech.scryme.app.data.dto.PosPairResponseDto
 import tech.scryme.app.data.dto.RegisterDeviceRequestDto
 import tech.scryme.app.data.dto.RegisterDeviceResponseDto
+import tech.scryme.app.data.dto.SwitchOrgRequestDto
+import tech.scryme.app.data.dto.SwitchOrgResponseDto
 import tech.scryme.app.data.dto.TerminalLoginRequestDto
 import tech.scryme.app.data.dto.TerminalLoginResponseDto
 import tech.scryme.app.data.dto.TokenExchangeRequestDto
@@ -96,4 +98,9 @@ interface AuthApiService {
     suspend fun deletePasskey(
         @Body request: PasskeyDeleteRequestDto
     ): Response<JsonObject>
+
+    @POST("android/auth/switch-org")
+    suspend fun switchOrganization(
+        @Body request: SwitchOrgRequestDto
+    ): Response<V3ApiResponse<SwitchOrgResponseDto>>
 }
