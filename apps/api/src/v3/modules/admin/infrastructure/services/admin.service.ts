@@ -373,7 +373,7 @@ export class AdminService {
   // --- Connected Apps & System Logs ---
 
   async listConnectedApps() {
-    return this.prisma.client.oAuthClient.findMany({
+    return this.prisma.client.oauthClient.findMany({
       orderBy: { createdAt: "desc" },
     });
   }
@@ -435,7 +435,7 @@ export class AdminService {
       this.prisma.client.organization.count({ where: { deletedAt: null } }),
       this.prisma.client.member.count({ where: { isActive: true, deletedAt: null } }),
       this.prisma.client.deviceRegistry.count({ where: { status: "ACTIVE" } }),
-      this.prisma.client.oAuthClient.count(),
+      this.prisma.client.oauthClient.count(),
     ]);
 
     return {

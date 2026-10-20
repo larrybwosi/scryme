@@ -14,7 +14,7 @@ export class OAuthClientManagementUseCase {
       corsOrigins: dto.corsOrigins || [],
     };
 
-    const client = await db.oAuthClient.create({
+    const client = await db.oauthClient.create({
       data: {
         clientId,
         clientSecret,
@@ -42,7 +42,7 @@ export class OAuthClientManagementUseCase {
   }
 
   async listClients(userId?: string) {
-    const clients = await db.oAuthClient.findMany({
+    const clients = await db.oauthClient.findMany({
       where: userId ? { userId } : {},
       orderBy: { createdAt: "desc" },
     });
@@ -59,7 +59,7 @@ export class OAuthClientManagementUseCase {
   }
 
   async getClientById(id: string, userId?: string) {
-    const client = await db.oAuthClient.findFirst({
+    const client = await db.oauthClient.findFirst({
       where: {
         OR: [{ id }, { clientId: id }],
         ...(userId ? { userId } : {}),
@@ -97,7 +97,7 @@ export class OAuthClientManagementUseCase {
       ...(userId ? { userId } : {}),
     };
 
-    await db.oAuthClient.updateMany({
+    await db.oauthClient.updateMany({
       where: whereClause,
       data: {
         ...(dto.name ? { name: dto.name } : {}),
@@ -112,7 +112,7 @@ export class OAuthClientManagementUseCase {
       },
     });
 
-    const updated = await db.oAuthClient.findFirstOrThrow({
+    const updated = await db.oauthClient.findFirstOrThrow({
       where: whereClause,
     });
 
@@ -129,7 +129,7 @@ export class OAuthClientManagementUseCase {
 
     // Threat: BOLA/IDOR vulnerability allowing unauthorized deletion of foreign OAuth clients.
     // Mitigation: Use deleteMany scoped strictly by both id and userId for database-level owner isolation.
-    await db.oAuthClient.deleteMany({
+    await db.oauthClient.deleteMany({
       where: {
         id: existing.id,
         ...(userId ? { userId } : {}),
@@ -151,14 +151,14 @@ export class OAuthClientManagementUseCase {
       ...(userId ? { userId } : {}),
     };
 
-    await db.oAuthClient.updateMany({
+    await db.oauthClient.updateMany({
       where: whereClause,
       data: {
         clientSecret: newSecret,
       },
     });
 
-    const updated = await db.oAuthClient.findFirstOrThrow({
+    const updated = await db.oauthClient.findFirstOrThrow({
       where: whereClause,
     });
 

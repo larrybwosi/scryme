@@ -5,7 +5,7 @@ import { db } from "@repo/db";
 
 vi.mock("@repo/db", () => ({
   db: {
-    oAuthClient: {
+    oauthClient: {
       create: vi.fn(),
       findMany: vi.fn(),
       findFirst: vi.fn(),
@@ -35,7 +35,7 @@ describe("OAuthClientManagementUseCase", () => {
       metadata: { scopes: ["user.profile"], corsOrigins: ["https://app.com"] },
     };
 
-    vi.mocked(db.oAuthClient.create).mockResolvedValue(mockCreated as any);
+    vi.mocked(db.oauthClient.create).mockResolvedValue(mockCreated as any);
 
     const result = await useCase.createClient("user_123", {
       name: "Test App",
@@ -44,7 +44,7 @@ describe("OAuthClientManagementUseCase", () => {
       corsOrigins: ["https://app.com"],
     });
 
-    expect(db.oAuthClient.create).toHaveBeenCalled();
+    expect(db.oauthClient.create).toHaveBeenCalled();
     expect(result.name).toBe("Test App");
     expect(result.scopes).toEqual(["user.profile"]);
   });
@@ -60,11 +60,11 @@ describe("OAuthClientManagementUseCase", () => {
       },
     ];
 
-    vi.mocked(db.oAuthClient.findMany).mockResolvedValue(mockClients as any);
+    vi.mocked(db.oauthClient.findMany).mockResolvedValue(mockClients as any);
 
     const result = await useCase.listClients("user_123");
 
-    expect(db.oAuthClient.findMany).toHaveBeenCalledWith({
+    expect(db.oauthClient.findMany).toHaveBeenCalledWith({
       where: { userId: "user_123" },
       orderBy: { createdAt: "desc" },
     });
@@ -80,9 +80,9 @@ describe("OAuthClientManagementUseCase", () => {
       metadata: { scopes: ["user.profile"] },
     };
 
-    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
-    vi.mocked(db.oAuthClient.updateMany).mockResolvedValue({ count: 1 } as any);
-    vi.mocked(db.oAuthClient.findFirstOrThrow).mockResolvedValue({
+    vi.mocked(db.oauthClient.findFirst).mockResolvedValue(existingClient as any);
+    vi.mocked(db.oauthClient.updateMany).mockResolvedValue({ count: 1 } as any);
+    vi.mocked(db.oauthClient.findFirstOrThrow).mockResolvedValue({
       ...existingClient,
       name: "Updated App Name",
     } as any);
@@ -92,7 +92,7 @@ describe("OAuthClientManagementUseCase", () => {
     });
 
     expect(result.name).toBe("Updated App Name");
-    expect(db.oAuthClient.updateMany).toHaveBeenCalledWith({
+    expect(db.oauthClient.updateMany).toHaveBeenCalledWith({
       where: { id: "client_1", userId: "user_123" },
       data: expect.objectContaining({
         name: "Updated App Name",
@@ -108,9 +108,9 @@ describe("OAuthClientManagementUseCase", () => {
       metadata: { scopes: ["user.profile"] },
     };
 
-    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
-    vi.mocked(db.oAuthClient.updateMany).mockResolvedValue({ count: 1 } as any);
-    vi.mocked(db.oAuthClient.findFirstOrThrow).mockResolvedValue({
+    vi.mocked(db.oauthClient.findFirst).mockResolvedValue(existingClient as any);
+    vi.mocked(db.oauthClient.updateMany).mockResolvedValue({ count: 1 } as any);
+    vi.mocked(db.oauthClient.findFirstOrThrow).mockResolvedValue({
       ...existingClient,
       clientSecret: "sec_newsecret123",
     } as any);
@@ -118,7 +118,7 @@ describe("OAuthClientManagementUseCase", () => {
     const result = await useCase.rotateSecret("client_1", "user_123");
 
     expect(result.clientSecret).toMatch(/^sec_/);
-    expect(db.oAuthClient.updateMany).toHaveBeenCalledWith({
+    expect(db.oauthClient.updateMany).toHaveBeenCalledWith({
       where: { id: "client_1", userId: "user_123" },
       data: {
         clientSecret: expect.stringMatching(/^sec_/),
@@ -133,19 +133,19 @@ describe("OAuthClientManagementUseCase", () => {
       userId: "user_123",
     };
 
-    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(existingClient as any);
-    vi.mocked(db.oAuthClient.deleteMany).mockResolvedValue({ count: 1 } as any);
+    vi.mocked(db.oauthClient.findFirst).mockResolvedValue(existingClient as any);
+    vi.mocked(db.oauthClient.deleteMany).mockResolvedValue({ count: 1 } as any);
 
     const result = await useCase.deleteClient("client_1", "user_123");
 
     expect(result.success).toBe(true);
-    expect(db.oAuthClient.deleteMany).toHaveBeenCalledWith({
+    expect(db.oauthClient.deleteMany).toHaveBeenCalledWith({
       where: { id: "client_1", userId: "user_123" },
     });
   });
 
   it("should throw NotFoundException if OAuth client is not found", async () => {
-    vi.mocked(db.oAuthClient.findFirst).mockResolvedValue(null);
+    vi.mocked(db.oauthClient.findFirst).mockResolvedValue(null);
 
     await expect(useCase.getClientById("invalid_id", "user_123")).rejects.toThrow(
       NotFoundException,
