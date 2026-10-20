@@ -13,7 +13,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Business
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
@@ -315,6 +317,142 @@ fun ProfileScreen(
                                     style = MaterialTheme.typography.bodySmall,
                                     color = MaterialTheme.colorScheme.error
                                 )
+                            }
+                        }
+                    }
+                }
+
+                // Dedicated Organization Switcher Card Section
+                item {
+                    Card(
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            Row(
+                                modifier = Modifier.fillMaxWidth(),
+                                horizontalArrangement = Arrangement.SpaceBetween,
+                                verticalAlignment = Alignment.CenterVertically
+                            ) {
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Business,
+                                        contentDescription = null,
+                                        tint = MaterialTheme.colorScheme.primary
+                                    )
+                                    Text(
+                                        text = "Active Organization",
+                                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+
+                                if (state.isSwitchingOrg) {
+                                    CircularProgressIndicator(modifier = Modifier.size(18.dp))
+                                }
+                            }
+
+                            state.activeOrganization?.let { activeOrg ->
+                                Surface(
+                                    color = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.4f),
+                                    shape = RoundedCornerShape(10.dp),
+                                    modifier = Modifier.fillMaxWidth()
+                                ) {
+                                    Row(
+                                        modifier = Modifier.padding(12.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        horizontalArrangement = Arrangement.SpaceBetween
+                                    ) {
+                                        Column {
+                                            Text(
+                                                text = activeOrg.name ?: "Organization",
+                                                style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                                            )
+                                            Text(
+                                                text = "Slug: ${activeOrg.slug ?: activeOrg.id ?: ""}",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                            )
+                                        }
+                                        Icon(
+                                            imageVector = Icons.Default.CheckCircle,
+                                            contentDescription = "Active",
+                                            tint = Emerald500
+                                        )
+                                    }
+                                }
+                            }
+
+                            if (state.memberships.isNotEmpty()) {
+                                HorizontalDivider(modifier = Modifier.padding(vertical = 4.dp))
+                                Text(
+                                    text = "Switch Organization Workspace",
+                                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                                )
+
+                                Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                                    state.memberships.forEach { membership ->
+                                        val isCurrent = membership.organizationId == state.activeOrganization?.id || membership.slug == state.activeOrganization?.slug
+                                        Surface(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .clickable(enabled = !isCurrent && !state.isSwitchingOrg) {
+                                                    membership.organizationId?.let { orgId ->
+                                                        viewModel.switchOrganization(orgId)
+                                                    }
+                                                },
+                                            shape = RoundedCornerShape(8.dp),
+                                            color = if (isCurrent) MaterialTheme.colorScheme.primary.copy(alpha = 0.1f)
+                                                    else MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+                                        ) {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(12.dp),
+                                                horizontalArrangement = Arrangement.SpaceBetween,
+                                                verticalAlignment = Alignment.CenterVertically
+                                            ) {
+                                                Column {
+                                                    Text(
+                                                        text = membership.name ?: "Workspace",
+                                                        style = MaterialTheme.typography.bodyMedium.copy(
+                                                            fontWeight = if (isCurrent) FontWeight.Bold else FontWeight.Medium
+                                                        )
+                                                    )
+                                                    Text(
+                                                        text = "Role: ${membership.role ?: "Member"}",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                                                    )
+                                                }
+
+                                                if (isCurrent) {
+                                                    Text(
+                                                        text = "Current",
+                                                        style = MaterialTheme.typography.labelSmall,
+                                                        color = MaterialTheme.colorScheme.primary,
+                                                        fontWeight = FontWeight.Bold
+                                                    )
+                                                } else {
+                                                    Icon(
+                                                        imageVector = Icons.Default.ChevronRight,
+                                                        contentDescription = "Switch to org",
+                                                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                                        modifier = Modifier.size(18.dp)
+                                                    )
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
                             }
                         }
                     }

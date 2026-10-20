@@ -1,3 +1,5 @@
+import tech.scryme.app.data.dto.SwitchOrgRequestDto
+import tech.scryme.app.data.dto.SwitchOrgResponseDto
 package tech.scryme.app.data.api
 
 import com.google.gson.JsonObject
@@ -96,4 +98,9 @@ interface AuthApiService {
     suspend fun deletePasskey(
         @Body request: PasskeyDeleteRequestDto
     ): Response<JsonObject>
+
+    @POST("android/auth/switch-org")
+    suspend fun switchOrganization(
+        @Body request: SwitchOrgRequestDto
+    ): Response<V3ApiResponse<SwitchOrgResponseDto>>
 }

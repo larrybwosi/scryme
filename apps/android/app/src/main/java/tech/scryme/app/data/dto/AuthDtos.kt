@@ -170,3 +170,14 @@ data class PasskeyItemDto(
 data class PasskeyDeleteRequestDto(
     @SerializedName("id") val id: String
 )
+
+
+data class SwitchOrgRequestDto(
+    @SerializedName("organizationId") val organizationId: String
+)
+
+data class SwitchOrgResponseDto(
+    @SerializedName("success") val success: Boolean = true,
+    @SerializedName("activeOrganization") val activeOrganization: OrganizationDetailDto? = null,
+    @SerializedName("member") val member: MemberUserDto? = null
+)

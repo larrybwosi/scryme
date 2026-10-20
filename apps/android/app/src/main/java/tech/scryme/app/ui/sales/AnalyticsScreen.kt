@@ -83,7 +83,7 @@ fun AnalyticsScreen(
             }
         }
 
-        // Total Balance Card
+        // Today's Sales Card
         item {
             Card(
                 modifier = Modifier.fillMaxWidth(),
@@ -118,7 +118,7 @@ fun AnalyticsScreen(
                                 )
                             }
                             Text(
-                                text = "Total Revenue",
+                                text = "Today's Sales",
                                 fontSize = 13.sp,
                                 color = Color(0xFF94A3B8)
                             )

@@ -1,3 +1,4 @@
+import tech.scryme.app.data.dto.SwitchOrgRequestDto
 package tech.scryme.app.data.repository
 
 import android.os.Build
@@ -445,6 +446,21 @@ class AuthRepositoryImpl @Inject constructor(
                 Result.success(Unit)
             } else {
                 Result.failure(Exception("Failed to delete passkey: ${response.message()}"))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun switchOrganization(organizationId: String): Result<AndroidMeResponseDto> {
+        return try {
+            val response = authApiService.switchOrganization(SwitchOrgRequestDto(organizationId = organizationId))
+            if (response.isSuccessful && response.body()?.success == true) {
+                // Re-validate session to fetch full updated me context (user, member, org, memberships, locations)
+                validateSession()
+            } else {
+                val errorMsg = response.body()?.error?.message ?: response.message()
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)

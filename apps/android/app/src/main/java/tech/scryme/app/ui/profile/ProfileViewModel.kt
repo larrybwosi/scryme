@@ -8,6 +8,8 @@ import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
+import tech.scryme.app.data.dto.MembershipDto
+import tech.scryme.app.data.dto.OrganizationDetailDto
 import tech.scryme.app.data.dto.PasskeyItemDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.UserProfile
@@ -27,10 +29,13 @@ sealed interface ProfileUiState {
     object Loading : ProfileUiState
     data class Success(
         val profile: UserProfile,
+        val activeOrganization: OrganizationDetailDto? = null,
+        val memberships: List<MembershipDto> = emptyList(),
         val preferences: UserPreferencesState = UserPreferencesState(),
         val passkeys: List<PasskeyItemDto> = emptyList(),
         val isEditing: Boolean = false,
         val isUpdating: Boolean = false,
+        val isSwitchingOrg: Boolean = false,
         val passkeyActionMessage: String? = null,
         val updateError: String? = null
     ) : ProfileUiState
@@ -77,16 +82,39 @@ class ProfileViewModel @Inject constructor(
     fun loadProfile() {
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
-            val orgSlug = sessionManager.getOrgSlug()
-            val memberId = sessionManager.getMemberId()
-            if (orgSlug.isNullOrEmpty() || memberId.isNullOrEmpty()) {
-                _uiState.value = ProfileUiState.Error("Organization member profile context missing. Please ensure your account has staff membership in this organization.")
-                return@launch
-            }
+            val meResult = authRepository.validateSession()
+            meResult.fold(
+                onSuccess = { meData ->
+                    val user = meData.user
+                    val member = meData.member
+                    val activeOrg = meData.activeOrganization
+                    val memberships = meData.memberships ?: emptyList()
 
-            val result = profileRepository.getMemberProfile(orgSlug, memberId)
-            result.fold(
-                onSuccess = { profile ->
+                    val orgSlug = sessionManager.getOrgSlug() ?: activeOrg?.slug ?: "default"
+                    val memberId = member?.id ?: sessionManager.getMemberId()
+
+                    var profile: UserProfile? = null
+
+                    if (!memberId.isNullOrEmpty()) {
+                        val profileResult = profileRepository.getMemberProfile(orgSlug, memberId)
+                        profile = profileResult.getOrNull()
+                    }
+
+                    if (profile == null) {
+                        profile = UserProfile(
+                            id = memberId ?: user?.id ?: "user_profile",
+                            organizationId = activeOrg?.id ?: "",
+                            userId = user?.id ?: "",
+                            name = user?.name ?: sessionManager.getUserName() ?: "User",
+                            email = user?.email ?: sessionManager.getUserEmail(),
+                            phone = null,
+                            role = member?.role ?: memberships.firstOrNull { it.organizationId == activeOrg?.id }?.role ?: "MEMBER",
+                            status = sessionManager.dutyStatusFlow.first(),
+                            isActive = true,
+                            avatarUrl = sessionManager.userAvatarUrlFlow.first()
+                        )
+                    }
+
                     sessionManager.updateUserProfile(
                         name = profile.name,
                         email = profile.email,
@@ -106,12 +134,33 @@ class ProfileViewModel @Inject constructor(
 
                     _uiState.value = ProfileUiState.Success(
                         profile = profile,
+                        activeOrganization = activeOrg,
+                        memberships = memberships,
                         preferences = prefs,
                         passkeys = passkeysList
                     )
                 },
                 onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "Failed to load profile")
+                    _uiState.value = ProfileUiState.Error(error.message ?: "Failed to load organization context & profile")
+                }
+            )
+        }
+    }
+
+    fun switchOrganization(organizationId: String) {
+        val currentState = _uiState.value as? ProfileUiState.Success ?: return
+        viewModelScope.launch {
+            _uiState.value = currentState.copy(isSwitchingOrg = true, updateError = null)
+            val result = authRepository.switchOrganization(organizationId)
+            result.fold(
+                onSuccess = {
+                    loadProfile()
+                },
+                onFailure = { err ->
+                    _uiState.value = currentState.copy(
+                        isSwitchingOrg = false,
+                        updateError = err.message ?: "Failed to switch organization"
+                    )
                 }
             )
         }
