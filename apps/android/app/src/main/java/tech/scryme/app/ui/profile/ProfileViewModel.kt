@@ -254,8 +254,8 @@ class ProfileViewModel @Inject constructor(
         val currentState = _uiState.value as? ProfileUiState.Success ?: return
         viewModelScope.launch {
             _uiState.value = currentState.copy(isUpdating = true, updateError = null)
-            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
-            val memberId = sessionManager.getMemberId() ?: return@launch
+            val orgSlug = sessionManager.getOrgSlug() ?: currentState.activeOrganization?.slug ?: return@launch
+            val memberId = sessionManager.getMemberId() ?: currentState.profile.id
 
             val result = profileRepository.updateMemberProfile(
                 orgSlug = orgSlug,
@@ -311,9 +311,10 @@ class ProfileViewModel @Inject constructor(
     }
 
     fun updateDutyStatus(status: String) {
+        val currentState = _uiState.value as? ProfileUiState.Success ?: return
         viewModelScope.launch {
-            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
-            val memberId = sessionManager.getMemberId() ?: return@launch
+            val orgSlug = sessionManager.getOrgSlug() ?: currentState.activeOrganization?.slug ?: return@launch
+            val memberId = sessionManager.getMemberId() ?: currentState.profile.id
             val result = profileRepository.updateMemberStatus(orgSlug, memberId, status)
             result.fold(
                 onSuccess = { updatedProfile ->

@@ -165,6 +165,62 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun switchOrganization_success_validatesSessionAndUpdatesOrg() = runBlocking {
+        val switchOrgResponse = SwitchOrgResponseDto(
+            success = true,
+            activeOrganization = OrganizationDetailDto(id = "org_2", slug = "org-two", name = "Org Two")
+        )
+
+        coEvery {
+            authApiService.switchOrganization(SwitchOrgRequestDto(organizationId = "org_2"))
+        } returns Response.success(V3ApiResponse(success = true, data = switchOrgResponse))
+
+        coEvery { sessionManager.getAccessToken() } returns "jwt-valid-token"
+        coEvery {
+            authApiService.getAndroidMe()
+        } returns Response.success(V3ApiResponse(
+            success = true,
+            data = AndroidMeResponseDto(
+                user = UserDetailDto(id = "usr_1", email = "user@scryme.tech", name = "Scryme Admin"),
+                activeOrganization = OrganizationDetailDto(id = "org_2", slug = "org-two", name = "Org Two")
+            )
+        ))
+
+        val result = repository.switchOrganization("org_2")
+
+        assertTrue(result.isSuccess)
+        assertEquals("Org Two", result.getOrNull()?.activeOrganization?.name)
+        coVerify {
+            sessionManager.saveSession(
+                accessToken = "jwt-valid-token",
+                memberToken = "jwt-valid-token",
+                orgSlug = "org-two",
+                locationId = any(),
+                userId = "usr_1",
+                memberId = any(),
+                userName = "Scryme Admin",
+                userEmail = "user@scryme.tech",
+                orgName = "Org Two",
+                orgLogo = any(),
+                orgCurrency = any(),
+                orgCurrencySymbol = any()
+            )
+        }
+    }
+
+    @Test
+    fun switchOrganization_failure_returnsError() = runBlocking {
+        coEvery {
+            authApiService.switchOrganization(SwitchOrgRequestDto(organizationId = "org_invalid"))
+        } returns Response.success(V3ApiResponse(success = false, error = V3ApiError(message = "Organization not found")))
+
+        val result = repository.switchOrganization("org_invalid")
+
+        assertTrue(result.isFailure)
+        assertEquals("Organization not found", result.exceptionOrNull()?.message)
+    }
+
+    @Test
     fun logout_clearsSession() = runBlocking {
         repository.logout()
         coVerify { sessionManager.clearSession() }
