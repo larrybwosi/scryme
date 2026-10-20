@@ -102,57 +102,12 @@ function LoginPageContent({
     setIsLoading(true);
     setLoginStatus(null);
     try {
-      const result = await authClient.signIn.passkey({
-        fetchOptions: {
-          onSuccess: () => {
-            if (callbackUrl) {
-              router.push(callbackUrl);
-            } else {
-              router.push("/dashboard");
-            }
-          },
-          onError: (ctx: { error?: { message?: string; status?: number } }) => {
-            setLoginStatus("error");
-            const isRateLimit =
-              ctx.error?.status === 429 ||
-              ctx.error?.message?.includes("TOO_MANY_REQUESTS") ||
-              ctx.error?.message?.includes("429") ||
-              ctx.error?.message?.includes("Too many requests");
-            toast.error(
-              isRateLimit
-                ? "Too many login attempts. Please wait a moment and try again."
-                : ctx.error?.message || "Passkey authentication failed.",
-            );
-          },
-        },
-      });
-
-      if (result?.error) {
-        setLoginStatus("error");
-        const isRateLimit =
-          result.error.status === 429 ||
-          result.error.message?.includes("TOO_MANY_REQUESTS") ||
-          result.error.message?.includes("429") ||
-          result.error.message?.includes("Too many requests");
-        toast.error(
-          isRateLimit
-            ? "Too many login attempts. Please wait a moment and try again."
-            : result.error.message || "Passkey authentication failed.",
-        );
-      }
+      const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || "https://auth.scryme.tech";
+      const targetCallback = callbackUrl || `${window.location.origin}/dashboard`;
+      window.location.href = `${authUrl}/sign-in?callbackURL=${encodeURIComponent(targetCallback)}`;
     } catch (error: any) {
       setLoginStatus("error");
-      const isRateLimit =
-        error?.status === 429 ||
-        error?.message?.includes("TOO_MANY_REQUESTS") ||
-        error?.message?.includes("429") ||
-        error?.message?.includes("Too many requests");
-      toast.error(
-        isRateLimit
-          ? "Too many login attempts. Please wait a moment and try again."
-          : error?.message || "Passkey authentication failed.",
-      );
-    } finally {
+      toast.error(error?.message || "Passkey authentication failed.");
       setIsLoading(false);
     }
   };

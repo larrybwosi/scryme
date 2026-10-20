@@ -80,7 +80,11 @@ export const authOptions: BetterAuthOptions = {
   plugins: [
     jwt(),
     bearer(),
-    passkey(),
+    passkey({
+      rpID: "auth.scryme.tech",
+      rpName: "Scryme",
+      origin: "https://auth.scryme.tech",
+    }),
     twoFactor({
       issuer: "Scryme",
       otpOptions: {
