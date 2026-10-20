@@ -395,8 +395,8 @@ function getRawEnv() {
 
 
   // PostHog Server Configuration
-  POSTHOG_PERSONAL_API_KEY: z.string().optional(),
-  POSTHOG_PROJECT_ID: z.string().optional(),
+    POSTHOG_PERSONAL_API_KEY: process.env.POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID: process.env.POSTHOG_PROJECT_ID,
 
   // Resend Email Configuration
     RESEND_API_KEY: process.env.RESEND_API_KEY,
