@@ -24,7 +24,9 @@ import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.EmptyStateCard
 import tech.scryme.app.ui.components.ErrorMessageCard
 import tech.scryme.app.ui.components.ListSkeleton
+import tech.scryme.app.ui.components.MemberAvatar
 import tech.scryme.app.ui.components.MemberDropdown
+import tech.scryme.app.ui.components.QrScannerDialog
 import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
@@ -144,6 +146,7 @@ fun ScheduleScreen(
                     )
                     1 -> TeamRosterList(
                         shifts = state.teamShifts,
+                        members = state.members,
                         onAssessShift = { shiftToAssess = it }
                     )
                     2 -> ShiftTradesList(
@@ -237,6 +240,7 @@ fun MyShiftsList(
 @Composable
 fun TeamRosterList(
     shifts: List<StaffShift>,
+    members: List<UserProfile> = emptyList(),
     onAssessShift: (StaffShift) -> Unit
 ) {
     if (shifts.isEmpty()) {
@@ -246,7 +250,8 @@ fun TeamRosterList(
     } else {
         LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
             items(shifts, key = { it.id }) { shift ->
-                TeamShiftCard(shift = shift, onAssessShift = { onAssessShift(shift) })
+                val member = members.find { it.id == shift.memberId }
+                TeamShiftCard(shift = shift, member = member, onAssessShift = { onAssessShift(shift) })
             }
         }
     }
@@ -402,10 +407,12 @@ fun ShiftCard(
 @Composable
 fun TeamShiftCard(
     shift: StaffShift,
+    member: UserProfile? = null,
     onAssessShift: () -> Unit
 ) {
     val dayName = getDayName(shift.dayOfWeek)
     val assessment = shift.assessment
+    val memberName = member?.name ?: "Member: ${shift.memberId.take(8)}..."
 
     Card(
         modifier = Modifier.fillMaxWidth(),
@@ -418,17 +425,33 @@ fun TeamShiftCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
-                    Text(
-                        text = "Member: ${shift.memberId.take(8)}... - $dayName",
-                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MemberAvatar(
+                        avatarUrl = member?.avatarUrl,
+                        name = member?.name ?: "",
+                        modifier = Modifier.size(36.dp)
                     )
-                    Spacer(modifier = Modifier.height(4.dp))
-                    Text(
-                        text = "Shift Time: ${shift.startTime} - ${shift.endTime}",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
+                    Column {
+                        Text(
+                            text = memberName,
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold)
+                        )
+                        if (!member?.role.isNullOrBlank()) {
+                            Text(
+                                text = member!!.role!!,
+                                style = MaterialTheme.typography.labelSmall,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                        }
+                        Text(
+                            text = "$dayName (${shift.startTime} - ${shift.endTime})",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
                 }
 
                 OutlinedButton(
@@ -850,6 +873,7 @@ fun CheckInAttendanceDialog(
     var branchCode by remember { mutableStateOf("") }
     var latitudeText by remember { mutableStateOf("40.7128") }
     var longitudeText by remember { mutableStateOf("-74.0060") }
+    var showQrScanner by remember { mutableStateOf(false) }
 
     StyledFormDialog(
         title = "Member Check-In",
@@ -861,7 +885,7 @@ fun CheckInAttendanceDialog(
                 val lng = longitudeText.toDoubleOrNull()
                 onSubmit(selectedLocationId.ifBlank { null }, null, lat, lng)
             } else {
-                onSubmit(null, branchCode.ifBlank { null }, null, null)
+                onSubmit(selectedLocationId.ifBlank { null }, branchCode.ifBlank { null }, null, null)
             }
         }
     ) {
@@ -938,8 +962,55 @@ fun CheckInAttendanceDialog(
             }
         } else {
             Text(
-                text = "Scan or enter the branch code from the store display QR code:",
-                style = MaterialTheme.typography.bodySmall
+                text = "Select Branch Location (Optional):",
+                style = MaterialTheme.typography.labelSmall
+            )
+
+            if (locations.isNotEmpty()) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 2.dp)
+                ) {
+                    RadioButton(
+                        selected = selectedLocationId.isBlank(),
+                        onClick = { selectedLocationId = "" }
+                    )
+                    Text(text = "Auto-detect from QR / None", style = MaterialTheme.typography.bodySmall)
+                }
+                locations.forEach { loc ->
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 2.dp)
+                    ) {
+                        RadioButton(
+                            selected = selectedLocationId == loc.id,
+                            onClick = { selectedLocationId = loc.id }
+                        )
+                        Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Button(
+                onClick = { showQrScanner = true },
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp)
+            ) {
+                Text("📷 Launch Camera QR Scanner", fontSize = 13.sp)
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            Text(
+                text = "Or enter the branch code manually:",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
             )
 
             OutlinedTextField(
@@ -954,5 +1025,15 @@ fun CheckInAttendanceDialog(
                 modifier = Modifier.fillMaxWidth()
             )
         }
+    }
+
+    if (showQrScanner) {
+        QrScannerDialog(
+            onDismissRequest = { showQrScanner = false },
+            onQrCodeScanned = { scannedCode ->
+                branchCode = scannedCode
+                showQrScanner = false
+            }
+        )
     }
 }
