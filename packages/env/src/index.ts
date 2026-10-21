@@ -159,6 +159,10 @@ const serverSchema = z.object({
   OPENOBSERVE_STREAM: z.string().optional().default("pos-events"),
   OPENOBSERVE_AUTH_TOKEN: z.string().optional(),
 
+  // PostHog Server Configuration
+  POSTHOG_PERSONAL_API_KEY: z.string().optional(),
+  POSTHOG_PROJECT_ID: z.string().optional(),
+
   // Resend Email Configuration
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("Scryme <no-reply@scryme.tech>"),
@@ -201,6 +205,7 @@ const clientSchema = z.object({
   // PostHog Config
   NEXT_PUBLIC_POSTHOG_KEY: z.string().optional(),
   NEXT_PUBLIC_POSTHOG_HOST: z.string().default("https://us.i.posthog.com"),
+  NEXT_PUBLIC_POSTHOG_EMBED_URL: z.string().optional(),
 
   // Sentry Public Configuration
   NEXT_PUBLIC_SENTRY_DSN: z.string().optional(),
@@ -389,6 +394,10 @@ function getRawEnv() {
 
 
 
+  // PostHog Server Configuration
+    POSTHOG_PERSONAL_API_KEY: process.env.POSTHOG_PERSONAL_API_KEY,
+    POSTHOG_PROJECT_ID: process.env.POSTHOG_PROJECT_ID,
+
   // Resend Email Configuration
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
@@ -408,6 +417,7 @@ function getRawEnv() {
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
+    NEXT_PUBLIC_POSTHOG_EMBED_URL: process.env.NEXT_PUBLIC_POSTHOG_EMBED_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_SITE_SANITY_DATASET:
       process.env.NEXT_PUBLIC_SITE_SANITY_DATASET,
