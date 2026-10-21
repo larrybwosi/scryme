@@ -72,11 +72,11 @@ model OrganizationIntegration {
 
 // Maps internal entities (Products, Customers) to their external IDs
 model ExternalMapping {
-  id                        String                  @id @default(cuid())
+  id                        String                   @id @default(cuid())
   organizationIntegrationId String?
   organizationIntegration   OrganizationIntegration? @relation(fields: [organizationIntegrationId], references: [id], onDelete: Cascade)
 
-  organizationId            String? // Added for direct org relation
+  organizationId String? // Added for direct org relation
 
   // Your internal entity information
   internalEntityType String? // e.g., "Product", "Customer", "Order", "Invoice"
@@ -84,13 +84,13 @@ model ExternalMapping {
   internalEntityId   String? // Kept for backward compatibility
 
   // The external entity information
-  externalId       String  // The ID from the external system (renamed from externalEntityId)
+  externalId       String // The ID from the external system (renamed from externalEntityId)
   externalEntityId String? // Kept for backward compatibility
-  externalData     Json?   // Optional: Cache some external data here
+  externalData     Json? // Optional: Cache some external data here
 
   // Added fields for ERPNext integration
-  entityType       String? // e.g., "CUSTOMER", "PRODUCT", "ORDER", "INVOICE"
-  provider         String? // e.g., "ERPNEXT", "SHOPIFY", "QUICKBOOKS"
+  entityType String? // e.g., "CUSTOMER", "PRODUCT", "ORDER", "INVOICE"
+  provider   String? // e.g., "ERPNEXT", "SHOPIFY", "QUICKBOOKS"
 
   lastSyncedAt DateTime @updatedAt
 

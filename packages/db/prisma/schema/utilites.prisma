@@ -1,35 +1,35 @@
 model Attachment {
-  id          String   @id @default(cuid())
-  fileName    String?  // Optional, as a note won't have a file name
-  fileUrl     String?  // Optional, as a note won't have a URL
-  shortCode   String?  @unique
+  id          String    @id @default(cuid())
+  fileName    String? // Optional, as a note won't have a file name
+  fileUrl     String? // Optional, as a note won't have a URL
+  shortCode   String?   @unique
   shortUrl    String?
-  mimeType    String   // e.g., "image/jpeg", "application/pdf", "text/markdown"
-  isPublic    Boolean  @default(true)
+  mimeType    String // e.g., "image/jpeg", "application/pdf", "text/markdown"
+  isPublic    Boolean   @default(true)
   sizeBytes   Int?
   description String?
-  content     String?  @db.Text // New field for markdown content
+  content     String?   @db.Text // New field for markdown content
   expiresAt   DateTime? // Optional expiry date for public links
 
-  uploadedAt         DateTime @default(now())
-  memberId           String   // Who uploaded/created it
-  uploadedByMember   Member?  @relation("MemberUploadedAttachments", fields: [memberId], references: [id])
+  uploadedAt       DateTime @default(now())
+  memberId         String // Who uploaded/created it
+  uploadedByMember Member?  @relation("MemberUploadedAttachments", fields: [memberId], references: [id])
 
-  documentMemberId   String?
-  documentMember     Member?  @relation("MemberDocuments", fields: [documentMemberId], references: [id])
+  documentMemberId String?
+  documentMember   Member? @relation("MemberDocuments", fields: [documentMemberId], references: [id])
 
-  transactionId      String?
-  transactions        Transaction?      @relation(fields: [transactionId], references: [id])
+  transactionId String?
+  transactions  Transaction? @relation(fields: [transactionId], references: [id])
 
   paymentId String?
   payment   Payment? @relation(fields: [paymentId], references: [id])
 
-  purchaseId  String?
-  purchase    Purchase?  @relation(fields: [purchaseId], references: [id])
-  expenseId  String?
-  expense    Expense?  @relation(fields: [expenseId], references: [id])
-  stockBatchId  String?
-  stockBatch    StockBatch?  @relation(fields: [stockBatchId], references: [id])
+  purchaseId   String?
+  purchase     Purchase?   @relation(fields: [purchaseId], references: [id])
+  expenseId    String?
+  expense      Expense?    @relation(fields: [expenseId], references: [id])
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id])
 
   fulfillmentId String?
   fulfillment   Fulfillment? @relation(fields: [fulfillmentId], references: [id])
@@ -54,23 +54,23 @@ model GlobalSetting {
 }
 
 model CashDrawer {
-  id             String             @id @default(cuid())
-  name           String // Name for the drawer (e.g., "Till 1", "Main Register")
-  locationId     String? // Optional: Link to the physical location/terminal
-  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  memberId       String
-  member         Member             @relation(fields: [memberId], references: [id])
-  openingAmount  Decimal            @db.Decimal(10, 2)
+  id                String             @id @default(cuid())
+  name              String // Name for the drawer (e.g., "Till 1", "Main Register")
+  locationId        String? // Optional: Link to the physical location/terminal
+  location          InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  memberId          String
+  member            Member             @relation(fields: [memberId], references: [id])
+  openingAmount     Decimal            @db.Decimal(10, 2)
   closingAmount     Decimal?           @db.Decimal(10, 2)
   expectedAmount    Decimal?           @db.Decimal(10, 2) // Calculated based on sales and opening amount
   discrepancy       Decimal?           @db.Decimal(10, 2) // closingAmount - expectedAmount
   discrepancyReason String?
   notes             String?
-  openedAt       DateTime           @default(now())
-  closedAt       DateTime?
-  status         DrawerStatus       @default(OPEN)
-  createdAt      DateTime           @default(now())
-  updatedAt      DateTime           @updatedAt
+  openedAt          DateTime           @default(now())
+  closedAt          DateTime?
+  status            DrawerStatus       @default(OPEN)
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
 
   payments Payment[]
 
@@ -123,24 +123,24 @@ enum AuditEntityType {
   // --- Access & Identity ---
   USER
   MEMBER
-  ROLE                // Recommended: Creating/Editing roles
-  PERMISSION          // Recommended: Granting/Revoking permissions
+  ROLE // Recommended: Creating/Editing roles
+  PERMISSION // Recommended: Granting/Revoking permissions
   AUTH_CHECK
 
   // --- Organization & Config ---
   ORGANIZATION
-  SETTINGS            // Keep for general toggles
-  UNIT_DEFINITION     // NEW: SystemUnit, OrganizationUnit
-  UNIT_CONVERSION     // NEW: Unit conversions logic
-  ADDRESS             // NEW: Address changes
+  SETTINGS // Keep for general toggles
+  UNIT_DEFINITION // NEW: SystemUnit, OrganizationUnit
+  UNIT_CONVERSION // NEW: Unit conversions logic
+  ADDRESS // NEW: Address changes
 
   // --- Financials ---
-  TRANSACTION         // General Ledger impact
-  PAYMENT_GATEWAY     // NEW: Specific Mpesa/Stripe logs
+  TRANSACTION // General Ledger impact
+  PAYMENT_GATEWAY // NEW: Specific Mpesa/Stripe logs
   EXPENSE
   BUDGET
   RECURRING_EXPENSE
-  TAX                 // Recommended: Tax rates/rules
+  TAX // Recommended: Tax rates/rules
 
   // --- Operations (Inventory/Sales) ---
   PRODUCT
@@ -158,42 +158,42 @@ enum AuditEntityType {
   LOYALTY
 
   // --- System ---
-  ATTACHMENT          // NEW: File uploads/deletions
-  NOTIFICATION        // NEW: Broadcasts
+  ATTACHMENT // NEW: File uploads/deletions
+  NOTIFICATION // NEW: Broadcasts
   PROJECT
   ATTENDANCE
   OTHER
 }
 
 model AuditLog {
-  id             String          @id @default(cuid())
+  id String @id @default(cuid())
 
   // --- Context ---
   organizationId String?
-  organization   Organization?   @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
   // --- The Actor (Who did it?) ---
-  memberId       String?
-  member         Member?         @relation(fields: [memberId], references: [id], onDelete: SetNull)
+  memberId   String?
+  member     Member? @relation(fields: [memberId], references: [id], onDelete: SetNull)
   // SNAPSHOT: Store these strings in case the Member record is deleted entirely
-  actorName      String?         // e.g., "John Doe"
-  actorEmail     String?         // e.g., "john@company.com"
+  actorName  String? // e.g., "John Doe"
+  actorEmail String? // e.g., "john@company.com"
 
   // --- The Action (What happened?) ---
-  action         AuditLogAction
-  entityType     AuditEntityType
-  entityId       String          // The ID of the target (TransactionID, ExpenseID, etc.)
+  action     AuditLogAction
+  entityType AuditEntityType
+  entityId   String // The ID of the target (TransactionID, ExpenseID, etc.)
 
   // --- The Evidence ---
-  description    String
-  details        Json?           // Old vs New values (Diff)
+  description String
+  details     Json? // Old vs New values (Diff)
 
   // --- Technical Metadata ---
-  ipAddress      String?
-  userAgent      String?
-  status         AuditLogStatus   @default(SUCCESS)
-  severity       AuditLogSeverity @default(INFO)
-  performedAt    DateTime         @default(now())
+  ipAddress   String?
+  userAgent   String?
+  status      AuditLogStatus   @default(SUCCESS)
+  severity    AuditLogSeverity @default(INFO)
+  performedAt DateTime         @default(now())
 
   // Optimized Indexing for "Show me history of Invoice #123"
   @@index([entityType, entityId])
@@ -201,7 +201,6 @@ model AuditLog {
   @@index([memberId])
   // Optimized Indexing for "Show me activity in Org X"
   @@index([organizationId, performedAt])
-
   @@map("audit_log")
 }
 
@@ -235,23 +234,22 @@ model MpesaPaymentRequest {
   @@index([reference])
 }
 
-
 // Base unit types following international standards (SI and common commercial units)
 enum UnitType {
-  MASS        // Weight measurements (kg, g, lb, oz)
-  VOLUME      // Volume measurements (L, mL, gal, oz)
-  LENGTH      // Length measurements (m, cm, ft, in)
-  AREA        // Area measurements (m², ft²)
-  COUNT       // Discrete units (piece, dozen, pack)
-  TIME        // Time measurements (hour, minute, day)
+  MASS // Weight measurements (kg, g, lb, oz)
+  VOLUME // Volume measurements (L, mL, gal, oz)
+  LENGTH // Length measurements (m, cm, ft, in)
+  AREA // Area measurements (m², ft²)
+  COUNT // Discrete units (piece, dozen, pack)
+  TIME // Time measurements (hour, minute, day)
   TEMPERATURE // Temperature measurements (°C, °F, K)
-  ENERGY      // Energy measurements (cal, kJ, kWh)
-  CUSTOM      // Business-specific custom units
+  ENERGY // Energy measurements (cal, kJ, kWh)
+  CUSTOM // Business-specific custom units
 }
 
 // Industry categories for filtering and context
 enum IndustryCategory {
-  UNIVERSAL   // Common across all industries
+  UNIVERSAL // Common across all industries
   FOOD_SERVICE
   RETAIL
   MANUFACTURING
@@ -269,8 +267,8 @@ model SystemUnit {
   updatedAt DateTime @updatedAt
 
   // Core identifiers
-  name         String @unique // e.g., "Kilogram", "Liter", "Piece"
-  symbol       String @unique // e.g., "kg", "L", "pc"
+  name         String  @unique // e.g., "Kilogram", "Liter", "Piece"
+  symbol       String  @unique // e.g., "kg", "L", "pc"
   abbreviation String? // Alternative abbreviation if needed
   pluralName   String? // e.g., "Kilograms", "Liters" for display
 
@@ -299,19 +297,19 @@ model SystemUnit {
   customUnitReferences OrganizationUnit[] @relation("BaseSystemUnit")
 
   // Consolidated product relations
-  productVariantBase      ProductVariant[]     @relation("VariantBaseUnit")
-  productVariantStocking  ProductVariant[]     @relation("VariantStockingUnit")
-  variantSellingUnits     VariantSellingUnit[]
-  stockBatches            StockBatch[]        @relation("StockBatchSystemUnit")
-  supplierPackagingUnits  ProductSupplier[]   @relation("SupplierPackagingUnit")
-  purchaseItems           PurchaseItem[]      @relation("PIOrderUnit")
-  transactionItems        TransactionItem[]
+  productVariantBase     ProductVariant[]     @relation("VariantBaseUnit")
+  productVariantStocking ProductVariant[]     @relation("VariantStockingUnit")
+  variantSellingUnits    VariantSellingUnit[]
+  stockBatches           StockBatch[]         @relation("StockBatchSystemUnit")
+  supplierPackagingUnits ProductSupplier[]    @relation("SupplierPackagingUnit")
+  purchaseItems          PurchaseItem[]       @relation("PIOrderUnit")
+  transactionItems       TransactionItem[]
 
   // Recipe and batch management
   recipes           Recipe[]           @relation("RecipeYieldSystemUnit")
   batches           Batch[]            @relation("BatchSystemUnit")
   templates         Template[]         @relation("TemplateSystemUnit")
-  recipeIngredients RecipeIngredient[]  @relation("RecipeIngredientSystemUnit")
+  recipeIngredients RecipeIngredient[] @relation("RecipeIngredientSystemUnit")
 
   @@index([type])
   @@index([category])
@@ -321,9 +319,9 @@ model SystemUnit {
 
 // Organization-specific custom units
 model OrganizationUnit {
-  id             String   @id @default(cuid())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -352,13 +350,13 @@ model OrganizationUnit {
   conversionsTo   OrgUnitConversion[] @relation("OrgToUnit")
 
   // Product relations for custom units
-  productVariantBase      ProductVariant[]     @relation("VariantOrgBaseUnit")
-  productVariantStocking  ProductVariant[]     @relation("VariantOrgStockingUnit")
-  variantSellingUnits     VariantSellingUnit[] @relation("OrgSellingUnit")
-  stockBatches            StockBatch[]         @relation("StockBatchOrgUnit")
-  supplierPackagingUnits  ProductSupplier[]    @relation("SupplierOrgPackagingUnit")
-  purchaseItems           PurchaseItem[]       @relation("OrgPurchaseUnit")
-  transactionItems        TransactionItem[]    @relation("OrgTransactionUnit")
+  productVariantBase     ProductVariant[]     @relation("VariantOrgBaseUnit")
+  productVariantStocking ProductVariant[]     @relation("VariantOrgStockingUnit")
+  variantSellingUnits    VariantSellingUnit[] @relation("OrgSellingUnit")
+  stockBatches           StockBatch[]         @relation("StockBatchOrgUnit")
+  supplierPackagingUnits ProductSupplier[]    @relation("SupplierOrgPackagingUnit")
+  purchaseItems          PurchaseItem[]       @relation("OrgPurchaseUnit")
+  transactionItems       TransactionItem[]    @relation("OrgTransactionUnit")
 
   // Recipe and batch management
   recipes           Recipe[]           @relation("RecipeYieldOrgUnit")
@@ -375,9 +373,9 @@ model OrganizationUnit {
 
 // Conversions between organization custom units
 model OrgUnitConversion {
-  id             String   @id @default(cuid())
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  id             String       @id @default(cuid())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -463,7 +461,6 @@ model ProductUnitConversion {
   @@map("product_unit_conversion")
 }
 
-
 // ===================================
 // ADDRESS MODEL
 // ===================================
@@ -513,20 +510,20 @@ model Address {
 }
 
 model PosReleaseBinary {
-  id          String   @id @default(cuid())
-  version     String
-  platform    String   // "windows", "macos", "linux"
-  variant     String   // "retail", "restaurant", "supermarket", "pharmacy", "standalone"
-  fileName    String
-  fileUrl     String
-  storageKey  String
-  sizeBytes   BigInt?
-  mimeType    String?
-  sha256      String?
-  releaseTag  String
-  isLatest    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  version    String
+  platform   String // "windows", "macos", "linux"
+  variant    String // "retail", "restaurant", "supermarket", "pharmacy", "standalone"
+  fileName   String
+  fileUrl    String
+  storageKey String
+  sizeBytes  BigInt?
+  mimeType   String?
+  sha256     String?
+  releaseTag String
+  isLatest   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@unique([platform, variant, version])
   @@index([platform, variant, isLatest])
@@ -535,7 +532,7 @@ model PosReleaseBinary {
 
 model SystemDocumentSetting {
   id           String   @id @default(cuid())
-  documentType String   // "INVOICE", "RECEIPT", "WAYBILL", "DELIVERY_NOTE"
+  documentType String // "INVOICE", "RECEIPT", "WAYBILL", "DELIVERY_NOTE"
   templateId   String   @default("") // Empty string for category-level setting, or specific templateId
   isEnabled    Boolean  @default(false)
   updatedAt    DateTime @updatedAt

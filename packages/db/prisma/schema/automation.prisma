@@ -13,7 +13,7 @@ model WorkflowEngineDefinition {
   description String?
   triggerType WorkflowTriggerType @default(EVENT) // EVENT, WEBHOOK, SCHEDULED, MANUAL
   config      Json // Configuration parameters (thresholds, email targets, etc.)
-  isActive    Boolean @default(true)
+  isActive    Boolean             @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -51,8 +51,8 @@ model WorkflowEngineExecution {
 
   startedAt   DateTime?
   completedAt DateTime?
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   jobs      WorkflowEngineJob[]
   auditLogs WorkflowEngineAuditLog[]
@@ -82,20 +82,20 @@ model WorkflowEngineJob {
   definitionId String
   definition   WorkflowEngineDefinition @relation(fields: [definitionId], references: [id], onDelete: Cascade)
 
-  handler      String // Handler identifier, e.g. "lowstock_alert", "customer_onboarding", "outgoing_webhook"
-  payload      Json
-  status       WorkflowJobStatus @default(QUEUED)
-  attempts     Int               @default(0)
-  maxAttempts  Int               @default(5)
-  backoffMs    Int               @default(1000)
-  nextRunAt    DateTime          @default(now())
-  lockedBy     String?
-  lockedAt     DateTime?
-  lastError    String?
+  handler     String // Handler identifier, e.g. "lowstock_alert", "customer_onboarding", "outgoing_webhook"
+  payload     Json
+  status      WorkflowJobStatus @default(QUEUED)
+  attempts    Int               @default(0)
+  maxAttempts Int               @default(5)
+  backoffMs   Int               @default(1000)
+  nextRunAt   DateTime          @default(now())
+  lockedBy    String?
+  lockedAt    DateTime?
+  lastError   String?
 
-  processedAt  DateTime?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
+  processedAt DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   auditLogs WorkflowEngineAuditLog[]
 
@@ -122,12 +122,12 @@ model WorkflowEngineWebhook {
   definitionId String?
   definition   WorkflowEngineDefinition? @relation(fields: [definitionId], references: [id], onDelete: SetNull)
 
-  name         String
-  direction    WebhookDirection @default(INCOMING)
-  endpointUrl  String // URL for outgoing or secret token endpoint for incoming
-  secret       String? // Signing secret or verification header
-  headers      Json? // Custom HTTP headers for outgoing webhooks
-  isActive     Boolean          @default(true)
+  name        String
+  direction   WebhookDirection @default(INCOMING)
+  endpointUrl String // URL for outgoing or secret token endpoint for incoming
+  secret      String? // Signing secret or verification header
+  headers     Json? // Custom HTTP headers for outgoing webhooks
+  isActive    Boolean          @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

@@ -1,10 +1,10 @@
 // --- Standalone POS Management ---
 
 model StandaloneSetupKey {
-  id        String   @id @default(cuid())
-  name      String   // Human-readable name for the intended device
-  deviceId  String   // Human-assigned ID (e.g., "POS-001")
-  token     String   @unique // Secure random token (redeemable)
+  id       String @id @default(cuid())
+  name     String // Human-readable name for the intended device
+  deviceId String // Human-assigned ID (e.g., "POS-001")
+  token    String @unique // Secure random token (redeemable)
 
   expiresAt DateTime
   usedAt    DateTime?
@@ -16,34 +16,34 @@ model StandaloneSetupKey {
 }
 
 model StandaloneDevice {
-  id             String   @id @default(cuid())
-  name           String
-  assignedId     String   // Human-assigned ID from the setup key
+  id         String @id @default(cuid())
+  name       String
+  assignedId String // Human-assigned ID from the setup key
 
   // Hardware identifiers
-  machineId      String   @unique
-  fingerprint    String?
-  serialNumber   String?
+  machineId    String  @unique
+  fingerprint  String?
+  serialNumber String?
 
   organizationId String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: SetNull)
 
-  status         DeviceStatus @default(ACTIVE)
+  status DeviceStatus @default(ACTIVE)
 
-  keys           StandaloneDeviceKey[]
+  keys StandaloneDeviceKey[]
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@map("standalone_device")
 }
 
 model StandaloneDeviceKey {
-  id        String   @id @default(cuid())
-  key       String   @unique // Shorter random alphanumeric key
+  id  String @id @default(cuid())
+  key String @unique // Shorter random alphanumeric key
 
-  deviceId  String
-  device    StandaloneDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
+  deviceId String
+  device   StandaloneDevice @relation(fields: [deviceId], references: [id], onDelete: Cascade)
 
   isActive  Boolean  @default(true)
   expiresAt DateTime

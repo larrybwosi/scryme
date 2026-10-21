@@ -281,17 +281,18 @@ model CartItem {
   cart   Cart   @relation(fields: [cartId], references: [id], onDelete: Cascade)
 
   productId String?
-  product   Product? @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
+  product   Product?        @relation("ProductToCartItems", fields: [productId], references: [id], onDelete: Cascade)
   variantId String?
   variant   ProductVariant? @relation("VariantToCartItems", fields: [variantId], references: [id], onDelete: Cascade)
 
-  serviceId String?
+  serviceId      String?
   bookingDetails Json? // Holds scheduledStartTime, staffIds, resourceIds, notes
 
-  quantity  Int    @default(1)
+  quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
+
 enum CartStatus {
   ACTIVE
   CHECKED_OUT
@@ -300,18 +301,18 @@ enum CartStatus {
 }
 
 model Favorite {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  customerId     String
-  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  productId      String
-  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([customerId, productId])
   @@index([organizationId])
@@ -321,23 +322,23 @@ model Favorite {
 }
 
 model ProductReview {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  customerId     String
-  customer       Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  customerId String
+  customer   Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
 
-  productId      String
-  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
 
-  rating         Int      @default(5)
-  comment        String?  @db.Text
+  rating  Int     @default(5)
+  comment String? @db.Text
 
-  isVisible      Boolean  @default(true)
+  isVisible Boolean @default(true)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([customerId])

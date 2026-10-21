@@ -121,7 +121,7 @@ model Transaction {
   attachments           Attachment[]
   invoices              Invoice[]
   campaignEvents        CampaignEvent[]
-  ecommerceOrderMapping EcommerceOrderMapping? @relation("TransactionEcommerceMapping") // Back-relation for e-commerce order mappings
+  ecommerceOrderMapping EcommerceOrderMapping?   @relation("TransactionEcommerceMapping") // Back-relation for e-commerce order mappings
   loyaltyVouchers       LoyaltyVoucher[]
 
   // ---  QUOTES ---
@@ -159,7 +159,7 @@ model TransactionServiceItem {
   serviceId String
   service   Service @relation(fields: [serviceId], references: [id], onDelete: Restrict)
 
-  bookingId String? @unique
+  bookingId String?         @unique
   booking   ServiceBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
   // Snapshot data
@@ -485,11 +485,11 @@ model Fulfillment {
   pickupLocation   InventoryLocation? @relation(fields: [pickupLocationId], references: [id])
 
   // --- Logistics & Driver ---
-  driverId String?
+  driverId           String?
   quantityHandedOver Int?
   quantityDelivered  Int?
   isReconciled       Boolean @default(false)
-  driver   Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
+  driver             Driver? @relation(fields: [driverId], references: [id], onDelete: SetNull)
 
   trackingNumber String?
   carrier        String?
@@ -506,9 +506,7 @@ model Fulfillment {
   receivedBy String?
 
   // Security for digital/offline handovers
-  confirmationToken     String? // Random code generated on dispatch
-
-
+  confirmationToken String? // Random code generated on dispatch
 
   confirmedByCustomerAt DateTime? // When the code was entered/verified
 

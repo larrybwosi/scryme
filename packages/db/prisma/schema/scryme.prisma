@@ -3,10 +3,10 @@ model ScrymeConfiguration {
   organizationId String       @unique
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  workspaceId   String?  @unique
-  workspaceSlug String?  @unique
+  workspaceId   String? @unique
+  workspaceSlug String? @unique
 
-  channelMappings Json?  // Map operation keys (e.g. po_alerts, stock_alerts) to channel slugs/IDs
+  channelMappings Json? // Map operation keys (e.g. po_alerts, stock_alerts) to channel slugs/IDs
 
   isActive Boolean @default(true)
 
@@ -23,22 +23,22 @@ model ScrymeMessage {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  workspaceSlug  String
-  channelSlug    String
-  messageId      String       @unique // The ID returned by Scryme API
-  threadId       String?      // If this message belongs to a thread
+  workspaceSlug String
+  channelSlug   String
+  messageId     String  @unique // The ID returned by Scryme API
+  threadId      String? // If this message belongs to a thread
 
-  content        String?      @db.Text
-  senderId       String?      // Dealio Member ID of the sender if internal
-  recipientId    String?      // Dealio Member ID of the recipient if DM
+  content     String? @db.Text
+  senderId    String? // Dealio Member ID of the sender if internal
+  recipientId String? // Dealio Member ID of the recipient if DM
 
-  eventType      String?      // e.g., "APPROVAL_REQUEST", "NOTIFICATION", "HITL_PAUSE"
-  relatedId      String?      // ID of the related entity (e.g., ApprovalRequest ID)
+  eventType String? // e.g., "APPROVAL_REQUEST", "NOTIFICATION", "HITL_PAUSE"
+  relatedId String? // ID of the related entity (e.g., ApprovalRequest ID)
 
-  metadata       Json?        // Additional context
+  metadata Json? // Additional context
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([relatedId])

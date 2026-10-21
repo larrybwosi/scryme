@@ -32,20 +32,20 @@ model StockBatch {
   receivedDate  DateTime  @default(now())
 
   // Unit of this batch (can be bulk like Carton or base like Piece)
-  systemUnitId  String?
-  systemUnit    SystemUnit?       @relation("StockBatchSystemUnit", fields: [systemUnitId], references: [id], onDelete: Restrict)
-  orgUnitId     String?
-  orgUnit       OrganizationUnit? @relation("StockBatchOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
+  systemUnitId String?
+  systemUnit   SystemUnit?       @relation("StockBatchSystemUnit", fields: [systemUnitId], references: [id], onDelete: Restrict)
+  orgUnitId    String?
+  orgUnit      OrganizationUnit? @relation("StockBatchOrgUnit", fields: [orgUnitId], references: [id], onDelete: Restrict)
 
-  organizationId String
-  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  allocations    InventoryAllocation[]
-  adjustments    StockAdjustment[]
-  movements      StockMovement[]
-  atachments     Attachment[]
+  organizationId   String
+  organization     Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  allocations      InventoryAllocation[]
+  adjustments      StockAdjustment[]
+  movements        StockMovement[]
+  atachments       Attachment[]
   fulfillmentItems FulfillmentItem[]
-  stockTakeItems StockTakeItem[]
-  transferItems  StockTransferItem[]
+  stockTakeItems   StockTakeItem[]
+  transferItems    StockTransferItem[]
 
   supplierId String?
   supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
@@ -65,18 +65,18 @@ model StockBatch {
   assemblyId String?
   assembly   Assembly? @relation(fields: [assemblyId], references: [id], onDelete: SetNull)
 
-  isQuarantined    Boolean @default(false)
-  quarantineReason String?
+  isQuarantined     Boolean                      @default(false)
+  quarantineReason  String?
   consumedInBatches BatchIngredientConsumption[]
-  qualityIncidents   QualityIncident[]
+  qualityIncidents  QualityIncident[]
 
-  isRecalled       Boolean @default(false)
-  recallId         String?
-  recall           Recall? @relation(fields: [recallId], references: [id], onDelete: SetNull)
+  isRecalled Boolean @default(false)
+  recallId   String?
+  recall     Recall? @relation(fields: [recallId], references: [id], onDelete: SetNull)
 
-  assemblyItems    AssemblyItem[]
-  serialNumbers    SerialNumber[]
-  qcResults        QCResult[]
+  assemblyItems AssemblyItem[]
+  serialNumbers SerialNumber[]
+  qcResults     QCResult[]
 
   @@index([expiryDate])
   @@index([receivedDate])
@@ -136,26 +136,26 @@ model ProductVariantStock {
 }
 
 model SerialNumber {
-  id             String         @id @default(cuid())
-  serialNumber   String
-  variantId      String
-  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  id           String         @id @default(cuid())
+  serialNumber String
+  variantId    String
+  variant      ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
-  stockBatchId   String?
-  stockBatch     StockBatch?    @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
 
-  locationId     String?
-  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  status         SerialNumberStatus @default(IN_STOCK)
+  status SerialNumberStatus @default(IN_STOCK)
 
   organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  movements      StockMovement[] @relation("MovementSerialNumbers")
+  movements StockMovement[] @relation("MovementSerialNumbers")
 
   @@unique([organizationId, serialNumber])
   @@index([variantId])
@@ -203,7 +203,7 @@ model StockMovement {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  serialNumbers  SerialNumber[] @relation("MovementSerialNumbers")
+  serialNumbers SerialNumber[] @relation("MovementSerialNumbers")
 
   // Stock Reconciliation Relations
   reconciliationLinks MovementReconciliationLink[]
@@ -241,7 +241,7 @@ model StockAdjustment {
 
   // Approval details
   approvedById String?
-  approvedBy   Member? @relation("AdjustmentApprover", fields: [approvedById], references: [id], onDelete: SetNull)
+  approvedBy   Member?   @relation("AdjustmentApprover", fields: [approvedById], references: [id], onDelete: SetNull)
   approvedAt   DateTime?
 
   movement       StockMovement?
@@ -264,33 +264,33 @@ enum AdjustmentStatus {
 
 // Assembly/Kitting for Retail (Mirrors Bakery Recipes)
 model Assembly {
-  id             String         @id @default(cuid())
-  assemblyNumber String         @unique
+  id             String  @id @default(cuid())
+  assemblyNumber String  @unique
   name           String
-  description    String?        @db.Text
+  description    String? @db.Text
 
   // The resulting product variant
-  variantId      String
-  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
-  quantity       Decimal        @db.Decimal(10, 2)
+  quantity Decimal @db.Decimal(10, 2)
 
-  status         AssemblyStatus @default(PLANNED)
+  status AssemblyStatus @default(PLANNED)
 
-  startedAt      DateTime?
-  completedAt    DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
 
   organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  memberId       String
-  member         Member         @relation(fields: [memberId], references: [id])
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id])
 
-  items          AssemblyItem[]
+  items           AssemblyItem[]
   producedBatches StockBatch[]
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([variantId])
@@ -298,21 +298,21 @@ model Assembly {
 }
 
 model AssemblyItem {
-  id             String         @id @default(cuid())
-  assemblyId     String
-  assembly       Assembly       @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  assemblyId String
+  assembly   Assembly @relation(fields: [assemblyId], references: [id], onDelete: Cascade)
 
-  variantId      String
-  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
   // Quantity used for this assembly instance
-  quantity       Decimal        @db.Decimal(10, 2)
+  quantity Decimal @db.Decimal(10, 2)
 
   // Specific batch used if tracked
-  stockBatchId   String?
-  stockBatch     StockBatch?    @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
 
-  createdAt      DateTime       @default(now())
+  createdAt DateTime @default(now())
 
   @@index([assemblyId])
   @@index([variantId])
@@ -502,8 +502,8 @@ model StockTransfer {
   receivedBy   Member? @relation("ReceivedByMember", fields: [receivedById], references: [id], onDelete: SetNull)
 
   stockRequestId String?
-  stockRequest   StockRequest? @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
-  items StockTransferItem[]
+  stockRequest   StockRequest?       @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
+  items          StockTransferItem[]
 
   @@unique([organizationId, transferNumber])
   @@index([organizationId, status])

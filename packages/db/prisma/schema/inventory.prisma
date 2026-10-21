@@ -1,18 +1,18 @@
 model Category {
-  id             String       @id @default(cuid())
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  name           String
-  description    String?
-  parentId       String?
-  parent         Category?    @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Restrict)
-  subcategories  Category[]   @relation("CategoryToSubcategory")
-  products       Product[]
+  id                String             @id @default(cuid())
+  createdAt         DateTime           @default(now())
+  updatedAt         DateTime           @updatedAt
+  name              String
+  description       String?
+  parentId          String?
+  parent            Category?          @relation("CategoryToSubcategory", fields: [parentId], references: [id], onDelete: Restrict)
+  subcategories     Category[]         @relation("CategoryToSubcategory")
+  products          Product[]
   cycleCountConfigs CycleCountConfig[]
-  color          String?
-  code           String       @unique
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  color             String?
+  code              String             @unique
+  organizationId    String
+  organization      Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([organizationId, name])
   @@index([name])
@@ -61,29 +61,29 @@ model Product {
   loyaltyPointsOverride Int? // Specific points for this product, overrides default calculation
 
   // Relations
-  variants        ProductVariant[]
-  variantStock    ProductVariantStock[]
-  suppliers       ProductSupplier[]
-  unitConversions ProductUnitConversion[] @relation
+  variants          ProductVariant[]
+  variantStock      ProductVariantStock[]
+  suppliers         ProductSupplier[]
+  unitConversions   ProductUnitConversion[]   @relation
   ecommerceMappings EcommerceProductMapping[] @relation("EcommerceProductMappings")
-  reorderRules ReorderRule[]
-  favorites       Favorite[]
-  reviews         ProductReview[]
+  reorderRules      ReorderRule[]
+  favorites         Favorite[]
+  reviews           ProductReview[]
 
-  customFields    Json?
+  customFields Json?
 
-  organizationId       String
-  organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  cartItems      CartItem[]   @relation("ProductToCartItems")
 
+  @@unique([organizationId, barcode])
+  @@unique([organizationId, slug])
   @@index([name])
   @@index([sku])
   @@index([slug])
   @@index([organizationId])
   @@index([organizationId, id])
   @@index([organizationId, isArchived])
-  cartItems       CartItem[] @relation("ProductToCartItems")
-  @@unique([organizationId, barcode])
-  @@unique([organizationId, slug])
   @@index([defaultLocationId])
 }
 
@@ -116,9 +116,9 @@ model ProductVariant {
   variantStocks    ProductVariantStock[]
   suppliers        ProductSupplier[]
 
-  priceListItems   PriceListItem[]
-  pricingRules     PricingRule[]
-  bundleItems      PricingBundleItem[]
+  priceListItems PriceListItem[]
+  pricingRules   PricingRule[]
+  bundleItems    PricingBundleItem[]
 
   // Loyalty Points Override for this specific variant
   pointsOnPurchase      Int?
@@ -148,25 +148,25 @@ model ProductVariant {
   usedInRecipes RecipeIngredient[]
 
   // Expiration defaults
-  defaultShelfLifeDays   Int?    // Default shelf life for this product
-  requiresExpiryTracking Boolean @default(true) // Some products might not need tracking
-  expiryWarningDays      Int?    @default(2) // Days before expiry to trigger warning
-  requiresSerialNumber   Boolean @default(false)
+  defaultShelfLifeDays   Int? // Default shelf life for this product
+  requiresExpiryTracking Boolean  @default(true) // Some products might not need tracking
+  expiryWarningDays      Int?     @default(2) // Days before expiry to trigger warning
+  requiresSerialNumber   Boolean  @default(false)
   tags                   String[]
 
-  producedByRecipe Recipe?
+  producedByRecipe       Recipe?
   supplierPriceHistories SupplierPriceHistory[]
 
-  cartItems       CartItem[] @relation("VariantToCartItems")
+  cartItems           CartItem[]           @relation("VariantToCartItems")
   // Stock Reconciliation Relations
   reconciliationItems ReconciliationItem[]
   assemblies          Assembly[]
   assemblyItems       AssemblyItem[]
 
-  serialNumbers       SerialNumber[]
-  qcTemplates         QCTemplate[] @relation("VariantQCTemplates")
-  serviceMaterials    ServiceMaterial[]
-  consumedInBookings  BookingConsumedMaterial[]
+  serialNumbers      SerialNumber[]
+  qcTemplates        QCTemplate[]              @relation("VariantQCTemplates")
+  serviceMaterials   ServiceMaterial[]
+  consumedInBookings BookingConsumedMaterial[]
 
   @@unique([productId, sku])
   @@unique([productId, barcode])
@@ -201,9 +201,8 @@ model VariantSellingUnit {
 
   // Conversion multiplier to base unit (for quick calculations)
   // e.g., if selling by "box" and base is "piece", multiplier might be 12
-  conversionMultiplier Decimal? @db.Decimal(20, 10)
-  priceListItems PriceListItem[] // Prices specifically set for this selling unit
-
+  conversionMultiplier Decimal?        @db.Decimal(20, 10)
+  priceListItems       PriceListItem[] // Prices specifically set for this selling unit
 
   isActive Boolean @default(true)
 
@@ -234,25 +233,25 @@ enum RecallStatus {
 }
 
 model Recall {
-  id             String       @id @default(cuid())
-  recallNumber   String       @unique
-  title          String
-  description    String?      @db.Text
-  status         RecallStatus @default(ACTIVE)
+  id           String       @id @default(cuid())
+  recallNumber String       @unique
+  title        String
+  description  String?      @db.Text
+  status       RecallStatus @default(ACTIVE)
 
   // Root cause link
-  supplierId     String?
-  supplier       Supplier?    @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  stockBatchId   String?      // If the recall started from a specific raw material batch
+  stockBatchId String? // If the recall started from a specific raw material batch
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  stockBatches   StockBatch[]
+  stockBatches      StockBatch[]
   productionBatches Batch[]
 
   @@index([organizationId])
@@ -260,21 +259,21 @@ model Recall {
 }
 
 model Supplier {
-  id                 String       @id @default(cuid())
+  id                 String             @id @default(cuid())
   name               String
-  createdAt          DateTime     @default(now())
-  updatedAt          DateTime     @updatedAt
-  code               String       @unique
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+  code               String             @unique
   type               SupplierType
   website            String?
   taxId              String?
   registrationNumber String?
   currency           String?
   categories         String[]
-  riskLevel          RiskLevel    @default(low)
-  invoices          SupplierInvoice[]
-  purchaseReturns   PurchaseReturn[]
-  documents         SupplierDocument[]
+  riskLevel          RiskLevel          @default(low)
+  invoices           SupplierInvoice[]
+  purchaseReturns    PurchaseReturn[]
+  documents          SupplierDocument[]
 
   // Contact Info
   primaryContact String
@@ -310,8 +309,8 @@ model Supplier {
   stockBatches      StockBatch[]
   qualityIncidents  QualityIncident[]
   recalls           Recall[]
-  reviews           SupplierReview[] @relation("SupplierReviews")
-  favorites         FavoriteSupplier[] @relation("SupplierFavorites")
+  reviews           SupplierReview[]       @relation("SupplierReviews")
+  favorites         FavoriteSupplier[]     @relation("SupplierFavorites")
 
   @@unique([organizationId, name])
   @@unique([organizationId, email])
@@ -320,24 +319,24 @@ model Supplier {
 }
 
 model ProductSupplier {
-  id                   String          @id @default(cuid())
+  id                   String         @id @default(cuid())
   productId            String
-  product              Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  product              Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
   variantId            String
-  variant              ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  variant              ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
   supplierId           String
-  supplier             Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier             Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   supplierSku          String? // The SKU used by the supplier for this product
-  costPrice            Decimal         @db.Decimal(10, 2)
+  costPrice            Decimal        @db.Decimal(10, 2)
   minimumOrderQuantity Int?
   leadTimeDays         Int?
 
   // Packaging configuration
-  packagingUnitId      String?
-  packagingUnit        SystemUnit?       @relation("SupplierPackagingUnit", fields: [packagingUnitId], references: [id], onDelete: Restrict)
-  packagingOrgUnitId   String?
-  packagingOrgUnit     OrganizationUnit? @relation("SupplierOrgPackagingUnit", fields: [packagingOrgUnitId], references: [id], onDelete: Restrict)
-  unitsPerPackage      Decimal?          @db.Decimal(10, 2) // e.g., 24 books in a carton
+  packagingUnitId    String?
+  packagingUnit      SystemUnit?       @relation("SupplierPackagingUnit", fields: [packagingUnitId], references: [id], onDelete: Restrict)
+  packagingOrgUnitId String?
+  packagingOrgUnit   OrganizationUnit? @relation("SupplierOrgPackagingUnit", fields: [packagingOrgUnitId], references: [id], onDelete: Restrict)
+  unitsPerPackage    Decimal?          @db.Decimal(10, 2) // e.g., 24 books in a carton
 
   isPreferred Boolean  @default(false) // Is this the preferred supplier for this product?
   createdAt   DateTime @default(now())
@@ -367,15 +366,15 @@ model SupplierDocument {
 }
 
 model SupplierPriceHistory {
-  id             String          @id @default(cuid())
+  id             String         @id @default(cuid())
   supplierId     String
-  supplier       Supplier        @relation(fields: [supplierId], references: [id], onDelete: Cascade)
+  supplier       Supplier       @relation(fields: [supplierId], references: [id], onDelete: Cascade)
   variantId      String
-  variant        ProductVariant  @relation(fields: [variantId], references: [id], onDelete: Cascade)
-  costPrice      Decimal         @db.Decimal(10, 2)
-  effectiveDate  DateTime        @default(now())
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  costPrice      Decimal        @db.Decimal(10, 2)
+  effectiveDate  DateTime       @default(now())
   organizationId String
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([supplierId])
   @@index([variantId])
@@ -383,31 +382,31 @@ model SupplierPriceHistory {
 }
 
 model InventoryLocation {
-  id                  String                  @id @default(cuid())
-  name                String
-  code                String?                 @unique
-  description         String?
-  isActive            Boolean                 @default(true)
-  isDefault           Boolean                 @default(false)
-  locationType        LocationType            @default(RETAIL_SHOP)
-  address             Json?
-  contact             Json?
-  capacity            Json?
-  settings            Json?
-  latitude            Float?
-  longitude           Float?
-  radiusMeters        Int?                    @default(100)
-  branchCode          String?                 @unique
-  parentLocationId    String?
-  parentLocation      InventoryLocation?      @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
-  childLocations      InventoryLocation[]     @relation("LocationHierarchy")
-  customFields        Json?
-  approvalConditions     ApprovalStepCondition[] @relation("LocationCondition")
-  createdAt           DateTime                @default(now())
-  updatedAt           DateTime                @updatedAt
-  managerId           String?
-  manager             Member?                 @relation("LocationManager", fields: [managerId], references: [id], onDelete: SetNull)
-  cashDrawers         CashDrawer[]
+  id                 String                  @id @default(cuid())
+  name               String
+  code               String?                 @unique
+  description        String?
+  isActive           Boolean                 @default(true)
+  isDefault          Boolean                 @default(false)
+  locationType       LocationType            @default(RETAIL_SHOP)
+  address            Json?
+  contact            Json?
+  capacity           Json?
+  settings           Json?
+  latitude           Float?
+  longitude          Float?
+  radiusMeters       Int?                    @default(100)
+  branchCode         String?                 @unique
+  parentLocationId   String?
+  parentLocation     InventoryLocation?      @relation("LocationHierarchy", fields: [parentLocationId], references: [id], onDelete: SetNull)
+  childLocations     InventoryLocation[]     @relation("LocationHierarchy")
+  customFields       Json?
+  approvalConditions ApprovalStepCondition[] @relation("LocationCondition")
+  createdAt          DateTime                @default(now())
+  updatedAt          DateTime                @updatedAt
+  managerId          String?
+  manager            Member?                 @relation("LocationManager", fields: [managerId], references: [id], onDelete: SetNull)
+  cashDrawers        CashDrawer[]
 
   organizationId    String
   organization      Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -417,7 +416,7 @@ model InventoryLocation {
   outgoingMovements StockMovement[]       @relation("FromLocationMovements")
   incomingMovements StockMovement[]       @relation("ToLocationMovements")
 
-  transactions Transaction[]
+  transactions       Transaction[]
   pickupFulfillments Fulfillment[]
   allocations        InventoryAllocation[]
 
@@ -428,39 +427,39 @@ model InventoryLocation {
   pettyCashFunds         PettyCashFund[]
   checkOutAttendanceLogs AttendanceLog[] @relation("CheckOutLocationLogs")
 
-  defaultProducts           Product[]                  @relation("ProductDefaultLocation")
-  ecommerceConnections      EcommerceConnection[]     // Back-relation for e-commerce default locations
-  reorderRules              ReorderRule[]
-  stockTakes                StockTake[]
-  stockValuations           StockValuation[]
-  expenses                  Expense[]
-  budgets                   Budget[]
-  departments               Department[]
-  fromStockRequests         StockRequest[]             @relation("FromStockRequests")
-  toStockRequests           StockRequest[]             @relation("ToStockRequests")
-  fromStockTransfers        StockTransfer[]            @relation("FromLocation")
-  toStockTransfers          StockTransfer[]            @relation("ToLocation")
-  batchOutputs              Batch[]
-  dispatchesToLocation      BatchDispatch[]
-  crmFollowUps              CrmFollowUp[]              @relation("LocationFollowUps")
+  defaultProducts      Product[]             @relation("ProductDefaultLocation")
+  ecommerceConnections EcommerceConnection[] // Back-relation for e-commerce default locations
+  reorderRules         ReorderRule[]
+  stockTakes           StockTake[]
+  stockValuations      StockValuation[]
+  expenses             Expense[]
+  budgets              Budget[]
+  departments          Department[]
+  fromStockRequests    StockRequest[]        @relation("FromStockRequests")
+  toStockRequests      StockRequest[]        @relation("ToStockRequests")
+  fromStockTransfers   StockTransfer[]       @relation("FromLocation")
+  toStockTransfers     StockTransfer[]       @relation("ToLocation")
+  batchOutputs         Batch[]
+  dispatchesToLocation BatchDispatch[]
+  crmFollowUps         CrmFollowUp[]         @relation("LocationFollowUps")
 
   // Stock Reconciliation Relations
-  stockReconciliations      StockReconciliation[]
-  serviceBookings           ServiceBooking[]
-  staffTasks                StaffTask[]
+  stockReconciliations StockReconciliation[]
+  serviceBookings      ServiceBooking[]
+  staffTasks           StaffTask[]
 
   // API Key Relations
-  apiKeys                   ApiKey[]
+  apiKeys ApiKey[]
 
   // Integration Tracking
   scrymeChannelId String?
 
   // Device Setup & Registry Relations
-  deviceSetupTokens         DeviceSetupToken[]
-  deviceRegistries          DeviceRegistry[]  @relation("DeviceRegistryLocation")
+  deviceSetupTokens DeviceSetupToken[]
+  deviceRegistries  DeviceRegistry[]   @relation("DeviceRegistryLocation")
 
-  serialNumbers             SerialNumber[]
-  cycleCountConfigs         CycleCountConfig[]
+  serialNumbers     SerialNumber[]
+  cycleCountConfigs CycleCountConfig[]
 
   @@unique([organizationId, name])
   @@index([name])
@@ -565,43 +564,43 @@ model QCTemplate {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // JSON structure defining the checks (e.g., [{ name: "Temp", type: "NUMBER", required: true }])
-  config         Json
+  config Json
 
-  variants       ProductVariant[] @relation("VariantQCTemplates")
-  qcResults      QCResult[]
+  variants  ProductVariant[] @relation("VariantQCTemplates")
+  qcResults QCResult[]
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, name])
   @@index([organizationId])
 }
 
 model QCResult {
-  id             String       @id @default(cuid())
-  templateId     String
-  template       QCTemplate   @relation(fields: [templateId], references: [id], onDelete: Restrict)
+  id         String     @id @default(cuid())
+  templateId String
+  template   QCTemplate @relation(fields: [templateId], references: [id], onDelete: Restrict)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Links to what was checked
-  stockBatchId   String?
-  stockBatch     StockBatch?  @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
+  stockBatchId String?
+  stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
 
   purchaseItemId String?
   purchaseItem   PurchaseItem? @relation(fields: [purchaseItemId], references: [id], onDelete: SetNull)
 
   // The actual data collected
-  data           Json
-  status         QualityCheckStatus @default(PENDING)
-  notes          String?
+  data   Json
+  status QualityCheckStatus @default(PENDING)
+  notes  String?
 
-  performedById  String
-  performedBy    Member       @relation("QCPerformer", fields: [performedById], references: [id])
+  performedById String
+  performedBy   Member @relation("QCPerformer", fields: [performedById], references: [id])
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([stockBatchId])
@@ -609,21 +608,21 @@ model QCResult {
 }
 
 model SupplierReview {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  memberId       String
-  member         Member       @relation("SupplierReviewer", fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member @relation("SupplierReviewer", fields: [memberId], references: [id], onDelete: Cascade)
 
-  supplierId     String
-  supplier       Supplier     @relation("SupplierReviews", fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier @relation("SupplierReviews", fields: [supplierId], references: [id], onDelete: Cascade)
 
-  rating         Int      @default(5)
-  comment        String?  @db.Text
+  rating  Int     @default(5)
+  comment String? @db.Text
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([memberId])
@@ -632,18 +631,18 @@ model SupplierReview {
 }
 
 model FavoriteSupplier {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  memberId       String
-  member         Member       @relation("MemberFavoriteSuppliers", fields: [memberId], references: [id], onDelete: Cascade)
+  memberId String
+  member   Member @relation("MemberFavoriteSuppliers", fields: [memberId], references: [id], onDelete: Cascade)
 
-  supplierId     String
-  supplier       Supplier     @relation("SupplierFavorites", fields: [supplierId], references: [id], onDelete: Cascade)
+  supplierId String
+  supplier   Supplier @relation("SupplierFavorites", fields: [supplierId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime @default(now())
-  updatedAt      DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([memberId, supplierId])
   @@index([organizationId])

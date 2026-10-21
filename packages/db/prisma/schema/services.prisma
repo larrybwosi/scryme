@@ -281,10 +281,10 @@ model StaffShift {
   departmentId String?
   roleTags     String[] @default([])
 
-  breaks       StaffBreak[]
-  tradeRequests ShiftTradeRequest[] @relation("ShiftTradeShift")
-  offeredTrades ShiftTradeRequest[] @relation("ShiftTradeOfferedShift")
-  tasks        StaffTask[]
+  breaks         StaffBreak[]
+  tradeRequests  ShiftTradeRequest[] @relation("ShiftTradeShift")
+  offeredTrades  ShiftTradeRequest[] @relation("ShiftTradeOfferedShift")
+  tasks          StaffTask[]
   attendanceLogs AttendanceLog[]
 
   createdAt DateTime @default(now())
@@ -384,29 +384,29 @@ model BookingEvent {
 }
 
 model ShiftTradeRequest {
-  id             String           @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   requesterMemberId String
-  requesterMember   Member        @relation("TradeRequester", fields: [requesterMemberId], references: [id], onDelete: Cascade)
+  requesterMember   Member @relation("TradeRequester", fields: [requesterMemberId], references: [id], onDelete: Cascade)
 
-  targetMemberId    String?
-  targetMember      Member?       @relation("TradeTarget", fields: [targetMemberId], references: [id], onDelete: SetNull)
+  targetMemberId String?
+  targetMember   Member? @relation("TradeTarget", fields: [targetMemberId], references: [id], onDelete: SetNull)
 
-  shiftId        String
-  shift          StaffShift       @relation("ShiftTradeShift", fields: [shiftId], references: [id], onDelete: Cascade)
+  shiftId String
+  shift   StaffShift @relation("ShiftTradeShift", fields: [shiftId], references: [id], onDelete: Cascade)
 
   offeredShiftId String?
-  offeredShift   StaffShift?      @relation("ShiftTradeOfferedShift", fields: [offeredShiftId], references: [id], onDelete: SetNull)
+  offeredShift   StaffShift? @relation("ShiftTradeOfferedShift", fields: [offeredShiftId], references: [id], onDelete: SetNull)
 
-  type           String           @default("SWAP") // SWAP, OFFER, BID
-  status         ShiftTradeStatus @default(PENDING)
-  reason         String?
+  type   String           @default("SWAP") // SWAP, OFFER, BID
+  status ShiftTradeStatus @default(PENDING)
+  reason String?
 
-  approvedById   String?
-  createdAt      DateTime         @default(now())
-  updatedAt      DateTime         @updatedAt
+  approvedById String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([organizationId, status])
   @@index([requesterMemberId])
@@ -434,8 +434,8 @@ model StaffTask {
   locationId String?
   location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  checklist Json?
-  notes     String?
+  checklist   Json?
+  notes       String?
   createdById String?
 
   createdAt DateTime @default(now())
