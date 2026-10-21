@@ -16,6 +16,8 @@ import {
   ApiHeader,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
+import { ModuleGuard } from "../../../../common/guards/module.guard";
+import { RequireModule } from "../../../../common/decorators/module.decorator";
 import { AndroidUseCase } from "../../application/use-cases/android.use-case";
 import { RegisterDeviceDto, SwitchOrgDto } from "../../application/dto/android.dto";
 
@@ -27,7 +29,8 @@ import { RegisterDeviceDto, SwitchOrgDto } from "../../application/dto/android.d
   required: false,
 })
 @Controller("android")
-@UseGuards(V3AuthGuard)
+@UseGuards(V3AuthGuard, ModuleGuard)
+@RequireModule("android_app")
 export class AndroidController {
   constructor(private readonly androidUseCase: AndroidUseCase) {}
 

@@ -8,6 +8,7 @@ import {
   getEffectiveQuota,
   getOrganizationStorageUsage,
   getOrganizationPaymentCredentials,
+  getOrganizationModules,
 } from "@/app/actions/organizations"
 import { getOrganizationActivityLogs, getOrganizationUsage } from "@/app/actions/dashboard"
 import { getOrganizationSubscription, listTiers } from "@/app/actions/billing"
@@ -18,6 +19,7 @@ import { SubscriptionEditor } from "@/components/organizations/subscription-edit
 import { MembersTable } from "@/components/organizations/members-table"
 import { OrganizationActivityPanel } from "@/components/organizations/organization-activity-panel"
 import { OrganizationPaymentCredentialsCard } from "@/components/organizations/payment-credentials-card"
+import { OrgModuleEditor } from "@/components/organizations/module-editor"
 
 export default async function OrganizationDetailPage({
   params,
@@ -29,7 +31,7 @@ export default async function OrganizationDetailPage({
   const org = await getOrganizationDetails(id).catch(() => null)
   if (!org) notFound()
 
-  const [members, quota, subscription, tiers, storage, usage, activityLogs, credentials] =
+  const [members, quota, subscription, tiers, storage, usage, activityLogs, credentials, modules] =
     await Promise.all([
       getOrganizationMembers(id),
       getEffectiveQuota(id),
@@ -39,6 +41,7 @@ export default async function OrganizationDetailPage({
       getOrganizationUsage(id),
       getOrganizationActivityLogs(id, 15),
       getOrganizationPaymentCredentials(id),
+      getOrganizationModules(id),
     ])
 
   return (
@@ -81,6 +84,8 @@ export default async function OrganizationDetailPage({
         activityLogs={activityLogs}
         acquisitionSource={org.acquisitionSource}
       />
+
+      <OrgModuleEditor organizationId={org.id} initialModules={modules} />
 
       <StorageControl organizationId={org.id} storage={storage} />
 
