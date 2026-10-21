@@ -532,18 +532,25 @@ export class ScrymeChatApiClient {
   async registerGlobalWebhook(webhookUrl: string): Promise<any> {
     try {
       const workspaces = await chat.workspace.list();
-      for (const ws of workspaces.data.workspaces) {
-        try {
-          await this.registerWorkspaceWebhook(ws.slug, webhookUrl);
-        } catch (err: any) {
-          if (err.response?.status !== 409) {
-            console.error(
-              `Failed to register webhook for workspace ${ws.slug}:`,
-              err.message,
-            );
+      const workspaceList = workspaces?.data?.workspaces || [];
+
+      // ⚡ Bolt Optimization: Parallelize webhook registration across workspaces concurrently.
+      // Replacing sequential for...of iteration with Promise.all collapses HTTP roundtrip delays
+      // from O(N) sequential blocking requests down to O(1) concurrent execution.
+      await Promise.all(
+        workspaceList.map(async (ws: any) => {
+          try {
+            await this.registerWorkspaceWebhook(ws.slug, webhookUrl);
+          } catch (err: any) {
+            if (err.response?.status !== 409) {
+              console.error(
+                `Failed to register webhook for workspace ${ws.slug}:`,
+                err.message,
+              );
+            }
           }
-        }
-      }
+        }),
+      );
     } catch (err: any) {
       console.error(
         "Failed to register webhooks across workspaces:",
