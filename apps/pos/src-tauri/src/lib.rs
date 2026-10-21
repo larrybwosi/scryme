@@ -16,11 +16,8 @@ mod scanner_manager;
 use scanner_manager::ScannerState;
 
 // Features enabled by default, but excluded in standalone mode
-#[cfg(not(feature = "standalone"))]
 mod stock_acceptance;
-#[cfg(not(feature = "standalone"))]
 mod stock_acceptance_models;
-#[cfg(not(feature = "standalone"))]
 pub mod stock_transfer;
 
 use stores::audit_store;
@@ -57,9 +54,9 @@ use network_monitor::NetworkState;
 mod customer_screen_state;
 use customer_screen_state::CustomerScreenState;
 
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 mod kds_hub_server;
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 mod kds_models;
 mod utils;
 
@@ -122,8 +119,7 @@ pub fn run() {
     #[cfg(debug_assertions)]
     let mut builder = tauri::Builder::default().plugin(tauri_plugin_sql::Builder::new().build());
 
-    #[cfg(not(feature = "standalone"))]
-    {
+        {
         builder = builder.plugin(tauri_plugin_updater::Builder::new().build());
     }
 
@@ -169,9 +165,9 @@ pub fn run() {
                         location_id, e
                     );
                 }
-            } else if cfg!(feature = "standalone") {
+            } else if false {
                 let _ = tauri::async_runtime::block_on(
-                    product_store::load_products_from_disk(app.handle(), &state, "standalone"),
+                    product_store::load_products_from_disk(app.handle(), &state, "default"),
                 );
             }
 
@@ -185,8 +181,7 @@ pub fn run() {
             let sales_state = app.state::<SalesState>();
             tauri::async_runtime::block_on(sales_store::init_state(app.handle(), &sales_state));
             
-            #[cfg(not(feature = "standalone"))]
-            {
+                        {
                 sales_store::start_auto_sync_task(app.handle().clone());
 
                 let app_clone = app.handle().clone();
@@ -198,7 +193,7 @@ pub fn run() {
                 });
             }
 
-            #[cfg(all(not(feature = "standalone"), feature = "restaurant"))]
+            #[cfg(feature = "restaurant")]
             if let Err(e) = tauri::async_runtime::block_on(table_store::init_db(app.handle())) {
                 error!("Failed to initialize table database: {}", e);
             }
@@ -216,8 +211,7 @@ pub fn run() {
                 notification_manager::init_notification_state(&app_handle, &state).await;
             });
 
-            #[cfg(not(feature = "standalone"))]
-            let notification_state = app.state::<NotificationState>();
+                        let notification_state = app.state::<NotificationState>();
 
             let customer_screen_state = app.state::<CustomerScreenState>();
             if let Err(e) = tauri::async_runtime::block_on(
@@ -226,8 +220,7 @@ pub fn run() {
                 error!("Failed to load customer screen state: {}", e);
             }
 
-            #[cfg(not(feature = "standalone"))]
-            {
+                        {
                 let old_sales = tauri::async_runtime::block_on(sales_store::check_old_pending_sales(
                     app.handle().clone(),
                     &sales_state,
@@ -394,8 +387,7 @@ pub fn run() {
             customer_screen_state::close_customer_screen,
             customer_screen_state::set_customer_screen_enabled,
             customer_screen_state::get_customer_screen_state,
-            #[cfg(not(feature = "standalone"))]
-            product_manager::sync_products_command,
+                        product_manager::sync_products_command,
             product_manager::search_products_command,
             product_manager::search_global_command,
             product_manager::get_products_by_ids_command,
@@ -403,24 +395,20 @@ pub fn run() {
             product_manager::update_local_product_command,
             product_manager::delete_local_product_command,
             product_manager::get_product_by_barcode_command,
-            #[cfg(not(feature = "standalone"))]
-            product_store::switch_location,
+                        product_store::switch_location,
             printer_manager::get_serial_ports,
             printer_manager::open_cash_drawer,
             printer_manager::print_test_page,
-            #[cfg(not(feature = "standalone"))]
-            customer_manager::sync_customers_command,
+                        customer_manager::sync_customers_command,
             customer_manager::search_customers_command,
             customer_manager::get_customers_by_ids_command,
             customer_manager::create_customer_command,
             customer_manager::update_customer_command,
             customer_manager::delete_local_customer_command,
             sale_manager::process_sale_command,
-            #[cfg(not(feature = "standalone"))]
-            sale_manager::sync_sales_command,
+                        sale_manager::sync_sales_command,
             sale_manager::get_pending_sales_command,
-            #[cfg(not(feature = "standalone"))]
-            pricing_manager::sync_pricing_command,
+                        pricing_manager::sync_pricing_command,
             pricing_manager::resolve_price_batch_command,
             pricing_manager::get_pos_pricing_command,
             pricing_manager::delete_local_price_list_command,
@@ -441,8 +429,7 @@ pub fn run() {
             shift_manager::add_cash_drop_command,
             shift_manager::record_shift_sale_command,
             shift_manager::close_shift_command,
-            #[cfg(not(feature = "standalone"))]
-            shift_manager::sync_shifts_command,
+                        shift_manager::sync_shifts_command,
             auth_store::set_device_config,
             auth_store::update_base_url,
             auth_store::login_member,
@@ -455,8 +442,7 @@ pub fn run() {
             auth_store::create_pairing_session_command,
             auth_store::get_pairing_session_status_command,
             auth_store::authorize_pairing_session_command,
-            #[cfg(not(feature = "standalone"))]
-            auth_store::update_device_location,
+                        auth_store::update_device_location,
             notification_manager::send_native_notification,
             notification_manager::get_notification_history,
             notification_manager::get_unread_notification_count,
@@ -484,42 +470,33 @@ pub fn run() {
             finance_store::upload_file_command,
             sales_store::set_sync_interval_command,
             auth_store::set_negative_stock_command,
-            #[cfg(not(feature = "standalone"))]
-            auth_store::get_locations_command,
-            #[cfg(not(feature = "standalone"))]
-            auth_store::get_ably_auth_token_command,
-            #[cfg(all(not(feature = "standalone"), feature = "restaurant"))]
+                        auth_store::get_locations_command,
+                        auth_store::get_ably_auth_token_command,
+            #[cfg(feature = "restaurant")]
             auth_store::start_device_setup_command,
             
             // Stock Acceptance - Only disabled in standalone
-            #[cfg(not(feature = "standalone"))]
-            stock_acceptance::save_document_locally,
-            #[cfg(not(feature = "standalone"))]
-            stock_acceptance::fetch_incoming_shipments,
-            #[cfg(not(feature = "standalone"))]
-            stock_acceptance::receive_purchase_order,
-            #[cfg(not(feature = "standalone"))]
-            stock_acceptance::receive_stock_transfer,
-            #[cfg(not(feature = "standalone"))]
-            stock_acceptance::submit_stock_process,
-            #[cfg(not(feature = "standalone"))]
-            stock_transfer::submit_stock_transfer,
-            #[cfg(not(feature = "standalone"))]
-            stock_transfer::submit_stock_request,
+                        stock_acceptance::save_document_locally,
+                        stock_acceptance::fetch_incoming_shipments,
+                        stock_acceptance::receive_purchase_order,
+                        stock_acceptance::receive_stock_transfer,
+                        stock_acceptance::submit_stock_process,
+                        stock_transfer::submit_stock_transfer,
+                        stock_transfer::submit_stock_request,
 
             http_server::start_file_server,
             audit_store::write_audit_log,
             audit_store::get_audit_logs,
             audit_store::get_system_logs,
-            #[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+            #[cfg(any(feature = "restaurant", feature = "pharmacy"))]
             kds_hub_server::start_kds_hub,
-            #[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+            #[cfg(any(feature = "restaurant", feature = "pharmacy"))]
             kds_hub_server::stop_kds_hub,
-            #[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+            #[cfg(any(feature = "restaurant", feature = "pharmacy"))]
             kds_hub_server::get_hub_status,
-            #[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+            #[cfg(any(feature = "restaurant", feature = "pharmacy"))]
             kds_hub_server::get_connected_devices,
-            #[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+            #[cfg(any(feature = "restaurant", feature = "pharmacy"))]
             kds_hub_server::assign_user_to_device,
             utils::get_local_ip_command,
             #[cfg(feature = "restaurant")]

@@ -131,7 +131,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
       >
         {/* Header Section */}
         <div className="p-6 border-b flex items-center gap-3 relative">
-          {import.meta.env.MODE === 'standalone' && (
+          {import.meta.env.MODE === 'default' && (
             <div className="absolute top-0 left-0 w-full h-1 bg-amber-500" title="Standalone Mode" />
           )}
           <Link
@@ -142,7 +142,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             {!isCollapsed && (
               <div className="flex flex-col min-w-0">
                 <span className="font-semibold text-lg truncate text-foreground leading-tight">{businessName}</span>
-                {currentLocation && import.meta.env.MODE !== 'standalone' && (
+                {currentLocation && import.meta.env.MODE !== 'default' && (
                   <div className="flex items-center gap-1 text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
                     <MapPin className="w-2.5 h-2.5" />
                     <span className="truncate">{currentLocation.name}</span>
@@ -172,7 +172,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             const route = routeMap[item.id] || `/${item.id}`;
             const isActive = isRouteActive(route);
 
-            const isStandalone = import.meta.env.MODE === 'standalone';
+            const isStandalone = import.meta.env.MODE === 'default';
             const businessMode = import.meta.env.VITE_BUSINESS_MODE || 'retail';
 
             const excludedInStandalone = [
@@ -212,7 +212,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
           })}
 
           {deviceType === 'MAIN_HUB' &&
-            import.meta.env.MODE !== 'standalone' &&
+            import.meta.env.MODE !== 'default' &&
             import.meta.env.VITE_BUSINESS_MODE === 'restaurant' && (
               <Button
                 asChild
@@ -234,7 +234,7 @@ export function Sidebar({ onCheckout }: SidebarProps) {
 
           <div className="my-4 border-t pt-4">
             {/* Hardcoded Items with correct isActive check */}
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
               <Button
                 variant={isScanOpen ? 'secondary' : 'ghost'}
                 className={cn('w-full justify-start gap-3 mb-1', isCollapsed && 'justify-center px-0')}
@@ -248,14 +248,14 @@ export function Sidebar({ onCheckout }: SidebarProps) {
             )}
 
             {[
-              ...(import.meta.env.MODE !== 'standalone'
+              ...(import.meta.env.MODE !== 'default'
                 ? [
                     { id: 'pending-transactions', label: 'Pending', icon: Clock, route: '/pending-transactions' },
                     { id: 'create-order', label: 'Create Order', icon: Plus, route: '/create-order' },
                     { id: 'cash-drawer', label: 'Cash Drawer', icon: Wallet, route: '/cash-drawer' },
                   ]
                 : []),
-              ...(import.meta.env.MODE === 'standalone'
+              ...(import.meta.env.MODE === 'default'
                 ? [{ id: 'product-management', label: 'Products', icon: Box, route: '/product-management' }]
                 : []),
             ].map(item => {
@@ -370,9 +370,9 @@ export function Sidebar({ onCheckout }: SidebarProps) {
               {!isCollapsed && (
                 <div className="flex-1 min-w-0">
                   <div className="text-sm font-medium truncate">
-                    {import.meta.env.MODE === 'standalone' ? 'Admin' : currentMember?.name || 'User'}
+                    {import.meta.env.MODE === 'default' ? 'Admin' : currentMember?.name || 'User'}
                   </div>
-                  {import.meta.env.MODE !== 'standalone' && (
+                  {import.meta.env.MODE !== 'default' && (
                     <div className="text-xs text-muted-foreground truncate">{currentMember?.email}</div>
                   )}
                 </div>

@@ -32,7 +32,7 @@ export function ConnectionStatusBanner() {
   const isOnline = useSyncEngineStore((state) => state.isOnline);
 
   useEffect(() => {
-    if (import.meta.env.MODE === 'standalone') return;
+    if (import.meta.env.MODE === 'default') return;
     const handleChange = (e: Event) => {
       const { state } = (e as CustomEvent<ConnectionStatus>).detail;
 

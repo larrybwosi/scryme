@@ -373,7 +373,7 @@ export default function SettingsPage() {
               setEnableAutoUpdate={setEnableAutoUpdate}
             />
 
-            {import.meta.env.MODE === 'standalone' && (
+            {import.meta.env.MODE === 'default' && (
               <Card className="mt-6 border-blue-100 bg-blue-50/50 p-6">
                 <div className="flex items-center gap-3 mb-4">
                   <div className="p-2 rounded-lg bg-blue-100 text-blue-600">
@@ -1220,7 +1220,7 @@ export default function SettingsPage() {
               )}
             </div>
             
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
               <Card className="border-muted/60 shadow-sm p-6 rounded-lg">
                 <div className="flex items-center gap-3 mb-6">
                   <div className="p-2 rounded-lg bg-slate-100 dark:bg-slate-800">

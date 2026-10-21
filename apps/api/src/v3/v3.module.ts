@@ -21,7 +21,6 @@ import { FavoritesModule } from "./modules/favorites/favorites.module";
 import { StockingModule } from "./modules/stocking/stocking.module";
 import { CrmModule } from "./modules/crm/crm.module";
 import { FinanceModule } from "./modules/finance/finance.module";
-import { StandalonePosModule } from "./modules/standalone-pos/standalone-pos.module";
 import { CrmIntegrationsModule } from "./modules/crm-integrations/crm-integrations.module";
 import { UnitsModule } from "./modules/units/units.module";
 import { ServicesModule } from "./modules/services/services.module";
@@ -49,7 +48,6 @@ export const V3_SUB_MODULES = [
   StockingModule,
   CrmModule,
   FinanceModule,
-  StandalonePosModule,
   B2BModule,
   CrmIntegrationsModule,
   UnitsModule,

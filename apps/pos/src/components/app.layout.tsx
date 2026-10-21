@@ -93,7 +93,7 @@ export default function AppLayoutProvider({ children }: AppLayoutProviderProps) 
       {showSidebar && <Sidebar onCheckout={() => setShowCheckoutDialog(true)} />}
 
       <div className="flex-1 flex flex-col overflow-hidden">
-        {import.meta.env.MODE !== 'standalone' && <ConnectionStatusBanner />}
+        {import.meta.env.MODE !== 'default' && <ConnectionStatusBanner />}
         {showHeader && (
           <header className="h-16 border-b border-border px-6 flex items-center justify-between bg-background">
             <div className="flex items-center gap-6 flex-1">

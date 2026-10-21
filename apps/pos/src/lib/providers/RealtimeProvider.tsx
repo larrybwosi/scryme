@@ -119,7 +119,7 @@ export default function RealtimeInitializer() {
             try {
                 await invoke('delete_local_product_command', {
                     productId: data.productId,
-                    locationId: currentLocationId || 'standalone'
+                    locationId: currentLocationId || 'default'
                 });
             } catch (err) {
                 console.error('Failed to delete local product:', err);

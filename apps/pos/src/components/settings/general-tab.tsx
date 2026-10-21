@@ -437,7 +437,7 @@ export default function GeneralSettings({
         </Card>
 
         {/* Store Location */}
-        {import.meta.env.MODE !== 'standalone' && (
+        {import.meta.env.MODE !== 'default' && (
           <Card className="border-muted/60 shadow-sm">
             <CardHeader className="pb-4">
               <div className="flex items-center gap-2">
@@ -486,7 +486,7 @@ export default function GeneralSettings({
         )}
 
         {/* Financial Settings */}
-        {import.meta.env.MODE !== 'standalone' && (
+        {import.meta.env.MODE !== 'default' && (
           <Card className="border-muted/60 shadow-sm">
           <CardHeader className="pb-4">
             <div className="flex items-center gap-2">
@@ -578,7 +578,7 @@ export default function GeneralSettings({
           </CardHeader>
           <Separator className="mb-0" />
           <CardContent className="divide-y divide-muted">
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
               <div className="flex items-center justify-between py-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -619,7 +619,7 @@ export default function GeneralSettings({
               <Switch checked={autoPrintEnabled} onCheckedChange={setAutoPrintEnabled} />
             </div>
 
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
               <div className="flex items-center justify-between py-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
@@ -640,7 +640,7 @@ export default function GeneralSettings({
         <ConnectionTestCard />
 
         {/* Software Updates */}
-        {import.meta.env.MODE !== 'standalone' && (
+        {import.meta.env.MODE !== 'default' && (
           <SoftwareUpdatesCard
             enableAutoUpdate={enableAutoUpdate}
             setEnableAutoUpdate={setEnableAutoUpdate}

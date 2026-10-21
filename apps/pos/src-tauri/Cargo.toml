@@ -9,7 +9,6 @@ edition = "2021"
 
 [features]
 retail = []
-standalone = []
 restaurant = []
 supermarket = []
 pharmacy = []

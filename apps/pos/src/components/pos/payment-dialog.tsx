@@ -592,7 +592,7 @@ const PaymentModal = ({
   };
 
   const handleAddCash = () => {
-    if (settings.enforceShiftForCashPayments && !activeShift && import.meta.env.MODE !== 'standalone') {
+    if (settings.enforceShiftForCashPayments && !activeShift && import.meta.env.MODE !== 'default') {
         toast.error('No Active Shift', {
             description: 'You must open a shift before processing cash payments.',
         });
@@ -970,7 +970,7 @@ const PaymentModal = ({
             {/* Payment method tabs */}
             <div className="flex gap-1 p-3 border-b bg-background">
               {PAYMENT_METHODS.filter(m => {
-                const isStandalone = import.meta.env.MODE === 'standalone';
+                const isStandalone = import.meta.env.MODE === 'default';
                 if (isStandalone && m.id !== 'CASH') return false;
 
                 // Only show Insurance if it's a pharmacy
@@ -1530,7 +1530,7 @@ const PaymentModal = ({
               )}
 
               <div className="flex gap-3 w-full">
-                {settings.allowSaveUnpaidOrders && import.meta.env.MODE !== 'standalone' && (
+                {settings.allowSaveUnpaidOrders && import.meta.env.MODE !== 'default' && (
                   <Button
                     variant="outline"
                     size="lg"

@@ -1,5 +1,4 @@
 use crate::models::{PosProduct, ProductSearchResponse};
-#[cfg(not(feature = "standalone"))]
 use crate::models::ProductsSyncResponse;
 use aes_gcm::{
     aead::{Aead, KeyInit, OsRng},
@@ -10,7 +9,6 @@ use log::{error, info};
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 use sqlx::{Row, SqlitePool};
-#[cfg(not(feature = "standalone"))]
 use std::path::PathBuf;
 use std::sync::OnceLock;
 use tauri::{AppHandle, Manager, Emitter};
@@ -45,8 +43,8 @@ pub async fn get_db_pool(app: &AppHandle) -> Result<SqlitePool, String> {
     let instances = app.state::<DbInstances>();
     let guard = instances.0.read().await;
 
-    let db_name = if cfg!(feature = "standalone") {
-        "sqlite:pos_standalone.db"
+    let db_name = if false {
+        "sqlite:pos.db"
     } else {
         MAIN_DB_NAME
     };
@@ -188,7 +186,6 @@ pub(crate) fn build_search_text(product: &PosProduct) -> String {
 }
 
 // --- Helper: Cache Single Image ---
-#[cfg(not(feature = "standalone"))]
 async fn get_images_dir(app: &AppHandle) -> Result<PathBuf> {
     let app_dir = app.path().app_data_dir()?;
     let images_dir = app_dir.join("product_images");
@@ -196,7 +193,6 @@ async fn get_images_dir(app: &AppHandle) -> Result<PathBuf> {
     Ok(images_dir)
 }
 
-#[cfg(not(feature = "standalone"))]
 async fn cache_image(app: &AppHandle, url: &str) -> Option<String> {
     if url.trim().is_empty() { return None; }
     let clean_name = url.replace("https://", "").replace("http://", "").replace('/', "_").replace(':', "").replace('?', "_");
@@ -247,7 +243,6 @@ pub async fn load_products_from_disk(app: &AppHandle, _state: &ProductState, loc
 }
 
 // --- 2. Sync Engine ---
-#[cfg(not(feature = "standalone"))]
 pub async fn run_sync(
     app: AppHandle,
     _state: &ProductState,
@@ -501,7 +496,6 @@ pub async fn get_products_by_ids(app: &AppHandle, _state: &ProductState, locatio
 }
 
 #[tauri::command]
-#[cfg(not(feature = "standalone"))]
 pub async fn switch_location(
     app: AppHandle,
     state: tauri::State<'_, ProductState>,
@@ -527,7 +521,7 @@ pub async fn create_local_product(app: &AppHandle, state: &ProductState, product
     let location_id = {
         let auth_state = app.state::<AuthState>();
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        config_guard.as_ref().map(|c| c.location_id.clone()).unwrap_or_else(|| "standalone".to_string())
+        config_guard.as_ref().map(|c| c.location_id.clone()).unwrap_or_else(|| "default".to_string())
     };
 
     sqlx::query("INSERT INTO products (product_id, location_id, category, product_name, search_text, payload) VALUES (?1, ?2, ?3, ?4, ?5, ?6)")
@@ -548,7 +542,7 @@ pub async fn update_local_product(app: &AppHandle, state: &ProductState, product
     let location_id = {
         let auth_state = app.state::<AuthState>();
         let config_guard = auth_state.device_config.lock().map_err(|_| anyhow::anyhow!("Lock error"))?;
-        config_guard.as_ref().map(|c| c.location_id.clone()).unwrap_or_else(|| "standalone".to_string())
+        config_guard.as_ref().map(|c| c.location_id.clone()).unwrap_or_else(|| "default".to_string())
     };
 
     sqlx::query("UPDATE products SET category = ?1, product_name = ?2, search_text = ?3, payload = ?4 WHERE product_id = ?5 AND location_id = ?6")
@@ -586,7 +580,7 @@ pub async fn get_product_by_barcode(
         config_guard
             .as_ref()
             .map(|c| c.location_id.clone())
-            .unwrap_or_else(|| "standalone".to_string())
+            .unwrap_or_else(|| "default".to_string())
     };
 
     let query = "SELECT payload FROM products WHERE location_id = ?1 AND search_text LIKE ?2";
