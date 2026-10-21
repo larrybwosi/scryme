@@ -3,6 +3,7 @@ package tech.scryme.app.ui.admin
 import tech.scryme.app.ui.components.EmptyStateCard
 import tech.scryme.app.ui.components.ErrorMessageCard
 import tech.scryme.app.ui.components.ListSkeleton
+import tech.scryme.app.ui.components.MemberAvatar
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.StyledFormDialog
@@ -26,8 +27,6 @@ import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
-
-
 
 @Composable
 fun AdminScreen(
@@ -158,8 +157,10 @@ fun AdminScreen(
                         }
 
                         items(state.pendingTrades, key = { it.id }) { trade ->
+                            val member = state.members.find { it.id == trade.requestingMemberId }
                             PendingTradeItem(
                                 trade = trade,
+                                member = member,
                                 onApprove = { viewModel.processTrade(trade.id, "APPROVED") },
                                 onReject = { viewModel.processTrade(trade.id, "REJECTED") }
                             )
@@ -174,8 +175,10 @@ fun AdminScreen(
                     }
 
                     items(state.allShifts, key = { it.id }) { shift ->
+                        val member = state.members.find { it.id == shift.memberId }
                         AdminShiftCard(
                             shift = shift,
+                            member = member,
                             onAddBreak = { selectedShiftForBreak = shift }
                         )
                     }
@@ -221,16 +224,30 @@ fun AdminScreen(
 @Composable
 fun PendingTradeItem(
     trade: ShiftTrade,
+    member: UserProfile? = null,
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
+    val memberName = member?.name ?: trade.requestingMemberId
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
             Text(text = "Trade Request for Shift: ${trade.shiftId}", fontWeight = FontWeight.Bold)
-            Text(text = "Requesting Member: ${trade.requestingMemberId}", style = MaterialTheme.typography.bodySmall)
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.padding(vertical = 4.dp)
+            ) {
+                MemberAvatar(
+                    avatarUrl = member?.avatarUrl,
+                    name = member?.name ?: "",
+                    modifier = Modifier.size(24.dp)
+                )
+                Text(text = "Requesting Member: $memberName", style = MaterialTheme.typography.bodySmall)
+            }
             if (!trade.reason.isNullOrEmpty()) {
                 Text(text = "Reason: ${trade.reason}", style = MaterialTheme.typography.bodySmall)
             }
@@ -258,19 +275,43 @@ fun PendingTradeItem(
 @Composable
 fun AdminShiftCard(
     shift: StaffShift,
+    member: UserProfile? = null,
     onAddBreak: () -> Unit
 ) {
+    val memberName = member?.name ?: shift.memberId
+
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
     ) {
         Column(modifier = Modifier.padding(12.dp)) {
-            Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                Text("Member: ${shift.memberId}", fontWeight = FontWeight.Bold)
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MemberAvatar(
+                        avatarUrl = member?.avatarUrl,
+                        name = member?.name ?: "",
+                        modifier = Modifier.size(28.dp)
+                    )
+                    Column {
+                        Text(memberName, fontWeight = FontWeight.Bold)
+                        val role = member?.role
+                        if (!role.isNullOrBlank()) {
+                            Text(role, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
+                        }
+                    }
+                }
                 TextButton(onClick = onAddBreak) {
                     Text("+ Add Break")
                 }
             }
+            Spacer(modifier = Modifier.height(4.dp))
             Text("Day ${shift.dayOfWeek} (${shift.startTime} - ${shift.endTime})", style = MaterialTheme.typography.bodyMedium)
         }
     }
