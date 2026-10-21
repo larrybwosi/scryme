@@ -140,4 +140,37 @@ describe("Tenant Data Isolation - Database Level", () => {
       expect(mockQuery).not.toHaveBeenCalled();
     });
   });
+  it("should preserve nested relation filters like organization: { isSuspended: false } without flattening", async () => {
+    const mockQuery = vi.fn().mockResolvedValue([]);
+    const dummyBaseClient: any = {
+      $extends: (extensionFn: any) => {
+        return extensionFn;
+      },
+    };
+
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
+    const allOpsFn = extensionObj.query.$allModels.$allOperations;
+
+    await runWithTenant({ organizationId: "org-aaa" }, async () => {
+      const args: any = {
+        where: {
+          userId: "user-123",
+          deletedAt: null,
+          organization: { isSuspended: false },
+        },
+      };
+
+      await allOpsFn({
+        model: "Member",
+        operation: "findMany",
+        args,
+        query: mockQuery,
+      });
+
+      expect(args.where.organization).toEqual({ isSuspended: false });
+      expect(args.where.isSuspended).toBeUndefined();
+      expect(args.where.organizationId).toBe("org-aaa");
+      expect(mockQuery).toHaveBeenCalledWith(args);
+    });
+  });
 });
