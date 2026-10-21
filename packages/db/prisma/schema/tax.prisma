@@ -59,17 +59,17 @@ model TaxRate {
   isDefault   Boolean @default(false)
   isActive    Boolean @default(true)
 
-  taxType           TaxType             @default(VAT)
-  taxAuthorityId      String?
-  taxAuthority        TaxAuthority?         @relation(fields: [taxAuthorityId], references: [id], onDelete: Restrict)
-  appliedToExpenses   AppliedExpenseTax[]
-  appliedToPurchases  AppliedPurchaseTax[]
-  purchaseItems       PurchaseItem[]
+  taxType            TaxType              @default(VAT)
+  taxAuthorityId     String?
+  taxAuthority       TaxAuthority?        @relation(fields: [taxAuthorityId], references: [id], onDelete: Restrict)
+  appliedToExpenses  AppliedExpenseTax[]
+  appliedToPurchases AppliedPurchaseTax[]
+  purchaseItems      PurchaseItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  appliedToSales AppliedTax[]
+  appliedToSales  AppliedTax[]
   serviceTaxRates ServiceTaxRate[]
 
   @@unique([organizationId, name])
@@ -161,7 +161,7 @@ model AppliedExpenseTax {
   expenseId String
   expense   Expense  @relation(fields: [expenseId], references: [id], onDelete: Cascade)
   taxId     String
-  tax       TaxRate      @relation(fields: [taxId], references: [id], onDelete: Restrict)
+  tax       TaxRate  @relation(fields: [taxId], references: [id], onDelete: Restrict)
   taxAmount Decimal  @db.Decimal(10, 2)
   createdAt DateTime @default(now())
 

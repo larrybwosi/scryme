@@ -3,8 +3,8 @@ model PlaneConfiguration {
   organizationId String       @unique
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  workspaceId   String?  @unique
-  workspaceSlug String?  @unique
+  workspaceId   String? @unique
+  workspaceSlug String? @unique
 
   // OAuth2 credentials for the organization's Plane workspace
   accessToken  String?

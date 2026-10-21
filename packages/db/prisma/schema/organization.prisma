@@ -363,7 +363,7 @@ model Member {
   createdApiKeys           ApiKey[]
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
-  bakeryRoles BakeryBaker[]
+  bakeryRoles       BakeryBaker[]
   dispatchedBatches BatchDispatch[] @relation("BatchDispatchedBy")
 
   // Cal.com Integration
@@ -371,12 +371,12 @@ model Member {
   calComApiKey String? // Encrypted
 
   // Service Module Relations
-  serviceAssignments ServiceStaffAssignment[]
-  staffShifts        StaffShift[]
-  scheduleOverrides  StaffScheduleOverride[]
-  bookingAssignments BookingStaff[]
-  tradeRequestsRequested ShiftTradeRequest[] @relation("TradeRequester")
-  tradeRequestsTargeted  ShiftTradeRequest[] @relation("TradeTarget")
+  serviceAssignments     ServiceStaffAssignment[]
+  staffShifts            StaffShift[]
+  scheduleOverrides      StaffScheduleOverride[]
+  bookingAssignments     BookingStaff[]
+  tradeRequestsRequested ShiftTradeRequest[]      @relation("TradeRequester")
+  tradeRequestsTargeted  ShiftTradeRequest[]      @relation("TradeTarget")
   staffTasks             StaffTask[]
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
@@ -403,10 +403,10 @@ model Member {
   favoriteSuppliers FavoriteSupplier[] @relation("MemberFavoriteSuppliers")
 
   // CRM Relations
-  ownedCrmRecords CrmRecord[]   @relation("CrmRecordOwner")
-  crmActivities   CrmActivity[] @relation("CrmActivityMember")
-  crmNotes        CrmNote[]     @relation("CrmNoteCreator")
-  crmFollowUps    CrmFollowUp[] @relation("CrmFollowUpAssignedTo")
+  ownedCrmRecords           CrmRecord[]            @relation("CrmRecordOwner")
+  crmActivities             CrmActivity[]          @relation("CrmActivityMember")
+  crmNotes                  CrmNote[]              @relation("CrmNoteCreator")
+  crmFollowUps              CrmFollowUp[]          @relation("CrmFollowUpAssignedTo")
   sentCommunicationMessages CommunicationMessage[] @relation("SentCommunicationMessages")
 
   createdCampaigns  Campaign[] @relation("CampaignCreator")
@@ -442,12 +442,12 @@ model Member {
   qualityCheckedTransfers StockTransfer[]   @relation("TransferQualityChecker")
   approvedAdjustments     StockAdjustment[] @relation("AdjustmentApprover")
   assemblies              Assembly[]
-  ownedProjects           Project[]             @relation("ProjectOwner")
-  projectMemberships      ProjectMember[]       @relation("ProjectMemberRef")
-  createdTasks            Task[]                @relation("TaskCreator")
-  taskAssignees           TaskAssignee[]        @relation("TaskAssigneeMember")
-  taskComments            TaskComment[]         @relation("TaskCommentAuthor")
-  taskActivityLogs        TaskActivityLog[]     @relation("TaskActivityActor")
+  ownedProjects           Project[]         @relation("ProjectOwner")
+  projectMemberships      ProjectMember[]   @relation("ProjectMemberRef")
+  createdTasks            Task[]            @relation("TaskCreator")
+  taskAssignees           TaskAssignee[]    @relation("TaskAssigneeMember")
+  taskComments            TaskComment[]     @relation("TaskCommentAuthor")
+  taskActivityLogs        TaskActivityLog[] @relation("TaskActivityActor")
 
   @@unique([organizationId, userId])
   @@unique([organizationId, cardId])
@@ -485,7 +485,6 @@ enum EmploymentType {
   TEMPORARY
 }
 
-
 enum ShiftAttendanceStatus {
   ON_TIME
   LATE
@@ -503,17 +502,17 @@ enum AttendanceVerificationMethod {
 }
 
 model AttendanceLog {
-  id                 String             @id @default(cuid())
+  id                 String                       @id @default(cuid())
   memberId           String
-  member             Member             @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member             Member                       @relation(fields: [memberId], references: [id], onDelete: Cascade)
   organizationId     String
-  organization       Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization       Organization                 @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   checkInTime        DateTime
   checkOutTime       DateTime?
   checkInLocationId  String // Now references InventoryLocation
-  checkInLocation    InventoryLocation  @relation("CheckInLocationLogs", fields: [checkInLocationId], references: [id], onDelete: Restrict)
+  checkInLocation    InventoryLocation            @relation("CheckInLocationLogs", fields: [checkInLocationId], references: [id], onDelete: Restrict)
   checkOutLocationId String? // Optional: if checkout can happen at a different location
-  checkOutLocation   InventoryLocation? @relation("CheckOutLocationLogs", fields: [checkOutLocationId], references: [id], onDelete: Restrict)
+  checkOutLocation   InventoryLocation?           @relation("CheckOutLocationLogs", fields: [checkOutLocationId], references: [id], onDelete: Restrict)
   durationMinutes    Int? // Calculated when member checks out
   shiftId            String?
   shift              StaffShift?                  @relation(fields: [shiftId], references: [id], onDelete: SetNull)
@@ -524,9 +523,9 @@ model AttendanceLog {
   longitude          Float?
   distanceMeters     Float?
   notes              String?
-  isAutoCheckout     Boolean            @default(false) // To flag if this was an auto checkout
-  createdAt          DateTime           @default(now())
-  updatedAt          DateTime           @updatedAt
+  isAutoCheckout     Boolean                      @default(false) // To flag if this was an auto checkout
+  createdAt          DateTime                     @default(now())
+  updatedAt          DateTime                     @updatedAt
 
   activeMemberCheckIn Member? @relation("ActiveCheckIn") // Link to Member's current active log
 
@@ -800,14 +799,14 @@ model Subscription {
   dodoCurrentPeriodEnd DateTime?          @map("dodo_current_period_end")
 
   // Custom Pricing Overrides
-  isCustomPrice         Boolean  @default(false) @map("is_custom_price")
-  customMonthlyPrice    Float?   @map("custom_monthly_price")
-  customYearlyPrice     Float?   @map("custom_yearly_price")
-  billingInterval       String?  @default("monthly") @map("billing_interval")
-  customCurrency        String?  @map("custom_currency")
-  customDiscountPercent Float?   @map("custom_discount_percent")
-  customTaxPercent      Float?   @map("custom_tax_percent")
-  customNotes           String?  @map("custom_notes")
+  isCustomPrice         Boolean @default(false) @map("is_custom_price")
+  customMonthlyPrice    Float?  @map("custom_monthly_price")
+  customYearlyPrice     Float?  @map("custom_yearly_price")
+  billingInterval       String? @default("monthly") @map("billing_interval")
+  customCurrency        String? @map("custom_currency")
+  customDiscountPercent Float?  @map("custom_discount_percent")
+  customTaxPercent      Float?  @map("custom_tax_percent")
+  customNotes           String? @map("custom_notes")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @default(now()) @updatedAt
@@ -1004,7 +1003,6 @@ enum ReportType {
   TAX_REPORT
 }
 
-
 model ReportSettings {
   id             String       @id @default(cuid())
   organizationId String       @unique
@@ -1016,7 +1014,7 @@ model ReportSettings {
   recipients    String[] @default([])
 
   // Delivery target
-  scrymeChannel String   @default("reports")
+  scrymeChannel String @default("reports")
 
   // Schedule Configuration
   scheduleEnabled Boolean @default(true)

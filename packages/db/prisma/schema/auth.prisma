@@ -1,14 +1,14 @@
 model User {
-  id                   String             @id @default(cuid())
+  id                   String        @id @default(cuid())
   name                 String?
-  email                String             @unique
+  email                String        @unique
   password             String?
-  role                 UserRole           @default(MEMBER)
-  isActive             Boolean            @default(true)
+  role                 UserRole      @default(MEMBER)
+  isActive             Boolean       @default(true)
   deletedAt            DateTime?
-  version              Int                @default(0)
-  createdAt            DateTime           @default(now())
-  updatedAt            DateTime           @updatedAt
+  version              Int           @default(0)
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
   emailVerified        Boolean?
   image                String?
   banned               Boolean?
@@ -22,7 +22,7 @@ model User {
   sessions             Session[]
   passkeys             Passkey[]
   ssoProviders         SsoProvider[]
-  twoFactorEnabled     Boolean?           @default(false)
+  twoFactorEnabled     Boolean?      @default(false)
   twoFactor            TwoFactor[]
   activeOrganizationId String?
   displayUsername      String?
@@ -150,29 +150,29 @@ enum UserRole {
 }
 
 enum RateLimitTier {
-  LOW        // 100 req/min
-  STANDARD   // 500 req/min
-  HIGH       // 2000 req/min
+  LOW // 100 req/min
+  STANDARD // 500 req/min
+  HIGH // 2000 req/min
   UNLIMITED
 }
 
 // API key usage logs for rate limiting and analytics
 model ApiKeyUsageLog {
-  id          String    @id @default(cuid())
-  apiKeyId    String
-  apiKey      ApiKey    @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  apiKeyId String
+  apiKey   ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
 
-  endpoint    String    // API endpoint called
-  method      String    // HTTP method
-  statusCode  Int       // Response status code
-  ipAddress   String?   // Client IP
-  userAgent   String?   // Client user agent
+  endpoint   String // API endpoint called
+  method     String // HTTP method
+  statusCode Int // Response status code
+  ipAddress  String? // Client IP
+  userAgent  String? // Client user agent
 
-  requestSize  Int?     // Request size in bytes
-  responseSize Int?     // Response size in bytes
-  duration     Int?     // Request duration in ms
+  requestSize  Int? // Request size in bytes
+  responseSize Int? // Response size in bytes
+  duration     Int? // Request duration in ms
 
-  timestamp   DateTime  @default(now())
+  timestamp DateTime @default(now())
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -224,32 +224,32 @@ model OauthClient {
   referenceId                      String?
   metadata                         Json?
 
-  refreshTokens                    OauthRefreshToken[]
-  accessTokens                     OauthAccessToken[]
-  consents                         OauthConsent[]
-  clientResources                  OauthClientResource[]
+  refreshTokens   OauthRefreshToken[]
+  accessTokens    OauthAccessToken[]
+  consents        OauthConsent[]
+  clientResources OauthClientResource[]
 
   @@map("oauth_client")
 }
 
 model OauthResource {
-  id                            String                @id @default(cuid())
-  identifier                    String                @unique
+  id                            String    @id @default(cuid())
+  identifier                    String    @unique
   name                          String
-  accessTokenTtl               Int?
-  refreshTokenTtl              Int?
+  accessTokenTtl                Int?
+  refreshTokenTtl               Int?
   signingAlgorithm              String?
   signingKeyId                  String?
   allowedScopes                 String[]
   customClaims                  Json?
-  dpopBoundAccessTokensRequired Boolean?              @default(false)
-  disabled                      Boolean?              @default(false)
-  createdAt                     DateTime?             @default(now())
-  updatedAt                     DateTime?             @updatedAt
-  policyVersion                 Int?                  @default(1)
+  dpopBoundAccessTokensRequired Boolean?  @default(false)
+  disabled                      Boolean?  @default(false)
+  createdAt                     DateTime? @default(now())
+  updatedAt                     DateTime? @updatedAt
+  policyVersion                 Int?      @default(1)
   metadata                      Json?
 
-  clientResources               OauthClientResource[]
+  clientResources OauthClientResource[]
 
   @@map("oauth_resource")
 }
@@ -270,20 +270,20 @@ model OauthClientResource {
 }
 
 model OauthRefreshToken {
-  id                      String             @id @default(cuid())
-  token                   String             @unique
+  id                      String      @id @default(cuid())
+  token                   String      @unique
   clientId                String
-  client                  OauthClient        @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
+  client                  OauthClient @relation(fields: [clientId], references: [clientId], onDelete: Cascade)
   sessionId               String?
-  session                 Session?           @relation(fields: [sessionId], references: [id], onDelete: SetNull)
+  session                 Session?    @relation(fields: [sessionId], references: [id], onDelete: SetNull)
   userId                  String
-  user                    User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user                    User        @relation(fields: [userId], references: [id], onDelete: Cascade)
   referenceId             String?
   authorizationCodeId     String?
   resources               String[]
   requestedUserInfoClaims String[]
   expiresAt               DateTime?
-  createdAt               DateTime?          @default(now())
+  createdAt               DateTime?   @default(now())
   revoked                 DateTime?
   rotatedAt               DateTime?
   rotationReplayResponse  String?
@@ -292,7 +292,7 @@ model OauthRefreshToken {
   confirmation            Json?
   scopes                  String[]
 
-  accessTokens            OauthAccessToken[]
+  accessTokens OauthAccessToken[]
 
   @@index([clientId])
   @@index([sessionId])

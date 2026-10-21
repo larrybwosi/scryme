@@ -83,6 +83,9 @@ CREATE TYPE "CartStatus" AS ENUM ('ACTIVE', 'CHECKED_OUT', 'ABANDONED');
 CREATE TYPE "ExpenseStatus" AS ENUM ('PENDING', 'PENDING_APPROVAL', 'APPROVED', 'REJECTED', 'PAID', 'REIMBURSED', 'VOIDED');
 
 -- CreateEnum
+CREATE TYPE "SubscriptionStatus" AS ENUM ('TRIALING', 'ACTIVE', 'PAST_DUE', 'CANCELED', 'EXPIRED');
+
+-- CreateEnum
 CREATE TYPE "RecurrenceFrequency" AS ENUM ('DAILY', 'WEEKLY', 'BIWEEKLY', 'MONTHLY', 'QUARTERLY', 'YEARLY');
 
 -- CreateEnum
@@ -2939,10 +2942,15 @@ CREATE TABLE "department_member" (
 CREATE TABLE "subscriptions" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
+    "status" "SubscriptionStatus" NOT NULL DEFAULT 'TRIALING',
+    "trial_started_at" TIMESTAMP(3),
+    "trial_ends_at" TIMESTAMP(3),
     "dodo_customer_id" TEXT,
     "dodo_subscription_id" TEXT,
     "dodo_price_id" TEXT,
     "dodo_current_period_end" TIMESTAMP(3),
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "subscriptions_pkey" PRIMARY KEY ("id")
 );

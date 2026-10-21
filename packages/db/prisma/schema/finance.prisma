@@ -4,94 +4,94 @@
 // --------------------------------------------------------
 
 model Expense {
-  id                   String                     @id @default(cuid())
-  expenseNumber        String                     // Unique sequence: EXP-2023-0001
+  id            String @id @default(cuid())
+  expenseNumber String // Unique sequence: EXP-2023-0001
 
   // -- Audit & Lifecycle --
-  createdAt            DateTime                   @default(now())
-  updatedAt            DateTime                   @updatedAt
-  deletedAt            DateTime?                  // Soft Delete support
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime? // Soft Delete support
 
   // -- Core Details --
-  description          String
-  expenseDate          DateTime                   @default(now())
+  description String
+  expenseDate DateTime @default(now())
 
   // -- Financials (Multi-Currency) --
-  amount               Decimal                    @db.Decimal(19, 4) // Transaction amount
-  currencyCode         String                     @default("KES")    // ISO Code: USD, EUR, KES
-  exchangeRate         Decimal                    @default(1.0)      @db.Decimal(19, 6) // Rate at time of expense
-  baseAmount           Decimal?                   @db.Decimal(19, 4) // amount * exchangeRate (Reporting value)
+  amount       Decimal  @db.Decimal(19, 4) // Transaction amount
+  currencyCode String   @default("KES") // ISO Code: USD, EUR, KES
+  exchangeRate Decimal  @default(1.0) @db.Decimal(19, 6) // Rate at time of expense
+  baseAmount   Decimal? @db.Decimal(19, 4) // amount * exchangeRate (Reporting value)
 
-  taxAmount            Decimal?                   @db.Decimal(19, 4)
-  taxRate              Decimal?                   @default(0)        // Percentage
+  taxAmount Decimal? @db.Decimal(19, 4)
+  taxRate   Decimal? @default(0) // Percentage
 
   // -- Categorization & GL --
-  categoryId           String
-  category             ExpenseCategory            @relation(fields: [categoryId], references: [id], onDelete: Restrict)
-  ledgerAccountId      String?
-  ledgerAccount        LedgerAccount?             @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
+  categoryId      String
+  category        ExpenseCategory @relation(fields: [categoryId], references: [id], onDelete: Restrict)
+  ledgerAccountId String?
+  ledgerAccount   LedgerAccount?  @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
 
   // -- Dimensions (For Reporting) --
-  costCenterId         String?                    // Link to new CostCenter model
-  costCenter           CostCenter?                @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
-  projectId            String?                    // Placeholder for Project management linkage
+  costCenterId String? // Link to new CostCenter model
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  projectId    String? // Placeholder for Project management linkage
 
   // -- Payment & Status --
-  paymentMethod        PaymentMethod
-  status               ExpenseStatus              @default(PENDING)
-  isReimbursable       Boolean                    @default(false)
-  isBillable           Boolean                    @default(false)
+  paymentMethod  PaymentMethod
+  status         ExpenseStatus @default(PENDING)
+  isReimbursable Boolean       @default(false)
+  isBillable     Boolean       @default(false)
 
   // -- Relations --
-  purchaseId           String?
-  purchase             Purchase?                  @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id], onDelete: SetNull)
 
-  supplierId           String?
-  supplier             Supplier?                  @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  locationId           String?
-  location             InventoryLocation?         @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  budgetId             String?
-  budget               Budget?                    @relation(fields: [budgetId], references: [id], onDelete: SetNull)
+  budgetId String?
+  budget   Budget? @relation(fields: [budgetId], references: [id], onDelete: SetNull)
 
-  customerId           String?
-  customer             Customer?                  @relation("CustomerExpenses", fields: [customerId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer? @relation("CustomerExpenses", fields: [customerId], references: [id], onDelete: SetNull)
 
-  businessAccountId    String?
-  businessAccount      BusinessAccount?           @relation("BusinessAccountExpenses", fields: [businessAccountId], references: [id], onDelete: SetNull)
+  businessAccountId String?
+  businessAccount   BusinessAccount? @relation("BusinessAccountExpenses", fields: [businessAccountId], references: [id], onDelete: SetNull)
 
-  pettyCashFundId      String?
-  pettyCashFund        PettyCashFund?             @relation(fields: [pettyCashFundId], references: [id], onDelete: SetNull)
+  pettyCashFundId String?
+  pettyCashFund   PettyCashFund? @relation(fields: [pettyCashFundId], references: [id], onDelete: SetNull)
 
-  utilityAccountId     String?
-  utilityAccount       UtilityAccount?            @relation(fields: [utilityAccountId], references: [id], onDelete: SetNull)
+  utilityAccountId String?
+  utilityAccount   UtilityAccount? @relation(fields: [utilityAccountId], references: [id], onDelete: SetNull)
 
   // -- Approval Workflow --
-  memberId             String
-  member               Member                     @relation("ExpenseSubmitter", fields: [memberId], references: [id], onDelete: Restrict)
+  memberId String
+  member   Member @relation("ExpenseSubmitter", fields: [memberId], references: [id], onDelete: Restrict)
 
-  approverId           String?
-  approver             Member?                    @relation("ExpenseApprover", fields: [approverId], references: [id], onDelete: SetNull)
-  approvalDate         DateTime?
+  approverId   String?
+  approver     Member?   @relation("ExpenseApprover", fields: [approverId], references: [id], onDelete: SetNull)
+  approvalDate DateTime?
 
-  approvalRequestId    String?                    @unique
-  approvalRequest      ApprovalRequest?           @relation("ExpenseApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: SetNull)
+  approvalRequestId String?          @unique
+  approvalRequest   ApprovalRequest? @relation("ExpenseApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: SetNull)
 
-  recurringExpenseId   String?
-  recurringExpense     RecurringExpense?          @relation("RecurringExpenseExpenses", fields: [recurringExpenseId], references: [id], onDelete: SetNull)
+  recurringExpenseId String?
+  recurringExpense   RecurringExpense? @relation("RecurringExpenseExpenses", fields: [recurringExpenseId], references: [id], onDelete: SetNull)
 
   // -- Metadata --
-  receiptUrl           String?
-  notes                String?
-  tags                 String[]
-  mileage              Float?
+  receiptUrl String?
+  notes      String?
+  tags       String[]
+  mileage    Float?
 
   // -- External Relations --
-  organizationId       String
-  organization         Organization               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  appliedTaxes         AppliedExpenseTax[]
-  attachments          Attachment[]
+  organizationId String
+  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  appliedTaxes   AppliedExpenseTax[]
+  attachments    Attachment[]
 
   @@unique([organizationId, expenseNumber])
   @@index([organizationId, status, expenseDate])
@@ -101,24 +101,24 @@ model Expense {
 }
 
 model ExpenseCategory {
-  id                 String                  @id @default(cuid())
-  name               String
-  description        String?
-  code               String?                 // Short code, e.g., "TRV"
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  code        String? // Short code, e.g., "TRV"
 
   // -- Accounting Integration --
-  glCode             String?                 // General Ledger Account Code (e.g., 6000)
-  ledgerAccountId    String?
-  ledgerAccount      LedgerAccount?          @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
-  taxRateDefault     Decimal?                @default(0) // Default tax %
+  glCode          String? // General Ledger Account Code (e.g., 6000)
+  ledgerAccountId String?
+  ledgerAccount   LedgerAccount? @relation(fields: [ledgerAccountId], references: [id], onDelete: SetNull)
+  taxRateDefault  Decimal?       @default(0) // Default tax %
 
-  color              String?
-  isActive           Boolean                 @default(true)
-  requiresApproval   Boolean                 @default(false)
-  defaultBudget      Decimal?                @db.Decimal(19, 4)
+  color            String?
+  isActive         Boolean  @default(true)
+  requiresApproval Boolean  @default(false)
+  defaultBudget    Decimal? @db.Decimal(19, 4)
 
-  organizationId     String
-  organization       Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   expenses           Expense[]
   recurringExpenses  RecurringExpense[]
@@ -141,47 +141,47 @@ enum ExpenseStatus {
 }
 
 model RecurringExpense {
-  id              String              @id @default(cuid())
+  id String @id @default(cuid())
 
   // -- Core Details --
-  description     String
-  amount          Decimal             @db.Decimal(19, 4)
-  currencyCode    String              @default("KES")
+  description  String
+  amount       Decimal @db.Decimal(19, 4)
+  currencyCode String  @default("KES")
 
-  categoryId      String
-  category        ExpenseCategory     @relation(fields: [categoryId], references: [id])
+  categoryId String
+  category   ExpenseCategory @relation(fields: [categoryId], references: [id])
 
-  paymentMethod   PaymentMethod
-  frequency       RecurrenceFrequency
+  paymentMethod PaymentMethod
+  frequency     RecurrenceFrequency
 
   // -- Scheduling --
-  startDate       DateTime
-  endDate         DateTime?
-  nextDueDate     DateTime
-  isActive        Boolean             @default(true)
+  startDate   DateTime
+  endDate     DateTime?
+  nextDueDate DateTime
+  isActive    Boolean   @default(true)
 
-  supplierId      String?
-  supplier        Supplier?           @relation(fields: [supplierId], references: [id], onDelete: SetNull)
+  supplierId String?
+  supplier   Supplier? @relation(fields: [supplierId], references: [id], onDelete: SetNull)
 
-  customerId           String?
-  customer             Customer?                  @relation("CustomerRecurringExpenses", fields: [customerId], references: [id], onDelete: SetNull)
+  customerId String?
+  customer   Customer? @relation("CustomerRecurringExpenses", fields: [customerId], references: [id], onDelete: SetNull)
 
-  businessAccountId    String?
-  businessAccount      BusinessAccount?           @relation("BusinessAccountRecurringExpenses", fields: [businessAccountId], references: [id], onDelete: SetNull)
+  businessAccountId String?
+  businessAccount   BusinessAccount? @relation("BusinessAccountRecurringExpenses", fields: [businessAccountId], references: [id], onDelete: SetNull)
 
-  utilityAccountId     String?
-  utilityAccount       UtilityAccount?            @relation(fields: [utilityAccountId], references: [id], onDelete: SetNull)
+  utilityAccountId String?
+  utilityAccount   UtilityAccount? @relation(fields: [utilityAccountId], references: [id], onDelete: SetNull)
 
-  organizationId  String
-  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdById     String
-  createdBy       Member              @relation("RecurringExpenseCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String
+  createdBy   Member @relation("RecurringExpenseCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
-  expenses        Expense[]           @relation("RecurringExpenseExpenses")
+  expenses Expense[] @relation("RecurringExpenseExpenses")
 
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([nextDueDate])
@@ -202,45 +202,45 @@ enum RecurrenceFrequency {
 // --------------------------------------------------------
 
 model Budget {
-  id                  String             @id @default(cuid())
-  name                String
-  description         String?
+  id          String  @id @default(cuid())
+  name        String
+  description String?
 
   // -- Financial Control --
-  amount              Decimal            @db.Decimal(19, 4) // Total Budgeted
-  committedAmount     Decimal            @default(0) @db.Decimal(19, 4) // "Soft" spend (POs approved but not billed)
-  spentAmount         Decimal            @default(0) @db.Decimal(19, 4) // "Hard" spend (Actual Invoices/Expenses)
-  variance            Decimal?           @db.Decimal(19, 4) // Calculated: Amount - (Committed + Spent)
+  amount          Decimal  @db.Decimal(19, 4) // Total Budgeted
+  committedAmount Decimal  @default(0) @db.Decimal(19, 4) // "Soft" spend (POs approved but not billed)
+  spentAmount     Decimal  @default(0) @db.Decimal(19, 4) // "Hard" spend (Actual Invoices/Expenses)
+  variance        Decimal? @db.Decimal(19, 4) // Calculated: Amount - (Committed + Spent)
 
-  periodStart         DateTime
-  periodEnd           DateTime
-  fiscalYear          Int?
-  isActive            Boolean            @default(true)
+  periodStart DateTime
+  periodEnd   DateTime
+  fiscalYear  Int?
+  isActive    Boolean  @default(true)
 
   // -- Scopes (Dimensions) --
-  locationId          String?
-  location            InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  departmentId        String?
-  department          Department?        @relation("DepartmentBudgets", fields: [departmentId], references: [id], onDelete: SetNull)
+  departmentId String?
+  department   Department? @relation("DepartmentBudgets", fields: [departmentId], references: [id], onDelete: SetNull)
 
-  costCenterId        String?
-  costCenter          CostCenter?        @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
+  costCenterId String?
+  costCenter   CostCenter? @relation(fields: [costCenterId], references: [id], onDelete: SetNull)
 
-  expenseCategoryId   String?
-  expenseCategory     ExpenseCategory?   @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
+  expenseCategoryId String?
+  expenseCategory   ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
 
-  organizationId      String
-  organization        Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdById         String
-  createdBy           Member             @relation("BudgetCreator", fields: [createdById], references: [id], onDelete: Restrict)
+  createdById String
+  createdBy   Member @relation("BudgetCreator", fields: [createdById], references: [id], onDelete: Restrict)
 
-  createdAt           DateTime           @default(now())
-  updatedAt           DateTime           @updatedAt
-  deletedAt           DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
-  activeForDepartment Department?        @relation("DepartmentBudget")
+  activeForDepartment Department?    @relation("DepartmentBudget")
   expenses            Expense[]
   reports             BudgetReport[]
   alerts              BudgetAlert[]
@@ -252,42 +252,42 @@ model Budget {
 }
 
 model BudgetReport {
-  id            String   @id @default(cuid())
-  budgetId      String
-  budget        Budget   @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  budgetId String
+  budget   Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
 
-  reportDate    DateTime @default(now())
-  periodStart   DateTime
-  periodEnd     DateTime
+  reportDate  DateTime @default(now())
+  periodStart DateTime
+  periodEnd   DateTime
 
-  totalSpent    Decimal  @db.Decimal(19, 4)
-  remaining     Decimal  @db.Decimal(19, 4)
-  variance      Decimal  @db.Decimal(19, 4)
+  totalSpent Decimal @db.Decimal(19, 4)
+  remaining  Decimal @db.Decimal(19, 4)
+  variance   Decimal @db.Decimal(19, 4)
 
   notes         String?
   generatedById String
-  generatedBy   Member   @relation("BudgetReportGenerator", fields: [generatedById], references: [id], onDelete: Restrict)
+  generatedBy   Member  @relation("BudgetReportGenerator", fields: [generatedById], references: [id], onDelete: Restrict)
 
   @@index([budgetId])
   @@index([reportDate])
 }
 
 model BudgetAlert {
-  id             String       @id @default(cuid())
-  budgetId       String
-  budget         Budget       @relation(fields: [budgetId], references: [id], onDelete: Cascade)
+  id       String @id @default(cuid())
+  budgetId String
+  budget   Budget @relation(fields: [budgetId], references: [id], onDelete: Cascade)
 
-  threshold      Decimal      @db.Decimal(5, 2) // Percentage (e.g., 80.00 for 80%)
-  recipients     String[]     // Array of Email/User IDs
+  threshold  Decimal  @db.Decimal(5, 2) // Percentage (e.g., 80.00 for 80%)
+  recipients String[] // Array of Email/User IDs
 
-  isActive       Boolean      @default(true)
+  isActive       Boolean   @default(true)
   lastNotifiedAt DateTime?
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([budgetId])
   @@index([organizationId])
@@ -295,22 +295,22 @@ model BudgetAlert {
 
 // New Model: Financial Cost Center for Dimensional Reporting
 model CostCenter {
-  id             String        @id @default(cuid())
-  name           String
-  code           String        // e.g., "CC-IT-001"
-  description    String?
+  id          String  @id @default(cuid())
+  name        String
+  code        String // e.g., "CC-IT-001"
+  description String?
 
-  isActive       Boolean       @default(true)
+  isActive Boolean @default(true)
 
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  expenses       Expense[]
-  budgets        Budget[]
-  departments    Department[]
+  expenses    Expense[]
+  budgets     Budget[]
+  departments Department[]
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, code])
   @@index([organizationId])
@@ -321,44 +321,44 @@ model CostCenter {
 // --------------------------------------------------------
 
 model PettyCashFund {
-  id             String        @id @default(cuid())
-  name           String        // e.g., "Main Office Petty Cash"
-  amount         Decimal       @db.Decimal(19, 4) // Current balance
-  floatAmount    Decimal       @db.Decimal(19, 4) // Original float amount
-  currencyCode   String        @default("KES")
+  id           String  @id @default(cuid())
+  name         String // e.g., "Main Office Petty Cash"
+  amount       Decimal @db.Decimal(19, 4) // Current balance
+  floatAmount  Decimal @db.Decimal(19, 4) // Original float amount
+  currencyCode String  @default("KES")
 
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   responsibleMemberId String
-  responsibleMember   Member    @relation("ResponsibleForFund", fields: [responsibleMemberId], references: [id], onDelete: Restrict)
+  responsibleMember   Member @relation("ResponsibleForFund", fields: [responsibleMemberId], references: [id], onDelete: Restrict)
 
-  locationId     String?
-  location       InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
-  isActive       Boolean       @default(true)
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  expenses       Expense[]
-  transactions   PettyCashTransaction[]
+  expenses     Expense[]
+  transactions PettyCashTransaction[]
 
   @@index([organizationId])
 }
 
 model PettyCashTransaction {
-  id               String         @id @default(cuid())
-  fundId           String
-  fund             PettyCashFund  @relation(fields: [fundId], references: [id], onDelete: Cascade)
+  id     String        @id @default(cuid())
+  fundId String
+  fund   PettyCashFund @relation(fields: [fundId], references: [id], onDelete: Cascade)
 
-  type             PettyCashTransactionType
-  amount           Decimal        @db.Decimal(19, 4)
-  description      String?
+  type        PettyCashTransactionType
+  amount      Decimal                  @db.Decimal(19, 4)
+  description String?
 
-  memberId         String         // Who performed the transaction
-  member           Member         @relation(fields: [memberId], references: [id])
+  memberId String // Who performed the transaction
+  member   Member @relation(fields: [memberId], references: [id])
 
-  createdAt        DateTime       @default(now())
+  createdAt DateTime @default(now())
 
   @@index([fundId])
 }
@@ -374,21 +374,21 @@ enum PettyCashTransactionType {
 // --------------------------------------------------------
 
 model UtilityAccount {
-  id             String        @id @default(cuid())
-  name           String        // e.g., "Main Office Electricity"
-  provider       String?       // e.g., "Kenya Power"
-  accountNumber  String
-  meterNumber    String?
-  type           UtilityType
+  id            String      @id @default(cuid())
+  name          String // e.g., "Main Office Electricity"
+  provider      String? // e.g., "Kenya Power"
+  accountNumber String
+  meterNumber   String?
+  type          UtilityType
 
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  expenses       Expense[]
+  expenses          Expense[]
   recurringExpenses RecurringExpense[]
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
 }
@@ -407,65 +407,65 @@ enum UtilityType {
 // --------------------------------------------------------
 
 model Purchase {
-  id                  String                @id @default(cuid())
-  purchaseNumber      String                // PO-2023-0001
+  id             String @id @default(cuid())
+  purchaseNumber String // PO-2023-0001
 
-  supplierId          String
-  supplier            Supplier              @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
-  organizationId      String
-  organization        Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  memberId            String
-  member              Member                @relation("PurchaseCreator", fields: [memberId], references: [id])
+  memberId String
+  member   Member @relation("PurchaseCreator", fields: [memberId], references: [id])
 
   // -- Dates --
-  orderDate           DateTime              @default(now())
-  dueDate             DateTime?
-  expectedDate        DateTime?
-  receivedDate        DateTime?
+  orderDate    DateTime  @default(now())
+  dueDate      DateTime?
+  expectedDate DateTime?
+  receivedDate DateTime?
 
   // -- Multi-Currency Financials --
-  currency            String                @default("KES")
-  exchangeRate        Decimal               @default(1.0) @db.Decimal(19, 6)
+  currency     String  @default("KES")
+  exchangeRate Decimal @default(1.0) @db.Decimal(19, 6)
 
-  subTotal            Decimal               @default(0) @db.Decimal(19, 4)
-  discount            Decimal?              @default(0) @db.Decimal(19, 4)
-  shippingCost        Decimal?              @default(0) @db.Decimal(19, 4)
-  totalTaxAmount      Decimal               @default(0) @db.Decimal(19, 4)
-  totalAmount         Decimal               @db.Decimal(19, 4) // Grand Total
+  subTotal       Decimal  @default(0) @db.Decimal(19, 4)
+  discount       Decimal? @default(0) @db.Decimal(19, 4)
+  shippingCost   Decimal? @default(0) @db.Decimal(19, 4)
+  totalTaxAmount Decimal  @default(0) @db.Decimal(19, 4)
+  totalAmount    Decimal  @db.Decimal(19, 4) // Grand Total
 
-  landedCost          Decimal?              @default(0) @db.Decimal(19, 4)
-  paidAmount          Decimal               @default(0) @db.Decimal(19, 4)
+  landedCost Decimal? @default(0) @db.Decimal(19, 4)
+  paidAmount Decimal  @default(0) @db.Decimal(19, 4)
 
   // -- Status & Matching --
-  status              PurchaseStatus        @default(ORDERED)
-  paymentStatus       PaymentStatus         @default(UNPAID)
-  matchStatus         ThreeWayMatchStatus   @default(NO_MATCH) // PO vs Receipt vs Invoice
+  status        PurchaseStatus      @default(ORDERED)
+  paymentStatus PaymentStatus       @default(UNPAID)
+  matchStatus   ThreeWayMatchStatus @default(NO_MATCH) // PO vs Receipt vs Invoice
 
-  notifyBeforeDays    Int?
-  notes               String?
+  notifyBeforeDays Int?
+  notes            String?
 
-  approvalRequestId   String?               @unique
-  approvalRequest     ApprovalRequest?      @relation("PurchaseApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: SetNull)
-  stockRequestId      String?
-  stockRequest        StockRequest?         @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
+  approvalRequestId String?          @unique
+  approvalRequest   ApprovalRequest? @relation("PurchaseApprovalRequest", fields: [approvalRequestId], references: [id], onDelete: SetNull)
+  stockRequestId    String?
+  stockRequest      StockRequest?    @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
 
   // -- Audit --
-  createdAt           DateTime              @default(now())
-  updatedAt           DateTime              @updatedAt
-  deletedAt           DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   // -- Relations --
-  expenses            Expense[]
-  items               PurchaseItem[]
-  payments            PurchasePayment[]
-  attachments         Attachment[]
-  returns             PurchaseReturn[]
-  stockReceipts       StockReceipt[] // Link to Inventory Module
-  invoices            SupplierInvoice[]
-  appliedTaxes        AppliedPurchaseTax[]
-  metadata            Json?
+  expenses      Expense[]
+  items         PurchaseItem[]
+  payments      PurchasePayment[]
+  attachments   Attachment[]
+  returns       PurchaseReturn[]
+  stockReceipts StockReceipt[] // Link to Inventory Module
+  invoices      SupplierInvoice[]
+  appliedTaxes  AppliedPurchaseTax[]
+  metadata      Json?
 
   @@unique([organizationId, purchaseNumber])
   @@index([orderDate])
@@ -475,45 +475,45 @@ model Purchase {
 }
 
 model PurchaseItem {
-  id                  String               @id @default(cuid())
-  purchaseId          String
-  purchase            Purchase             @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  variantId           String
-  variant             ProductVariant       @relation(fields: [variantId], references: [id], onDelete: Restrict)
+  variantId String
+  variant   ProductVariant @relation(fields: [variantId], references: [id], onDelete: Restrict)
 
   // -- 3-Way Match Quantities --
-  orderedQuantity     Int
-  receivedQuantity    Int                  @default(0)
-  rejectedQuantity    Int                  @default(0)
-  invoicedQuantity    Int                  @default(0) // Quantity billed by supplier
+  orderedQuantity  Int
+  receivedQuantity Int @default(0)
+  rejectedQuantity Int @default(0)
+  invoicedQuantity Int @default(0) // Quantity billed by supplier
 
   // -- Line Item Financials --
-  unitCost            Decimal              @db.Decimal(19, 4)
-  taxRateId           String?
-  taxRateRel          TaxRate?             @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
-  taxRate             Decimal              @default(0) @db.Decimal(5, 4)
-  taxAmount           Decimal              @default(0) @db.Decimal(19, 4)
-  landedCost          Decimal?             @default(0) @db.Decimal(19, 4)
-  totalCost           Decimal              @db.Decimal(19, 4) // (Qty * Unit) + Tax + LandedCost
+  unitCost   Decimal  @db.Decimal(19, 4)
+  taxRateId  String?
+  taxRateRel TaxRate? @relation(fields: [taxRateId], references: [id], onDelete: SetNull)
+  taxRate    Decimal  @default(0) @db.Decimal(5, 4)
+  taxAmount  Decimal  @default(0) @db.Decimal(19, 4)
+  landedCost Decimal? @default(0) @db.Decimal(19, 4)
+  totalCost  Decimal  @db.Decimal(19, 4) // (Qty * Unit) + Tax + LandedCost
 
   // -- GL Override --
-  glCode              String?              // Specific GL code for this item if different from variant default
+  glCode String? // Specific GL code for this item if different from variant default
 
-  orderedUnitId       String?
-  orderedUnit         SystemUnit?          @relation("PIOrderUnit", fields: [orderedUnitId], references: [id], onDelete: Restrict)
+  orderedUnitId String?
+  orderedUnit   SystemUnit? @relation("PIOrderUnit", fields: [orderedUnitId], references: [id], onDelete: Restrict)
 
-  orderedOrgUnitId    String?
-  orderedOrgUnit      OrganizationUnit?    @relation("OrgPurchaseUnit", fields: [orderedOrgUnitId], references: [id], onDelete: Restrict)
+  orderedOrgUnitId String?
+  orderedOrgUnit   OrganizationUnit? @relation("OrgPurchaseUnit", fields: [orderedOrgUnitId], references: [id], onDelete: Restrict)
 
-  qualityCheckStatus  QualityCheckStatus   @default(PENDING)
+  qualityCheckStatus QualityCheckStatus @default(PENDING)
 
-  createdAt           DateTime             @default(now())
-  updatedAt           DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  stockBatches        StockBatch[]
-  returnItems         PurchaseReturnItem[]
-  qcResults           QCResult[]
+  stockBatches StockBatch[]
+  returnItems  PurchaseReturnItem[]
+  qcResults    QCResult[]
 
   @@unique([id, orderedOrgUnitId, orderedUnitId])
   @@index([purchaseId])
@@ -521,64 +521,64 @@ model PurchaseItem {
 }
 
 model PurchasePayment {
-  id            String        @id @default(cuid())
-  purchaseId    String
-  purchase      Purchase      @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  id         String   @id @default(cuid())
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  memberId      String
-  member        Member        @relation("PurchasePaymentMember", fields: [memberId], references: [id])
+  memberId String
+  member   Member @relation("PurchasePaymentMember", fields: [memberId], references: [id])
 
-  paymentDate   DateTime      @default(now())
-  amount        Decimal       @db.Decimal(19, 4)
-  currency      String        @default("KES")
+  paymentDate DateTime @default(now())
+  amount      Decimal  @db.Decimal(19, 4)
+  currency    String   @default("KES")
 
   paymentMethod PaymentMethod
-  reference     String?       // Transaction ID / Check #
+  reference     String? // Transaction ID / Check #
   notes         String?
 
-  createdAt     DateTime      @default(now())
-  updatedAt     DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([purchaseId])
   @@index([paymentDate])
 }
 
 model SupplierInvoice {
-  id             String        @id @default(cuid())
-  invoiceNumber  String        // Vendor's Invoice #
+  id            String @id @default(cuid())
+  invoiceNumber String // Vendor's Invoice #
 
-  purchaseId     String
-  purchase       Purchase      @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
 
-  supplierId     String
-  supplier       Supplier      @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
   organizationId String
-  organization   Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // -- Critical Dates --
-  issueDate      DateTime
-  dueDate        DateTime
-  postingDate    DateTime?     // For Accounting Period
+  issueDate   DateTime
+  dueDate     DateTime
+  postingDate DateTime? // For Accounting Period
 
   // -- Financials --
-  currency       String        @default("KES")
-  subTotal       Decimal       @db.Decimal(19, 4)
-  taxAmount      Decimal       @db.Decimal(19, 4)
-  totalAmount    Decimal       @db.Decimal(19, 4)
-  amountPaid     Decimal       @default(0) @db.Decimal(19, 4)
+  currency    String  @default("KES")
+  subTotal    Decimal @db.Decimal(19, 4)
+  taxAmount   Decimal @db.Decimal(19, 4)
+  totalAmount Decimal @db.Decimal(19, 4)
+  amountPaid  Decimal @default(0) @db.Decimal(19, 4)
 
-  status         PaymentStatus @default(UNPAID)
-  matchStatus    ThreeWayMatchStatus @default(NO_MATCH)
+  status      PaymentStatus       @default(UNPAID)
+  matchStatus ThreeWayMatchStatus @default(NO_MATCH)
 
-  notes          String?
-  invoiceUrl     String?
-  etrNumber      String?       // For Kenyan KRA Compliance
-  kraCompliant   Boolean       @default(false)
+  notes        String?
+  invoiceUrl   String?
+  etrNumber    String? // For Kenyan KRA Compliance
+  kraCompliant Boolean @default(false)
 
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
-  deletedAt      DateTime?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  deletedAt DateTime?
 
   @@unique([organizationId, supplierId, invoiceNumber])
   @@index([status])
@@ -586,30 +586,30 @@ model SupplierInvoice {
 }
 
 model PurchaseReturn {
-  id             String               @id @default(cuid())
-  returnNumber   String
+  id           String @id @default(cuid())
+  returnNumber String
 
-  purchaseId     String
-  purchase       Purchase             @relation(fields: [purchaseId], references: [id], onDelete: NoAction)
+  purchaseId String
+  purchase   Purchase @relation(fields: [purchaseId], references: [id], onDelete: NoAction)
 
-  supplierId     String
-  supplier       Supplier             @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  supplierId String
+  supplier   Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
-  returnDate     DateTime             @default(now())
-  reason         String
+  returnDate DateTime @default(now())
+  reason     String
 
-  totalValue     Decimal              @db.Decimal(19, 4)
-  currency       String               @default("KES")
+  totalValue Decimal @db.Decimal(19, 4)
+  currency   String  @default("KES")
 
-  status         PurchaseReturnStatus @default(REQUESTED)
-  notes          String?
+  status PurchaseReturnStatus @default(REQUESTED)
+  notes  String?
 
   items          PurchaseReturnItem[]
   organizationId String
   organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, returnNumber])
   @@index([purchaseId])
@@ -621,16 +621,16 @@ model PurchaseReturnItem {
   purchaseReturnId String
   purchaseReturn   PurchaseReturn @relation(fields: [purchaseReturnId], references: [id], onDelete: Cascade)
 
-  purchaseItemId   String
-  purchaseItem     PurchaseItem   @relation(fields: [purchaseItemId], references: [id], onDelete: NoAction)
+  purchaseItemId String
+  purchaseItem   PurchaseItem @relation(fields: [purchaseItemId], references: [id], onDelete: NoAction)
 
-  quantity         Int
-  unitCost         Decimal        @db.Decimal(19, 4)
-  totalRefund      Decimal        @default(0) @db.Decimal(19, 4)
+  quantity    Int
+  unitCost    Decimal @db.Decimal(19, 4)
+  totalRefund Decimal @default(0) @db.Decimal(19, 4)
 
-  reason           String?
-  createdAt        DateTime       @default(now())
-  updatedAt        DateTime       @updatedAt
+  reason    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([purchaseReturnId])
   @@index([purchaseItemId])
@@ -641,35 +641,35 @@ model PurchaseReturnItem {
 // --------------------------------------------------------
 
 model ApprovalRequest {
-  id                  String              @id @default(cuid())
-  organizationId      String
-  organization        Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  requestType         ApprovalRequestType
+  requestType ApprovalRequestType
 
-  relatedId           String              // Polymorphic ID (Expense ID or Purchase ID)
-  relatedRecordNumber String              // Display purposes
+  relatedId           String // Polymorphic ID (Expense ID or Purchase ID)
+  relatedRecordNumber String // Display purposes
 
-  requesterId         String
-  requester           Member              @relation("ApprovalRequester", fields: [requesterId], references: [id])
+  requesterId String
+  requester   Member @relation("ApprovalRequester", fields: [requesterId], references: [id])
 
-  amount              Decimal             @db.Decimal(19, 4)
-  currency            String              @default("KES")
+  amount   Decimal @db.Decimal(19, 4)
+  currency String  @default("KES")
 
-  status              ApprovalStatus      @default(PENDING)
-  currentStep         Int                 @default(1)
+  status      ApprovalStatus @default(PENDING)
+  currentStep Int            @default(1)
 
-  scrymeThreadId      String?             // For enterprise threaded discussions
+  scrymeThreadId String? // For enterprise threaded discussions
 
-  workflowId          String?
-  workflow            ApprovalWorkflow?   @relation("WorkflowApprovalRequests", fields: [workflowId], references: [id], onDelete: SetNull)
+  workflowId String?
+  workflow   ApprovalWorkflow? @relation("WorkflowApprovalRequests", fields: [workflowId], references: [id], onDelete: SetNull)
 
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  decisions           ApprovalDecision[]
-  expense             Expense?            @relation("ExpenseApprovalRequest")
-  purchase            Purchase?           @relation("PurchaseApprovalRequest")
+  decisions ApprovalDecision[]
+  expense   Expense?           @relation("ExpenseApprovalRequest")
+  purchase  Purchase?          @relation("PurchaseApprovalRequest")
 
   @@index([organizationId, status])
   @@index([relatedId])
@@ -681,109 +681,110 @@ model ApprovalDecision {
   approvalRequestId String
   approvalRequest   ApprovalRequest @relation(fields: [approvalRequestId], references: [id], onDelete: Cascade)
 
-  stepNumber        Int
-  approverId        String
-  approver          Member          @relation("ApprovalDecisions", fields: [approverId], references: [id])
+  stepNumber Int
+  approverId String
+  approver   Member @relation("ApprovalDecisions", fields: [approverId], references: [id])
 
-  status            ApprovalStatus  @default(PENDING)
-  comments          String?
-  decisionDate      DateTime?
+  status       ApprovalStatus @default(PENDING)
+  comments     String?
+  decisionDate DateTime?
 
   // -- Scryme Integration --
-  scrymeMessageId   String?
-  scrymeChannelId   String?
+  scrymeMessageId String?
+  scrymeChannelId String?
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([approvalRequestId])
   @@index([approverId, status])
 }
 
 model ApprovalWorkflow {
-  settings                     Json?                  // Generic settings for the workflow
-  id                           String                 @id @default(cuid())
-  organizationId               String
-  organization                 Organization           @relation("OrgWorkflows", fields: [organizationId], references: [id], onDelete: Cascade)
+  settings       Json? // Generic settings for the workflow
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgWorkflows", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  name                         String
-  description                  String?
-  isActive                     Boolean                @default(true)
-  triggerEvent                 String?                // e.g., "EXPENSE_CREATED", "PURCHASE_ORDER_CREATED"
+  name         String
+  description  String?
+  isActive     Boolean @default(true)
+  triggerEvent String? // e.g., "EXPENSE_CREATED", "PURCHASE_ORDER_CREATED"
 
   steps                        ApprovalWorkflowStep[]
   activeForOrganizations       Organization[]         @relation("ActiveOrgWorkflow")
   expenseApprovalOrganizations Organization[]         @relation("ExpenseApprovalWorkflows")
   approvalRequests             ApprovalRequest[]      @relation("WorkflowApprovalRequests")
 
-  createdAt                    DateTime               @default(now())
-  updatedAt                    DateTime               @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, name])
   @@index([organizationId, isActive])
 }
+
 // [Rest of finance.prisma]
 
 model ApprovalWorkflowStep {
-  id                     String                  @id @default(cuid())
-  approvalWorkflowId     String
-  workflow               ApprovalWorkflow        @relation(fields: [approvalWorkflowId], references: [id], onDelete: Cascade)
+  id                 String           @id @default(cuid())
+  approvalWorkflowId String
+  workflow           ApprovalWorkflow @relation(fields: [approvalWorkflowId], references: [id], onDelete: Cascade)
 
   stepNumber             Int
   name                   String
   description            String?
-  slaHours               Int?                    // SLA in hours
-  allConditionsMustMatch Boolean                 @default(true)
+  slaHours               Int? // SLA in hours
+  allConditionsMustMatch Boolean @default(true)
 
-  conditions             ApprovalStepCondition[]
-  actions                ApprovalStepAction[]
+  conditions ApprovalStepCondition[]
+  actions    ApprovalStepAction[]
 
-  createdAt              DateTime                @default(now())
-  updatedAt              DateTime                @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([approvalWorkflowId, stepNumber])
 }
 
 model ApprovalStepCondition {
-  id                String                @id @default(cuid())
-  stepId            String
-  step              ApprovalWorkflowStep  @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  id     String               @id @default(cuid())
+  stepId String
+  step   ApprovalWorkflowStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
-  type              ConditionType
+  type ConditionType
 
-  minAmount         Decimal?              @db.Decimal(19, 4)
-  maxAmount         Decimal?              @db.Decimal(19, 4)
+  minAmount Decimal? @db.Decimal(19, 4)
+  maxAmount Decimal? @db.Decimal(19, 4)
 
-  locationId        String?
-  location          InventoryLocation?    @relation("LocationCondition", fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation("LocationCondition", fields: [locationId], references: [id], onDelete: SetNull)
 
   expenseCategoryId String?
-  expenseCategory   ExpenseCategory?      @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
+  expenseCategory   ExpenseCategory? @relation(fields: [expenseCategoryId], references: [id], onDelete: SetNull)
 
-  createdAt         DateTime              @default(now())
-  updatedAt         DateTime              @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([stepId])
   @@index([expenseCategoryId])
 }
 
 model ApprovalStepAction {
-  id               String               @id @default(cuid())
-  stepId           String
-  step             ApprovalWorkflowStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
+  id     String               @id @default(cuid())
+  stepId String
+  step   ApprovalWorkflowStep @relation(fields: [stepId], references: [id], onDelete: Cascade)
 
-  type             ApprovalActionType
-  approverRole     MemberRole?
+  type         ApprovalActionType
+  approverRole MemberRole?
 
   specificMemberId String?
-  specificMember   Member?              @relation("ApprovalStepActionMember", fields: [specificMemberId], references: [id], onDelete: SetNull)
+  specificMember   Member? @relation("ApprovalStepActionMember", fields: [specificMemberId], references: [id], onDelete: SetNull)
 
-  windmillScriptPath String?             // If type is WINDMILL_SCRIPT
+  windmillScriptPath String? // If type is WINDMILL_SCRIPT
 
-  approvalMode     ApprovalMode         @default(ANY_ONE)
+  approvalMode ApprovalMode @default(ANY_ONE)
 
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([stepId])
   @@index([specificMemberId])
@@ -888,10 +889,10 @@ enum PaymentStatus {
 }
 
 enum ThreeWayMatchStatus {
-  NO_MATCH        // Invoice not yet received or linked
-  PARTIAL_MATCH   // Invoice matches PO but receipt is pending (or vice versa)
-  MATCHED         // PO, Receipt, and Invoice align
-  VARIANCE        // Discrepancy detected (Price or Qty difference)
+  NO_MATCH // Invoice not yet received or linked
+  PARTIAL_MATCH // Invoice matches PO but receipt is pending (or vice versa)
+  MATCHED // PO, Receipt, and Invoice align
+  VARIANCE // Discrepancy detected (Price or Qty difference)
 }
 
 // --------------------------------------------------------
@@ -899,30 +900,30 @@ enum ThreeWayMatchStatus {
 // --------------------------------------------------------
 
 model LedgerAccount {
-  id             String         @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  name           String
-  code           String         // e.g., "1000", "2000"
-  description    String?
-  type           AccountType
-  subType        AccountSubType
+  name        String
+  code        String // e.g., "1000", "2000"
+  description String?
+  type        AccountType
+  subType     AccountSubType
 
   // For hierarchical COA
-  parentId       String?
-  parent         LedgerAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
-  children       LedgerAccount[] @relation("AccountHierarchy")
+  parentId String?
+  parent   LedgerAccount?  @relation("AccountHierarchy", fields: [parentId], references: [id], onDelete: Restrict)
+  children LedgerAccount[] @relation("AccountHierarchy")
 
-  isActive       Boolean        @default(true)
-  isSystem       Boolean        @default(false) // If true, cannot be deleted (e.g., Retained Earnings)
+  isActive Boolean @default(true)
+  isSystem Boolean @default(false) // If true, cannot be deleted (e.g., Retained Earnings)
 
   journalLines      JournalLine[]
   expenseCategories ExpenseCategory[]
   expenses          Expense[]
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, code])
   @@unique([organizationId, name])
@@ -930,49 +931,49 @@ model LedgerAccount {
 }
 
 model JournalEntry {
-  id             String         @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  entryDate      DateTime       @default(now())
-  postingDate    DateTime?      // When it was actually committed to the ledger
-  description    String
-  reference      String?        // Document #, Invoice #, etc.
-  sourceType     JournalSource?
-  sourceId       String?        // Link to Transaction, Expense, Purchase, etc.
+  entryDate   DateTime       @default(now())
+  postingDate DateTime? // When it was actually committed to the ledger
+  description String
+  reference   String? // Document #, Invoice #, etc.
+  sourceType  JournalSource?
+  sourceId    String? // Link to Transaction, Expense, Purchase, etc.
 
-  status         JournalStatus  @default(DRAFT)
+  status JournalStatus @default(DRAFT)
 
-  memberId       String         // Creator
-  member         Member         @relation(fields: [memberId], references: [id])
+  memberId String // Creator
+  member   Member @relation(fields: [memberId], references: [id])
 
-  lines          JournalLine[]
+  lines JournalLine[]
 
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId, entryDate])
   @@index([status])
 }
 
 model JournalLine {
-  id               String        @id @default(cuid())
-  journalEntryId   String
-  journalEntry     JournalEntry  @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  journalEntryId String
+  journalEntry   JournalEntry @relation(fields: [journalEntryId], references: [id], onDelete: Cascade)
 
-  ledgerAccountId  String
-  ledgerAccount    LedgerAccount @relation(fields: [ledgerAccountId], references: [id], onDelete: Restrict)
+  ledgerAccountId String
+  ledgerAccount   LedgerAccount @relation(fields: [ledgerAccountId], references: [id], onDelete: Restrict)
 
-  description      String?
-  debit            Decimal       @default(0) @db.Decimal(19, 4)
-  credit           Decimal       @default(0) @db.Decimal(19, 4)
+  description String?
+  debit       Decimal @default(0) @db.Decimal(19, 4)
+  credit      Decimal @default(0) @db.Decimal(19, 4)
 
   // For reconciliation
-  bankStatementLineId String?    @unique
+  bankStatementLineId String?            @unique
   bankStatementLine   BankStatementLine? @relation(fields: [bankStatementLineId], references: [id], onDelete: SetNull)
 
-  createdAt        DateTime      @default(now())
-  updatedAt        DateTime      @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([journalEntryId])
   @@index([ledgerAccountId])
@@ -983,43 +984,43 @@ model JournalLine {
 // --------------------------------------------------------
 
 model BankStatement {
-  id             String              @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  bankAccountId  String?             // Link to a LedgerAccount of type BANK
-  accountNumber  String
-  statementDate  DateTime
+  bankAccountId String? // Link to a LedgerAccount of type BANK
+  accountNumber String
+  statementDate DateTime
 
-  openingBalance Decimal             @db.Decimal(19, 4)
-  closingBalance Decimal             @db.Decimal(19, 4)
+  openingBalance Decimal @db.Decimal(19, 4)
+  closingBalance Decimal @db.Decimal(19, 4)
 
-  status         BankReconciliationStatus @default(DRAFT)
+  status BankReconciliationStatus @default(DRAFT)
 
-  lines          BankStatementLine[]
+  lines BankStatementLine[]
 
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
 }
 
 model BankStatementLine {
-  id                String         @id @default(cuid())
-  statementId       String
-  statement         BankStatement  @relation(fields: [statementId], references: [id], onDelete: Cascade)
+  id          String        @id @default(cuid())
+  statementId String
+  statement   BankStatement @relation(fields: [statementId], references: [id], onDelete: Cascade)
 
-  transactionDate   DateTime
-  description       String
-  reference         String?
-  amount            Decimal        @db.Decimal(19, 4) // Positive for deposits, negative for withdrawals
+  transactionDate DateTime
+  description     String
+  reference       String?
+  amount          Decimal  @db.Decimal(19, 4) // Positive for deposits, negative for withdrawals
 
-  status            MatchStatus    @default(UNMATCHED)
+  status MatchStatus @default(UNMATCHED)
 
-  journalLine       JournalLine?
+  journalLine JournalLine?
 
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([statementId])
 }
@@ -1029,32 +1030,32 @@ model BankStatementLine {
 // --------------------------------------------------------
 
 model RecurringBill {
-  id              String              @id @default(cuid())
-  organizationId  String
-  organization    Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  description     String
-  supplierId      String
-  supplier        Supplier            @relation(fields: [supplierId], references: [id], onDelete: Restrict)
+  description String
+  supplierId  String
+  supplier    Supplier @relation(fields: [supplierId], references: [id], onDelete: Restrict)
 
-  amount          Decimal             @db.Decimal(19, 4)
-  currency        String              @default("KES")
+  amount   Decimal @db.Decimal(19, 4)
+  currency String  @default("KES")
 
-  frequency       RecurrenceFrequency
-  startDate       DateTime
-  endDate         DateTime?
-  nextDueDate     DateTime
-  isActive        Boolean             @default(true)
+  frequency   RecurrenceFrequency
+  startDate   DateTime
+  endDate     DateTime?
+  nextDueDate DateTime
+  isActive    Boolean             @default(true)
 
   // Template for generated bills
-  notes           String?
-  taxRateId       String?
+  notes     String?
+  taxRateId String?
 
-  createdById     String
-  createdBy       Member              @relation(fields: [createdById], references: [id])
+  createdById String
+  createdBy   Member @relation(fields: [createdById], references: [id])
 
-  createdAt       DateTime            @default(now())
-  updatedAt       DateTime            @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([organizationId])
   @@index([nextDueDate])

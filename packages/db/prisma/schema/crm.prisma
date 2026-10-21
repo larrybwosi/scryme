@@ -25,19 +25,19 @@ enum CrmRelationshipType {
 }
 
 model CrmObjectDefinition {
-  id             String   @id @default(cuid())
-  name           String   // Internal name e.g. "person"
-  label          String   // Display name e.g. "Person"
-  labelPlural    String   // e.g. "People"
-  description    String?
-  icon           String?  // Lucide icon name
-  isSystem       Boolean  @default(false) // If true, cannot be deleted
+  id          String  @id @default(cuid())
+  name        String // Internal name e.g. "person"
+  label       String // Display name e.g. "Person"
+  labelPlural String // e.g. "People"
+  description String?
+  icon        String? // Lucide icon name
+  isSystem    Boolean @default(false) // If true, cannot be deleted
 
   organizationId String
   organization   Organization @relation("OrgCrmObjects", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  fields         CrmFieldDefinition[]
-  records        CrmRecord[]
+  fields  CrmFieldDefinition[]
+  records CrmRecord[]
 
   // Relationships where this is the source
   sourceRelationships CrmRelationshipDefinition[] @relation("SourceRelationship")
@@ -53,20 +53,20 @@ model CrmObjectDefinition {
 }
 
 model CrmFieldDefinition {
-  id               String       @id @default(cuid())
+  id               String              @id @default(cuid())
   objectId         String
   objectDefinition CrmObjectDefinition @relation(fields: [objectId], references: [id], onDelete: Cascade)
 
-  name             String       // e.g. "first_name"
-  label            String       // e.g. "First Name"
-  type             CrmFieldType
-  isRequired       Boolean      @default(false)
-  isUnique         Boolean      @default(false)
-  defaultValue     Json?
-  options          Json?        // For SELECT/MULTI_SELECT types: [{ label: string, value: string, color?: string }]
+  name         String // e.g. "first_name"
+  label        String // e.g. "First Name"
+  type         CrmFieldType
+  isRequired   Boolean      @default(false)
+  isUnique     Boolean      @default(false)
+  defaultValue Json?
+  options      Json? // For SELECT/MULTI_SELECT types: [{ label: string, value: string, color?: string }]
 
-  isSystem         Boolean      @default(false)
-  order            Int          @default(0)
+  isSystem Boolean @default(false)
+  order    Int     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -77,35 +77,35 @@ model CrmFieldDefinition {
 }
 
 model CrmRecord {
-  id               String       @id @default(cuid())
+  id               String              @id @default(cuid())
   objectId         String
   objectDefinition CrmObjectDefinition @relation(fields: [objectId], references: [id], onDelete: Cascade)
 
-  organizationId   String
-  organization     Organization @relation("OrgCrmRecords", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation("OrgCrmRecords", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  data             Json         // The dynamic values: { "first_name": "John", ... }
+  data Json // The dynamic values: { "first_name": "John", ... }
 
   // To keep track of "owner"
-  ownerId          String?
-  owner            Member?      @relation("CrmRecordOwner", fields: [ownerId], references: [id], onDelete: SetNull)
+  ownerId String?
+  owner   Member? @relation("CrmRecordOwner", fields: [ownerId], references: [id], onDelete: SetNull)
 
   // Standard timestamps
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   // Associations
   sourceAssociations CrmAssociation[] @relation("SourceRecord")
   targetAssociations CrmAssociation[] @relation("TargetRecord")
 
-  businessAccount    BusinessAccount?
-  customer           Customer?
+  businessAccount BusinessAccount?
+  customer        Customer?
 
-  activities         CrmActivity[]
-  notes              CrmNote[]
-  followUps          CrmFollowUp[]
-  campaignEvents     CampaignEvent[]
-  workflowInstances  CampaignWorkflowInstance[]
+  activities           CrmActivity[]
+  notes                CrmNote[]
+  followUps            CrmFollowUp[]
+  campaignEvents       CampaignEvent[]
+  workflowInstances    CampaignWorkflowInstance[]
   communicationThreads CommunicationThread[]
 
   @@index([objectId, organizationId])
@@ -114,27 +114,27 @@ model CrmRecord {
 }
 
 model CrmRelationshipDefinition {
-  id               String       @id @default(cuid())
-  organizationId   String
-  organization     Organization @relation("OrgCrmRelationships", fields: [organizationId], references: [id], onDelete: Cascade)
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation("OrgCrmRelationships", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  name             String       // e.g. "company_employees"
-  type             CrmRelationshipType
+  name String // e.g. "company_employees"
+  type CrmRelationshipType
 
-  sourceObjectId   String
-  sourceObject     CrmObjectDefinition @relation("SourceRelationship", fields: [sourceObjectId], references: [id], onDelete: Cascade)
+  sourceObjectId String
+  sourceObject   CrmObjectDefinition @relation("SourceRelationship", fields: [sourceObjectId], references: [id], onDelete: Cascade)
 
-  targetObjectId   String
-  targetObject     CrmObjectDefinition @relation("TargetRelationship", fields: [targetObjectId], references: [id], onDelete: Cascade)
+  targetObjectId String
+  targetObject   CrmObjectDefinition @relation("TargetRelationship", fields: [targetObjectId], references: [id], onDelete: Cascade)
 
   // Labels for the relationship from both sides
-  sourceLabel      String       // e.g. "Employees"
-  targetLabel      String       // e.g. "Company"
+  sourceLabel String // e.g. "Employees"
+  targetLabel String // e.g. "Company"
 
-  associations     CrmAssociation[]
+  associations CrmAssociation[]
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, name])
   @@index([organizationId])
@@ -142,18 +142,18 @@ model CrmRelationshipDefinition {
 }
 
 model CrmAssociation {
-  id               String       @id @default(cuid())
-  relationshipId   String
-  relationship     CrmRelationshipDefinition @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
+  id             String                    @id @default(cuid())
+  relationshipId String
+  relationship   CrmRelationshipDefinition @relation(fields: [relationshipId], references: [id], onDelete: Cascade)
 
-  sourceRecordId   String
-  sourceRecord     CrmRecord @relation("SourceRecord", fields: [sourceRecordId], references: [id], onDelete: Cascade)
+  sourceRecordId String
+  sourceRecord   CrmRecord @relation("SourceRecord", fields: [sourceRecordId], references: [id], onDelete: Cascade)
 
-  targetRecordId   String
-  targetRecord     CrmRecord @relation("TargetRecord", fields: [targetRecordId], references: [id], onDelete: Cascade)
+  targetRecordId String
+  targetRecord   CrmRecord @relation("TargetRecord", fields: [targetRecordId], references: [id], onDelete: Cascade)
 
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([relationshipId, sourceRecordId, targetRecordId])
   @@index([sourceRecordId])
@@ -162,21 +162,21 @@ model CrmAssociation {
 }
 
 model CrmActivity {
-  id               String       @id @default(cuid())
-  recordId         String
-  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  recordId String
+  record   CrmRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
-  organizationId   String
-  organization     Organization @relation("OrgCrmActivities", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation("OrgCrmActivities", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  type             String       // e.g. "CREATION", "UPDATE", "EMAIL", "CALL", "NOTE"
-  description      String?      @db.Text
-  metadata         Json?        // To store old/new values or extra info
+  type        String // e.g. "CREATION", "UPDATE", "EMAIL", "CALL", "NOTE"
+  description String? @db.Text
+  metadata    Json? // To store old/new values or extra info
 
-  memberId         String?
-  member           Member?      @relation("CrmActivityMember", fields: [memberId], references: [id], onDelete: SetNull)
+  memberId String?
+  member   Member? @relation("CrmActivityMember", fields: [memberId], references: [id], onDelete: SetNull)
 
-  createdAt        DateTime     @default(now())
+  createdAt DateTime @default(now())
 
   @@index([recordId])
   @@index([organizationId])
@@ -184,22 +184,22 @@ model CrmActivity {
 }
 
 model CrmNote {
-  id               String       @id @default(cuid())
-  recordId         String
-  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  recordId String
+  record   CrmRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
-  organizationId   String
-  organization     Organization @relation("OrgCrmNotes", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation("OrgCrmNotes", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  content          String       @db.Text // Markdown string
+  content String @db.Text // Markdown string
 
-  createdById      String?
-  createdBy        Member?      @relation("CrmNoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
+  createdById String?
+  createdBy   Member? @relation("CrmNoteCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
-  timelineDate     DateTime     @default(now())
+  timelineDate DateTime @default(now())
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([recordId])
   @@index([organizationId])
@@ -235,36 +235,36 @@ enum CrmFollowUpType {
 }
 
 model CrmFollowUp {
-  id               String       @id @default(cuid())
-  recordId         String
-  record           CrmRecord    @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  id       String    @id @default(cuid())
+  recordId String
+  record   CrmRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
 
-  organizationId   String
-  organization     Organization @relation("OrgCrmFollowUps", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation("OrgCrmFollowUps", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  title            String
-  description      String?      @db.Text
-  dueDate          DateTime
-  priority         CrmFollowUpPriority @default(MEDIUM)
-  status           CrmFollowUpStatus   @default(PENDING)
-  type             CrmFollowUpType     @default(OTHER)
+  title       String
+  description String?             @db.Text
+  dueDate     DateTime
+  priority    CrmFollowUpPriority @default(MEDIUM)
+  status      CrmFollowUpStatus   @default(PENDING)
+  type        CrmFollowUpType     @default(OTHER)
 
-  assignedToId     String?
-  assignedTo       Member?      @relation("CrmFollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedToId String?
+  assignedTo   Member? @relation("CrmFollowUpAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
 
-  locationId       String?
-  location         InventoryLocation? @relation("LocationFollowUps", fields: [locationId], references: [id], onDelete: SetNull)
+  locationId String?
+  location   InventoryLocation? @relation("LocationFollowUps", fields: [locationId], references: [id], onDelete: SetNull)
 
   // Enterprise options
-  isRecurring       Boolean  @default(false)
-  recurringInterval String?  // e.g. "DAILY", "WEEKLY", "MONTHLY"
-  reminderSent      Boolean  @default(false)
-  escalationSent    Boolean  @default(false)
+  isRecurring       Boolean @default(false)
+  recurringInterval String? // e.g. "DAILY", "WEEKLY", "MONTHLY"
+  reminderSent      Boolean @default(false)
+  escalationSent    Boolean @default(false)
 
-  completedAt      DateTime?
+  completedAt DateTime?
 
-  createdAt        DateTime     @default(now())
-  updatedAt        DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([recordId])
   @@index([organizationId])
@@ -304,25 +304,25 @@ enum CommunicationMessageStatus {
 }
 
 model CommunicationThread {
-  id             String               @id @default(cuid())
+  id             String       @id @default(cuid())
   organizationId String
-  organization   Organization         @relation("OrgCommunicationThreads", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation("OrgCommunicationThreads", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  channel        CommunicationChannel @default(WHATSAPP)
-  participantPhone String             // E.164 phone number e.g. "+254712345678"
+  channel          CommunicationChannel @default(WHATSAPP)
+  participantPhone String // E.164 phone number e.g. "+254712345678"
   participantName  String?
 
   // Relations to CRM entities
-  crmRecordId    String?
-  crmRecord      CrmRecord?           @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
+  crmRecordId String?
+  crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
 
-  messages       CommunicationMessage[]
+  messages CommunicationMessage[]
 
-  lastMessageAt  DateTime             @default(now())
-  unreadCount    Int                  @default(0)
+  lastMessageAt DateTime @default(now())
+  unreadCount   Int      @default(0)
 
-  createdAt      DateTime             @default(now())
-  updatedAt      DateTime             @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, channel, participantPhone])
   @@index([organizationId])
@@ -332,28 +332,28 @@ model CommunicationThread {
 }
 
 model CommunicationMessage {
-  id             String                     @id @default(cuid())
-  threadId       String
-  thread         CommunicationThread        @relation(fields: [threadId], references: [id], onDelete: Cascade)
+  id       String              @id @default(cuid())
+  threadId String
+  thread   CommunicationThread @relation(fields: [threadId], references: [id], onDelete: Cascade)
 
   organizationId String
-  organization   Organization               @relation("OrgCommunicationMessages", fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation("OrgCommunicationMessages", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  direction      CommunicationDirection
-  content        String                     @db.Text
-  status         CommunicationMessageStatus @default(PENDING)
+  direction CommunicationDirection
+  content   String                     @db.Text
+  status    CommunicationMessageStatus @default(PENDING)
 
   // External IDs (e.g. Meta WhatsApp WAMID)
-  externalId     String?                    @unique
+  externalId String? @unique
 
   // Sender info if OUTBOUND from internal user
   senderMemberId String?
-  senderMember   Member?                    @relation("SentCommunicationMessages", fields: [senderMemberId], references: [id], onDelete: SetNull)
+  senderMember   Member? @relation("SentCommunicationMessages", fields: [senderMemberId], references: [id], onDelete: SetNull)
 
-  metadata       Json?                      // Extra details (e.g. template parameters, media URLs, delivery timestamps)
+  metadata Json? // Extra details (e.g. template parameters, media URLs, delivery timestamps)
 
-  createdAt      DateTime                   @default(now())
-  updatedAt      DateTime                   @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([threadId])
   @@index([organizationId])
@@ -366,14 +366,14 @@ model WhatsappTemplate {
   organizationId String
   organization   Organization @relation("OrgWhatsappTemplates", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  name           String       // e.g. "order_confirmation"
-  category       String       // e.g. "UTILITY", "MARKETING"
-  language       String       @default("en_US")
-  status         String       @default("APPROVED") // e.g. APPROVED, REJECTED, PENDING
-  components     Json         // Array of template components (HEADER, BODY, FOOTER, BUTTONS)
+  name       String // e.g. "order_confirmation"
+  category   String // e.g. "UTILITY", "MARKETING"
+  language   String @default("en_US")
+  status     String @default("APPROVED") // e.g. APPROVED, REJECTED, PENDING
+  components Json // Array of template components (HEADER, BODY, FOOTER, BUTTONS)
 
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@unique([organizationId, name, language])
   @@index([organizationId])

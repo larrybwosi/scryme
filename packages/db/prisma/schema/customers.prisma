@@ -37,11 +37,11 @@ model Customer {
   ecommerceMappings EcommerceCustomerMapping[]
   favorites         Favorite[]
   reviews           ProductReview[]
-  expenses          Expense[] @relation("CustomerExpenses")
-  recurringExpenses RecurringExpense[] @relation("CustomerRecurringExpenses")
+  expenses          Expense[]                  @relation("CustomerExpenses")
+  recurringExpenses RecurringExpense[]         @relation("CustomerRecurringExpenses")
 
-  createdBy            Member?                    @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
-  updatedBy            Member?                    @relation("CustomerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  createdBy Member? @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedBy Member? @relation("CustomerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   priceLists PriceList[]
 
@@ -74,18 +74,18 @@ model BusinessAccount {
 
   logoUrl            String?
   customTheme        String?
-  isEnterprise       Boolean      @default(false)
+  isEnterprise       Boolean @default(false)
   discountPercentage Float?
   paymentTermsDays   Int?
 
   crmRecordId String?    @unique
   crmRecord   CrmRecord? @relation(fields: [crmRecordId], references: [id], onDelete: SetNull)
 
-  transactions Transaction[]
-  contacts     CompanyContact[]
-  invoices     Invoice[]
-  addresses    Address[]
-  expenses          Expense[] @relation("BusinessAccountExpenses")
+  transactions      Transaction[]
+  contacts          CompanyContact[]
+  invoices          Invoice[]
+  addresses         Address[]
+  expenses          Expense[]          @relation("BusinessAccountExpenses")
   recurringExpenses RecurringExpense[] @relation("BusinessAccountRecurringExpenses")
 
   // Added implicit Many-to-Many relation to support multiple contracts/deals
@@ -132,18 +132,18 @@ enum ConnectionStatus {
 }
 
 model ReferralProgram {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   name           String
   description    String?
-  isActive       Boolean      @default(true)
+  isActive       Boolean         @default(true)
   referrerReward Int
   refereeReward  Int
-  rewardType     String       @default("points")
+  rewardType     String          @default("points")
   trigger        ReferralTrigger @default(FIRST_PURCHASE)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
   referrals      Referral[]
 
   @@unique([organizationId, name])
@@ -184,7 +184,7 @@ model Driver {
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   memberId       String?      @unique
-  member         Member?       @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  member         Member?      @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   availability    DriverStatus @default(OFFLINE)
   currentLocation String? // Could be lat/long
@@ -253,19 +253,19 @@ enum ReferralTrigger {
 }
 
 model CompanyContact {
-  id                String          @id @default(cuid())
-  name              String
-  email             String?
-  phone             String?
+  id    String  @id @default(cuid())
+  name  String
+  email String?
+  phone String?
 
   businessAccountId String
   businessAccount   BusinessAccount @relation(fields: [businessAccountId], references: [id], onDelete: Cascade)
 
-  organizationId    String
-  organization      Organization    @relation("OrgCompanyContacts", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization @relation("OrgCompanyContacts", fields: [organizationId], references: [id], onDelete: Cascade)
 
-  createdAt         DateTime        @default(now())
-  updatedAt         DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([businessAccountId])
   @@index([organizationId])
