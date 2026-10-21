@@ -318,3 +318,42 @@ export async function bulkExportCustomers() {
 
   return customers;
 }
+
+// ====================================
+// SYSTEM MODULE ACTIONS
+// ====================================
+
+export async function getSystemModules(): Promise<Record<string, boolean>> {
+  await requireSuperAdmin();
+
+  const setting = await db.globalSetting.findUnique({
+    where: { key: "system:modules" },
+  });
+
+  if (!setting?.value) {
+    return {};
+  }
+
+  try {
+    return JSON.parse(setting.value);
+  } catch {
+    return {};
+  }
+}
+
+export async function updateSystemModuleStatus(moduleKey: string, isEnabled: boolean) {
+  await requireSuperAdmin();
+
+  const current = await getSystemModules();
+  const updated = { ...current, [moduleKey]: isEnabled };
+
+  await db.globalSetting.upsert({
+    where: { key: "system:modules" },
+    update: { value: JSON.stringify(updated) },
+    create: { key: "system:modules", value: JSON.stringify(updated) },
+  });
+
+  revalidatePath("/systems");
+  revalidatePath("/organizations");
+  return updated;
+}

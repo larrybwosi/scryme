@@ -2,6 +2,8 @@ import { Module, Global } from "@nestjs/common";
 import { AuditService } from "./services/audit.service";
 import { QuotaService } from "./services/quota.service";
 import { QuotaGuard } from "./guards/quota.guard";
+import { ModuleAccessService } from "./services/module-access.service";
+import { ModuleGuard } from "./guards/module.guard";
 import { V3RealtimeGateway } from "./realtime/v3-realtime.gateway";
 import { RealtimeRedisService } from "./realtime/realtime-redis.service";
 import { V3AuthModule } from "../modules/auth/auth.module";
@@ -15,6 +17,8 @@ import { V3AuthGuard } from "./guards/v3-auth.guard";
     AuditService,
     QuotaService,
     QuotaGuard,
+    ModuleAccessService,
+    ModuleGuard,
     V3RealtimeGateway,
     RealtimeRedisService,
     V3AuthGuard,
@@ -23,6 +27,8 @@ import { V3AuthGuard } from "./guards/v3-auth.guard";
     AuditService,
     QuotaService,
     QuotaGuard,
+    ModuleAccessService,
+    ModuleGuard,
     V3RealtimeGateway,
     RealtimeRedisService,
     V3AuthModule,

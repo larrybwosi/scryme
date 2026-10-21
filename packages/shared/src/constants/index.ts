@@ -24,3 +24,5 @@ export const TIMEZONES = [
   { value: 'Asia/Dubai', label: 'Gulf Standard Time (GST)' },
   { value: 'Australia/Sydney', label: 'Australian Eastern Time (AEST)' },
 ];
+
+export * from "./modules";

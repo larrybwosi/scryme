@@ -5,16 +5,18 @@ import { FinancialReportingService } from "../../application/services/financial-
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "../../../../common/guards/multi-tenancy.guard";
 import { PermissionsGuard } from "../../../../common/guards/permissions.guard";
+import { ModuleGuard } from "../../../../common/guards/module.guard";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
-import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 import { v3Context } from "../../../../common/decorators/v3-context.decorator";
 import { Permissions } from "../../../../common/decorators/permissions.decorator";
+import { RequireModule } from "../../../../common/decorators/module.decorator";
 
 @ApiTags("V3 Finance / Accounting")
 @ApiBearerAuth()
 @Controller(":orgSlug/finance/accounting")
 @ApiParam({ name: "orgSlug", type: "string" })
-@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
+@UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard, ModuleGuard)
+@RequireModule("finance")
 @UseInterceptors(StandardResponseInterceptor)
 export class AccountingController {
   constructor(

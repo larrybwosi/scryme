@@ -384,3 +384,73 @@ export async function syncTierDefaultsToOrganizationQuota(orgId: string) {
   revalidatePath(`/organizations/${orgId}`);
   return getEffectiveQuota(orgId);
 }
+
+import { getSystemModules } from "./systems";
+import { evaluateAllModulesStatus } from "@repo/shared/constants";
+
+export async function getOrganizationModules(orgId: string) {
+  await requireSuperAdmin();
+
+  const [org, systemModules] = await Promise.all([
+    db.organization.findUnique({
+      where: { id: orgId },
+      select: { quotaOverrides: true },
+    }),
+    getSystemModules(),
+  ]);
+
+  if (!org) {
+    throw new Error(`Organization with ID ${orgId} not found`);
+  }
+
+  const overrides = (org.quotaOverrides as Record<string, any>)?.modules || {};
+  const effective = evaluateAllModulesStatus(systemModules, overrides);
+
+  return {
+    organizationId: orgId,
+    orgOverrides: overrides as Record<string, boolean>,
+    systemModules,
+    effective,
+  };
+}
+
+export async function updateOrganizationModuleStatus(
+  orgId: string,
+  moduleKey: string,
+  isEnabled: boolean | null,
+) {
+  await requireSuperAdmin();
+
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    select: { quotaOverrides: true },
+  });
+
+  if (!org) {
+    throw new Error(`Organization with ID ${orgId} not found`);
+  }
+
+  const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
+  const currentModules = (currentOverrides.modules as Record<string, boolean>) || {};
+
+  const updatedModules = { ...currentModules };
+  if (isEnabled === null) {
+    delete updatedModules[moduleKey];
+  } else {
+    updatedModules[moduleKey] = isEnabled;
+  }
+
+  await db.organization.update({
+    where: { id: orgId },
+    data: {
+      quotaOverrides: {
+        ...currentOverrides,
+        modules: updatedModules,
+      },
+    },
+  });
+
+  revalidatePath(`/organizations/${orgId}`);
+  revalidatePath("/systems");
+  return getOrganizationModules(orgId);
+}

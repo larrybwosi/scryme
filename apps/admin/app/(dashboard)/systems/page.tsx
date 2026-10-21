@@ -2,6 +2,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui
 import {
   getWorkflowEngineMetrics,
   getCustomerEngineMetrics,
+  getSystemModules,
 } from "@/app/actions/systems";
 import {
   getPosReleaseSettings,
@@ -12,15 +13,17 @@ import { WorkflowEnginePanel } from "@/components/systems/workflow-engine-panel"
 import { CustomerEnginePanel } from "@/components/systems/customer-engine-panel";
 import { PosReleasesPanel } from "@/components/systems/pos-releases-panel";
 import { DocumentTemplatesPanel } from "@/components/systems/document-templates-panel";
+import { SystemModulesPanel } from "@/components/systems/system-modules-panel";
 
 export default async function SystemsPage() {
-  const [workflowMetrics, customerMetrics, posSettings, posBinaries, documentSettings] =
+  const [workflowMetrics, customerMetrics, posSettings, posBinaries, documentSettings, systemModules] =
     await Promise.all([
       getWorkflowEngineMetrics(),
       getCustomerEngineMetrics(),
       getPosReleaseSettings(),
       listPosReleaseBinaries(),
       listSystemDocumentSettings(),
+      getSystemModules(),
     ]);
   const activeCategories = documentSettings.categories.filter((c) => c.isEnabled).length;
 
@@ -32,12 +35,15 @@ export default async function SystemsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Monitor platform system health, inspect execution metrics, and execute
-          administrative controls on workflow engine, customer engine, and POS app release binaries.
+          administrative controls on workflow engine, customer engine, POS app release binaries, and global module toggles.
         </p>
       </div>
 
-      <Tabs defaultValue="workflows">
+      <Tabs defaultValue="modules">
         <TabsList>
+          <TabsTrigger value="modules">
+            System Modules
+          </TabsTrigger>
           <TabsTrigger value="workflows">
             Workflow Engine ({workflowMetrics.activeWorkflows} Active / {workflowMetrics.totalWorkflows})
           </TabsTrigger>
@@ -51,6 +57,10 @@ export default async function SystemsPage() {
             Document Templates ({activeCategories} / {documentSettings.categories.length} Active)
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="modules" className="mt-6">
+          <SystemModulesPanel initialSystemModules={systemModules} />
+        </TabsContent>
 
         <TabsContent value="workflows" className="mt-6">
           <WorkflowEnginePanel metrics={workflowMetrics} />
