@@ -120,15 +120,42 @@ export class SchemaService {
   }
 
   async seedStandardObjects(organizationId: string) {
-    // Standard Person Object
-    const person = await this.createObject({
-      name: "person",
-      label: "Person",
-      labelPlural: "People",
-      icon: "User",
-      organizationId,
-      isSystem: true,
-    });
+    // ⚡ Bolt Optimization: Concurrently resolve standard object definitions (person, company, lead, deal)
+    // with Promise.all to eliminate sequential O(N) database roundtrips during CRM schema setup.
+    const [person, company, lead, deal] = await Promise.all([
+      this.createObject({
+        name: "person",
+        label: "Person",
+        labelPlural: "People",
+        icon: "User",
+        organizationId,
+        isSystem: true,
+      }),
+      this.createObject({
+        name: "company",
+        label: "Company",
+        labelPlural: "Companies",
+        icon: "Building",
+        organizationId,
+        isSystem: true,
+      }),
+      this.createObject({
+        name: "lead",
+        label: "Lead",
+        labelPlural: "Leads",
+        icon: "UserPlus",
+        organizationId,
+        isSystem: true,
+      }),
+      this.createObject({
+        name: "deal",
+        label: "Deal",
+        labelPlural: "Deals",
+        icon: "TrendingUp",
+        organizationId,
+        isSystem: true,
+      }),
+    ]);
 
     const personFields: CreateFieldInput[] = [
       {
@@ -176,20 +203,6 @@ export class SchemaService {
       },
     ];
 
-    for (const field of personFields) {
-      await this.createField(field, organizationId);
-    }
-
-    // Standard Company Object
-    const company = await this.createObject({
-      name: "company",
-      label: "Company",
-      labelPlural: "Companies",
-      icon: "Building",
-      organizationId,
-      isSystem: true,
-    });
-
     const companyFields: CreateFieldInput[] = [
       {
         objectId: company.id,
@@ -225,46 +238,6 @@ export class SchemaService {
         isSystem: true,
       },
     ];
-
-    for (const field of companyFields) {
-      await this.createField(field, organizationId);
-    }
-
-    // Standard Relationship: Company -> People
-    await this.prisma.crmRelationshipDefinition.upsert({
-      where: {
-        organizationId_name: {
-          organizationId,
-          name: "company_people",
-        },
-      },
-      update: {
-        type: "ONE_TO_MANY",
-        sourceObjectId: company.id,
-        targetObjectId: person.id,
-        sourceLabel: "Employees",
-        targetLabel: "Company",
-      },
-      create: {
-        organizationId,
-        name: "company_people",
-        type: "ONE_TO_MANY",
-        sourceObjectId: company.id,
-        targetObjectId: person.id,
-        sourceLabel: "Employees",
-        targetLabel: "Company",
-      },
-    });
-
-    // Standard Lead Object
-    const lead = await this.createObject({
-      name: "lead",
-      label: "Lead",
-      labelPlural: "Leads",
-      icon: "UserPlus",
-      organizationId,
-      isSystem: true,
-    });
 
     const leadFields: CreateFieldInput[] = [
       {
@@ -325,20 +298,6 @@ export class SchemaService {
       },
     ];
 
-    for (const field of leadFields) {
-      await this.createField(field, organizationId);
-    }
-
-    // Standard Deal Object
-    const deal = await this.createObject({
-      name: "deal",
-      label: "Deal",
-      labelPlural: "Deals",
-      icon: "TrendingUp",
-      organizationId,
-      isSystem: true,
-    });
-
     const dealFields: CreateFieldInput[] = [
       {
         objectId: deal.id,
@@ -392,61 +351,90 @@ export class SchemaService {
       },
     ];
 
-    for (const field of dealFields) {
-      await this.createField(field, organizationId);
-    }
+    const allFields = [
+      ...personFields,
+      ...companyFields,
+      ...leadFields,
+      ...dealFields,
+    ];
 
-    // Standard Relationship: Company -> Deals
-    await this.prisma.crmRelationshipDefinition.upsert({
-      where: {
-        organizationId_name: {
+    // ⚡ Bolt Optimization: Parallelize all 20 field definitions and 3 relationship upserts
+    // concurrently via Promise.all, collapsing 23 sequential DB roundtrips into 1 concurrent phase.
+    await Promise.all([
+      ...allFields.map((field) => this.createField(field, organizationId)),
+      this.prisma.crmRelationshipDefinition.upsert({
+        where: {
+          organizationId_name: {
+            organizationId,
+            name: "company_people",
+          },
+        },
+        update: {
+          type: "ONE_TO_MANY",
+          sourceObjectId: company.id,
+          targetObjectId: person.id,
+          sourceLabel: "Employees",
+          targetLabel: "Company",
+        },
+        create: {
+          organizationId,
+          name: "company_people",
+          type: "ONE_TO_MANY",
+          sourceObjectId: company.id,
+          targetObjectId: person.id,
+          sourceLabel: "Employees",
+          targetLabel: "Company",
+        },
+      }),
+      this.prisma.crmRelationshipDefinition.upsert({
+        where: {
+          organizationId_name: {
+            organizationId,
+            name: "company_deals",
+          },
+        },
+        update: {
+          type: "ONE_TO_MANY",
+          sourceObjectId: company.id,
+          targetObjectId: deal.id,
+          sourceLabel: "Deals",
+          targetLabel: "Company",
+        },
+        create: {
           organizationId,
           name: "company_deals",
+          type: "ONE_TO_MANY",
+          sourceObjectId: company.id,
+          targetObjectId: deal.id,
+          sourceLabel: "Deals",
+          targetLabel: "Company",
         },
-      },
-      update: {
-        type: "ONE_TO_MANY",
-        sourceObjectId: company.id,
-        targetObjectId: deal.id,
-        sourceLabel: "Deals",
-        targetLabel: "Company",
-      },
-      create: {
-        organizationId,
-        name: "company_deals",
-        type: "ONE_TO_MANY",
-        sourceObjectId: company.id,
-        targetObjectId: deal.id,
-        sourceLabel: "Deals",
-        targetLabel: "Company",
-      },
-    });
-
-    // Standard Relationship: Person -> Deals
-    await this.prisma.crmRelationshipDefinition.upsert({
-      where: {
-        organizationId_name: {
+      }),
+      this.prisma.crmRelationshipDefinition.upsert({
+        where: {
+          organizationId_name: {
+            organizationId,
+            name: "person_deals",
+          },
+        },
+        update: {
+          type: "ONE_TO_MANY",
+          sourceObjectId: person.id,
+          targetObjectId: deal.id,
+          sourceLabel: "Deals",
+          targetLabel: "Contact",
+        },
+        create: {
           organizationId,
           name: "person_deals",
+          type: "ONE_TO_MANY",
+          sourceObjectId: person.id,
+          targetObjectId: deal.id,
+          sourceLabel: "Deals",
+          targetLabel: "Contact",
         },
-      },
-      update: {
-        type: "ONE_TO_MANY",
-        sourceObjectId: person.id,
-        targetObjectId: deal.id,
-        sourceLabel: "Deals",
-        targetLabel: "Contact",
-      },
-      create: {
-        organizationId,
-        name: "person_deals",
-        type: "ONE_TO_MANY",
-        sourceObjectId: person.id,
-        targetObjectId: deal.id,
-        sourceLabel: "Deals",
-        targetLabel: "Contact",
-      },
-    });
+      }),
+    ]);
 
     return { person, company, lead, deal };
   }

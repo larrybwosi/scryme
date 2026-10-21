@@ -77,16 +77,26 @@ export class InventoryIntegrityService {
         batchesMap.get(batch.variantId)!.push(batch);
       }
 
-      for (const variant of variants) {
-        const variantStocks = stocksMap.get(variant.id) || [];
-        const variantBatches = batchesMap.get(variant.id) || [];
+      /**
+       * OPTIMIZATION (Bolt ⚡): Parallelized variant integrity verification.
+       * Replaced sequential 'for...of' loop awaiting each variant verification with Promise.all.
+       * Since pre-fetched stocks and batches are passed in, each verification runs concurrently,
+       * collapsing processing latency per batch from O(N) sequential awaits to O(1) concurrent execution.
+       */
+      const variantIssuesBatches = await Promise.all(
+        variants.map((variant) => {
+          const variantStocks = stocksMap.get(variant.id) || [];
+          const variantBatches = batchesMap.get(variant.id) || [];
+          return this.verifyVariantIntegrity(
+            organizationId,
+            variant.id,
+            variantStocks,
+            variantBatches,
+          );
+        }),
+      );
 
-        const variantIssues = await this.verifyVariantIntegrity(
-          organizationId,
-          variant.id,
-          variantStocks,
-          variantBatches,
-        );
+      for (const variantIssues of variantIssuesBatches) {
         issues.push(...variantIssues);
       }
 
