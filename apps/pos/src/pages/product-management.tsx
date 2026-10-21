@@ -82,7 +82,7 @@ export default function ProductManagementPage() {
               isBaseUnit: true
           }]
       }],
-      location_id: 'standalone'
+      location_id: 'default'
     };
 
     try {
@@ -106,7 +106,7 @@ export default function ProductManagementPage() {
     if (!productToDelete) return;
     setIsDeleting(true);
     try {
-      await invoke('delete_local_product_command', { productId: productToDelete, locationId: 'standalone' });
+      await invoke('delete_local_product_command', { productId: productToDelete, locationId: 'default' });
       toast.success('Product deleted');
       triggerSync();
       setProductToDelete(null);

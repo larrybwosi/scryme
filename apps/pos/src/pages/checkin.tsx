@@ -216,7 +216,7 @@ export default function CheckinPage() {
   const handleSubmit = async (): Promise<void> => {
     setError('');
 
-    if (import.meta.env.MODE === 'standalone') {
+    if (import.meta.env.MODE === 'default') {
         if (!password.trim()) {
             setError('Please enter your PIN');
             passwordInputRef.current?.focus();
@@ -226,11 +226,11 @@ export default function CheckinPage() {
         try {
             const isValid = await invoke<boolean>('verify_local_auth', { pin: password });
             if (isValid) {
-                // Mock member session for standalone
+                // Mock member session for default
                 useAuthStore.getState().setMemberSession({
-                    id: 'standalone-admin',
+                    id: 'default-admin',
                     name: 'Admin',
-                    email: 'admin@standalone.com',
+                    email: 'admin@default.com',
                     role: 'admin'
                 } as any);
                 navigate('/');
@@ -386,7 +386,7 @@ export default function CheckinPage() {
 
           <CardContent className="space-y-6">
             {/* Scan Button - Now sets Visual State */}
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
             <Button
               onClick={handleScanClick}
               disabled={isCheckingIn || isScanning}
@@ -435,7 +435,7 @@ export default function CheckinPage() {
             </Button>
             )}
 
-            {import.meta.env.MODE !== 'standalone' && (
+            {import.meta.env.MODE !== 'default' && (
             <div className="relative py-2">
               <div className="absolute inset-0 flex items-center">
                 <div className="w-full border-t border-slate-200 dark:border-slate-800"></div>
@@ -448,7 +448,7 @@ export default function CheckinPage() {
 
             {/* Inputs */}
             <div className="space-y-4">
-                {import.meta.env.MODE !== 'standalone' && (
+                {import.meta.env.MODE !== 'default' && (
                   <div className="space-y-2">
                     <Label htmlFor="cardId" className="text-slate-700 dark:text-slate-300">
                       Card ID
@@ -476,7 +476,7 @@ export default function CheckinPage() {
 
               <div className="space-y-2">
                 <Label htmlFor="password" className="text-slate-700 dark:text-slate-300">
-                    {import.meta.env.MODE === 'standalone' ? 'Access PIN' : 'Password'}
+                    {import.meta.env.MODE === 'default' ? 'Access PIN' : 'Password'}
                 </Label>
                 <div className="relative group">
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 dark:text-slate-500 group-focus-within:text-blue-500 dark:group-focus-within:text-blue-400 transition-colors" />

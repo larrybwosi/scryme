@@ -43,7 +43,7 @@ const HubOverviewPage = import.meta.env.VITE_BUSINESS_MODE === 'restaurant' || !
   ? lazy(() => import('./pages/hub-overview'))
   : () => null;
 const ProductManagementPage = lazy(() => import('./pages/product-management'));
-const StandaloneSetup = lazy(() => import('./pages/standalone-setup'));
+
 const BarcodePrintingPage = lazy(() => import('./pages/barcode-printing-page'));
 const LogsPage = lazy(() => import('./pages/logs-page'));
 const PrescriptionsPage = lazy(() => import('./pages/prescriptions-page'));

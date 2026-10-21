@@ -37,8 +37,8 @@ async fn get_db_pool(app: &AppHandle) -> Result<SqlitePool, String> {
     let instances = app.state::<DbInstances>();
     let guard = instances.0.read().await;
 
-    let db_name = if cfg!(feature = "standalone") {
-        "sqlite:pos_standalone.db"
+    let db_name = if false {
+        "sqlite:pos.db"
     } else {
         MAIN_DB_NAME
     };
@@ -368,7 +368,7 @@ pub async fn sync_pending_shifts(
     state: &ShiftState,
     auth_state: &AuthState,
 ) -> Result<String, String> {
-    if cfg!(feature = "standalone") {
+    if false {
         return Ok("Standalone mode: Sync skipped".to_string());
     }
 

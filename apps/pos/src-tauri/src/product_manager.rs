@@ -5,7 +5,6 @@ use crate::stores::product_store::{self, ProductState};
 use crate::stores::sales_store::SalesState;
 
 #[tauri::command]
-#[cfg(not(feature = "standalone"))]
 pub async fn sync_products_command(
     app: tauri::AppHandle,
     state: tauri::State<'_, ProductState>,
@@ -39,7 +38,7 @@ pub async fn search_products_command(
         config_guard
             .as_ref()
             .map(|c| c.location_id.clone())
-            .unwrap_or_else(|| "standalone".to_string())
+            .unwrap_or_else(|| "default".to_string())
     };
     
     let result = product_store::search_local(&app, &state, &location_id, query, category, page, page_size).await;
@@ -63,7 +62,7 @@ pub async fn search_global_command(
         config_guard
             .as_ref()
             .map(|c| c.location_id.clone())
-            .unwrap_or_else(|| "standalone".to_string())
+            .unwrap_or_else(|| "default".to_string())
     };
 
     let products = product_store::search_local(
@@ -112,7 +111,7 @@ pub async fn get_products_by_ids_command(
         config_guard
             .as_ref()
             .map(|c| c.location_id.clone())
-            .unwrap_or_else(|| "standalone".to_string())
+            .unwrap_or_else(|| "default".to_string())
     };
     
     let products = product_store::get_products_by_ids(&app, &state, &location_id, ids).await;

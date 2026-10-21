@@ -205,7 +205,6 @@ model Organization {
   shiftTradeRequests       ShiftTradeRequest[]
   staffTasks               StaffTask[]
 
-  standaloneDevices StandaloneDevice[]
 
   qcTemplates       QCTemplate[]
   qcResults         QCResult[]

@@ -83,7 +83,7 @@ export function POS() {
 
   useEffect(() => {
     const checkActiveShift = async () => {
-      if (import.meta.env.MODE === 'standalone') return;
+      if (false) return;
       if (typeof navigator !== 'undefined' && navigator.webdriver) {
         // Bypass shift alert during automated end-to-end tests
         return;
@@ -556,7 +556,7 @@ export function POS() {
             <div className="w-px h-6 bg-border/60 mx-1" />
 
             {/* Table Selector */}
-            {businessConfig.features.tableManagement && import.meta.env.MODE !== 'standalone' && (
+            {businessConfig.features.tableManagement && true && (
               <Button
                 variant={currentOrder.tableNumber ? 'default' : 'outline'}
                 size="sm"

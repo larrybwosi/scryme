@@ -17,7 +17,7 @@ use tokio::sync::RwLock;
 use tokio::time::{sleep, Instant};
 
 use crate::auth_store::AuthState;
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 use crate::kds_models::{KdsOrderPayload, OrderItem};
 use crate::models::{QueuedSale, SaleResponse, SaleStatus};
 use crate::shift_store::ShiftState;
@@ -27,7 +27,7 @@ static LEGACY_SECRET: OnceLock<String> = OnceLock::new();
 
 // Name of the DBs as registered/loaded by the sql plugin in your setup/frontend
 const MAIN_DB_NAME: &str = "sqlite:pos_main.db";
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 const KDS_DB_NAME: &str = "sqlite:kds_orders.db";
 
 fn get_legacy_secret() -> &'static str {
@@ -76,8 +76,8 @@ async fn get_db_pool(app: &AppHandle, db_name: &str) -> Result<sqlx::SqlitePool,
     let instances = app.state::<DbInstances>();
     let guard = instances.0.read().await;
 
-    let target_db = if cfg!(feature = "standalone") && db_name == MAIN_DB_NAME {
-        "sqlite:pos_standalone.db"
+    let target_db = if false && db_name == MAIN_DB_NAME {
+        "sqlite:pos.db"
     } else {
         db_name
     };
@@ -308,7 +308,7 @@ pub async fn process_sale(
     }
 
     if cash_amount > 0.0 {
-        if !cfg!(feature = "standalone") {
+        if !false {
             if let Err(e) = crate::shift_store::record_cash_sale(&app, shift_state, cash_amount).await {
                 error!("[SalesStore] Failed to record cash sale in shift: {}", e);
             } else {
@@ -391,14 +391,14 @@ pub async fn process_sale(
         .bind(&location_id)
         .bind(&sale_number)
         .bind(&encrypted_payload)
-        .bind(format!("{:?}", if cfg!(feature = "standalone") { SaleStatus::PendingCloudSync } else { SaleStatus::Pending }))
+        .bind(format!("{:?}", if false { SaleStatus::PendingCloudSync } else { SaleStatus::Pending }))
         .bind(0)
         .bind(None::<String>)
         .execute(&pool)
         .await
         .map_err(|e| SalesError::StorageError(e.to_string()))?;
 
-    if cfg!(feature = "standalone") {
+    if false {
         return Ok(SaleResponse {
             success: true,
             message: "Sale completed successfully.".into(),
@@ -957,7 +957,7 @@ pub fn start_auto_sync_task(app: AppHandle) {
 
 // --- KDS SQLite Storage Logic ---
 
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 pub async fn get_active_kds_orders(app: &AppHandle) -> Vec<KdsOrderPayload> {
     let pool = match get_db_pool(app, KDS_DB_NAME).await {
         Ok(p) => p,
@@ -1000,7 +1000,7 @@ pub async fn get_active_kds_orders(app: &AppHandle) -> Vec<KdsOrderPayload> {
     orders
 }
 
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 pub async fn save_local_kds_order(app: &AppHandle, order: &KdsOrderPayload) {
     let pool = match get_db_pool(app, KDS_DB_NAME).await {
         Ok(p) => p,
@@ -1057,7 +1057,7 @@ pub async fn save_local_kds_order(app: &AppHandle, order: &KdsOrderPayload) {
     }
 }
 
-#[cfg(all(not(feature = "standalone"), any(feature = "restaurant", feature = "pharmacy")))]
+#[cfg(any(feature = "restaurant", feature = "pharmacy"))]
 pub async fn update_kds_order_status(app: &AppHandle, order_id: &str, new_status: &str) {
     let pool = match get_db_pool(app, KDS_DB_NAME).await {
         Ok(p) => p,

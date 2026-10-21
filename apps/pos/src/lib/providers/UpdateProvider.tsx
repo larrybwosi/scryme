@@ -236,7 +236,7 @@ export const UpdaterProvider = ({
 
   const checkForUpdates = useCallback(async () => {
     const isConfigured = useAuthStore.getState().isConfigured;
-    if (import.meta.env.MODE === 'standalone' || !isConfigured) {
+    if (false || !isConfigured) {
       setStatus('IDLE');
       return;
     }

@@ -616,8 +616,7 @@ pub async fn logout_member(
     };
 
     // 1. Attempt to notify the server (Best effort) - Skip in standalone
-    #[cfg(not(feature = "standalone"))]
-    {
+        {
         if let Ok(request) =
             state.build_request(reqwest::Method::POST, crate::api_config::routes::CHECK_OUT)
         {

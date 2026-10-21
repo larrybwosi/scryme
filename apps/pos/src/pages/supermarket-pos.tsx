@@ -78,7 +78,7 @@ export function SupermarketPOS() {
     trackPosEvent(POS_EVENTS.SUPERMARKET_MODE_USED);
 
     const checkActiveShift = async () => {
-      if (import.meta.env.MODE === 'standalone') return;
+      if (false) return;
       if (typeof navigator !== 'undefined' && navigator.webdriver) {
         // Bypass shift alert during automated end-to-end tests
         return;
@@ -250,7 +250,7 @@ export function SupermarketPOS() {
   const handleQuickPayExactCash = useCallback(async () => {
     if (currentOrder.items.length === 0 || isProcessingSale) return;
 
-    if (settings.enforceShiftForCashPayments && import.meta.env.MODE !== 'standalone') {
+    if (settings.enforceShiftForCashPayments && true) {
         const shift = await shiftService.getShiftStatus();
         if (!shift) {
             toast.error('No Active Shift', {
@@ -428,7 +428,7 @@ export function SupermarketPOS() {
         </div>
 
         <div className="flex items-center gap-3">
-          {import.meta.env.MODE !== 'standalone' && (
+          {true && (
             <Button
               variant="outline"
               size="sm"
@@ -582,7 +582,7 @@ export function SupermarketPOS() {
                 >
                   Clear Sale<br/><span className="text-[10px] opacity-70">(F3)</span>
                 </Button>
-                {import.meta.env.MODE !== 'standalone' && (
+                {true && (
                   <Button
                     variant="outline"
                     size="lg"
@@ -598,7 +598,7 @@ export function SupermarketPOS() {
                 )}
               </div>
               <div className="grid grid-cols-2 gap-2">
-                {import.meta.env.MODE !== 'standalone' && (
+                {true && (
                   <Button
                     size="lg"
                     variant="secondary"

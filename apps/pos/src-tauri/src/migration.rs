@@ -41,7 +41,7 @@ pub async fn push_local_to_cloud(
     }
 
     // 2. Push Products
-    let products_res = product_store::search_local(&app, &product_state, "standalone", "".to_string(), "all".to_string(), Some(1), Some(1000)).await;
+    let products_res = product_store::search_local(&app, &product_state, "default", "".to_string(), "all".to_string(), Some(1), Some(1000)).await;
     let mut product_count = 0;
     for product in products_res.products {
         let path = crate::api_config::routes::PRODUCTS;

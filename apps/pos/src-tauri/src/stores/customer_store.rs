@@ -44,8 +44,8 @@ async fn get_db_pool(app: &AppHandle) -> Result<SqlitePool, String> {
     let instances = app.state::<DbInstances>();
     let guard = instances.0.read().await;
 
-    let db_name = if cfg!(feature = "standalone") {
-        "sqlite:pos_standalone.db"
+    let db_name = if false {
+        "sqlite:pos.db"
     } else {
         MAIN_DB_NAME
     };
@@ -393,7 +393,7 @@ pub async fn create_customer(
     auth_state: &AuthState,
     payload: serde_json::Value,
 ) -> Result<PosCustomer> {
-    if cfg!(feature = "standalone") {
+    if false {
         let mut new_customer: PosCustomer = serde_json::from_value(payload)?;
         if new_customer.id.is_empty() {
             new_customer.id = uuid::Uuid::now_v7().to_string();
@@ -480,7 +480,7 @@ pub async fn update_customer(
     id: String,
     payload: serde_json::Value,
 ) -> Result<PosCustomer> {
-    if cfg!(feature = "standalone") {
+    if false {
         let new_customer: PosCustomer = serde_json::from_value(payload)?;
         let pool = get_db_pool(&app).await.map_err(|e| anyhow::anyhow!(e))?;
         let search_text = build_search_text(&new_customer);

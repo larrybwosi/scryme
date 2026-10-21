@@ -32,10 +32,10 @@ pub async fn set_local_auth(app: tauri::AppHandle, pin: String) -> Result<(), St
 
     let pool = crate::stores::product_store::get_db_pool(&app).await?;
 
-    sqlx::query("CREATE TABLE IF NOT EXISTS standalone_auth (id INTEGER PRIMARY KEY, pin_hash TEXT)")
+    sqlx::query("CREATE TABLE IF NOT EXISTS auth_store (id INTEGER PRIMARY KEY, pin_hash TEXT)")
         .execute(&pool).await.map_err(|e| e.to_string())?;
 
-    sqlx::query("INSERT OR REPLACE INTO standalone_auth (id, pin_hash) VALUES (1, ?1)")
+    sqlx::query("INSERT OR REPLACE INTO auth_store (id, pin_hash) VALUES (1, ?1)")
         .bind(hash).execute(&pool).await.map_err(|e| e.to_string())?;
 
     Ok(())
@@ -50,7 +50,7 @@ pub async fn verify_local_auth(app: tauri::AppHandle, pin: String) -> Result<boo
 
     let pool = crate::stores::product_store::get_db_pool(&app).await?;
 
-    let row: Option<(String,)> = sqlx::query_as("SELECT pin_hash FROM standalone_auth WHERE id = 1")
+    let row: Option<(String,)> = sqlx::query_as("SELECT pin_hash FROM auth_store WHERE id = 1")
         .fetch_optional(&pool).await.map_err(|e| e.to_string())?;
 
     match row {

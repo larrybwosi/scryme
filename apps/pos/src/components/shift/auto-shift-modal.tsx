@@ -42,7 +42,7 @@ export const AutoShiftModal: React.FC = () => {
       if (
         isAuthenticated &&
         settings.enableAutoShiftPrompt &&
-        import.meta.env.MODE !== 'standalone'
+        import.meta.env.MODE !== 'default'
       ) {
         try {
           const shift = await shiftService.getShiftStatus();

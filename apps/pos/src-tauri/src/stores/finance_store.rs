@@ -20,8 +20,8 @@ async fn get_db_pool(app: &AppHandle, db_name: &str) -> Result<sqlx::SqlitePool,
     let instances = app.state::<DbInstances>();
     let guard = instances.0.read().await;
 
-    let target_db = if cfg!(feature = "standalone") && db_name == MAIN_DB_NAME {
-        "sqlite:pos_standalone.db"
+    let target_db = if false && db_name == MAIN_DB_NAME {
+        "sqlite:pos.db"
     } else {
         db_name
     };
