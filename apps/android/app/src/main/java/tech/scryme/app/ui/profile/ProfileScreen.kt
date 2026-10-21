@@ -36,6 +36,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
+import tech.scryme.app.ui.components.ErrorMessageCard
 import tech.scryme.app.ui.components.QrScannerDialog
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
@@ -117,23 +118,11 @@ fun ProfileScreen(
             }
             is ProfileUiState.Error -> {
                 item {
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
-                            horizontalAlignment = Alignment.CenterHorizontally
-                        ) {
-                            Text(text = state.message, color = MaterialTheme.colorScheme.onErrorContainer)
-                            Spacer(modifier = Modifier.height(12.dp))
-                            Button(onClick = { viewModel.loadProfile() }) {
-                                Text("Retry")
-                            }
-                        }
-                    }
+                    ErrorMessageCard(
+                        title = "Unable to load profile",
+                        message = state.message.ifBlank { "Failed to load organization context & profile" },
+                        onRetry = { viewModel.loadProfile() }
+                    )
                 }
             }
             is ProfileUiState.Success -> {
