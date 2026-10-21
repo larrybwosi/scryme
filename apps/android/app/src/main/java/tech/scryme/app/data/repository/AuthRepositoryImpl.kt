@@ -30,6 +30,12 @@ class AuthRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager
 ) : AuthRepository {
 
+    private fun extractErrorMessage(bodyError: String?, responseMsg: String?, defaultMsg: String): String {
+        return bodyError?.takeIf { it.isNotBlank() }
+            ?: responseMsg?.takeIf { it.isNotBlank() }
+            ?: defaultMsg
+    }
+
     override suspend fun registerDeviceToken(pushToken: String?): Result<Unit> {
         return try {
             val token = pushToken ?: sessionManager.getFcmToken()
@@ -45,7 +51,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body()?.success == true) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Device registration failed: ${response.message()}"))
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "Device registration failed")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -117,8 +124,8 @@ class AuthRepositoryImpl @Inject constructor(
                     Result.failure(Exception("Authentication succeeded but no token was returned"))
                 }
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
-                Result.failure(Exception("Login failed: $errorMsg"))
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "Login failed")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -196,8 +203,8 @@ class AuthRepositoryImpl @Inject constructor(
                     Result.failure(Exception("OAuth authorization code exchange succeeded but no token was returned"))
                 }
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
-                Result.failure(Exception("OAuth code exchange failed: $errorMsg"))
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "OAuth code exchange failed")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -239,7 +246,7 @@ class AuthRepositoryImpl @Inject constructor(
 
                 Result.success(data)
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "Failed to validate user session")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -278,7 +285,7 @@ class AuthRepositoryImpl @Inject constructor(
 
                 Result.success(Unit)
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "Terminal login failed")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
@@ -337,8 +344,8 @@ class AuthRepositoryImpl @Inject constructor(
                 runCatching { registerDeviceToken() }
                 Result.success("POS Device paired successfully for org: $effectiveOrgSlug")
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
-                Result.failure(Exception("POS Pairing failed: $errorMsg"))
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "POS Pairing failed")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -364,7 +371,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body().toString())
             } else {
-                Result.failure(Exception("Failed to generate passkey register options: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to generate passkey register options")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -378,7 +386,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to verify passkey registration: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to verify passkey registration")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -391,7 +400,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body().toString())
             } else {
-                Result.failure(Exception("Failed to generate passkey authenticate options: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to generate passkey authenticate options")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -419,7 +429,8 @@ class AuthRepositoryImpl @Inject constructor(
                 }
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to verify passkey authentication: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to verify passkey authentication")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -432,7 +443,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful && response.body() != null) {
                 Result.success(response.body() ?: emptyList())
             } else {
-                Result.failure(Exception("Failed to list passkeys: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to list passkeys")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -445,7 +457,8 @@ class AuthRepositoryImpl @Inject constructor(
             if (response.isSuccessful) {
                 Result.success(Unit)
             } else {
-                Result.failure(Exception("Failed to delete passkey: ${response.message()}"))
+                val errorMsg = extractErrorMessage(null, response.message(), "Failed to delete passkey")
+                Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {
             Result.failure(e)
@@ -459,7 +472,7 @@ class AuthRepositoryImpl @Inject constructor(
                 // Re-validate session to fetch full updated me context (user, member, org, memberships, locations)
                 validateSession()
             } else {
-                val errorMsg = response.body()?.error?.message ?: response.message()
+                val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "Failed to switch organization")
                 Result.failure(Exception(errorMsg))
             }
         } catch (e: Exception) {

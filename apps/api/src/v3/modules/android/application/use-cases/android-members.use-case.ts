@@ -29,6 +29,7 @@ export class AndroidMembersUseCase {
       where,
       select: {
         id: true,
+        organizationId: true,
         role: true,
         status: true,
         user: {
@@ -45,6 +46,8 @@ export class AndroidMembersUseCase {
 
     return members.map((m) => ({
       id: m.id,
+      organizationId: m.organizationId,
+      userId: m.user?.id || null,
       name: m.user?.name || "Staff Member",
       email: m.user?.email || "",
       role: m.role,
@@ -65,6 +68,7 @@ export class AndroidMembersUseCase {
       },
       select: {
         id: true,
+        organizationId: true,
         role: true,
         status: true,
         cardId: true,
@@ -86,6 +90,8 @@ export class AndroidMembersUseCase {
 
     return {
       id: member.id,
+      organizationId: member.organizationId,
+      userId: member.user?.id || null,
       name: member.user?.name || "Staff Member",
       email: member.user?.email || "",
       role: member.role,
@@ -162,11 +168,14 @@ export class AndroidMembersUseCase {
 
     return {
       id: updated.id,
+      organizationId: updated.organizationId,
+      userId: updated.userId || null,
       name: updated.user?.name || "Staff Member",
       email: updated.user?.email || "",
       role: updated.role,
       status: updated.status,
       dutyStatus: dto.dutyStatus || updated.status,
+      avatarUrl: updated.user?.image || null,
     };
   }
 }
