@@ -1,47 +1,6 @@
 
-const PRISMA_FILTER_OPERATORS = new Set([
-  "equals", "in", "notIn", "lt", "lte", "gt", "gte",
-  "contains", "startsWith", "endsWith", "mode", "not",
-  "set", "push", "is", "isNot", "some", "every", "none",
-  "search", "has", "hasEvery", "hasSome", "isEmpty",
-]);
-
-function isPrimitiveValue(val: any): boolean {
-  if (val === null || val === undefined) return true;
-  const type = typeof val;
-  return type === "string" || type === "number" || type === "boolean" || type === "bigint" || val instanceof Date;
-}
-
 function normalizeWhereClause(where: any): any {
-  if (!where || typeof where !== "object" || Array.isArray(where)) {
-    return where;
-  }
-
-  const normalized: Record<string, any> = {};
-
-  for (const [key, val] of Object.entries(where)) {
-    if (
-      val &&
-      typeof val === "object" &&
-      !Array.isArray(val) &&
-      !(val instanceof Date) &&
-      !(val.constructor && val.constructor.name === "Decimal")
-    ) {
-      const subKeys = Object.keys(val);
-      const isFilterObject = subKeys.some((k) => PRISMA_FILTER_OPERATORS.has(k));
-      const allPrimitives = subKeys.length > 0 && subKeys.every((k) => isPrimitiveValue((val as any)[k]));
-
-      if (!isFilterObject && allPrimitives) {
-        Object.assign(normalized, val);
-      } else {
-        normalized[key] = val;
-      }
-    } else {
-      normalized[key] = val;
-    }
-  }
-
-  return normalized;
+  return where;
 }
 import { Pool, Client } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
