@@ -95,6 +95,28 @@ export async function createPettyCashFund(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
+  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+  // MITIGATION: Validate foreign relational IDs (responsibleMemberId, locationId) against auth.organizationId before creating petty cash fund.
+  if (data.responsibleMemberId) {
+    const responsibleMember = await db.member.findFirst({
+      where: { id: data.responsibleMemberId, organizationId: auth.organizationId },
+      select: { id: true },
+    });
+    if (!responsibleMember) {
+      throw new Error("Responsible member not found or belongs to another organization");
+    }
+  }
+
+  if (data.locationId) {
+    const location = await db.inventoryLocation.findFirst({
+      where: { id: data.locationId, organizationId: auth.organizationId },
+      select: { id: true },
+    });
+    if (!location) {
+      throw new Error("Location not found or belongs to another organization");
+    }
+  }
+
   const fund = await db.pettyCashFund.create({
     data: {
       organizationId: auth.organizationId,
@@ -137,11 +159,22 @@ export async function topUpPettyCashFund(
 
     if (!fund) throw new Error("Fund not found");
 
-    const updatedFund = await tx.pettyCashFund.update({
-      where: { id: fundId },
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: PettyCashFund model lacks a composite unique constraint on [id, organizationId].
+    // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await tx.pettyCashFund.updateMany({
+      where: { id: fundId, organizationId: auth.organizationId },
       data: {
         amount: { increment: data.amount },
       },
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error("Fund not found");
+    }
+
+    const updatedFund = await tx.pettyCashFund.findFirstOrThrow({
+      where: { id: fundId, organizationId: auth.organizationId },
     });
 
     await tx.pettyCashTransaction.create({

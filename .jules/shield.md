@@ -26,10 +26,6 @@
 **Learning:** Models like `Customer` and `DeliveryPartner` lack composite unique keys on `[id, organizationId]`. Using Prisma's standard `delete({ where: { id } })` or `update({ where: { id } })` ignores `organizationId` filters in `where` parameters, creating BOLA/IDOR vulnerabilities if mutations are executed against foreign tenant entity IDs.
 **Action:** Use `deleteMany({ where: { id, organizationId } })` and `updateMany({ where: { id, organizationId }, data })` to enforce strict database-level multi-tenant isolation during entity deletion, deactivation, and balance adjustments.
 
-## 2026-09-30 - User Owner Scoping in OAuth Clients and API Keys
-**Learning:** `OAuthClient` and `Apikey` models lack composite unique constraints on `[id, userId]`. Standard Prisma `update` and `delete` calls ignore non-unique `userId` conditions in `where` clauses at runtime. In user-owned developer features, relying solely on pre-checks leaves potential race or bypass exposure.
-**Action:** Always use `updateMany({ where: { id, userId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, userId } })` for database-level user owner scoping on auth resource mutations.
-
 ## 2026-10-02 - Custom Role Mutation Tenant Isolation
 **Learning:** In `RoleManagementUseCase`, `CustomRole` lacks a composite unique constraint on `[id, organizationId]`. Using standard `customRole.update` or `customRole.delete` with `{ where: { id } }` ignores non-unique tenant parameters at database execution time.
 **Action:** Use `updateMany({ where: { id, organizationId }, data })` (followed by `findFirstOrThrow`) and `deleteMany({ where: { id, organizationId } })` to enforce database-level multi-tenant isolation during custom role mutations.
@@ -86,3 +82,7 @@
 ## 2026-10-28 - Service & ServiceCategory Relational ID Validation & BOLA Tenant Isolation
 **Learning:** In service management server actions (`apps/web/app/actions/services.ts`), foreign relational field `categoryId` provided by client callers was not verified for tenant ownership before service creation or updates, permitting cross-tenant category binding. Additionally, `ServiceCategory` and `Service` models lack composite unique constraints on `[id, organizationId]`, meaning standard Prisma `update` and `delete` ignore non-unique `organizationId` parameters in `where` clauses at runtime.
 **Action:** Always validate relational foreign key IDs (`categoryId`) using `findFirst` scoped by `organizationId`, and use `updateMany({ where: { id, organizationId }, data })` and `deleteMany({ where: { id, organizationId } })` to enforce database-level tenant isolation.
+
+## 2026-10-28 - Petty Cash Relational ID Validation & Top-Up Multi-Tenant Scoping
+**Learning:** In `createPettyCashFund` (`apps/web/app/actions/petty-cash.ts`), foreign relational IDs (`responsibleMemberId` and `locationId`) supplied by callers were not validated for tenant ownership before fund creation, permitting cross-tenant resource binding. Furthermore, in `topUpPettyCashFund`, because `PettyCashFund` lacks a composite unique constraint on `[id, organizationId]`, calling standard `tx.pettyCashFund.update({ where: { id } })` ignores non-unique tenant parameters at database execution runtime.
+**Action:** Validate relational foreign key IDs (`responsibleMemberId`, `locationId`) using `findFirst` scoped by `organizationId`, and use `tx.pettyCashFund.updateMany({ where: { id: fundId, organizationId: auth.organizationId }, data })` followed by `findFirstOrThrow` to enforce strict database-level multi-tenant isolation on petty cash fund updates.
