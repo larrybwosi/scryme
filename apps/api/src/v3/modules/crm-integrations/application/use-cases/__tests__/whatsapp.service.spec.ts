@@ -30,6 +30,7 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
     },
     communicationMessage: {
       upsert: vi.fn(),
+      create: vi.fn(),
     },
   };
 
@@ -206,6 +207,136 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
 
       // Verify message upsert was processed 3 times
       expect(mockPrisma.communicationMessage.upsert).toHaveBeenCalledTimes(3);
+    });
+  });
+  describe("verifyConfig", () => {
+    it("should return disconnected state when no integration exists", async () => {
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue(null);
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(null);
+
+      const res = await service.verifyConfig("org-none");
+
+      expect(res).toEqual({
+        isConfigured: false,
+        isActive: false,
+        phoneNumberId: null,
+        wabaId: null,
+        syncStatus: "DISCONNECTED",
+        multitenancyValid: true,
+      });
+    });
+
+    it("should return active and configured state for valid organization integration", async () => {
+      const mockIntegration = {
+        organizationId: "org-123",
+        isActive: true,
+        syncStatus: "CONNECTED",
+        credentials: {
+          phoneNumberId: "phone-999",
+          accessToken: "token-abc",
+          wabaId: "waba-777",
+        },
+      };
+
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+
+      const res = await service.verifyConfig("org-123");
+
+      expect(res).toEqual({
+        isConfigured: true,
+        isActive: true,
+        phoneNumberId: "phone-999",
+        wabaId: "waba-777",
+        syncStatus: "CONNECTED",
+        multitenancyValid: true,
+      });
+    });
+  });
+
+  describe("sendPurchaseOrderNotification", () => {
+    it("should send notification using recipientPhoneOverride when provided", async () => {
+      const mockIntegration = {
+        organizationId: "org-123",
+        isActive: true,
+        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
+      };
+
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.po.123" });
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-po-1" });
+      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-po-1" });
+
+      const result = await service.sendPurchaseOrderNotification(
+        "org-123",
+        "PO-1001",
+        undefined,
+        5000,
+        undefined,
+        "+254712345678"
+      );
+
+      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        mockIntegration,
+        expect.objectContaining({
+          threadId: "254712345678",
+          templateName: "purchase_order_issued",
+          components: [
+            {
+              type: "body",
+              parameters: [
+                { type: "text", text: "PO-1001" },
+                { type: "text", text: "5000" },
+              ],
+            },
+          ],
+        })
+      );
+      expect(result).toBeDefined();
+    });
+
+    it("should fetch purchase order and supplier phone if phone is missing", async () => {
+      const mockIntegration = {
+        organizationId: "org-123",
+        isActive: true,
+        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
+      };
+
+      const mockPo = {
+        id: "po-123",
+        purchaseNumber: "PO-2002",
+        totalAmount: 12500,
+        supplier: { phone: "+254799988877" },
+      };
+
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+      mockPrisma.purchase = { findFirst: vi.fn().mockResolvedValue(mockPo) };
+      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.po.456" });
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-po-2" });
+      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-po-2" });
+
+      const result = await service.sendPurchaseOrderNotification(
+        "org-123",
+        "PO-2002",
+        undefined,
+        undefined,
+        "po-123"
+      );
+
+      expect(mockPrisma.purchase.findFirst).toHaveBeenCalledWith({
+        where: { id: "po-123", organizationId: "org-123" },
+        include: { supplier: true },
+      });
+      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        mockIntegration,
+        expect.objectContaining({
+          threadId: "254799988877",
+          templateName: "purchase_order_issued",
+        })
+      );
+      expect(result).toBeDefined();
     });
   });
 });
