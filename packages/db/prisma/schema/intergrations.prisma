@@ -127,3 +127,30 @@ model IntegrationEvent {
   @@index([organizationIntegrationId, status])
   @@map("integration_event")
 }
+
+
+// Model for Model Context Protocol (MCP) API Keys
+model McpApiKey {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  name         String
+  keyPrefix    String    @unique
+  hashedKey    String
+  scopes       String[]  @default(["mcp:read", "mcp:write"])
+  isActive     Boolean   @default(true)
+  lastUsedAt   DateTime?
+  expiresAt    DateTime?
+  revokedAt    DateTime?
+
+  createdById       String?
+  createdByMember   Member?  @relation("McpApiKeyCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([isActive])
+  @@map("mcp_api_key")
+}

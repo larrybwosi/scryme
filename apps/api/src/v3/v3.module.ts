@@ -1,3 +1,4 @@
+import { McpModule } from "./modules/mcp/mcp.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { AndroidModule } from "./modules/android/android.module";
 import { TasksModule } from "./modules/tasks/tasks.module";
@@ -59,6 +60,7 @@ export const V3_SUB_MODULES = [
   AndroidModule,
   SalesModule,
   ReportsModule,
+  McpModule,
 ];
 
 @Module({
