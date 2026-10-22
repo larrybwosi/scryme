@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import { createDeviceSetupTokenCore, getDeviceSetupTokensCore } from '../common';
+import { createDeviceSetupTokenCore, getDeviceSetupTokensCore, revokeSetupTokenCore } from '../common';
 import { provisionDeviceV2 } from '../v2';
 import { provisionDeviceV3 } from '../v3';
 import * as crypto from 'crypto';
@@ -14,6 +14,9 @@ const mockPrisma = {
     findMany: vi.fn(),
     update: vi.fn(),
     updateMany: vi.fn(),
+  },
+  inventoryLocation: {
+    findFirst: vi.fn(),
   },
   apiKey: {
     create: vi.fn(),
@@ -43,7 +46,7 @@ describe('Provisioning Logic', () => {
   });
 
   describe('createDeviceSetupToken', () => {
-    it('should create a setup token with correct data', async () => {
+    it('should create a setup token with correct data when location belongs to org', async () => {
       const data = {
         organizationId: 'org-1',
         createdById: 'user-1',
@@ -53,12 +56,56 @@ describe('Provisioning Logic', () => {
         permissions: ['pos:orders'],
       };
 
+      (mockPrisma.inventoryLocation.findFirst as any).mockResolvedValue({ id: 'loc-1' });
       (mockPrisma.deviceSetupToken.create as any).mockResolvedValue({ id: 'token-1', ...data });
 
       const result = await createDeviceSetupTokenCore(mockPrisma as any, data);
 
       expect(result).toHaveProperty('rawToken');
+      expect(mockPrisma.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: 'loc-1', organizationId: 'org-1' },
+        select: { id: true },
+      });
       expect(mockPrisma.deviceSetupToken.create).toHaveBeenCalled();
+    });
+
+    it('should throw an error if location does not belong to organization', async () => {
+      const data = {
+        organizationId: 'org-1',
+        createdById: 'user-1',
+        deviceName: 'Test Device',
+        deviceType: 'POS_TERMINAL',
+        locationId: 'loc-foreign',
+        permissions: ['pos:orders'],
+      };
+
+      (mockPrisma.inventoryLocation.findFirst as any).mockResolvedValue(null);
+
+      await expect(createDeviceSetupTokenCore(mockPrisma as any, data)).rejects.toThrow(
+        'Location not found or belongs to another organization'
+      );
+    });
+  });
+
+  describe('revokeSetupTokenCore', () => {
+    it('should update setup token with updateMany and return count', async () => {
+      (mockPrisma.deviceSetupToken.updateMany as any).mockResolvedValue({ count: 1 });
+
+      const result = await revokeSetupTokenCore(mockPrisma as any, 'org-1', 'token-1');
+
+      expect(mockPrisma.deviceSetupToken.updateMany).toHaveBeenCalledWith({
+        where: { id: 'token-1', organizationId: 'org-1' },
+        data: { revokedAt: expect.any(Date) },
+      });
+      expect(result).toEqual({ count: 1 });
+    });
+
+    it('should throw an error if token is not found or foreign organization', async () => {
+      (mockPrisma.deviceSetupToken.updateMany as any).mockResolvedValue({ count: 0 });
+
+      await expect(revokeSetupTokenCore(mockPrisma as any, 'org-1', 'foreign-token')).rejects.toThrow(
+        'Setup token not found'
+      );
     });
   });
 
