@@ -1,6 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { Bot } from "lucide-react";
-"use client";
+
 
 import { ReportSettingsPanel } from "./report-settings-panel";
 import { useState, useTransition } from "react";

@@ -11,7 +11,7 @@ import {
   UnauthorizedException,
   Logger,
 } from "@nestjs/common";
-import { Response } from "express";
+import type { Response } from "express";
 import { ApiTags, ApiOperation, ApiBearerAuth } from "@nestjs/swagger";
 import { McpService } from "./mcp.service";
 

@@ -50,18 +50,18 @@ export class McpToolsService {
       },
       {
         name: "get_order_details",
-        description: "Retrieve complete breakdown of a specific sales transaction / order by ID.",
+        description: "Retrieve complete breakdown of a specific sales transaction / order by ID or order number.",
         inputSchema: {
           type: "object",
           properties: {
-            transactionId: { type: "string", description: "The transaction ID or sale number" },
+            transactionId: { type: "string", description: "The transaction ID or order number" },
           },
           required: ["transactionId"],
         },
       },
       {
         name: "search_customers",
-        description: "Search customer profiles, loyalty points, contact information, and purchase counts.",
+        description: "Search customer profiles, loyalty points, and contact information.",
         inputSchema: {
           type: "object",
           properties: {
@@ -152,7 +152,7 @@ export class McpToolsService {
     const search = args.search?.trim();
     const locationId = args.locationId;
 
-    const where: any = { organizationId, deletedAt: null };
+    const where: any = { organizationId, isArchived: false };
     if (search) {
       where.OR = [
         { name: { contains: search, mode: "insensitive" } },
@@ -174,8 +174,10 @@ export class McpToolsService {
             id: true,
             name: true,
             sku: true,
-            price: true,
-            stocks: locationId ? { where: { locationId } } : true,
+            retailPrice: true,
+            wholesalePrice: true,
+            buyingPrice: true,
+            variantStocks: locationId ? { where: { locationId } } : true,
           },
         },
       },
@@ -189,14 +191,15 @@ export class McpToolsService {
         sku: p.sku,
         barcode: p.barcode,
         variants: p.variants.map((v) => {
-          const totalStock = v.stocks ? v.stocks.reduce((acc, s) => acc + (s.quantity || 0), 0) : 0;
+          const totalStock = v.variantStocks ? v.variantStocks.reduce((acc, s) => acc + Number(s.currentStock || 0), 0) : 0;
+          const price = Number(v.retailPrice || v.wholesalePrice || v.buyingPrice || 0);
           return {
             id: v.id,
             name: v.name,
             sku: v.sku,
-            price: v.price,
+            price,
             totalStock,
-            locations: v.stocks?.map((s) => ({ locationId: s.locationId, quantity: s.quantity })),
+            locations: v.variantStocks?.map((s) => ({ locationId: s.locationId, quantity: Number(s.currentStock) })),
           };
         }),
       })),
@@ -208,7 +211,7 @@ export class McpToolsService {
     const query = args.query?.trim();
     const categoryId = args.categoryId;
 
-    const where: any = { organizationId, deletedAt: null };
+    const where: any = { organizationId, isArchived: false };
     if (categoryId) where.categoryId = categoryId;
     if (query) {
       where.OR = [
@@ -226,13 +229,24 @@ export class McpToolsService {
         name: true,
         sku: true,
         description: true,
-        isAvailable: true,
+        isActive: true,
         category: { select: { id: true, name: true } },
-        variants: { select: { id: true, name: true, price: true, sku: true } },
+        variants: { select: { id: true, name: true, retailPrice: true, wholesalePrice: true, buyingPrice: true, sku: true } },
       },
     });
 
-    return { count: products.length, products };
+    return {
+      count: products.length,
+      products: products.map((p) => ({
+        ...p,
+        variants: p.variants.map((v) => ({
+          id: v.id,
+          name: v.name,
+          sku: v.sku,
+          price: Number(v.retailPrice || v.wholesalePrice || v.buyingPrice || 0),
+        })),
+      })),
+    };
   }
 
   private async listOrders(args: Record<string, any>, organizationId: string) {
@@ -253,12 +267,12 @@ export class McpToolsService {
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
-        saleNumber: true,
-        totalAmount: true,
-        netAmount: true,
+        number: true,
+        finalTotal: true,
+        subtotal: true,
+        taxTotal: true,
         status: true,
         paymentStatus: true,
-        paymentMethod: true,
         createdAt: true,
         customer: { select: { id: true, name: true, email: true } },
       },
@@ -274,7 +288,7 @@ export class McpToolsService {
     const transaction = await db.transaction.findFirst({
       where: {
         organizationId,
-        OR: [{ id: transactionId }, { saleNumber: transactionId }],
+        OR: [{ id: transactionId }, { number: transactionId }],
       },
       include: {
         customer: true,
@@ -292,7 +306,7 @@ export class McpToolsService {
     const limit = Math.min(Number(args.limit) || 20, 100);
     const query = args.query?.trim();
 
-    const where: any = { organizationId, deletedAt: null };
+    const where: any = { organizationId, isActive: true };
     if (query) {
       where.OR = [
         { name: { contains: query, mode: "insensitive" } },
@@ -310,9 +324,6 @@ export class McpToolsService {
         email: true,
         phone: true,
         loyaltyPoints: true,
-        tier: true,
-        totalSpent: true,
-        ordersCount: true,
         createdAt: true,
       },
     });
@@ -342,17 +353,17 @@ export class McpToolsService {
         status: "COMPLETED",
       },
       select: {
-        totalAmount: true,
-        netAmount: true,
-        taxAmount: true,
-        discountAmount: true,
+        finalTotal: true,
+        subtotal: true,
+        taxTotal: true,
+        discountTotal: true,
       },
     });
 
     const totalOrders = transactions.length;
-    const grossRevenue = transactions.reduce((acc, t) => acc + Number(t.totalAmount || 0), 0);
-    const netRevenue = transactions.reduce((acc, t) => acc + Number(t.netAmount || 0), 0);
-    const totalTax = transactions.reduce((acc, t) => acc + Number(t.taxAmount || 0), 0);
+    const grossRevenue = transactions.reduce((acc, t) => acc + Number(t.finalTotal || 0), 0);
+    const netRevenue = transactions.reduce((acc, t) => acc + Number(t.subtotal || 0), 0);
+    const totalTax = transactions.reduce((acc, t) => acc + Number(t.taxTotal || 0), 0);
     const avgOrderValue = totalOrders > 0 ? grossRevenue / totalOrders : 0;
 
     return {
@@ -380,17 +391,17 @@ export class McpToolsService {
         },
       },
       select: {
-        productId: true,
+        variantId: true,
         productName: true,
         quantity: true,
-        totalPrice: true,
+        lineTotal: true,
       },
     });
 
     const productMap = new Map<string, { name: string; totalQuantity: number; totalRevenue: number }>();
 
     for (const item of items) {
-      const key = item.productId || item.productName || "unknown";
+      const key = item.variantId || item.productName || "unknown";
       const existing = productMap.get(key) || {
         name: item.productName || "Unknown Product",
         totalQuantity: 0,
@@ -398,7 +409,7 @@ export class McpToolsService {
       };
 
       existing.totalQuantity += Number(item.quantity || 0);
-      existing.totalRevenue += Number(item.totalPrice || 0);
+      existing.totalRevenue += Number(item.lineTotal || 0);
       productMap.set(key, existing);
     }
 
@@ -455,9 +466,9 @@ export class McpToolsService {
         id: true,
         startTime: true,
         endTime: true,
-        status: true,
+        isActive: true,
         member: { select: { id: true, user: { select: { name: true, email: true } } } },
-        location: { select: { id: true, name: true } },
+        locationId: true,
       },
     });
 
