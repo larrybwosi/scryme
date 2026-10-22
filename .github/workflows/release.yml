@@ -149,7 +149,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [windows-latest]
-        variant: [pharmacy, retail, standalone, supermarket, restaurant]
+        variant: [pharmacy, retail, supermarket, restaurant]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
