@@ -13,11 +13,25 @@ export async function createDeviceSetupTokenCore(
     environment?: string;
   }
 ) {
+  const p = prisma.client || prisma;
+
+  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Binding
+  // MITIGATION: Explicitly validate locationId belongs to the caller's organizationId before issuing device token.
+  if (data.locationId) {
+    const location = await p.inventoryLocation.findFirst({
+      where: { id: data.locationId, organizationId: data.organizationId },
+      select: { id: true },
+    });
+    if (!location) {
+      throw new Error("Location not found or belongs to another organization");
+    }
+  }
+
   const jti = crypto.randomUUID();
   const rawToken = crypto.randomBytes(32).toString("hex");
   const tokenHash = crypto.createHash("sha256").update(rawToken).digest("hex");
 
-  const setupToken = await (prisma.client || prisma).deviceSetupToken.create({
+  const setupToken = await p.deviceSetupToken.create({
     data: {
       organizationId: data.organizationId,
       createdById: data.createdById,
@@ -81,16 +95,18 @@ export async function getDeviceSetupTokensCore(
 
 export async function revokeSetupTokenCore(prisma: any, organizationId: string, tokenId: string) {
   const p = prisma.client || prisma;
-  const token = await p.deviceSetupToken.findFirst({
+
+  // THREAT: BOLA/IDOR Vulnerability - Unscoped Mutation
+  // MITIGATION: DeviceSetupToken lacks composite unique index on [id, organizationId].
+  // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+  const updateResult = await p.deviceSetupToken.updateMany({
     where: { id: tokenId, organizationId },
+    data: { revokedAt: new Date() },
   });
 
-  if (!token) {
+  if (updateResult.count === 0) {
     throw new Error('Setup token not found');
   }
 
-  return p.deviceSetupToken.update({
-    where: { id: tokenId },
-    data: { revokedAt: new Date() },
-  });
+  return updateResult;
 }
