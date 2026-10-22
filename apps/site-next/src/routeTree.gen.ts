@@ -16,8 +16,11 @@ import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LightRouteImport } from './routes/light'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
 import { Route as DevelopersAppsRouteImport } from './routes/developers/apps'
+import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
 import { Route as StudioSplatRouteImport } from './routes/studio/$'
+import { Route as VsSlugRouteImport } from './routes/vs/$slug'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -54,14 +57,29 @@ const SalesRoute = SalesRouteImport.update({
   path: '/sales',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CompareSlugRoute = CompareSlugRouteImport.update({
+  id: '/compare/$slug',
+  path: '/compare/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DevelopersAppsRoute = DevelopersAppsRouteImport.update({
   id: '/developers/apps',
   path: '/developers/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PagesSlugRoute = PagesSlugRouteImport.update({
+  id: '/pages/$slug',
+  path: '/pages/$slug',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const StudioSplatRoute = StudioSplatRouteImport.update({
   id: '/studio/$',
   path: '/studio/$',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const VsSlugRoute = VsSlugRouteImport.update({
+  id: '/vs/$slug',
+  path: '/vs/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 
@@ -73,8 +91,11 @@ export interface FileRoutesByFullPath {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/studio/$': typeof StudioSplatRoute
+  '/vs/$slug': typeof VsSlugRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -84,8 +105,11 @@ export interface FileRoutesByTo {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/studio/$': typeof StudioSplatRoute
+  '/vs/$slug': typeof VsSlugRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -96,8 +120,11 @@ export interface FileRoutesById {
   '/light': typeof LightRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
+  '/pages/$slug': typeof PagesSlugRoute
   '/studio/$': typeof StudioSplatRoute
+  '/vs/$slug': typeof VsSlugRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -109,8 +136,11 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/compare/$slug'
     | '/developers/apps'
+    | '/pages/$slug'
     | '/studio/$'
+    | '/vs/$slug'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -120,8 +150,11 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/compare/$slug'
     | '/developers/apps'
+    | '/pages/$slug'
     | '/studio/$'
+    | '/vs/$slug'
   id:
     | '__root__'
     | '/'
@@ -131,8 +164,11 @@ export interface FileRouteTypes {
     | '/light'
     | '/pricing'
     | '/sales'
+    | '/compare/$slug'
     | '/developers/apps'
+    | '/pages/$slug'
     | '/studio/$'
+    | '/vs/$slug'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -143,8 +179,11 @@ export interface RootRouteChildren {
   LightRoute: typeof LightRoute
   PricingRoute: typeof PricingRoute
   SalesRoute: typeof SalesRoute
+  CompareSlugRoute: typeof CompareSlugRoute
   DevelopersAppsRoute: typeof DevelopersAppsRoute
+  PagesSlugRoute: typeof PagesSlugRoute
   StudioSplatRoute: typeof StudioSplatRoute
+  VsSlugRoute: typeof VsSlugRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -198,6 +237,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SalesRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/compare/$slug': {
+      id: '/compare/$slug'
+      path: '/compare/$slug'
+      fullPath: '/compare/$slug'
+      preLoaderRoute: typeof CompareSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/developers/apps': {
       id: '/developers/apps'
       path: '/developers/apps'
@@ -205,11 +251,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevelopersAppsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/pages/$slug': {
+      id: '/pages/$slug'
+      path: '/pages/$slug'
+      fullPath: '/pages/$slug'
+      preLoaderRoute: typeof PagesSlugRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/studio/$': {
       id: '/studio/$'
       path: '/studio/$'
       fullPath: '/studio/$'
       preLoaderRoute: typeof StudioSplatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/vs/$slug': {
+      id: '/vs/$slug'
+      path: '/vs/$slug'
+      fullPath: '/vs/$slug'
+      preLoaderRoute: typeof VsSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
   }
@@ -223,8 +283,11 @@ const rootRouteChildren: RootRouteChildren = {
   LightRoute: LightRoute,
   PricingRoute: PricingRoute,
   SalesRoute: SalesRoute,
+  CompareSlugRoute: CompareSlugRoute,
   DevelopersAppsRoute: DevelopersAppsRoute,
+  PagesSlugRoute: PagesSlugRoute,
   StudioSplatRoute: StudioSplatRoute,
+  VsSlugRoute: VsSlugRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
