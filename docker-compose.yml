@@ -196,7 +196,7 @@ volumes:
 
 networks:
   scryme-network:
-    name: scryme-network
+    name: ${SCRYME_NETWORK_NAME:-scryme-network}
     driver: bridge
   proxy-network:
     name: ${PROXY_NETWORK_NAME:-dokploy-network}
