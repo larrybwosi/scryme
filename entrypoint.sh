@@ -174,7 +174,9 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
     echo "✅ $db_label is ready!"
   }
 
-  if [ -n "$DATABASE_URL" ]; then
+  if [ "$SKIP_MIGRATIONS" = "true" ] || [ "$SKIP_MIGRATIONS" = "1" ]; then
+    echo "SKIP_MIGRATIONS is set, skipping runtime database migration step."
+  elif [ -n "$DATABASE_URL" ]; then
     wait_for_db "$DATABASE_URL" "main database"
     echo "Deploying database migrations..."
 
@@ -216,7 +218,9 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
   fi
 
   C_DB_URL="${CUSTOMER_DB:-$CUSTOMER_DATABASE_URL}"
-  if [ -n "$C_DB_URL" ]; then
+  if [ "$SKIP_MIGRATIONS" = "true" ] || [ "$SKIP_MIGRATIONS" = "1" ]; then
+    echo "SKIP_MIGRATIONS is set, skipping customer DB migration step."
+  elif [ -n "$C_DB_URL" ]; then
     wait_for_db "$C_DB_URL" "customer database"
     echo "Deploying customer database migrations..."
     PRISMA_BIN="./node_modules/.bin/prisma"
