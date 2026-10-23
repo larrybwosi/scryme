@@ -12,6 +12,7 @@ import { CatalogModule } from "../catalog/catalog.module";
 import { CycleCountingService } from "./application/services/cycle-counting.service";
 import { DocumentModule } from "../../../common/documents/document.module";
 import { FinanceModule } from "../finance/finance.module";
+import { CrmIntegrationsModule } from "../crm-integrations/crm-integrations.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { FinanceModule } from "../finance/finance.module";
     CatalogModule,
     DocumentModule,
     forwardRef(() => FinanceModule),
+    forwardRef(() => CrmIntegrationsModule),
   ],
   controllers: [StockingController],
   providers: [

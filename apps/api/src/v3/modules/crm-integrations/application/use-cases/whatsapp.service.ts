@@ -393,14 +393,74 @@ export class WhatsappService {
     }
   }
 
-  async sendPurchaseOrderNotification(organizationId: string, poNumber: string, supplierPhone: string, totalAmount: number) {
+  async verifyConfig(organizationId: string) {
+    const integration = await this.getIntegration(organizationId);
+    if (!integration) {
+      return {
+        isConfigured: false,
+        isActive: false,
+        phoneNumberId: null,
+        wabaId: null,
+        syncStatus: "DISCONNECTED",
+        multitenancyValid: true,
+      };
+    }
+
+    const credentials = (integration.credentials as any) || {};
+    const hasPhoneNumberId = !!credentials.phoneNumberId;
+    const hasAccessToken = !!credentials.accessToken;
+
+    return {
+      isConfigured: hasPhoneNumberId && hasAccessToken,
+      isActive: integration.isActive,
+      phoneNumberId: credentials.phoneNumberId || null,
+      wabaId: credentials.wabaId || null,
+      syncStatus: integration.syncStatus,
+      multitenancyValid: integration.organizationId === organizationId,
+    };
+  }
+
+  async sendPurchaseOrderNotification(
+    organizationId: string,
+    poNumber: string,
+    supplierPhone?: string,
+    totalAmount?: number,
+    purchaseOrderId?: string,
+    recipientPhoneOverride?: string,
+  ) {
     try {
       const integration = await this.getIntegration(organizationId);
       if (!integration || !integration.isActive) return null;
 
-      const text = `Hello! A new Purchase Order #${poNumber} for total ${totalAmount} has been issued to you. Please check your portal or contact us for details.`;
+      let targetPhone = recipientPhoneOverride || supplierPhone;
+      let amount = totalAmount;
+
+      if ((!targetPhone || amount === undefined) && purchaseOrderId) {
+        const po = await this.prisma.client.purchase.findFirst({
+          where: { id: purchaseOrderId, organizationId },
+          include: { supplier: true },
+        });
+
+        if (po) {
+          if (!targetPhone) {
+            targetPhone = po.supplier?.phone || undefined;
+          }
+          if (amount === undefined) {
+            amount = Number(po.totalAmount);
+          }
+        }
+      }
+
+      if (!targetPhone) {
+        this.logger.warn(`Purchase order WhatsApp notification skipped: recipient phone is missing for PO ${poNumber}`);
+        return null;
+      }
+
+      const formattedAmount = amount !== undefined ? `${amount}` : "N/A";
+      const text = `Hello! A new Purchase Order #${poNumber} for total ${formattedAmount} has been issued to you. Please check your portal or contact us for details.`;
+
       return await this.sendMessage(organizationId, undefined, {
-        recipientPhone: supplierPhone,
+        recipientPhone: targetPhone,
         text,
         templateName: "purchase_order_issued",
         components: [
@@ -408,7 +468,7 @@ export class WhatsappService {
             type: "body",
             parameters: [
               { type: "text", text: poNumber },
-              { type: "text", text: `${totalAmount}` },
+              { type: "text", text: formattedAmount },
             ],
           },
         ],

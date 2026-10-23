@@ -109,6 +109,41 @@ export class WhatsappCrmController {
     return this.service.sendMessage(user.organizationId, user.memberId || user.id, body);
   }
 
+  @Get("whatsapp/verify-config")
+  @ApiOperation({ summary: "Verify WhatsApp Integration Configuration & Multitenancy Health" })
+  async verifyConfig(@CurrentUser() user: any) {
+    return this.service.verifyConfig(user.organizationId);
+  }
+
+  @Post("whatsapp/send-po")
+  @ApiOperation({ summary: "Send Purchase Order Notification via WhatsApp" })
+  async sendPurchaseOrderNotification(
+    @CurrentUser() user: any,
+    @Body()
+    body: {
+      purchaseOrderId: string;
+      poNumber?: string;
+      recipientPhone?: string;
+      totalAmount?: number;
+    },
+  ) {
+    if (!body.purchaseOrderId && !body.poNumber) {
+      throw new BadRequestException("Purchase Order ID or PO Number is required.");
+    }
+    const result = await this.service.sendPurchaseOrderNotification(
+      user.organizationId,
+      body.poNumber || body.purchaseOrderId,
+      undefined,
+      body.totalAmount,
+      body.purchaseOrderId,
+      body.recipientPhone,
+    );
+    if (!result) {
+      throw new BadRequestException("Failed to send Purchase Order WhatsApp notification. Check integration setup or recipient phone number.");
+    }
+    return result;
+  }
+
   @Get("templates")
   @ApiOperation({ summary: "List Synced WhatsApp Templates" })
   async listTemplates(@CurrentUser() user: any) {

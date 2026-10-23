@@ -14,6 +14,7 @@ import { Route as CmsRouteImport } from './routes/cms'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LightRouteImport } from './routes/light'
+import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
@@ -45,6 +46,11 @@ const InventoryRoute = InventoryRouteImport.update({
 const LightRoute = LightRouteImport.update({
   id: '/light',
   path: '/light',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PaymentsRoute = PaymentsRouteImport.update({
+  id: '/payments',
+  path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -89,6 +95,7 @@ export interface FileRoutesByFullPath {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -103,6 +110,7 @@ export interface FileRoutesByTo {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -118,6 +126,7 @@ export interface FileRoutesById {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -134,6 +143,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/payments'
     | '/pricing'
     | '/sales'
     | '/compare/$slug'
@@ -148,6 +158,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/payments'
     | '/pricing'
     | '/sales'
     | '/compare/$slug'
@@ -162,6 +173,7 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/payments'
     | '/pricing'
     | '/sales'
     | '/compare/$slug'
@@ -177,6 +189,7 @@ export interface RootRouteChildren {
   CrmRoute: typeof CrmRoute
   InventoryRoute: typeof InventoryRoute
   LightRoute: typeof LightRoute
+  PaymentsRoute: typeof PaymentsRoute
   PricingRoute: typeof PricingRoute
   SalesRoute: typeof SalesRoute
   CompareSlugRoute: typeof CompareSlugRoute
@@ -221,6 +234,13 @@ declare module '@tanstack/react-router' {
       path: '/light'
       fullPath: '/light'
       preLoaderRoute: typeof LightRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/payments': {
+      id: '/payments'
+      path: '/payments'
+      fullPath: '/payments'
+      preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -281,6 +301,7 @@ const rootRouteChildren: RootRouteChildren = {
   CrmRoute: CrmRoute,
   InventoryRoute: InventoryRoute,
   LightRoute: LightRoute,
+  PaymentsRoute: PaymentsRoute,
   PricingRoute: PricingRoute,
   SalesRoute: SalesRoute,
   CompareSlugRoute: CompareSlugRoute,
