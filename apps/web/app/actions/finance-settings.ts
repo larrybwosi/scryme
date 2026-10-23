@@ -89,6 +89,85 @@ export async function getApprovalWorkflows() {
   });
 }
 
+/**
+ * PERFORMANCE OPTIMIZATION:
+ * Batches relational entity existence checks across workflow steps, conditions, and actions into
+ * concurrent `findMany` database queries using `Promise.all`. Collapses $O(S \times (C + A))$ sequential
+ * blocking DB roundtrips into a single $O(1)$ concurrent roundtrip while maintaining strict tenant boundary checks.
+ */
+async function validateWorkflowRelationalIds(
+  steps: {
+    conditions?: { locationId?: string; expenseCategoryId?: string }[];
+    actions?: { specificMemberId?: string }[];
+  }[],
+  organizationId: string,
+) {
+  if (!steps || !Array.isArray(steps) || steps.length === 0) return;
+
+  const locationIds = new Set<string>();
+  const expenseCategoryIds = new Set<string>();
+  const memberIds = new Set<string>();
+
+  for (const step of steps) {
+    if (step.conditions && Array.isArray(step.conditions)) {
+      for (const cond of step.conditions) {
+        if (cond.locationId) locationIds.add(cond.locationId);
+        if (cond.expenseCategoryId) expenseCategoryIds.add(cond.expenseCategoryId);
+      }
+    }
+    if (step.actions && Array.isArray(step.actions)) {
+      for (const act of step.actions) {
+        if (act.specificMemberId) memberIds.add(act.specificMemberId);
+      }
+    }
+  }
+
+  const [validLocations, validCategories, validMembers] = await Promise.all([
+    locationIds.size > 0
+      ? db.inventoryLocation.findMany({
+          where: { id: { in: Array.from(locationIds) }, organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+    expenseCategoryIds.size > 0
+      ? db.expenseCategory.findMany({
+          where: { id: { in: Array.from(expenseCategoryIds) }, organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+    memberIds.size > 0
+      ? db.member.findMany({
+          where: { id: { in: Array.from(memberIds) }, organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve([]),
+  ]);
+
+  const validLocationSet = new Set(validLocations.map((l) => l.id));
+  const validCategorySet = new Set(validCategories.map((c) => c.id));
+  const validMemberSet = new Set(validMembers.map((m) => m.id));
+
+  for (const step of steps) {
+    if (step.conditions && Array.isArray(step.conditions)) {
+      for (const cond of step.conditions) {
+        if (cond.locationId && !validLocationSet.has(cond.locationId)) {
+          throw new Error("Location condition not found or belongs to another organization");
+        }
+        if (cond.expenseCategoryId && !validCategorySet.has(cond.expenseCategoryId)) {
+          throw new Error("Expense category condition not found or belongs to another organization");
+        }
+      }
+    }
+    if (step.actions && Array.isArray(step.actions)) {
+      for (const act of step.actions) {
+        if (act.specificMemberId && !validMemberSet.has(act.specificMemberId)) {
+          throw new Error("Approver member not found or belongs to another organization");
+        }
+      }
+    }
+  }
+}
+
 export async function createApprovalWorkflow(data: {
   name: string;
   description?: string;
@@ -118,39 +197,7 @@ export async function createApprovalWorkflow(data: {
 
   // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
   // MITIGATION: Validate foreign relational IDs across steps against current organizationId before creating the workflow.
-  for (const step of data.steps || []) {
-    for (const cond of step.conditions || []) {
-      if (cond.locationId) {
-        const loc = await db.inventoryLocation.findFirst({
-          where: { id: cond.locationId, organizationId: auth.organizationId },
-          select: { id: true },
-        });
-        if (!loc) {
-          throw new Error("Location condition not found or belongs to another organization");
-        }
-      }
-      if (cond.expenseCategoryId) {
-        const cat = await db.expenseCategory.findFirst({
-          where: { id: cond.expenseCategoryId, organizationId: auth.organizationId },
-          select: { id: true },
-        });
-        if (!cat) {
-          throw new Error("Expense category condition not found or belongs to another organization");
-        }
-      }
-    }
-    for (const act of step.actions || []) {
-      if (act.specificMemberId) {
-        const member = await db.member.findFirst({
-          where: { id: act.specificMemberId, organizationId: auth.organizationId },
-          select: { id: true },
-        });
-        if (!member) {
-          throw new Error("Approver member not found or belongs to another organization");
-        }
-      }
-    }
-  }
+  await validateWorkflowRelationalIds(data.steps, auth.organizationId);
 
   const workflow = await db.approvalWorkflow.create({
     data: {
@@ -207,43 +254,7 @@ export async function updateApprovalWorkflow(id: string, data: any) {
   }
 
   if (data.steps && Array.isArray(data.steps)) {
-    for (const step of data.steps) {
-      if (step.conditions && Array.isArray(step.conditions)) {
-        for (const cond of step.conditions) {
-          if (cond.locationId) {
-            const loc = await db.inventoryLocation.findFirst({
-              where: { id: cond.locationId, organizationId: auth.organizationId },
-              select: { id: true },
-            });
-            if (!loc) {
-              throw new Error("Location condition not found or belongs to another organization");
-            }
-          }
-          if (cond.expenseCategoryId) {
-            const cat = await db.expenseCategory.findFirst({
-              where: { id: cond.expenseCategoryId, organizationId: auth.organizationId },
-              select: { id: true },
-            });
-            if (!cat) {
-              throw new Error("Expense category condition not found or belongs to another organization");
-            }
-          }
-        }
-      }
-      if (step.actions && Array.isArray(step.actions)) {
-        for (const act of step.actions) {
-          if (act.specificMemberId) {
-            const member = await db.member.findFirst({
-              where: { id: act.specificMemberId, organizationId: auth.organizationId },
-              select: { id: true },
-            });
-            if (!member) {
-              throw new Error("Approver member not found or belongs to another organization");
-            }
-          }
-        }
-      }
-    }
+    await validateWorkflowRelationalIds(data.steps, auth.organizationId);
   }
 
   await db.$transaction(async tx => {

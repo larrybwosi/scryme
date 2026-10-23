@@ -41,3 +41,7 @@
 ## 2026-10-25 - [Phased Concurrency for Relational Entity Schema Seeding]
 **Learning:** Executing multi-step schema initialization (such as seeding CRM object definitions, fields, and relationships) sequentially introduces $O(N)$ network query roundtrips. Splitting execution into 2 distinct concurrent phases (Phase 1: `Promise.all` creating parent entities; Phase 2: `Promise.all` creating child fields and relationship definitions using parent IDs) reduces 27 sequential roundtrips down to 2 concurrent query phases.
 **Action:** When seeding relational schemas, structure operations into distinct dependency-ordered phases and execute each phase concurrently with `Promise.all`.
+
+## 2026-10-26 - [Batched Relational Validation in Workflow Server Actions]
+**Learning:** Sequential `findFirst` database queries inside nested loops (`steps` -> `conditions` / `actions`) for foreign entity validation (`locationId`, `expenseCategoryId`, `specificMemberId`) introduce $O(S \times (C + A))$ blocking network roundtrips. Extracting unique foreign IDs into `Set`s up-front and executing concurrent `findMany` queries with `Promise.all` collapses latency down to $O(1)$ single concurrent roundtrips while preserving BOLA multi-tenant isolation.
+**Action:** Always extract foreign relational IDs into unique `Set`s and validate via batched `findMany` queries with `Promise.all` when validating multi-item step/line structures.
