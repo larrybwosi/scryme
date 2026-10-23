@@ -1,7 +1,7 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
-import { Check, ArrowRight, ShieldCheck, Zap, DollarSign, Calculator, ChevronDown, Layers, CreditCard, Smartphone, Building2, HelpCircle, Sparkles } from 'lucide-react'
+import { Check, ArrowRight, ShieldCheck, CreditCard, Smartphone, Building2, ChevronDown, Sparkles } from 'lucide-react'
 import { useState } from 'react'
 
 export const Route = createFileRoute('/pricing')({
@@ -20,6 +20,7 @@ const PRICING_DATA: Record<Currency, {
   symbol: string
   name: string
   badge: string
+  free: { monthly: PlanPricing; annual: PlanPricing }
   growth: { monthly: PlanPricing; annual: PlanPricing }
   scale: { monthly: PlanPricing; annual: PlanPricing }
   enterprise: { monthly: PlanPricing; annual: PlanPricing }
@@ -28,6 +29,10 @@ const PRICING_DATA: Record<Currency, {
     symbol: '$',
     name: 'USD ($)',
     badge: 'Global USD',
+    free: {
+      monthly: { amount: '$0', period: ' forever' },
+      annual: { amount: '$0', period: ' forever' },
+    },
     growth: {
       monthly: { amount: '$599', period: '/ month' },
       annual: { amount: '$499', period: '/ month', billedNote: 'Billed annually ($5,988/yr)' },
@@ -45,6 +50,10 @@ const PRICING_DATA: Record<Currency, {
     symbol: 'KSh ',
     name: 'KSh (M-Pesa)',
     badge: 'M-Pesa Direct',
+    free: {
+      monthly: { amount: 'KSh 0', period: ' forever' },
+      annual: { amount: 'KSh 0', period: ' forever' },
+    },
     growth: {
       monthly: { amount: 'KSh 78,000', period: '/ month' },
       annual: { amount: 'KSh 65,000', period: '/ month', billedNote: 'Billed annually (KSh 780,000/yr)' },
@@ -62,6 +71,10 @@ const PRICING_DATA: Record<Currency, {
     symbol: '€',
     name: 'EUR (€)',
     badge: 'Eurozone SEPA',
+    free: {
+      monthly: { amount: '€0', period: ' forever' },
+      annual: { amount: '€0', period: ' forever' },
+    },
     growth: {
       monthly: { amount: '€550', period: '/ month' },
       annual: { amount: '€460', period: '/ month', billedNote: 'Billed annually (€5,520/yr)' },
@@ -90,6 +103,9 @@ export function PricingComponent() {
   const currData = PRICING_DATA[currency]
 
   const getSignupUrl = (plan: string) => {
+    if (plan === 'free') {
+      return `https://app.scryme.tech/signup?plan=free&currency=${currency.toLowerCase()}`
+    }
     return `https://app.scryme.tech/signup?plan=${plan}&billing=${billingCycle}&currency=${currency.toLowerCase()}&trial=true`
   }
 
@@ -103,7 +119,7 @@ export function PricingComponent() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 mb-6">
             <span className="w-2 h-2 rounded-full bg-[#d2ff3a] animate-pulse" />
             <span className="text-xs font-semibold uppercase tracking-wider text-[#d2ff3a] font-mono">
-              14-Day Free Trial • Instant Deployment • Zero Risk
+              Free Tier Available • 14-Day Pro Trial • Zero Risk
             </span>
           </div>
 
@@ -111,7 +127,7 @@ export function PricingComponent() {
             Predictable Pricing Engineered for Limitless Enterprise Scale
           </h1>
           <p className="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed mb-8">
-            No per-user penalties or hidden seat taxes. Unify your operational software stack under one transparent, telemetry-based billing model.
+            Start testing immediately with our free tier or power your multi-location commerce with full enterprise scale.
           </p>
 
           {/* Controls: Billing Cycle + Currency Switcher */}
@@ -163,10 +179,48 @@ export function PricingComponent() {
 
       {/* Pricing Cards Grid */}
       <section className="py-4 px-4 md:px-8 max-w-7xl mx-auto mb-16">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+
+          {/* Free Tier Plan */}
+          <div className="glass-panel p-6 rounded-3xl border-white/10 flex flex-col justify-between hover:border-[#d2ff3a]/40 transition">
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-xs font-mono uppercase tracking-widest text-blue-400">Starter Tier</span>
+                <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                  Free Forever
+                </span>
+              </div>
+              <h3 className="text-xl font-serif dark:text-white light:text-[#090a0b] mb-4">Community Free</h3>
+              <div className="mb-6">
+                <div className="flex items-baseline gap-1">
+                  <span className="text-3xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
+                    {currData.free[billingCycle].amount}
+                  </span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.free[billingCycle].period}</span>
+                </div>
+                <p className="text-[11px] font-mono text-blue-400 mt-1">No Credit Card Required</p>
+              </div>
+              <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
+                Perfect for testing core POS, product cataloging, and inventory management features.
+              </p>
+              <ul className="space-y-2.5 text-xs text-[var(--text-muted)] mb-8">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 1 Store / Location Node</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Up to 1,000 Transactions / mo</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Core POS Checkout Terminal</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> M-Pesa & Cash Payment Setup</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Community & Documentation Support</li>
+              </ul>
+            </div>
+            <a
+              href={getSignupUrl('free')}
+              className="w-full text-center py-3 text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/20 rounded-full hover:bg-white/10 transition"
+            >
+              Start Free Testing
+            </a>
+          </div>
 
           {/* Starter Plan (Growth) */}
-          <div className="glass-panel p-8 rounded-3xl border-white/10 flex flex-col justify-between hover:border-[#d2ff3a]/40 transition">
+          <div className="glass-panel p-6 rounded-3xl border-white/10 flex flex-col justify-between hover:border-[#d2ff3a]/40 transition">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono uppercase tracking-widest text-slate-400">Growth Tier</span>
@@ -174,10 +228,10 @@ export function PricingComponent() {
                   14-Day Free Trial
                 </span>
               </div>
-              <h3 className="text-2xl font-serif dark:text-white light:text-[#090a0b] mb-4">Core Operational Engine</h3>
+              <h3 className="text-xl font-serif dark:text-white light:text-[#090a0b] mb-4">Core Operational Engine</h3>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
+                  <span className="text-3xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
                     {currData.growth[billingCycle].amount}
                   </span>
                   <span className="text-xs text-[var(--text-muted)] font-mono">{currData.growth[billingCycle].period}</span>
@@ -189,7 +243,7 @@ export function PricingComponent() {
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
                 Ideal for growing brands unifying inventory across up to 5 regional warehouse nodes.
               </p>
-              <ul className="space-y-3 text-xs text-[var(--text-muted)] mb-8">
+              <ul className="space-y-2.5 text-xs text-[var(--text-muted)] mb-8">
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Up to 5 Warehouse Locations</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 10,000 Orders / Month Included</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Real-time POS & RevOps Sync</li>
@@ -199,16 +253,16 @@ export function PricingComponent() {
             </div>
             <a
               href={getSignupUrl('growth')}
-              className="w-full text-center py-3.5 text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/20 rounded-full hover:bg-white/10 transition"
+              className="w-full text-center py-3 text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/20 rounded-full hover:bg-white/10 transition"
             >
               Start 14-Day Growth Trial
             </a>
           </div>
 
           {/* Scale Plan (Featured) */}
-          <div className="glass-panel-elevated p-8 rounded-3xl relative flex flex-col justify-between border-2 border-[#d2ff3a]">
-            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-4 py-1 rounded-full bg-[#d2ff3a] text-[#090a0b] text-[10px] font-extrabold uppercase tracking-widest font-mono shadow-md">
-              Most Popular Enterprise Plan
+          <div className="glass-panel-elevated p-6 rounded-3xl relative flex flex-col justify-between border-2 border-[#d2ff3a]">
+            <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 px-3 py-0.5 rounded-full bg-[#d2ff3a] text-[#090a0b] text-[9px] font-extrabold uppercase tracking-widest font-mono shadow-md">
+              Most Popular Plan
             </div>
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -217,10 +271,10 @@ export function PricingComponent() {
                   14-Day Free Trial
                 </span>
               </div>
-              <h3 className="text-2xl font-serif dark:text-white light:text-[#090a0b] mb-4">Autonomous Enterprise</h3>
+              <h3 className="text-xl font-serif dark:text-white light:text-[#090a0b] mb-4">Autonomous Enterprise</h3>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-mono text-[#d2ff3a]">
+                  <span className="text-3xl font-extrabold font-mono text-[#d2ff3a]">
                     {currData.scale[billingCycle].amount}
                   </span>
                   <span className="text-xs text-[var(--text-muted)] font-mono">{currData.scale[billingCycle].period}</span>
@@ -232,25 +286,25 @@ export function PricingComponent() {
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
                 Complete multi-location inventory, Hermes AI automation, and sub-50ms catalog cloud.
               </p>
-              <ul className="space-y-3 text-xs text-[var(--text-muted)] mb-8">
+              <ul className="space-y-2.5 text-xs text-[var(--text-muted)] mb-8">
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Unlimited Warehouse Nodes</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 100,000 Orders / Month Included</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Hermes AI HITL Approval Workflows</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Sub-50ms Catalog Cloud Edge Workers</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Dedicated SLA & Priority Engineering</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Multi-Currency & Automated M-Pesa Recon</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Hermes AI HITL Workflows</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Sub-50ms Catalog Cloud Edge</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Priority SLA & Engineering</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Multi-Currency & M-Pesa Recon</li>
               </ul>
             </div>
             <a
               href={getSignupUrl('scale')}
-              className="w-full text-center py-3.5 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-[0_0_20px_rgba(210,255,58,0.3)]"
+              className="w-full text-center py-3 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-[0_0_20px_rgba(210,255,58,0.3)]"
             >
               Start 14-Day Free Scale Trial
             </a>
           </div>
 
           {/* Custom Enterprise Plan */}
-          <div className="glass-panel p-8 rounded-3xl border-white/10 flex flex-col justify-between hover:border-[#d2ff3a]/40 transition">
+          <div className="glass-panel p-6 rounded-3xl border-white/10 flex flex-col justify-between hover:border-[#d2ff3a]/40 transition">
             <div>
               <div className="flex items-center justify-between mb-2">
                 <span className="text-xs font-mono uppercase tracking-widest text-purple-400">Global Grid</span>
@@ -258,27 +312,27 @@ export function PricingComponent() {
                   Custom Onboarding
                 </span>
               </div>
-              <h3 className="text-2xl font-serif dark:text-white light:text-[#090a0b] mb-4">Custom Architecture</h3>
+              <h3 className="text-xl font-serif dark:text-white light:text-[#090a0b] mb-4">Custom Architecture</h3>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">Custom</span>
+                  <span className="text-3xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">Custom</span>
                 </div>
                 <p className="text-[11px] font-mono text-purple-400 mt-1">Tailored Billing & SLA Contracts</p>
               </div>
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
                 For high-volume enterprise organizations requiring dedicated hardware isolation and bespoke SAP/NetSuite integrations.
               </p>
-              <ul className="space-y-3 text-xs text-[var(--text-muted)] mb-8">
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Custom High-Volume Order Throughput</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Hardware-Isolated Database Instances</li>
+              <ul className="space-y-2.5 text-xs text-[var(--text-muted)] mb-8">
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Custom High-Volume Throughput</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Hardware-Isolated Database</li>
                 <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 99.999% Guaranteed SLA Uptime</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 24/7 Dedicated Solutions Architect</li>
-                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Custom Invoicing & Corporate Purchase Orders</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> 24/7 Dedicated Architect</li>
+                <li className="flex items-center gap-2"><Check className="w-4 h-4 text-[#d2ff3a]" /> Custom Invoicing & PO Terms</li>
               </ul>
             </div>
             <a
               href="mailto:enterprise@scryme.tech"
-              className="w-full text-center py-3.5 text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/20 rounded-full hover:bg-white/10 transition"
+              className="w-full text-center py-3 text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/20 rounded-full hover:bg-white/10 transition"
             >
               Contact Solutions Team
             </a>
@@ -352,15 +406,16 @@ export function PricingComponent() {
             Detailed Plan Feature Breakdown
           </h2>
           <p className="text-sm text-[var(--text-muted)]">
-            Compare capabilities across Growth, Scale, and Custom Enterprise tiers.
+            Compare capabilities across Free, Growth, Scale, and Custom Enterprise tiers.
           </p>
         </div>
 
         <div className="glass-panel rounded-3xl border-white/10 overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[650px]">
+          <table className="w-full text-left border-collapse min-w-[750px]">
             <thead>
               <tr className="border-b border-white/10 bg-white/5 text-xs font-mono uppercase tracking-wider text-[var(--text-muted)]">
                 <th className="p-5 font-bold">Capabilities</th>
+                <th className="p-5 font-bold text-center text-blue-400">Free Tier</th>
                 <th className="p-5 font-bold text-center">Growth</th>
                 <th className="p-5 font-bold text-center text-[#d2ff3a]">Scale</th>
                 <th className="p-5 font-bold text-center text-purple-400">Enterprise</th>
@@ -368,9 +423,10 @@ export function PricingComponent() {
             </thead>
             <tbody className="divide-y divide-white/5 text-xs text-[var(--text-muted)]">
               <tr>
-                <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Free Trial Period</td>
-                <td className="p-5 text-center text-emerald-400 font-mono font-bold">14 Days</td>
-                <td className="p-5 text-center text-emerald-400 font-mono font-bold">14 Days</td>
+                <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Pricing & Trial Period</td>
+                <td className="p-5 text-center text-blue-400 font-mono font-bold">Free Forever</td>
+                <td className="p-5 text-center text-emerald-400 font-mono font-bold">14 Days Trial</td>
+                <td className="p-5 text-center text-emerald-400 font-mono font-bold">14 Days Trial</td>
                 <td className="p-5 text-center text-purple-400 font-mono font-bold">Custom PoC</td>
               </tr>
               <tr>
@@ -378,15 +434,18 @@ export function PricingComponent() {
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
+                <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
               </tr>
               <tr>
                 <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Warehouse & Node Count</td>
+                <td className="p-5 text-center font-mono">1 Store Node</td>
                 <td className="p-5 text-center font-mono">Up to 5</td>
                 <td className="p-5 text-center font-mono text-[#d2ff3a]">Unlimited</td>
                 <td className="p-5 text-center font-mono text-purple-400">Unlimited Isolated</td>
               </tr>
               <tr>
                 <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Monthly Transaction Allowance</td>
+                <td className="p-5 text-center font-mono">1,000 / mo</td>
                 <td className="p-5 text-center font-mono">10,000 / mo</td>
                 <td className="p-5 text-center font-mono text-[#d2ff3a]">100,000 / mo</td>
                 <td className="p-5 text-center font-mono text-purple-400">Custom Throughput</td>
@@ -396,9 +455,11 @@ export function PricingComponent() {
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
+                <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
               </tr>
               <tr>
                 <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Hermes AI Autonomous Agents</td>
+                <td className="p-5 text-center font-mono text-slate-500">—</td>
                 <td className="p-5 text-center font-mono text-slate-500">—</td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
@@ -406,11 +467,13 @@ export function PricingComponent() {
               <tr>
                 <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Catalog Edge Workers (Sub-50ms)</td>
                 <td className="p-5 text-center font-mono text-slate-500">—</td>
+                <td className="p-5 text-center font-mono text-slate-500">—</td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
                 <td className="p-5 text-center"><Check className="w-4 h-4 text-[#d2ff3a] mx-auto" /></td>
               </tr>
               <tr>
                 <td className="p-5 font-semibold dark:text-white light:text-[#090a0b]">Guaranteed Uptime SLA</td>
+                <td className="p-5 text-center font-mono">Community SLA</td>
                 <td className="p-5 text-center font-mono">99.9%</td>
                 <td className="p-5 text-center font-mono text-[#d2ff3a]">99.95%</td>
                 <td className="p-5 text-center font-mono text-purple-400">99.999% Dedicated</td>
@@ -471,19 +534,23 @@ export function PricingComponent() {
         <div className="text-center mb-10">
           <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a]">Procurement & Trials</span>
           <h2 className="text-3xl font-serif dark:text-white light:text-[#090a0b] mt-2">
-            Frequently Asked Billing & Trial Inquiries
+            Frequently Asked Billing & Free Tier Inquiries
           </h2>
         </div>
 
         <div className="space-y-4">
           {[
             {
-              q: "How does the 14-day free trial work?",
-              a: "When you sign up for Growth or Scale tiers, you receive full platform access for 14 days without charge. You can upgrade, switch billing cycles, or cancel anytime before the trial period ends."
+              q: "Is there a completely free tier available?",
+              a: "Yes! Scryme provides a free forever Community plan with 1 store node, up to 1,000 monthly orders, full POS terminal access, and M-Pesa/Card support without requiring a credit card."
+            },
+            {
+              q: "How does the 14-day free trial work for Growth & Scale tiers?",
+              a: "When you sign up for Growth or Scale tiers, you receive full platform access for 14 days without charge. You can upgrade, switch billing cycles, or adjust plans anytime during or after the trial."
             },
             {
               q: "What payment options do you support?",
-              a: "We support M-Pesa (STK push & direct paybill), all major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and bank wire transfers (ACH/SEPA/SWIFT) for annual commitments."
+              a: "We support M-Pesa (STK push & direct paybill), major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and bank wire transfers (ACH/SEPA/SWIFT)."
             },
             {
               q: "Are there per-seat or per-user licensing fees?",
@@ -496,10 +563,6 @@ export function PricingComponent() {
             {
               q: "What happens if our order volume exceeds the plan threshold?",
               a: "You are never cut off. Overages are billed transparently at fractional cents per transaction without service degradation."
-            },
-            {
-              q: "How long does migration from NetSuite or SAP take?",
-              a: "Our automated zero-loss ingestion connectors typically complete data migration and validation within 48 to 72 hours."
             }
           ].map((item, idx) => (
             <div key={idx} className="glass-panel rounded-2xl border-white/10 overflow-hidden">
@@ -527,15 +590,23 @@ export function PricingComponent() {
             Ready to Streamline Your Operational Core?
           </h2>
           <p className="text-sm md:text-base text-[var(--text-muted)] max-w-xl mx-auto mb-8">
-            Start your 14-day free trial today. Deploy your Scryme workspace in 5 minutes with zero commitment.
+            Get started immediately on our Free Tier or start a 14-day free Scale trial. Deploy your Scryme workspace in under 5 minutes.
           </p>
-          <a
-            href={getSignupUrl('scale')}
-            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-[0_0_20px_rgba(210,255,58,0.3)]"
-          >
-            <span>Start 14-Day Free Scale Trial</span>
-            <ArrowRight className="w-4 h-4" />
-          </a>
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+            <a
+              href={getSignupUrl('free')}
+              className="px-8 py-4 text-sm font-bold uppercase tracking-wider text-white border border-white/20 rounded-full hover:bg-white/10 transition"
+            >
+              Start Free Testing ($0/mo)
+            </a>
+            <a
+              href={getSignupUrl('scale')}
+              className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-[0_0_20px_rgba(210,255,58,0.3)]"
+            >
+              <span>Start 14-Day Free Scale Trial</span>
+              <ArrowRight className="w-4 h-4" />
+            </a>
+          </div>
         </div>
       </section>
 
