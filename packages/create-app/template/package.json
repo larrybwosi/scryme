@@ -9,7 +9,7 @@
     "lint": "next lint"
   },
   "dependencies": {
-    "@scryme/sdk": "^10.2.24",
+    "@scryme/sdk": "^10.2.25",
     "lucide-react": "^0.475.0",
     "next": "^16.4.1",
     "react": "^19.3.1",
