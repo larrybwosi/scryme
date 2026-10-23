@@ -8,25 +8,111 @@ import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.components.DatePickerTextField
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
 import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+// ---------------------------------------------------------------------------
+// Shared design tokens
+// ---------------------------------------------------------------------------
+
+private val CardShape = RoundedCornerShape(8.dp)
+private val ControlShape = RoundedCornerShape(6.dp)
+private val TileShape = RoundedCornerShape(6.dp)
+private val ChipShape = RoundedCornerShape(4.dp)
+private val CompactButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+)
+
+/** Flat, bordered container. Pass [onClick] to make the whole surface tappable. */
+@Composable
+private fun OutlinedSurface(
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+    content: @Composable () -> Unit
+) {
+    val border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant)
+    if (onClick != null) {
+        Surface(
+            onClick = onClick,
+            shape = CardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = border,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            modifier = modifier.fillMaxWidth(),
+            content = content
+        )
+    } else {
+        Surface(
+            shape = CardShape,
+            color = MaterialTheme.colorScheme.surface,
+            border = border,
+            tonalElevation = 0.dp,
+            shadowElevation = 0.dp,
+            modifier = modifier.fillMaxWidth(),
+            content = content
+        )
+    }
+}
+
+@Composable
+private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.8.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun StatusChip(text: String, color: Color) {
+    Surface(
+        shape = ChipShape,
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
 @Composable
 fun AdminScreen(
@@ -47,62 +133,68 @@ fun AdminScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            Text(
-                text = "Admin Management Hub",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+        Text(
+            text = "Admin Management Hub",
+            style = MaterialTheme.typography.titleLarge.copy(
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onBackground
             )
-        }
+        )
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        // Sales & Analytics Quick Banner
-        Card(
-            onClick = { onNavigateToSales?.invoke() },
-            modifier = Modifier.fillMaxWidth(),
-            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            shape = RoundedCornerShape(12.dp)
-        ) {
+        // Sales & analytics entry point
+        OutlinedSurface(onClick = { onNavigateToSales?.invoke() }) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp),
+                    .padding(14.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Row(
+                    modifier = Modifier.weight(1f),
                     horizontalArrangement = Arrangement.spacedBy(12.dp),
                     verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Icon(
-                        imageVector = Icons.Default.BarChart,
-                        contentDescription = "Sales Analytics",
-                        tint = MaterialTheme.colorScheme.onPrimaryContainer
-                    )
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f),
+                                TileShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.BarChart,
+                            contentDescription = "Sales Analytics",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
                     Column {
                         Text(
                             text = "Sales & Analytics Dashboard",
-                            fontSize = 15.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
                         )
                         Text(
-                            text = "View revenue, balance, & recent orders",
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer.copy(alpha = 0.8f)
+                            text = "Revenue, balance and recent orders",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
-                Text("View >", fontSize = 13.sp, fontWeight = FontWeight.SemiBold, color = MaterialTheme.colorScheme.onPrimaryContainer)
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
             }
         }
 
@@ -115,18 +207,29 @@ fun AdminScreen(
             Button(
                 onClick = { showCreateShiftDialog = true },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(8.dp)
+                shape = ControlShape
             ) {
-                Text("+ Create Shift", fontSize = 13.sp)
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Create Shift",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
 
-            Button(
+            OutlinedButton(
                 onClick = { showCreateTaskDialog = true },
                 modifier = Modifier.weight(1f),
-                shape = RoundedCornerShape(8.dp),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.secondary)
+                shape = ControlShape
             ) {
-                Text("+ Create Task", fontSize = 13.sp)
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Create Task",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
@@ -145,15 +248,12 @@ fun AdminScreen(
             }
             is AdminUiState.Success -> {
                 LazyColumn(
-                    verticalArrangement = Arrangement.spacedBy(16.dp)
+                    verticalArrangement = Arrangement.spacedBy(10.dp),
+                    contentPadding = PaddingValues(bottom = 16.dp)
                 ) {
                     if (state.pendingTrades.isNotEmpty()) {
                         item {
-                            Text(
-                                text = "Pending Shift Trade Approvals",
-                                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold),
-                                color = MaterialTheme.colorScheme.primary
-                            )
+                            SectionLabel("Pending shift trade approvals (${state.pendingTrades.size})")
                         }
 
                         items(state.pendingTrades, key = { it.id }) { trade ->
@@ -165,13 +265,12 @@ fun AdminScreen(
                                 onReject = { viewModel.processTrade(trade.id, "REJECTED") }
                             )
                         }
+
+                        item { Spacer(modifier = Modifier.height(4.dp)) }
                     }
 
                     item {
-                        Text(
-                            text = "All Staff Shifts",
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
-                        )
+                        SectionLabel("All staff shifts")
                     }
 
                     items(state.allShifts, key = { it.id }) { shift ->
@@ -221,6 +320,10 @@ fun AdminScreen(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
 @Composable
 fun PendingTradeItem(
     trade: ShiftTrade,
@@ -230,42 +333,81 @@ fun PendingTradeItem(
 ) {
     val memberName = member?.name ?: trade.requestingMemberId
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
-            Text(text = "Trade Request for Shift: ${trade.shiftId}", fontWeight = FontWeight.Bold)
+    OutlinedSurface {
+        Column(modifier = Modifier.padding(14.dp)) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = "Shift ${trade.shiftId}",
+                    style = MaterialTheme.typography.titleSmall,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 1,
+                    modifier = Modifier.weight(1f)
+                )
+                Spacer(modifier = Modifier.width(8.dp))
+                StatusChip(text = "PENDING", color = Amber500)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+
             Row(
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                modifier = Modifier.padding(vertical = 4.dp)
+                verticalAlignment = Alignment.CenterVertically
             ) {
                 MemberAvatar(
                     avatarUrl = member?.avatarUrl,
                     name = member?.name ?: "",
                     modifier = Modifier.size(24.dp)
                 )
-                Text(text = "Requesting Member: $memberName", style = MaterialTheme.typography.bodySmall)
+                Column {
+                    Text(
+                        text = memberName,
+                        style = MaterialTheme.typography.bodyMedium,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = "Requesting member",
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
             }
+
             if (!trade.reason.isNullOrEmpty()) {
-                Text(text = "Reason: ${trade.reason}", style = MaterialTheme.typography.bodySmall)
+                Spacer(modifier = Modifier.height(8.dp))
+                Text(
+                    text = "Reason: ${trade.reason}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
-            Spacer(modifier = Modifier.height(8.dp))
+
+            Spacer(modifier = Modifier.height(12.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(12.dp))
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(
+                    onClick = onReject,
+                    colors = ButtonDefaults.outlinedButtonColors(contentColor = Rose500),
+                    border = BorderStroke(1.dp, Rose500.copy(alpha = 0.6f)),
+                    shape = ControlShape,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("Reject", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
+                }
                 Button(
                     onClick = onApprove,
                     colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
+                    shape = ControlShape,
                     modifier = Modifier.weight(1f)
                 ) {
-                    Text("Approve")
-                }
-                Button(
-                    onClick = onReject,
-                    colors = ButtonDefaults.buttonColors(containerColor = Rose500),
-                    modifier = Modifier.weight(1f)
-                ) {
-                    Text("Reject")
+                    Text("Approve", style = MaterialTheme.typography.labelLarge, fontWeight = FontWeight.SemiBold)
                 }
             }
         }
@@ -280,42 +422,72 @@ fun AdminShiftCard(
 ) {
     val memberName = member?.name ?: shift.memberId
 
-    Card(
-        modifier = Modifier.fillMaxWidth(),
-        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface)
-    ) {
-        Column(modifier = Modifier.padding(12.dp)) {
+    OutlinedSurface {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.weight(1f),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    MemberAvatar(
-                        avatarUrl = member?.avatarUrl,
-                        name = member?.name ?: "",
-                        modifier = Modifier.size(28.dp)
+                MemberAvatar(
+                    avatarUrl = member?.avatarUrl,
+                    name = member?.name ?: "",
+                    modifier = Modifier.size(36.dp)
+                )
+                Column {
+                    Text(
+                        text = memberName,
+                        style = MaterialTheme.typography.titleSmall,
+                        fontWeight = FontWeight.SemiBold,
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Column {
-                        Text(memberName, fontWeight = FontWeight.Bold)
-                        val role = member?.role
-                        if (!role.isNullOrBlank()) {
-                            Text(role, style = MaterialTheme.typography.labelSmall, color = MaterialTheme.colorScheme.primary)
-                        }
+                    val role = member?.role
+                    if (!role.isNullOrBlank()) {
+                        Text(
+                            text = role,
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
+                    }
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(12.dp)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "${getDayName(shift.dayOfWeek)}  ·  ${shift.startTime} - ${shift.endTime}",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     }
                 }
-                TextButton(onClick = onAddBreak) {
-                    Text("+ Add Break")
-                }
             }
-            Spacer(modifier = Modifier.height(4.dp))
-            Text("Day ${shift.dayOfWeek} (${shift.startTime} - ${shift.endTime})", style = MaterialTheme.typography.bodyMedium)
+
+            Spacer(modifier = Modifier.width(8.dp))
+
+            OutlinedButton(
+                onClick = onAddBreak,
+                shape = ControlShape,
+                contentPadding = CompactButtonPadding
+            ) {
+                Text("+ Break", style = MaterialTheme.typography.labelMedium)
+            }
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Dialogs
+// ---------------------------------------------------------------------------
 
 @Composable
 fun CreateShiftDialog(
@@ -348,11 +520,8 @@ fun CreateShiftDialog(
             value = dayOfWeek,
             onValueChange = { dayOfWeek = it },
             label = { Text("Day of Week (1-7, Mon-Sun) *") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
@@ -360,11 +529,8 @@ fun CreateShiftDialog(
             onValueChange = { startTime = it },
             label = { Text("Start Time *") },
             placeholder = { Text("e.g. 09:00") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
@@ -372,11 +538,8 @@ fun CreateShiftDialog(
             onValueChange = { endTime = it },
             label = { Text("End Time *") },
             placeholder = { Text("e.g. 17:00") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
     }
@@ -413,22 +576,16 @@ fun CreateTaskDialog(
             value = title,
             onValueChange = { title = it },
             label = { Text("Task Title *") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
             value = desc,
             onValueChange = { desc = it },
             label = { Text("Description") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         MemberDropdown(
@@ -439,17 +596,14 @@ fun CreateTaskDialog(
             allowUnassigned = true
         )
         Column {
-            Text(
-                text = "Priority",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+            SectionLabel("Priority")
+            Spacer(modifier = Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
                     FilterChip(
                         selected = priority == p,
                         onClick = { priority = p },
+                        shape = ControlShape,
                         label = { Text(p, fontSize = 11.sp) }
                     )
                 }
@@ -487,11 +641,8 @@ fun AddBreakDialog(
             onValueChange = { startTime = it },
             label = { Text("Start Time *") },
             placeholder = { Text("e.g. 12:00") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
@@ -499,23 +650,30 @@ fun AddBreakDialog(
             onValueChange = { endTime = it },
             label = { Text("End Time *") },
             placeholder = { Text("e.g. 12:30") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
         OutlinedTextField(
             value = desc,
             onValueChange = { desc = it },
             label = { Text("Description") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
+    }
+}
+
+private fun getDayName(dayOfWeek: Int): String {
+    return when (dayOfWeek) {
+        1 -> "Monday"
+        2 -> "Tuesday"
+        3 -> "Wednesday"
+        4 -> "Thursday"
+        5 -> "Friday"
+        6 -> "Saturday"
+        7 -> "Sunday"
+        else -> "Day $dayOfWeek"
     }
 }

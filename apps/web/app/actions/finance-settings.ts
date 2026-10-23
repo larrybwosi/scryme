@@ -116,6 +116,42 @@ export async function createApprovalWorkflow(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
+  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+  // MITIGATION: Validate foreign relational IDs across steps against current organizationId before creating the workflow.
+  for (const step of data.steps || []) {
+    for (const cond of step.conditions || []) {
+      if (cond.locationId) {
+        const loc = await db.inventoryLocation.findFirst({
+          where: { id: cond.locationId, organizationId: auth.organizationId },
+          select: { id: true },
+        });
+        if (!loc) {
+          throw new Error("Location condition not found or belongs to another organization");
+        }
+      }
+      if (cond.expenseCategoryId) {
+        const cat = await db.expenseCategory.findFirst({
+          where: { id: cond.expenseCategoryId, organizationId: auth.organizationId },
+          select: { id: true },
+        });
+        if (!cat) {
+          throw new Error("Expense category condition not found or belongs to another organization");
+        }
+      }
+    }
+    for (const act of step.actions || []) {
+      if (act.specificMemberId) {
+        const member = await db.member.findFirst({
+          where: { id: act.specificMemberId, organizationId: auth.organizationId },
+          select: { id: true },
+        });
+        if (!member) {
+          throw new Error("Approver member not found or belongs to another organization");
+        }
+      }
+    }
+  }
+
   const workflow = await db.approvalWorkflow.create({
     data: {
       organizationId: auth.organizationId,
@@ -158,26 +194,88 @@ export async function createApprovalWorkflow(data: {
 export async function updateApprovalWorkflow(id: string, data: any) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
+  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Workflow Mutation & Relational Resource Binding
+  // MITIGATION: Verify workflow ownership before purging steps or mutating entity, validate relational input IDs,
+  // and execute updateMany with strict organizationId filtering.
+  const existing = await db.approvalWorkflow.findFirst({
+    where: { id, organizationId: auth.organizationId },
+    select: { id: true },
+  });
+
+  if (!existing) {
+    throw new Error("Workflow not found or belongs to another organization");
+  }
+
+  if (data.steps && Array.isArray(data.steps)) {
+    for (const step of data.steps) {
+      if (step.conditions && Array.isArray(step.conditions)) {
+        for (const cond of step.conditions) {
+          if (cond.locationId) {
+            const loc = await db.inventoryLocation.findFirst({
+              where: { id: cond.locationId, organizationId: auth.organizationId },
+              select: { id: true },
+            });
+            if (!loc) {
+              throw new Error("Location condition not found or belongs to another organization");
+            }
+          }
+          if (cond.expenseCategoryId) {
+            const cat = await db.expenseCategory.findFirst({
+              where: { id: cond.expenseCategoryId, organizationId: auth.organizationId },
+              select: { id: true },
+            });
+            if (!cat) {
+              throw new Error("Expense category condition not found or belongs to another organization");
+            }
+          }
+        }
+      }
+      if (step.actions && Array.isArray(step.actions)) {
+        for (const act of step.actions) {
+          if (act.specificMemberId) {
+            const member = await db.member.findFirst({
+              where: { id: act.specificMemberId, organizationId: auth.organizationId },
+              select: { id: true },
+            });
+            if (!member) {
+              throw new Error("Approver member not found or belongs to another organization");
+            }
+          }
+        }
+      }
+    }
+  }
+
   await db.$transaction(async tx => {
     await tx.approvalWorkflowStep.deleteMany({
-      where: { approvalWorkflowId: id },
+      where: { approvalWorkflowId: id, workflow: { organizationId: auth.organizationId } },
     });
 
-    await tx.approvalWorkflow.update({
+    const updateResult = await tx.approvalWorkflow.updateMany({
       where: { id, organizationId: auth.organizationId },
       data: {
         name: data.name,
         description: data.description,
         triggerEvent: data.triggerEvent,
         isActive: data.isActive,
-        steps: {
-          create: data.steps.map((step: any) => ({
+      },
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error("Workflow not found or belongs to another organization");
+    }
+
+    if (data.steps && Array.isArray(data.steps)) {
+      for (const step of data.steps) {
+        await tx.approvalWorkflowStep.create({
+          data: {
+            approvalWorkflowId: id,
             name: step.name,
             description: step.description,
             stepNumber: step.stepNumber,
             allConditionsMustMatch: step.allConditionsMustMatch,
             conditions: {
-              create: step.conditions.map((condition: any) => ({
+              create: (step.conditions || []).map((condition: any) => ({
                 type: condition.type,
                 minAmount: condition.minAmount,
                 maxAmount: condition.maxAmount,
@@ -186,7 +284,7 @@ export async function updateApprovalWorkflow(id: string, data: any) {
               })),
             },
             actions: {
-              create: step.actions.map((action: any) => ({
+              create: (step.actions || []).map((action: any) => ({
                 type: action.type,
                 approverRole: action.approverRole,
                 specificMemberId: action.specificMemberId,
@@ -194,10 +292,10 @@ export async function updateApprovalWorkflow(id: string, data: any) {
                 approvalMode: action.approvalMode,
               })),
             },
-          })),
-        },
-      },
-    });
+          },
+        });
+      }
+    }
   });
 
   revalidatePath("/finance/settings");
@@ -207,9 +305,16 @@ export async function updateApprovalWorkflow(id: string, data: any) {
 export async function deleteApprovalWorkflow(id: string) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
-  await db.approvalWorkflow.delete({
+  // THREAT: BOLA/IDOR Vulnerability
+  // MITIGATION: ApprovalWorkflow model lacks a composite unique index on [id, organizationId].
+  // Using deleteMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+  const deleteResult = await db.approvalWorkflow.deleteMany({
     where: { id, organizationId: auth.organizationId },
   });
+
+  if (deleteResult.count === 0) {
+    throw new Error("Workflow not found or belongs to another organization");
+  }
 
   revalidatePath("/finance/settings");
   return { success: true };
@@ -239,7 +344,10 @@ export async function upsertCostCenter(data: {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
   if (data.id) {
-    return await db.costCenter.update({
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: CostCenter model lacks a composite unique index on [id, organizationId].
+    // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await db.costCenter.updateMany({
       where: { id: data.id, organizationId: auth.organizationId },
       data: {
         name: data.name,
@@ -247,6 +355,14 @@ export async function upsertCostCenter(data: {
         description: data.description,
         isActive: data.isActive,
       },
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error("Cost center not found or belongs to another organization");
+    }
+
+    return await db.costCenter.findFirstOrThrow({
+      where: { id: data.id, organizationId: auth.organizationId },
     });
   } else {
     return await db.costCenter.create({
@@ -281,8 +397,22 @@ export async function upsertBudgetAlert(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
+  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Binding
+  // MITIGATION: Validate budgetId against current organizationId before creating or updating a budget alert.
+  const budget = await db.budget.findFirst({
+    where: { id: data.budgetId, organizationId: auth.organizationId },
+    select: { id: true },
+  });
+
+  if (!budget) {
+    throw new Error("Budget not found or belongs to another organization");
+  }
+
   if (data.id) {
-    return await db.budgetAlert.update({
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: BudgetAlert model lacks a composite unique index on [id, organizationId].
+    // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await db.budgetAlert.updateMany({
       where: { id: data.id, organizationId: auth.organizationId },
       data: {
         budgetId: data.budgetId,
@@ -290,6 +420,14 @@ export async function upsertBudgetAlert(data: {
         recipients: data.recipients,
         isActive: data.isActive,
       },
+    });
+
+    if (updateResult.count === 0) {
+      throw new Error("Budget alert not found or belongs to another organization");
+    }
+
+    return await db.budgetAlert.findFirstOrThrow({
+      where: { id: data.id, organizationId: auth.organizationId },
     });
   } else {
     return await db.budgetAlert.create({
