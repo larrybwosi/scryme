@@ -1,6 +1,6 @@
 {
   "name": "@repo/ui",
-  "version": "10.2.24",
+  "version": "10.2.25",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
