@@ -69,6 +69,7 @@ export const TENANT_MODELS = new Set<string>([
   "LoyaltyTransaction",
   "LoyaltyVoucher",
   "Member",
+  "McpApiKey",
   "MpesaPaymentRequest",
   "NotificationChannelConfig",
   "NotificationDispatch",
