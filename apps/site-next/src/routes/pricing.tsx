@@ -3,12 +3,17 @@ import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import { Check, ArrowRight, ShieldCheck, Zap, DollarSign, Calculator, ChevronDown, Layers, CreditCard, Smartphone, Building2, HelpCircle, Sparkles } from 'lucide-react'
 import { useState } from 'react'
+import { fetchPricingConfig, DEFAULT_PRICING_FALLBACK } from '../sanity/queries'
 
 export const Route = createFileRoute('/pricing')({
+  loader: async () => {
+    const config = await fetchPricingConfig()
+    return { config: config || DEFAULT_PRICING_FALLBACK }
+  },
   component: PricingComponent,
 })
 
-type Currency = 'USD' | 'KSH' | 'EUR'
+type Currency = string
 
 interface PlanPricing {
   amount: string
@@ -16,82 +21,49 @@ interface PlanPricing {
   billedNote?: string
 }
 
-const PRICING_DATA: Record<Currency, {
+interface CurrencyData {
+  code: string
   symbol: string
   name: string
   badge: string
   growth: { monthly: PlanPricing; annual: PlanPricing }
   scale: { monthly: PlanPricing; annual: PlanPricing }
   enterprise: { monthly: PlanPricing; annual: PlanPricing }
-}> = {
-  USD: {
-    symbol: '$',
-    name: 'USD ($)',
-    badge: 'Global USD',
-    growth: {
-      monthly: { amount: '$599', period: '/ month' },
-      annual: { amount: '$499', period: '/ month', billedNote: 'Billed annually ($5,988/yr)' },
-    },
-    scale: {
-      monthly: { amount: '$1,799', period: '/ month' },
-      annual: { amount: '$1,499', period: '/ month', billedNote: 'Billed annually ($17,988/yr)' },
-    },
-    enterprise: {
-      monthly: { amount: 'Custom', period: '' },
-      annual: { amount: 'Custom', period: '' },
-    },
-  },
-  KSH: {
-    symbol: 'KSh ',
-    name: 'KSh (M-Pesa)',
-    badge: 'M-Pesa Direct',
-    growth: {
-      monthly: { amount: 'KSh 78,000', period: '/ month' },
-      annual: { amount: 'KSh 65,000', period: '/ month', billedNote: 'Billed annually (KSh 780,000/yr)' },
-    },
-    scale: {
-      monthly: { amount: 'KSh 234,000', period: '/ month' },
-      annual: { amount: 'KSh 195,000', period: '/ month', billedNote: 'Billed annually (KSh 2,340,000/yr)' },
-    },
-    enterprise: {
-      monthly: { amount: 'Custom', period: '' },
-      annual: { amount: 'Custom', period: '' },
-    },
-  },
-  EUR: {
-    symbol: '€',
-    name: 'EUR (€)',
-    badge: 'Eurozone SEPA',
-    growth: {
-      monthly: { amount: '€550', period: '/ month' },
-      annual: { amount: '€460', period: '/ month', billedNote: 'Billed annually (€5,520/yr)' },
-    },
-    scale: {
-      monthly: { amount: '€1,650', period: '/ month' },
-      annual: { amount: '€1,380', period: '/ month', billedNote: 'Billed annually (€16,560/yr)' },
-    },
-    enterprise: {
-      monthly: { amount: 'Custom', period: '' },
-      annual: { amount: 'Custom', period: '' },
-    },
-  },
 }
 
 export function PricingComponent() {
+  const { config } = Route.useLoaderData()
+  const pricingConfig = config || DEFAULT_PRICING_FALLBACK
+
+  const currenciesList: CurrencyData[] = pricingConfig.currencies && pricingConfig.currencies.length > 0
+    ? pricingConfig.currencies
+    : DEFAULT_PRICING_FALLBACK.currencies
+
+  const currenciesMap = currenciesList.reduce((acc, item) => {
+    acc[item.code] = item
+    return acc
+  }, {} as Record<string, CurrencyData>)
+
+  const availableCurrencyCodes = currenciesList.map((c) => c.code)
+
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'annual'>('annual')
-  const [currency, setCurrency] = useState<Currency>('USD')
+  const [currency, setCurrency] = useState<string>(availableCurrencyCodes[0] || 'USD')
   const [legacyCost, setLegacyCost] = useState<number>(180000)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
+
+  const currData = currenciesMap[currency] || currenciesList[0] || DEFAULT_PRICING_FALLBACK.currencies[0]
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
   }
 
-  const currData = PRICING_DATA[currency]
-
   const getSignupUrl = (plan: string) => {
     return `https://app.scryme.tech/signup?plan=${plan}&billing=${billingCycle}&currency=${currency.toLowerCase()}&trial=true`
   }
+
+  const faqsList = pricingConfig.faqs && pricingConfig.faqs.length > 0
+    ? pricingConfig.faqs
+    : DEFAULT_PRICING_FALLBACK.faqs
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#d2ff3a] selection:text-[#090a0b] transition-colors">
@@ -103,15 +75,15 @@ export function PricingComponent() {
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 mb-6">
             <span className="w-2 h-2 rounded-full bg-[#d2ff3a] animate-pulse" />
             <span className="text-xs font-semibold uppercase tracking-wider text-[#d2ff3a] font-mono">
-              14-Day Free Trial • Instant Deployment • Zero Risk
+              {pricingConfig.heroBadge || '14-Day Free Trial • Instant Deployment • Zero Risk'}
             </span>
           </div>
 
           <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif dark:text-white light:text-[#090a0b] tracking-tight leading-[1.08] mb-6">
-            Predictable Pricing Engineered for Limitless Enterprise Scale
+            {pricingConfig.heroTitle || 'Predictable Pricing Engineered for Limitless Enterprise Scale'}
           </h1>
           <p className="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed mb-8">
-            No per-user penalties or hidden seat taxes. Unify your operational software stack under one transparent, telemetry-based billing model.
+            {pricingConfig.heroSubtitle || 'No per-user penalties or hidden seat taxes. Unify your operational software stack under one transparent, telemetry-based billing model.'}
           </p>
 
           {/* Controls: Billing Cycle + Currency Switcher */}
@@ -143,7 +115,7 @@ export function PricingComponent() {
 
             {/* Currency Selector */}
             <div className="inline-flex items-center p-1.5 rounded-full bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 gap-1">
-              {(['USD', 'KSH', 'EUR'] as Currency[]).map((c) => (
+              {availableCurrencyCodes.map((c) => (
                 <button
                   key={c}
                   onClick={() => setCurrency(c)}
@@ -153,7 +125,7 @@ export function PricingComponent() {
                       : 'text-[var(--text-muted)] hover:text-white'
                   }`}
                 >
-                  {PRICING_DATA[c].name}
+                  {currenciesMap[c]?.name || c}
                 </button>
               ))}
             </div>
@@ -178,12 +150,12 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
-                    {currData.growth[billingCycle].amount}
+                    {currData.growth[billingCycle]?.amount}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.growth[billingCycle].period}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.growth[billingCycle]?.period}</span>
                 </div>
-                {currData.growth[billingCycle].billedNote && (
-                  <p className="text-[11px] font-mono text-emerald-400 mt-1">{currData.growth[billingCycle].billedNote}</p>
+                {currData.growth[billingCycle]?.billedNote && (
+                  <p className="text-[11px] font-mono text-emerald-400 mt-1">{currData.growth[billingCycle]?.billedNote}</p>
                 )}
               </div>
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
@@ -221,12 +193,12 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-mono text-[#d2ff3a]">
-                    {currData.scale[billingCycle].amount}
+                    {currData.scale[billingCycle]?.amount}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.scale[billingCycle].period}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.scale[billingCycle]?.period}</span>
                 </div>
-                {currData.scale[billingCycle].billedNote && (
-                  <p className="text-[11px] font-mono text-[#d2ff3a] mt-1">{currData.scale[billingCycle].billedNote}</p>
+                {currData.scale[billingCycle]?.billedNote && (
+                  <p className="text-[11px] font-mono text-[#d2ff3a] mt-1">{currData.scale[billingCycle]?.billedNote}</p>
                 )}
               </div>
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
@@ -261,7 +233,9 @@ export function PricingComponent() {
               <h3 className="text-2xl font-serif dark:text-white light:text-[#090a0b] mb-4">Custom Architecture</h3>
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
-                  <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">Custom</span>
+                  <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
+                    {currData.enterprise[billingCycle]?.amount || 'Custom'}
+                  </span>
                 </div>
                 <p className="text-[11px] font-mono text-purple-400 mt-1">Tailored Billing & SLA Contracts</p>
               </div>
@@ -436,7 +410,7 @@ export function PricingComponent() {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 items-center">
             <div>
               <label className="text-xs font-mono text-[var(--text-muted)] uppercase tracking-wider block mb-3">
-                Current Annual Middleware & SaaS Spend ({currData.symbol.trim()})
+                Current Annual Middleware & SaaS Spend ({currData.symbol?.trim() || '$'})
               </label>
               <input
                 type="range"
@@ -476,32 +450,7 @@ export function PricingComponent() {
         </div>
 
         <div className="space-y-4">
-          {[
-            {
-              q: "How does the 14-day free trial work?",
-              a: "When you sign up for Growth or Scale tiers, you receive full platform access for 14 days without charge. You can upgrade, switch billing cycles, or cancel anytime before the trial period ends."
-            },
-            {
-              q: "What payment options do you support?",
-              a: "We support M-Pesa (STK push & direct paybill), all major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and bank wire transfers (ACH/SEPA/SWIFT) for annual commitments."
-            },
-            {
-              q: "Are there per-seat or per-user licensing fees?",
-              a: "No. Scryme believes charging per-seat penalizes business growth and discourages cross-department collaboration. All plans include unlimited user seats."
-            },
-            {
-              q: "Can I change my billing cycle or currency later?",
-              a: "Yes. You can switch between Monthly and Annual billing or adjust your default workspace currency at any time directly in Organization Settings."
-            },
-            {
-              q: "What happens if our order volume exceeds the plan threshold?",
-              a: "You are never cut off. Overages are billed transparently at fractional cents per transaction without service degradation."
-            },
-            {
-              q: "How long does migration from NetSuite or SAP take?",
-              a: "Our automated zero-loss ingestion connectors typically complete data migration and validation within 48 to 72 hours."
-            }
-          ].map((item, idx) => (
+          {faqsList.map((item: { q: string; a: string }, idx: number) => (
             <div key={idx} className="glass-panel rounded-2xl border-white/10 overflow-hidden">
               <button
                 onClick={() => toggleFaq(idx)}

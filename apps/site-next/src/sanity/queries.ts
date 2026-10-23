@@ -1,5 +1,122 @@
 import { sanityClient } from './client'
 
+export const PRICING_CONFIG_QUERY = `
+  *[_type == "pricingConfig"][0] {
+    _id,
+    _type,
+    title,
+    heroBadge,
+    heroTitle,
+    heroSubtitle,
+    currencies,
+    faqs
+  }
+`
+
+export const DEFAULT_PRICING_FALLBACK = {
+  title: 'Global Site Pricing Configuration',
+  heroBadge: '14-Day Free Trial • Instant Deployment • Zero Risk',
+  heroTitle: 'Predictable Pricing Engineered for Limitless Enterprise Scale',
+  heroSubtitle: 'No per-user penalties or hidden seat taxes. Unify your operational software stack under one transparent, telemetry-based billing model.',
+  currencies: [
+    {
+      code: 'USD',
+      symbol: '$',
+      name: 'USD ($)',
+      badge: 'Global USD',
+      growth: {
+        monthly: { amount: '$599', period: '/ month' },
+        annual: { amount: '$499', period: '/ month', billedNote: 'Billed annually ($5,988/yr)' },
+      },
+      scale: {
+        monthly: { amount: '$1,799', period: '/ month' },
+        annual: { amount: '$1,499', period: '/ month', billedNote: 'Billed annually ($17,988/yr)' },
+      },
+      enterprise: {
+        monthly: { amount: 'Custom', period: '' },
+        annual: { amount: 'Custom', period: '' },
+      },
+    },
+    {
+      code: 'KSH',
+      symbol: 'KSh ',
+      name: 'KSh (M-Pesa)',
+      badge: 'M-Pesa Direct',
+      growth: {
+        monthly: { amount: 'KSh 78,000', period: '/ month' },
+        annual: { amount: 'KSh 65,000', period: '/ month', billedNote: 'Billed annually (KSh 780,000/yr)' },
+      },
+      scale: {
+        monthly: { amount: 'KSh 234,000', period: '/ month' },
+        annual: { amount: 'KSh 195,000', period: '/ month', billedNote: 'Billed annually (KSh 2,340,000/yr)' },
+      },
+      enterprise: {
+        monthly: { amount: 'Custom', period: '' },
+        annual: { amount: 'Custom', period: '' },
+      },
+    },
+    {
+      code: 'EUR',
+      symbol: '€',
+      name: 'EUR (€)',
+      badge: 'Eurozone SEPA',
+      growth: {
+        monthly: { amount: '€550', period: '/ month' },
+        annual: { amount: '€460', period: '/ month', billedNote: 'Billed annually (€5,520/yr)' },
+      },
+      scale: {
+        monthly: { amount: '€1,650', period: '/ month' },
+        annual: { amount: '€1,380', period: '/ month', billedNote: 'Billed annually (€16,560/yr)' },
+      },
+      enterprise: {
+        monthly: { amount: 'Custom', period: '' },
+        annual: { amount: 'Custom', period: '' },
+      },
+    },
+  ],
+  faqs: [
+    {
+      q: 'How does the 14-day free trial work?',
+      a: 'When you sign up for Growth or Scale tiers, you receive full platform access for 14 days without charge. You can upgrade, switch billing cycles, or cancel anytime before the trial period ends.',
+    },
+    {
+      q: 'What payment options do you support?',
+      a: 'We support M-Pesa (STK push & direct paybill), all major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and bank wire transfers (ACH/SEPA/SWIFT) for annual commitments.',
+    },
+    {
+      q: 'Are there per-seat or per-user licensing fees?',
+      a: 'No. Scryme believes charging per-seat penalizes business growth and discourages cross-department collaboration. All plans include unlimited user seats.',
+    },
+    {
+      q: 'Can I change my billing cycle or currency later?',
+      a: 'Yes. You can switch between Monthly and Annual billing or adjust your default workspace currency at any time directly in Organization Settings.',
+    },
+    {
+      q: 'What happens if our order volume exceeds the plan threshold?',
+      a: 'You are never cut off. Overages are billed transparently at fractional cents per transaction without service degradation.',
+    },
+    {
+      q: 'How long does migration from NetSuite or SAP take?',
+      a: 'Our automated zero-loss ingestion connectors typically complete data migration and validation within 48 to 72 hours.',
+    },
+  ],
+}
+
+export async function fetchPricingConfig() {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const config = await sanityClient.fetch(PRICING_CONFIG_QUERY)
+      if (config && config.currencies && config.currencies.length > 0) {
+        return config
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching pricing config from API, falling back to default:', err)
+  }
+
+  return DEFAULT_PRICING_FALLBACK
+}
+
 export const COMPARISON_PAGE_QUERY = `
   *[_type == "comparisonPage" && slug.current == $slug][0] {
     _id,
