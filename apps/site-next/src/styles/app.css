@@ -83,3 +83,183 @@ html.light .glass-panel-elevated {
 .glow-lime {
   box-shadow: 0 0 20px rgba(210, 255, 58, 0.35);
 }
+
+
+/* Editorial Executive Theme & Design Tokens */
+.theme-editorial {
+  --ee-surface: #faf9f6;
+  --ee-surface-dim: #dbdad7;
+  --ee-surface-bright: #faf9f6;
+  --ee-surface-container-lowest: #ffffff;
+  --ee-surface-container-low: #f4f3f0;
+  --ee-surface-container: #efeeeb;
+  --ee-surface-container-high: #e9e8e5;
+  --ee-surface-container-highest: #e3e2e0;
+  --ee-on-surface: #1a1c1a;
+  --ee-on-surface-variant: #414844;
+  --ee-inverse-surface: #2f312f;
+  --ee-inverse-on-surface: #f2f1ee;
+  --ee-outline: #717974;
+  --ee-outline-variant: #c1c8c3;
+  --ee-surface-tint: #416656;
+  --ee-primary: #002116;
+  --ee-on-primary: #ffffff;
+  --ee-primary-container: #12372a;
+  --ee-on-primary-container: #7ba190;
+  --ee-inverse-primary: #a8cfbd;
+  --ee-secondary: #4d6700;
+  --ee-on-secondary: #ffffff;
+  --ee-secondary-container: #bef529;
+  --ee-on-secondary-container: #526d00;
+  --ee-tertiary: #002113;
+  --ee-on-tertiary: #ffffff;
+  --ee-tertiary-container: #003923;
+  --ee-on-tertiary-container: #70a487;
+  --ee-error: #ba1a1a;
+  --ee-background: #faf9f6;
+  --ee-on-background: #1a1c1a;
+  --ee-stroke: rgba(18, 55, 42, 0.08);
+
+  background-color: var(--ee-background);
+  color: var(--ee-on-background);
+  font-family: 'Inter', sans-serif;
+}
+
+/* Typography Scale */
+.text-display-xl {
+  font-family: 'Newsreader', serif;
+  font-size: 56px;
+  font-weight: 400;
+  line-height: 64px;
+  letter-spacing: -0.02em;
+}
+
+@media (max-width: 767px) {
+  .text-display-xl {
+    font-size: 38px;
+    line-height: 44px;
+    letter-spacing: -0.015em;
+  }
+}
+
+.text-headline-lg {
+  font-family: 'Newsreader', serif;
+  font-size: 40px;
+  font-weight: 400;
+  line-height: 48px;
+  letter-spacing: -0.015em;
+}
+
+@media (max-width: 767px) {
+  .text-headline-lg {
+    font-size: 30px;
+    line-height: 36px;
+    letter-spacing: -0.01em;
+  }
+}
+
+.text-headline-md {
+  font-family: 'Newsreader', serif;
+  font-size: 28px;
+  font-weight: 500;
+  line-height: 36px;
+  letter-spacing: -0.01em;
+}
+
+.text-headline-sm {
+  font-family: 'Newsreader', serif;
+  font-size: 22px;
+  font-weight: 500;
+  line-height: 28px;
+  letter-spacing: -0.005em;
+}
+
+.text-title-md {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 24px;
+  letter-spacing: -0.01em;
+}
+
+.text-title-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 20px;
+  letter-spacing: 0em;
+}
+
+.text-body-lg {
+  font-family: 'Inter', sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: 24px;
+  letter-spacing: 0em;
+}
+
+.text-body-md {
+  font-family: 'Inter', sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 20px;
+  letter-spacing: 0em;
+}
+
+.text-body-sm {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  letter-spacing: 0.01em;
+}
+
+.text-data-mono {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 13px;
+  font-weight: 500;
+  line-height: 18px;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-label-md {
+  font-family: 'Inter', sans-serif;
+  font-size: 12px;
+  font-weight: 600;
+  line-height: 16px;
+  letter-spacing: 0.02em;
+}
+
+.text-label-xs {
+  font-family: 'Inter', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 12px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+/* Editorial Elevation Cards */
+.ee-card-level1 {
+  background-color: #ffffff;
+  border: 1px solid rgba(18, 55, 42, 0.08);
+  border-radius: 0.5rem;
+  box-shadow: 0 1px 3px rgba(18, 55, 42, 0.03), 0 4px 16px rgba(18, 55, 42, 0.02);
+}
+
+.ee-card-level2 {
+  background-color: #ffffff;
+  border: 1px solid rgba(18, 55, 42, 0.12);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 6px rgba(18, 55, 42, 0.04), 0 12px 28px rgba(18, 55, 42, 0.05);
+}
+
+.ee-card-level3 {
+  background-color: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(18, 55, 42, 0.15);
+  border-radius: 0.5rem;
+  box-shadow: 0 20px 48px rgba(18, 55, 42, 0.12), 0 4px 12px rgba(18, 55, 42, 0.04);
+}

@@ -31,6 +31,8 @@ export function Header() {
           <Link to="/sales" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Sales & RevOps</Link>
           <Link to="/crm" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">CRM</Link>
           <Link to="/cms" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Catalog Cloud</Link>
+          <Link to="/features/mcp" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">MCP Server</Link>
+          <Link to="/features/mobile" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Mobile Field</Link>
           <Link to="/pricing" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Pricing</Link>
           <Link to="/developers/apps" className="hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold flex items-center gap-1.5">
             <Code2 className="w-3.5 h-3.5 text-[#d2ff3a]" />
@@ -85,6 +87,8 @@ export function Header() {
             <Link onClick={() => setMobileMenuOpen(false)} to="/sales" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Sales & RevOps</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/crm" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">CRM</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/cms" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Catalog Cloud</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/features/mcp" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">MCP Server</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/features/mobile" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Mobile Field</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/pricing" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Pricing</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/developers/apps" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold flex items-center gap-2">
               <Code2 className="w-4 h-4 text-[#d2ff3a]" />
