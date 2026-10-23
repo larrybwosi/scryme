@@ -177,12 +177,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
     }
 
     // Execute consolidated productVariantStock updates per unique variantId sequentially on the interactive transaction handle
-    const deductionsList: [string, number][] = [];
-    aggregateDeductionsByVariant.forEach((totalDeduct, variantId) => {
-      deductionsList.push([variantId, totalDeduct]);
-    });
-
-    for (const [variantId, totalDeduct] of deductionsList) {
+    for (const [variantId, totalDeduct] of aggregateDeductionsByVariant.entries()) {
       await tx.productVariantStock.updateMany({
         where: { variantId, locationId: transaction.locationId },
         data: {

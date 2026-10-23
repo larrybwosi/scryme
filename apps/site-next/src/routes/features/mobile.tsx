@@ -346,7 +346,7 @@ function MobileFeatureComponent() {
                 </div>
                 <div className="bg-[#002116] text-[#ffffff] p-5 rounded font-mono text-data-mono text-xs border border-[rgba(18,55,42,0.2)]">
                   <p className="text-[#bef529]">// Android Pairing Interceptor</p>
-                  <p className="text-[#a8cfbd]">val sessionId = "pos_pair_9921482"</p>
+                  <p className="text-[#a8cfbd]">val sessionId = "SESSION_ID_PLACEHOLDER"</p>
                   <p className="text-[#a8cfbd]">val response = posApiService.authorizeSession(</p>
                   <p className="pl-4 text-[#a8cfbd]">sessionId = sessionId,</p>
                   <p className="pl-4 text-[#a8cfbd]">deviceKey = sessionManager.getDeviceKey()</p>

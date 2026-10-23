@@ -2,9 +2,7 @@ import {
   Injectable,
   NotFoundException,
   BadRequestException,
-  Optional,
 } from "@nestjs/common";
-import { WhatsappService } from "../../../crm-integrations/application/use-cases/whatsapp.service";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreatePurchaseDto, ReceivePurchaseDto } from "../dto/purchase.dto";
 import {
@@ -26,7 +24,6 @@ export class PurchaseOrderUseCase {
     private readonly inventoryMovementService: InventoryMovementService,
     private readonly pricingManagementService: PricingManagementService,
     private readonly accountingService: AccountingService,
-    @Optional() private readonly whatsappService?: WhatsappService,
   ) {}
 
   async create(
@@ -99,20 +96,6 @@ export class PurchaseOrderUseCase {
     }).catch((err) =>
       console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
     );
-
-    if (this.whatsappService) {
-      this.whatsappService
-        .sendPurchaseOrderNotification(
-          organizationId,
-          purchase.purchaseNumber,
-          supplier.phone || undefined,
-          Number(purchase.totalAmount),
-          purchase.id,
-        )
-        .catch((err) =>
-          console.error("[v3 PurchaseOrder] WhatsApp notification failed on create:", err),
-        );
-    }
 
     return purchase;
   }
@@ -420,20 +403,6 @@ export class PurchaseOrderUseCase {
     await this.accountingService.postPurchaseToLedger(updatedPurchase.id, organizationId).catch((err) =>
       console.error("[PurchaseOrderUseCase] Failed to post purchase to ledger:", err),
     );
-
-    if (this.whatsappService) {
-      this.whatsappService
-        .sendPurchaseOrderNotification(
-          organizationId,
-          updatedPurchase.purchaseNumber,
-          undefined,
-          Number(updatedPurchase.totalAmount),
-          updatedPurchase.id,
-        )
-        .catch((err) =>
-          console.error("[PurchaseOrderUseCase] WhatsApp notification failed on approve:", err),
-        );
-    }
 
     return updatedPurchase;
   }

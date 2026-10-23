@@ -60,7 +60,7 @@ export function Header() {
             Sign In
           </a>
           <a
-            href="https://app.scryme.tech/signup?plan=free"
+            href="https://app.scryme.tech/signup"
             className="inline-flex items-center gap-1.5 px-5 py-2 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] hover:shadow-[0_0_20px_rgba(210,255,58,0.4)] transition-all transform active:scale-95"
           >
             <span>Get Started</span>

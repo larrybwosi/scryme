@@ -9,6 +9,16 @@ export default defineConfig({
     port: 3006,
   },
   ssr: {
+    external: [
+      'sanity',
+      'sanity/structure',
+      '@sanity/vision',
+      '@sanity/icons',
+      '@sanity/client',
+      '@sanity/image-url',
+      '@portabletext/react',
+      'styled-components',
+    ],
     noExternal: true,
   },
   build: {

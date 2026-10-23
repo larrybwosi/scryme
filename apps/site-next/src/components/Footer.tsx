@@ -1,5 +1,5 @@
 import { Link } from '@tanstack/react-router'
-import { Layers, Github, Twitter, Linkedin, ShieldCheck } from 'lucide-react'
+import { Layers, ArrowRight, Github, Twitter, Linkedin, ShieldCheck } from 'lucide-react'
 
 export function Footer() {
   return (
@@ -40,7 +40,6 @@ export function Footer() {
             <li><Link to="/inventory" className="hover:text-[#d2ff3a] transition-colors">Multi-Location Inventory</Link></li>
             <li><Link to="/crm" className="hover:text-[#d2ff3a] transition-colors">360° Relationship CRM</Link></li>
             <li><Link to="/cms" className="hover:text-[#d2ff3a] transition-colors">Catalog Cloud & CMS</Link></li>
-            <li><Link to="/payments" className="hover:text-[#d2ff3a] transition-colors">Payments & Settlement</Link></li>
             <li><Link to="/pricing" className="hover:text-[#d2ff3a] transition-colors">Enterprise Pricing</Link></li>
           </ul>
         </div>
