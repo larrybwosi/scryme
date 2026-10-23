@@ -12,15 +12,15 @@ import { Button } from "@repo/ui/components/ui/button";
 import {
   Plus,
   MapPin,
-  ArrowLeft,
   Settings,
   Layers,
   Box,
   ChevronRight,
   Database,
-  Copy,
   Building2,
   UserCircle2,
+  Grid3x3,
+  Package,
 } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@repo/ui/components/ui/badge";
@@ -30,12 +30,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@repo/ui/components/ui/tabs";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { LocationSheet } from "../../../components/locations/location-sheet";
 import { ZoneList } from "../../../components/locations/zone-list";
 import { UnitList } from "../../../components/locations/unit-list";
 import { LocationManagementTab } from "../../../components/locations/location-management-tab";
 import { LocationStockTable } from "../../../components/locations/location-stock-table";
+import { CopyCodeButton } from "../../../components/locations/copy-code-button";
 import Image from "next/image";
 import { LocationMap } from "../../../components/locations/location-map";
 import {
@@ -44,23 +44,19 @@ import {
   createSerializer,
 } from "nuqs/server";
 
-// Create search params cache for server component
-const searchParamsCache = createSearchParamsCache({
+const searchParsers = {
   tab: parseAsString.withDefault("hierarchy"),
   search: parseAsString.withDefault(""),
   page: parseAsString.withDefault("1"),
   sortBy: parseAsString.withDefault(""),
   sortOrder: parseAsString.withDefault("asc"),
-});
+};
 
-// Create serializer for generating URLs with search params
-const serialize = createSerializer({
-  tab: parseAsString.withDefault("hierarchy"),
-  search: parseAsString.withDefault(""),
-  page: parseAsString.withDefault("1"),
-  sortBy: parseAsString.withDefault(""),
-  sortOrder: parseAsString.withDefault("asc"),
-});
+const searchParamsCache = createSearchParamsCache(searchParsers);
+const serialize = createSerializer(searchParsers);
+
+const VALID_TABS = ["hierarchy", "stock", "storage", "management"] as const;
+type TabValue = (typeof VALID_TABS)[number];
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -73,6 +69,9 @@ interface PageProps {
   }>;
 }
 
+const formatType = (type?: string | null) =>
+  (type ?? "").toLowerCase().replace(/_/g, " ");
+
 export default async function LocationDetailPage({
   params,
   searchParams,
@@ -80,13 +79,16 @@ export default async function LocationDetailPage({
   const { id } = await params;
   const rawSearchParams = await searchParams;
 
-  // Parse search params using nuqs
   const parsedParams = searchParamsCache.parse(rawSearchParams);
   const { search, page, sortBy, sortOrder, tab } = parsedParams;
 
-  // ⚡ Bolt Optimization: Parallelize independent location detail and stock queries using Promise.all
-  // Collapses 4 sequential database queries into 1 concurrent roundtrip (~75% latency reduction)
-  const [location, allLocations, members, { data: formattedStock, total: stockTotal }] = await Promise.all([
+  // Run independent queries concurrently in a single round trip
+  const [
+    location,
+    allLocations,
+    members,
+    { data: formattedStock, total: stockTotal },
+  ] = await Promise.all([
     getLocation(id),
     getLocations(),
     getMembersForSelect(),
@@ -105,105 +107,137 @@ export default async function LocationDetailPage({
   }
 
   const settings = (location.settings as LocationSettings) || {};
-  const activeTab = tab || "hierarchy";
+  const activeTab: TabValue = (VALID_TABS as readonly string[]).includes(tab)
+    ? (tab as TabValue)
+    : "hierarchy";
   const zoneCount = location.zones.length;
   const unitCount = location.storageUnits?.length ?? 0;
   const childCount = location.childLocations.length;
 
-  const stats: { label: string; value: number }[] = [
-    { label: "Sub-locations", value: childCount },
-    { label: "Zones", value: zoneCount },
-    { label: "Storage units", value: unitCount },
-    { label: "SKUs tracked", value: stockTotal },
-  ];
+  const address = location.address as
+    | {
+        street?: string;
+        city?: string;
+        state?: string;
+        zipCode?: string;
+        country?: string;
+      }
+    | null
+    | undefined;
+  const cityLine = [address?.city, [address?.state, address?.zipCode].filter(Boolean).join(" ")]
+    .filter(Boolean)
+    .join(", ");
+  const hasAddress = !!(address?.street || cityLine || address?.country);
 
-  // Helper function to generate tab URLs with current search params
-  const getTabUrl = (tabValue: string) => {
-    const params = { ...parsedParams, tab: tabValue };
-    return `/locations/${id}?${serialize(params)}`;
+  // Stock tab keeps search/sort/page; other tabs start clean
+  const getTabUrl = (tabValue: TabValue) => {
+    const next =
+      tabValue === "stock"
+        ? { ...parsedParams, tab: tabValue }
+        : { tab: tabValue };
+    return `/locations/${id}${serialize(next)}`;
   };
 
+  const stats: {
+    label: string;
+    value: number;
+    icon: React.ReactNode;
+    tab: TabValue;
+  }[] = [
+    { label: "Sub-locations", value: childCount, icon: <Layers size={15} />, tab: "hierarchy" },
+    { label: "Zones", value: zoneCount, icon: <Grid3x3 size={15} />, tab: "hierarchy" },
+    { label: "Storage units", value: unitCount, icon: <Box size={15} />, tab: "storage" },
+    { label: "SKUs tracked", value: stockTotal, icon: <Package size={15} />, tab: "stock" },
+  ];
+
+  const tabs: {
+    value: TabValue;
+    label: string;
+    icon: React.ReactNode;
+    count?: number;
+  }[] = [
+    { value: "hierarchy", label: "Hierarchy", icon: <Layers size={14} />, count: childCount + zoneCount },
+    { value: "stock", label: "Stock", icon: <Database size={14} />, count: stockTotal },
+    { value: "storage", label: "Storage", icon: <Box size={14} />, count: unitCount },
+    { value: "management", label: "Enterprise", icon: <Settings size={14} /> },
+  ];
+
+  const managerName = location.manager?.user?.name;
+
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-muted/30">
       {/* Header */}
-      <div className="border-b border-border bg-card">
-        <div className="px-8 pt-4">
+      <header className="border-b border-border bg-card">
+        <div className="mx-auto max-w-[1440px] px-4 pt-5 sm:px-8">
           <nav
             aria-label="Breadcrumb"
-            className="flex items-center gap-1.5 text-[12px] font-medium text-muted-foreground mb-4">
+            className="mb-5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
             <Link
               href="/locations"
-              className="flex items-center gap-1 hover:text-foreground transition-colors">
-              <ArrowLeft size={12} strokeWidth={2.25} />
-              <span className="uppercase tracking-wide">Locations</span>
+              className="rounded-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              Locations
             </Link>
             {location.parentLocation && (
               <>
-                <ChevronRight size={12} className="text-muted-foreground/50" />
+                <ChevronRight size={12} className="text-muted-foreground/50" aria-hidden />
                 <Link
                   href={`/locations/${location.parentLocation.id}`}
-                  className="uppercase tracking-wide hover:text-foreground transition-colors">
+                  className="rounded-sm font-medium transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
                   {location.parentLocation.name}
                 </Link>
               </>
             )}
-            <ChevronRight size={12} className="text-muted-foreground/50" />
-            <span className="uppercase tracking-wide text-foreground">
+            <ChevronRight size={12} className="text-muted-foreground/50" aria-hidden />
+            <span aria-current="page" className="font-semibold text-foreground">
               {location.name}
             </span>
           </nav>
 
-          <div className="flex items-start justify-between pb-5 border-b border-border/50">
-            <div className="flex items-start gap-3.5">
-              <div className="w-10 h-10 rounded-sm bg-primary flex items-center justify-center text-white shrink-0 mt-0.5">
-                <MapPin size={17} strokeWidth={2} />
+          <div className="flex flex-col gap-4 pb-6 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 items-start gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground shadow-sm">
+                <MapPin size={20} strokeWidth={2} />
               </div>
-              <div>
-                <div className="flex items-center gap-2 flex-wrap">
-                  <h1 className="text-[19px] font-semibold text-foreground tracking-tight leading-none">
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <h1 className="truncate text-2xl font-semibold leading-tight tracking-tight text-foreground">
                     {location.name}
                   </h1>
                   <Badge
                     variant="outline"
-                    className="rounded-sm capitalize font-semibold text-[10px] tracking-wide px-1.5 py-0 border-border text-muted-foreground">
-                    {location.locationType.toLowerCase().replace("_", " ")}
+                    className="rounded-full border-border px-2.5 py-0.5 text-[11px] font-medium capitalize text-muted-foreground">
+                    {formatType(location.locationType)}
                   </Badge>
                   {location.isDefault && (
-                    <Badge className="rounded-sm bg-primary text-white border-0 text-[10px] font-semibold tracking-wide px-1.5 py-0 hover:bg-primary">
+                    <Badge className="rounded-full border-0 bg-emerald-50 px-2.5 py-0.5 text-[11px] font-medium text-emerald-700 hover:bg-emerald-50 dark:bg-emerald-950 dark:text-emerald-300">
                       Default
                     </Badge>
                   )}
                 </div>
-                <div className="flex items-center gap-1.5 mt-2 text-[12px] text-muted-foreground">
+                <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-muted-foreground">
                   {location.code ? (
-                    <button className="flex items-center gap-1.5 hover:text-foreground transition-colors group">
-                      <span className="font-mono bg-muted border border-slate-200 rounded-sm px-1.5 py-0.5 text-[11px] text-foreground/90">
-                        {location.code}
-                      </span>
-                      <Copy
-                        size={11}
-                        className="opacity-0 group-hover:opacity-60 transition-opacity"
-                      />
-                    </button>
+                    <CopyCodeButton code={location.code} />
                   ) : (
                     <span className="italic text-muted-foreground/70">
-                      No location code assigned
+                      No location code
+                    </span>
+                  )}
+                  {location.description && (
+                    <span className="line-clamp-1 max-w-xl">
+                      {location.description}
                     </span>
                   )}
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
+            <div className="flex shrink-0 items-center gap-2">
               <LocationSheet
                 locations={allLocations}
                 members={members}
                 location={{ parentLocationId: location.id }}>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="rounded-sm gap-1.5 border-border text-foreground/90">
-                  <Plus size={13} />
+                <Button variant="outline" size="sm" className="gap-1.5 shadow-sm">
+                  <Plus size={14} />
                   Sub-location
                 </Button>
               </LocationSheet>
@@ -212,258 +246,239 @@ export default async function LocationDetailPage({
                 locations={allLocations}
                 members={members}
                 isEdit>
-                <Button
-                  size="sm"
-                  className="rounded-sm gap-1.5 bg-primary hover:bg-primary/90">
-                  <Settings size={13} />
+                <Button size="sm" className="gap-1.5 shadow-sm">
+                  <Settings size={14} />
                   Configure
                 </Button>
               </LocationSheet>
             </div>
           </div>
-
-          {/* Stat strip */}
-          <div className="grid grid-cols-4">
-            {stats.map((s, i) => (
-              <div
-                key={s.label}
-                className={`py-3 px-0.5 ${
-                  i !== 0 ? "border-l border-border/50 pl-4" : ""
-                }`}>
-                <div className="text-[20px] font-semibold text-foreground leading-none tabular-nums">
-                  {s.value}
-                </div>
-                <div className="text-[10px] uppercase font-semibold tracking-wide text-muted-foreground/70 mt-1.5">
-                  {s.label}
-                </div>
-              </div>
-            ))}
-          </div>
         </div>
-      </div>
+      </header>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] gap-5 p-8">
-        {/* Left rail */}
-        <div className="space-y-5">
-          <Panel title="Overview">
-            {settings.imageUrl ? (
-              <div className="relative h-35 w-full border-b border-slate-200">
-                <Image
-                  src={settings.imageUrl}
-                  alt={`${location.name} branch custom image`}
-                  fill
-                  className="object-cover"
-                  priority
-                />
-                <span className="absolute bottom-2 left-2 text-white text-[9px] font-semibold uppercase tracking-wider bg-black/50 px-1.5 py-0.5 rounded-sm">
-                  Branch showcase image
+      <main className="mx-auto max-w-[1440px] space-y-6 p-4 sm:p-8">
+        {/* Stat cards */}
+        <section aria-label="Location summary" className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          {stats.map((s) => (
+            <Link
+              key={s.label}
+              href={getTabUrl(s.tab)}
+              className="group rounded-lg border border-border bg-card p-4 shadow-sm transition-all hover:border-primary/30 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="text-xs font-medium">{s.label}</span>
+                <span className="text-muted-foreground/60 transition-colors group-hover:text-primary">
+                  {s.icon}
                 </span>
               </div>
-            ) : (
-              <div className="px-4 py-5 bg-muted/50 border-b border-slate-200 flex flex-col items-center text-center gap-1.5">
-                <Building2 size={16} className="text-muted-foreground/70" />
-                <p className="text-[11px] font-semibold text-foreground/90">
-                  No showcase image
-                </p>
-                <p className="text-[11px] text-muted-foreground leading-normal max-w-52.5">
-                  Add an image to represent this branch on the public homepage.
-                </p>
+              <div className="mt-2 text-2xl font-semibold tabular-nums leading-none text-foreground">
+                {s.value.toLocaleString()}
               </div>
-            )}
+            </Link>
+          ))}
+        </section>
 
-            <div className="divide-y divide-slate-100">
-              <DetailRow
-                icon={<UserCircle2 size={13} />}
-                label="Manager"
-                value={location.manager?.user?.name || "Unassigned"}
-                muted={!location.manager?.user?.name}
-              />
-              <DetailRow
-                icon={<Building2 size={13} />}
-                label="Parent"
-                value={location.parentLocation?.name || "Root location"}
-                muted={!location.parentLocation?.name}
-              />
-            </div>
-
-            <div className="px-4 py-3 border-t border-border/50 space-y-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70 font-semibold">
-                Description
-              </span>
-              <p className="text-[13px] text-foreground/90 leading-relaxed">
-                {location.description || (
-                  <span className="italic text-muted-foreground/70">
-                    No description provided.
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-[320px_1fr]">
+          {/* Left rail */}
+          <aside className="space-y-6">
+            <Panel title="Overview">
+              {settings.imageUrl ? (
+                <div className="relative h-40 w-full border-b border-border">
+                  <Image
+                    src={settings.imageUrl}
+                    alt={`${location.name} branch image`}
+                    fill
+                    sizes="320px"
+                    className="object-cover"
+                    priority
+                  />
+                  <span className="absolute bottom-2 left-2 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+                    Branch showcase image
                   </span>
-                )}
-              </p>
-            </div>
-
-            <div className="px-4 py-3 border-t border-border/50 space-y-1.5">
-              <span className="text-[10px] uppercase tracking-wide text-muted-foreground/70 font-semibold">
-                Address
-              </span>
-              {location.address ? (
-                <div className="text-[13px] text-foreground/90 leading-relaxed">
-                  <p>{(location.address as any).street}</p>
-                  <p>
-                    {(location.address as any).city},{" "}
-                    {(location.address as any).state}{" "}
-                    {(location.address as any).zipCode}
-                  </p>
-                  <p className="text-muted-foreground">
-                    {(location.address as any).country}
-                  </p>
                 </div>
               ) : (
-                <p className="text-[13px] italic text-muted-foreground/70">
-                  No address added
-                </p>
-              )}
-            </div>
-          </Panel>
-
-          <Panel title="Physical location">
-            <div className="p-3">
-              <LocationMap
-                latitude={location.latitude ?? settings.latitude}
-                longitude={location.longitude ?? settings.longitude}
-              />
-            </div>
-          </Panel>
-        </div>
-
-        {/* Right: tabbed workspace */}
-        <div className="min-w-0">
-          <Tabs defaultValue={activeTab} className="w-full">
-            <TabsList className="h-10 w-full justify-start gap-6 rounded-none bg-transparent border-b border-slate-200 p-0">
-              <Link href={getTabUrl("hierarchy")} className="shrink-0">
-                <TabsTrigger
-                  value="hierarchy"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
-                  <Layers size={14} />
-                  Hierarchy
-                  <CountBadge n={childCount + zoneCount} />
-                </TabsTrigger>
-              </Link>
-              <Link href={getTabUrl("stock")} className="shrink-0">
-                <TabsTrigger
-                  value="stock"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
-                  <Database size={14} />
-                  Stock
-                  <CountBadge n={stockTotal} />
-                </TabsTrigger>
-              </Link>
-              <Link href={getTabUrl("storage")} className="shrink-0">
-                <TabsTrigger
-                  value="storage"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
-                  <Box size={14} />
-                  Storage
-                  <CountBadge n={unitCount} />
-                </TabsTrigger>
-              </Link>
-              <Link href={getTabUrl("management")} className="shrink-0">
-                <TabsTrigger
-                  value="management"
-                  className="gap-1.5 rounded-none border-b-2 border-transparent px-0.5 pb-3 text-[13px] font-medium text-muted-foreground data-[state=active]:border-b-emerald-600 data-[state=active]:text-emerald-700 data-[state=active]:shadow-none data-[state=active]:bg-transparent hover:text-foreground/90 transition-colors">
-                  <Settings size={14} />
-                  Enterprise
-                </TabsTrigger>
-              </Link>
-            </TabsList>
-
-            <TabsContent value="hierarchy" className="space-y-6 mt-6">
-              <div className="space-y-3">
-                <div className="flex items-center justify-between">
-                  <SectionLabel>Sub-locations</SectionLabel>
-                  <LocationSheet
-                    locations={allLocations}
-                    members={members}
-                    location={{ parentLocationId: location.id }}>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      className="rounded-sm gap-1.5 h-7 text-[12px] font-semibold text-muted-foreground hover:text-foreground hover:bg-muted">
-                      <Plus size={13} />
-                      Add
-                    </Button>
-                  </LocationSheet>
+                <div className="flex flex-col items-center gap-1.5 border-b border-border bg-muted/40 px-4 py-6 text-center">
+                  <Building2 size={20} className="text-muted-foreground/60" />
+                  <p className="text-xs font-semibold text-foreground">
+                    No showcase image
+                  </p>
+                  <p className="max-w-56 text-xs leading-normal text-muted-foreground">
+                    Add an image to represent this branch on the public homepage.
+                  </p>
                 </div>
+              )}
 
-                {location.childLocations.length === 0 ? (
-                  <EmptyState
-                    icon={<Layers size={18} />}
-                    title="No sub-locations yet"
-                    description="Add a sub-location to break this site down into floors, rooms, or storage areas."
-                  />
+              <dl className="divide-y divide-border">
+                <DetailRow
+                  icon={<UserCircle2 size={14} />}
+                  label="Manager"
+                  value={managerName || "Unassigned"}
+                  muted={!managerName}
+                />
+                <DetailRow
+                  icon={<Building2 size={14} />}
+                  label="Parent"
+                  value={location.parentLocation?.name || "Root location"}
+                  muted={!location.parentLocation?.name}
+                />
+              </dl>
+
+              <div className="space-y-1.5 border-t border-border px-4 py-3">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Description
+                </h4>
+                <p className="text-sm leading-relaxed text-foreground/90">
+                  {location.description || (
+                    <span className="italic text-muted-foreground/70">
+                      No description provided.
+                    </span>
+                  )}
+                </p>
+              </div>
+
+              <div className="space-y-1.5 border-t border-border px-4 py-3">
+                <h4 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  Address
+                </h4>
+                {hasAddress ? (
+                  <address className="text-sm not-italic leading-relaxed text-foreground/90">
+                    {address?.street && <p>{address.street}</p>}
+                    {cityLine && <p>{cityLine}</p>}
+                    {address?.country && (
+                      <p className="text-muted-foreground">{address.country}</p>
+                    )}
+                  </address>
                 ) : (
-                  <div className="border border-slate-200 divide-y divide-slate-200 bg-card">
-                    {location.childLocations.map((child: any) => (
-                      <Link key={child.id} href={`/locations/${child.id}`}>
-                        <div className="px-4 py-3 hover:bg-muted/50 transition-colors flex items-center justify-between group">
-                          <div className="flex items-center gap-3 min-w-0">
-                            <div className="w-7 h-7 rounded-sm bg-muted border border-slate-200 flex items-center justify-center text-muted-foreground/70 group-hover:text-foreground group-hover:border-border transition-colors shrink-0">
-                              <MapPin size={13} />
-                            </div>
-                            <div className="min-w-0">
-                              <div className="font-medium text-[13px] text-foreground truncate">
-                                {child.name}
-                              </div>
-                              <div className="text-[10px] uppercase font-semibold text-muted-foreground/70 tracking-wide">
-                                {child.locationType}
-                              </div>
-                            </div>
-                          </div>
-                          <ChevronRight
-                            size={14}
-                            className="text-muted-foreground/50 group-hover:text-muted-foreground shrink-0"
-                          />
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
+                  <p className="text-sm italic text-muted-foreground/70">
+                    No address added
+                  </p>
                 )}
               </div>
+            </Panel>
 
-              <ZoneList locationId={location.id} zones={location.zones} />
-            </TabsContent>
-
-            <TabsContent value="stock" className="mt-6">
-              <div className="border border-border bg-card">
-                <div className="px-4 py-3 border-b border-slate-200 flex items-center justify-between">
-                  <span className="text-[13px] font-semibold text-foreground flex items-center gap-2">
-                    <Database size={14} className="text-muted-foreground" />
-                    Inventory
-                  </span>
-                  <span className="text-[11px] text-muted-foreground/70 font-medium tabular-nums">
-                    {stockTotal} SKU{stockTotal === 1 ? "" : "s"}
-                  </span>
-                </div>
-                <LocationStockTable
-                  locationId={location.id}
-                  locationName={location.name}
-                  initialData={formattedStock}
-                  totalCount={stockTotal}
+            <Panel title="Map">
+              <div className="p-3">
+                <LocationMap
+                  latitude={location.latitude ?? settings.latitude}
+                  longitude={location.longitude ?? settings.longitude}
                 />
               </div>
-            </TabsContent>
+            </Panel>
+          </aside>
 
-            <TabsContent value="storage" className="mt-6">
-              <UnitList
-                locationId={location.id}
-                zones={location.zones}
-                units={location.storageUnits}
-              />
-            </TabsContent>
+          {/* Right: tabbed workspace */}
+          <section className="min-w-0">
+            <Tabs value={activeTab} className="w-full">
+              <div className="overflow-x-auto">
+                <TabsList className="h-11 w-full min-w-max justify-start gap-6 rounded-none border-b border-border bg-transparent p-0">
+                  {tabs.map((t) => (
+                    <TabsTrigger
+                      key={t.value}
+                      value={t.value}
+                      asChild
+                      className="h-11 shrink-0 gap-1.5 rounded-none border-b-2 border-transparent px-0.5 text-sm font-medium text-muted-foreground shadow-none transition-colors hover:text-foreground data-[state=active]:border-b-primary data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none">
+                      <Link href={getTabUrl(t.value)} scroll={false}>
+                        {t.icon}
+                        {t.label}
+                        {t.count ? <CountBadge n={t.count} /> : null}
+                      </Link>
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </div>
 
-            <TabsContent value="management" className="mt-6">
-              <LocationManagementTab location={location} />
-            </TabsContent>
-          </Tabs>
+              <TabsContent value="hierarchy" className="mt-6 space-y-8">
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <SectionLabel>Sub-locations</SectionLabel>
+                    <LocationSheet
+                      locations={allLocations}
+                      members={members}
+                      location={{ parentLocationId: location.id }}>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        className="h-8 gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground">
+                        <Plus size={14} />
+                        Add
+                      </Button>
+                    </LocationSheet>
+                  </div>
+
+                  {childCount === 0 ? (
+                    <EmptyState
+                      icon={<Layers size={20} />}
+                      title="No sub-locations yet"
+                      description="Add a sub-location to break this site down into floors, rooms, or storage areas."
+                    />
+                  ) : (
+                    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+                      {location.childLocations.map((child: any) => (
+                        <li key={child.id}>
+                          <Link
+                            href={`/locations/${child.id}`}
+                            className="group flex items-center justify-between gap-3 px-4 py-3 transition-colors hover:bg-muted/50 focus-visible:bg-muted/50 focus-visible:outline-none">
+                            <div className="flex min-w-0 items-center gap-3">
+                              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md border border-border bg-muted text-muted-foreground transition-colors group-hover:border-primary/30 group-hover:text-primary">
+                                <MapPin size={15} />
+                              </div>
+                              <div className="min-w-0">
+                                <div className="truncate text-sm font-medium text-foreground">
+                                  {child.name}
+                                </div>
+                                <div className="text-xs capitalize text-muted-foreground">
+                                  {formatType(child.locationType)}
+                                </div>
+                              </div>
+                            </div>
+                            <ChevronRight
+                              size={16}
+                              className="shrink-0 text-muted-foreground/50 transition-transform group-hover:translate-x-0.5 group-hover:text-muted-foreground"
+                            />
+                          </Link>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+
+                <ZoneList locationId={location.id} zones={location.zones} />
+              </TabsContent>
+
+              <TabsContent value="stock" className="mt-6">
+                <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+                  <div className="flex items-center justify-between border-b border-border px-4 py-3">
+                    <span className="flex items-center gap-2 text-sm font-semibold text-foreground">
+                      <Database size={15} className="text-muted-foreground" />
+                      Inventory
+                    </span>
+                    <span className="text-xs font-medium tabular-nums text-muted-foreground">
+                      {stockTotal.toLocaleString()} SKU{stockTotal === 1 ? "" : "s"}
+                    </span>
+                  </div>
+                  <LocationStockTable
+                    locationId={location.id}
+                    locationName={location.name}
+                    initialData={formattedStock}
+                    totalCount={stockTotal}
+                  />
+                </div>
+              </TabsContent>
+
+              <TabsContent value="storage" className="mt-6">
+                <UnitList
+                  locationId={location.id}
+                  zones={location.zones}
+                  units={location.storageUnits}
+                />
+              </TabsContent>
+
+              <TabsContent value="management" className="mt-6">
+                <LocationManagementTab location={location} />
+              </TabsContent>
+            </Tabs>
+          </section>
         </div>
-      </div>
+      </main>
     </div>
   );
 }
@@ -476,11 +491,11 @@ function Panel({
   children: React.ReactNode;
 }) {
   return (
-    <div className="border border-border bg-card">
-      <div className="px-4 py-2.5 border-b border-slate-200 bg-muted/50/60">
-        <span className="text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <div className="overflow-hidden rounded-lg border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-muted/40 px-4 py-2.5">
+        <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
           {title}
-        </span>
+        </h3>
       </div>
       {children}
     </div>
@@ -489,7 +504,7 @@ function Panel({
 
 function SectionLabel({ children }: { children: React.ReactNode }) {
   return (
-    <h3 className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
       {children}
     </h3>
   );
@@ -507,26 +522,27 @@ function DetailRow({
   muted?: boolean;
 }) {
   return (
-    <div className="flex items-center justify-between px-4 py-2.5">
-      <span className="flex items-center gap-2 text-[12px] text-muted-foreground">
+    <div className="flex items-center justify-between gap-3 px-4 py-2.5">
+      <dt className="flex items-center gap-2 text-xs text-muted-foreground">
         {icon}
         {label}
-      </span>
-      <span
-        className={`text-[13px] font-medium text-right ${
-          muted ? "text-muted-foreground/70 italic font-normal" : "text-foreground"
+      </dt>
+      <dd
+        className={`truncate text-right text-sm ${
+          muted
+            ? "font-normal italic text-muted-foreground/70"
+            : "font-medium text-foreground"
         }`}>
         {value}
-      </span>
+      </dd>
     </div>
   );
 }
 
 function CountBadge({ n }: { n: number }) {
-  if (!n) return null;
   return (
-    <span className="ml-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-sm bg-muted text-muted-foreground leading-none tabular-nums">
-      {n}
+    <span className="ml-0.5 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-semibold leading-none tabular-nums text-muted-foreground">
+      {n.toLocaleString()}
     </span>
   );
 }
@@ -541,15 +557,18 @@ function EmptyState({
   description: string;
 }) {
   return (
-    <div className="p-8 border border-dashed border-border bg-card text-center flex flex-col items-center gap-2">
-      <div className="text-muted-foreground/50">{icon}</div>
-      <p className="text-[13px] font-semibold text-foreground">{title}</p>
-      <p className="text-[13px] text-muted-foreground max-w-sm">{description}</p>
+    <div className="flex flex-col items-center gap-2 rounded-lg border border-dashed border-border bg-card p-10 text-center">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground/70">
+        {icon}
+      </div>
+      <p className="text-sm font-semibold text-foreground">{title}</p>
+      <p className="max-w-sm text-sm text-muted-foreground">{description}</p>
     </div>
   );
 }
 
 export const metadata: Metadata = {
   title: "Location Details",
-  description: "Manage branch settings, terminal devices, and localized stock inventories.",
+  description:
+    "Manage branch settings, terminal devices, and localized stock inventories.",
 };
