@@ -10,6 +10,7 @@ import { portableTextBlock } from './objects/portableTextBlock'
 
 import { comparisonPage } from './documents/comparisonPage'
 import { pageDocument } from './documents/page'
+import { pricingConfig } from './documents/pricingConfig'
 
 export const schemaTypes = [
   // Objects
@@ -26,4 +27,5 @@ export const schemaTypes = [
   // Documents
   comparisonPage,
   pageDocument,
+  pricingConfig,
 ]
