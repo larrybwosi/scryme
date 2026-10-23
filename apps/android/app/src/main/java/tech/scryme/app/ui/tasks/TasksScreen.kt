@@ -1,13 +1,19 @@
 package tech.scryme.app.ui.tasks
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
 import androidx.compose.material3.*
@@ -15,6 +21,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
@@ -30,6 +37,74 @@ import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+
+// ---------------------------------------------------------------------------
+// Shared design tokens
+// ---------------------------------------------------------------------------
+
+private val CardShape = RoundedCornerShape(8.dp)
+private val ControlShape = RoundedCornerShape(6.dp)
+private val ChipShape = RoundedCornerShape(4.dp)
+private val CompactButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+)
+
+/** Flat, bordered container used across the screen for a consistent enterprise look. */
+@Composable
+private fun OutlinedSurface(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = modifier.fillMaxWidth(),
+        content = content
+    )
+}
+
+@Composable
+private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.8.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun StatusChip(text: String, color: Color) {
+    Surface(
+        shape = ChipShape,
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = color,
+            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+        )
+    }
+}
+
+private fun prettyLabel(value: String): String =
+    value.replace("_", " ").lowercase().split(" ")
+        .joinToString(" ") { word -> word.replaceFirstChar { it.uppercase() } }
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
 @Composable
 fun TasksScreen(
@@ -48,7 +123,7 @@ fun TasksScreen(
         modifier = Modifier
             .fillMaxSize()
             .background(MaterialTheme.colorScheme.background)
-            .padding(16.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         Row(
             modifier = Modifier.fillMaxWidth(),
@@ -57,17 +132,28 @@ fun TasksScreen(
         ) {
             Text(
                 text = "Operational Tasks",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
+                style = MaterialTheme.typography.titleLarge.copy(
+                    fontWeight = FontWeight.SemiBold,
                     color = MaterialTheme.colorScheme.onBackground
                 )
             )
 
             Button(
                 onClick = { showCreateTaskDialog = true },
-                shape = RoundedCornerShape(8.dp)
+                shape = ControlShape,
+                contentPadding = PaddingValues(start = 10.dp, end = 14.dp, top = 6.dp, bottom = 6.dp)
             ) {
-                Text("+ Add Task", fontSize = 12.sp)
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp)
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = "Add Task",
+                    style = MaterialTheme.typography.labelLarge,
+                    fontWeight = FontWeight.SemiBold
+                )
             }
         }
 
@@ -80,7 +166,7 @@ fun TasksScreen(
             }
         )
 
-        Spacer(modifier = Modifier.height(16.dp))
+        Spacer(modifier = Modifier.height(12.dp))
 
         when (val state = uiState) {
             is TasksUiState.Loading -> {
@@ -103,7 +189,8 @@ fun TasksScreen(
                     )
                 } else {
                     LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                        verticalArrangement = Arrangement.spacedBy(10.dp),
+                        contentPadding = PaddingValues(bottom = 16.dp)
                     ) {
                         items(state.tasks, key = { it.id }) { task ->
                             TaskItemCard(
@@ -163,6 +250,10 @@ fun TasksScreen(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
+
 @Composable
 fun TaskItemCard(
     task: StaffTask,
@@ -175,142 +266,173 @@ fun TaskItemCard(
         "MEDIUM" -> Amber500
         else -> Emerald500
     }
+    val statusColor = when (task.status) {
+        "IN_PROGRESS" -> MaterialTheme.colorScheme.primary
+        "COMPLETED" -> Emerald500
+        else -> MaterialTheme.colorScheme.onSurfaceVariant
+    }
+    val nextStatus = when (task.status) {
+        "TODO" -> "IN_PROGRESS"
+        "IN_PROGRESS" -> "COMPLETED"
+        else -> "TODO"
+    }
 
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clip(RoundedCornerShape(12.dp)),
-        colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
-        ),
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
-    ) {
-        Column(
+    OutlinedSurface {
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(16.dp)
+                .height(IntrinsicSize.Min)
         ) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically
+            // Priority accent bar
+            Box(
+                modifier = Modifier
+                    .width(4.dp)
+                    .fillMaxHeight()
+                    .background(priorityColor)
+            )
+
+            Column(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(14.dp)
             ) {
-                Box(
-                    modifier = Modifier
-                        .size(12.dp)
-                        .clip(CircleShape)
-                        .background(priorityColor)
-                )
-
-                Spacer(modifier = Modifier.width(12.dp))
-
-                Column(
-                    modifier = Modifier.weight(1f)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.Top
                 ) {
-                    Text(
-                        text = task.title,
-                        style = MaterialTheme.typography.titleMedium.copy(
-                            fontWeight = FontWeight.SemiBold,
-                            textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
-                        ),
-                        color = MaterialTheme.colorScheme.onSurface
-                    )
-
-                    if (!task.description.isNullOrEmpty()) {
+                    Column(modifier = Modifier.weight(1f)) {
                         Text(
-                            text = task.description,
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            text = task.title,
+                            style = MaterialTheme.typography.titleSmall.copy(
+                                fontWeight = FontWeight.SemiBold,
+                                textDecoration = if (isCompleted) TextDecoration.LineThrough else TextDecoration.None
+                            ),
+                            color = if (isCompleted) MaterialTheme.colorScheme.onSurfaceVariant
+                            else MaterialTheme.colorScheme.onSurface
                         )
+
+                        if (!task.description.isNullOrEmpty()) {
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = task.description,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.width(12.dp))
+
+                    if (isCompleted) {
+                        OutlinedButton(
+                            onClick = { onToggleStatus(nextStatus) },
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Emerald500),
+                            border = BorderStroke(1.dp, Emerald500.copy(alpha = 0.6f)),
+                            shape = ControlShape,
+                            contentPadding = CompactButtonPadding
+                        ) {
+                            Icon(
+                                imageVector = Icons.Filled.Check,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
+                            Text("Done", style = MaterialTheme.typography.labelMedium)
+                        }
+                    } else {
+                        Button(
+                            onClick = { onToggleStatus(nextStatus) },
+                            shape = ControlShape,
+                            contentPadding = CompactButtonPadding
+                        ) {
+                            Text(
+                                text = if (task.status == "IN_PROGRESS") "Complete" else "Start",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Meta row: status, priority, due date
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatusChip(text = prettyLabel(task.status ?: "TODO"), color = statusColor)
+
+                    if (!task.priority.isNullOrEmpty()) {
+                        StatusChip(text = prettyLabel(task.priority), color = priorityColor)
                     }
 
                     if (!task.dueDate.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "Due: ${task.dueDate}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.primary
-                        )
-                    }
-                }
-
-                Spacer(modifier = Modifier.width(8.dp))
-
-                Button(
-                    onClick = {
-                        val nextStatus = when (task.status) {
-                            "TODO" -> "IN_PROGRESS"
-                            "IN_PROGRESS" -> "COMPLETED"
-                            else -> "TODO"
-                        }
-                        onToggleStatus(nextStatus)
-                    },
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = if (isCompleted) Emerald500 else MaterialTheme.colorScheme.primary
-                    ),
-                    shape = RoundedCornerShape(8.dp)
-                ) {
-                    Text(
-                        text = when (task.status) {
-                            "TODO" -> "Start"
-                            "IN_PROGRESS" -> "Complete"
-                            else -> "Done ✓"
-                        },
-                        fontSize = 12.sp
-                    )
-                }
-            }
-
-            Spacer(modifier = Modifier.height(10.dp))
-            HorizontalDivider()
-            Spacer(modifier = Modifier.height(10.dp))
-
-            // Task Assessment Banner / Action Row
-            val assessment = task.assessment
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                if (assessment != null) {
-                    Column {
                         Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(
+                                imageVector = Icons.Filled.CalendarMonth,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(14.dp)
+                            )
+                            Spacer(modifier = Modifier.width(4.dp))
                             Text(
-                                text = "Assessment: ",
-                                style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                                text = task.dueDate,
+                                style = MaterialTheme.typography.labelSmall,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                            repeat(5) { index ->
-                                Icon(
-                                    imageVector = if (index < assessment.qualityScore) Icons.Filled.Star else Icons.Outlined.Star,
-                                    contentDescription = null,
-                                    tint = Amber500,
-                                    modifier = Modifier.size(14.dp)
-                                )
-                            }
                         }
-                        Text(
-                            text = "Risk: ${assessment.riskLevel} · Complexity: ${assessment.complexity}",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
                     }
-                } else {
-                    Text(
-                        text = "No formal assessment recorded yet",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                    )
                 }
 
-                OutlinedButton(
-                    onClick = onAssessTask,
-                    shape = RoundedCornerShape(8.dp),
-                    contentPadding = PaddingValues(horizontal = 10.dp, vertical = 4.dp)
+                Spacer(modifier = Modifier.height(10.dp))
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                Spacer(modifier = Modifier.height(10.dp))
+
+                // Assessment row
+                val assessment = task.assessment
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
                 ) {
-                    Text(
-                        text = if (assessment != null) "Edit Assessment" else "Assess Task",
-                        fontSize = 11.sp
-                    )
+                    if (assessment != null) {
+                        Column(modifier = Modifier.weight(1f)) {
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                repeat(5) { index ->
+                                    Icon(
+                                        imageVector = if (index < assessment.qualityScore) Icons.Filled.Star else Icons.Outlined.Star,
+                                        contentDescription = null,
+                                        tint = Amber500,
+                                        modifier = Modifier.size(14.dp)
+                                    )
+                                }
+                            }
+                            Spacer(modifier = Modifier.height(2.dp))
+                            Text(
+                                text = "Risk: ${assessment.riskLevel}  ·  Complexity: ${assessment.complexity}",
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    } else {
+                        Text(
+                            text = "No assessment recorded",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.weight(1f)
+                        )
+                    }
+
+                    OutlinedButton(
+                        onClick = onAssessTask,
+                        shape = ControlShape,
+                        contentPadding = CompactButtonPadding
+                    ) {
+                        Text(
+                            text = if (assessment != null) "Edit Assessment" else "Assess Task",
+                            style = MaterialTheme.typography.labelMedium
+                        )
+                    }
                 }
             }
         }
@@ -324,6 +446,7 @@ fun FilterChipRow(
 ) {
     val filters = listOf("ALL", "TODO", "IN_PROGRESS", "COMPLETED")
     Row(
+        modifier = Modifier.horizontalScroll(rememberScrollState()),
         horizontalArrangement = Arrangement.spacedBy(8.dp)
     ) {
         filters.forEach { filter ->
@@ -331,7 +454,13 @@ fun FilterChipRow(
             FilterChip(
                 selected = isSelected,
                 onClick = { onSelectFilter(filter) },
-                label = { Text(filter) },
+                shape = ControlShape,
+                label = {
+                    Text(
+                        text = if (filter == "ALL") "All" else prettyLabel(filter),
+                        style = MaterialTheme.typography.labelMedium
+                    )
+                },
                 colors = FilterChipDefaults.filterChipColors(
                     selectedContainerColor = MaterialTheme.colorScheme.primary,
                     selectedLabelColor = MaterialTheme.colorScheme.onPrimary
@@ -340,6 +469,10 @@ fun FilterChipRow(
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Dialogs
+// ---------------------------------------------------------------------------
 
 @Composable
 fun CreateTaskDialog(
@@ -368,11 +501,8 @@ fun CreateTaskDialog(
             value = title,
             onValueChange = { title = it },
             label = { Text("Task Title *") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -380,11 +510,8 @@ fun CreateTaskDialog(
             value = description,
             onValueChange = { description = it },
             label = { Text("Description") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -397,17 +524,14 @@ fun CreateTaskDialog(
         )
 
         Column {
-            Text(
-                text = "Priority",
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant
-            )
-            Spacer(modifier = Modifier.height(4.dp))
+            SectionLabel("Priority")
+            Spacer(modifier = Modifier.height(6.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
                     FilterChip(
                         selected = priority == p,
                         onClick = { priority = p },
+                        shape = ControlShape,
                         label = { Text(p, fontSize = 11.sp) }
                     )
                 }
@@ -463,8 +587,8 @@ fun TaskAssessmentDialog(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Quality Score Rating
-        Text("Quality Score:", style = MaterialTheme.typography.labelMedium)
+        // Quality score rating
+        SectionLabel("Quality score")
         Row(
             horizontalArrangement = Arrangement.spacedBy(4.dp),
             verticalAlignment = Alignment.CenterVertically
@@ -481,18 +605,23 @@ fun TaskAssessmentDialog(
                 )
             }
             Spacer(modifier = Modifier.width(8.dp))
-            Text("$qualityScore / 5 Stars", style = MaterialTheme.typography.bodySmall)
+            Text(
+                text = "$qualityScore / 5",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         }
 
         Spacer(modifier = Modifier.height(8.dp))
 
         // Complexity
-        Text("Complexity Level:", style = MaterialTheme.typography.labelMedium)
+        SectionLabel("Complexity level")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("LOW", "MEDIUM", "HIGH").forEach { level ->
                 FilterChip(
                     selected = complexity == level,
                     onClick = { complexity = level },
+                    shape = ControlShape,
                     label = { Text(level, fontSize = 11.sp) }
                 )
             }
@@ -500,13 +629,14 @@ fun TaskAssessmentDialog(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // Risk Level
-        Text("Risk Level:", style = MaterialTheme.typography.labelMedium)
+        // Risk level
+        SectionLabel("Risk level")
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             listOf("LOW", "MEDIUM", "HIGH").forEach { level ->
                 FilterChip(
                     selected = riskLevel == level,
                     onClick = { riskLevel = level },
+                    shape = ControlShape,
                     label = { Text(level, fontSize = 11.sp) }
                 )
             }
@@ -520,11 +650,8 @@ fun TaskAssessmentDialog(
                 onValueChange = { estimatedHoursText = it },
                 label = { Text("Est. Hours") },
                 placeholder = { Text("e.g. 4.0") },
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                ),
+                shape = ControlShape,
+                colors = fieldColors(),
                 modifier = Modifier.weight(1f)
             )
 
@@ -533,11 +660,8 @@ fun TaskAssessmentDialog(
                 onValueChange = { actualHoursText = it },
                 label = { Text("Actual Hours") },
                 placeholder = { Text("e.g. 3.5") },
-                shape = RoundedCornerShape(10.dp),
-                colors = OutlinedTextFieldDefaults.colors(
-                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-                ),
+                shape = ControlShape,
+                colors = fieldColors(),
                 modifier = Modifier.weight(1f)
             )
         }
@@ -547,11 +671,8 @@ fun TaskAssessmentDialog(
             onValueChange = { notes = it },
             label = { Text("Assessment Notes & Retrospective") },
             placeholder = { Text("e.g. Delivered on schedule, high code quality.") },
-            shape = RoundedCornerShape(10.dp),
-            colors = OutlinedTextFieldDefaults.colors(
-                focusedBorderColor = MaterialTheme.colorScheme.primary,
-                unfocusedBorderColor = MaterialTheme.colorScheme.outline
-            ),
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
     }

@@ -798,3 +798,210 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
 
   return { status: "PENDING", payment: payReq };
 }
+
+
+export type PricingConfigData = {
+  title?: string;
+  heroBadge?: string;
+  heroTitle?: string;
+  heroSubtitle?: string;
+  currencies: Array<{
+    code: string;
+    symbol: string;
+    name: string;
+    badge: string;
+    growth: {
+      monthly: { amount: string; period: string };
+      annual: { amount: string; period: string; billedNote?: string };
+    };
+    scale: {
+      monthly: { amount: string; period: string };
+      annual: { amount: string; period: string; billedNote?: string };
+    };
+    enterprise: {
+      monthly: { amount: string; period: string };
+      annual: { amount: string; period: string; billedNote?: string };
+    };
+  }>;
+  faqs: Array<{ q: string; a: string }>;
+};
+
+export async function getPricingConfig(): Promise<PricingConfigData> {
+  const setting = await db.globalSetting.findUnique({
+    where: { key: "system:pricing_config" },
+  });
+
+  const defaults: PricingConfigData = {
+    title: "Global Site Pricing Configuration",
+    heroBadge: "14-Day Free Trial • Instant Deployment • Zero Risk",
+    heroTitle: "Predictable Pricing Engineered for Limitless Enterprise Scale",
+    heroSubtitle:
+      "No per-user penalties or hidden seat taxes. Unify your operational software stack under one transparent, telemetry-based billing model.",
+    currencies: [
+      {
+        code: "USD",
+        symbol: "$",
+        name: "USD ($)",
+        badge: "Global USD",
+        growth: {
+          monthly: { amount: "$599", period: "/ month" },
+          annual: { amount: "$499", period: "/ month", billedNote: "Billed annually ($5,988/yr)" },
+        },
+        scale: {
+          monthly: { amount: "$1,799", period: "/ month" },
+          annual: { amount: "$1,499", period: "/ month", billedNote: "Billed annually ($17,988/yr)" },
+        },
+        enterprise: {
+          monthly: { amount: "Custom", period: "" },
+          annual: { amount: "Custom", period: "" },
+        },
+      },
+      {
+        code: "KSH",
+        symbol: "KSh ",
+        name: "KSh (M-Pesa)",
+        badge: "M-Pesa Direct",
+        growth: {
+          monthly: { amount: "KSh 78,000", period: "/ month" },
+          annual: { amount: "KSh 65,000", period: "/ month", billedNote: "Billed annually (KSh 780,000/yr)" },
+        },
+        scale: {
+          monthly: { amount: "KSh 234,000", period: "/ month" },
+          annual: { amount: "KSh 195,000", period: "/ month", billedNote: "Billed annually (KSh 2,340,000/yr)" },
+        },
+        enterprise: {
+          monthly: { amount: "Custom", period: "" },
+          annual: { amount: "Custom", period: "" },
+        },
+      },
+      {
+        code: "EUR",
+        symbol: "€",
+        name: "EUR (€)",
+        badge: "Eurozone SEPA",
+        growth: {
+          monthly: { amount: "€550", period: "/ month" },
+          annual: { amount: "€460", period: "/ month", billedNote: "Billed annually (€5,520/yr)" },
+        },
+        scale: {
+          monthly: { amount: "€1,650", period: "/ month" },
+          annual: { amount: "€1,380", period: "/ month", billedNote: "Billed annually (€16,560/yr)" },
+        },
+        enterprise: {
+          monthly: { amount: "Custom", period: "" },
+          annual: { amount: "Custom", period: "" },
+        },
+      },
+    ],
+    faqs: [
+      {
+        q: "How does the 14-day free trial work?",
+        a: "When you sign up for Growth or Scale tiers, you receive full platform access for 14 days without charge. You can upgrade, switch billing cycles, or cancel anytime before the trial period ends.",
+      },
+      {
+        q: "What payment options do you support?",
+        a: "We support M-Pesa (STK push & direct paybill), all major credit/debit cards (Visa, Mastercard, Amex), Apple Pay, Google Pay, and bank wire transfers (ACH/SEPA/SWIFT) for annual commitments.",
+      },
+      {
+        q: "Are there per-seat or per-user licensing fees?",
+        a: "No. Scryme believes charging per-seat penalizes business growth and discourages cross-department collaboration. All plans include unlimited user seats.",
+      },
+      {
+        q: "Can I change my billing cycle or currency later?",
+        a: "Yes. You can switch between Monthly and Annual billing or adjust your default workspace currency at any time directly in Organization Settings.",
+      },
+      {
+        q: "What happens if our order volume exceeds the plan threshold?",
+        a: "You are never cut off. Overages are billed transparently at fractional cents per transaction without service degradation.",
+      },
+      {
+        q: "How long does migration from NetSuite or SAP take?",
+        a: "Our automated zero-loss ingestion connectors typically complete data migration and validation within 48 to 72 hours.",
+      },
+    ],
+  };
+
+  if (!setting?.value) return defaults;
+
+  try {
+    const parsed = JSON.parse(setting.value);
+    return { ...defaults, ...parsed };
+  } catch {
+    return defaults;
+  }
+}
+
+export async function syncPricingToSanity(config: PricingConfigData) {
+  const projectId =
+    process.env.SANITY_PROJECT_ID ||
+    process.env.SANITY_STUDIO_PROJECT_ID ||
+    process.env.VITE_SANITY_PROJECT_ID;
+  const dataset =
+    process.env.SANITY_DATASET ||
+    process.env.SANITY_STUDIO_DATASET ||
+    process.env.VITE_SANITY_DATASET ||
+    "production";
+  const apiToken =
+    process.env.SANITY_WRITE_TOKEN ||
+    process.env.SANITY_API_TOKEN ||
+    process.env.SANITY_TOKEN;
+
+  if (!projectId || projectId === "placeholder_project_id" || !apiToken) {
+    return {
+      synced: false,
+      message:
+        "Sanity write credentials (SANITY_PROJECT_ID & SANITY_WRITE_TOKEN) not set. Local DB pricing updated.",
+    };
+  }
+
+  const { createClient } = await import("@sanity/client");
+  const client = createClient({
+    projectId,
+    dataset,
+    apiVersion: "2024-01-01",
+    token: apiToken,
+    useCdn: false,
+  });
+
+  const doc = {
+    _id: "site-pricing-config",
+    _type: "pricingConfig",
+    title: config.title || "Global Site Pricing Configuration",
+    heroBadge: config.heroBadge,
+    heroTitle: config.heroTitle,
+    heroSubtitle: config.heroSubtitle,
+    currencies: config.currencies,
+    faqs: config.faqs,
+  };
+
+  await client.createOrReplace(doc);
+
+  return {
+    synced: true,
+    message: "Pricing configuration successfully published to Sanity CMS!",
+  };
+}
+
+export async function savePricingConfig(config: PricingConfigData) {
+  await requireSuperAdmin();
+
+  await db.globalSetting.upsert({
+    where: { key: "system:pricing_config" },
+    update: { value: JSON.stringify(config) },
+    create: { key: "system:pricing_config", value: JSON.stringify(config) },
+  });
+
+  let syncResult = { synced: false, message: "" };
+  try {
+    syncResult = await syncPricingToSanity(config);
+  } catch (err) {
+    console.warn("Sanity sync warning:", err);
+    syncResult = {
+      synced: false,
+      message: `Saved to DB, but Sanity sync failed: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  }
+
+  revalidatePath("/billing");
+  return { success: true, ...syncResult };
+}

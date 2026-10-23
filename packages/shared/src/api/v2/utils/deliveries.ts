@@ -69,7 +69,38 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
     if (!transaction) throw new Error('TRANSACTION_NOT_FOUND');
     if (transaction.status === TransactionStatus.DISPATCHED) throw new Error('ALREADY_DISPATCHED');
 
-    // 2. Stock Reduction Logic
+    // ⚡ Bolt Optimization: Stock Reduction Logic
+    // Pre-fetch all active stock batches for all item variantIds in a single batched query
+    // instead of issuing sequential findMany queries per item inside the loop.
+    // Index batches into an in-memory Map<string, StockBatch[]> keyed by variantId.
+    const variantIds = transaction.items
+      .filter((item: any) => item.variant)
+      .map((item: any) => item.variantId);
+
+    const allBatches = variantIds.length > 0
+      ? await tx.stockBatch.findMany({
+          where: {
+            organizationId,
+            variantId: { in: variantIds },
+            locationId: transaction.locationId,
+            currentQuantity: { gt: 0 },
+          },
+          orderBy: [{ expiryDate: 'asc' }, { receivedDate: 'asc' }],
+        })
+      : [];
+
+    const batchesByVariantMap = new Map<string, any[]>();
+    for (const batch of allBatches) {
+      if (!batchesByVariantMap.has(batch.variantId)) {
+        batchesByVariantMap.set(batch.variantId, []);
+      }
+      batchesByVariantMap.get(batch.variantId)!.push(batch);
+    }
+
+    const batchDeductionsToExecute: { id: string; deduction: number }[] = [];
+    const stockMovementsToCreate: any[] = [];
+    const aggregateDeductionsByVariant = new Map<string, number>();
+
     for (const item of transaction.items) {
       if (!item.variant) continue;
 
@@ -80,7 +111,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
 
       // If units differ, convert
       if (sellingUnitId && baseUnitId && sellingUnitId !== baseUnitId) {
-        const conversion = item.variant.product.unitConversions.find(
+        const conversion = item.variant.product?.unitConversions?.find(
           (c: any) => c.fromUnitId === sellingUnitId && c.toUnitId === baseUnitId
         );
         if (conversion) {
@@ -88,40 +119,35 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
         }
       }
 
-      const batches = await tx.stockBatch.findMany({
-        where: {
-          variantId: item.variantId,
-          locationId: transaction.locationId,
-          currentQuantity: { gt: 0 },
-        },
-        orderBy: [{ expiryDate: 'asc' }, { receivedDate: 'asc' }],
-      });
-
+      const batches = batchesByVariantMap.get(item.variantId) || [];
       let remaining = qtyToDeduct;
 
       for (const batch of batches) {
         if (remaining <= 0) break;
-        const deduction = Math.min(Number(batch.currentQuantity), remaining);
+        const currentBatchQty = Number(batch.currentQuantity);
+        if (currentBatchQty <= 0) continue;
 
-        await tx.stockBatch.update({
-          where: { id: batch.id },
-          data: { currentQuantity: { decrement: deduction } },
+        const deduction = Math.min(currentBatchQty, remaining);
+
+        batchDeductionsToExecute.push({
+          id: batch.id,
+          deduction,
         });
 
-        // Create Movement Log
-        await tx.stockMovement.create({
-          data: {
-            organizationId,
-            stockBatchId: batch.id,
-            variantId: item.variantId,
-            fromLocationId: transaction.locationId,
-            quantity: deduction,
-            movementType: 'SALE',
-            referenceId: transaction.id,
-            memberId,
-            notes: `Dispatch Order #${transaction.number}`,
-            movementDate: new Date(),
-          },
+        // Update local copy so subsequent deductions on the same batch in this transaction calculate correctly
+        batch.currentQuantity = currentBatchQty - deduction;
+
+        stockMovementsToCreate.push({
+          organizationId,
+          stockBatchId: batch.id,
+          variantId: item.variantId,
+          fromLocationId: transaction.locationId,
+          quantity: deduction,
+          movementType: 'SALE',
+          referenceId: transaction.id,
+          memberId,
+          notes: `Dispatch Order #${transaction.number}`,
+          movementDate: new Date(),
         });
 
         remaining -= deduction;
@@ -131,12 +157,37 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
         throw new Error(`INSUFFICIENT_STOCK: Item ${item.variant.sku} needs ${qtyToDeduct} base units.`);
       }
 
-      // C. AGGREGATE UPDATE
+      // Consolidate variant stock deductions in-memory to execute 1 update per unique variantId
+      const currentDeduction = aggregateDeductionsByVariant.get(item.variantId) || 0;
+      aggregateDeductionsByVariant.set(item.variantId, currentDeduction + qtyToDeduct);
+    }
+
+    // Execute batch deductions sequentially on the interactive transaction handle
+    for (const { id, deduction } of batchDeductionsToExecute) {
+      await tx.stockBatch.update({
+        where: { id },
+        data: { currentQuantity: { decrement: deduction } },
+      });
+    }
+
+    if (stockMovementsToCreate.length > 0) {
+      await tx.stockMovement.createMany({
+        data: stockMovementsToCreate,
+      });
+    }
+
+    // Execute consolidated productVariantStock updates per unique variantId sequentially on the interactive transaction handle
+    const deductionsList: [string, number][] = [];
+    aggregateDeductionsByVariant.forEach((totalDeduct, variantId) => {
+      deductionsList.push([variantId, totalDeduct]);
+    });
+
+    for (const [variantId, totalDeduct] of deductionsList) {
       await tx.productVariantStock.updateMany({
-        where: { variantId: item.variantId, locationId: transaction.locationId },
+        where: { variantId, locationId: transaction.locationId },
         data: {
-          currentStock: { decrement: qtyToDeduct },
-          reservedStock: { decrement: qtyToDeduct },
+          currentStock: { decrement: totalDeduct },
+          reservedStock: { decrement: totalDeduct },
         },
       });
     }

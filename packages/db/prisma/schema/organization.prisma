@@ -140,6 +140,7 @@ model Organization {
   notificationTemplates      NotificationTemplate[]
   notificationDispatches     NotificationDispatch[]
   notificationChannelConfigs NotificationChannelConfig[]
+  mcpApiKeys                 McpApiKey[]
   apiKeys                    ApiKey[]
   deviceSetupTokens          DeviceSetupToken[]
   deviceRegistries           DeviceRegistry[]
@@ -360,6 +361,7 @@ model Member {
   generatedStockReports    GeneratedStockReport[]
   stockReceipts            StockReceipt[]
   createdApiKeys           ApiKey[]
+  createdMcpApiKeys        McpApiKey[]     @relation("McpApiKeyCreator")
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
   bakeryRoles       BakeryBaker[]

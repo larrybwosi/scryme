@@ -1,5 +1,9 @@
 "use client";
 
+import Link from "next/link";
+import { Bot } from "lucide-react";
+
+
 import { ReportSettingsPanel } from "./report-settings-panel";
 import { useState, useTransition } from "react";
 import {
@@ -485,6 +489,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Profile section ── */}
           {activeSection === "profile" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -570,6 +591,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Localization section ── */}
           {activeSection === "localization" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -650,6 +688,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Payment Options section (M-Pesa) ── */}
           {activeSection === "payments" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                   <div>
@@ -758,6 +813,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Inventory section ── */}
           {activeSection === "inventory" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                   <div>
@@ -835,6 +907,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Operations & Attendance section ── */}
           {activeSection === "operations" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -901,6 +990,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Tax & Compliance section ── */}
           {activeSection === "tax" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -957,6 +1063,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Pricing Strategy section ── */}
           {activeSection === "pricing" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border">
                   <h3 className="text-sm font-semibold text-foreground">
@@ -1043,6 +1166,23 @@ export function SettingsForm({ initialData }: { initialData: any }) {
           {/* ── Security section ── */}
           {activeSection === "security" && (
             <div className="space-y-8">
+
+              <Link href="/settings/mcp">
+                <div className="flex items-center justify-between p-4 bg-indigo-950/30 border border-indigo-500/20 rounded-xl hover:bg-indigo-950/50 transition-colors cursor-pointer mb-6">
+                  <div className="flex items-center gap-3">
+                    <div className="p-2 bg-indigo-600/20 text-indigo-400 rounded-lg">
+                      <Bot className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Model Context Protocol (MCP) AI Integrations</p>
+                      <p className="text-xs text-muted-foreground">Generate MCP API keys to connect Claude Desktop, Cursor, or AI agents directly to your data</p>
+                    </div>
+                  </div>
+                  <span className="text-xs font-semibold text-indigo-400 hover:underline flex items-center gap-1">
+                    Manage MCP Keys &rarr;
+                  </span>
+                </div>
+              </Link>
               <div className="bg-card rounded-xl border border-border overflow-hidden">
                 <div className="px-6 py-5 border-b border-border flex items-center justify-between">
                   <div>
