@@ -4,12 +4,14 @@ import { PrismaService } from "@/prisma/prisma.service";
 import { InventoryMovementService } from "../../../inventory/application/services/inventory-movement.service";
 import { PricingManagementService } from "../../../catalog/application/services/pricing-management.service";
 import { AccountingService } from "../../../finance/application/services/accounting.service";
+import { WhatsappService } from "../../../crm-integrations/application/use-cases/whatsapp.service";
 import { NotFoundException } from "@nestjs/common";
 import { PurchaseStatus } from "@repo/db";
 
-describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
+describe("PurchaseOrderUseCase (Security, BOLA & WhatsApp PO Notifications)", () => {
   let useCase: PurchaseOrderUseCase;
   let prismaService: any;
+  let whatsappService: any;
 
   const mockPrismaService = {
     client: {
@@ -17,10 +19,12 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
         findFirst: vi.fn(),
       },
       purchase: {
+        create: vi.fn(),
         findFirst: vi.fn(),
         updateMany: vi.fn(),
         findFirstOrThrow: vi.fn(),
       },
+      $transaction: vi.fn(),
     },
   };
 
@@ -28,6 +32,9 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
   const mockPricingManagementService = {};
   const mockAccountingService = {
     postPurchaseToLedger: vi.fn().mockResolvedValue(undefined),
+  };
+  const mockWhatsappService = {
+    sendPurchaseOrderNotification: vi.fn().mockResolvedValue({ message: "sent" }),
   };
 
   beforeEach(async () => {
@@ -40,11 +47,13 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
         { provide: InventoryMovementService, useValue: mockInventoryMovementService },
         { provide: PricingManagementService, useValue: mockPricingManagementService },
         { provide: AccountingService, useValue: mockAccountingService },
+        { provide: WhatsappService, useValue: mockWhatsappService },
       ],
     }).compile();
 
     useCase = module.get<PurchaseOrderUseCase>(PurchaseOrderUseCase);
     prismaService = module.get(PrismaService);
+    whatsappService = module.get(WhatsappService);
   });
 
   describe("approve", () => {
@@ -65,7 +74,7 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
       expect(mockPrismaService.client.purchase.updateMany).not.toHaveBeenCalled();
     });
 
-    it("should execute updateMany scoped to organizationId to enforce BOLA protection", async () => {
+    it("should execute updateMany scoped to organizationId to enforce BOLA protection and trigger WhatsApp notification", async () => {
       const orgId = "org-1";
       const memberId = "member-1";
       const purchaseId = "purchase-1";
@@ -73,6 +82,8 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
       const existingPurchase = {
         id: purchaseId,
         organizationId: orgId,
+        purchaseNumber: "PO-100",
+        totalAmount: 4500,
         status: PurchaseStatus.ORDERED,
       };
 
@@ -103,6 +114,58 @@ describe("PurchaseOrderUseCase (Security & BOLA Hardening)", () => {
       expect(mockAccountingService.postPurchaseToLedger).toHaveBeenCalledWith(
         purchaseId,
         orgId,
+      );
+      expect(mockWhatsappService.sendPurchaseOrderNotification).toHaveBeenCalledWith(
+        orgId,
+        "PO-100",
+        undefined,
+        4500,
+        purchaseId,
+      );
+    });
+  });
+
+  describe("create", () => {
+    it("should create purchase order and send WhatsApp notification when supplier phone is present", async () => {
+      const orgId = "org-1";
+      const memberId = "member-1";
+      const dto: any = {
+        supplierId: "supplier-1",
+        items: [{ variantId: "var-1", orderedQuantity: 2, unitCost: 100 }],
+      };
+
+      const mockSupplier = {
+        id: "supplier-1",
+        organizationId: orgId,
+        phone: "+254700000000",
+      };
+
+      const createdPurchase = {
+        id: "po-new-1",
+        purchaseNumber: "PO-888",
+        organizationId: orgId,
+        totalAmount: 200,
+        member: { user: { name: "John" } },
+      };
+
+      mockPrismaService.client.supplier.findFirst.mockResolvedValue(mockSupplier);
+      mockPrismaService.client.$transaction.mockImplementation(async (cb: any) =>
+        cb({
+          purchase: {
+            create: vi.fn().mockResolvedValue(createdPurchase),
+          },
+        }),
+      );
+
+      const res = await useCase.create(orgId, memberId, dto);
+
+      expect(res).toEqual(createdPurchase);
+      expect(mockWhatsappService.sendPurchaseOrderNotification).toHaveBeenCalledWith(
+        orgId,
+        "PO-888",
+        "+254700000000",
+        200,
+        "po-new-1",
       );
     });
   });
