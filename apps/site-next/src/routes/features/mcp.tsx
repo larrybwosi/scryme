@@ -366,7 +366,7 @@ const result = await scryme.inventory.allocate({
   warehouseId: 'NL-RTM-14',
   sku: 'SKU-992-OPTIC',
   units: 1000,
-  dualAuthToken: 'sat_live_99218204'
+  dualAuthToken: 'AUTH_TOKEN_PLACEHOLDER'
 });
 
 console.log('Allocation Ledger Hash:', result.ledgerHash);`}</pre>
@@ -387,7 +387,7 @@ def handle_allocation(params):
 
               {activeLanguage === 'curl' && (
                 <pre className="text-[#a8cfbd]">{`curl -X POST https://api.scryme.tech/api/v3/mcp/invoke \\
-  -H "Authorization: Bearer scryme_live_key_992" \\
+  -H "Authorization: Bearer YOUR_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{
     "jsonrpc": "2.0",
