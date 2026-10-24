@@ -334,7 +334,7 @@ export class McpToolsService {
   private async getSalesAnalytics(args: Record<string, any>, organizationId: string) {
     const timeframe = args.timeframe || "month";
     const now = new Date();
-    let startDate = new Date();
+    const startDate = new Date();
 
     if (timeframe === "today") {
       startDate.setHours(0, 0, 0, 0);

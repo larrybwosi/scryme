@@ -41,3 +41,7 @@
 ## 2026-10-25 - [Phased Concurrency for Relational Entity Schema Seeding]
 **Learning:** Executing multi-step schema initialization (such as seeding CRM object definitions, fields, and relationships) sequentially introduces $O(N)$ network query roundtrips. Splitting execution into 2 distinct concurrent phases (Phase 1: `Promise.all` creating parent entities; Phase 2: `Promise.all` creating child fields and relationship definitions using parent IDs) reduces 27 sequential roundtrips down to 2 concurrent query phases.
 **Action:** When seeding relational schemas, structure operations into distinct dependency-ordered phases and execute each phase concurrently with `Promise.all`.
+
+## 2026-10-26 - [Organization-Grouped Concurrency for Sequential Document Numbering]
+**Learning:** Parallelizing batch entity processing with `Promise.all` across items sharing stateful dynamic counter lookups (such as `tx.expense.count` used to build sequential `expenseNumber`s) causes race conditions where multiple concurrent transactions read the same initial count and generate duplicate document numbers. Grouping batch collections by `organizationId` first allows parallelizing execution across distinct organizations while maintaining strict sequential ordering within each organization.
+**Action:** When batch operations depend on dynamic counter reads for sequence numbering, group items by tenant/scope ID and process organizations concurrently via `Promise.all`, while processing intra-tenant items sequentially.
