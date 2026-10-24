@@ -87,23 +87,30 @@ export class V3AuthCoreService {
   ) {
     payload.memberId = memberId;
 
-    const member = await this.prisma.client.member.findUnique({
-      where: { id: memberId },
-      select: { userId: true },
-    });
+    // ⚡ Bolt Optimization: Parallelize independent member and device registry database lookups with Promise.all.
+    // Executing these independent queries concurrently reduces token enrichment latency from 2 sequential database roundtrips O(2)
+    // down to 1 concurrent roundtrip O(1).
+    const [member, registry] = await Promise.all([
+      this.prisma.client.member.findUnique({
+        where: { id: memberId },
+        select: { userId: true },
+      }),
+      this.prisma.client.deviceRegistry.findFirst({
+        where: {
+          OR: [
+            { v3ApiClientId: clientId },
+            { apiKeyId: clientId },
+          ],
+        },
+      }),
+    ]);
+
     if (member) {
       payload.userId = member.userId;
     }
 
     payload.type = "v3_hybrid";
-    const registry = await this.prisma.client.deviceRegistry.findFirst({
-      where: {
-        OR: [
-          { v3ApiClientId: clientId },
-          { apiKeyId: clientId },
-        ],
-      },
-    });
+
     if (registry) {
       payload.locationId = registry.locationId;
       payload.deviceId = registry.id;
