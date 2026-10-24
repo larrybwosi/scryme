@@ -6,12 +6,15 @@ vi.mock("@repo/db", () => ({
     member: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     inventoryLocation: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     expenseCategory: {
       findFirst: vi.fn(),
+      findMany: vi.fn(),
     },
     budget: {
       findFirst: vi.fn(),
@@ -87,7 +90,7 @@ describe("Finance Settings Server Actions - BOLA/IDOR Hardening", () => {
   describe("createApprovalWorkflow", () => {
     it("should reject creation if location condition belongs to another organization", async () => {
       setupAuth();
-      (db.inventoryLocation.findFirst as any).mockResolvedValue(null);
+      (db.inventoryLocation.findMany as any).mockResolvedValue([]);
 
       await expect(
         createApprovalWorkflow({
@@ -105,8 +108,8 @@ describe("Finance Settings Server Actions - BOLA/IDOR Hardening", () => {
         }),
       ).rejects.toThrow("Location condition not found or belongs to another organization");
 
-      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
-        where: { id: "foreign-loc-id", organizationId: "org-1" },
+      expect(db.inventoryLocation.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["foreign-loc-id"] }, organizationId: "org-1" },
         select: { id: true },
       });
       expect(db.approvalWorkflow.create).not.toHaveBeenCalled();
@@ -114,7 +117,7 @@ describe("Finance Settings Server Actions - BOLA/IDOR Hardening", () => {
 
     it("should reject creation if approver member belongs to another organization", async () => {
       setupAuth();
-      (db.member.findFirst as any).mockResolvedValue(null);
+      (db.member.findMany as any).mockResolvedValue([]);
 
       await expect(
         createApprovalWorkflow({
@@ -138,8 +141,8 @@ describe("Finance Settings Server Actions - BOLA/IDOR Hardening", () => {
         }),
       ).rejects.toThrow("Approver member not found or belongs to another organization");
 
-      expect(db.member.findFirst).toHaveBeenCalledWith({
-        where: { id: "foreign-member-id", organizationId: "org-1" },
+      expect(db.member.findMany).toHaveBeenCalledWith({
+        where: { id: { in: ["foreign-member-id"] }, organizationId: "org-1" },
         select: { id: true },
       });
       expect(db.approvalWorkflow.create).not.toHaveBeenCalled();
