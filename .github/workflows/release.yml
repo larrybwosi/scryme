@@ -147,6 +147,7 @@ jobs:
     if: needs.release-management.outputs.published == 'true'
     strategy:
       fail-fast: false
+      max-parallel: 1
       matrix:
         os: [windows-latest]
         variant: [pharmacy, retail, supermarket, restaurant]
