@@ -175,6 +175,7 @@ export function POS() {
   // Sync cart item prices when multi-buy or rule pricing resolves for cart item quantities
   useEffect(() => {
     currentOrder.items.forEach(item => {
+      if ((item.selectedUnit as any)?.isCustomPrice) return;
       const keyWithQty = `${item.variantId}:${item.selectedUnit.unitId ?? 'null'}:${item.quantity}`;
       const resolvedPrice = priceMap[keyWithQty];
       if (typeof resolvedPrice === 'number' && resolvedPrice !== item.selectedUnit.price) {
