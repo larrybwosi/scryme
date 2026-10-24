@@ -1,4 +1,3 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs";
 import {
   getWorkflowEngineMetrics,
   getCustomerEngineMetrics,
@@ -25,10 +24,9 @@ export default async function SystemsPage() {
       listSystemDocumentSettings(),
       getSystemModules(),
     ]);
-  const activeCategories = documentSettings.categories.filter((c) => c.isEnabled).length;
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Platform Systems
@@ -39,45 +37,27 @@ export default async function SystemsPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="modules">
-        <TabsList>
-          <TabsTrigger value="modules">
-            System Modules
-          </TabsTrigger>
-          <TabsTrigger value="workflows">
-            Workflow Engine ({workflowMetrics.activeWorkflows} Active / {workflowMetrics.totalWorkflows})
-          </TabsTrigger>
-          <TabsTrigger value="customers">
-            Customer Engine ({customerMetrics.totalCustomers} Profiles)
-          </TabsTrigger>
-          <TabsTrigger value="pos-releases">
-            POS App Releases ({posBinaries.length} Stored)
-          </TabsTrigger>
-          <TabsTrigger value="document-templates">
-            Document Templates ({activeCategories} / {documentSettings.categories.length} Active)
-          </TabsTrigger>
-        </TabsList>
-
-        <TabsContent value="modules" className="mt-6">
+      <div className="flex flex-col gap-8">
+        <section className="flex flex-col gap-3">
           <SystemModulesPanel initialSystemModules={systemModules} />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="workflows" className="mt-6">
+        <section className="flex flex-col gap-3">
           <WorkflowEnginePanel metrics={workflowMetrics} />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="customers" className="mt-6">
+        <section className="flex flex-col gap-3">
           <CustomerEnginePanel metrics={customerMetrics} />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="pos-releases" className="mt-6">
+        <section className="flex flex-col gap-3">
           <PosReleasesPanel settings={posSettings} binaries={posBinaries} />
-        </TabsContent>
+        </section>
 
-        <TabsContent value="document-templates" className="mt-6">
+        <section className="flex flex-col gap-3">
           <DocumentTemplatesPanel initialData={documentSettings} />
-        </TabsContent>
-      </Tabs>
+        </section>
+      </div>
     </div>
   );
 }
