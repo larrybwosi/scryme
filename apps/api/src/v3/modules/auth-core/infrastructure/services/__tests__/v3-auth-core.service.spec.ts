@@ -181,4 +181,36 @@ describe("V3AuthCoreService", () => {
       expect(validateV3ApiSecret).toHaveBeenCalledWith("client-1", "valid-secret");
     });
   });
+
+  describe("enrichPayloadWithMember", () => {
+    it("should parallelize member and device registry lookups to enrich token payload", async () => {
+      const mockMember = { userId: "user-123" };
+      const mockDeviceRegistry = { id: "device-1", locationId: "loc-1" };
+
+      (prisma.client.member.findUnique as any).mockResolvedValue(mockMember);
+      (prisma.client.deviceRegistry.findFirst as any).mockResolvedValue(mockDeviceRegistry);
+
+      const payload: any = {};
+      await (service as any).enrichPayloadWithMember(payload, "client-1", "member-1");
+
+      expect(prisma.client.member.findUnique).toHaveBeenCalledWith({
+        where: { id: "member-1" },
+        select: { userId: true },
+      });
+      expect(prisma.client.deviceRegistry.findFirst).toHaveBeenCalledWith({
+        where: {
+          OR: [
+            { v3ApiClientId: "client-1" },
+            { apiKeyId: "client-1" },
+          ],
+        },
+      });
+
+      expect(payload.memberId).toBe("member-1");
+      expect(payload.userId).toBe("user-123");
+      expect(payload.type).toBe("v3_hybrid");
+      expect(payload.locationId).toBe("loc-1");
+      expect(payload.deviceId).toBe("device-1");
+    });
+  });
 });
