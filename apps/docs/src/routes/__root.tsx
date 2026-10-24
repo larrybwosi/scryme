@@ -20,7 +20,7 @@ import {
   Layers,
   Package
 } from 'lucide-react'
-import appCss from '../styles/app.css?url'
+import '../styles/app.css'
 
 export const Route = createRootRoute({
   head: () => ({
@@ -28,8 +28,7 @@ export const Route = createRootRoute({
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
       { title: 'Scryme Developer Docs & V3 API Reference' }
-    ],
-    links: [{ rel: 'stylesheet', href: appCss }]
+    ]
   }),
   component: RootComponent
 })
