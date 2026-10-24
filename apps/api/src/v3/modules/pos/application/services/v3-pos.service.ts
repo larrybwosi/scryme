@@ -469,17 +469,174 @@ export class V3PosService {
   }
 
   async getPricing(ctx: V3ApiContext, lastSync?: string) {
+    const lastSyncDate = lastSync ? new Date(lastSync) : undefined;
+
     const priceLists = await this.prisma.client.priceList.findMany({
       where: {
         organizationId: ctx.organizationId,
         isActive: true,
-        ...(lastSync ? { updatedAt: { gt: new Date(lastSync) } } : {}),
+        ...(lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : {}),
       },
-      include: {
-        items: true,
+      select: {
+        id: true,
+        code: true,
+        priority: true,
+        isGlobal: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
+        items: {
+          where: lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : undefined,
+          select: {
+            id: true,
+            priceListId: true,
+            variantId: true,
+            sellingUnitId: true,
+            minQuantity: true,
+            price: true,
+            updatedAt: true,
+          },
+        },
+        customers: { select: { id: true } },
+        businessAccounts: { select: { id: true } },
       },
     });
-    return { priceLists, timestamp: new Date() };
+
+    const items = priceLists.flatMap((pl) =>
+      pl.items.map((item) => ({
+        id: item.id,
+        priceListId: item.priceListId,
+        variantId: item.variantId,
+        sellingUnitId: item.sellingUnitId,
+        minQuantity: item.minQuantity,
+        price: item.price.toString(),
+        updatedAt: item.updatedAt,
+      })),
+    );
+
+    const lists = priceLists.map((pl) => ({
+      id: pl.id,
+      code: pl.code,
+      priority: pl.priority,
+      isGlobal: pl.isGlobal,
+      isActive: pl.isActive,
+      validFrom: pl.validFrom,
+      validTo: pl.validTo,
+      updatedAt: pl.updatedAt,
+    }));
+
+    const customerAllocations: Record<string, string[]> = {};
+    priceLists.forEach((pl) => {
+      (pl as any).customers?.forEach((cust: any) => {
+        if (!customerAllocations[cust.id]) {
+          customerAllocations[cust.id] = [];
+        }
+        customerAllocations[cust.id].push(pl.id);
+      });
+      (pl as any).businessAccounts?.forEach((ba: any) => {
+        if (!customerAllocations[ba.id]) {
+          customerAllocations[ba.id] = [];
+        }
+        customerAllocations[ba.id].push(pl.id);
+      });
+    });
+
+    const rules = await this.prisma.client.pricingRule.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+        ...(lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        description: true,
+        priceListId: true,
+        variantId: true,
+        categoryId: true,
+        conditions: true,
+        discountType: true,
+        discountValue: true,
+        stackable: true,
+        priority: true,
+        maxUsage: true,
+        usageCount: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
+      },
+    });
+
+    const bundles = await this.prisma.client.pricingBundle.findMany({
+      where: {
+        organizationId: ctx.organizationId,
+        isActive: true,
+        ...(lastSyncDate ? { updatedAt: { gt: lastSyncDate } } : {}),
+      },
+      select: {
+        id: true,
+        name: true,
+        code: true,
+        description: true,
+        bundleType: true,
+        bundlePrice: true,
+        buyQuantity: true,
+        getQuantity: true,
+        getDiscountType: true,
+        getDiscountValue: true,
+        savingsLabel: true,
+        imageUrl: true,
+        isActive: true,
+        validFrom: true,
+        validTo: true,
+        updatedAt: true,
+        items: {
+          select: {
+            id: true,
+            bundleId: true,
+            variantId: true,
+            quantity: true,
+            itemRole: true,
+            priceOverride: true,
+          },
+        },
+      },
+    });
+
+    const payload = {
+      metadata: {
+        syncedAt: new Date().toISOString(),
+        isDelta: !!lastSync,
+      },
+      data: {
+        lists,
+        items,
+        customerAllocations,
+        rules: rules.map((r) => ({
+          ...r,
+          discountValue: r.discountValue ? r.discountValue.toString() : "0",
+          conditions: typeof r.conditions === "string" ? r.conditions : JSON.stringify(r.conditions ?? {}),
+        })),
+        bundles: bundles.map((b) => ({
+          ...b,
+          bundlePrice: b.bundlePrice ? b.bundlePrice.toString() : null,
+          getDiscountValue: b.getDiscountValue ? b.getDiscountValue.toString() : null,
+          items: b.items.map((i) => ({
+            ...i,
+            priceOverride: i.priceOverride ? i.priceOverride.toString() : null,
+          })),
+        })),
+      },
+    };
+
+    return {
+      success: true,
+      data: payload,
+      priceLists,
+      timestamp: new Date(),
+    };
   }
 
   async syncShifts(ctx: V3ApiContext, body: any) {
