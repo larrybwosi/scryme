@@ -158,6 +158,7 @@ describe('processSale Action', () => {
     });
 
     const result = await processSale('org_1', 'member_1', mockData);
+    await new Promise((resolve) => setTimeout(resolve, 500));
 
     expect(result.success).toBe(true);
     expect(result.transactionId).toBe('txn_1');
