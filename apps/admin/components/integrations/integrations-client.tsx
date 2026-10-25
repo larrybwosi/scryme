@@ -1,10 +1,7 @@
 "use client"
 
-import { useState } from "react"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
 import {
   useQuery,
-  useQueryClient,
   QueryClient,
   QueryClientProvider,
 } from "@tanstack/react-query"
@@ -15,8 +12,6 @@ import {
 } from "@/app/actions/integrations"
 import { IntegrationsList } from "./integrations-list"
 import { OrganizationIntegrationsTable } from "./organization-integrations-table"
-import { SystemIntegrationsPanel } from "./system-integrations-panel"
-import { Loader2, Plug, Shield, Table } from "lucide-react"
 
 const queryClient = new QueryClient()
 
@@ -51,7 +46,7 @@ function IntegrationsClientContent({
   })
 
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-8">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-foreground">Integrations</h1>
         <p className="mt-1 text-sm text-muted-foreground">
@@ -59,34 +54,32 @@ function IntegrationsClientContent({
         </p>
       </div>
 
-      <Tabs defaultValue="definitions">
-        <TabsList>
-          <TabsTrigger value="definitions" className="gap-2">
-            Integration Definitions ({definitions.length})
-            {isLoadingDefs && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
-          </TabsTrigger>
-          <TabsTrigger value="credentials" className="gap-2">
-            System Credentials & Workspace
-            {isLoadingSettings && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
-          </TabsTrigger>
-          <TabsTrigger value="active" className="gap-2">
-            Active Connections ({activeIntegrations.length})
-            {isLoadingActive && <Loader2 className="size-3 animate-spin text-muted-foreground" />}
-          </TabsTrigger>
-        </TabsList>
+      <div className="flex flex-col gap-8">
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Integration Definitions & System Credentials
+            </h2>
+          </div>
+          <IntegrationsList
+            integrations={definitions}
+            isLoading={isLoadingDefs}
+            systemSettings={systemSettings}
+          />
+        </section>
 
-        <TabsContent value="definitions" className="mt-6">
-          <IntegrationsList integrations={definitions} isLoading={isLoadingDefs} />
-        </TabsContent>
-
-        <TabsContent value="credentials" className="mt-6">
-          <SystemIntegrationsPanel settings={systemSettings} isLoading={isLoadingSettings} />
-        </TabsContent>
-
-        <TabsContent value="active" className="mt-6">
-          <OrganizationIntegrationsTable activeIntegrations={activeIntegrations} isLoading={isLoadingActive} />
-        </TabsContent>
-      </Tabs>
+        <section className="flex flex-col gap-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold tracking-tight text-foreground">
+              Active Organization Connections ({activeIntegrations.length})
+            </h2>
+          </div>
+          <OrganizationIntegrationsTable
+            activeIntegrations={activeIntegrations}
+            isLoading={isLoadingActive}
+          />
+        </section>
+      </div>
     </div>
   )
 }

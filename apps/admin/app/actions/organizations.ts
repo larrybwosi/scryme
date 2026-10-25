@@ -386,7 +386,7 @@ export async function syncTierDefaultsToOrganizationQuota(orgId: string) {
 }
 
 import { getSystemModules } from "./systems";
-import { evaluateAllModulesStatus } from "@repo/shared/constants";
+import { evaluateAllModulesStatus, PLATFORM_MODULES } from "@repo/shared/constants";
 
 export async function getOrganizationModules(orgId: string) {
   await requireSuperAdmin();
@@ -403,12 +403,15 @@ export async function getOrganizationModules(orgId: string) {
     throw new Error(`Organization with ID ${orgId} not found`);
   }
 
-  const overrides = (org.quotaOverrides as Record<string, any>)?.modules || {};
+  const quotaOverrides = (org.quotaOverrides as Record<string, any>) || {};
+  const overrides = (quotaOverrides.modules as Record<string, boolean>) || {};
+  const bypassPaymentCheck = Boolean(quotaOverrides.bypassPaymentCheck);
   const effective = evaluateAllModulesStatus(systemModules, overrides);
 
   return {
     organizationId: orgId,
     orgOverrides: overrides as Record<string, boolean>,
+    bypassPaymentCheck,
     systemModules,
     effective,
   };
@@ -452,5 +455,87 @@ export async function updateOrganizationModuleStatus(
 
   revalidatePath(`/organizations/${orgId}`);
   revalidatePath("/systems");
+  return getOrganizationModules(orgId);
+}
+
+export async function enableAllOrganizationModules(
+  orgId: string,
+  enableAll: boolean = true,
+) {
+  await requireSuperAdmin();
+
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    select: { quotaOverrides: true },
+  });
+
+  if (!org) {
+    throw new Error(`Organization with ID ${orgId} not found`);
+  }
+
+  const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
+
+  const updatedModules: Record<string, boolean> = {};
+  if (enableAll) {
+    PLATFORM_MODULES.forEach((m) => {
+      updatedModules[m.key] = true;
+    });
+  }
+
+  await db.organization.update({
+    where: { id: orgId },
+    data: {
+      quotaOverrides: {
+        ...currentOverrides,
+        modules: updatedModules,
+      },
+    },
+  });
+
+  revalidatePath(`/organizations/${orgId}`);
+  revalidatePath("/systems");
+  return getOrganizationModules(orgId);
+}
+
+export async function toggleOrganizationPaymentOverride(
+  orgId: string,
+  bypassPaymentCheck: boolean,
+) {
+  await requireSuperAdmin();
+
+  const org = await db.organization.findUnique({
+    where: { id: orgId },
+    select: { quotaOverrides: true },
+  });
+
+  if (!org) {
+    throw new Error(`Organization with ID ${orgId} not found`);
+  }
+
+  const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
+
+  await db.organization.update({
+    where: { id: orgId },
+    data: {
+      quotaOverrides: {
+        ...currentOverrides,
+        bypassPaymentCheck,
+      },
+    },
+  });
+
+  if (bypassPaymentCheck) {
+    await db.subscription.upsert({
+      where: { organizationId: orgId },
+      update: { status: "ACTIVE" },
+      create: {
+        organizationId: orgId,
+        status: "ACTIVE",
+      },
+    });
+  }
+
+  revalidatePath(`/organizations/${orgId}`);
+  revalidatePath("/billing");
   return getOrganizationModules(orgId);
 }

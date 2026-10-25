@@ -253,6 +253,70 @@ function IntegrationDetailContent({
                 </form>
               </CardContent>
             </Card>
+          ) : slug === "hermes-agent" || slug === "hermes" ? (
+            <Card className="border-border bg-card">
+              <CardHeader>
+                <CardTitle>Hermes Agent Integration Configuration</CardTitle>
+                <CardDescription>
+                  Configure Hermes Agent base URL, API key, model selection, and background automation settings.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleSaveSettings} className="space-y-4">
+                  <div className="flex items-center justify-between rounded-lg border p-4">
+                    <div className="space-y-0.5">
+                      <Label className="text-base">Enable Hermes Agent</Label>
+                      <p className="text-sm text-muted-foreground">
+                        Enable autonomous background task orchestration and monitoring.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.hermesEnabled ?? false}
+                      onCheckedChange={(checked) => setFormData({ ...formData, hermesEnabled: checked })}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="hermesBaseUrl">Hermes Base API URL</Label>
+                      <Input
+                        id="hermesBaseUrl"
+                        placeholder="http://hermes:8080"
+                        value={formData.hermesBaseUrl || ""}
+                        onChange={(e) => setFormData({ ...formData, hermesBaseUrl: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="hermesApiKey">Hermes API Key</Label>
+                      <Input
+                        id="hermesApiKey"
+                        type="password"
+                        placeholder="••••••••••••"
+                        value={formData.hermesApiKey || ""}
+                        onChange={(e) => setFormData({ ...formData, hermesApiKey: e.target.value })}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="hermesModel">Default LLM Model / Agent Engine</Label>
+                    <Input
+                      id="hermesModel"
+                      placeholder="hermes-3-llama-3.1-8b"
+                      value={formData.hermesModel || ""}
+                      onChange={(e) => setFormData({ ...formData, hermesModel: e.target.value })}
+                    />
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
+                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                      Save Hermes Settings
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
           ) : slug === "sentry" ? (
             <Card className="border-border bg-card">
               <CardHeader>
