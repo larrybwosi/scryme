@@ -179,6 +179,8 @@ export function TransactionTable({
   const [isGeneratingDoc, setIsGeneratingDoc] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(15);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
@@ -223,10 +225,29 @@ export function TransactionTable({
     });
   }, [transactions, search, activeFilter]);
 
+  // Reset page to 1 whenever filtering criteria or transaction list changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, activeFilter, transactions]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / itemsPerPage));
+
+  // Ensure current page stays within valid bounds
+  useEffect(() => {
+    if (currentPage > totalPages) {
+      setCurrentPage(totalPages);
+    }
+  }, [currentPage, totalPages]);
+
+  const paginatedTransactions = useMemo(() => {
+    const start = (currentPage - 1) * itemsPerPage;
+    return filtered.slice(start, start + itemsPerPage);
+  }, [filtered, currentPage, itemsPerPage]);
+
   // ── Select-all indeterminate state ─────────────────────────────────────────
   useEffect(() => {
     if (!selectAllRef.current) return;
-    const visibleIds = filtered.map(t => t.id);
+    const visibleIds = paginatedTransactions.map(t => t.id);
     const allChecked =
       visibleIds.length > 0 && visibleIds.every(id => selectedIds.has(id));
     const someChecked = visibleIds.some(id => selectedIds.has(id));
@@ -244,7 +265,7 @@ export function TransactionTable({
   };
 
   const toggleSelectAll = () => {
-    const visibleIds = filtered.map(t => t.id);
+    const visibleIds = paginatedTransactions.map(t => t.id);
     const allSelected = visibleIds.every(id => selectedIds.has(id));
     setSelectedIds(prev => {
       const next = new Set(prev);
@@ -400,7 +421,7 @@ export function TransactionTable({
                   </td>
                 </tr>
               ) : (
-                filtered.map(trx => {
+                paginatedTransactions.map(trx => {
                   const isSelected = selectedIds.has(trx.id);
                   const custName = trx.customer?.name ?? trx.businessAccount?.name ?? "Walk-in Customer";
                   const canPay =
@@ -607,36 +628,94 @@ export function TransactionTable({
         </div>
 
         {/* ── Footer ──────────────────────────────────────────────────────── */}
-        <div className="flex items-center justify-between border-t border-border bg-muted/50 px-4 py-2 dark:border-zinc-800">
-          <span className="text-[11px] text-muted-foreground">
-            Showing {filtered.length} of {transactions.length} transaction
-            {transactions.length !== 1 ? "s" : ""}
-          </span>
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-3 border-t border-border bg-muted/50 px-4 py-2.5 dark:border-zinc-800 text-[11px] text-muted-foreground">
+          <div className="flex items-center gap-3">
+            <span>
+              {filtered.length === 0
+                ? "Showing 0 transactions"
+                : `Showing ${(currentPage - 1) * itemsPerPage + 1} to ${Math.min(
+                    currentPage * itemsPerPage,
+                    filtered.length,
+                  )} of ${filtered.length} transaction${filtered.length !== 1 ? "s" : ""}${
+                    filtered.length !== transactions.length
+                      ? ` (filtered from ${transactions.length} total)`
+                      : ""
+                  }`}
+            </span>
+            <div className="flex items-center gap-1.5 border-l border-border pl-3 dark:border-zinc-700">
+              <span className="hidden sm:inline">Per page:</span>
+              <Select
+                value={String(itemsPerPage)}
+                onValueChange={val => {
+                  setItemsPerPage(Number(val));
+                  setCurrentPage(1);
+                }}>
+                <SelectTrigger className="h-6 text-[11px] w-[60px] px-1.5 bg-background border-border">
+                  <SelectValue placeholder={String(itemsPerPage)} />
+                </SelectTrigger>
+                <SelectContent align="end">
+                  <SelectItem value="10">10</SelectItem>
+                  <SelectItem value="15">15</SelectItem>
+                  <SelectItem value="25">25</SelectItem>
+                  <SelectItem value="50">50</SelectItem>
+                  <SelectItem value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
           <div className="flex items-center gap-1">
             <Button
               variant="outline"
               size="icon"
-              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground">
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
               <ChevronLeft className="h-3 w-3" />
             </Button>
-            {[1, 2, 3].map(p => (
-              <Button
-                key={p}
-                variant={p === 1 ? "default" : "outline"}
-                size="icon"
-                className={cn(
-                  "h-6 w-6 rounded text-[11px]",
-                  p === 1
-                    ? "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                    : "border-border text-muted-foreground hover:text-foreground",
-                )}>
-                {p}
-              </Button>
-            ))}
+            {Array.from({ length: totalPages }, (_, i) => i + 1)
+              .filter(p => {
+                if (totalPages <= 7) return true;
+                if (p === 1 || p === totalPages) return true;
+                return Math.abs(p - currentPage) <= 1;
+              })
+              .reduce<(number | string)[]>((acc, page, index, array) => {
+                if (index > 0 && typeof array[index - 1] === "number") {
+                  const prevPage = array[index - 1] as number;
+                  if (page - prevPage > 1) {
+                    acc.push("...");
+                  }
+                }
+                acc.push(page);
+                return acc;
+              }, [])
+              .map((p, idx) =>
+                typeof p === "string" ? (
+                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                    ...
+                  </span>
+                ) : (
+                  <Button
+                    key={p}
+                    variant={p === currentPage ? "default" : "outline"}
+                    size="icon"
+                    onClick={() => setCurrentPage(p)}
+                    className={cn(
+                      "h-6 w-6 rounded text-[11px]",
+                      p === currentPage
+                        ? "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                    )}>
+                    {p}
+                  </Button>
+                ),
+              )}
             <Button
               variant="outline"
               size="icon"
-              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground">
+              disabled={currentPage === totalPages || totalPages === 0}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
               <ChevronRight className="h-3 w-3" />
             </Button>
           </div>
