@@ -302,7 +302,7 @@ describe("Department Server Actions - BOLA Hardening", () => {
     it("should reject chain creation if approver member belongs to foreign organization", async () => {
       (getServerAuth as any).mockResolvedValue({ organizationId: "org-1", role: "ADMIN" });
       (db.department.findFirst as any).mockResolvedValue({ id: "dept-1" });
-      (db.member.findFirst as any).mockResolvedValue(null);
+      (db.member.findMany as any).mockResolvedValue([]);
 
       const result = await createDepartmentApprovalChain({
         departmentId: "dept-1",
@@ -314,7 +314,40 @@ describe("Department Server Actions - BOLA Hardening", () => {
         success: false,
         error: "Approver member foreign-approver not found or belongs to another organization",
       });
+      expect(db.member.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["foreign-approver"] },
+          organizationId: "org-1",
+        },
+        select: { id: true },
+      });
       expect(db.purchaseApprovalChain.create).not.toHaveBeenCalled();
+    });
+
+    it("should create approval chain successfully when approvers belong to org", async () => {
+      (getServerAuth as any).mockResolvedValue({ organizationId: "org-1", role: "ADMIN" });
+      (db.department.findFirst as any).mockResolvedValue({ id: "dept-1" });
+      (db.member.findMany as any).mockResolvedValue([{ id: "app-1" }, { id: "app-2" }]);
+      (db.purchaseApprovalChain.create as any).mockResolvedValue({ id: "chain-1", name: "Chain 1" });
+
+      const result = await createDepartmentApprovalChain({
+        departmentId: "dept-1",
+        name: "Chain 1",
+        steps: [
+          { approverId: "app-1", stepOrder: 1 },
+          { approverId: "app-2", stepOrder: 2 },
+        ],
+      });
+
+      expect(result).toEqual({ success: true, data: { id: "chain-1", name: "Chain 1" } });
+      expect(db.member.findMany).toHaveBeenCalledWith({
+        where: {
+          id: { in: ["app-1", "app-2"] },
+          organizationId: "org-1",
+        },
+        select: { id: true },
+      });
+      expect(db.purchaseApprovalChain.create).toHaveBeenCalled();
     });
   });
 

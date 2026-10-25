@@ -48,3 +48,7 @@
 ## 2026-10-26 - [Batched Relational Validation in Workflow Server Actions]
 **Learning:** Sequential `findFirst` database queries inside nested loops (`steps` -> `conditions` / `actions`) for foreign entity validation (`locationId`, `expenseCategoryId`, `specificMemberId`) introduce $O(S \times (C + A))$ blocking network roundtrips. Extracting unique foreign IDs into `Set`s up-front and executing concurrent `findMany` queries with `Promise.all` collapses latency down to $O(1)$ single concurrent roundtrips while preserving BOLA multi-tenant isolation.
 **Action:** Always extract foreign relational IDs into unique `Set`s and validate via batched `findMany` queries with `Promise.all` when validating multi-item step/line structures.
+
+## 2026-10-26 - [Batched Relational Validation in Department Server Actions]
+**Learning:** Sequential foreign key validation queries (`headId`, `parentId`, `locationId`, `costCenterId`) and per-step member lookups inside loops create $O(1 + N)$ blocking database roundtrips. Extracting unique relational IDs into arrays and validating them via a single batched `findMany` query parallelized alongside main entity queries via `Promise.all` collapses latency down to $O(1)$ concurrent execution while preserving multi-tenant BOLA checks.
+**Action:** Always batch foreign relational validation checks into `findMany` queries and group independent validations concurrently with `Promise.all`.
