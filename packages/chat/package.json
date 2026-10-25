@@ -1,6 +1,6 @@
 {
   "name": "@repo/chat",
-  "version": "10.2.25",
+  "version": "10.2.26",
   "main": "./src/index.ts",
   "types": "./src/index.ts",
   "type": "module",
