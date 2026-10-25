@@ -10,6 +10,7 @@ vi.mock("@repo/db", () => ({
       create: vi.fn(),
       update: vi.fn(),
       delete: vi.fn(),
+      deleteMany: vi.fn(),
     },
     member: {
       findUnique: vi.fn(),
@@ -326,17 +327,31 @@ describe("Invitations Server Actions", () => {
         orgRole: "OWNER",
       });
 
-      (db.invitation.delete as any).mockResolvedValue({ id: "inv_to_revoke" });
+      (db.invitation.deleteMany as any).mockResolvedValue({ count: 1 });
 
       const result = await revokeOrgInvitation("inv_to_revoke");
 
       expect(result.success).toBe(true);
-      expect(db.invitation.delete).toHaveBeenCalledWith({
+      expect(db.invitation.deleteMany).toHaveBeenCalledWith({
         where: {
           id: "inv_to_revoke",
           organizationId: "org_1",
         },
       });
+    });
+
+    it("should return error if invitation is not found or belongs to another org", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        user: { id: "user_owner" },
+        organizationId: "org_1",
+        orgRole: "OWNER",
+      });
+
+      (db.invitation.deleteMany as any).mockResolvedValue({ count: 0 });
+
+      const result = await revokeOrgInvitation("inv_foreign");
+
+      expect(result).toEqual({ success: false, error: "Invitation not found" });
     });
   });
 });
