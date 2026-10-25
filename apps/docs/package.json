@@ -1,6 +1,6 @@
 {
   "name": "docs",
-  "version": "10.2.25",
+  "version": "10.2.26",
   "private": true,
   "type": "module",
   "scripts": {
