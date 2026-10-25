@@ -299,12 +299,19 @@ export async function revokeOrgInvitation(invitationId: string) {
   }
 
   try {
-    await db.invitation.delete({
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: Invitation model lacks a composite unique index on [id, organizationId].
+    // Using deleteMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const result = await db.invitation.deleteMany({
       where: {
         id: invitationId,
         organizationId: session.organizationId,
       },
     });
+
+    if (result.count === 0) {
+      return { success: false, error: "Invitation not found" };
+    }
 
     revalidatePath("/staff");
     return { success: true };

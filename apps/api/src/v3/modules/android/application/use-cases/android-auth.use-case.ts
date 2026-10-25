@@ -282,7 +282,7 @@ export class AndroidAuthUseCase {
       }
 
       // Retrieve or create active session token for the user
-      let session = await this.prisma.client.session.findFirst({
+      const session = await this.prisma.client.session.findFirst({
         where: { userId: user.id },
         orderBy: { createdAt: "desc" },
         select: { token: true },

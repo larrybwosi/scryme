@@ -330,74 +330,96 @@ export async function processRecurringExpenses() {
     },
   });
 
-  for (const recurring of dueRecurring) {
-    await db.$transaction(async tx => {
-      // Create the actual expense
-      const count = await tx.expense.count({
-        where: { organizationId: recurring.organizationId },
-      });
-      const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
+  if (dueRecurring.length === 0) {
+    return { processed: 0 };
+  }
 
-      // Check for approval threshold
-      const org = await tx.organization.findUnique({
-        where: { id: recurring.organizationId },
-        select: { expenseApprovalThreshold: true },
-      });
+  // Group due recurring expenses by organizationId to prevent expenseNumber race conditions
+  const orgMap = new Map<string, typeof dueRecurring>();
+  for (const item of dueRecurring) {
+    const list = orgMap.get(item.organizationId) || [];
+    list.push(item);
+    orgMap.set(item.organizationId, list);
+  }
 
-      const threshold = org?.expenseApprovalThreshold
-        ? Number(org.expenseApprovalThreshold)
-        : 0;
-      const status =
-        Number(recurring.amount?.toString() || 0) > threshold
-          ? "PENDING_APPROVAL"
-          : "PENDING";
+  // ⚡ Bolt Optimization: Parallelize processing across organizations concurrently while maintaining
+  // sequential ordering per organization to guarantee unique, incrementing expense numbers.
+  const CHUNK_SIZE = 10;
+  const orgEntries = Array.from(orgMap.values());
 
-      const expense = await tx.expense.create({
-        data: {
-          organizationId: recurring.organizationId,
-          memberId: recurring.createdById, // Original creator
-          expenseNumber,
-          description: `Recurring: ${recurring.description}`,
-          amount: recurring.amount,
-          categoryId: recurring.categoryId,
-          expenseDate: recurring.nextDueDate,
-          paymentMethod: recurring.paymentMethod,
-          supplierId: recurring.supplierId,
-          utilityAccountId: recurring.utilityAccountId,
-          recurringExpenseId: recurring.id,
-          status: status as ExpenseStatus,
-        },
-      });
+  for (let i = 0; i < orgEntries.length; i += CHUNK_SIZE) {
+    const chunk = orgEntries.slice(i, i + CHUNK_SIZE);
+    await Promise.all(
+      chunk.map(async orgExpenses => {
+        for (const recurring of orgExpenses) {
+          await db.$transaction(async tx => {
+            // ⚡ Bolt Optimization: Parallelize expense count and organization approval threshold lookups inside transaction.
+            const [count, org] = await Promise.all([
+              tx.expense.count({
+                where: { organizationId: recurring.organizationId },
+              }),
+              tx.organization.findUnique({
+                where: { id: recurring.organizationId },
+                select: { expenseApprovalThreshold: true },
+              }),
+            ]);
 
-      if (status === "PENDING_APPROVAL") {
-        // We'd call submitForApproval here, but we need to ensure it works within transaction
-        // For simplicity in this background task, we'll create the approval request directly if needed
-        await tx.approvalRequest.create({
-          data: {
-            organizationId: recurring.organizationId,
-            requesterId: recurring.createdById,
-            relatedId: expense.id,
-            requestType: "EXPENSE",
-            amount: recurring.amount,
-            relatedRecordNumber: expenseNumber,
-            status: "PENDING",
-          },
-        });
-      }
+            const expenseNumber = `EXP-${new Date().getFullYear()}-${(count + 1).toString().padStart(4, "0")}`;
 
-      // Update next due date
-      const nextDueDate = calculateNextDueDate(
-        recurring.nextDueDate,
-        recurring.frequency,
-      );
-      await tx.recurringExpense.update({
-        where: { id: recurring.id },
-        data: { nextDueDate },
-      });
+            const threshold = org?.expenseApprovalThreshold
+              ? Number(org.expenseApprovalThreshold)
+              : 0;
+            const status =
+              Number(recurring.amount?.toString() || 0) > threshold
+                ? "PENDING_APPROVAL"
+                : "PENDING";
 
-      // TODO: Send notifications to admins/managers
-      // console.log(`Created recurring expense ${expenseNumber} for organization ${recurring.organizationId}`);
-    });
+            const expense = await tx.expense.create({
+              data: {
+                organizationId: recurring.organizationId,
+                memberId: recurring.createdById, // Original creator
+                expenseNumber,
+                description: `Recurring: ${recurring.description}`,
+                amount: recurring.amount,
+                categoryId: recurring.categoryId,
+                expenseDate: recurring.nextDueDate,
+                paymentMethod: recurring.paymentMethod,
+                supplierId: recurring.supplierId,
+                utilityAccountId: recurring.utilityAccountId,
+                recurringExpenseId: recurring.id,
+                status: status as ExpenseStatus,
+              },
+            });
+
+            if (status === "PENDING_APPROVAL") {
+              // We'd call submitForApproval here, but we need to ensure it works within transaction
+              // For simplicity in this background task, we'll create the approval request directly if needed
+              await tx.approvalRequest.create({
+                data: {
+                  organizationId: recurring.organizationId,
+                  requesterId: recurring.createdById,
+                  relatedId: expense.id,
+                  requestType: "EXPENSE",
+                  amount: recurring.amount,
+                  relatedRecordNumber: expenseNumber,
+                  status: "PENDING",
+                },
+              });
+            }
+
+            // Update next due date
+            const nextDueDate = calculateNextDueDate(
+              recurring.nextDueDate,
+              recurring.frequency,
+            );
+            await tx.recurringExpense.update({
+              where: { id: recurring.id },
+              data: { nextDueDate },
+            });
+          });
+        }
+      }),
+    );
   }
 
   return { processed: dueRecurring.length };

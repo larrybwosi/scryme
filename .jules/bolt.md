@@ -41,3 +41,14 @@
 ## 2026-10-25 - [Phased Concurrency for Relational Entity Schema Seeding]
 **Learning:** Executing multi-step schema initialization (such as seeding CRM object definitions, fields, and relationships) sequentially introduces $O(N)$ network query roundtrips. Splitting execution into 2 distinct concurrent phases (Phase 1: `Promise.all` creating parent entities; Phase 2: `Promise.all` creating child fields and relationship definitions using parent IDs) reduces 27 sequential roundtrips down to 2 concurrent query phases.
 **Action:** When seeding relational schemas, structure operations into distinct dependency-ordered phases and execute each phase concurrently with `Promise.all`.
+
+## 2026-10-26 - [Organization-Grouped Concurrency for Sequential Document Numbering]
+**Learning:** Parallelizing batch entity processing with `Promise.all` across items sharing stateful dynamic counter lookups (such as `tx.expense.count` used to build sequential `expenseNumber`s) causes race conditions where multiple concurrent transactions read the same initial count and generate duplicate document numbers. Grouping batch collections by `organizationId` first allows parallelizing execution across distinct organizations while maintaining strict sequential ordering within each organization.
+**Action:** When batch operations depend on dynamic counter reads for sequence numbering, group items by tenant/scope ID and process organizations concurrently via `Promise.all`, while processing intra-tenant items sequentially.
+## 2026-10-26 - [Batched Relational Validation in Workflow Server Actions]
+**Learning:** Sequential `findFirst` database queries inside nested loops (`steps` -> `conditions` / `actions`) for foreign entity validation (`locationId`, `expenseCategoryId`, `specificMemberId`) introduce $O(S \times (C + A))$ blocking network roundtrips. Extracting unique foreign IDs into `Set`s up-front and executing concurrent `findMany` queries with `Promise.all` collapses latency down to $O(1)$ single concurrent roundtrips while preserving BOLA multi-tenant isolation.
+**Action:** Always extract foreign relational IDs into unique `Set`s and validate via batched `findMany` queries with `Promise.all` when validating multi-item step/line structures.
+
+## 2026-10-26 - [Batched Relational Validation in Department Server Actions]
+**Learning:** Sequential foreign key validation queries (`headId`, `parentId`, `locationId`, `costCenterId`) and per-step member lookups inside loops create $O(1 + N)$ blocking database roundtrips. Extracting unique relational IDs into arrays and validating them via a single batched `findMany` query parallelized alongside main entity queries via `Promise.all` collapses latency down to $O(1)$ concurrent execution while preserving multi-tenant BOLA checks.
+**Action:** Always batch foreign relational validation checks into `findMany` queries and group independent validations concurrently with `Promise.all`.

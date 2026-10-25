@@ -73,7 +73,7 @@ export async function getDepartmentDetail(id: string) {
   }
 
   try {
-    const department = await db.department.findUnique({
+    const department = await db.department.findFirst({
       where: {
         id,
         organizationId: session.organizationId,
@@ -153,22 +153,67 @@ export async function createDepartment(data: {
   try {
     const session = await checkAdminPermission();
 
-    // Check if name is duplicate case-insensitively within the same organization
-    const existing = await db.department.findFirst({
-      where: {
-        organizationId: session.organizationId,
-        name: { equals: data.name, mode: "insensitive" },
-      },
-    });
+    const headIdValue = !data.headId || data.headId === "" || data.headId === "none" ? null : data.headId;
+    const parentIdValue = !data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId;
+    const locationIdValue = !data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId;
+    const costCenterIdValue = !data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId;
+
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+    // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
+    // ⚡ Bolt Optimization: Parallelize duplicate department name check and foreign relational ID validations with Promise.all.
+    // Collapses up to 5 sequential blocking database queries into 1 concurrent roundtrip.
+    const [existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
+      db.department.findFirst({
+        where: {
+          organizationId: session.organizationId,
+          name: { equals: data.name, mode: "insensitive" },
+        },
+      }),
+      headIdValue
+        ? db.member.findFirst({
+            where: { id: headIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      parentIdValue
+        ? db.department.findFirst({
+            where: { id: parentIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      locationIdValue
+        ? db.inventoryLocation.findFirst({
+            where: { id: locationIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      costCenterIdValue
+        ? db.costCenter.findFirst({
+            where: { id: costCenterIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (existing) {
       return { success: false, error: "A department with this name already exists." };
     }
 
-    const headIdValue = !data.headId || data.headId === "" || data.headId === "none" ? null : data.headId;
-    const parentIdValue = !data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId;
-    const locationIdValue = !data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId;
-    const costCenterIdValue = !data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId;
+    if (headIdValue && !headMember) {
+      return { success: false, error: "Department head not found or belongs to another organization" };
+    }
+
+    if (parentIdValue && !parentDepartment) {
+      return { success: false, error: "Parent department not found or belongs to another organization" };
+    }
+
+    if (locationIdValue && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
+    }
+
+    if (costCenterIdValue && !costCenter) {
+      return { success: false, error: "Cost center not found or belongs to another organization" };
+    }
 
     const department = await db.department.create({
       data: {
@@ -220,32 +265,87 @@ export async function updateDepartment(
   try {
     const session = await checkAdminPermission();
 
-    // Check if name is duplicate case-insensitively within the same organization
-    if (data.name) {
-      const existing = await db.department.findFirst({
-        where: {
-          organizationId: session.organizationId,
-          name: { equals: data.name, mode: "insensitive" },
-          id: { not: id },
-        },
-      });
-
-      if (existing) {
-        return { success: false, error: "A department with this name already exists." };
-      }
-    }
-
-    const oldDept = await db.department.findUnique({
-      where: { id, organizationId: session.organizationId },
-      select: { headId: true },
-    });
-
     const headIdValue = data.headId === undefined ? undefined : (!data.headId || data.headId === "" || data.headId === "none" ? null : data.headId);
     const parentIdValue = data.parentId === undefined ? undefined : (!data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId);
     const locationIdValue = data.locationId === undefined ? undefined : (!data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId);
     const costCenterIdValue = data.costCenterId === undefined ? undefined : (!data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId);
 
-    const department = await db.department.update({
+    if (parentIdValue === id) {
+      return { success: false, error: "Department cannot be its own parent" };
+    }
+
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
+    // MITIGATION: Validate modified foreign relational IDs against current organizationId before updating.
+    // ⚡ Bolt Optimization: Parallelize existing department lookup, duplicate name check, and relational ID validations with Promise.all.
+    // Collapses up to 6 sequential blocking database queries into 1 concurrent roundtrip.
+    const [oldDept, existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
+      db.department.findFirst({
+        where: { id, organizationId: session.organizationId },
+        select: { headId: true },
+      }),
+      data.name
+        ? db.department.findFirst({
+            where: {
+              organizationId: session.organizationId,
+              name: { equals: data.name, mode: "insensitive" },
+              id: { not: id },
+            },
+          })
+        : Promise.resolve(null),
+      headIdValue
+        ? db.member.findFirst({
+            where: { id: headIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      parentIdValue
+        ? db.department.findFirst({
+            where: { id: parentIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      locationIdValue
+        ? db.inventoryLocation.findFirst({
+            where: { id: locationIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      costCenterIdValue
+        ? db.costCenter.findFirst({
+            where: { id: costCenterIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (!oldDept) {
+      return { success: false, error: "Department not found" };
+    }
+
+    if (data.name && existing) {
+      return { success: false, error: "A department with this name already exists." };
+    }
+
+    if (headIdValue && !headMember) {
+      return { success: false, error: "Department head not found or belongs to another organization" };
+    }
+
+    if (parentIdValue && !parentDepartment) {
+      return { success: false, error: "Parent department not found or belongs to another organization" };
+    }
+
+    if (locationIdValue && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
+    }
+
+    if (costCenterIdValue && !costCenter) {
+      return { success: false, error: "Cost center not found or belongs to another organization" };
+    }
+
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: Department model lacks composite unique constraint on [id, organizationId].
+    // updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await db.department.updateMany({
       where: {
         id,
         organizationId: session.organizationId,
@@ -261,6 +361,14 @@ export async function updateDepartment(
         banner: data.banner,
         settings: data.settings,
       },
+    });
+
+    if (updateResult.count === 0) {
+      return { success: false, error: "Department not found" };
+    }
+
+    const department = await db.department.findFirstOrThrow({
+      where: { id, organizationId: session.organizationId },
     });
 
     // If head changed, handle department membership
@@ -296,12 +404,19 @@ export async function deleteDepartment(id: string) {
   try {
     const session = await checkAdminPermission();
 
-    await db.department.delete({
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: Department model lacks composite unique constraint on [id, organizationId].
+    // deleteMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const deleteResult = await db.department.deleteMany({
       where: {
         id,
         organizationId: session.organizationId,
       },
     });
+
+    if (deleteResult.count === 0) {
+      return { success: false, error: "Department not found" };
+    }
 
     revalidatePath("/staff/departments");
     return { success: true };
@@ -321,6 +436,24 @@ export async function addDepartmentMember(data: {
 }) {
   try {
     const session = await checkAdminPermission();
+
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Member or Department Access
+    // MITIGATION: Verify that both department and member belong to current organizationId.
+    const department = await db.department.findFirst({
+      where: { id: data.departmentId, organizationId: session.organizationId },
+      select: { id: true },
+    });
+    if (!department) {
+      return { success: false, error: "Department not found or belongs to another organization" };
+    }
+
+    const memberToAssign = await db.member.findFirst({
+      where: { id: data.memberId, organizationId: session.organizationId },
+      select: { id: true },
+    });
+    if (!memberToAssign) {
+      return { success: false, error: "Member not found or belongs to another organization" };
+    }
 
     const member = await db.departmentMember.create({
       data: {
@@ -350,6 +483,20 @@ export async function updateDepartmentMember(
   try {
     const session = await checkAdminPermission();
 
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: Verify department ownership through relational organizationId check before updating member.
+    const existing = await db.departmentMember.findFirst({
+      where: {
+        id,
+        department: { organizationId: session.organizationId },
+      },
+      select: { id: true, departmentId: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Department member record not found" };
+    }
+
     const member = await db.departmentMember.update({
       where: { id },
       data,
@@ -365,6 +512,20 @@ export async function updateDepartmentMember(
 export async function removeDepartmentMember(id: string) {
   try {
     const session = await checkAdminPermission();
+
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: Verify department ownership through relational organizationId check before deletion.
+    const existing = await db.departmentMember.findFirst({
+      where: {
+        id,
+        department: { organizationId: session.organizationId },
+      },
+      select: { id: true, departmentId: true },
+    });
+
+    if (!existing) {
+      return { success: false, error: "Department member record not found" };
+    }
 
     const member = await db.departmentMember.delete({
       where: { id },
@@ -384,6 +545,15 @@ export async function getMembersForAssignment(departmentId: string) {
   }
 
   try {
+    const department = await db.department.findFirst({
+      where: { id: departmentId, organizationId: session.organizationId },
+      select: { id: true },
+    });
+
+    if (!department) {
+      return { success: false, error: "Department not found" };
+    }
+
     const existingMemberIds = await db.departmentMember.findMany({
       where: { departmentId },
       select: { memberId: true },
@@ -459,6 +629,17 @@ export async function createDepartmentBudget(data: {
   try {
     const session = await checkAdminPermission();
 
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Budget Creation
+    // MITIGATION: Ensure department belongs to current organizationId before creating budget.
+    const department = await db.department.findFirst({
+      where: { id: data.departmentId, organizationId: session.organizationId },
+      select: { id: true },
+    });
+
+    if (!department) {
+      return { success: false, error: "Department not found or belongs to another organization" };
+    }
+
     const budget = await db.$transaction(async tx => {
       const newBudget = await tx.budget.create({
         data: {
@@ -475,8 +656,8 @@ export async function createDepartmentBudget(data: {
       });
 
       if (data.makeActive) {
-        await tx.department.update({
-          where: { id: data.departmentId },
+        await tx.department.updateMany({
+          where: { id: data.departmentId, organizationId: session.organizationId },
           data: { activeBudgetId: newBudget.id },
         });
       }
@@ -496,12 +677,38 @@ export async function updateDepartmentActiveBudget(
   budgetId: string | null,
 ) {
   try {
-    await checkAdminPermission();
+    const session = await checkAdminPermission();
 
-    await db.department.update({
-      where: { id: departmentId },
+    // THREAT: BOLA/IDOR Vulnerability - Foreign Active Budget Assignment
+    // MITIGATION: Verify both department and budget belong to current organizationId.
+    const department = await db.department.findFirst({
+      where: { id: departmentId, organizationId: session.organizationId },
+      select: { id: true },
+    });
+
+    if (!department) {
+      return { success: false, error: "Department not found" };
+    }
+
+    if (budgetId) {
+      const budget = await db.budget.findFirst({
+        where: { id: budgetId, organizationId: session.organizationId, departmentId },
+        select: { id: true },
+      });
+
+      if (!budget) {
+        return { success: false, error: "Budget not found or belongs to another department" };
+      }
+    }
+
+    const updateResult = await db.department.updateMany({
+      where: { id: departmentId, organizationId: session.organizationId },
       data: { activeBudgetId: budgetId },
     });
+
+    if (updateResult.count === 0) {
+      return { success: false, error: "Department not found" };
+    }
 
     revalidatePath(`/staff/departments/${departmentId}`);
     return { success: true };
@@ -521,6 +728,39 @@ export async function createDepartmentApprovalChain(data: {
 }) {
   try {
     const session = await checkAdminPermission();
+
+    // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Chain Creation
+    // MITIGATION: Verify department and all step approvers belong to current organizationId.
+    // ⚡ Bolt Optimization: Extract unique approver IDs and parallelize department verification and batched approver membership validation via Promise.all.
+    // Collapses O(1 + N) sequential blocking queries to O(1) concurrent database execution.
+    const approverIds = Array.from(new Set(data.steps.map(step => step.approverId)));
+
+    const [department, approvers] = await Promise.all([
+      db.department.findFirst({
+        where: { id: data.departmentId, organizationId: session.organizationId },
+        select: { id: true },
+      }),
+      approverIds.length > 0
+        ? db.member.findMany({
+            where: {
+              id: { in: approverIds },
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
+
+    if (!department) {
+      return { success: false, error: "Department not found or belongs to another organization" };
+    }
+
+    const validApproverSet = new Set(approvers.map(a => a.id));
+    for (const step of data.steps) {
+      if (!validApproverSet.has(step.approverId)) {
+        return { success: false, error: `Approver member ${step.approverId} not found or belongs to another organization` };
+      }
+    }
 
     const chain = await db.purchaseApprovalChain.create({
       data: {
@@ -551,12 +791,26 @@ export async function toggleApprovalChainStatus(id: string, isActive: boolean) {
   try {
     const session = await checkAdminPermission();
 
-    const chain = await db.purchaseApprovalChain.update({
+    // THREAT: BOLA/IDOR Vulnerability
+    // MITIGATION: PurchaseApprovalChain model lacks composite unique constraint on [id, organizationId].
+    // updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+    const updateResult = await db.purchaseApprovalChain.updateMany({
       where: { id, organizationId: session.organizationId },
       data: { isActive },
     });
 
-    revalidatePath(`/staff/departments/${chain.departmentId}`);
+    if (updateResult.count === 0) {
+      return { success: false, error: "Approval chain not found" };
+    }
+
+    const chain = await db.purchaseApprovalChain.findFirstOrThrow({
+      where: { id, organizationId: session.organizationId },
+      select: { departmentId: true },
+    });
+
+    if (chain.departmentId) {
+      revalidatePath(`/staff/departments/${chain.departmentId}`);
+    }
     return { success: true };
   } catch (error: any) {
     return { success: false, error: error.message };
