@@ -87,4 +87,20 @@ export class PaymentsController {
 
     return this.mpesaService.handleStkCallback(org.id, paymentId, payload);
   }
+
+  @AllowPublic()
+  @Post("webhooks/mpesa/c2b/validation")
+  @ApiOperation({ summary: "M-Pesa C2B Validation Webhook (Paybill / Till)" })
+  async handleC2BValidation(@Req() req: FastifyRequest, @Body() payload: any) {
+    this.mpesaService.validateWebhookIp(req.ip || "");
+    return this.mpesaService.handleC2BValidation(payload);
+  }
+
+  @AllowPublic()
+  @Post("webhooks/mpesa/c2b/confirmation")
+  @ApiOperation({ summary: "M-Pesa C2B Confirmation Webhook (Paybill / Till)" })
+  async handleC2BConfirmation(@Req() req: FastifyRequest, @Body() payload: any) {
+    this.mpesaService.validateWebhookIp(req.ip || "");
+    return this.mpesaService.handleC2BConfirmation(payload);
+  }
 }

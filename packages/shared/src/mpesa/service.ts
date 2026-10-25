@@ -1,6 +1,15 @@
 import { db, Payment, UnclaimedPayment } from '@repo/db';
 import { realtimeService } from '../realtime';
-import { decrypt } from '../api/v2';
+import { decryptV3 } from "../api/v3/encryption";
+
+export function safeDecryptCredential(encryptedText?: string | null): string {
+  if (!encryptedText) return "";
+  try {
+    return decryptV3(encryptedText);
+  } catch (error) {
+    return encryptedText;
+  }
+}
 import { MpesaClient } from './client';
 import { MpesaTriggerInput, MpesaCallbackPayload, MpesaC2BPayload, MpesaCredentials } from './types';
 import {
@@ -87,10 +96,10 @@ export class MpesaService {
     if (!config) throw new Error("M-Pesa not configured for this organization");
 
     const credentials: MpesaCredentials = {
-      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
-      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaConsumerKey: safeDecryptCredential(config.mpesaConsumerKey),
+      mpesaConsumerSecret: safeDecryptCredential(config.mpesaConsumerSecret),
       mpesaShortCode: config.mpesaShortCode,
-      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : "",
+      mpesaPassKey: safeDecryptCredential(config.mpesaPassKey),
       mpesaType: config.mpesaType as any,
       environment: config.environment as any,
     };
@@ -170,10 +179,10 @@ export class MpesaService {
     }
 
     const credentials: MpesaCredentials = {
-      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
-      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaConsumerKey: safeDecryptCredential(config.mpesaConsumerKey),
+      mpesaConsumerSecret: safeDecryptCredential(config.mpesaConsumerSecret),
       mpesaShortCode: config.mpesaShortCode,
-      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaPassKey: safeDecryptCredential(config.mpesaPassKey),
       mpesaType: config.mpesaType as any,
       environment: config.environment as any,
     };
@@ -185,11 +194,9 @@ export class MpesaService {
       accountReference: transactionId,
       transactionDesc: `Payment for Transaction ${transactionId}`,
       callbackUrl: (() => {
-        const orgSlug = input.orgSlug || config.organization?.slug;
+        const orgSlug = input.orgSlug || config.organization?.slug || organizationId;
         const callbackBase = process.env.MPESA_CALLBACK_BASE_URL || "https://api.scryme.tech";
-        return orgSlug
-          ? `${callbackBase}/api/v3/${orgSlug}/payments/webhooks/mpesa/stkpush/${paymentId}`
-          : `${callbackBase}/api/v2/payments/mpesa/webhooks/stkpush/${organizationId}/${paymentId}`;
+        return `${callbackBase}/api/v3/${orgSlug}/payments/webhooks/mpesa/stkpush/${paymentId}`;
       })(),
     });
 
@@ -724,13 +731,13 @@ export class MpesaService {
     if (!config) throw new Error('M-Pesa not configured');
 
     const credentials: MpesaCredentials = {
-      mpesaConsumerKey: decrypt(config.mpesaConsumerKey),
-      mpesaConsumerSecret: decrypt(config.mpesaConsumerSecret),
+      mpesaConsumerKey: safeDecryptCredential(config.mpesaConsumerKey),
+      mpesaConsumerSecret: safeDecryptCredential(config.mpesaConsumerSecret),
       mpesaShortCode: config.mpesaShortCode,
-      mpesaPassKey: config.mpesaPassKey ? decrypt(config.mpesaPassKey) : '',
+      mpesaPassKey: safeDecryptCredential(config.mpesaPassKey),
       mpesaType: config.mpesaType as any,
       environment: config.environment as any,
-      mpesaInitiatorPass: config.mpesaInitiatorPass ? decrypt(config.mpesaInitiatorPass) : undefined,
+      mpesaInitiatorPass: config.mpesaInitiatorPass ? safeDecryptCredential(config.mpesaInitiatorPass) : undefined,
     };
 
     const client = new MpesaClient(credentials);

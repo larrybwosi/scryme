@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
-import { MpesaService } from '../service';
+import { MpesaService, safeDecryptCredential } from '../service';
 import { db } from '@repo/db';
 import { realtimeService } from '../../realtime';
 
@@ -58,6 +58,17 @@ describe('MpesaService', () => {
   beforeEach(() => {
     service = new MpesaService();
     vi.clearAllMocks();
+  });
+
+  describe('safeDecryptCredential', () => {
+    it('should return empty string for null or undefined', () => {
+      expect(safeDecryptCredential(null)).toBe('');
+      expect(safeDecryptCredential(undefined)).toBe('');
+    });
+
+    it('should fallback to raw string if decryption fails or text is unencrypted', () => {
+      expect(safeDecryptCredential('raw_plain_text_credential')).toBe('raw_plain_text_credential');
+    });
   });
 
   describe('handleC2BConfirmation', () => {
