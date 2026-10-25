@@ -153,18 +153,6 @@ export async function createDepartment(data: {
   try {
     const session = await checkAdminPermission();
 
-    // Check if name is duplicate case-insensitively within the same organization
-    const existing = await db.department.findFirst({
-      where: {
-        organizationId: session.organizationId,
-        name: { equals: data.name, mode: "insensitive" },
-      },
-    });
-
-    if (existing) {
-      return { success: false, error: "A department with this name already exists." };
-    }
-
     const headIdValue = !data.headId || data.headId === "" || data.headId === "none" ? null : data.headId;
     const parentIdValue = !data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId;
     const locationIdValue = !data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId;
@@ -172,44 +160,59 @@ export async function createDepartment(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
-    if (headIdValue) {
-      const headMember = await db.member.findFirst({
-        where: { id: headIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!headMember) {
-        return { success: false, error: "Department head not found or belongs to another organization" };
-      }
+    // ⚡ Bolt Optimization: Parallelize duplicate department name check and foreign relational ID validations with Promise.all.
+    // Collapses up to 5 sequential blocking database queries into 1 concurrent roundtrip.
+    const [existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
+      db.department.findFirst({
+        where: {
+          organizationId: session.organizationId,
+          name: { equals: data.name, mode: "insensitive" },
+        },
+      }),
+      headIdValue
+        ? db.member.findFirst({
+            where: { id: headIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      parentIdValue
+        ? db.department.findFirst({
+            where: { id: parentIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      locationIdValue
+        ? db.inventoryLocation.findFirst({
+            where: { id: locationIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      costCenterIdValue
+        ? db.costCenter.findFirst({
+            where: { id: costCenterIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (existing) {
+      return { success: false, error: "A department with this name already exists." };
     }
 
-    if (parentIdValue) {
-      const parentDepartment = await db.department.findFirst({
-        where: { id: parentIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!parentDepartment) {
-        return { success: false, error: "Parent department not found or belongs to another organization" };
-      }
+    if (headIdValue && !headMember) {
+      return { success: false, error: "Department head not found or belongs to another organization" };
     }
 
-    if (locationIdValue) {
-      const location = await db.inventoryLocation.findFirst({
-        where: { id: locationIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!location) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
+    if (parentIdValue && !parentDepartment) {
+      return { success: false, error: "Parent department not found or belongs to another organization" };
     }
 
-    if (costCenterIdValue) {
-      const costCenter = await db.costCenter.findFirst({
-        where: { id: costCenterIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!costCenter) {
-        return { success: false, error: "Cost center not found or belongs to another organization" };
-      }
+    if (locationIdValue && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
+    }
+
+    if (costCenterIdValue && !costCenter) {
+      return { success: false, error: "Cost center not found or belongs to another organization" };
     }
 
     const department = await db.department.create({
@@ -262,78 +265,81 @@ export async function updateDepartment(
   try {
     const session = await checkAdminPermission();
 
-    // Check if name is duplicate case-insensitively within the same organization
-    if (data.name) {
-      const existing = await db.department.findFirst({
-        where: {
-          organizationId: session.organizationId,
-          name: { equals: data.name, mode: "insensitive" },
-          id: { not: id },
-        },
-      });
-
-      if (existing) {
-        return { success: false, error: "A department with this name already exists." };
-      }
-    }
-
-    const oldDept = await db.department.findFirst({
-      where: { id, organizationId: session.organizationId },
-      select: { headId: true },
-    });
-
-    if (!oldDept) {
-      return { success: false, error: "Department not found" };
-    }
-
     const headIdValue = data.headId === undefined ? undefined : (!data.headId || data.headId === "" || data.headId === "none" ? null : data.headId);
     const parentIdValue = data.parentId === undefined ? undefined : (!data.parentId || data.parentId === "" || data.parentId === "none" ? null : data.parentId);
     const locationIdValue = data.locationId === undefined ? undefined : (!data.locationId || data.locationId === "" || data.locationId === "none" ? null : data.locationId);
     const costCenterIdValue = data.costCenterId === undefined ? undefined : (!data.costCenterId || data.costCenterId === "" || data.costCenterId === "none" ? null : data.costCenterId);
 
+    if (parentIdValue === id) {
+      return { success: false, error: "Department cannot be its own parent" };
+    }
+
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate modified foreign relational IDs against current organizationId before updating.
-    if (headIdValue) {
-      const headMember = await db.member.findFirst({
-        where: { id: headIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!headMember) {
-        return { success: false, error: "Department head not found or belongs to another organization" };
-      }
+    // ⚡ Bolt Optimization: Parallelize existing department lookup, duplicate name check, and relational ID validations with Promise.all.
+    // Collapses up to 6 sequential blocking database queries into 1 concurrent roundtrip.
+    const [oldDept, existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
+      db.department.findFirst({
+        where: { id, organizationId: session.organizationId },
+        select: { headId: true },
+      }),
+      data.name
+        ? db.department.findFirst({
+            where: {
+              organizationId: session.organizationId,
+              name: { equals: data.name, mode: "insensitive" },
+              id: { not: id },
+            },
+          })
+        : Promise.resolve(null),
+      headIdValue
+        ? db.member.findFirst({
+            where: { id: headIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      parentIdValue
+        ? db.department.findFirst({
+            where: { id: parentIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      locationIdValue
+        ? db.inventoryLocation.findFirst({
+            where: { id: locationIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      costCenterIdValue
+        ? db.costCenter.findFirst({
+            where: { id: costCenterIdValue, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (!oldDept) {
+      return { success: false, error: "Department not found" };
     }
 
-    if (parentIdValue) {
-      if (parentIdValue === id) {
-        return { success: false, error: "Department cannot be its own parent" };
-      }
-      const parentDepartment = await db.department.findFirst({
-        where: { id: parentIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!parentDepartment) {
-        return { success: false, error: "Parent department not found or belongs to another organization" };
-      }
+    if (data.name && existing) {
+      return { success: false, error: "A department with this name already exists." };
     }
 
-    if (locationIdValue) {
-      const location = await db.inventoryLocation.findFirst({
-        where: { id: locationIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!location) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
+    if (headIdValue && !headMember) {
+      return { success: false, error: "Department head not found or belongs to another organization" };
     }
 
-    if (costCenterIdValue) {
-      const costCenter = await db.costCenter.findFirst({
-        where: { id: costCenterIdValue, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!costCenter) {
-        return { success: false, error: "Cost center not found or belongs to another organization" };
-      }
+    if (parentIdValue && !parentDepartment) {
+      return { success: false, error: "Parent department not found or belongs to another organization" };
+    }
+
+    if (locationIdValue && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
+    }
+
+    if (costCenterIdValue && !costCenter) {
+      return { success: false, error: "Cost center not found or belongs to another organization" };
     }
 
     // THREAT: BOLA/IDOR Vulnerability
@@ -725,21 +731,33 @@ export async function createDepartmentApprovalChain(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Chain Creation
     // MITIGATION: Verify department and all step approvers belong to current organizationId.
-    const department = await db.department.findFirst({
-      where: { id: data.departmentId, organizationId: session.organizationId },
-      select: { id: true },
-    });
+    // ⚡ Bolt Optimization: Extract unique approver IDs and parallelize department verification and batched approver membership validation via Promise.all.
+    // Collapses O(1 + N) sequential blocking queries to O(1) concurrent database execution.
+    const approverIds = Array.from(new Set(data.steps.map(step => step.approverId)));
+
+    const [department, approvers] = await Promise.all([
+      db.department.findFirst({
+        where: { id: data.departmentId, organizationId: session.organizationId },
+        select: { id: true },
+      }),
+      approverIds.length > 0
+        ? db.member.findMany({
+            where: {
+              id: { in: approverIds },
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve([]),
+    ]);
 
     if (!department) {
       return { success: false, error: "Department not found or belongs to another organization" };
     }
 
+    const validApproverSet = new Set(approvers.map(a => a.id));
     for (const step of data.steps) {
-      const approver = await db.member.findFirst({
-        where: { id: step.approverId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!approver) {
+      if (!validApproverSet.has(step.approverId)) {
         return { success: false, error: `Approver member ${step.approverId} not found or belongs to another organization` };
       }
     }
