@@ -339,10 +339,12 @@ export class ProductionService {
     const categoryIds = recipeGroups
       .map(g => g.categoryId)
       .filter((id): id is string => !!id);
-    const categories = await this.prisma.client.bakeryCategory.findMany({
-      where: { id: { in: categoryIds } },
-      select: { id: true, name: true },
-    });
+    const categories = categoryIds.length > 0
+      ? await this.prisma.client.bakeryCategory.findMany({
+          where: { id: { in: categoryIds } },
+          select: { id: true, name: true },
+        })
+      : [];
     const categoryMap = new Map(categories.map(c => [c.id, c.name]));
 
     const recipesByCategory: Record<string, number> = {};
