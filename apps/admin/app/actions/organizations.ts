@@ -1,3 +1,4 @@
+import { encryptV3 } from "@repo/shared/api/v3";
 "use server";
 
 import { db } from "@repo/db";
@@ -320,6 +321,16 @@ export async function getOrganizationPaymentCredentials(orgId: string) {
     where: { organizationId: orgId },
   });
 
+  if (creds) {
+    return {
+      ...creds,
+      mpesaConsumerKey: creds.mpesaConsumerKey ? "••••••••" : "",
+      mpesaConsumerSecret: creds.mpesaConsumerSecret ? "••••••••" : "",
+      mpesaPassKey: creds.mpesaPassKey ? "••••••••" : "",
+      mpesaInitiatorPass: creds.mpesaInitiatorPass ? "••••••••" : "",
+    };
+  }
+
   return creds;
 }
 
@@ -337,26 +348,52 @@ export async function upsertOrganizationPaymentCredentials(
 ) {
   await requireSuperAdmin();
 
+  const existingCreds = await db.paymentCredentials.findUnique({
+    where: { organizationId: orgId },
+  });
+
+  const getEncryptedValue = (newValue?: string, existingEncrypted?: string | null) => {
+    if (!newValue || newValue === "••••••••") {
+      return existingEncrypted || "";
+    }
+    return encryptV3(newValue);
+  };
+
+  const mpesaConsumerKey = getEncryptedValue(
+    input.mpesaConsumerKey,
+    existingCreds?.mpesaConsumerKey,
+  );
+  const mpesaConsumerSecret = getEncryptedValue(
+    input.mpesaConsumerSecret,
+    existingCreds?.mpesaConsumerSecret,
+  );
+  const mpesaPassKey = input.mpesaPassKey
+    ? getEncryptedValue(input.mpesaPassKey, existingCreds?.mpesaPassKey)
+    : existingCreds?.mpesaPassKey || null;
+  const mpesaInitiatorPass = input.mpesaInitiatorPass
+    ? getEncryptedValue(input.mpesaInitiatorPass, existingCreds?.mpesaInitiatorPass)
+    : existingCreds?.mpesaInitiatorPass || null;
+
   const creds = await db.paymentCredentials.upsert({
     where: { organizationId: orgId },
     update: {
-      mpesaShortCode: input.mpesaShortCode,
-      mpesaType: input.mpesaType || "PAYBILL",
-      mpesaConsumerKey: input.mpesaConsumerKey,
-      mpesaConsumerSecret: input.mpesaConsumerSecret,
-      mpesaPassKey: input.mpesaPassKey || null,
-      mpesaInitiatorPass: input.mpesaInitiatorPass || null,
-      environment: input.environment || "SANDBOX",
+      mpesaShortCode: input.mpesaShortCode || existingCreds?.mpesaShortCode || "",
+      mpesaType: input.mpesaType || existingCreds?.mpesaType || "PAYBILL",
+      environment: input.environment || existingCreds?.environment || "SANDBOX",
+      mpesaConsumerKey,
+      mpesaConsumerSecret,
+      mpesaPassKey,
+      mpesaInitiatorPass,
     },
     create: {
       organizationId: orgId,
-      mpesaShortCode: input.mpesaShortCode,
+      mpesaShortCode: input.mpesaShortCode || "",
       mpesaType: input.mpesaType || "PAYBILL",
-      mpesaConsumerKey: input.mpesaConsumerKey,
-      mpesaConsumerSecret: input.mpesaConsumerSecret,
-      mpesaPassKey: input.mpesaPassKey || null,
-      mpesaInitiatorPass: input.mpesaInitiatorPass || null,
       environment: input.environment || "SANDBOX",
+      mpesaConsumerKey,
+      mpesaConsumerSecret,
+      mpesaPassKey,
+      mpesaInitiatorPass,
     },
   });
 

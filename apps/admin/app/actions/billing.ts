@@ -634,7 +634,7 @@ export async function initiateAdminMpesaPayment(input: {
   const isDev = process.env.NODE_ENV === "development";
   const defaultCallbackBase = isDev ? "http://localhost:4000" : "https://api.scryme.tech";
   const callbackBase = process.env.MPESA_CALLBACK_BASE_URL || defaultCallbackBase;
-  const callbackUrl = `${callbackBase}/api/v2/payments/mpesa/webhooks/stkpush/${input.organizationId}/admin-${reference}`;
+  const callbackUrl = `${callbackBase}/api/v3/${org.slug}/payments/webhooks/mpesa/stkpush/admin-${reference}`;
 
   const stkRes = await client.initiateSTKPush({
     phoneNumber: input.phoneNumber,
