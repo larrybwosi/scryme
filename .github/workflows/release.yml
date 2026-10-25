@@ -149,13 +149,19 @@ jobs:
       fail-fast: false
       max-parallel: 1
       matrix:
-        os: [windows-latest]
+        os: [windows-latest, ubuntu-22.04]
         variant: [pharmacy, retail, supermarket, restaurant]
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
           ref: ${{ github.ref_name }}
+
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 libudev-dev libusb-1.0-0-dev libpcsclite-dev pkg-config
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
