@@ -1,22 +1,34 @@
 package tech.scryme.app.ui.sales
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.Crossfade
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.BarChart
+import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
-import tech.scryme.app.ui.components.ErrorMessageCard
-import tech.scryme.app.ui.components.ListSkeleton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -28,73 +40,98 @@ fun SalesScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     if (!uiState.isAuthorized) {
-        Box(
-            modifier = modifier.fillMaxSize(),
-            contentAlignment = Alignment.Center
-        ) {
-            Column(
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-                modifier = Modifier.padding(24.dp)
-            ) {
-                Text(
-                    text = "Access Restricted",
-                    fontSize = 20.sp,
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.error
-                )
-                Text(
-                    text = "Sales analytics and orders are only visible to Admins and Owners.",
-                    fontSize = 14.sp,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                onNavigateBack?.let { goBack ->
-                    Button(
-                        onClick = goBack,
-                        modifier = Modifier.padding(top = 16.dp)
-                    ) {
-                        Text("Go Back")
-                    }
-                }
-            }
-        }
+        AccessRestricted(onNavigateBack = onNavigateBack, modifier = modifier)
         return
     }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = "Sales & Orders",
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 18.sp
+            Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+                Column {
+                    TopAppBar(
+                        title = {
+                            Text(
+                                text = "Sales & Orders",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.SemiBold
+                            )
+                        },
+                        navigationIcon = {
+                            onNavigateBack?.let { goBack ->
+                                IconButton(onClick = goBack) {
+                                    Icon(
+                                        imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                        contentDescription = "Back"
+                                    )
+                                }
+                            }
+                        },
+                        actions = {
+                            IconButton(
+                                onClick = { viewModel.refresh() },
+                                enabled = !uiState.isLoading
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Refresh,
+                                    contentDescription = "Refresh"
+                                )
+                            }
+                        },
+                        colors = TopAppBarDefaults.topAppBarColors(
+                            containerColor = MaterialTheme.colorScheme.surface,
+                            titleContentColor = MaterialTheme.colorScheme.onSurface,
+                            navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                            actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
                     )
-                },
-                navigationIcon = {
-                    onNavigateBack?.let { goBack ->
-                        IconButton(onClick = goBack) {
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                contentDescription = "Back"
+
+                    TabRow(
+                        selectedTabIndex = uiState.selectedTab.ordinal,
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        contentColor = MaterialTheme.colorScheme.primary,
+                        divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
+                    ) {
+                        SalesTab.values().forEach { tab ->
+                            val selected = uiState.selectedTab == tab
+                            LeadingIconTab(
+                                selected = selected,
+                                onClick = { viewModel.selectTab(tab) },
+                                selectedContentColor = MaterialTheme.colorScheme.primary,
+                                unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                                text = {
+                                    Text(
+                                        text = tab.title,
+                                        style = MaterialTheme.typography.labelLarge,
+                                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                                    )
+                                },
+                                icon = {
+                                    val iconVector = when (tab) {
+                                        SalesTab.ANALYTICS -> Icons.Default.BarChart
+                                        SalesTab.ORDERS -> Icons.AutoMirrored.Filled.ReceiptLong
+                                    }
+                                    Icon(
+                                        imageVector = iconVector,
+                                        contentDescription = null,
+                                        modifier = Modifier.size(18.dp)
+                                    )
+                                }
                             )
                         }
                     }
-                },
-                actions = {
-                    IconButton(onClick = { viewModel.refresh() }) {
-                        Icon(
-                            imageVector = Icons.Default.Refresh,
-                            contentDescription = "Refresh"
-                        )
+
+                    // Subtle progress bar for background refreshes (data already on screen)
+                    val isRefreshing = uiState.isLoading &&
+                        (uiState.analytics != null || uiState.orders.isNotEmpty())
+                    Box(modifier = Modifier.height(2.dp).fillMaxWidth()) {
+                        if (isRefreshing) {
+                            LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
+                        }
                     }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                    titleContentColor = MaterialTheme.colorScheme.onSurface
-                )
-            )
+                }
+            }
         }
     ) { innerPadding ->
         Column(
@@ -102,114 +139,193 @@ fun SalesScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
         ) {
-            // Top Tab Row for switching between Analytics and Orders
-            TabRow(
-                selectedTabIndex = uiState.selectedTab.ordinal,
-                containerColor = MaterialTheme.colorScheme.surface,
-                contentColor = MaterialTheme.colorScheme.primary
+            AnimatedVisibility(
+                visible = uiState.error != null,
+                enter = fadeIn() + expandVertically(),
+                exit = fadeOut() + shrinkVertically()
             ) {
-                SalesTab.values().forEach { tab ->
-                    val selected = uiState.selectedTab == tab
-                    Tab(
-                        selected = selected,
-                        onClick = { viewModel.selectTab(tab) },
-                        text = {
-                            Text(
-                                text = tab.title,
-                                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                                fontSize = 14.sp
-                            )
-                        },
-                        icon = {
-                            val iconVector = when (tab) {
-                                SalesTab.ANALYTICS -> Icons.Default.BarChart
-                                SalesTab.ORDERS -> Icons.AutoMirrored.Filled.ReceiptLong
-                            }
-                            Icon(
-                                imageVector = iconVector,
-                                contentDescription = tab.title
-                            )
-                        }
-                    )
-                }
+                ErrorBanner(
+                    message = uiState.error ?: "",
+                    onRetry = { viewModel.refresh() }
+                )
             }
 
-            // Error Banner / Card if error exists
-            uiState.error?.let { errorMsg ->
-                Card(
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = errorMsg,
-                            color = MaterialTheme.colorScheme.onErrorContainer,
-                            modifier = Modifier.weight(1f),
-                            fontSize = 13.sp
-                        )
-                        TextButton(onClick = { viewModel.refresh() }) {
-                            Text("Retry", color = MaterialTheme.colorScheme.onErrorContainer)
-                        }
-                    }
-                }
-            }
-
-            // Main Content Area
             Box(
                 modifier = Modifier
-                    .fillMaxSize()
+                    .fillMaxWidth()
                     .weight(1f)
             ) {
-                if (uiState.isLoading && uiState.analytics == null && uiState.orders.isEmpty()) {
+                val initialLoading =
+                    uiState.isLoading && uiState.analytics == null && uiState.orders.isEmpty()
+
+                if (initialLoading) {
                     Box(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center
                     ) {
-                        CircularProgressIndicator()
-                    }
-                } else {
-                    when (uiState.selectedTab) {
-                        SalesTab.ANALYTICS -> {
-                            uiState.analytics?.let { analytics ->
-                                AnalyticsScreen(
-                                    analytics = analytics,
-                                    onRefresh = { viewModel.refresh() }
-                                )
-                            } ?: Box(
-                                modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center
-                            ) {
-                                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                    Text(
-                                        text = "No analytics data available",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant
-                                    )
-                                    Button(
-                                        onClick = { viewModel.refresh() },
-                                        modifier = Modifier.padding(top = 12.dp)
-                                    ) {
-                                        Text("Load Sales Analytics")
-                                    }
-                                }
-                            }
-                        }
-                        SalesTab.ORDERS -> {
-                            OrdersScreen(
-                                orders = uiState.orders,
-                                searchQuery = uiState.searchQuery,
-                                onSearchQueryChange = { viewModel.onSearchQueryChanged(it) }
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            CircularProgressIndicator()
+                            Text(
+                                text = "Loading sales data…",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
                         }
                     }
+                } else {
+                    Crossfade(targetState = uiState.selectedTab, label = "sales-tab") { tab ->
+                        when (tab) {
+                            SalesTab.ANALYTICS -> {
+                                val analytics = uiState.analytics
+                                if (analytics != null) {
+                                    AnalyticsScreen(
+                                        analytics = analytics,
+                                        onRefresh = { viewModel.refresh() }
+                                    )
+                                } else {
+                                    StateMessage(
+                                        icon = Icons.Default.BarChart,
+                                        title = "No analytics yet",
+                                        message = "Load your sales analytics to see revenue and order trends.",
+                                        actionLabel = "Load analytics",
+                                        onAction = { viewModel.refresh() }
+                                    )
+                                }
+                            }
+
+                            SalesTab.ORDERS -> {
+                                OrdersScreen(
+                                    orders = uiState.orders,
+                                    searchQuery = uiState.searchQuery,
+                                    onSearchQueryChange = { viewModel.onSearchQueryChanged(it) }
+                                )
+                            }
+                        }
+                    }
                 }
+            }
+        }
+    }
+}
+
+@Composable
+private fun AccessRestricted(
+    onNavigateBack: (() -> Unit)?,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        StateMessage(
+            icon = Icons.Default.Lock,
+            title = "Access restricted",
+            message = "Sales analytics and orders are only visible to Admins and Owners.",
+            actionLabel = if (onNavigateBack != null) "Go back" else null,
+            onAction = onNavigateBack
+        )
+    }
+}
+
+@Composable
+private fun StateMessage(
+    icon: ImageVector,
+    title: String,
+    message: String,
+    actionLabel: String? = null,
+    onAction: (() -> Unit)? = null,
+    modifier: Modifier = Modifier
+) {
+    Box(
+        modifier = modifier.fillMaxSize(),
+        contentAlignment = Alignment.Center
+    ) {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier
+                .widthIn(max = 360.dp)
+                .padding(32.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    imageVector = icon,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = TextAlign.Center
+            )
+            if (actionLabel != null && onAction != null) {
+                Spacer(Modifier.height(8.dp))
+                Button(onClick = onAction, shape = RoundedCornerShape(12.dp)) {
+                    Text(actionLabel)
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun ErrorBanner(
+    message: String,
+    onRetry: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Surface(
+        color = MaterialTheme.colorScheme.errorContainer,
+        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+        shape = RoundedCornerShape(12.dp),
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 12.dp)
+            .semantics { contentDescription = "Error: $message" }
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(10.dp)
+        ) {
+            Icon(
+                imageVector = Icons.Default.Warning,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Text(
+                text = message,
+                style = MaterialTheme.typography.bodySmall,
+                modifier = Modifier.weight(1f)
+            )
+            TextButton(
+                onClick = onRetry,
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                )
+            ) {
+                Text("Retry", fontWeight = FontWeight.SemiBold)
             }
         }
     }
