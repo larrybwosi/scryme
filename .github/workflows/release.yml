@@ -75,6 +75,63 @@ jobs:
             echo "published=false" >> "$GITHUB_OUTPUT"
           fi
 
+  set-version:
+    name: Set Version Output
+    runs-on: ubuntu-latest
+    needs: release-management
+    if: needs.release-management.outputs.published == 'true'
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      was_bumped: ${{ steps.get-version.outputs.was_bumped }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Ensure Unique Version and Sync
+        id: get-version
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/ensure-unique-version.js
+
+      - name: Commit and Push Version Bump If Needed
+        if: steps.get-version.outputs.was_bumped == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): bump version to v${{ steps.get-version.outputs.version }}"
+          git push origin ${{ github.ref_name }}
+
+  create-draft-release:
+    name: Create Draft Release
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Create GitHub Draft Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.set-version.outputs.version }}
+          IS_PRERELEASE: ${{ needs.release-management.outputs.isPrerelease }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          echo "Creating draft GitHub release for $TAG_NAME..."
+          gh release create "$TAG_NAME" --draft --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG || echo "Draft release already exists."
+
   build-packages:
     name: Build Packages
     runs-on: ubuntu-latest
@@ -108,42 +165,10 @@ jobs:
           name: built-packages
           path: packages/
 
-  set-version:
-    name: Set Version Output
-    runs-on: ubuntu-latest
-    needs: release-management
-    if: needs.release-management.outputs.published == 'true'
-    outputs:
-      version: ${{ steps.get-version.outputs.version }}
-      was_bumped: ${{ steps.get-version.outputs.was_bumped }}
-    steps:
-      - name: Checkout Repo
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-          fetch-depth: 0
-
-      - name: Ensure Unique Version and Sync
-        id: get-version
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          node scripts/ensure-unique-version.js
-
-      - name: Commit and Push Version Bump If Needed
-        if: steps.get-version.outputs.was_bumped == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add .
-          git commit -m "chore(release): bump version to v${{ steps.get-version.outputs.version }}"
-          git push origin ${{ github.ref_name }}
-
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
-    needs: [release-management, set-version, build-packages]
+    needs: [release-management, set-version, create-draft-release, build-packages]
     if: needs.release-management.outputs.published == 'true'
     strategy:
       fail-fast: false
@@ -227,7 +252,7 @@ jobs:
   publish-bakery:
     name: Publish Bakery (windows-latest)
     runs-on: windows-latest
-    needs: [release-management, set-version, build-packages]
+    needs: [release-management, set-version, create-draft-release, build-packages]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout repository
@@ -299,7 +324,7 @@ jobs:
   publish-android:
     name: Publish Android App
     runs-on: ubuntu-latest
-    needs: [release-management, set-version]
+    needs: [release-management, set-version, create-draft-release]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout repository
@@ -335,7 +360,7 @@ jobs:
             apps/android/app/build/outputs/apk/release/*.apk
             apps/android/app/build/outputs/bundle/release/*.aab
 
-      - name: Attach Android Build Artifacts to GitHub Release
+      - name: Attach Android Build Artifacts to GitHub Draft Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: v${{ needs.set-version.outputs.version }}
@@ -344,17 +369,17 @@ jobs:
           AAB_PATH=$(find apps/android/app/build/outputs/bundle/release -name "*.aab" 2>/dev/null | head -n 1)
 
           if [ -n "$APK_PATH" ]; then
-            gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || echo "No existing release found yet for gh release upload"
+            gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || echo "Failed to upload APK to draft release"
           fi
           if [ -n "$AAB_PATH" ]; then
-            gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || echo "No existing release found yet for gh release upload"
+            gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || echo "Failed to upload AAB to draft release"
           fi
 
   publish-crates:
     name: Publish Rust SDK to Crates.io
     continue-on-error: true
     runs-on: ubuntu-latest
-    needs: [release-management, build-packages]
+    needs: [release-management, set-version, build-packages, create-draft-release]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout Repo
@@ -404,7 +429,7 @@ jobs:
   publish-docker:
     name: Publish Docker Images
     runs-on: ubuntu-latest
-    needs: [release-management, set-version]
+    needs: [release-management, set-version, create-draft-release]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout Repo
@@ -436,9 +461,9 @@ jobs:
           BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
 
   create-tag:
-    name: Create Tag and Publish Release
+    name: Create Tag and Finalize Release
     runs-on: ubuntu-latest
-    needs: [release-management, set-version, publish-pos, publish-bakery, publish-android, publish-crates, publish-docker]
+    needs: [release-management, set-version, create-draft-release, publish-pos, publish-bakery, publish-android, publish-crates, publish-docker]
     if: needs.release-management.outputs.published == 'true'
     steps:
       - name: Checkout Repo
@@ -453,41 +478,30 @@ jobs:
           path: android-release-builds
           continue-on-error: true
 
-      - name: Create Git Tag and Publish Release
+      - name: Tag Repository and Publish Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: v${{ needs.set-version.outputs.version }}
-          IS_PRERELEASE: ${{ needs.release-management.outputs.isPrerelease }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
 
-          echo "Checking if git tag $TAG_NAME exists locally/remotely..."
+          echo "Creating and pushing Git tag $TAG_NAME..."
           if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
             git tag "$TAG_NAME"
           fi
+          git push origin "$TAG_NAME" || echo "Tag already pushed"
 
-          echo "Publishing release $TAG_NAME..."
-          if gh release edit "$TAG_NAME" --draft=false; then
-            echo "Draft release $TAG_NAME successfully published."
-          else
-            echo "Draft release $TAG_NAME not found or couldn't be undrafted, creating new release..."
-            PRERELEASE_FLAG=""
-            if [ "$IS_PRERELEASE" = "true" ]; then
-              PRERELEASE_FLAG="--prerelease"
-            fi
-            gh release create "$TAG_NAME" --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG || true
-          fi
+          echo "Publishing draft release $TAG_NAME..."
+          gh release edit "$TAG_NAME" --draft=false
 
           APK_PATH=$(find android-release-builds -name "*.apk" 2>/dev/null | head -n 1)
           AAB_PATH=$(find android-release-builds -name "*.aab" 2>/dev/null | head -n 1)
 
           if [ -n "$APK_PATH" ]; then
-            echo "Uploading Android APK $APK_PATH to release $TAG_NAME..."
             gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || true
           fi
           if [ -n "$AAB_PATH" ]; then
-            echo "Uploading Android AAB $AAB_PATH to release $TAG_NAME..."
             gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || true
           fi
