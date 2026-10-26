@@ -180,7 +180,6 @@ jobs:
     if: needs.release-management.outputs.published == 'true'
     strategy:
       fail-fast: false
-      max-parallel: 1
       matrix:
         os: [windows-latest, ubuntu-22.04]
         variant: [pharmacy, retail, supermarket, restaurant]
