@@ -550,6 +550,14 @@ export async function toggleOrganizationPaymentOverride(
   }
 
   const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
+  const currentModules = (currentOverrides.modules as Record<string, boolean>) || {};
+
+  const updatedModules = { ...currentModules };
+  if (bypassPaymentCheck) {
+    PLATFORM_MODULES.forEach((m) => {
+      updatedModules[m.key] = true;
+    });
+  }
 
   await db.organization.update({
     where: { id: orgId },
@@ -557,6 +565,7 @@ export async function toggleOrganizationPaymentOverride(
       quotaOverrides: {
         ...currentOverrides,
         bypassPaymentCheck,
+        modules: updatedModules,
       },
     },
   });
@@ -574,5 +583,6 @@ export async function toggleOrganizationPaymentOverride(
 
   revalidatePath(`/organizations/${orgId}`);
   revalidatePath("/billing");
+  revalidatePath("/systems");
   return getOrganizationModules(orgId);
 }

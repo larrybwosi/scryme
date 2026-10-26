@@ -55,6 +55,7 @@ export class MultiTenancyGuard implements CanActivate {
         isSuspended: true,
         suspensionReason: true,
         createdAt: true,
+        quotaOverrides: true,
       },
     });
 
@@ -128,7 +129,11 @@ export class MultiTenancyGuard implements CanActivate {
         url.includes("/billing") ||
         url.includes("/webhooks");
 
-      if (isMutatingMethod && !isExemptRoute) {
+      const isPaymentOverride = Boolean(
+        (organization.quotaOverrides as Record<string, any>)?.bypassPaymentCheck,
+      );
+
+      if (isMutatingMethod && !isExemptRoute && !isPaymentOverride) {
         const subscription = await this.prisma.client.subscription.findUnique({
           where: { organizationId: organization.id },
         });

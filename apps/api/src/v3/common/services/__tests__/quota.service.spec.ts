@@ -57,6 +57,22 @@ describe("QuotaService", () => {
       expect(result.effectiveLimits.maxProducts).toBe(250);
       expect(result.effectiveLimits.maxUsers).toBe(3); // from free tier
     });
+
+    it("should set all effective limits to -1 (unlimited) when bypassPaymentCheck is true", async () => {
+      (prisma.client.organization.findUnique as any).mockResolvedValue({
+        id: "org-1",
+        quotaOverrides: { bypassPaymentCheck: true, maxProducts: 50 },
+      });
+      (prisma.client.subscription.findUnique as any).mockResolvedValue({
+        organizationId: "org-1",
+        dodoPriceId: "free",
+      });
+      (prisma.client.globalSetting.findUnique as any).mockResolvedValue(null);
+
+      const result = await service.getEffectiveQuota("org-1");
+      expect(result.effectiveLimits.maxProducts).toBe(-1);
+      expect(result.effectiveLimits.maxUsers).toBe(-1);
+    });
   });
 
   describe("checkQuota", () => {

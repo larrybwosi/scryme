@@ -99,36 +99,43 @@ export async function getServerAuth(
 
   // Block access if organization subscription or free trial is expired
   if (organizationId && !isSuperAdmin && !options.allowExpired) {
-    const subscription = await db.subscription.findUnique({
-      where: { organizationId },
+    const org = await db.organization.findUnique({
+      where: { id: organizationId },
+      select: { createdAt: true, quotaOverrides: true },
     });
 
-    const now = new Date();
-    let isExpired = false;
+    const isPaymentOverride = Boolean(
+      (org?.quotaOverrides as Record<string, any>)?.bypassPaymentCheck
+    );
 
-    if (subscription) {
-      if (["EXPIRED", "CANCELED", "PAST_DUE"].includes(subscription.status)) {
-        isExpired = true;
-      } else if (subscription.status === "TRIALING" && subscription.trialEndsAt && new Date(subscription.trialEndsAt) < now) {
-        isExpired = true;
-      } else if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
-        isExpired = true;
-      }
-    } else {
-      const org = await db.organization.findUnique({
-        where: { id: organizationId },
-        select: { createdAt: true },
+    if (!isPaymentOverride) {
+      const subscription = await db.subscription.findUnique({
+        where: { organizationId },
       });
-      if (org?.createdAt) {
-        const trialEnd = new Date(org.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
-        if (trialEnd < now) {
+
+      const now = new Date();
+      let isExpired = false;
+
+      if (subscription) {
+        if (["EXPIRED", "CANCELED", "PAST_DUE"].includes(subscription.status)) {
+          isExpired = true;
+        } else if (subscription.status === "TRIALING" && subscription.trialEndsAt && new Date(subscription.trialEndsAt) < now) {
+          isExpired = true;
+        } else if (subscription.dodoCurrentPeriodEnd && new Date(subscription.dodoCurrentPeriodEnd) < now) {
           isExpired = true;
         }
+      } else {
+        if (org?.createdAt) {
+          const trialEnd = new Date(org.createdAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+          if (trialEnd < now) {
+            isExpired = true;
+          }
+        }
       }
-    }
 
-    if (isExpired) {
-      redirect("/payment-expired");
+      if (isExpired) {
+        redirect("/payment-expired");
+      }
     }
   }
 
