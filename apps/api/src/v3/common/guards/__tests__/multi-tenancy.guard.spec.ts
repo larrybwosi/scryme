@@ -242,4 +242,32 @@ describe("MultiTenancyGuard - Cross Tenant Isolation", () => {
     const result = await guard.canActivate(context);
     expect(result).toBe(true);
   });
+
+  it("should allow POST mutating request when subscription is expired if bypassPaymentCheck is enabled on organization", async () => {
+    mockPrisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_b",
+      slug: "org-b",
+      name: "Organization B",
+      quotaOverrides: { bypassPaymentCheck: true },
+    });
+    mockPrisma.client.member.findFirst.mockResolvedValue({
+      id: "member_id_123",
+      organizationId: "org_b",
+      userId: "member_user",
+      isActive: true,
+    });
+    mockPrisma.client.subscription.findUnique.mockResolvedValue({
+      status: "EXPIRED",
+    });
+
+    const context = createMockHttpContext({
+      orgSlug: "org-b",
+      user: { id: "member_user", role: "MEMBER" },
+      method: "POST",
+      url: "/api/v3/org-b/sales",
+    });
+
+    const result = await guard.canActivate(context);
+    expect(result).toBe(true);
+  });
 });

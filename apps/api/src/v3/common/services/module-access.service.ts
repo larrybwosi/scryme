@@ -35,11 +35,17 @@ export class ModuleAccessService {
       });
 
       if (org?.quotaOverrides) {
-        orgModules =
-          ((org.quotaOverrides as Record<string, any>)?.modules as Record<
-            string,
-            boolean
-          >) || {};
+        const overridesObj = org.quotaOverrides as Record<string, any>;
+        if (overridesObj.bypassPaymentCheck) {
+          return {
+            moduleKey,
+            isEnabled: true,
+            systemEnabled: true,
+            orgEnabled: true,
+            reason: "Organization payment override enabled",
+          };
+        }
+        orgModules = (overridesObj.modules as Record<string, boolean>) || {};
       }
     }
 

@@ -140,11 +140,23 @@ export class QuotaService {
     const baseLimits = tier?.limits || {};
     const overrides = (org?.quotaOverrides as Record<string, number>) || {};
 
-    const effectiveLimits = {
+    const isPaymentOverride = Boolean(
+      (org?.quotaOverrides as Record<string, any>)?.bypassPaymentCheck,
+    );
+
+    let effectiveLimits = {
       ...defaultAllocations,
       ...baseLimits,
       ...overrides,
     };
+
+    if (isPaymentOverride) {
+      const unlimitedLimits: Record<string, number> = {};
+      Object.keys(effectiveLimits).forEach((k) => {
+        unlimitedLimits[k] = -1;
+      });
+      effectiveLimits = unlimitedLimits;
+    }
 
     return {
       organizationId,
