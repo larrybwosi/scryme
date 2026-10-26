@@ -1,38 +1,36 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
+import { useState } from 'react'
 import {
   ArrowRight,
+  ChevronDown,
   Zap,
   ShieldCheck,
-  TrendingUp,
   Cpu,
-  BarChart3,
-  Box,
-  Users,
-  CheckCircle2,
-  Sparkles,
   Layers,
-  ChevronDown,
-  Activity,
-  Globe,
   Database,
-  Terminal,
+  BarChart3,
+  TrendingUp,
+  Activity,
+  CheckCircle2,
+  DollarSign,
+  Users,
+  Building2,
+  Store,
+  Boxes,
   Lock,
   RefreshCw,
-  Server,
-  ShoppingCart,
-  DollarSign
+  Server
 } from 'lucide-react'
-import { useState } from 'react'
 
 export const Route = createFileRoute('/')({
-  component: IndexComponent,
+  component: HomeComponent,
 })
 
-function IndexComponent() {
+function HomeComponent() {
+  const [activeTab, setActiveTab] = useState<'crm' | 'inventory' | 'sales' | 'cms'>('crm')
   const [openFaq, setOpenFaq] = useState<number | null>(0)
-  const [activeTab, setActiveTab] = useState<'sales' | 'inventory' | 'crm' | 'cms'>('sales')
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
@@ -43,222 +41,146 @@ function IndexComponent() {
       <Header />
 
       {/* Hero Section */}
-      <section className="relative pt-20 pb-24 md:pt-32 md:pb-36 overflow-hidden">
-        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#d2ff3a]/10 blur-[120px] rounded-full pointer-events-none" />
+      <section className="relative pt-20 pb-20 md:pt-32 md:pb-28 overflow-hidden px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] bg-[#d2ff3a]/5 rounded-full blur-[120px] pointer-events-none" />
 
-        <div className="max-w-7xl mx-auto px-4 md:px-8 relative z-10 text-center">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 mb-8">
-            <span className="w-2 h-2 rounded-full bg-[#d2ff3a] animate-pulse" />
-            <span className="text-xs font-semibold uppercase tracking-wider text-[#d2ff3a] font-mono">
-              Obsidian Kinetic Architecture • 14-Day Free Trial
+        <div className="text-center max-w-4xl mx-auto mb-16 relative z-10">
+          <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-[#d2ff3a]/10 border border-[#d2ff3a]/20 text-[#d2ff3a] text-xs font-mono mb-8 backdrop-blur-md">
+            <span className="relative flex h-2 w-2">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d2ff3a] opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 bg-[#d2ff3a]"></span>
             </span>
+            <span>Sub-Second Operational Data Mesh Engine</span>
           </div>
 
-          <h1 className="text-4xl sm:text-6xl md:text-7xl lg:text-8xl font-normal font-serif dark:text-white light:text-[#090a0b] tracking-tight leading-[1.05] max-w-5xl mx-auto mb-8">
-            The Autonomous ERP for High-Growth Enterprises
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif dark:text-white light:text-[#090a0b] tracking-tight leading-[1.08] mb-8">
+            Can one smarter engine scale your entire enterprise?
           </h1>
 
-          <p className="text-lg md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed font-sans">
-            Bridge institutional rigor with real-time operational telemetry. Unify inventory, RevOps, POS, and CRM into one high-contrast, kinetic intelligence engine.
+          <p className="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed mb-10">
+            Four specialized engines. Zero operational friction. Eliminate the catastrophic sync drift of legacy software with sub-second bi-directional telemetry.
           </p>
 
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] hover:shadow-[0_0_30px_rgba(210,255,58,0.5)] transition-all transform active:scale-95"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] hover:shadow-[0_0_30px_rgba(210,255,58,0.4)] transition-all"
             >
-              <span>Start 14-Day Free Trial</span>
+              <span>Deploy Workspace Free</span>
               <ArrowRight className="w-4 h-4" />
             </a>
             <a
-              href="#demo"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/15 dark:border-white/15 light:border-black/15 rounded-full hover:bg-white/5 transition"
+              href="#engines"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-semibold uppercase tracking-wider dark:text-white light:text-[#090a0b] border border-white/15 rounded-full hover:bg-white/5 transition"
             >
-              <span>Explore Live Telemetry</span>
+              <span>Explore Architecture</span>
             </a>
           </div>
+        </div>
 
-          {/* Stat Ticker */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 glass-panel rounded-2xl max-w-4xl mx-auto text-left">
-            <div>
-              <div className="text-3xl font-extrabold dark:text-white light:text-[#090a0b] font-mono">12ms</div>
-              <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-mono">Global Sync Latency</div>
-            </div>
-            <div>
-              <div className="text-3xl font-extrabold text-[#d2ff3a] font-mono">99.999%</div>
-              <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-mono">Uptime SLA</div>
-            </div>
-            <div>
-              <div className="text-3xl font-extrabold text-[#10b981] font-mono">$4.2B+</div>
-              <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-mono">Ledger Processed</div>
-            </div>
-            <div>
-              <div className="text-3xl font-extrabold dark:text-white light:text-[#090a0b] font-mono">150+</div>
-              <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider font-mono">Global Edge Nodes</div>
-            </div>
+        {/* Core Operational Telemetry Bar */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-5xl mx-auto font-mono text-center">
+          <div className="glass-panel p-5 rounded-2xl border-white/10">
+            <div className="text-2xl md:text-3xl font-extrabold text-[#d2ff3a]">+42%</div>
+            <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">Win-Rate Velocity</div>
+          </div>
+          <div className="glass-panel p-5 rounded-2xl border-white/10">
+            <div className="text-2xl md:text-3xl font-extrabold text-[#10b981]">0.02%</div>
+            <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">Incident Rate</div>
+          </div>
+          <div className="glass-panel p-5 rounded-2xl border-white/10">
+            <div className="text-2xl md:text-3xl font-extrabold text-purple-400">89.4%</div>
+            <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">Net Retention</div>
+          </div>
+          <div className="glass-panel p-5 rounded-2xl border-white/10">
+            <div className="text-2xl md:text-3xl font-extrabold text-blue-400">&lt;8ms</div>
+            <div className="text-xs text-[var(--text-muted)] uppercase tracking-wider mt-1">POS Latency</div>
           </div>
         </div>
       </section>
 
-      {/* Interactive Platform Overview */}
-      <section id="demo" className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
-        <div className="text-center max-w-3xl mx-auto mb-12">
-          <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a]">Architectural Mesh</span>
+      {/* Legacy vs Scryme Callout */}
+      <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto border-t border-b border-white/10">
+        <div className="glass-panel-elevated p-8 md:p-12 rounded-3xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+          <div>
+            <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a] block mb-3">Operational Friction Solved</span>
+            <h2 className="text-2xl md:text-4xl font-serif dark:text-white light:text-[#090a0b] mb-4">
+              Stop paying the middleware tax on broken operational data.
+            </h2>
+            <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
+              Traditional enterprise software wasn't designed to communicate. It was designed to bill you for integration consultants. Scryme unifies your CRM, stock ledger, sales engine, and CMS into a single hardware-isolated mesh.
+            </p>
+            <div className="flex flex-wrap gap-4 font-mono text-xs text-slate-300">
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" />
+                <span>Zero Middleware Connectors Needed</span>
+              </div>
+              <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10">
+                <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" />
+                <span>Sub-Second Multi-Node Replication</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="glass-panel p-6 rounded-2xl bg-[#0d0e0f] border-white/10 font-mono text-xs space-y-4">
+            <div className="flex items-center justify-between border-b border-white/10 pb-3">
+              <span className="text-slate-400">// LEGACY_STACK_DRIFT</span>
+              <span className="text-rose-400 font-bold">48-Hour Sync Lag</span>
+            </div>
+            <div className="space-y-2 text-slate-400">
+              <p>Salesforce ➔ NetSuite Integration: <span className="text-rose-400">Failed (Timeout)</span></p>
+              <p>Warehouse Stock Reconciliation: <span className="text-amber-400">Inconsistent Ledger</span></p>
+            </div>
+            <div className="pt-3 border-t border-white/10 flex items-center justify-between">
+              <span className="text-[#d2ff3a] font-bold">// SCRYME_MESH_STATE</span>
+              <span className="text-emerald-400 font-bold">12ms Telemetry Sync</span>
+            </div>
+            <p className="text-slate-300">Unified Account Graph: <span className="text-emerald-400">Consistent Across 180 Nodes</span></p>
+          </div>
+        </div>
+      </section>
+
+      {/* Four Specialized Engines (Interactive Switcher) */}
+      <section id="engines" className="py-24 px-4 md:px-8 max-w-7xl mx-auto">
+        <div className="text-center max-w-3xl mx-auto mb-16">
+          <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a]">Unified Architecture</span>
           <h2 className="text-3xl md:text-5xl font-serif dark:text-white light:text-[#090a0b] mt-3 mb-4">
-            Four Core Pillars. One Unified Ledger.
+            The Four Pillars of Operational Command
           </h2>
-          <p className="text-base text-[var(--text-muted)]">
-            Select a module below to inspect real-time ERP operational capabilities.
+          <p className="text-sm md:text-base text-[var(--text-muted)]">
+            Every module operates natively on the same unified ledger, eliminating data translation layers.
           </p>
         </div>
 
-        {/* Module Switcher Tabs */}
-        <div className="flex flex-wrap items-center justify-center gap-2 mb-8">
-          <button
-            onClick={() => setActiveTab('sales')}
-            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider font-mono transition ${
-              activeTab === 'sales'
-                ? 'bg-[#d2ff3a] text-[#090a0b]'
-                : 'bg-white/5 border border-white/10 dark:text-white light:text-[#090a0b] hover:bg-white/10'
-            }`}
-          >
-            Sales & RevOps
-          </button>
-          <button
-            onClick={() => setActiveTab('inventory')}
-            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider font-mono transition ${
-              activeTab === 'inventory'
-                ? 'bg-[#d2ff3a] text-[#090a0b]'
-                : 'bg-white/5 border border-white/10 dark:text-white light:text-[#090a0b] hover:bg-white/10'
-            }`}
-          >
-            Multi-Location Inventory
-          </button>
-          <button
-            onClick={() => setActiveTab('crm')}
-            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider font-mono transition ${
-              activeTab === 'crm'
-                ? 'bg-[#d2ff3a] text-[#090a0b]'
-                : 'bg-white/5 border border-white/10 dark:text-white light:text-[#090a0b] hover:bg-white/10'
-            }`}
-          >
-            360° Relationship CRM
-          </button>
-          <button
-            onClick={() => setActiveTab('cms')}
-            className={`px-5 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider font-mono transition ${
-              activeTab === 'cms'
-                ? 'bg-[#d2ff3a] text-[#090a0b]'
-                : 'bg-white/5 border border-white/10 dark:text-white light:text-[#090a0b] hover:bg-white/10'
-            }`}
-          >
-            Catalog Cloud & Headless CMS
-          </button>
+        {/* Tab Selector */}
+        <div className="flex flex-wrap items-center justify-center gap-2 md:gap-4 mb-12">
+          {[
+            { id: 'crm', label: '360° Relationship CRM', icon: Users },
+            { id: 'inventory', label: 'Multi-Node Inventory', icon: Boxes },
+            { id: 'sales', label: 'Omnichannel Sales POS', icon: Store },
+            { id: 'cms', label: 'Headless Catalog Cloud', icon: Database },
+          ].map((tab) => {
+            const Icon = tab.icon
+            const active = activeTab === tab.id
+            return (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as any)}
+                className={`flex items-center gap-2.5 px-6 py-3.5 rounded-full text-xs font-mono font-semibold uppercase tracking-wider transition-all ${
+                  active
+                    ? 'bg-[#d2ff3a] text-[#090a0b] shadow-[0_0_20px_rgba(210,255,58,0.3)]'
+                    : 'glass-panel text-slate-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                <Icon className="w-4 h-4" />
+                <span>{tab.label}</span>
+              </button>
+            )
+          })}
         </div>
 
-        {/* Tab Display Panel */}
-        <div className="glass-panel-elevated rounded-3xl p-6 md:p-10 transition-all">
-          {activeTab === 'sales' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#10b981]/10 text-[#10b981] text-xs font-mono mb-4">
-                  <DollarSign className="w-3.5 h-3.5" />
-                  <span>Real-Time Quote-to-Cash Engine</span>
-                </div>
-                <h3 className="text-2xl md:text-4xl font-serif dark:text-white light:text-[#090a0b] mb-4">
-                  Deterministic Financial Velocity
-                </h3>
-                <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
-                  Automate contract approvals, multi-currency invoicing, VAT calculations, and instant banking reconciliation. Eliminate revenue leakage across all digital and POS touchpoints.
-                </p>
-                <ul className="space-y-2.5 text-sm text-[var(--text-muted)] mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" /> Sub-second invoice generation with localized Tax ID routing.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" /> Automated payment gateway webhook processing & ledger sync.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" /> Hermes AI guardrails for automated deal margin protection.
-                  </li>
-                </ul>
-                <Link to="/sales" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline">
-                  <span>Explore Sales & RevOps Module</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              {/* Mock Terminal Card */}
-              <div className="glass-panel p-6 rounded-2xl border-white/10 font-mono text-xs text-slate-300 space-y-3 bg-[#0d0e0f]">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <div className="flex items-center gap-2">
-                    <span className="w-3 h-3 rounded-full bg-red-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-yellow-500/80" />
-                    <span className="w-3 h-3 rounded-full bg-green-500/80" />
-                  </div>
-                  <span className="text-[10px] text-slate-500">deal-SC-88402.json</span>
-                </div>
-                <p className="text-emerald-400">// Deal Approval Executed in 12ms</p>
-                <p><span className="text-slate-500">account:</span> "Aetheria Dynamics Corp"</p>
-                <p><span className="text-slate-500">value:</span> "$142,500.00 USD" (EUR conversion: €131,210.00)</p>
-                <p><span className="text-slate-500">status:</span> <span className="text-[#d2ff3a]">RECONCILED_LEDGER_SYNC</span></p>
-                <p><span className="text-slate-500">inventory_reserved:</span> true (SKU-9021, SKU-9022)</p>
-                <div className="pt-3 border-t border-white/10 flex items-center justify-between text-[11px]">
-                  <span className="text-slate-400">VAT ID: EU372019482</span>
-                  <span className="text-[#10b981]">Margin: 48.2% (Approved)</span>
-                </div>
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'inventory' && (
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
-              <div>
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d2ff3a]/10 text-[#d2ff3a] text-xs font-mono mb-4">
-                  <Box className="w-3.5 h-3.5" />
-                  <span>Sub-Second Logistics Mesh</span>
-                </div>
-                <h3 className="text-2xl md:text-4xl font-serif dark:text-white light:text-[#090a0b] mb-4">
-                  Zero-Ghost Physical Stock Routing
-                </h3>
-                <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
-                  Track lot numbers, expiry dates, and bin locations across 150+ regional hubs in real time. Automatic reorder triggers ensure zero stockouts under peak traffic.
-                </p>
-                <ul className="space-y-2.5 text-sm text-[var(--text-muted)] mb-6">
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" /> Dynamic multi-branch order allocation by shipping proximity.
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <CheckCircle2 className="w-4 h-4 text-[#d2ff3a]" /> Full barcode and scanner fleet interoperability.
-                  </li>
-                </ul>
-                <Link to="/inventory" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline">
-                  <span>Explore Inventory Module</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-
-              <div className="glass-panel p-6 rounded-2xl border-white/10 font-mono text-xs text-slate-300 space-y-3 bg-[#0d0e0f]">
-                <div className="flex items-center justify-between pb-3 border-b border-white/10">
-                  <span className="text-[#d2ff3a] font-bold">WAREHOUSE_TELEMETRY_LIVE</span>
-                  <span className="text-[10px] text-emerald-400">SYNC: 100%</span>
-                </div>
-                <div className="grid grid-cols-2 gap-2 text-[11px]">
-                  <div className="p-2 rounded bg-white/5">
-                    <p className="text-slate-400">HUB-NYC-01</p>
-                    <p className="text-white font-bold">4,120 Units</p>
-                  </div>
-                  <div className="p-2 rounded bg-white/5">
-                    <p className="text-slate-400">HUB-LON-04</p>
-                    <p className="text-white font-bold">8,950 Units</p>
-                  </div>
-                </div>
-                <p className="text-slate-400">// Reorder triggered for SKU-PREM-88</p>
-                <p className="text-[#d2ff3a]">Supplier Auto-PO dispatched via Hermes Agent</p>
-              </div>
-            </div>
-          )}
-
+        {/* Active Tab Panel */}
+        <div className="glass-panel p-8 md:p-12 rounded-3xl border-white/10">
           {activeTab === 'crm' && (
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
               <div>
@@ -270,7 +192,7 @@ function IndexComponent() {
                   Unified Customer Health & Retention
                 </h3>
                 <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
-                  Merge commercial communications, order history, support tickets, and contract renewals into one predictive timeline.
+                  Merge commercial communications, order history, support tickets, and contract renewals into one predictive timeline. Prevent churn before it happens with AI risk guards.
                 </p>
                 <Link to="/crm" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline">
                   <span>Explore CRM Module</span>
@@ -283,6 +205,62 @@ function IndexComponent() {
                 <p><span className="text-slate-400">ARR Value:</span> $240,000 / yr</p>
                 <p><span className="text-slate-400">Health Score:</span> <span className="text-emerald-400">98/100 (Optimal)</span></p>
                 <p><span className="text-slate-400">Next Action:</span> Q3 Enterprise Expansion Contract Renewal</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'inventory' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-mono mb-4">
+                  <Boxes className="w-3.5 h-3.5" />
+                  <span>Sub-Second Telemetry</span>
+                </div>
+                <h3 className="text-2xl md:text-4xl font-serif dark:text-white light:text-[#090a0b] mb-4">
+                  Real-Time Multi-Location Inventory
+                </h3>
+                <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
+                  Sub-second RFID & 2D barcode mesh sync across global warehouses and store locations. Prevent stockouts autonomously with predictive reordering.
+                </p>
+                <Link to="/inventory" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline">
+                  <span>Explore Inventory Module</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              <div className="glass-panel p-6 rounded-2xl border-white/10 font-mono text-xs text-slate-300 space-y-3 bg-[#0d0e0f]">
+                <p className="text-emerald-400 font-bold">// STOCK_LEDGER_TELEMETRY</p>
+                <p><span className="text-slate-400">Nodes Active:</span> 150 Tier-1 Warehouses</p>
+                <p><span className="text-slate-400">Sync Latency:</span> 12ms (Global Mesh)</p>
+                <p><span className="text-slate-400">Stockouts Prevented:</span> 99.98% Accuracy</p>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'sales' && (
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
+              <div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#d2ff3a]/10 text-[#d2ff3a] text-xs font-mono mb-4">
+                  <Store className="w-3.5 h-3.5" />
+                  <span>Omnichannel Velocity</span>
+                </div>
+                <h3 className="text-2xl md:text-4xl font-serif dark:text-white light:text-[#090a0b] mb-4">
+                  Automated Quote-to-Cash Ledger
+                </h3>
+                <p className="text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-6">
+                  Accelerate quote-to-cash velocity with automated ledger reconciliation, instant M-Pesa STK push, credit cards, and corporate wire invoicing.
+                </p>
+                <Link to="/sales" className="inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline">
+                  <span>Explore Sales POS</span>
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+              </div>
+
+              <div className="glass-panel p-6 rounded-2xl border-white/10 font-mono text-xs text-slate-300 space-y-3 bg-[#0d0e0f]">
+                <p className="text-[#d2ff3a] font-bold">// QUOTE_TO_CASH_STATE</p>
+                <p><span className="text-slate-400">Deal Reference:</span> #SC-88402</p>
+                <p><span className="text-slate-400">STK Push Settlement:</span> <span className="text-emerald-400">Instant (Confirmed)</span></p>
+                <p><span className="text-slate-400">Cycle Reduction:</span> 4.2x Faster Sales Cycle</p>
               </div>
             </div>
           )}
@@ -317,8 +295,37 @@ function IndexComponent() {
         </div>
       </section>
 
+      {/* Measurable Yield Callout */}
+      <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto font-mono">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="glass-panel p-8 rounded-2xl border-white/10">
+            <div className="text-3xl md:text-4xl font-extrabold text-[#d2ff3a] mb-2">$180,000</div>
+            <div className="text-sm font-bold dark:text-white light:text-[#090a0b] mb-2">Yearly Middleware Saved</div>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed font-sans">
+              Eliminated expensive custom API integration software and external ETL maintenance contracts.
+            </p>
+          </div>
+
+          <div className="glass-panel p-8 rounded-2xl border-white/10">
+            <div className="text-3xl md:text-4xl font-extrabold text-[#10b981] mb-2">99.999%</div>
+            <div className="text-sm font-bold dark:text-white light:text-[#090a0b] mb-2">Hardware-Isolated Uptime</div>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed font-sans">
+              High-availability SLA backed by edge-replicated NestJS V3 micro-runtimes and local offline SQLite fallbacks.
+            </p>
+          </div>
+
+          <div className="glass-panel p-8 rounded-2xl border-white/10">
+            <div className="text-3xl md:text-4xl font-extrabold text-purple-400 mb-2">88%</div>
+            <div className="text-sm font-bold dark:text-white light:text-[#090a0b] mb-2">TCO Cost Reduction</div>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed font-sans">
+              Consolidated 5 disparate SaaS products into one cohesive subscription model with multi-tenant isolation.
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Feature Highlights Grid */}
-      <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
+      <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto border-t border-white/10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           <div className="glass-panel p-8 rounded-2xl hover:border-[#d2ff3a]/40 transition">
             <div className="w-10 h-10 rounded-lg bg-[#d2ff3a]/10 flex items-center justify-center text-[#d2ff3a] mb-6">
@@ -355,9 +362,9 @@ function IndexComponent() {
       {/* FAQ Section */}
       <section className="py-20 px-4 md:px-8 max-w-4xl mx-auto">
         <div className="text-center mb-12">
-          <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a]">Frequently Analyzed Inquiries</span>
+          <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a]">Frequently Asked Questions</span>
           <h2 className="text-3xl md:text-5xl font-serif dark:text-white light:text-[#090a0b] mt-3 mb-4">
-            Everything You Need to Know
+            Frequently asked questions by enterprise engineering & leadership
           </h2>
         </div>
 
@@ -373,7 +380,7 @@ function IndexComponent() {
             },
             {
               q: "What is Hermes Agent and how does HITL approval work?",
-              a: "Hermes Agent evaluates business rules continuously. When an action exceeds set thresholds (such as discount caps or stock reorders), it dispatches a approval request to ScrymeChat for human sign-off."
+              a: "Hermes Agent evaluates business rules continuously. When an action exceeds set thresholds (such as discount caps or stock reorders), it dispatches an approval request to ScrymeChat for human sign-off."
             },
             {
               q: "Is there support for multi-currency and multi-tax jurisdictions?",
@@ -403,7 +410,7 @@ function IndexComponent() {
         <div className="glass-panel-elevated p-10 md:p-16 rounded-3xl text-center relative overflow-hidden">
           <div className="absolute -top-24 -right-24 w-96 h-96 bg-[#d2ff3a]/10 rounded-full blur-3xl pointer-events-none" />
           <h2 className="text-3xl md:text-6xl font-serif dark:text-white light:text-[#090a0b] mb-6">
-            Ready to Operate with Absolute Clarity?
+            Reclaim command of your global operations today.
           </h2>
           <p className="text-base md:text-lg text-[var(--text-muted)] max-w-2xl mx-auto mb-10 leading-relaxed">
             Start your 14-day free trial today. Deploy your workspace in less than 5 minutes with zero commitment.
