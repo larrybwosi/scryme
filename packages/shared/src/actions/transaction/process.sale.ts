@@ -209,22 +209,18 @@ export async function processSale(
         ]);
         const variantsMap = new Map(allVariants.map((v) => [v.id, v]));
 
-        // --- 2. Line Items & Stock Logic ---
-        let transactionSubTotal = new Prisma.Decimal(0);
-        const transactionItemsCreateData: any[] = [];
-        const variantStockUpdates = new Map<string, number>();
-
-        for (const item of cartItems) {
-          const variant = variantsMap.get(item.variantId) as any;
-          if (!variant) {
-            throw new Error(
-              `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
-            );
-          }
-
-          // A. Resolve Price using Service
-          const { price: resolvedPrice, defaultPrice } =
-            await unitCalculationService.resolvePrice({
+        // --- 2. Pre-resolve Price Calculations for Line Items Concurrently ---
+        // ⚡ Bolt Optimization: Parallelize unitCalculationService.resolvePrice calls across all cart items.
+        // Pre-resolving prices concurrently reduces network/query wait times from O(N) sequential executions to O(1) concurrent roundtrips.
+        const resolvedPrices = await Promise.all(
+          cartItems.map(async (item) => {
+            const variant = variantsMap.get(item.variantId) as any;
+            if (!variant) {
+              throw new Error(
+                `Product variant ID ${item.variantId} is invalid, inactive, or not part of this organization.`,
+              );
+            }
+            return unitCalculationService.resolvePrice({
               variantId: item.variantId,
               sellingUnitId: item.sellingUnitId,
               quantity: item.quantity,
@@ -236,6 +232,18 @@ export async function processSale(
               preFetchedVariant: variant,
               preFetchedPriceLists: activePriceLists,
             });
+          }),
+        );
+
+        // --- 3. Line Items & Stock Logic ---
+        let transactionSubTotal = new Prisma.Decimal(0);
+        const transactionItemsCreateData: any[] = [];
+        const variantStockUpdates = new Map<string, number>();
+
+        for (let i = 0; i < cartItems.length; i++) {
+          const item = cartItems[i]!;
+          const variant = variantsMap.get(item.variantId) as any;
+          const { price: resolvedPrice, defaultPrice } = resolvedPrices[i]!;
 
           // B. Calculate Line Totals
           const itemTotal = resolvedPrice.mul(item.quantity);
