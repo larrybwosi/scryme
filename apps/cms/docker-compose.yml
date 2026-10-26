@@ -19,10 +19,10 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=${CMS_PORT:-3010}
-      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@scryme-db:5432/${POSTGRES_DB:-app_db}?schema=public}
-      - REDIS_HOST=${REDIS_HOST:-scryme-redis}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-app_db}?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
-      - REDIS_URL=${REDIS_URL:-redis://scryme-redis:6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
       - PAYLOAD_SECRET=${PAYLOAD_SECRET:-payloadsecret1234567890secret32ch}
       - PAYLOAD_DB_PUSH=${PAYLOAD_DB_PUSH:-false}
       - NEXT_PUBLIC_SERVER_URL=${NEXT_PUBLIC_CMS_URL:-http://localhost:3010}
@@ -51,8 +51,8 @@ services:
 
 networks:
   scryme-network:
-    name: scryme-network
+    name: ${SCRYME_NETWORK_NAME:-${INSTANCE_NAME:-scryme}-network}
     external: true
   proxy-network:
-    name: ${PROXY_NETWORK_NAME:-dokploy-network}
+    name: ${PROXY_NETWORK_NAME:-${PROXY_NETWORK:-dokploy-network}}
     external: true
