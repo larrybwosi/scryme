@@ -1,7 +1,7 @@
 {
   "name": "pos",
   "private": true,
-  "version": "10.2.26",
+  "version": "10.2.27",
   "type": "module",
   "scripts": {
     "dev": "vite",
