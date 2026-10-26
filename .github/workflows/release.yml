@@ -110,6 +110,8 @@ jobs:
   create-draft-release:
     name: Create Draft Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [release-management, set-version]
     if: needs.release-management.outputs.published == 'true'
     steps:
@@ -130,7 +132,11 @@ jobs:
             PRERELEASE_FLAG="--prerelease"
           fi
           echo "Creating draft GitHub release for $TAG_NAME..."
-          gh release create "$TAG_NAME" --draft --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG || echo "Draft release already exists."
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Draft release $TAG_NAME already exists."
+          else
+            gh release create "$TAG_NAME" --draft --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG
+          fi
 
   build-packages:
     name: Build Packages
@@ -168,6 +174,8 @@ jobs:
   publish-pos:
     name: Publish POS (${{ matrix.os }} - ${{ matrix.variant }})
     runs-on: ${{ matrix.os }}
+    permissions:
+      contents: write
     needs: [release-management, set-version, create-draft-release, build-packages]
     if: needs.release-management.outputs.published == 'true'
     strategy:
@@ -252,6 +260,8 @@ jobs:
   publish-bakery:
     name: Publish Bakery (windows-latest)
     runs-on: windows-latest
+    permissions:
+      contents: write
     needs: [release-management, set-version, create-draft-release, build-packages]
     if: needs.release-management.outputs.published == 'true'
     steps:
@@ -324,6 +334,8 @@ jobs:
   publish-android:
     name: Publish Android App
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [release-management, set-version, create-draft-release]
     if: needs.release-management.outputs.published == 'true'
     steps:
@@ -463,6 +475,8 @@ jobs:
   create-tag:
     name: Create Tag and Finalize Release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     needs: [release-management, set-version, create-draft-release, publish-pos, publish-bakery, publish-android, publish-crates, publish-docker]
     if: needs.release-management.outputs.published == 'true'
     steps:
