@@ -1,12 +1,16 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { makeApprovalDecisionCore } from "../approvals";
+import { submitForApprovalCore, makeApprovalDecisionCore } from "../approvals";
 import { db } from "@repo/db";
 
 vi.mock("@repo/db", () => {
   return {
     db: {
+      approvalWorkflow: {
+        findFirst: vi.fn(),
+      },
       approvalRequest: {
         findFirst: vi.fn(),
+        create: vi.fn(),
         update: vi.fn(),
       },
       approvalDecision: {
@@ -16,10 +20,17 @@ vi.mock("@repo/db", () => {
         count: vi.fn(),
       },
       expense: {
+        findFirst: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
       },
       purchase: {
+        findFirst: vi.fn(),
         update: vi.fn(),
+        updateMany: vi.fn(),
+      },
+      member: {
+        findMany: vi.fn(),
       },
     },
   };
@@ -80,6 +91,62 @@ describe("makeApprovalDecisionCore IDOR & Security Tests", () => {
       include: expect.any(Object),
     });
 
+    expect(db.expense.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "exp_123",
+        organizationId: "org_authorized",
+      },
+      data: { status: "APPROVED" },
+    });
+
     expect(result.finalStatus).toBe("APPROVED");
+  });
+
+  it("should throw error during submitForApprovalCore when related expense does not belong to organizationId", async () => {
+    vi.mocked(db.approvalWorkflow.findFirst).mockResolvedValue(null);
+    vi.mocked(db.approvalRequest.create).mockResolvedValue({ id: "req_new_1" } as any);
+    vi.mocked(db.member.findMany).mockResolvedValue([]);
+    vi.mocked(db.expense.findFirst).mockResolvedValue(null);
+
+    await expect(
+      submitForApprovalCore("org_attacker", "member_1", {
+        relatedId: "exp_victim_999",
+        type: "EXPENSE",
+        amount: 100,
+        relatedRecordNumber: "EXP-001",
+      }),
+    ).rejects.toThrow("Expense not found or unauthorized");
+
+    expect(db.expense.findFirst).toHaveBeenCalledWith({
+      where: {
+        id: "exp_victim_999",
+        organizationId: "org_attacker",
+      },
+      select: { id: true },
+    });
+  });
+
+  it("should successfully submit for approval and update status via updateMany when expense exists for tenant", async () => {
+    vi.mocked(db.approvalWorkflow.findFirst).mockResolvedValue(null);
+    vi.mocked(db.approvalRequest.create).mockResolvedValue({ id: "req_new_2" } as any);
+    vi.mocked(db.member.findMany).mockResolvedValue([{ id: "admin_1" }] as any);
+    vi.mocked(db.expense.findFirst).mockResolvedValue({ id: "exp_100" } as any);
+    vi.mocked(db.expense.updateMany).mockResolvedValue({ count: 1 } as any);
+
+    const request = await submitForApprovalCore("org_authorized", "member_1", {
+      relatedId: "exp_100",
+      type: "EXPENSE",
+      amount: 250,
+      relatedRecordNumber: "EXP-002",
+    });
+
+    expect(request.id).toBe("req_new_2");
+    expect(db.expense.updateMany).toHaveBeenCalledWith({
+      where: {
+        id: "exp_100",
+        organizationId: "org_authorized",
+      },
+      data: { status: "PENDING_APPROVAL", approvalRequestId: "req_new_2" },
+    });
   });
 });
