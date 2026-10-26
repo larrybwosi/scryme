@@ -160,7 +160,7 @@ fun LoginScreen(
                         )
                         Spacer(modifier = Modifier.width(10.dp))
                         Text(
-                            text = "Sign in with Auth Web App",
+                            text = "Sign in with Cloud",
                             fontSize = 16.sp,
                             fontWeight = FontWeight.Bold
                         )
@@ -275,10 +275,6 @@ fun LoginScreen(
                     isLoading = uiState is AuthUiState.Loading,
                     enabled = email.isNotBlank() && password.isNotBlank()
                 )
-
-                OrDivider()
-
-                SocialAuthButtons()
             }
 
             // Bottom Navigation Link

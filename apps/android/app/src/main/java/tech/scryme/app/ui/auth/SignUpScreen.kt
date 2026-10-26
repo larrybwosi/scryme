@@ -201,10 +201,6 @@ fun SignUpScreen(
                     isLoading = uiState is AuthUiState.Loading,
                     enabled = fullName.isNotBlank() && email.isNotBlank() && password.isNotBlank()
                 )
-
-                OrDivider()
-
-                SocialAuthButtons()
             }
 
             // Bottom Navigation Link
