@@ -7,6 +7,8 @@ import tech.scryme.app.ui.components.MemberAvatar
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.ui.components.StyledFormDialog
+import tech.scryme.app.ui.components.TimePickerTextField
+import tech.scryme.app.ui.components.WeekdayDropdown
 import tech.scryme.app.ui.components.DatePickerTextField
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
@@ -496,7 +498,7 @@ fun CreateShiftDialog(
     onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
 ) {
     var memberId by remember { mutableStateOf("") }
-    var dayOfWeek by remember { mutableStateOf("1") }
+    var dayOfWeek by remember { mutableStateOf(1) }
     var startTime by remember { mutableStateOf("09:00") }
     var endTime by remember { mutableStateOf("17:00") }
 
@@ -505,8 +507,7 @@ fun CreateShiftDialog(
         onDismissRequest = onDismiss,
         confirmButtonText = "Create Shift",
         onConfirm = {
-            val dayInt = dayOfWeek.toIntOrNull() ?: 1
-            onSubmit(memberId, dayInt, startTime, endTime)
+            onSubmit(memberId, dayOfWeek, startTime, endTime)
         },
         confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
     ) {
@@ -516,31 +517,20 @@ fun CreateShiftDialog(
             members = members,
             label = "Staff Member *"
         )
-        OutlinedTextField(
-            value = dayOfWeek,
-            onValueChange = { dayOfWeek = it },
-            label = { Text("Day of Week (1-7, Mon-Sun) *") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+        WeekdayDropdown(
+            selectedDayOfWeek = dayOfWeek,
+            onDaySelected = { dayOfWeek = it },
+            label = "Day of Week *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = startTime,
             onValueChange = { startTime = it },
-            label = { Text("Start Time *") },
-            placeholder = { Text("e.g. 09:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "Start Time *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = endTime,
             onValueChange = { endTime = it },
-            label = { Text("End Time *") },
-            placeholder = { Text("e.g. 17:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "End Time *"
         )
     }
 }
@@ -625,8 +615,8 @@ fun AddBreakDialog(
     onDismiss: () -> Unit,
     onSubmit: (startTime: String, endTime: String, description: String?) -> Unit
 ) {
-    var startTime by remember { mutableStateOf("12:00") }
-    var endTime by remember { mutableStateOf("12:30") }
+    var startTime by remember { mutableStateOf(shift.startTime.ifBlank { "12:00" }) }
+    var endTime by remember { mutableStateOf(shift.endTime.ifBlank { "12:30" }) }
     var desc by remember { mutableStateOf("Lunch Break") }
 
     StyledFormDialog(
@@ -636,23 +626,15 @@ fun AddBreakDialog(
         onConfirm = { onSubmit(startTime, endTime, desc.ifBlank { null }) },
         confirmEnabled = startTime.isNotBlank() && endTime.isNotBlank()
     ) {
-        OutlinedTextField(
+        TimePickerTextField(
             value = startTime,
             onValueChange = { startTime = it },
-            label = { Text("Start Time *") },
-            placeholder = { Text("e.g. 12:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "Start Time *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = endTime,
             onValueChange = { endTime = it },
-            label = { Text("End Time *") },
-            placeholder = { Text("e.g. 12:30") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "End Time *"
         )
         OutlinedTextField(
             value = desc,
