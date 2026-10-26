@@ -31,6 +31,7 @@ const smtpPort = parseInt(process.env.SMTP_PORT || '587', 10);
 const smtpUser = process.env.SMTP_USER;
 const smtpPass = process.env.SMTP_PASS;
 const smtpSecure = process.env.SMTP_SECURE === 'true';
+const smtpSkipVerify = process.env.SMTP_SKIP_VERIFY !== 'false';
 
 export default buildConfig({
   admin: {
@@ -58,6 +59,7 @@ export default buildConfig({
   email: nodemailerAdapter({
     defaultFromAddress: process.env.SMTP_FROM_ADDRESS || 'noreply@scryme.tech',
     defaultFromName: process.env.SMTP_FROM_NAME || 'Scryme CMS',
+    skipVerify: smtpSkipVerify,
     transportOptions: {
       host: smtpHost,
       port: smtpPort,
