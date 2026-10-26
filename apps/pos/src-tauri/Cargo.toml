@@ -1,6 +1,6 @@
 [package]
 name = "scryme"
-version = "10.2.26"
+version = "10.2.27"
 description = "A Tauri App"
 authors = ["you"]
 edition = "2021"
