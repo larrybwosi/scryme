@@ -18,6 +18,7 @@ import tech.scryme.app.domain.model.UserProfile
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
@@ -30,9 +31,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Button
 import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
+import androidx.compose.material3.TimePicker
+import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -369,6 +373,209 @@ fun MemberDropdown(
                     },
                     onClick = {
                         onMemberSelected(member.id)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
+}
+
+
+/**
+ * Custom TimePickerDialog dialog container wrapping Material3 TimePicker.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerDialog(
+    onDismissRequest: () -> Unit,
+    confirmButton: @Composable () -> Unit,
+    dismissButton: @Composable () -> Unit,
+    content: @Composable () -> Unit
+) {
+    Dialog(
+        onDismissRequest = onDismissRequest,
+        properties = DialogProperties(usePlatformDefaultWidth = false)
+    ) {
+        Surface(
+            shape = RoundedCornerShape(16.dp),
+            tonalElevation = 6.dp,
+            color = MaterialTheme.colorScheme.surface,
+            modifier = Modifier
+                .width(IntrinsicSize.Min)
+                .height(IntrinsicSize.Min)
+                .padding(16.dp)
+        ) {
+            Column(
+                modifier = Modifier.padding(24.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                content()
+                Spacer(modifier = Modifier.height(16.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End
+                ) {
+                    dismissButton()
+                    Spacer(modifier = Modifier.width(8.dp))
+                    confirmButton()
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Reusable Form TimePicker field with interactive clock dialog.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun TimePickerTextField(
+    value: String,
+    onValueChange: (String) -> Unit,
+    label: String,
+    modifier: Modifier = Modifier,
+    placeholder: String = "HH:mm",
+    enabled: Boolean = true
+) {
+    var showTimePicker by remember { mutableStateOf(false) }
+
+    Box(modifier = modifier) {
+        OutlinedTextField(
+            value = value,
+            onValueChange = {},
+            readOnly = true,
+            enabled = enabled,
+            label = { Text(label) },
+            placeholder = { Text(placeholder) },
+            trailingIcon = {
+                IconButton(onClick = { if (enabled) showTimePicker = true }) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = "Select Time",
+                        tint = MaterialTheme.colorScheme.primary
+                    )
+                }
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Box(
+            modifier = Modifier
+                .matchParentSize()
+                .clickable(
+                    enabled = enabled,
+                    interactionSource = remember { MutableInteractionSource() },
+                    indication = null,
+                    onClick = { showTimePicker = true }
+                )
+        )
+    }
+
+    if (showTimePicker) {
+        val initialHour = value.split(":").getOrNull(0)?.toIntOrNull() ?: 9
+        val initialMinute = value.split(":").getOrNull(1)?.toIntOrNull() ?: 0
+        val timePickerState = rememberTimePickerState(
+            initialHour = initialHour,
+            initialMinute = initialMinute,
+            is24Hour = true
+        )
+
+        TimePickerDialog(
+            onDismissRequest = { showTimePicker = false },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val formattedTime = String.format(Locale.US, "%02d:%02d", timePickerState.hour, timePickerState.minute)
+                        onValueChange(formattedTime)
+                        showTimePicker = false
+                    }
+                ) {
+                    Text("OK")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showTimePicker = false }) {
+                    Text("Cancel")
+                }
+            }
+        ) {
+            TimePicker(state = timePickerState)
+        }
+    }
+}
+
+data class WeekdayOption(val dayOfWeek: Int, val name: String)
+
+val WeekdayList = listOf(
+    WeekdayOption(1, "Monday"),
+    WeekdayOption(2, "Tuesday"),
+    WeekdayOption(3, "Wednesday"),
+    WeekdayOption(4, "Thursday"),
+    WeekdayOption(5, "Friday"),
+    WeekdayOption(6, "Saturday"),
+    WeekdayOption(7, "Sunday")
+)
+
+/**
+ * Reusable Weekday Dropdown component.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun WeekdayDropdown(
+    selectedDayOfWeek: Int,
+    onDaySelected: (Int) -> Unit,
+    label: String = "Day of Week *",
+    modifier: Modifier = Modifier
+) {
+    var expanded by remember { mutableStateOf(false) }
+    val selectedOption = remember(selectedDayOfWeek) {
+        WeekdayList.find { it.dayOfWeek == selectedDayOfWeek } ?: WeekdayList.first()
+    }
+
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded },
+        modifier = modifier
+    ) {
+        OutlinedTextField(
+            value = selectedOption.name,
+            onValueChange = {},
+            readOnly = true,
+            label = { Text(label) },
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            colors = OutlinedTextFieldDefaults.colors(
+                focusedBorderColor = MaterialTheme.colorScheme.primary,
+                unfocusedBorderColor = MaterialTheme.colorScheme.outline
+            ),
+            shape = RoundedCornerShape(10.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor()
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            WeekdayList.forEach { option ->
+                DropdownMenuItem(
+                    text = {
+                        Text(
+                            text = option.name,
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = if (option.dayOfWeek == selectedDayOfWeek) FontWeight.Bold else FontWeight.Normal
+                        )
+                    },
+                    onClick = {
+                        onDaySelected(option.dayOfWeek)
                         expanded = false
                     }
                 )

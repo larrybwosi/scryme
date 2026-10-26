@@ -35,6 +35,8 @@ import tech.scryme.app.ui.components.MemberAvatar
 import tech.scryme.app.ui.components.MemberDropdown
 import tech.scryme.app.ui.components.QrScannerDialog
 import tech.scryme.app.ui.components.StyledFormDialog
+import tech.scryme.app.ui.components.TimePickerTextField
+import tech.scryme.app.ui.components.WeekdayDropdown
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
@@ -249,6 +251,8 @@ fun ScheduleScreen(
                     )
                     2 -> ShiftTradesList(
                         trades = state.trades,
+                        members = state.members,
+                        shifts = state.teamShifts.ifEmpty { state.myShifts },
                         onProcessTrade = { tradeId, action ->
                             viewModel.processShiftTrade(tradeId, action)
                         }
@@ -261,9 +265,10 @@ fun ScheduleScreen(
     showTradeDialog?.let { shift ->
         RequestTradeDialog(
             shift = shift,
+            members = (uiState as? ScheduleUiState.Success)?.members ?: emptyList(),
             onDismiss = { showTradeDialog = null },
-            onSubmit = { reason ->
-                viewModel.requestShiftTrade(shift.id, targetMemberId = null, reason = reason)
+            onSubmit = { targetMemberId, reason ->
+                viewModel.requestShiftTrade(shift.id, targetMemberId = targetMemberId, reason = reason)
                 showTradeDialog = null
             }
         )
@@ -364,6 +369,8 @@ fun TeamRosterList(
 @Composable
 fun ShiftTradesList(
     trades: List<ShiftTrade>,
+    members: List<UserProfile> = emptyList(),
+    shifts: List<StaffShift> = emptyList(),
     onProcessTrade: (tradeId: String, action: String) -> Unit
 ) {
     if (trades.isEmpty()) {
@@ -374,7 +381,17 @@ fun ShiftTradesList(
             contentPadding = PaddingValues(bottom = 16.dp)
         ) {
             items(trades, key = { it.id }) { trade ->
-                TradeCard(trade = trade, onProcessTrade = onProcessTrade)
+                val requestingMember = members.find { it.id == trade.requestingMemberId }
+                val targetMember = members.find { it.id == trade.targetMemberId }
+                val shift = shifts.find { it.id == trade.shiftId }
+
+                TradeCard(
+                    trade = trade,
+                    requestingMember = requestingMember,
+                    targetMember = targetMember,
+                    shift = shift,
+                    onProcessTrade = onProcessTrade
+                )
             }
         }
     }
@@ -582,14 +599,27 @@ fun TeamShiftCard(
 @Composable
 fun TradeCard(
     trade: ShiftTrade,
+    requestingMember: UserProfile? = null,
+    targetMember: UserProfile? = null,
+    shift: StaffShift? = null,
     onProcessTrade: (tradeId: String, action: String) -> Unit
 ) {
     val statusColor = when (trade.status.uppercase()) {
         "PENDING" -> Amber500
         "APPROVED" -> Emerald500
         "REJECTED" -> Rose500
+        "CANCELLED" -> MaterialTheme.colorScheme.onSurfaceVariant
         else -> MaterialTheme.colorScheme.onSurfaceVariant
     }
+
+    val shiftDetails = if (shift != null) {
+        "${getDayName(shift.dayOfWeek)}  ·  ${shift.startTime} - ${shift.endTime}"
+    } else {
+        "Shift ID: ${trade.shiftId.take(8)}..."
+    }
+
+    val requesterName = requestingMember?.name ?: "Member ${trade.requestingMemberId.take(6)}"
+    val targetName = targetMember?.name ?: "Open Trade (Any Member)"
 
     OutlinedSurface {
         Column(modifier = Modifier.padding(14.dp)) {
@@ -598,44 +628,100 @@ fun TradeCard(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-                    SectionLabel("Trade request")
-                    StatusChip(text = trade.status.uppercase(), color = statusColor)
-                }
-
-                if (trade.status.uppercase() == "PENDING") {
-                    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                        OutlinedButton(
-                            onClick = { onProcessTrade(trade.id, "REJECT") },
-                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Rose500),
-                            border = BorderStroke(1.dp, Rose500.copy(alpha = 0.6f)),
-                            shape = ControlShape,
-                            contentPadding = CompactButtonPadding
-                        ) {
-                            Text("Reject", style = MaterialTheme.typography.labelMedium)
-                        }
-
-                        Button(
-                            onClick = { onProcessTrade(trade.id, "APPROVE") },
-                            colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
-                            shape = ControlShape,
-                            contentPadding = CompactButtonPadding
-                        ) {
-                            Text("Approve", style = MaterialTheme.typography.labelMedium)
-                        }
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    modifier = Modifier.weight(1f)
+                ) {
+                    MemberAvatar(
+                        avatarUrl = requestingMember?.avatarUrl,
+                        name = requesterName,
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Column {
+                        Text(
+                            text = requesterName,
+                            style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Target: $targetName",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary
+                        )
                     }
                 }
+
+                StatusChip(text = trade.status.uppercase(), color = statusColor)
+            }
+
+            Spacer(modifier = Modifier.height(10.dp))
+            HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            Spacer(modifier = Modifier.height(10.dp))
+
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Icon(
+                    imageVector = Icons.Filled.Schedule,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(14.dp)
+                )
+                Spacer(modifier = Modifier.width(6.dp))
+                Text(
+                    text = shiftDetails,
+                    style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Medium),
+                    color = MaterialTheme.colorScheme.onSurface
+                )
             }
 
             if (!trade.reason.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.height(10.dp))
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
-                Spacer(modifier = Modifier.height(10.dp))
+                Spacer(modifier = Modifier.height(4.dp))
                 Text(
                     text = "Reason: ${trade.reason}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
+            }
+
+            if (trade.status.uppercase() == "PENDING") {
+                Spacer(modifier = Modifier.height(12.dp))
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.End,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    OutlinedButton(
+                        onClick = { onProcessTrade(trade.id, "CANCEL") },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = MaterialTheme.colorScheme.onSurfaceVariant),
+                        shape = ControlShape,
+                        contentPadding = CompactButtonPadding
+                    ) {
+                        Text("Cancel", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    OutlinedButton(
+                        onClick = { onProcessTrade(trade.id, "REJECT") },
+                        colors = ButtonDefaults.outlinedButtonColors(contentColor = Rose500),
+                        border = BorderStroke(1.dp, Rose500.copy(alpha = 0.6f)),
+                        shape = ControlShape,
+                        contentPadding = CompactButtonPadding
+                    ) {
+                        Text("Reject", style = MaterialTheme.typography.labelMedium)
+                    }
+
+                    Spacer(modifier = Modifier.width(8.dp))
+
+                    Button(
+                        onClick = { onProcessTrade(trade.id, "APPROVE") },
+                        colors = ButtonDefaults.buttonColors(containerColor = Emerald500),
+                        shape = ControlShape,
+                        contentPadding = CompactButtonPadding
+                    ) {
+                        Text("Approve", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
             }
         }
     }
@@ -779,16 +865,18 @@ fun AttendanceStatusCard(
 @Composable
 fun RequestTradeDialog(
     shift: StaffShift,
+    members: List<UserProfile> = emptyList(),
     onDismiss: () -> Unit,
-    onSubmit: (String) -> Unit
+    onSubmit: (targetMemberId: String?, reason: String) -> Unit
 ) {
+    var targetMemberId by remember { mutableStateOf("") }
     var reason by remember { mutableStateOf("") }
 
     StyledFormDialog(
         title = "Request Shift Swap",
         onDismissRequest = onDismiss,
         confirmButtonText = "Submit Request",
-        onConfirm = { onSubmit(reason) },
+        onConfirm = { onSubmit(targetMemberId.ifBlank { null }, reason) },
         confirmEnabled = reason.isNotBlank()
     ) {
         Text(
@@ -796,10 +884,21 @@ fun RequestTradeDialog(
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
+
+        MemberDropdown(
+            selectedMemberId = targetMemberId,
+            onMemberSelected = { targetMemberId = it },
+            members = members,
+            label = "Swap Target Member (Optional)",
+            allowUnassigned = true,
+            placeholder = "Open Trade (Any Team Member)"
+        )
+
         OutlinedTextField(
             value = reason,
             onValueChange = { reason = it },
             label = { Text("Reason for trade *") },
+            placeholder = { Text("e.g. Schedule conflict or personal emergency") },
             shape = ControlShape,
             colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
@@ -813,8 +912,8 @@ fun AddBreakDialog(
     onDismiss: () -> Unit,
     onSubmit: (startTime: String, endTime: String, description: String?) -> Unit
 ) {
-    var startTime by remember { mutableStateOf("12:00") }
-    var endTime by remember { mutableStateOf("12:30") }
+    var startTime by remember { mutableStateOf(shift.startTime.ifBlank { "12:00" }) }
+    var endTime by remember { mutableStateOf(shift.endTime.ifBlank { "12:30" }) }
     var description by remember { mutableStateOf("Meal break") }
 
     StyledFormDialog(
@@ -824,23 +923,15 @@ fun AddBreakDialog(
         onConfirm = { onSubmit(startTime, endTime, description.ifBlank { null }) },
         confirmEnabled = startTime.isNotBlank() && endTime.isNotBlank()
     ) {
-        OutlinedTextField(
+        TimePickerTextField(
             value = startTime,
             onValueChange = { startTime = it },
-            label = { Text("Start Time *") },
-            placeholder = { Text("e.g. 12:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "Start Time *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = endTime,
             onValueChange = { endTime = it },
-            label = { Text("End Time *") },
-            placeholder = { Text("e.g. 12:30") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "End Time *"
         )
         OutlinedTextField(
             value = description,
@@ -860,7 +951,7 @@ fun CreateShiftDialog(
     onSubmit: (memberId: String, dayOfWeek: Int, startTime: String, endTime: String) -> Unit
 ) {
     var memberId by remember { mutableStateOf("") }
-    var dayOfWeek by remember { mutableStateOf("1") }
+    var dayOfWeek by remember { mutableStateOf(1) }
     var startTime by remember { mutableStateOf("09:00") }
     var endTime by remember { mutableStateOf("17:00") }
 
@@ -869,8 +960,7 @@ fun CreateShiftDialog(
         onDismissRequest = onDismiss,
         confirmButtonText = "Create Shift",
         onConfirm = {
-            val dayInt = dayOfWeek.toIntOrNull() ?: 1
-            onSubmit(memberId, dayInt, startTime, endTime)
+            onSubmit(memberId, dayOfWeek, startTime, endTime)
         },
         confirmEnabled = memberId.isNotBlank() && startTime.isNotBlank() && endTime.isNotBlank()
     ) {
@@ -880,31 +970,20 @@ fun CreateShiftDialog(
             members = members,
             label = "Staff Member *"
         )
-        OutlinedTextField(
-            value = dayOfWeek,
-            onValueChange = { dayOfWeek = it },
-            label = { Text("Day of Week (1-7, Mon-Sun) *") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+        WeekdayDropdown(
+            selectedDayOfWeek = dayOfWeek,
+            onDaySelected = { dayOfWeek = it },
+            label = "Day of Week *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = startTime,
             onValueChange = { startTime = it },
-            label = { Text("Start Time *") },
-            placeholder = { Text("e.g. 09:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "Start Time *"
         )
-        OutlinedTextField(
+        TimePickerTextField(
             value = endTime,
             onValueChange = { endTime = it },
-            label = { Text("End Time *") },
-            placeholder = { Text("e.g. 17:00") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
+            label = "End Time *"
         )
     }
 }
