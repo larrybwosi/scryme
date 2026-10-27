@@ -19,6 +19,7 @@ import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.ui.schedule.ScheduleUiState
 import tech.scryme.app.ui.schedule.ScheduleViewModel
+import tech.scryme.app.util.LocationHelper
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScheduleViewModelTest {
@@ -34,6 +35,7 @@ class ScheduleViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        LocationHelper.locationProviderOverride = { null }
         coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { sessionManager.getLocationId() } returns null
         coEvery { branchRepository.getBranchLocations(any()) } returns Result.success(emptyList())
@@ -44,6 +46,7 @@ class ScheduleViewModelTest {
 
     @After
     fun tearDown() {
+        LocationHelper.locationProviderOverride = null
         Dispatchers.resetMain()
     }
 
@@ -81,15 +84,15 @@ class ScheduleViewModelTest {
 
         coEvery {
             scheduleRepository.checkInAttendance(
-                orgSlug = any(),
-                locationId = any(),
-                branchCode = any(),
-                latitude = any(),
-                longitude = any(),
-                accuracy = any(),
-                isMock = any(),
-                verificationMethod = any(),
-                notes = any()
+                orgSlug = "scryme-org",
+                locationId = null,
+                branchCode = "BRANCH-01",
+                latitude = null,
+                longitude = null,
+                accuracy = null,
+                isMock = false,
+                verificationMethod = "QR_SCAN",
+                notes = null
             )
         } returns Result.success(logDto)
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
@@ -99,7 +102,8 @@ class ScheduleViewModelTest {
         var callbackMessage: String? = null
         viewModel.checkInAttendance(
             branchCode = "BRANCH-01",
-            onSuccess = { msg -> callbackMessage = msg }
+            onSuccess = { msg -> callbackMessage = msg },
+            onError = { err -> fail("Check in failed unexpectedly: $err") }
         )
         testScheduler.advanceUntilIdle()
 

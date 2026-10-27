@@ -19,10 +19,19 @@ sealed class LocationValidationResult {
 object LocationHelper {
 
     /**
+     * Optional provider override for unit testing environment.
+     */
+    var locationProviderOverride: (suspend (Context) -> Location?)? = null
+
+    /**
      * Retrieves the current high-accuracy device location using FusedLocationProviderClient.
      */
     @SuppressLint("MissingPermission")
     suspend fun getCurrentLocation(context: Context): Location? {
+        locationProviderOverride?.let { override ->
+            return override(context)
+        }
+
         return try {
             val fusedLocationClient = LocationServices.getFusedLocationProviderClient(context)
             val cancellationTokenSource = CancellationTokenSource()
@@ -30,8 +39,7 @@ object LocationHelper {
                 Priority.PRIORITY_HIGH_ACCURACY,
                 cancellationTokenSource.token
             ).await()
-        } catch (e: Exception) {
-            e.printStackTrace()
+        } catch (e: Throwable) {
             null
         }
     }
@@ -41,10 +49,14 @@ object LocationHelper {
      */
     @Suppress("DEPRECATION")
     fun isMockLocation(location: Location): Boolean {
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
-            location.isMock
-        } else {
-            location.isFromMockProvider
+        return try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) {
+                location.isMock
+            } else {
+                location.isFromMockProvider
+            }
+        } catch (e: Throwable) {
+            false
         }
     }
 
