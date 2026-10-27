@@ -51,7 +51,7 @@ class AuthViewModel @Inject constructor(
                 val codeChallenge = PkceUtils.generateCodeChallenge(codeVerifier)
                 pendingCodeVerifier = codeVerifier
 
-                val authUrl = Uri.parse("https://auth.scryme.tech/oauth2/authorize")
+                val authUrl = Uri.parse("https://auth.scryme.tech/api/auth/oauth2/authorize")
                     .buildUpon()
                     .appendQueryParameter("client_id", "scryme-android-app")
                     .appendQueryParameter("response_type", "code")

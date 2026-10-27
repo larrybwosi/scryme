@@ -9,6 +9,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
+import tech.scryme.app.domain.repository.AuthRepository
 import javax.inject.Inject
 
 sealed class SplashState {
@@ -19,7 +20,8 @@ sealed class SplashState {
 
 @HiltViewModel
 class SplashViewModel @Inject constructor(
-    private val sessionManager: SessionManager
+    private val sessionManager: SessionManager,
+    private val authRepository: AuthRepository
 ) : ViewModel() {
 
     private val _splashState = MutableStateFlow<SplashState>(SplashState.Loading)
@@ -29,18 +31,42 @@ class SplashViewModel @Inject constructor(
         checkSession()
     }
 
-    fun checkSession() {
+        fun checkSession() {
         viewModelScope.launch {
             _splashState.value = SplashState.Loading
-            // Small minimum delay for smooth splash presentation
-            delay(1200)
+            delay(1000)
             val token = sessionManager.getAccessToken()
-            val orgSlug = sessionManager.getOrgSlug()
-            if (!token.isNullOrEmpty() && !orgSlug.isNullOrEmpty()) {
-                _splashState.value = SplashState.Authenticated
-            } else {
+            if (token.isNullOrEmpty()) {
                 _splashState.value = SplashState.Unauthenticated
+                return@launch
             }
+
+            val validateResult = authRepository.validateSession()
+            validateResult.fold(
+                onSuccess = { meData ->
+                    val effectiveOrgSlug = meData.activeOrganization?.slug ?: sessionManager.getOrgSlug() ?: "default"
+                    val currentToken = sessionManager.getAccessToken()
+                    if (!currentToken.isNullOrEmpty() && !effectiveOrgSlug.isNullOrEmpty()) {
+                        _splashState.value = SplashState.Authenticated
+                    } else {
+                        _splashState.value = SplashState.Unauthenticated
+                    }
+                },
+                onFailure = {
+                    val localOrgSlug = sessionManager.getOrgSlug()
+                    if (!token.isNullOrEmpty() && !localOrgSlug.isNullOrEmpty()) {
+                        _splashState.value = SplashState.Authenticated
+                    } else if (!token.isNullOrEmpty()) {
+                        sessionManager.saveSession(
+                            accessToken = token,
+                            orgSlug = localOrgSlug ?: "default"
+                        )
+                        _splashState.value = SplashState.Authenticated
+                    } else {
+                        _splashState.value = SplashState.Unauthenticated
+                    }
+                }
+            )
         }
     }
 }
