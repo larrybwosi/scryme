@@ -315,6 +315,8 @@ class ScheduleRepositoryImpl @Inject constructor(
         branchCode: String?,
         latitude: Double?,
         longitude: Double?,
+        accuracy: Float?,
+        isMock: Boolean?,
         verificationMethod: String?,
         notes: String?
     ): Result<AttendanceLogDto> {
@@ -324,6 +326,8 @@ class ScheduleRepositoryImpl @Inject constructor(
                 branchCode = branchCode,
                 latitude = latitude,
                 longitude = longitude,
+                accuracy = accuracy,
+                isMock = isMock,
                 verificationMethod = verificationMethod ?: "GPS_GEOFENCE",
                 notes = notes
             )

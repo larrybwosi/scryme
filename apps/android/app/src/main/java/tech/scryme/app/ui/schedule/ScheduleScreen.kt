@@ -187,6 +187,15 @@ fun ScheduleScreen(
             is ScheduleUiState.Success -> {
                 var showCheckInDialog by remember { mutableStateOf(false) }
 
+                if (!state.errorMessage.isNullOrEmpty()) {
+                    ErrorMessageCard(
+                        title = "Check-In Blocked",
+                        message = state.errorMessage,
+                        onRetry = { viewModel.clearError() }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                }
+
                 AttendanceStatusCard(
                     status = state.attendanceStatus,
                     onCheckInClick = { showCheckInDialog = true },
@@ -1080,8 +1089,8 @@ fun CheckInAttendanceDialog(
     var checkInMode by remember { mutableStateOf(0) }
     var selectedLocationId by remember { mutableStateOf(locations.firstOrNull()?.id ?: "") }
     var branchCode by remember { mutableStateOf("") }
-    var latitudeText by remember { mutableStateOf("40.7128") }
-    var longitudeText by remember { mutableStateOf("-74.0060") }
+    var latitudeText by remember { mutableStateOf("") }
+    var longitudeText by remember { mutableStateOf("") }
     var showQrScanner by remember { mutableStateOf(false) }
 
     StyledFormDialog(
@@ -1130,7 +1139,16 @@ fun CheckInAttendanceDialog(
                             selected = selectedLocationId == loc.id,
                             onClick = { selectedLocationId = loc.id }
                         )
-                        Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
+                        Column {
+                            Text(text = loc.name, style = MaterialTheme.typography.bodyMedium)
+                            if (loc.latitude != null && loc.longitude != null) {
+                                Text(
+                                    text = "📍 Pinned (${"%.4f".format(loc.latitude)}, ${"%.4f".format(loc.longitude)})",
+                                    style = MaterialTheme.typography.labelSmall,
+                                    color = Emerald500
+                                )
+                            }
+                        }
                     }
                 }
             } else {
@@ -1145,25 +1163,11 @@ fun CheckInAttendanceDialog(
             }
 
             Spacer(modifier = Modifier.height(4.dp))
-            SectionLabel("Coordinates (GPS geofence)")
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                OutlinedTextField(
-                    value = latitudeText,
-                    onValueChange = { latitudeText = it },
-                    label = { Text("Latitude") },
-                    shape = ControlShape,
-                    colors = fieldColors(),
-                    modifier = Modifier.weight(1f)
-                )
-                OutlinedTextField(
-                    value = longitudeText,
-                    onValueChange = { longitudeText = it },
-                    label = { Text("Longitude") },
-                    shape = ControlShape,
-                    colors = fieldColors(),
-                    modifier = Modifier.weight(1f)
-                )
-            }
+            Text(
+                text = "GPS coordinates will automatically be acquired during check-in to verify you are within 50m of the pinned branch.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
         } else {
             SectionLabel("Branch location (optional)")
 

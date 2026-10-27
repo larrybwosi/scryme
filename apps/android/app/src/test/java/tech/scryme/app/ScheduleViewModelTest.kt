@@ -34,6 +34,8 @@ class ScheduleViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { sessionManager.getLocationId() } returns null
         coEvery { branchRepository.getBranchLocations(any()) } returns Result.success(emptyList())
         coEvery { profileRepository.getMembers(any()) } returns Result.success(emptyList())
         coEvery { scheduleRepository.getMyAttendanceStatus(any()) } returns Result.success(AttendanceStatusDto(id = "mem_1"))
@@ -54,7 +56,6 @@ class ScheduleViewModelTest {
             ShiftTrade(id = "tr1", requestingMemberId = "m1", shiftId = "s1", status = "PENDING")
         )
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(shifts)
         coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(shifts)
         coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(trades)
@@ -78,16 +79,17 @@ class ScheduleViewModelTest {
             isLocationVerified = true
         )
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery {
             scheduleRepository.checkInAttendance(
-                orgSlug = "scryme-org",
-                locationId = null,
-                branchCode = "BRANCH-01",
-                latitude = null,
-                longitude = null,
-                verificationMethod = "QR_SCAN",
-                notes = null
+                orgSlug = any(),
+                locationId = any(),
+                branchCode = any(),
+                latitude = any(),
+                longitude = any(),
+                accuracy = any(),
+                isMock = any(),
+                verificationMethod = any(),
+                notes = any()
             )
         } returns Result.success(logDto)
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
@@ -109,7 +111,6 @@ class ScheduleViewModelTest {
     fun requestShiftTrade_success_reloadsSchedule() = runTest {
         val trade = ShiftTrade(id = "tr1", requestingMemberId = "m1", shiftId = "s1", status = "PENDING")
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.requestShiftTrade("scryme-org", "s1", null, "Personal reason") } returns Result.success(trade)
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
         coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(emptyList())
