@@ -79,71 +79,106 @@ class ProfileViewModel @Inject constructor(
         }
     }
 
-    fun loadProfile() {
+        fun loadProfile() {
         viewModelScope.launch {
             _uiState.value = ProfileUiState.Loading
-            val meResult = authRepository.validateSession()
-            meResult.fold(
-                onSuccess = { meData ->
-                    val user = meData.user
-                    val member = meData.member
-                    val activeOrg = meData.activeOrganization
-                    val memberships = meData.memberships ?: emptyList()
+            try {
+                val meResult = authRepository.validateSession()
+                val savedName = sessionManager.userNameFlow.first()
+                val savedEmail = sessionManager.userEmailFlow.first()
+                val savedAvatar = sessionManager.userAvatarUrlFlow.first()
+                val savedDutyStatus = sessionManager.dutyStatusFlow.first()
 
-                    val orgSlug = sessionManager.getOrgSlug() ?: activeOrg?.slug ?: "default"
-                    val memberId = member?.id ?: sessionManager.getMemberId()
+                meResult.fold(
+                    onSuccess = { meData ->
+                        val user = meData.user
+                        val member = meData.member
+                        val activeOrg = meData.activeOrganization
+                        val memberships = meData.memberships ?: emptyList()
 
-                    var profile: UserProfile? = null
+                        val orgSlug = sessionManager.getOrgSlug() ?: activeOrg?.slug ?: "default"
+                        val memberId = member?.id ?: sessionManager.getMemberId()
 
-                    if (!memberId.isNullOrEmpty()) {
-                        val profileResult = profileRepository.getMemberProfile(orgSlug, memberId)
-                        profile = profileResult.getOrNull()
-                    }
+                        var profile: UserProfile? = null
 
-                    if (profile == null) {
-                        profile = UserProfile(
-                            id = memberId ?: user?.id ?: "user_profile",
-                            organizationId = activeOrg?.id ?: "",
-                            userId = user?.id ?: "",
-                            name = user?.name ?: sessionManager.userNameFlow.first() ?: "User",
-                            email = user?.email ?: sessionManager.userEmailFlow.first(),
-                            phone = null,
-                            role = member?.role ?: memberships.firstOrNull { it.organizationId == activeOrg?.id }?.role ?: "MEMBER",
-                            status = sessionManager.dutyStatusFlow.first(),
-                            isActive = true,
-                            avatarUrl = sessionManager.userAvatarUrlFlow.first()
+                        if (!memberId.isNullOrEmpty()) {
+                            val profileResult = profileRepository.getMemberProfile(orgSlug, memberId)
+                            profile = profileResult.getOrNull()
+                        }
+
+                        if (profile == null) {
+                            profile = UserProfile(
+                                id = memberId ?: user?.id ?: "user_profile",
+                                organizationId = activeOrg?.id ?: "",
+                                userId = user?.id ?: "",
+                                name = user?.name?.ifBlank { null } ?: savedName?.ifBlank { null } ?: "User",
+                                email = user?.email?.ifBlank { null } ?: savedEmail,
+                                phone = null,
+                                role = member?.role ?: memberships.firstOrNull { it.organizationId == activeOrg?.id }?.role ?: "MEMBER",
+                                status = savedDutyStatus,
+                                isActive = true,
+                                avatarUrl = savedAvatar
+                            )
+                        }
+
+                        sessionManager.updateUserProfile(
+                            name = profile.name,
+                            email = profile.email,
+                            avatarUrl = profile.avatarUrl
                         )
+                        sessionManager.updateDutyStatus(profile.status)
+
+                        val prefs = UserPreferencesState(
+                            themeMode = sessionManager.themeModeFlow.first(),
+                            notificationsEnabled = sessionManager.notificationsEnabledFlow.first(),
+                            shiftNotifications = sessionManager.shiftNotificationsFlow.first(),
+                            taskNotifications = sessionManager.taskNotificationsFlow.first()
+                        )
+
+                        val passkeysResult = authRepository.listUserPasskeys()
+                        val passkeysList = passkeysResult.getOrDefault(emptyList())
+
+                        _uiState.value = ProfileUiState.Success(
+                            profile = profile,
+                            activeOrganization = activeOrg,
+                            memberships = memberships,
+                            preferences = prefs,
+                            passkeys = passkeysList
+                        )
+                    },
+                    onFailure = { error ->
+                        if (!savedName.isNullOrEmpty() || !savedEmail.isNullOrEmpty()) {
+                            val fallbackProfile = UserProfile(
+                                id = sessionManager.getMemberId() ?: sessionManager.getUserId() ?: "user_profile",
+                                organizationId = "",
+                                userId = sessionManager.getUserId() ?: "",
+                                name = savedName ?: "User",
+                                email = savedEmail,
+                                phone = null,
+                                role = "MEMBER",
+                                status = savedDutyStatus,
+                                isActive = true,
+                                avatarUrl = savedAvatar
+                            )
+                            val prefs = UserPreferencesState(
+                                themeMode = sessionManager.themeModeFlow.first(),
+                                notificationsEnabled = sessionManager.notificationsEnabledFlow.first(),
+                                shiftNotifications = sessionManager.shiftNotificationsFlow.first(),
+                                taskNotifications = sessionManager.taskNotificationsFlow.first()
+                            )
+                            _uiState.value = ProfileUiState.Success(
+                                profile = fallbackProfile,
+                                preferences = prefs,
+                                updateError = error.message
+                            )
+                        } else {
+                            _uiState.value = ProfileUiState.Error(error.message ?: "Failed to load organization context & profile")
+                        }
                     }
-
-                    sessionManager.updateUserProfile(
-                        name = profile.name,
-                        email = profile.email,
-                        avatarUrl = profile.avatarUrl
-                    )
-                    sessionManager.updateDutyStatus(profile.status)
-
-                    val prefs = UserPreferencesState(
-                        themeMode = sessionManager.themeModeFlow.first(),
-                        notificationsEnabled = sessionManager.notificationsEnabledFlow.first(),
-                        shiftNotifications = sessionManager.shiftNotificationsFlow.first(),
-                        taskNotifications = sessionManager.taskNotificationsFlow.first()
-                    )
-
-                    val passkeysResult = authRepository.listUserPasskeys()
-                    val passkeysList = passkeysResult.getOrDefault(emptyList())
-
-                    _uiState.value = ProfileUiState.Success(
-                        profile = profile,
-                        activeOrganization = activeOrg,
-                        memberships = memberships,
-                        preferences = prefs,
-                        passkeys = passkeysList
-                    )
-                },
-                onFailure = { error ->
-                    _uiState.value = ProfileUiState.Error(error.message ?: "Failed to load organization context & profile")
-                }
-            )
+                )
+            } catch (e: Exception) {
+                _uiState.value = ProfileUiState.Error(e.message ?: "An unexpected error occurred while loading profile.")
+            }
         }
     }
 
