@@ -186,14 +186,23 @@ export async function approvePermissionRequestAction(data: {
     return { success: false, error: "Unauthorized: Please log in again." };
   }
 
-  const currentMember = await db.member.findUnique({
-    where: { id: auth.memberId },
+  const currentMember = await db.member.findFirst({
+    where: { id: auth.memberId, organizationId: auth.organizationId },
   });
 
   if (!currentMember || !["OWNER", "ADMIN"].includes(currentMember.role)) {
     return {
       success: false,
       error: "Forbidden: Only admins can approve permission requests.",
+    };
+  }
+
+  // THREAT: Privilege Escalation (CWE-269)
+  // MITIGATION: Only OWNER role holders can grant the OWNER role. Non-OWNER admins are restricted from granting OWNER privileges.
+  if (data.roleToGrant === "OWNER" && currentMember.role !== "OWNER") {
+    return {
+      success: false,
+      error: "Forbidden: Only organization owners can grant the OWNER role.",
     };
   }
 
@@ -205,13 +214,24 @@ export async function approvePermissionRequestAction(data: {
     return { success: false, error: "Target member not found." };
   }
 
-  const updatedMember = await db.member.update({
-    where: { id: memberToUpdate.id },
+  // THREAT: BOLA/IDOR Vulnerability
+  // MITIGATION: Member model lacks a composite unique constraint on [id, organizationId].
+  // Using updateMany scoped strictly by id AND organizationId enforces database-level multi-tenant isolation.
+  const updateResult = await db.member.updateMany({
+    where: { id: memberToUpdate.id, organizationId: auth.organizationId },
     data: {
       role: data.roleToGrant,
       membershipStatus: "ACTIVE",
       isActive: true,
     },
+  });
+
+  if (updateResult.count === 0) {
+    return { success: false, error: "Target member not found." };
+  }
+
+  const updatedMember = await db.member.findFirstOrThrow({
+    where: { id: memberToUpdate.id, organizationId: auth.organizationId },
   });
 
   revalidatePath("/staff");
