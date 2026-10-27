@@ -113,6 +113,32 @@ describe("LoyaltyService", () => {
     });
   });
 
+  describe("awardPoints", () => {
+    it("should award points when customer and loyalty program exist", async () => {
+      (mockPrisma.customer.findFirst as any).mockResolvedValue({ id: "cust1", organizationId: "org1" });
+      (mockPrisma.loyaltyProgram.findFirst as any).mockResolvedValue({ id: "prog1", organizationId: "org1", isActive: true });
+      (mockPrisma.customer.update as any).mockResolvedValue({ id: "cust1", loyaltyPoints: 100 });
+      (mockPrisma.loyaltyTransaction.create as any).mockResolvedValue({ id: "tx1" });
+
+      const res = await service.awardPoints("cust1", 50, "org1", "Welcome bonus");
+      expect(res).toEqual({ id: "cust1", loyaltyPoints: 100 });
+      expect(mockPrisma.customer.findFirst).toHaveBeenCalledWith({
+        where: { id: "cust1", organizationId: "org1" },
+      });
+      expect(mockPrisma.loyaltyProgram.findFirst).toHaveBeenCalledWith({
+        where: { organizationId: "org1", isActive: true },
+      });
+    });
+
+    it("should return early when customer or program does not exist", async () => {
+      (mockPrisma.customer.findFirst as any).mockResolvedValue(null);
+      (mockPrisma.loyaltyProgram.findFirst as any).mockResolvedValue({ id: "prog1" });
+
+      const res = await service.awardPoints("cust1", 50, "org1", "Bonus");
+      expect(res).toBeUndefined();
+    });
+  });
+
   describe("validateVoucher", () => {
     it("should validate voucher with null expiresAt (non-expiring voucher)", async () => {
       (mockPrisma.loyaltyVoucher.findFirst as any).mockResolvedValue({
