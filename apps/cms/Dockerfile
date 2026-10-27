@@ -80,7 +80,7 @@ USER nextjs
 EXPOSE 3010
 
 HEALTHCHECK --interval=30s --timeout=10s --start-period=15s --retries=3 \
-  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3010}
+  CMD wget --no-verbose --tries=1 --spider http://127.0.0.1:${PORT:-3010}/api/health
 
 ENTRYPOINT ["./entrypoint.sh"]
 CMD ["node", "apps/cms/server.js"]
