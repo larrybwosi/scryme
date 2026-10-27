@@ -196,18 +196,19 @@ export class LoyaltyService {
   ) {
     if (points === 0) return;
 
-    // Validate customer belongs to organization
-    const customerExists = await db.customer.findFirst({
-      where: { id: customerId, organizationId },
-    });
+    // ⚡ Bolt Optimization: Parallelize independent database read queries for customer validation
+    // and active loyalty program lookup using Promise.all.
+    // This reduces database wait time from 2 sequential roundtrips to 1 parallel roundtrip.
+    const [customerExists, program] = await Promise.all([
+      db.customer.findFirst({
+        where: { id: customerId, organizationId },
+      }),
+      db.loyaltyProgram.findFirst({
+        where: { organizationId, isActive: true },
+      }),
+    ]);
 
-    if (!customerExists) return;
-
-    const program = await db.loyaltyProgram.findFirst({
-      where: { organizationId, isActive: true },
-    });
-
-    if (!program) return;
+    if (!customerExists || !program) return;
 
     return await this.prisma.client.$transaction(async tx => {
       const customer = await tx.customer.update({
