@@ -30,7 +30,8 @@ describe("ProcessSaleUseCase", () => {
         productVariant: { findMany: vi.fn() },
         customer: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
         transaction: { create: vi.fn() },
-        productVariantStock: { update: vi.fn() },
+        productVariantStock: { update: vi.fn(), upsert: vi.fn() },
+        priceList: { findMany: vi.fn().mockResolvedValue([]) },
         stockMovement: { createMany: vi.fn() },
         loyaltyVoucher: { findUnique: vi.fn(), findFirst: vi.fn(), update: vi.fn() },
         organization: { findUnique: vi.fn() },
@@ -780,5 +781,74 @@ describe("ProcessSaleUseCase", () => {
       where: { id: "selected_cust_100", organizationId: "org_1" },
       select: { id: true, phone: true },
     });
+  });
+  it("should automatically resolve bulk pricing from active PriceLists when unitPrice is omitted", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+    const dto = {
+      items: [{ variantId: "v_bulk", quantity: 10 }],
+      payments: [{ method: "CASH", amount: 800 }],
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "v_bulk",
+        productId: "p_bulk",
+        retailPrice: 100,
+        buyingPrice: 50,
+        name: "Bulk Variant",
+        sku: "SBULK",
+        product: { name: "Bulk Product" },
+        sellingUnits: [],
+      },
+    ]);
+
+    prisma.client.priceList.findMany.mockResolvedValue([
+      {
+        id: "pl_1",
+        name: "Wholesale Tier",
+        items: [
+          {
+            variantId: "v_bulk",
+            sellingUnitId: null,
+            minQuantity: 10,
+            maxQuantity: null,
+            price: 80,
+            isActive: true,
+            deletedAt: null,
+          },
+        ],
+      },
+    ]);
+
+    prisma.client.transaction.create.mockImplementation(async ({ data }) => {
+      return {
+        id: "t_bulk_1",
+        number: data.number,
+        subtotal: data.subtotal,
+        finalTotal: data.finalTotal,
+      };
+    });
+
+    prisma.client.organization.findUnique.mockResolvedValue({
+      id: "org_1",
+      settings: { taxIntegrationEnabled: false },
+    });
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.finalTotal).toBe(800);
+    expect(prisma.client.transaction.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          subtotal: 800,
+          finalTotal: 800,
+        }),
+      }),
+    );
   });
 });

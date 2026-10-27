@@ -1,3 +1,4 @@
+import { unitCalculationService } from "@repo/shared/lib";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { AutomationService } from "../../../../../automation/automation.service";
 import {
@@ -63,7 +64,7 @@ export class ProcessSaleUseCase {
         // 1. Process Product Items if present
         if (hasProducts) {
           const variants = await this.getV(tx, productItems, orgId);
-          items = this.prepI(productItems, variants);
+          items = await this.prepI(productItems, variants, orgId, dto.customerId, dto.isWholesale, tx);
           sub += items.reduce((s: number, i: any) => s + i.lineTotal, 0);
         }
 
@@ -265,17 +266,74 @@ export class ProcessSaleUseCase {
     return v;
   }
 
-  private prepI(items: any[], variants: any[]) {
+  private async prepI(
+    items: any[],
+    variants: any[],
+    orgId?: string,
+    customerId?: string,
+    isWholesale?: boolean,
+    tx?: any,
+  ) {
     // ⚡ Bolt Optimization: Use a Map for O(1) constant-time variant lookups.
     // This reduces lookup complexity from O(N*M) nested search to O(N+M) mapping.
     const variantMap = new Map(variants.map((v) => [v.id, v]));
 
-    return items.map((i) => {
+    let activePriceLists: any[] = [];
+    if (orgId && tx) {
+      const now = new Date();
+      activePriceLists = await tx.priceList.findMany({
+        where: {
+          organizationId: orgId,
+          isActive: true,
+          AND: [
+            { OR: [{ validFrom: null }, { validFrom: { lte: now } }] },
+            { OR: [{ validTo: null }, { validTo: { gte: now } }] },
+          ],
+          OR: [
+            { isGlobal: true },
+            ...(customerId ? [{ customers: { some: { id: customerId } } }] : []),
+          ],
+        },
+        orderBy: { priority: "desc" },
+        include: {
+          items: {
+            where: {
+              isActive: true,
+              deletedAt: null,
+            },
+          },
+        },
+      });
+    }
+
+    const preparedItems = [];
+    for (const i of items) {
       const v = variantMap.get(i.variantId)!;
       const defaultPrice = Number(v.retailPrice || 0);
-      const p = i.unitPrice !== undefined && i.unitPrice !== null ? Number(i.unitPrice) : defaultPrice;
-      return {
+
+      let p: number;
+      if (i.unitPrice !== undefined && i.unitPrice !== null) {
+        p = Number(i.unitPrice);
+      } else if (orgId) {
+        const resolved = await unitCalculationService.resolvePrice({
+          variantId: i.variantId,
+          sellingUnitId: i.sellingUnitId,
+          quantity: i.quantity,
+          customerId,
+          organizationId: orgId,
+          isWholesale: isWholesale || false,
+          tx,
+          preFetchedVariant: v,
+          preFetchedPriceLists: activePriceLists,
+        });
+        p = Number(resolved.price);
+      } else {
+        p = defaultPrice;
+      }
+
+      preparedItems.push({
         variantId: v.id,
+        productId: v.productId,
         productName: v.product.name,
         variantName: v.name,
         sku: v.sku || "N/A",
@@ -285,8 +343,10 @@ export class ProcessSaleUseCase {
         unitCost: Number(v.buyingPrice || 0),
         subtotal: p * i.quantity,
         lineTotal: p * i.quantity,
-      };
-    });
+      });
+    }
+
+    return preparedItems;
   }
 
   private async getC(
