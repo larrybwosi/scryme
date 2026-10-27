@@ -1,6 +1,7 @@
 package tech.scryme.app.ui.sales
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -28,6 +29,7 @@ fun OrdersScreen(
     orders: List<OrderItem>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
+    onOrderClick: (OrderItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     val groupedOrders = orders.groupBy { it.groupDate }
@@ -128,7 +130,10 @@ fun OrdersScreen(
                         )
                     }
                     items(orderGroup) { order ->
-                        OrderItemCard(order = order)
+                        OrderItemCard(
+                            order = order,
+                            onClick = { onOrderClick(order) }
+                        )
                     }
                 }
             }
@@ -137,9 +142,14 @@ fun OrdersScreen(
 }
 
 @Composable
-private fun OrderItemCard(order: OrderItem) {
+private fun OrderItemCard(
+    order: OrderItem,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         shape = RoundedCornerShape(12.dp)
     ) {

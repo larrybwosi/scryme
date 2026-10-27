@@ -2,6 +2,7 @@ package tech.scryme.app.data.api
 
 import retrofit2.Response
 import retrofit2.http.GET
+import retrofit2.http.Path
 import retrofit2.http.Query
 import tech.scryme.app.data.dto.V3ApiResponse
 import tech.scryme.app.domain.model.OrderItem
@@ -15,4 +16,9 @@ interface SalesApiService {
     suspend fun getOrders(
         @Query("query") query: String? = null
     ): Response<V3ApiResponse<List<OrderItem>>>
+
+    @GET("sales/orders/{id}")
+    suspend fun getOrderDetails(
+        @Path("id") id: String
+    ): Response<V3ApiResponse<OrderItem>>
 }

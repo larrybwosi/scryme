@@ -21,7 +21,8 @@ data class SalesUiState(
     val searchQuery: String = "",
     val error: String? = null,
     val selectedTab: SalesTab = SalesTab.ANALYTICS,
-    val isAuthorized: Boolean = true
+    val isAuthorized: Boolean = true,
+    val selectedOrderForDetails: OrderItem? = null
 )
 
 enum class SalesTab(val title: String) {
@@ -70,6 +71,10 @@ class SalesViewModel @Inject constructor(
     fun onSearchQueryChanged(query: String) {
         _uiState.update { it.copy(searchQuery = query) }
         loadOrders(query)
+    }
+
+    fun selectOrderForDetails(order: OrderItem?) {
+        _uiState.update { it.copy(selectedOrderForDetails = order) }
     }
 
     fun refresh() {
