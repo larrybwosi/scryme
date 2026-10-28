@@ -86,13 +86,23 @@ export async function submitPriceListForApproval(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
 
-  const priceList = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): PriceList lacks a composite unique constraint on [id, organizationId].
+  // Scoping updateMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.priceList.updateMany({
     where: { id, organizationId: context.organizationId },
     data: {
       approvalStatus: PriceApprovalStatus.PENDING_APPROVAL,
       submittedAt: new Date(),
       submittedBy: context.memberId,
     },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const priceList = await db.priceList.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
   });
 
   revalidatePath("/inventory/pricelists");
@@ -104,7 +114,9 @@ export async function approvePriceList(id: string, notes?: string) {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
 
-  const priceList = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): PriceList lacks a composite unique constraint on [id, organizationId].
+  // Scoping updateMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.priceList.updateMany({
     where: { id, organizationId: context.organizationId },
     data: {
       approvalStatus: PriceApprovalStatus.APPROVED,
@@ -112,6 +124,14 @@ export async function approvePriceList(id: string, notes?: string) {
       approvedBy: context.memberId,
       approvalNotes: notes,
     },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const priceList = await db.priceList.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
   });
 
   revalidatePath("/inventory/pricelists");
@@ -123,12 +143,22 @@ export async function rejectPriceList(id: string, notes: string) {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId) throw new Error("Unauthorized");
 
-  const priceList = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): PriceList lacks a composite unique constraint on [id, organizationId].
+  // Scoping updateMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.priceList.updateMany({
     where: { id, organizationId: context.organizationId },
     data: {
       approvalStatus: PriceApprovalStatus.REJECTED,
       approvalNotes: notes,
     },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const priceList = await db.priceList.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
   });
 
   revalidatePath("/inventory/pricelists");
@@ -140,9 +170,19 @@ export async function updatePriceList(id: string, data: any) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const priceList = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): PriceList lacks a composite unique constraint on [id, organizationId].
+  // Scoping updateMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.priceList.updateMany({
     where: { id, organizationId: context.organizationId },
     data,
+  });
+
+  if (result.count === 0) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const priceList = await db.priceList.findFirstOrThrow({
+    where: { id, organizationId: context.organizationId },
   });
 
   revalidatePath("/inventory/pricelists");
@@ -154,9 +194,15 @@ export async function deletePriceList(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.priceList.delete({
+  // Security Mitigation (BOLA/IDOR): PriceList lacks a composite unique constraint on [id, organizationId].
+  // Scoping deleteMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.priceList.deleteMany({
     where: { id, organizationId: context.organizationId },
   });
+
+  if (result.count === 0) {
+    throw new Error("Price list not found or unauthorized");
+  }
 
   await realtimeService.publish(
     `organization:${context.organizationId}:pricing`,
@@ -178,12 +224,22 @@ export async function addPriceListItems(priceListId: string, items: Array<{
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // Security Mitigation (BOLA/IDOR): Verify target price list belongs to context.organizationId
+  const priceList = await db.priceList.findFirst({
+    where: { id: priceListId, organizationId: context.organizationId },
+    select: { id: true },
+  });
+
+  if (!priceList) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
   const result = await db.$transaction(
     items.map(item => {
       const where = item.sellingUnitId
         ? {
             priceListId_variantId_sellingUnitId_minQuantity: {
-              priceListId,
+              priceListId: priceList.id,
               variantId: item.variantId,
               sellingUnitId: item.sellingUnitId,
               minQuantity: item.minQuantity ?? 1,
@@ -191,7 +247,7 @@ export async function addPriceListItems(priceListId: string, items: Array<{
           }
         : {
             priceListId_variantId_minQuantity: {
-              priceListId,
+              priceListId: priceList.id,
               variantId: item.variantId,
               minQuantity: item.minQuantity ?? 1,
             }
@@ -201,7 +257,7 @@ export async function addPriceListItems(priceListId: string, items: Array<{
         where,
         create: {
           ...item,
-          priceListId,
+          priceListId: priceList.id,
           price: new Decimal(item.price),
           percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
         },
@@ -222,12 +278,21 @@ export async function removePriceListItem(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const item = await db.priceListItem.delete({
-    where: { id },
-    select: { priceListId: true }
+  const item = await db.priceListItem.findFirst({
+    where: { id, priceList: { organizationId: context.organizationId } },
+    select: { priceListId: true },
   });
 
-  if (item?.priceListId) {
+  if (!item) {
+    throw new Error("Price list item not found or unauthorized");
+  }
+
+  // Security Mitigation (BOLA/IDOR): Scoping deleteMany to { id, priceList: { organizationId } } enforces database-level multi-tenant isolation.
+  await db.priceListItem.deleteMany({
+    where: { id, priceList: { organizationId: context.organizationId } },
+  });
+
+  if (item.priceListId) {
     revalidatePath(`/inventory/pricelists/${item.priceListId}`);
   }
 }
@@ -286,9 +351,20 @@ export async function createPricingRule(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // Security Mitigation (BOLA/IDOR): Verify priceListId belongs to context.organizationId
+  const priceList = await db.priceList.findFirst({
+    where: { id: data.priceListId, organizationId: context.organizationId },
+    select: { id: true },
+  });
+
+  if (!priceList) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
   const rule = await db.pricingRule.create({
     data: {
       ...data,
+      priceListId: priceList.id,
       organizationId: context.organizationId,
       discountValue: new Decimal(data.discountValue),
     },
@@ -317,8 +393,18 @@ export async function assignCustomersToPriceList(priceListId: string, customerId
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const result = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): Verify priceList belongs to context.organizationId
+  const priceList = await db.priceList.findFirst({
     where: { id: priceListId, organizationId: context.organizationId },
+    select: { id: true },
+  });
+
+  if (!priceList) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const result = await db.priceList.update({
+    where: { id: priceList.id },
     data: {
       customers: {
         connect: customerIds.map(id => ({ id }))
@@ -334,8 +420,18 @@ export async function removeCustomerFromPriceList(priceListId: string, customerI
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const result = await db.priceList.update({
+  // Security Mitigation (BOLA/IDOR): Verify priceList belongs to context.organizationId
+  const priceList = await db.priceList.findFirst({
     where: { id: priceListId, organizationId: context.organizationId },
+    select: { id: true },
+  });
+
+  if (!priceList) {
+    throw new Error("Price list not found or unauthorized");
+  }
+
+  const result = await db.priceList.update({
+    where: { id: priceList.id },
     data: {
       customers: {
         disconnect: { id: customerId }
@@ -346,7 +442,6 @@ export async function removeCustomerFromPriceList(priceListId: string, customerI
   revalidatePath(`/inventory/pricelists/${priceListId}`);
   return result;
 }
-
 
 export async function getOrCreateDefaultPriceList() {
   const context = await getServerAuth();
@@ -422,7 +517,7 @@ export async function getProductPricingDetails(productId: string) {
   });
 
   const bundleItems = await db.pricingBundleItem.findMany({
-    where: { variantId: { in: variantIds } },
+    where: { variantId: { in: variantIds }, bundle: { organizationId: context.organizationId } },
     include: {
       bundle: {
         include: {
@@ -472,6 +567,12 @@ export async function createVolumeTierForProduct(data: {
   if (!listId) {
     const defaultList = await getOrCreateDefaultPriceList();
     listId = defaultList.id;
+  } else {
+    const priceList = await db.priceList.findFirst({
+      where: { id: listId, organizationId: context.organizationId },
+      select: { id: true },
+    });
+    if (!priceList) throw new Error("Price list not found or unauthorized");
   }
 
   const existing = await db.priceListItem.findFirst({
@@ -479,18 +580,23 @@ export async function createVolumeTierForProduct(data: {
       priceListId: listId,
       variantId: data.variantId,
       minQuantity: data.minQuantity,
+      priceList: { organizationId: context.organizationId },
     },
   });
 
   let item;
   if (existing) {
-    item = await db.priceListItem.update({
-      where: { id: existing.id },
+    await db.priceListItem.updateMany({
+      where: { id: existing.id, priceList: { organizationId: context.organizationId } },
       data: {
         price: new Decimal(data.price),
         maxQuantity: data.maxQuantity ?? null,
         wholesalePrice: data.wholesalePrice ? new Decimal(data.wholesalePrice) : null,
       },
+    });
+
+    item = await db.priceListItem.findFirstOrThrow({
+      where: { id: existing.id, priceList: { organizationId: context.organizationId } },
     });
   } else {
     item = await db.priceListItem.create({
@@ -513,9 +619,14 @@ export async function deleteVolumeTier(priceListItemId: string, productId?: stri
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.priceListItem.delete({
-    where: { id: priceListItemId },
+  // Security Mitigation (BOLA/IDOR): Scoping deleteMany to { id, priceList: { organizationId } } enforces database-level multi-tenant isolation.
+  const result = await db.priceListItem.deleteMany({
+    where: { id: priceListItemId, priceList: { organizationId: context.organizationId } },
   });
+
+  if (result.count === 0) {
+    throw new Error("Volume tier not found or unauthorized");
+  }
 
   if (productId) {
     revalidatePath(`/inventory/products/${productId}`);
@@ -540,6 +651,12 @@ export async function createProductPricingRule(data: {
   if (!listId) {
     const defaultList = await getOrCreateDefaultPriceList();
     listId = defaultList.id;
+  } else {
+    const priceList = await db.priceList.findFirst({
+      where: { id: listId, organizationId: context.organizationId },
+      select: { id: true },
+    });
+    if (!priceList) throw new Error("Price list not found or unauthorized");
   }
 
   const conditions: Record<string, any> = {};
@@ -567,9 +684,15 @@ export async function deleteProductPricingRule(ruleId: string, productId?: strin
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.pricingRule.delete({
+  // Security Mitigation (BOLA/IDOR): PricingRule lacks a composite unique constraint on [id, organizationId].
+  // Scoping deleteMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.pricingRule.deleteMany({
     where: { id: ruleId, organizationId: context.organizationId },
   });
+
+  if (result.count === 0) {
+    throw new Error("Pricing rule not found or unauthorized");
+  }
 
   if (productId) {
     revalidatePath(`/inventory/products/${productId}`);
@@ -625,9 +748,15 @@ export async function deleteProductPricingBundle(bundleId: string, productId?: s
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  await db.pricingBundle.delete({
+  // Security Mitigation (BOLA/IDOR): PricingBundle lacks a composite unique constraint on [id, organizationId].
+  // Scoping deleteMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  const result = await db.pricingBundle.deleteMany({
     where: { id: bundleId, organizationId: context.organizationId },
   });
+
+  if (result.count === 0) {
+    throw new Error("Pricing bundle not found or unauthorized");
+  }
 
   if (productId) {
     revalidatePath(`/inventory/products/${productId}`);

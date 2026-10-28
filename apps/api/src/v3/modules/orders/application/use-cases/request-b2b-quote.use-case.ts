@@ -227,12 +227,17 @@ export class RequestB2BQuoteUseCase {
     });
 
     // 6. Trigger events
-    await this.realtimeService.publish(
-      `order:${quote.id}`,
-      "quote.created",
-      quote,
-    );
-    await this.webhookService.dispatch("quote.created", organizationId, quote);
+    // ⚡ Bolt Optimization: Parallelize post-creation event emissions (realtime service publish & webhook dispatch).
+    // Executing external network event dispatches concurrently via Promise.all collapses 2 sequential network roundtrips
+    // into 1 flat concurrent roundtrip, reducing total execute() latency.
+    await Promise.all([
+      this.realtimeService.publish(
+        `order:${quote.id}`,
+        "quote.created",
+        quote,
+      ),
+      this.webhookService.dispatch("quote.created", organizationId, quote),
+    ]);
 
     return quote;
   }

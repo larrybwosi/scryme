@@ -68,34 +68,40 @@ export async function createStaffTask(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
-    if (data.memberId) {
-      const member = await db.member.findFirst({
-        where: { id: data.memberId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!member) {
-        return { success: false, error: "Assigned staff member not found or belongs to another organization" };
-      }
+    // ⚡ Bolt Optimization: Parallelize foreign entity validation lookups (member, shift, location).
+    // Combining independent database read queries into a single Promise.all concurrent block collapses up to 3 sequential database
+    // roundtrips into 1 flat concurrent roundtrip, reducing task creation validation latency by up to ~66%.
+    const [member, shift, location] = await Promise.all([
+      data.memberId
+        ? db.member.findFirst({
+            where: { id: data.memberId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+      data.shiftId
+        ? db.staffShift.findFirst({
+            where: { id: data.shiftId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+      data.locationId
+        ? db.inventoryLocation.findFirst({
+            where: { id: data.locationId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+    ]);
+
+    if (data.memberId && !member) {
+      return { success: false, error: "Assigned staff member not found or belongs to another organization" };
     }
 
-    if (data.shiftId) {
-      const shift = await db.staffShift.findFirst({
-        where: { id: data.shiftId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!shift) {
-        return { success: false, error: "Shift not found or belongs to another organization" };
-      }
+    if (data.shiftId && !shift) {
+      return { success: false, error: "Shift not found or belongs to another organization" };
     }
 
-    if (data.locationId) {
-      const location = await db.inventoryLocation.findFirst({
-        where: { id: data.locationId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!location) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
+    if (data.locationId && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
     }
 
     const task = await db.staffTask.create({
@@ -165,34 +171,40 @@ export async function updateStaffTask(
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate updated foreign relational IDs against current organizationId before updating.
-    if (data.memberId) {
-      const member = await db.member.findFirst({
-        where: { id: data.memberId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!member) {
-        return { success: false, error: "Assigned staff member not found or belongs to another organization" };
-      }
+    // ⚡ Bolt Optimization: Parallelize foreign entity validation lookups (member, shift, location).
+    // Combining independent database read queries into a single Promise.all concurrent block collapses up to 3 sequential database
+    // roundtrips into 1 flat concurrent roundtrip, reducing task update validation latency by up to ~66%.
+    const [member, shift, location] = await Promise.all([
+      data.memberId
+        ? db.member.findFirst({
+            where: { id: data.memberId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+      data.shiftId
+        ? db.staffShift.findFirst({
+            where: { id: data.shiftId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+      data.locationId
+        ? db.inventoryLocation.findFirst({
+            where: { id: data.locationId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : null,
+    ]);
+
+    if (data.memberId && !member) {
+      return { success: false, error: "Assigned staff member not found or belongs to another organization" };
     }
 
-    if (data.shiftId) {
-      const shift = await db.staffShift.findFirst({
-        where: { id: data.shiftId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!shift) {
-        return { success: false, error: "Shift not found or belongs to another organization" };
-      }
+    if (data.shiftId && !shift) {
+      return { success: false, error: "Shift not found or belongs to another organization" };
     }
 
-    if (data.locationId) {
-      const location = await db.inventoryLocation.findFirst({
-        where: { id: data.locationId, organizationId: session.organizationId },
-        select: { id: true },
-      });
-      if (!location) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
+    if (data.locationId && !location) {
+      return { success: false, error: "Location not found or belongs to another organization" };
     }
 
     // THREAT: BOLA/IDOR Vulnerability

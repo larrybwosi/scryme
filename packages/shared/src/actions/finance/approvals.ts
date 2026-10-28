@@ -132,15 +132,32 @@ export async function submitForApprovalCore(
     }
   }
 
-  // Update the related record status
+  // SECURITY (Sentinel): Validate that the target resource belongs to organizationId and update status with updateMany
+  // to enforce database-level multi-tenant isolation against BOLA / IDOR attacks.
   if (data.type === "EXPENSE") {
-    await client.expense.update({
-      where: { id: data.relatedId },
+    const expense = await client.expense.findFirst({
+      where: { id: data.relatedId, organizationId },
+      select: { id: true },
+    });
+    if (!expense) {
+      throw new Error("Expense not found or unauthorized");
+    }
+
+    await client.expense.updateMany({
+      where: { id: data.relatedId, organizationId },
       data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
   } else if (data.type === "PURCHASE_ORDER") {
-    await client.purchase.update({
-      where: { id: data.relatedId },
+    const purchase = await client.purchase.findFirst({
+      where: { id: data.relatedId, organizationId },
+      select: { id: true },
+    });
+    if (!purchase) {
+      throw new Error("Purchase order not found or unauthorized");
+    }
+
+    await client.purchase.updateMany({
+      where: { id: data.relatedId, organizationId },
       data: { status: "PENDING_APPROVAL", approvalRequestId: request.id },
     });
   }
@@ -306,28 +323,28 @@ export async function makeApprovalDecisionCore(
     },
   });
 
-  // Update related record if final status is reached
+  // SECURITY (Sentinel): Use updateMany scoped strictly by organizationId for database-level multi-tenant BOLA isolation
   if (finalStatus === "APPROVED") {
     if (request.requestType === "EXPENSE") {
-      await db.expense.update({
-        where: { id: request.relatedId },
+      await db.expense.updateMany({
+        where: { id: request.relatedId, organizationId },
         data: { status: "APPROVED" },
       });
     } else if (request.requestType === "PURCHASE_ORDER") {
-      await db.purchase.update({
-        where: { id: request.relatedId },
+      await db.purchase.updateMany({
+        where: { id: request.relatedId, organizationId },
         data: { status: "APPROVED" },
       });
     }
   } else if (finalStatus === "REJECTED") {
     if (request.requestType === "EXPENSE") {
-      await db.expense.update({
-        where: { id: request.relatedId },
+      await db.expense.updateMany({
+        where: { id: request.relatedId, organizationId },
         data: { status: "REJECTED" },
       });
     } else if (request.requestType === "PURCHASE_ORDER") {
-      await db.purchase.update({
-        where: { id: request.relatedId },
+      await db.purchase.updateMany({
+        where: { id: request.relatedId, organizationId },
         data: { status: "REJECTED" },
       });
     }
