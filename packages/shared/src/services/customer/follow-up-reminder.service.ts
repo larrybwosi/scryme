@@ -1,3 +1,4 @@
+import { env } from "@repo/env";
 import { PrismaClient } from "@repo/db";
 import { ScrymeChatApiClient } from "@repo/chat";
 import { addHours, subHours, isBefore, isAfter } from "date-fns";
@@ -106,7 +107,7 @@ export class FollowUpReminderService {
     if (!config || !config.workspaceSlug || !config.isActive) return;
 
     const customerName = record.customer?.name || "Unknown Customer";
-    const appUrl = process.env.PUBLIC_APP_URL || "https://app.dealio.cm";
+    const appUrl = env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
     const crmLink = record.customer
       ? `${appUrl}/crm/customers/${record.customer.id}`
       : `${appUrl}/crm/records/${record.id}`;
@@ -150,7 +151,7 @@ export class FollowUpReminderService {
     if (!config || !config.workspaceSlug || !config.isActive) return;
 
     const customerName = record.customer?.name || "Unknown Customer";
-    const appUrl = process.env.PUBLIC_APP_URL || "https://app.dealio.cm";
+    const appUrl = env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
     const crmLink = record.customer
       ? `${appUrl}/crm/customers/${record.customer.id}`
       : `${appUrl}/crm/records/${record.id}`;
