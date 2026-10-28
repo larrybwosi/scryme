@@ -6,8 +6,6 @@ data class BranchLocation(
     val code: String?,
     val address: String?,
     val phone: String?,
-    val latitude: Double? = null,
-    val longitude: Double? = null,
     val locationType: String,
     val latitude: Double?,
     val longitude: Double?,
