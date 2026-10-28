@@ -19,6 +19,7 @@ import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.ui.schedule.ScheduleUiState
 import tech.scryme.app.ui.schedule.ScheduleViewModel
+import tech.scryme.app.util.LocationHelper
 
 @OptIn(ExperimentalCoroutinesApi::class)
 class ScheduleViewModelTest {
@@ -34,6 +35,9 @@ class ScheduleViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
+        LocationHelper.locationProviderOverride = { null }
+        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { sessionManager.getLocationId() } returns null
         coEvery { branchRepository.getBranchLocations(any()) } returns Result.success(emptyList())
         coEvery { profileRepository.getMembers(any()) } returns Result.success(emptyList())
         coEvery { scheduleRepository.getMyAttendanceStatus(any()) } returns Result.success(AttendanceStatusDto(id = "mem_1"))
@@ -42,6 +46,7 @@ class ScheduleViewModelTest {
 
     @After
     fun tearDown() {
+        LocationHelper.locationProviderOverride = null
         Dispatchers.resetMain()
     }
 
@@ -54,7 +59,6 @@ class ScheduleViewModelTest {
             ShiftTrade(id = "tr1", requestingMemberId = "m1", shiftId = "s1", status = "PENDING")
         )
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(shifts)
         coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(shifts)
         coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(trades)
@@ -78,7 +82,6 @@ class ScheduleViewModelTest {
             isLocationVerified = true
         )
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery {
             scheduleRepository.checkInAttendance(
                 orgSlug = "scryme-org",
@@ -86,6 +89,8 @@ class ScheduleViewModelTest {
                 branchCode = "BRANCH-01",
                 latitude = null,
                 longitude = null,
+                accuracy = null,
+                isMock = false,
                 verificationMethod = "QR_SCAN",
                 notes = null
             )
@@ -97,7 +102,8 @@ class ScheduleViewModelTest {
         var callbackMessage: String? = null
         viewModel.checkInAttendance(
             branchCode = "BRANCH-01",
-            onSuccess = { msg -> callbackMessage = msg }
+            onSuccess = { msg -> callbackMessage = msg },
+            onError = { err -> fail("Check in failed unexpectedly: $err") }
         )
         testScheduler.advanceUntilIdle()
 
@@ -109,7 +115,6 @@ class ScheduleViewModelTest {
     fun requestShiftTrade_success_reloadsSchedule() = runTest {
         val trade = ShiftTrade(id = "tr1", requestingMemberId = "m1", shiftId = "s1", status = "PENDING")
 
-        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
         coEvery { scheduleRepository.requestShiftTrade("scryme-org", "s1", null, "Personal reason") } returns Result.success(trade)
         coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
         coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(emptyList())

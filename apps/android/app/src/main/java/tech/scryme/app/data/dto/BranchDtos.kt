@@ -42,3 +42,8 @@ data class UpdateBranchRequestDto(
     @SerializedName("geofenceRadiusMeters") val geofenceRadiusMeters: Double? = null,
     @SerializedName("isActive") val isActive: Boolean? = null
 )
+
+data class UpdateBranchCoordinatesDto(
+    @SerializedName("latitude") val latitude: Double,
+    @SerializedName("longitude") val longitude: Double
+)

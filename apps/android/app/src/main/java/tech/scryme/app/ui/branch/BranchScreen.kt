@@ -20,6 +20,7 @@ import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -32,6 +33,7 @@ fun BranchScreen(
     viewModel: BranchViewModel
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    val context = LocalContext.current
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var locationToEdit by remember { mutableStateOf<BranchLocation?>(null) }
@@ -90,13 +92,14 @@ fun BranchScreen(
                     }
                 }
                 is BranchUiState.Success -> {
-                    if (state.actionSuccessMessage != null) {
+                    val successMessage = state.actionSuccessMessage ?: state.message
+                    if (!successMessage.isNullOrEmpty()) {
                         Snackbar(
                             modifier = Modifier.padding(bottom = 8.dp),
                             containerColor = MaterialTheme.colorScheme.secondaryContainer,
                             contentColor = MaterialTheme.colorScheme.onSecondaryContainer
                         ) {
-                            Text(state.actionSuccessMessage)
+                            Text(successMessage)
                         }
                     }
 
@@ -112,7 +115,8 @@ fun BranchScreen(
                                 onSelect = { viewModel.switchBranch(branch.id) },
                                 onEdit = { locationToEdit = branch },
                                 onEditGeofence = { locationToEditGeofence = branch },
-                                onDelete = { locationToDelete = branch }
+                                onDelete = { locationToDelete = branch },
+                                onPinCurrentLocation = { viewModel.pinCurrentLocation(context, branch.id) }
                             )
                         }
                     }
@@ -216,7 +220,8 @@ fun BranchItemCard(
     onSelect: () -> Unit,
     onEdit: () -> Unit,
     onEditGeofence: () -> Unit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    onPinCurrentLocation: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
 
@@ -237,7 +242,10 @@ fun BranchItemCard(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Column(modifier = Modifier.weight(1f)) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
                         Text(
                             text = branch.name,
                             style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
@@ -256,7 +264,10 @@ fun BranchItemCard(
 
                     if (!branch.address.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Place,
                                 contentDescription = null,
@@ -273,7 +284,10 @@ fun BranchItemCard(
 
                     if (!branch.phone.isNullOrEmpty()) {
                         Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.Phone,
                                 contentDescription = null,
@@ -290,19 +304,29 @@ fun BranchItemCard(
 
                     if (branch.latitude != null && branch.longitude != null) {
                         Spacer(modifier = Modifier.height(2.dp))
-                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            horizontalArrangement = Arrangement.spacedBy(4.dp)
+                        ) {
                             Icon(
                                 imageVector = Icons.Default.LocationOn,
                                 contentDescription = null,
                                 modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.primary
+                                tint = Emerald500
                             )
                             Text(
-                                text = "GPS: ${String.format("%.4f", branch.latitude)}, ${String.format("%.4f", branch.longitude)} (${branch.geofenceRadiusMeters?.toInt() ?: 100}m)",
+                                text = "📍 GPS: ${"%.4f".format(branch.latitude)}, ${"%.4f".format(branch.longitude)} (${branch.geofenceRadiusMeters?.toInt() ?: 100}m)",
                                 style = MaterialTheme.typography.labelSmall,
-                                color = MaterialTheme.colorScheme.primary
+                                color = Emerald500
                             )
                         }
+                    } else {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        Text(
+                            text = "📍 Location not pinned",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.error
+                        )
                     }
                 }
 
@@ -355,6 +379,16 @@ fun BranchItemCard(
                         }
                     }
                 }
+            }
+
+            Spacer(modifier = Modifier.height(8.dp))
+
+            OutlinedButton(
+                onClick = onPinCurrentLocation,
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(8.dp)
+            ) {
+                Text("📌 Pin Current GPS Location")
             }
         }
     }

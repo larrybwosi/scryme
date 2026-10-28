@@ -10,6 +10,7 @@ import retrofit2.http.Path
 import tech.scryme.app.data.dto.BranchDto
 import tech.scryme.app.data.dto.BranchListResponseDto
 import tech.scryme.app.data.dto.CreateBranchRequestDto
+import tech.scryme.app.data.dto.UpdateBranchCoordinatesDto
 import tech.scryme.app.data.dto.UpdateBranchRequestDto
 import tech.scryme.app.data.dto.V3ApiResponse
 
@@ -32,6 +33,12 @@ interface BranchApiService {
     suspend fun updateBranch(
         @Path("id") id: String,
         @Body request: UpdateBranchRequestDto
+    ): Response<V3ApiResponse<BranchDto>>
+
+    @PATCH("android/branches/locations/{id}/coordinates")
+    suspend fun updateBranchCoordinates(
+        @Path("id") id: String,
+        @Body dto: UpdateBranchCoordinatesDto
     ): Response<V3ApiResponse<BranchDto>>
 
     @DELETE("android/branches/locations/{id}")

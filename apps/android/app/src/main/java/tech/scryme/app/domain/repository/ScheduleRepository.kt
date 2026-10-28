@@ -53,6 +53,8 @@ interface ScheduleRepository {
         branchCode: String? = null,
         latitude: Double? = null,
         longitude: Double? = null,
+        accuracy: Float? = null,
+        isMock: Boolean? = null,
         verificationMethod: String? = null,
         notes: String? = null
     ): Result<AttendanceLogDto>
