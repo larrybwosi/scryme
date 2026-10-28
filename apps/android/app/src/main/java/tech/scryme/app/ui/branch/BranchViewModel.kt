@@ -23,7 +23,7 @@ sealed interface BranchUiState {
         val branches: List<BranchLocation>,
         val activeLocationId: String?,
         val isAdmin: Boolean = false,
-        val actionSuccessMessage: String? = null
+        val actionSuccessMessage: String? = null,
         val message: String? = null
     ) : BranchUiState
     data class Error(val message: String) : BranchUiState
