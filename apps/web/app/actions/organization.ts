@@ -4,6 +4,7 @@ import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { encryptV3, decryptV3 } from "@repo/shared/api/v3";
+import { evaluateAllModulesStatus, EffectiveModuleResolution } from "@repo/shared/constants";
 
 const MASK_STRING = "••••••••";
 
@@ -361,4 +362,45 @@ export async function checkSlugAvailability(slug: string) {
     where: { slug },
   });
   return !existing;
+}
+
+export async function getEffectiveModulesServerAction(): Promise<EffectiveModuleResolution[]> {
+  const auth = await getServerAuth();
+  if (!auth) return evaluateAllModulesStatus(null, null);
+
+  const systemSetting = await db.globalSetting.findUnique({
+    where: { key: "system:modules" },
+  });
+
+  let systemModules: Record<string, boolean> = {};
+  if (systemSetting?.value) {
+    try {
+      systemModules = JSON.parse(systemSetting.value);
+    } catch {
+      systemModules = {};
+    }
+  }
+
+  let orgModules: Record<string, boolean> = {};
+  if (auth.organizationId) {
+    const org = await db.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { quotaOverrides: true },
+    });
+
+    if (org?.quotaOverrides) {
+      const overridesObj = org.quotaOverrides as Record<string, any>;
+      if (overridesObj.bypassPaymentCheck) {
+        return evaluateAllModulesStatus(systemModules, {}).map((m) => ({
+          ...m,
+          isEnabled: true,
+          orgEnabled: true,
+          reason: "Organization payment override enabled",
+        }));
+      }
+      orgModules = (overridesObj.modules as Record<string, boolean>) || {};
+    }
+  }
+
+  return evaluateAllModulesStatus(systemModules, orgModules);
 }

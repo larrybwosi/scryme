@@ -4,6 +4,7 @@ import { QuotaService } from "./services/quota.service";
 import { QuotaGuard } from "./guards/quota.guard";
 import { ModuleAccessService } from "./services/module-access.service";
 import { ModuleGuard } from "./guards/module.guard";
+import { OrganizationModulesController } from "./controllers/organization-modules.controller";
 import { V3RealtimeGateway } from "./realtime/v3-realtime.gateway";
 import { RealtimeRedisService } from "./realtime/realtime-redis.service";
 import { V3AuthModule } from "../modules/auth/auth.module";
@@ -13,6 +14,7 @@ import { V3AuthGuard } from "./guards/v3-auth.guard";
 @Global()
 @Module({
   imports: [V3AuthModule, V3AuthCoreModule],
+  controllers: [OrganizationModulesController],
   providers: [
     AuditService,
     QuotaService,

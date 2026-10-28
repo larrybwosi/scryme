@@ -355,5 +355,6 @@ export async function updateSystemModuleStatus(moduleKey: string, isEnabled: boo
 
   revalidatePath("/systems");
   revalidatePath("/organizations");
+  revalidatePath("/organizations/[id]", "page");
   return updated;
 }

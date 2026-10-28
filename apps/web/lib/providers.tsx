@@ -9,6 +9,7 @@ import { Toaster } from "@repo/ui/components/ui/sonner";
 import { TopLoader } from "../components/top-loader";
 import { OrganizationInitializer } from "../components/organization-initializer";
 import { OrgPresenceTracker } from "../components/org-presence-tracker";
+import { ModuleProvider } from "@/providers/module-provider";
 
 interface ProvidersProps {
   children: React.ReactNode;
@@ -20,11 +21,13 @@ export function Providers({ children }: ProvidersProps) {
       <NuqsAdapter>
         <TooltipProvider>
           <RealtimeProvider>
-            <OrganizationInitializer />
-            <OrgPresenceTracker />
-            <TopLoader />
-            {children}
-            <Toaster />
+            <ModuleProvider>
+              <OrganizationInitializer />
+              <OrgPresenceTracker />
+              <TopLoader />
+              {children}
+              <Toaster />
+            </ModuleProvider>
           </RealtimeProvider>
         </TooltipProvider>
       </NuqsAdapter>
