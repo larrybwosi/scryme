@@ -76,11 +76,15 @@ export class ReportsService {
   }
 
   async generateAndDispatchReport(organizationId: string, dto: GenerateReportDto, triggerUserEmail?: string) {
-    const settings = await this.getReportSettings(organizationId);
-    const org = await this.prisma.client.organization.findUnique({
-      where: { id: organizationId },
-      select: { id: true, name: true, slug: true },
-    });
+    // Bolt Optimization: Parallelize independent report settings lookup and organization details query.
+    // Collapses pre-fetch latency from 2 sequential DB roundtrips down to 1 concurrent roundtrip.
+    const [settings, org] = await Promise.all([
+      this.getReportSettings(organizationId),
+      this.prisma.client.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, name: true, slug: true },
+      }),
+    ]);
 
     if (!org) {
       throw new NotFoundException(`Organization with ID ${organizationId} not found`);
@@ -91,23 +95,21 @@ export class ReportsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
+    // Bolt Optimization: Parallelize sales, inventory, production, and tax metric queries.
+    // Sequentially awaiting each section creates up to 4 consecutive DB query delays.
+    // Executing enabled sections concurrently with Promise.all reduces query latency from O(N) to O(1).
+    const [sales, inventory, production, tax] = await Promise.all([
+      settings.includeSales ? this.getSalesMetrics(organizationId, startDate, endDate) : Promise.resolve(undefined),
+      settings.includeInventory ? this.getInventoryMetrics(organizationId, startDate, endDate) : Promise.resolve(undefined),
+      settings.includeProduction ? this.getProductionMetrics(organizationId, startDate, endDate) : Promise.resolve(undefined),
+      settings.includeTax ? this.getTaxMetrics(organizationId, startDate, endDate) : Promise.resolve(undefined),
+    ]);
+
     const summaryData: ReportSummaryData = {};
-
-    if (settings.includeSales) {
-      summaryData.sales = await this.getSalesMetrics(organizationId, startDate, endDate);
-    }
-
-    if (settings.includeInventory) {
-      summaryData.inventory = await this.getInventoryMetrics(organizationId, startDate, endDate);
-    }
-
-    if (settings.includeProduction) {
-      summaryData.production = await this.getProductionMetrics(organizationId, startDate, endDate);
-    }
-
-    if (settings.includeTax) {
-      summaryData.tax = await this.getTaxMetrics(organizationId, startDate, endDate);
-    }
+    if (sales) summaryData.sales = sales;
+    if (inventory) summaryData.inventory = inventory;
+    if (production) summaryData.production = production;
+    if (tax) summaryData.tax = tax;
 
     let aiInsights = "";
     if (settings.includeAiInsights) {

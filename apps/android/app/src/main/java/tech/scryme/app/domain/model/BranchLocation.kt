@@ -9,8 +9,6 @@ data class BranchLocation(
     val latitude: Double? = null,
     val longitude: Double? = null,
     val locationType: String,
-    val latitude: Double?,
-    val longitude: Double?,
     val geofenceRadiusMeters: Double?,
     val isDefault: Boolean,
     val isActive: Boolean
