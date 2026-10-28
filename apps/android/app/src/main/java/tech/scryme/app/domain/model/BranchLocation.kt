@@ -5,6 +5,8 @@ data class BranchLocation(
     val name: String,
     val code: String?,
     val address: String?,
+    val latitude: Double? = null,
+    val longitude: Double? = null,
     val locationType: String,
     val isDefault: Boolean,
     val isActive: Boolean

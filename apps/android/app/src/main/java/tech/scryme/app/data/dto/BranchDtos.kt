@@ -11,7 +11,14 @@ data class BranchDto(
     @SerializedName("name") val name: String,
     @SerializedName("code") val code: String? = null,
     @SerializedName("address") val address: String? = null,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null,
     @SerializedName("locationType") val locationType: String? = "STORE",
     @SerializedName("isDefault") val isDefault: Boolean = false,
     @SerializedName("isActive") val isActive: Boolean = true
+)
+
+data class UpdateBranchCoordinatesDto(
+    @SerializedName("latitude") val latitude: Double,
+    @SerializedName("longitude") val longitude: Double
 )

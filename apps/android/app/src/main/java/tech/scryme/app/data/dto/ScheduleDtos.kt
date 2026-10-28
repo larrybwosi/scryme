@@ -124,6 +124,8 @@ data class CheckInAttendanceRequestDto(
     @SerializedName("branchCode") val branchCode: String? = null,
     @SerializedName("latitude") val latitude: Double? = null,
     @SerializedName("longitude") val longitude: Double? = null,
+    @SerializedName("accuracy") val accuracy: Float? = null,
+    @SerializedName("isMock") val isMock: Boolean? = null,
     @SerializedName("verificationMethod") val verificationMethod: String? = null,
     @SerializedName("notes") val notes: String? = null
 )
@@ -165,5 +167,7 @@ data class CurrentAttendanceLogDto(
 
 data class AttendanceLocationDto(
     @SerializedName("id") val id: String,
-    @SerializedName("name") val name: String
+    @SerializedName("name") val name: String,
+    @SerializedName("latitude") val latitude: Double? = null,
+    @SerializedName("longitude") val longitude: Double? = null
 )

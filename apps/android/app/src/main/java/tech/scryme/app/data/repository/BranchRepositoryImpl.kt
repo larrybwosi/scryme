@@ -2,6 +2,7 @@ package tech.scryme.app.data.repository
 
 import tech.scryme.app.data.api.BranchApiService
 import tech.scryme.app.data.dto.BranchDto
+import tech.scryme.app.data.dto.UpdateBranchCoordinatesDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.BranchLocation
 import tech.scryme.app.domain.repository.BranchRepository
@@ -45,6 +46,26 @@ class BranchRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun updateBranchCoordinates(
+        orgSlug: String,
+        locationId: String,
+        latitude: Double,
+        longitude: Double
+    ): Result<BranchLocation> {
+        return try {
+            val dto = UpdateBranchCoordinatesDto(latitude = latitude, longitude = longitude)
+            val res = branchApiService.updateBranchCoordinates(locationId, dto)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val branch = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null branch response"))
+                Result.success(branch)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     override suspend fun switchActiveBranch(locationId: String) {
         sessionManager.updateLocationId(locationId)
     }
@@ -54,6 +75,8 @@ class BranchRepositoryImpl @Inject constructor(
         name = name,
         code = code,
         address = address,
+        latitude = latitude,
+        longitude = longitude,
         locationType = locationType ?: "STORE",
         isDefault = isDefault,
         isActive = isActive
