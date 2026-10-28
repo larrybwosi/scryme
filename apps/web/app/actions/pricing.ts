@@ -257,7 +257,6 @@ export async function addPriceListItems(priceListId: string, items: Array<{
         where,
         create: {
           ...item,
-          organizationId: context.organizationId,
           priceListId: priceList.id,
           price: new Decimal(item.price),
           percentageValue: item.percentageValue ? new Decimal(item.percentageValue) : null,
@@ -280,7 +279,7 @@ export async function removePriceListItem(id: string) {
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   const item = await db.priceListItem.findFirst({
-    where: { id, organizationId: context.organizationId },
+    where: { id, priceList: { organizationId: context.organizationId } },
     select: { priceListId: true },
   });
 
@@ -288,10 +287,9 @@ export async function removePriceListItem(id: string) {
     throw new Error("Price list item not found or unauthorized");
   }
 
-  // Security Mitigation (BOLA/IDOR): PriceListItem lacks a composite unique constraint on [id, organizationId].
-  // Scoping deleteMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  // Security Mitigation (BOLA/IDOR): Scoping deleteMany to { id, priceList: { organizationId } } enforces database-level multi-tenant isolation.
   await db.priceListItem.deleteMany({
-    where: { id, organizationId: context.organizationId },
+    where: { id, priceList: { organizationId: context.organizationId } },
   });
 
   if (item.priceListId) {
@@ -582,14 +580,14 @@ export async function createVolumeTierForProduct(data: {
       priceListId: listId,
       variantId: data.variantId,
       minQuantity: data.minQuantity,
-      organizationId: context.organizationId,
+      priceList: { organizationId: context.organizationId },
     },
   });
 
   let item;
   if (existing) {
     await db.priceListItem.updateMany({
-      where: { id: existing.id, organizationId: context.organizationId },
+      where: { id: existing.id, priceList: { organizationId: context.organizationId } },
       data: {
         price: new Decimal(data.price),
         maxQuantity: data.maxQuantity ?? null,
@@ -598,12 +596,11 @@ export async function createVolumeTierForProduct(data: {
     });
 
     item = await db.priceListItem.findFirstOrThrow({
-      where: { id: existing.id, organizationId: context.organizationId },
+      where: { id: existing.id, priceList: { organizationId: context.organizationId } },
     });
   } else {
     item = await db.priceListItem.create({
       data: {
-        organizationId: context.organizationId,
         priceListId: listId,
         variantId: data.variantId,
         minQuantity: data.minQuantity,
@@ -622,10 +619,9 @@ export async function deleteVolumeTier(priceListItemId: string, productId?: stri
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // Security Mitigation (BOLA/IDOR): PriceListItem lacks a composite unique constraint on [id, organizationId].
-  // Scoping deleteMany to { id, organizationId } enforces database-level multi-tenant isolation.
+  // Security Mitigation (BOLA/IDOR): Scoping deleteMany to { id, priceList: { organizationId } } enforces database-level multi-tenant isolation.
   const result = await db.priceListItem.deleteMany({
-    where: { id: priceListItemId, organizationId: context.organizationId },
+    where: { id: priceListItemId, priceList: { organizationId: context.organizationId } },
   });
 
   if (result.count === 0) {

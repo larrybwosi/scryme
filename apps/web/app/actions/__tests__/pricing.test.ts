@@ -161,7 +161,7 @@ describe("Pricing Server Actions - Tenant Isolation & BOLA Hardening", () => {
       );
     });
 
-    it("should delete price list item using deleteMany scoped by organizationId", async () => {
+    it("should delete price list item using deleteMany scoped by priceList organizationId", async () => {
       (getServerAuth as any).mockResolvedValue({
         organizationId: mockOrgId,
       });
@@ -173,13 +173,13 @@ describe("Pricing Server Actions - Tenant Isolation & BOLA Hardening", () => {
       await removePriceListItem("pli_123");
 
       expect(db.priceListItem.deleteMany).toHaveBeenCalledWith({
-        where: { id: "pli_123", organizationId: mockOrgId },
+        where: { id: "pli_123", priceList: { organizationId: mockOrgId } },
       });
     });
   });
 
   describe("deleteVolumeTier", () => {
-    it("should delete volume tier using deleteMany scoped by organizationId", async () => {
+    it("should delete volume tier using deleteMany scoped by priceList organizationId", async () => {
       (getServerAuth as any).mockResolvedValue({
         organizationId: mockOrgId,
       });
@@ -188,7 +188,7 @@ describe("Pricing Server Actions - Tenant Isolation & BOLA Hardening", () => {
       await deleteVolumeTier("pli_vol_1", "prod_1");
 
       expect(db.priceListItem.deleteMany).toHaveBeenCalledWith({
-        where: { id: "pli_vol_1", organizationId: mockOrgId },
+        where: { id: "pli_vol_1", priceList: { organizationId: mockOrgId } },
       });
     });
 
