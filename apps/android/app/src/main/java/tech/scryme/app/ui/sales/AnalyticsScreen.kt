@@ -1,13 +1,19 @@
 package tech.scryme.app.ui.sales
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.filled.ArrowDownward
+import androidx.compose.material.icons.filled.ArrowUpward
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.ShoppingBag
+import androidx.compose.material.icons.filled.TrendingUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -22,75 +28,62 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.scryme.app.domain.model.MetricItem
+import tech.scryme.app.domain.model.OrderItem
 import tech.scryme.app.domain.model.OrderStatus
 import tech.scryme.app.domain.model.SalesAnalytics
 import tech.scryme.app.domain.model.TransactionSummary
+import tech.scryme.app.ui.theme.Rose500
+import tech.scryme.app.ui.theme.Emerald500
 
-private val PositiveColor = Color(0xFF16A34A)
-private val NegativeColor = Color(0xFFDC2626)
-
-private data class MetricSlot(
-    val fallback: MetricItem,
-    val icon: ImageVector
-)
-
-private val metricSlots = listOf(
-    MetricSlot(MetricItem("Customer", "0", "0%", true), Icons.Default.Person),
-    MetricSlot(MetricItem("Product", "0", "0%", true), Icons.Default.Inventory2),
-    MetricSlot(MetricItem("Revenue", "0", "0%", true), Icons.Default.CreditCard),
-    MetricSlot(MetricItem("Expense", "0", "0%", false), Icons.Default.CreditCardOff)
-)
-
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AnalyticsScreen(
     analytics: SalesAnalytics,
-    onRefresh: (() -> Unit)? = null,
+    onRefresh: () -> Unit,
+    onTransactionClick: (OrderItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
     LazyColumn(
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(12.dp),
-        contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 16.dp, bottom = 32.dp)
+        contentPadding = PaddingValues(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         item {
-            Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(
-                    text = "Welcome back",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-                Text(
-                    text = analytics.userName,
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis
-                )
-            }
+            SalesHeroCard(total = analytics.totalBalance)
         }
 
-        item { SalesHeroCard(total = analytics.totalBalance) }
+        item {
+            Text(
+                text = "Key performance indicators",
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface,
+                modifier = Modifier.padding(top = 8.dp)
+            )
+        }
 
         item {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                metricSlots.chunked(2).forEachIndexed { rowIndex, row ->
+                val metricIcons = listOf(
+                    Icons.Default.Receipt,
+                    Icons.Default.TrendingUp,
+                    Icons.Default.ShoppingBag
+                )
+                analytics.metrics.chunked(2).forEach { rowMetrics ->
                     Row(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(IntrinsicSize.Max),
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
-                        row.forEachIndexed { colIndex, slot ->
-                            val metric = analytics.metrics.getOrNull(rowIndex * 2 + colIndex)
-                                ?: slot.fallback
+                        rowMetrics.forEachIndexed { index, metric ->
+                            val icon = metricIcons.getOrElse(index % metricIcons.size) { Icons.Default.Receipt }
                             MetricCard(
                                 metric = metric,
-                                icon = slot.icon,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
+                                icon = icon,
+                                modifier = Modifier.weight(1f)
                             )
+                        }
+                        if (rowMetrics.size == 1) {
+                            Spacer(modifier = Modifier.weight(1f))
                         }
                     }
                 }
@@ -111,7 +104,19 @@ fun AnalyticsScreen(
             item { EmptyTransactions() }
         } else {
             items(analytics.recentTransactions) { txn ->
-                RecentTransactionItem(transaction = txn)
+                val order = txn.orderDetails ?: OrderItem(
+                    id = txn.id,
+                    title = txn.productName,
+                    itemCountText = "1 item",
+                    timeText = txn.dateText,
+                    status = txn.status,
+                    orderCode = txn.transactionCode,
+                    groupDate = "Today"
+                )
+                RecentTransactionItem(
+                    transaction = txn,
+                    onClick = { onTransactionClick(order) }
+                )
             }
         }
     }
@@ -177,7 +182,7 @@ private fun MetricCard(
     icon: ImageVector,
     modifier: Modifier = Modifier
 ) {
-    val trendColor = if (metric.isUp) PositiveColor else NegativeColor
+    val trendColor = if (metric.isUp) Emerald500 else Rose500
     val trendIcon = if (metric.isUp) Icons.Default.ArrowUpward else Icons.Default.ArrowDownward
     val trendLabel = if (metric.isUp) "up" else "down"
 
@@ -259,9 +264,14 @@ private fun MetricCard(
 }
 
 @Composable
-private fun RecentTransactionItem(transaction: TransactionSummary) {
+private fun RecentTransactionItem(
+    transaction: TransactionSummary,
+    onClick: () -> Unit
+) {
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onClick() },
         shape = RoundedCornerShape(16.dp),
         colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
         border = androidx.compose.foundation.BorderStroke(

@@ -6,18 +6,43 @@ import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
-import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.background
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ReceiptLong
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.Lock
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.*
+import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.LeadingIconTab
+import androidx.compose.material3.LinearProgressIndicator
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TabRow
+import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -46,37 +71,28 @@ fun SalesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.background,
         topBar = {
-            Surface(color = MaterialTheme.colorScheme.surface, tonalElevation = 0.dp) {
+            Surface(
+                color = MaterialTheme.colorScheme.surface,
+                shadowElevation = 2.dp
+            ) {
                 Column {
                     TopAppBar(
                         title = {
                             Text(
                                 text = "Sales & Orders",
                                 style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.SemiBold
+                                fontWeight = FontWeight.Bold
                             )
                         },
                         navigationIcon = {
-                            onNavigateBack?.let { goBack ->
-                                IconButton(onClick = goBack) {
+                            if (onNavigateBack != null) {
+                                IconButton(onClick = onNavigateBack) {
                                     Icon(
                                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                                        contentDescription = "Back"
+                                        contentDescription = "Navigate back"
                                     )
                                 }
-                            }
-                        },
-                        actions = {
-                            IconButton(
-                                onClick = { viewModel.refresh() },
-                                enabled = !uiState.isLoading
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Default.Refresh,
-                                    contentDescription = "Refresh"
-                                )
                             }
                         },
                         colors = TopAppBarDefaults.topAppBarColors(
@@ -122,7 +138,6 @@ fun SalesScreen(
                         }
                     }
 
-                    // Subtle progress bar for background refreshes (data already on screen)
                     val isRefreshing = uiState.isLoading &&
                         (uiState.analytics != null || uiState.orders.isNotEmpty())
                     Box(modifier = Modifier.height(2.dp).fillMaxWidth()) {
@@ -183,7 +198,8 @@ fun SalesScreen(
                                 if (analytics != null) {
                                     AnalyticsScreen(
                                         analytics = analytics,
-                                        onRefresh = { viewModel.refresh() }
+                                        onRefresh = { viewModel.refresh() },
+                                        onTransactionClick = { viewModel.selectOrderForDetails(it) }
                                     )
                                 } else {
                                     StateMessage(
@@ -200,7 +216,8 @@ fun SalesScreen(
                                 OrdersScreen(
                                     orders = uiState.orders,
                                     searchQuery = uiState.searchQuery,
-                                    onSearchQueryChange = { viewModel.onSearchQueryChanged(it) }
+                                    onSearchQueryChange = { viewModel.onSearchQueryChanged(it) },
+                                    onOrderClick = { viewModel.selectOrderForDetails(it) }
                                 )
                             }
                         }
@@ -208,6 +225,13 @@ fun SalesScreen(
                 }
             }
         }
+    }
+
+    uiState.selectedOrderForDetails?.let { selectedOrder ->
+        OrderDetailsBottomSheet(
+            order = selectedOrder,
+            onDismiss = { viewModel.selectOrderForDetails(null) }
+        )
     }
 }
 

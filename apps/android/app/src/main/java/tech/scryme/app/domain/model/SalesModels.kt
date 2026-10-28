@@ -19,7 +19,18 @@ data class TransactionSummary(
     val productName: String,
     val dateText: String,
     val status: OrderStatus,
-    val transactionCode: String
+    val transactionCode: String,
+    val orderDetails: OrderItem? = null
+)
+
+data class OrderLineItem(
+    val id: String? = null,
+    val name: String,
+    val quantity: Int,
+    val unitPrice: String,
+    val totalPrice: String,
+    val sku: String? = null,
+    val notes: String? = null
 )
 
 data class OrderItem(
@@ -29,7 +40,20 @@ data class OrderItem(
     val timeText: String,
     val status: OrderStatus,
     val orderCode: String,
-    val groupDate: String
+    val groupDate: String,
+    val lineItems: List<OrderLineItem> = emptyList(),
+    val customOrderNotes: String? = null,
+    val customerName: String? = null,
+    val customerPhone: String? = null,
+    val customerEmail: String? = null,
+    val fulfillmentStatus: String? = null,
+    val paymentMethod: String? = null,
+    val paymentStatus: String? = null,
+    val subtotal: String? = null,
+    val tax: String? = null,
+    val discount: String? = null,
+    val totalAmount: String? = null,
+    val deliveryAddress: String? = null
 )
 
 enum class OrderStatus(val label: String) {

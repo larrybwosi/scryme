@@ -2,6 +2,8 @@ package tech.scryme.app.data.repository
 
 import tech.scryme.app.data.api.BranchApiService
 import tech.scryme.app.data.dto.BranchDto
+import tech.scryme.app.data.dto.CreateBranchRequestDto
+import tech.scryme.app.data.dto.UpdateBranchRequestDto
 import tech.scryme.app.data.dto.UpdateBranchCoordinatesDto
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.BranchLocation
@@ -70,14 +72,62 @@ class BranchRepositoryImpl @Inject constructor(
         sessionManager.updateLocationId(locationId)
     }
 
+    override suspend fun createBranch(request: CreateBranchRequestDto): Result<BranchLocation> {
+        return try {
+            val res = branchApiService.createBranch(request)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val branch = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null creation response"))
+                Result.success(branch)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun updateBranch(
+        locationId: String,
+        request: UpdateBranchRequestDto
+    ): Result<BranchLocation> {
+        return try {
+            val res = branchApiService.updateBranch(locationId, request)
+            if (res.isSuccessful && res.body()?.success == true) {
+                val branch = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null update response"))
+                Result.success(branch)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
+    override suspend fun deleteBranch(locationId: String): Result<Unit> {
+        return try {
+            val res = branchApiService.deleteBranch(locationId)
+            if (res.isSuccessful && res.body()?.success == true) {
+                Result.success(Unit)
+            } else {
+                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+            }
+        } catch (e: Exception) {
+            Result.failure(e)
+        }
+    }
+
     private fun BranchDto.toDomain() = BranchLocation(
         id = id,
         name = name,
         code = code,
         address = address,
+        phone = phone,
         latitude = latitude,
         longitude = longitude,
         locationType = locationType ?: "STORE",
+        latitude = latitude,
+        longitude = longitude,
+        geofenceRadiusMeters = geofenceRadiusMeters ?: 100.0,
         isDefault = isDefault,
         isActive = isActive
     )
