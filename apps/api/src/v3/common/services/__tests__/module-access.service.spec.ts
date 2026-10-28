@@ -1,4 +1,5 @@
 import { ModuleAccessService } from "../module-access.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("ModuleAccessService", () => {
   let service: ModuleAccessService;
@@ -8,10 +9,10 @@ describe("ModuleAccessService", () => {
     prisma = {
       client: {
         globalSetting: {
-          findUnique: jest.fn(),
+          findUnique: vi.fn(),
         },
         organization: {
-          findUnique: jest.fn(),
+          findUnique: vi.fn(),
         },
       },
     };
