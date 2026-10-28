@@ -1,9 +1,10 @@
 import { Controller, Get, UseInterceptors } from "@nestjs/common";
 import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { ModuleAccessService } from "../services/module-access.service";
-import { CurrentOrganization } from "../decorators/current-organization.decorator";
+import { v3Context } from "../decorators/v3-context.decorator";
 import { StandardResponseInterceptor } from "../interceptors/standard-response.interceptor";
 import { EffectiveModuleResolution } from "@repo/shared/constants";
+import { V3ApiContext } from "@repo/shared/api/v3";
 
 @ApiTags("V3 Organization Modules")
 @Controller("organization/modules")
@@ -17,8 +18,8 @@ export class OrganizationModulesController {
     operationId: "Organization_GetModules",
   })
   async getModules(
-    @CurrentOrganization() orgId: string | undefined,
+    @v3Context() ctx: V3ApiContext | undefined,
   ): Promise<EffectiveModuleResolution[]> {
-    return this.moduleAccessService.getAllModulesAccess(orgId);
+    return this.moduleAccessService.getAllModulesAccess(ctx?.organizationId);
   }
 }
