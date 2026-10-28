@@ -3,8 +3,8 @@ import { ApiTags, ApiOperation } from "@nestjs/swagger";
 import { ModuleAccessService } from "../services/module-access.service";
 import { v3Context } from "../decorators/v3-context.decorator";
 import { StandardResponseInterceptor } from "../interceptors/standard-response.interceptor";
-import { EffectiveModuleResolution } from "@repo/shared/constants";
-import { V3ApiContext } from "@repo/shared/api/v3";
+import type { EffectiveModuleResolution } from "@repo/shared/constants";
+import type { V3ApiContext } from "@repo/shared/api/v3";
 
 @ApiTags("V3 Organization Modules")
 @Controller("organization/modules")
