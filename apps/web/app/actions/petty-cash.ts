@@ -95,26 +95,31 @@ export async function createPettyCashFund(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
-  // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
-  // MITIGATION: Validate foreign relational IDs (responsibleMemberId, locationId) against auth.organizationId before creating petty cash fund.
-  if (data.responsibleMemberId) {
-    const responsibleMember = await db.member.findFirst({
-      where: { id: data.responsibleMemberId, organizationId: auth.organizationId },
-      select: { id: true },
-    });
-    if (!responsibleMember) {
-      throw new Error("Responsible member not found or belongs to another organization");
-    }
+  // ⚡ Bolt Optimization & Threat Mitigation:
+  // Parallelize independent relational ID validation queries concurrently via Promise.all
+  // to collapse database execution latency from 2 sequential blocking roundtrips to 1 concurrent roundtrip
+  // while preserving multi-tenant BOLA isolation checks.
+  const [responsibleMember, location] = await Promise.all([
+    data.responsibleMemberId
+      ? db.member.findFirst({
+          where: { id: data.responsibleMemberId, organizationId: auth.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    data.locationId
+      ? db.inventoryLocation.findFirst({
+          where: { id: data.locationId, organizationId: auth.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (data.responsibleMemberId && !responsibleMember) {
+    throw new Error("Responsible member not found or belongs to another organization");
   }
 
-  if (data.locationId) {
-    const location = await db.inventoryLocation.findFirst({
-      where: { id: data.locationId, organizationId: auth.organizationId },
-      select: { id: true },
-    });
-    if (!location) {
-      throw new Error("Location not found or belongs to another organization");
-    }
+  if (data.locationId && !location) {
+    throw new Error("Location not found or belongs to another organization");
   }
 
   const fund = await db.pettyCashFund.create({
