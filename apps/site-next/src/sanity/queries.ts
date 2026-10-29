@@ -13,7 +13,40 @@ export const PRICING_CONFIG_QUERY = `
   }
 `
 
-export const DEFAULT_PRICING_FALLBACK = {
+export interface PlanPricing {
+  amount: string
+  period: string
+  billedNote?: string
+}
+
+export interface CurrencyData {
+  code: string
+  symbol: string
+  name: string
+  badge: string
+  free?: { monthly?: PlanPricing; annual?: PlanPricing }
+  growth?: { monthly?: PlanPricing; annual?: PlanPricing }
+  scale?: { monthly?: PlanPricing; annual?: PlanPricing }
+  enterprise?: { monthly?: PlanPricing; annual?: PlanPricing }
+}
+
+export interface PricingFaq {
+  q: string
+  a: string
+}
+
+export interface PricingConfig {
+  _id?: string
+  _type?: string
+  title?: string
+  heroBadge?: string
+  heroTitle?: string
+  heroSubtitle?: string
+  currencies?: CurrencyData[]
+  faqs?: PricingFaq[]
+}
+
+export const DEFAULT_PRICING_FALLBACK: PricingConfig = {
   title: 'Global Site Pricing Configuration',
   heroBadge: '14-Day Free Trial • Instant Deployment • Zero Risk',
   heroTitle: 'Predictable Pricing Engineered for Limitless Enterprise Scale',
@@ -24,6 +57,10 @@ export const DEFAULT_PRICING_FALLBACK = {
       symbol: '$',
       name: 'USD ($)',
       badge: 'Global USD',
+      free: {
+        monthly: { amount: '$0', period: '/ month' },
+        annual: { amount: '$0', period: '/ month' },
+      },
       growth: {
         monthly: { amount: '$599', period: '/ month' },
         annual: { amount: '$499', period: '/ month', billedNote: 'Billed annually ($5,988/yr)' },
@@ -42,6 +79,10 @@ export const DEFAULT_PRICING_FALLBACK = {
       symbol: 'KSh ',
       name: 'KSh (M-Pesa)',
       badge: 'M-Pesa Direct',
+      free: {
+        monthly: { amount: 'KSh 0', period: '/ month' },
+        annual: { amount: 'KSh 0', period: '/ month' },
+      },
       growth: {
         monthly: { amount: 'KSh 78,000', period: '/ month' },
         annual: { amount: 'KSh 65,000', period: '/ month', billedNote: 'Billed annually (KSh 780,000/yr)' },
@@ -60,6 +101,10 @@ export const DEFAULT_PRICING_FALLBACK = {
       symbol: '€',
       name: 'EUR (€)',
       badge: 'Eurozone SEPA',
+      free: {
+        monthly: { amount: '€0', period: '/ month' },
+        annual: { amount: '€0', period: '/ month' },
+      },
       growth: {
         monthly: { amount: '€550', period: '/ month' },
         annual: { amount: '€460', period: '/ month', billedNote: 'Billed annually (€5,520/yr)' },
@@ -102,7 +147,7 @@ export const DEFAULT_PRICING_FALLBACK = {
   ],
 }
 
-export async function fetchPricingConfig() {
+export async function fetchPricingConfig(): Promise<PricingConfig> {
   try {
     if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
       const config = await sanityClient.fetch(PRICING_CONFIG_QUERY)

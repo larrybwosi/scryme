@@ -14,7 +14,7 @@ import {
   Cpu,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/crm')({
+export const Route = createFileRoute('/cms')({
   component: CrmComponent,
 })
 

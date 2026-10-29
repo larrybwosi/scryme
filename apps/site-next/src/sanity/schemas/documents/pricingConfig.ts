@@ -45,6 +45,30 @@ export const pricingConfig = defineType({
             defineField({ name: 'name', title: 'Display Name (e.g. KSh (M-Pesa))', type: 'string' }),
             defineField({ name: 'badge', title: 'Currency Badge Label', type: 'string' }),
             defineField({
+              name: 'free',
+              title: 'Free Plan Pricing',
+              type: 'object',
+              fields: [
+                defineField({
+                  name: 'monthly',
+                  type: 'object',
+                  fields: [
+                    defineField({ name: 'amount', type: 'string' }),
+                    defineField({ name: 'period', type: 'string' }),
+                  ],
+                }),
+                defineField({
+                  name: 'annual',
+                  type: 'object',
+                  fields: [
+                    defineField({ name: 'amount', type: 'string' }),
+                    defineField({ name: 'period', type: 'string' }),
+                    defineField({ name: 'billedNote', type: 'string' }),
+                  ],
+                }),
+              ],
+            }),
+            defineField({
               name: 'growth',
               title: 'Growth Plan Pricing',
               type: 'object',
