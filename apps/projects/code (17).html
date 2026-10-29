@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "on-error": "#690005", "primary-fixed": "#dfe0ff", "on-secondary-fixed": "#000964", "error-container": "#93000a", "on-primary": "#121f8b", "primary": "#bdc2ff", "secondary-fixed-dim": "#bdc2ff", "on-primary-fixed-variant": "#2e3aa2", "surface-container-highest": "#343538", "inverse-primary": "#4854bb", "on-surface": "#e3e2e6", "outline-variant": "#454652", "surface-bright": "#38393c", "surface-dim": "#121316", "surface-container-low": "#1b1b1f", "outline": "#908f9e", "inverse-on-surface": "#303034", "on-tertiary-fixed-variant": "#444653", "on-secondary-fixed-variant": "#343e91", "surface-tint": "#bdc2ff", "on-background": "#e3e2e6", "surface": "#121316", "on-secondary": "#1c2679", "secondary": "#bdc2ff", "secondary-container": "#343e91", "error": "#ffb4ab", "tertiary-fixed-dim": "#c5c5d5", "on-error-container": "#ffdad6", "inverse-surface": "#e3e2e6", "on-tertiary-fixed": "#191b26", "on-surface-variant": "#c6c5d5", "primary-fixed-dim": "#bdc2ff", "on-primary-fixed": "#000965", "surface-container-high": "#292a2d", "surface-container": "#1f1f23", "tertiary-fixed": "#e1e1f2", "tertiary-container": "#717381", "tertiary": "#c5c5d5", "on-tertiary": "#2e303c", "on-tertiary-container": "#fdfaff", "primary-container": "#5e6ad2", "background": "#121316", "surface-variant": "#343538", "on-secondary-container": "#a7afff", "secondary-fixed": "#dfe0ff", "on-primary-container": "#fdfaff", "surface-container-lowest": "#0d0e11" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "margin": "1rem", "space-sm": "0.5rem", "space-md": "0.75rem", "space-xs": "0.25rem", "space-lg": "1rem", "space-xl": "1.5rem", "margin-desktop": "1.5rem", "gutter": "0.75rem", "gutter-desktop": "1rem" }, "fontFamily": { "label-code": [ "JetBrains Mono" ], "label-kbd": [ "JetBrains Mono" ], "body-lg": [ "Inter" ], "display-lg": [ "Inter" ], "headline-md": [ "Inter" ], "label-badge": [ "Inter" ], "headline-sm": [ "Inter" ], "body-sm": [ "Inter" ], "body-md": [ "Inter" ], "headline-lg": [ "Inter" ] }, "fontSize": { "label-code": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "label-kbd": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "body-lg": [ "14px", { "lineHeight": "22px", "letterSpacing": "-0.006em", "fontWeight": "400" } ], "display-lg": [ "32px", { "lineHeight": "38px", "letterSpacing": "-0.025em", "fontWeight": "600" } ], "headline-md": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "label-badge": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.01em", "fontWeight": "500" } ], "headline-sm": [ "15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" } ], "body-md": [ "13px", { "lineHeight": "19px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "headline-lg": [ "24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-12 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><button class="flex items-center gap-space-sm rounded-lg px-space-xs py-1 hover:bg-surface-container transition-colors text-left" type="button"><div class="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-sm font-semibold">S</div><div class="flex flex-col leading-none"><span class="font-headline-sm text-body-sm text-on-surface font-medium truncate max-w-[120px]">Scryme</span><span class="font-body-sm text-[10px] text-outline leading-none truncate max-w-[120px]">Acme Global</span></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></button><button class="w-6 h-6 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">edit_square</span></button></div><div class="p-space-xs"><button class="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors" type="button"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px] text-outline">search</span><span class="font-body-sm text-body-sm text-outline">Search...</span></div><div class="flex items-center gap-0.5 bg-surface-container px-1 py-0.5 rounded border border-outline-variant/40"><span class="font-label-kbd text-label-kbd text-outline">⌘K</span></div></button></div><div class="px-space-xs py-space-xs"><div class="px-space-sm py-1 text-[11px] font-label-badge text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-high text-on-surface font-medium border-l-2 border-primary-container"><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="tasks" href="#"><span class="material-symbols-outlined text-[18px]">check_circle</span><span class="font-body-md text-body-md">Tasks</span></a><a aria-current="page" class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg transition-all bg-surface-container-high text-on-surface font-medium border-l-2 border-primary-container" data-path="board" href="#"><span class="material-symbols-outlined text-[18px]">view_kanban</span><span class="font-body-md text-body-md">Board</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="timeline" href="#"><span class="material-symbols-outlined text-[18px]">reorder</span><span class="font-body-md text-body-md">Timeline</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="calendar" href="#"><span class="material-symbols-outlined text-[18px]">calendar_today</span><span class="font-body-md text-body-md">Calendar</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="schedule" href="#"><span class="material-symbols-outlined text-[18px]">date_range</span><span class="font-body-md text-body-md">Schedule</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="time-tracking" href="#"><span class="material-symbols-outlined text-[18px]">timer</span><span class="font-body-md text-body-md">Time Tracking</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="notes-and-docs" href="#"><span class="material-symbols-outlined text-[18px]">description</span><span class="font-body-md text-body-md">Notes &amp; Docs</span></a><a class="flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all" data-path="reports" href="#"><span class="material-symbols-outlined text-[18px]">insights</span><span class="font-body-md text-body-md">Reports</span></a></nav></div></div><div class="p-space-xs border-t border-outline-variant/30"><div class="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center"><span class="material-symbols-outlined text-outline text-[13px]">tune</span></div><span class="font-body-sm text-body-sm text-on-surface-variant">Settings</span></div><span class="font-label-kbd text-label-kbd text-outline">⌘,</span></div></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 text-body-sm font-body-sm text-outline"><span class="hover:text-on-surface transition-colors cursor-pointer">Scryme</span><span class="text-outline-variant">/</span><div class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium text-body-sm text-on-surface">Nexus 2.0 Redesign</span><span class="material-symbols-outlined text-[14px] text-outline">expand_more</span></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40"><span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-code text-label-code text-primary">01:42:15</span><button class="text-outline hover:text-error transition-colors flex items-center" type="button"><span class="material-symbols-outlined text-[14px]">stop_circle</span></button></div><button class="relative p-1 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span></button><button class="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span><span>New Task</span><span class="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span></button><div class="h-4 w-px bg-outline-variant/40"></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-12 min-h-screen bg-surface w-full px-8"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-md pb-space-lg">
+<!-- Board Secondary Sub-Header & Controls -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md pt-space-xs">
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-2.5 h-2.5 rounded-sm bg-primary-container"></div>
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight">Nexus 2.0 Redesign</h1>
+</div>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge tracking-wide">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span>Sprint 14</span>
+<span class="text-outline font-label-code text-label-code">4d left</span>
+</div>
+<div class="hidden xl:flex items-center gap-1 text-outline font-label-code text-label-code bg-surface-container-low px-2 py-0.5 rounded-sm">
+<span class="material-symbols-outlined text-[13px] text-primary">data_thresholding</span>
+<span>58 issues • 84% cycle velocity</span>
+</div>
+</div>
+<!-- Quick Action Buttons -->
+<div class="flex items-center gap-space-sm self-start lg:self-auto">
+<div class="flex items-center bg-surface-container-low rounded-sm p-0.5 shadow-sm">
+<button class="px-2 py-1 rounded-sm bg-surface-container-highest text-on-surface font-label-badge text-label-badge flex items-center gap-1 shadow-sm" type="button">
+<span class="material-symbols-outlined text-[14px]">view_kanban</span>
+<span>Board</span>
+</button>
+<button class="px-2 py-1 rounded-sm text-outline hover:text-on-surface font-label-badge text-label-badge flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">view_agenda</span>
+<span>List</span>
+</button>
+<button class="px-2 py-1 rounded-sm text-outline hover:text-on-surface font-label-badge text-label-badge flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">timeline</span>
+<span>Roadmap</span>
+</button>
+</div>
+<button class="h-8 px-2.5 rounded-sm bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px] text-outline">tune</span>
+<span>Display</span>
+</button>
+<button class="h-8 px-3 rounded-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-headline-sm flex items-center gap-1.5 shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>New Issue</span>
+<kbd class="font-label-kbd text-label-kbd bg-on-primary-container/20 px-1 rounded-sm ml-1 text-on-primary-container">C</kbd>
+</button>
+</div>
+</div>
+<!-- Filter & View Command Bar -->
+<div class="flex flex-wrap items-center justify-between gap-space-sm bg-surface-container-lowest p-space-xs rounded-sm">
+<div class="flex flex-wrap items-center gap-1.5">
+<div class="relative flex items-center">
+<span class="material-symbols-outlined absolute left-2 text-outline text-[16px] pointer-events-none">filter_list</span>
+<input class="h-7 w-48 sm:w-64 bg-surface-container-low focus:bg-surface-container text-on-surface placeholder:text-outline text-body-sm font-body-sm pl-7 pr-7 rounded-sm outline-none transition-all" placeholder="Filter issues (press 'F')..." type="text"/>
+<span class="font-label-kbd text-label-kbd text-outline absolute right-2">/</span>
+</div>
+<!-- Filter Segment Toggles -->
+<div class="h-4 w-px bg-surface-container-highest mx-1"></div>
+<button class="h-7 px-2 rounded-sm bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Active</span>
+<span class="font-label-code text-label-code text-outline ml-1">39</span>
+</button>
+<button class="h-7 px-2 rounded-sm bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">person</span>
+<span>Assignee</span>
+<span class="material-symbols-outlined text-[14px] text-outline">expand_more</span>
+</button>
+<button class="h-7 px-2 rounded-sm bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">flag</span>
+<span>Priority</span>
+<span class="material-symbols-outlined text-[14px] text-outline">expand_more</span>
+</button>
+<button class="h-7 px-2 rounded-sm bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">label</span>
+<span>Label</span>
+</button>
+</div>
+<div class="flex items-center gap-2">
+<!-- Team Stack Representation -->
+<div class="flex items-center -space-x-1.5">
+<div class="w-5 h-5 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-badge text-[9px] shadow-sm">MK</div>
+<div class="w-5 h-5 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-badge text-[9px] shadow-sm">EL</div>
+<div class="w-5 h-5 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center font-label-badge text-[9px] shadow-sm">DR</div>
+<div class="w-5 h-5 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px] shadow-sm">+5</div>
+</div>
+<div class="h-4 w-px bg-surface-container-highest mx-1"></div>
+<button class="h-7 px-2 rounded-sm bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors" type="button">
+<span class="material-symbols-outlined text-[15px]">view_column</span>
+<span>Add Column</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Kanban Horizontal Columns Container -->
+<div class="w-full overflow-x-auto pb-6 scrollbar-none">
+<div class="flex items-start gap-3 min-w-[1360px] select-none">
+<!-- ================= 1. BACKLOG COLUMN ================= -->
+<div class="flex flex-col w-[268px] flex-shrink-0 bg-surface-container-lowest/80 rounded-sm p-1.5">
+<!-- Column Header -->
+<div class="flex items-center justify-between px-2 py-1.5 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[16px]">radio_button_unchecked</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Backlog</span>
+<span class="px-1.5 py-0.2 rounded-sm bg-surface-container font-label-code text-label-code text-outline">12</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+</div>
+<!-- Issue Cards Lane -->
+<div class="flex flex-col gap-2">
+<!-- Card: SCR-89 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-89</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_1_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Deprecate legacy WebSocket connection fallback
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Arch</span>
+<span class="font-label-code text-label-code text-outline">Cycle 12</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px]">un</div>
+</div>
+</div>
+<!-- Card: SCR-94 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-94</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_2_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Unified keyboard shortcuts map across modal sheets
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">UX</span>
+<span class="flex items-center gap-0.5 text-outline font-label-code text-label-code">
+<span class="material-symbols-outlined text-[13px]">checklist</span> 0/4
+                </span>
+</div>
+<div class="w-4 h-4 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-badge text-[9px]">TC</div>
+</div>
+</div>
+<!-- Card: SCR-98 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-98</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_1_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Evaluate Rust-based regex compile engine for search
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Engine</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px]">RH</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= 2. TODO COLUMN ================= -->
+<div class="flex flex-col w-[268px] flex-shrink-0 bg-surface-container-lowest/80 rounded-sm p-1.5">
+<!-- Column Header -->
+<div class="flex items-center justify-between px-2 py-1.5 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-[16px]">change_circle</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Todo</span>
+<span class="px-1.5 py-0.2 rounded-sm bg-surface-container font-label-code text-label-code text-outline">14</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Card: SCR-101 (Urgent Flame) -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="font-label-code text-label-code text-primary-fixed">SCR-101</span>
+<span class="px-1 py-0.2 rounded-sm bg-error-container text-error font-label-badge text-[10px] flex items-center gap-0.5">
+<span class="material-symbols-outlined text-[12px] leading-none">local_fire_department</span> Urgent
+                </span>
+</div>
+<span class="material-symbols-outlined text-error text-[15px]">priority_high</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Resolve memory leak in telemetry stream sync worker
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Infra</span>
+<span class="flex items-center gap-0.5 text-outline font-label-code text-label-code">
+<span class="material-symbols-outlined text-[13px]">checklist</span> 1/3
+                </span>
+</div>
+<div class="w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-badge text-[9px]">MK</div>
+</div>
+</div>
+<!-- Card: SCR-104 (High Priority) -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-104</span>
+<span class="material-symbols-outlined text-primary text-[15px]">signal_cellular_alt</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Design high-density split view for code diff review
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">UI</span>
+<span class="font-label-code text-label-code text-outline">Sprint 14</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-badge text-[9px]">EL</div>
+</div>
+</div>
+<!-- Card: SCR-108 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-108</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_2_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              OAuth token auto-renewal background service hooks
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Auth</span>
+<span class="flex items-center gap-0.5 text-outline font-label-code text-label-code">
+<span class="material-symbols-outlined text-[13px]">checklist</span> 2/2
+                </span>
+</div>
+<div class="w-4 h-4 rounded-full bg-tertiary-container text-on-tertiary-container flex items-center justify-center font-label-badge text-[9px]">DR</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= 3. IN PROGRESS COLUMN ================= -->
+<div class="flex flex-col w-[268px] flex-shrink-0 bg-surface-container-lowest/80 rounded-sm p-1.5">
+<!-- Column Header -->
+<div class="flex items-center justify-between px-2 py-1.5 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary-container text-[16px]">timelapse</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">In Progress</span>
+<span class="px-1.5 py-0.2 rounded-sm bg-primary-container/20 font-label-code text-label-code text-primary">8</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Featured Card: Interactive Analytics Dashboard (Rich Visual) -->
+<div class="group flex flex-col p-3 rounded-sm bg-surface-container text-on-surface cursor-pointer shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="font-label-code text-label-code text-primary font-semibold">SCR-112</span>
+<!-- Active Timer Pill -->
+<div class="flex items-center gap-1 px-1.5 py-0.5 rounded-sm bg-surface-container-high text-primary font-label-code text-[10px]">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+<span>01:42:15</span>
+</div>
+</div>
+<span class="material-symbols-outlined text-primary text-[15px]">signal_cellular_alt</span>
+</div>
+<p class="font-headline-sm text-headline-sm text-on-surface font-semibold leading-snug mb-1.5 group-hover:text-primary-fixed transition-colors">
+              Interactive Analytics Dashboard
+            </p>
+<!-- Inline Metric Mini Sparkline -->
+<div class="my-2 bg-surface-container-lowest p-2 rounded-sm flex flex-col gap-1.5">
+<div class="flex justify-between items-center text-outline font-label-badge text-[10px]">
+<span>Throughput</span>
+<span class="text-primary font-label-code text-label-code">+28.4%</span>
+</div>
+<div class="w-full h-8 flex items-end gap-1">
+<div class="w-full bg-surface-container-high rounded-sm h-[30%]"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[50%]"></div>
+<div class="w-full bg-surface-container-high rounded-sm h-[40%]"></div>
+<div class="w-full bg-primary-container/70 rounded-sm h-[75%]"></div>
+<div class="w-full bg-primary-container rounded-sm h-[95%]"></div>
+<div class="w-full bg-primary rounded-sm h-[80%]"></div>
+<div class="w-full bg-primary-container rounded-sm h-[100%]"></div>
+</div>
+</div>
+<!-- Progress Bar -->
+<div class="flex flex-col gap-1 mb-2.5">
+<div class="flex justify-between text-outline font-label-code text-[11px]">
+<span>Milestone tasks</span>
+<span class="text-on-surface">5/7 done</span>
+</div>
+<div class="w-full h-1 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full w-[71%]"></div>
+</div>
+</div>
+<div class="flex items-center justify-between pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-primary-container/20 text-primary-fixed font-label-badge text-label-badge">Front-End</span>
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Canvas</span>
+</div>
+<div class="flex items-center -space-x-1">
+<div class="w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-badge text-[9px]">MK</div>
+<div class="w-4 h-4 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-label-badge text-[9px]">AL</div>
+</div>
+</div>
+</div>
+<!-- Card: SCR-115 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-115</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_2_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Extract shared color token palette for desktop dark mode
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Design</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-badge text-[9px]">EL</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= 4. IN REVIEW COLUMN ================= -->
+<div class="flex flex-col w-[268px] flex-shrink-0 bg-surface-container-lowest/80 rounded-sm p-1.5">
+<!-- Column Header -->
+<div class="flex items-center justify-between px-2 py-1.5 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary text-[16px]">rate_review</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">In Review</span>
+<span class="px-1.5 py-0.2 rounded-sm bg-surface-container font-label-code text-label-code text-outline">5</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+</button>
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Card: SCR-118 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-118</span>
+<div class="flex items-center gap-1 px-1.5 py-0.2 rounded-sm bg-tertiary-container/30 text-tertiary-fixed font-label-badge text-[10px]">
+<span class="material-symbols-outlined text-[12px]">verified</span> QA Ready
+              </div>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Virtual table list rendering optimization with 10k rows
+            </p>
+<!-- Review Details Strip -->
+<div class="bg-surface-container-lowest p-1.5 rounded-sm mb-2 flex items-center justify-between text-outline font-label-badge text-[10px]">
+<span class="flex items-center gap-1 text-on-surface-variant">
+<span class="material-symbols-outlined text-[13px] text-primary">commit</span> PR #348
+              </span>
+<span class="text-outline">Reviewer: DR</span>
+</div>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Perf</span>
+</div>
+<div class="flex items-center gap-1">
+<span class="text-outline font-label-code text-[10px]">QA by</span>
+<div class="w-4 h-4 rounded-full bg-tertiary text-on-tertiary flex items-center justify-center font-label-badge text-[9px]">DR</div>
+</div>
+</div>
+</div>
+<!-- Card: SCR-121 -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low hover:bg-surface-container text-on-surface cursor-pointer shadow-sm hover:shadow-md transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<span class="font-label-code text-label-code text-outline hover:text-primary">SCR-121</span>
+<span class="material-symbols-outlined text-outline text-[14px]">signal_cellular_alt_1_bar</span>
+</div>
+<p class="font-body-md text-body-md text-on-surface font-medium leading-snug mb-2 group-hover:text-primary-fixed transition-colors">
+              Fix command palette flickering on rapid ESC triggers
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Hotfix</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-primary text-on-primary flex items-center justify-center font-label-badge text-[9px]">MK</div>
+</div>
+</div>
+</div>
+</div>
+<!-- ================= 5. DONE COLUMN ================= -->
+<div class="flex flex-col w-[268px] flex-shrink-0 bg-surface-container-lowest/80 rounded-sm p-1.5">
+<!-- Column Header -->
+<div class="flex items-center justify-between px-2 py-1.5 mb-1.5">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[16px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-headline-sm text-headline-sm text-on-surface">Done</span>
+<span class="px-1.5 py-0.2 rounded-sm bg-surface-container font-label-code text-label-code text-outline">19</span>
+</div>
+<div class="flex items-center gap-1">
+<button class="text-outline hover:text-on-surface p-0.5 rounded-sm hover:bg-surface-container transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_horiz</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-2">
+<!-- Card: SCR-77 (Completed) -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low/70 hover:bg-surface-container text-on-surface cursor-pointer opacity-85 hover:opacity-100 transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-code text-label-code text-outline line-through">SCR-77</span>
+</div>
+<span class="font-label-code text-label-code text-outline text-[11px]">Sprint 13</span>
+</div>
+<p class="font-body-md text-body-md text-outline font-normal leading-snug mb-2 line-through">
+              Refactor Global State Dispatcher to use Zustand slices
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container text-outline font-label-badge text-label-badge">Core</span>
+<span class="text-outline font-label-badge text-[10px]">Closed</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px]">MK</div>
+</div>
+</div>
+<!-- Card: SCR-82 (Completed) -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low/70 hover:bg-surface-container text-on-surface cursor-pointer opacity-85 hover:opacity-100 transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-code text-label-code text-outline line-through">SCR-82</span>
+</div>
+<span class="font-label-code text-label-code text-outline text-[11px]">Sprint 13</span>
+</div>
+<p class="font-body-md text-body-md text-outline font-normal leading-snug mb-2 line-through">
+              Set up Docker preview environments on ephemeral PR branches
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container text-outline font-label-badge text-label-badge">DevOps</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px]">DR</div>
+</div>
+</div>
+<!-- Card: SCR-86 (Completed) -->
+<div class="group flex flex-col p-2.5 rounded-sm bg-surface-container-low/70 hover:bg-surface-container text-on-surface cursor-pointer opacity-85 hover:opacity-100 transition-all">
+<div class="flex items-center justify-between text-outline mb-1.5">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-primary text-[14px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-code text-label-code text-outline line-through">SCR-86</span>
+</div>
+<span class="font-label-code text-label-code text-outline text-[11px]">Sprint 14</span>
+</div>
+<p class="font-body-md text-body-md text-outline font-normal leading-snug mb-2 line-through">
+              Replace system font cascade with bundled JetBrains Mono &amp; Inter
+            </p>
+<div class="flex items-center justify-between mt-auto pt-1">
+<div class="flex items-center gap-1.5">
+<span class="px-1.5 py-0.5 rounded-sm bg-surface-container text-outline font-label-badge text-label-badge">Typography</span>
+</div>
+<div class="w-4 h-4 rounded-full bg-surface-container-highest text-outline flex items-center justify-center font-label-badge text-[9px]">EL</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Bottom Workspace Status Bar -->
+<div class="w-full flex items-center justify-between py-space-xs text-outline font-label-code text-label-code border-t border-outline-variant/20 mt-space-md">
+<div class="flex items-center gap-space-md">
+<span class="flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span class="text-on-surface-variant font-body-sm text-body-sm">Sprint 14 Target: Apr 26</span>
+</span>
+<span class="hidden sm:inline text-outline-variant">•</span>
+<span class="hidden sm:inline text-outline">58 total issues synced</span>
+<span class="hidden md:inline text-outline-variant">•</span>
+<span class="hidden md:inline text-outline">Linear Sync v2.4 (Active)</span>
+</div>
+<div class="flex items-center gap-space-md">
+<div class="flex items-center gap-1">
+<kbd class="font-label-kbd text-label-kbd bg-surface-container px-1 py-0.5 rounded text-outline">J</kbd>
+<kbd class="font-label-kbd text-label-kbd bg-surface-container px-1 py-0.5 rounded text-outline">K</kbd>
+<span class="text-[11px] text-outline ml-1">Navigate</span>
+</div>
+<div class="flex items-center gap-1">
+<kbd class="font-label-kbd text-label-kbd bg-surface-container px-1 py-0.5 rounded text-outline">Space</kbd>
+<span class="text-[11px] text-outline ml-1">Expand</span>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Micro-interactions: Card keyboard navigation visual highlight
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'c' || e.key === 'C') {
+      const activeInput = ['INPUT', 'TEXTAREA'].includes(document.activeElement.tagName);
+      if (!activeInput) {
+        e.preventDefault();
+        const newIssueBtn = document.querySelector('button:has(kbd)');
+        if (newIssueBtn) {
+          newIssueBtn.classList.add('ring-2', 'ring-primary-container');
+          setTimeout(() => newIssueBtn.classList.remove('ring-2', 'ring-primary-container'), 300);
+        }
+      }
+    }
+  });
+</script></main></div></body></html>

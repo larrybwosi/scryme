@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-on-surface": "#303034", "outline-variant": "#454652", "on-secondary": "#1c2679", "on-surface-variant": "#c6c5d5", "surface": "#121316", "on-tertiary-fixed": "#191b26", "on-background": "#e3e2e6", "on-tertiary": "#2e303c", "primary-fixed": "#dfe0ff", "error-container": "#93000a", "secondary-fixed": "#dfe0ff", "on-error-container": "#ffdad6", "on-surface": "#e3e2e6", "outline": "#908f9e", "primary-container": "#5e6ad2", "surface-bright": "#38393c", "surface-container-high": "#292a2d", "surface-container-highest": "#343538", "secondary-fixed-dim": "#bdc2ff", "inverse-surface": "#e3e2e6", "on-primary-fixed": "#000965", "surface-container-lowest": "#0d0e11", "surface-tint": "#bdc2ff", "on-tertiary-fixed-variant": "#444653", "on-secondary-fixed": "#000964", "on-secondary-fixed-variant": "#343e91", "surface-dim": "#121316", "background": "#121316", "on-tertiary-container": "#fdfaff", "on-primary-container": "#fdfaff", "tertiary": "#c5c5d5", "surface-container-low": "#1b1b1f", "on-error": "#690005", "tertiary-fixed": "#e1e1f2", "primary": "#bdc2ff", "secondary": "#bdc2ff", "error": "#ffb4ab", "on-secondary-container": "#a7afff", "tertiary-fixed-dim": "#c5c5d5", "primary-fixed-dim": "#bdc2ff", "on-primary": "#121f8b", "on-primary-fixed-variant": "#2e3aa2", "inverse-primary": "#4854bb", "surface-container": "#1f1f23", "tertiary-container": "#717381", "surface-variant": "#343538", "secondary-container": "#343e91" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter": "0.75rem", "space-md": "0.75rem", "space-lg": "1rem", "gutter-desktop": "1rem", "space-xl": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin": "1rem", "margin-desktop": "1.5rem" }, "fontFamily": { "headline-sm": [ "Inter" ], "body-md": [ "Inter" ], "label-kbd": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "label-code": [ "JetBrains Mono" ], "body-lg": [ "Inter" ], "headline-md": [ "Inter" ], "display-lg": [ "Inter" ], "headline-lg": [ "Inter" ], "label-badge": [ "Inter" ] }, "fontSize": { "headline-sm": [ "15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-md": [ "13px", { "lineHeight": "19px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "label-kbd": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-code": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "body-lg": [ "14px", { "lineHeight": "22px", "letterSpacing": "-0.006em", "fontWeight": "400" } ], "headline-md": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "display-lg": [ "32px", { "lineHeight": "38px", "letterSpacing": "-0.025em", "fontWeight": "600" } ], "headline-lg": [ "24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "label-badge": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-12 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><button class="flex items-center gap-space-sm rounded-lg px-space-xs py-1 hover:bg-surface-container transition-colors text-left" type="button"><div class="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-sm font-semibold">S</div><div class="flex flex-col leading-none"><span class="font-headline-sm text-body-sm text-on-surface font-medium truncate max-w-[120px]">Scryme</span><span class="font-body-sm text-[10px] text-outline leading-none truncate max-w-[120px]">Acme Global</span></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></button><button class="w-6 h-6 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">edit_square</span></button></div><div class="p-space-xs"><button class="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors" type="button"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px] text-outline">search</span><span class="font-body-sm text-body-sm text-outline">Search...</span></div><div class="flex items-center gap-0.5 bg-surface-container px-1 py-0.5 rounded border border-outline-variant/40"><span class="font-label-kbd text-label-kbd text-outline">⌘K</span></div></button></div><div class="px-space-xs py-space-xs"><div class="px-space-sm py-1 text-[11px] font-label-badge text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-high text-on-surface font-medium border-l-2 border-primary-container"><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="tasks" href="#">Tasks</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="board" href="#">Board</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="timeline" href="#">Timeline</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="calendar" href="#">Calendar</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="schedule" href="#">Schedule</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="task-detail" href="#">Task Detail</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="notes-and-docs" href="#">Notes &amp; Docs</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="time-tracking" href="#">Time Tracking</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="projects" href="#">Projects</a></nav></div></div><div class="p-space-xs border-t border-outline-variant/30"><div class="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center"><span class="material-symbols-outlined text-outline text-[13px]">tune</span></div><span class="font-body-sm text-body-sm text-on-surface-variant">Settings</span></div><span class="font-label-kbd text-label-kbd text-outline">⌘,</span></div></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 text-body-sm font-body-sm text-outline"><span class="hover:text-on-surface transition-colors cursor-pointer">Scryme</span><span class="text-outline-variant">/</span><div class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium text-body-sm text-on-surface">Nexus 2.0 Redesign</span><span class="material-symbols-outlined text-[14px] text-outline">expand_more</span></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40"><span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-code text-label-code text-primary">01:42:15</span><button class="text-outline hover:text-error transition-colors flex items-center" type="button"><span class="material-symbols-outlined text-[14px]">stop_circle</span></button></div><button class="relative p-1 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span></button><button class="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span><span>New Task</span><span class="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span></button><div class="h-4 w-px bg-outline-variant/40"></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-12 min-h-screen bg-surface w-full px-8"><div class="flex flex-col w-full pb-16">
+<!-- Top Ambient Glow Field -->
+<div class="relative w-full">
+<div class="absolute -top-10 left-1/4 w-96 h-32 bg-primary-container/10 rounded-full blur-3xl pointer-events-none"></div>
+<div class="absolute -top-6 right-1/3 w-80 h-28 bg-secondary-container/10 rounded-full blur-2xl pointer-events-none"></div>
+<!-- Project Breadcrumb & Quick Actions Bar -->
+<div class="flex flex-col lg:flex-row lg:items-center justify-between gap-space-md py-space-md">
+<div class="flex flex-col gap-1.5 min-w-0">
+<div class="flex items-center gap-2 text-outline font-label-code text-label-code">
+<span class="hover:text-on-surface cursor-pointer transition-colors">Projects</span>
+<span class="text-outline-variant">/</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-high text-primary font-medium">PRJ-204</span>
+<span class="text-outline-variant">/</span>
+<span class="text-on-surface truncate font-body-sm font-medium">Nexus 2.0 Redesign</span>
+</div>
+<div class="flex items-center flex-wrap gap-space-sm pt-0.5">
+<h1 class="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight mr-2">Nexus 2.0 Redesign</h1>
+<span class="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container-high text-on-primary-container font-label-badge text-label-badge font-medium">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container animate-pulse"></span>
+            Live Pipeline
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low text-on-surface-variant font-label-badge text-label-badge">
+<span class="material-symbols-outlined text-[12px] text-error">priority_high</span>
+            High Priority
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-low text-outline font-label-badge text-label-badge">
+<span class="material-symbols-outlined text-[12px]">calendar_today</span>
+            Oct 29, 2024
+          </span>
+<span class="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-surface-container-high text-primary font-label-badge text-label-badge">
+<span class="material-symbols-outlined text-[12px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+            94% Health
+          </span>
+</div>
+</div>
+<!-- Action Button Group -->
+<div class="flex items-center gap-space-xs self-start lg:self-center shrink-0">
+<button class="h-8 px-2.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">share</span>
+<span>Share</span>
+</button>
+<button class="h-8 px-2.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-sm" id="copyUrlBtn" type="button">
+<span class="material-symbols-outlined text-[15px]">content_copy</span>
+<span id="copyUrlText">Copy URL</span>
+</button>
+<button class="h-8 px-2.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px]">edit_note</span>
+<span>Edit Spec</span>
+</button>
+<div class="h-5 w-px bg-surface-variant mx-1"></div>
+<button class="h-8 px-3 rounded bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 shadow-sm transition-all" type="button">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>New Issue</span>
+<kbd class="ml-1 px-1 py-0.2 rounded bg-surface-container-lowest/40 font-label-kbd text-label-kbd text-primary-fixed">N</kbd>
+</button>
+</div>
+</div>
+<!-- Project Metrics Summary Bar (5 Stat Columns) -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-space-xs mt-space-sm mb-space-lg">
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-badge text-label-badge uppercase tracking-wider">Execution State</span>
+<span class="material-symbols-outlined text-[16px] text-primary">donut_large</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">68%</span>
+<span class="font-label-code text-[11px] text-primary">On Target</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 68%;"></div>
+</div>
+</div>
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-badge text-label-badge uppercase tracking-wider">Active Sprint</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">alt_route</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">Sprint 14</span>
+<span class="font-label-code text-[11px] text-outline">Day 6 / 10</span>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant truncate mt-2">Core Shader &amp; State Engine</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-badge text-label-badge uppercase tracking-wider">Hours Logged</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">timer</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">142h</span>
+<span class="font-label-code text-[11px] text-primary">+12h sync</span>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant truncate mt-2">Target allocation: 160h</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-badge text-label-badge uppercase tracking-wider">Cap Utilization</span>
+<span class="material-symbols-outlined text-[16px] text-primary-fixed">payments</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">$19,880</span>
+<span class="font-label-code text-[11px] text-outline">/ $28.5k</span>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant truncate mt-2">Burn paced at 69.7%</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm col-span-2 md:col-span-1">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-badge text-label-badge uppercase tracking-wider">Squad Roster</span>
+<span class="material-symbols-outlined text-[16px] text-outline">groups</span>
+</div>
+<div class="mt-2 flex items-center justify-between">
+<span class="font-headline-lg text-headline-lg text-on-surface font-semibold">6 squad</span>
+<div class="flex -space-x-1.5">
+<div class="w-6 h-6 rounded-full bg-primary-container text-on-primary-container text-[10px] font-label-badge flex items-center justify-center font-bold">AK</div>
+<div class="w-6 h-6 rounded-full bg-secondary-container text-secondary text-[10px] font-label-badge flex items-center justify-center font-bold">MV</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-highest text-on-surface text-[10px] font-label-badge flex items-center justify-center font-bold">LR</div>
+<div class="w-6 h-6 rounded-full bg-surface-container-high text-outline text-[10px] font-label-badge flex items-center justify-center font-bold">+3</div>
+</div>
+</div>
+<span class="font-body-sm text-[11px] text-on-surface-variant truncate mt-2">4 Eng · 1 Shader · 1 Des</span>
+</div>
+</div>
+<!-- Project Sub-Tabs Nav -->
+<div class="w-full flex items-center justify-between overflow-x-auto no-scrollbar bg-surface-container-lowest rounded-lg p-1 mb-space-lg">
+<div class="flex items-center gap-1 min-w-max">
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm" type="button">
+          Overview
+        </button>
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm flex items-center gap-1.5" type="button">
+<span>Issues</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-outline font-label-badge text-[10px]">58</span>
+</button>
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm" type="button">
+          Cycles &amp; Sprints
+        </button>
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm flex items-center gap-1.5" type="button">
+<span>Milestones</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-outline font-label-badge text-[10px]">4</span>
+</button>
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm flex items-center gap-1.5" type="button">
+<span>Documents &amp; RFCs</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container text-outline font-label-badge text-[10px]">6</span>
+</button>
+<button class="px-3 py-1.5 rounded text-outline hover:text-on-surface hover:bg-surface-container-low transition-colors font-body-sm text-body-sm" type="button">
+          Team &amp; Access
+        </button>
+<!-- ACTIVE TAB -->
+<button class="relative px-3.5 py-1.5 rounded bg-surface-container-high text-on-surface font-headline-sm text-body-sm flex items-center gap-2 shadow-sm" type="button">
+<span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+<span>Analytics &amp; Telemetry</span>
+<span class="inline-block w-1.5 h-1.5 bg-primary rounded-full animate-ping"></span>
+<span class="absolute bottom-0 left-2 right-2 h-0.5 bg-primary-container rounded-t"></span>
+</button>
+</div>
+<div class="hidden xl:flex items-center gap-2 px-2 text-outline font-label-code text-label-kbd">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Telemetry Stream: <span class="text-on-surface font-medium">STOMP #us-east-1</span></span>
+</div>
+</div>
+</div>
+<!-- SECTION 1: EXECUTIVE TELEMETRY OVERVIEW (5 Core Diagnostics Cards) -->
+<div class="flex flex-col gap-space-sm mb-space-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Section 01 //</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Executive Telemetry Overview</h2>
+</div>
+<div class="flex items-center gap-2">
+<span class="font-label-code text-label-code text-outline">Window: Last 24 Hours</span>
+<button class="w-6 h-6 rounded bg-surface-container-low hover:bg-surface-container flex items-center justify-center text-outline hover:text-on-surface transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">refresh</span>
+</button>
+</div>
+</div>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-space-xs">
+<!-- 1. System Health -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative overflow-hidden group hover:bg-surface-container transition-colors">
+<div class="absolute -right-3 -top-3 w-16 h-16 bg-primary-container/10 rounded-full blur-xl pointer-events-none"></div>
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code text-[11px] uppercase tracking-wider">Sys Health Index</span>
+<span class="px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-label-code text-[10px]">99.4% target</span>
+</div>
+<div class="my-2.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-lg text-display-lg font-semibold text-on-surface tracking-tight">94.2%</span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">Healthy, sub-16ms target locked</p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px]">
+<span class="text-outline">SLO Breaches</span>
+<span class="text-primary font-medium">0 today</span>
+</div>
+</div>
+<!-- 2. Canvas Render Loop Latency -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative overflow-hidden group hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code text-[11px] uppercase tracking-wider">Canvas Frame Latency</span>
+<span class="material-symbols-outlined text-[16px] text-primary">speed</span>
+</div>
+<div class="my-2.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-lg text-display-lg font-semibold text-on-surface tracking-tight">14.2<span class="font-body-sm text-body-sm text-outline ml-0.5">ms</span></span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">Avg frame overhead (60fps cap)</p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px]">
+<span class="text-outline">p95: <span class="text-on-surface">15.8ms</span></span>
+<span class="text-outline">p99: <span class="text-secondary">21.4ms</span></span>
+</div>
+</div>
+<!-- 3. WebSocket / STOMP Sync Latency -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative overflow-hidden group hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code text-[11px] uppercase tracking-wider">STOMP Sync Latency</span>
+<span class="material-symbols-outlined text-[16px] text-secondary">hub</span>
+</div>
+<div class="my-2.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-lg text-display-lg font-semibold text-on-surface tracking-tight">18<span class="font-body-sm text-body-sm text-outline ml-0.5">ms</span></span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">Across 42 dogfood nodes</p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px]">
+<span class="text-outline">Jitter Rate</span>
+<span class="text-primary font-medium">±1.4ms variance</span>
+</div>
+</div>
+<!-- 4. Crash-Free Sessions -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative overflow-hidden group hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code text-[11px] uppercase tracking-wider">Crash-Free Sessions</span>
+<span class="material-symbols-outlined text-[16px] text-primary">security</span>
+</div>
+<div class="my-2.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-lg text-display-lg font-semibold text-on-surface tracking-tight">99.85<span class="font-body-sm text-body-sm text-outline ml-0.5">%</span></span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">48,290 client instances</p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px]">
+<span class="text-outline">Unhandled</span>
+<span class="text-on-surface font-medium">1 capture</span>
+</div>
+</div>
+<!-- 5. Memory Allocation Peak -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative overflow-hidden group hover:bg-surface-container transition-colors">
+<div class="flex items-center justify-between text-outline">
+<span class="font-label-code text-[11px] uppercase tracking-wider">Memory Allocation</span>
+<span class="material-symbols-outlined text-[16px] text-tertiary">memory</span>
+</div>
+<div class="my-2.5">
+<div class="flex items-baseline gap-1.5">
+<span class="font-display-lg text-display-lg font-semibold text-on-surface tracking-tight">42<span class="font-body-sm text-body-sm text-outline ml-0.5">MB</span></span>
+</div>
+<p class="font-body-sm text-[11px] text-on-surface-variant mt-0.5">Ceiling: 60MB budget rule</p>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px]">
+<span class="text-outline">GC Pauses</span>
+<span class="text-primary font-medium">sub-2.2ms peak</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 2: INTERACTIVE ENGINEERING GRAPHS (3 Diagnostic Charts) -->
+<div class="flex flex-col gap-space-sm mb-space-xl">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Section 02 //</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Interactive Engineering Graphs</h2>
+</div>
+<div class="flex items-center gap-2">
+<span class="px-2 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-outline">Engine: Canvas 2D + WebGL 2.0</span>
+</div>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-md">
+<!-- GRAPH 1: Sprint Velocity & Story Points Burn-down -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative group hover:bg-surface-container/80 transition-all">
+<div class="flex items-start justify-between mb-space-sm">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">Sprint Velocity &amp; Burn-Down</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest font-label-code text-[10px] text-primary">S10 → S14</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Actual points completed vs Nominal squad capacity</p>
+</div>
+<div class="flex items-center gap-2 text-[11px] font-label-code">
+<span class="inline-flex items-center gap-1 text-primary">
+<span class="w-2 h-2 rounded bg-primary-container"></span>Actual
+            </span>
+<span class="inline-flex items-center gap-1 text-outline">
+<span class="w-2 h-0.5 bg-outline"></span>Nominal
+            </span>
+</div>
+</div>
+<!-- Inline SVG Visualization: Velocity Bar & Capacity Curve -->
+<div class="w-full h-44 my-2 relative">
+<svg class="w-full h-full overflow-visible" fill="none" preserveaspectratio="none" viewbox="0 0 340 140">
+<!-- Grid Lines -->
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="20" y2="20"></line>
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="60" y2="60"></line>
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="100" y2="100"></line>
+<!-- Nominal Capacity Dotted Line (approx 42-45 pts level at y=48) -->
+<path d="M 20 54 L 85 52 L 160 50 L 235 48 L 310 46" opacity="0.6" stroke="#908F9E" stroke-dasharray="4 3" stroke-width="1.5"></path>
+<!-- Sprint 10 Bar (36 pts) -->
+<rect fill="#343E91" height="60" opacity="0.75" rx="2" width="28" x="25" y="62"></rect>
+<!-- Sprint 11 Bar (41 pts) -->
+<rect fill="#343E91" height="74" opacity="0.85" rx="2" width="28" x="95" y="48"></rect>
+<!-- Sprint 12 Bar (39 pts) -->
+<rect fill="#5E6AD2" height="68" opacity="0.9" rx="2" width="28" x="165" y="54"></rect>
+<!-- Sprint 13 Bar (44 pts) -->
+<rect fill="#5E6AD2" height="80" rx="2" width="28" x="235" y="42"></rect>
+<!-- Sprint 14 Bar (Current: 46 pts projected) -->
+<rect fill="#BDC2FF" height="90" rx="2" width="28" x="305" y="32"></rect>
+<!-- Highlight marker on latest bar -->
+<circle cx="319" cy="32" fill="#DFE0FF" r="3"></circle>
+<!-- Values Above Bars -->
+<text fill="#908F9E" font-family="JetBrains Mono" font-size="10" text-anchor="middle" x="39" y="56">36</text>
+<text fill="#908F9E" font-family="JetBrains Mono" font-size="10" text-anchor="middle" x="109" y="42">41</text>
+<text fill="#BDC2FF" font-family="JetBrains Mono" font-size="10" text-anchor="middle" x="179" y="48">39</text>
+<text fill="#BDC2FF" font-family="JetBrains Mono" font-size="10" text-anchor="middle" x="249" y="36">44</text>
+<text fill="#DFE0FF" font-family="JetBrains Mono" font-size="10" font-weight="600" text-anchor="middle" x="319" y="24">46</text>
+</svg>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px] text-outline">
+<span>Sprint 10</span>
+<span>Sprint 11</span>
+<span>Sprint 12</span>
+<span>Sprint 13</span>
+<span class="text-primary font-semibold">Sprint 14 (Now)</span>
+</div>
+</div>
+<!-- GRAPH 2: WebGL Render Frame Times (60 FPS Lock) -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative group hover:bg-surface-container/80 transition-all">
+<div class="flex items-start justify-between mb-space-sm">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">WebGL Frame Times</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest font-label-code text-[10px] text-primary">60 FPS Lock</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Critical budget: 16.6ms frame hard ceiling</p>
+</div>
+<div class="flex items-center gap-2 text-[11px] font-label-code">
+<span class="inline-flex items-center gap-1 text-error">
+<span class="w-2 h-0.5 bg-error"></span>16.6ms limit
+            </span>
+</div>
+</div>
+<!-- Frame Time Waveform SVG -->
+<div class="w-full h-44 my-2 relative">
+<svg class="w-full h-full overflow-visible" fill="none" preserveaspectratio="none" viewbox="0 0 340 140">
+<!-- 16.6ms Critical Threshold Line at y=45 -->
+<line opacity="0.8" stroke="#FFB4AB" stroke-dasharray="3 3" stroke-width="1.5" x1="0" x2="340" y1="45" y2="45"></line>
+<text fill="#FFB4AB" font-family="JetBrains Mono" font-size="9" text-anchor="end" x="336" y="40">16.6ms threshold</text>
+<!-- 8.3ms 120 FPS Reference Line at y=85 -->
+<line stroke="#454652" stroke-dasharray="2 4" stroke-width="1" x1="0" x2="340" y1="85" y2="85"></line>
+<text fill="#908F9E" font-family="JetBrains Mono" font-size="9" x="6" y="81">8.3ms</text>
+<!-- Frame Time Area Gradient & Path -->
+<defs>
+<lineargradient id="frameGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#5E6AD2" stop-opacity="0.35"></stop>
+<stop offset="100%" stop-color="#5E6AD2" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<path d="M 0 68 
+                     L 20 65 L 40 69 L 60 62 L 80 66 L 100 58 
+                     L 120 72 L 140 54 L 160 56 L 180 52 L 200 48 
+                     L 220 50 L 240 43 L 260 52 L 280 50 L 300 49 L 320 52 L 340 50 
+                     L 340 130 L 0 130 Z" fill="url(#frameGrad)"></path>
+<path d="M 0 68 
+                     L 20 65 L 40 69 L 60 62 L 80 66 L 100 58 
+                     L 120 72 L 140 54 L 160 56 L 180 52 L 200 48 
+                     L 220 50 L 240 43 L 260 52 L 280 50 L 300 49 L 320 52 L 340 50" stroke="#BDC2FF" stroke-linecap="round" stroke-width="2"></path>
+<!-- Single spike indicator at x=240, y=43 -->
+<circle cx="240" cy="43" fill="#FFB4AB" r="3.5"></circle>
+<text fill="#FFB4AB" font-family="JetBrains Mono" font-size="9" text-anchor="middle" x="240" y="32">17.1ms</text>
+</svg>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px] text-outline">
+<span>T -60s</span>
+<span>T -45s</span>
+<span>T -30s</span>
+<span>T -15s</span>
+<span class="text-on-surface">Now (14.2ms)</span>
+</div>
+</div>
+<!-- GRAPH 3: Real-time WebSocket Ingestion Throughput -->
+<div class="p-space-md rounded bg-surface-container-low flex flex-col justify-between shadow-sm relative group hover:bg-surface-container/80 transition-all">
+<div class="flex items-start justify-between mb-space-sm">
+<div>
+<div class="flex items-center gap-1.5">
+<span class="font-headline-sm text-headline-sm text-on-surface font-semibold">STOMP Ingestion Curve</span>
+<span class="px-1.5 py-0.2 rounded bg-surface-container-highest font-label-code text-[10px] text-primary">events / sec</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline mt-0.5">Real-time delta state synchronization bus</p>
+</div>
+<div class="flex items-center gap-1 text-[11px] font-label-code text-primary">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-ping"></span>
+<span>4.2k evt/s</span>
+</div>
+</div>
+<!-- Ingestion Waveform SVG -->
+<div class="w-full h-44 my-2 relative">
+<svg class="w-full h-full overflow-visible" fill="none" preserveaspectratio="none" viewbox="0 0 340 140">
+<defs>
+<lineargradient id="ingestGrad" x1="0" x2="0" y1="0" y2="1">
+<stop offset="0%" stop-color="#343E91" stop-opacity="0.45"></stop>
+<stop offset="100%" stop-color="#343E91" stop-opacity="0.0"></stop>
+</lineargradient>
+</defs>
+<!-- Baseline grid -->
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="30" y2="30"></line>
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="70" y2="70"></line>
+<line class="text-surface-variant/30" stroke="currentColor" stroke-dasharray="3 3" x1="0" x2="340" y1="110" y2="110"></line>
+<path d="M 0 95 
+                     Q 30 92, 60 78 
+                     T 120 62 
+                     T 180 82 
+                     T 240 45 
+                     T 300 52 
+                     L 340 38 
+                     L 340 130 L 0 130 Z" fill="url(#ingestGrad)"></path>
+<path d="M 0 95 
+                     Q 30 92, 60 78 
+                     T 120 62 
+                     T 180 82 
+                     T 240 45 
+                     T 300 52 
+                     L 340 38" stroke="#5E6AD2" stroke-linecap="round" stroke-width="2"></path>
+<!-- Active pulse point -->
+<circle cx="340" cy="38" fill="#BDC2FF" r="4"></circle>
+</svg>
+</div>
+<div class="flex items-center justify-between pt-2 border-t border-surface-variant/40 font-label-code text-[11px] text-outline">
+<span>00:00</span>
+<span>06:00</span>
+<span>12:00</span>
+<span>18:00</span>
+<span class="text-on-surface">Peak: 5,120/s</span>
+</div>
+</div>
+</div>
+</div>
+<!-- SECTION 3 & 4: DUAL COLUMN LAYOUT (Sprint Health & Effort / Budget Burn Breakdown) -->
+<div class="grid grid-cols-1 lg:grid-cols-12 gap-space-md items-start">
+<!-- LEFT COLUMN: Sprint Health & Issue Distribution (7 Cols) -->
+<div class="lg:col-span-7 flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Section 03 //</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Sprint Health &amp; Issue Distribution</h2>
+</div>
+<span class="font-label-code text-label-code text-outline">Sprint 14 Active</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low shadow-sm flex flex-col gap-space-md">
+<!-- 4 Metric Micro-Tiles Grid -->
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-space-xs">
+<div class="p-2.5 rounded bg-surface-container flex flex-col">
+<span class="font-label-badge text-[10px] uppercase text-outline">Throughput</span>
+<span class="font-headline-md text-headline-md font-semibold text-on-surface mt-1">46 pts</span>
+<span class="font-label-code text-[11px] text-primary flex items-center gap-0.5 mt-0.5">
+<span class="material-symbols-outlined text-[13px]">trending_up</span> +8.2% eff
+            </span>
+</div>
+<div class="p-2.5 rounded bg-surface-container flex flex-col">
+<span class="font-label-badge text-[10px] uppercase text-outline">Cycle Lead Time</span>
+<span class="font-headline-md text-headline-md font-semibold text-on-surface mt-1">3.2 days</span>
+<span class="font-label-code text-[11px] text-outline flex items-center gap-0.5 mt-0.5">
+              Prog → Done
+            </span>
+</div>
+<div class="p-2.5 rounded bg-surface-container flex flex-col">
+<span class="font-label-badge text-[10px] uppercase text-outline">Bug Defect Rate</span>
+<span class="font-headline-md text-headline-md font-semibold text-on-surface mt-1">2.1%</span>
+<span class="font-label-code text-[11px] text-primary flex items-center gap-0.5 mt-0.5">
+              3/3 resolved
+            </span>
+</div>
+<div class="p-2.5 rounded bg-surface-container flex flex-col">
+<span class="font-label-badge text-[10px] uppercase text-outline">CR Turnaround</span>
+<span class="font-headline-md text-headline-md font-semibold text-on-surface mt-1">4.2h</span>
+<span class="font-label-code text-[11px] text-outline flex items-center gap-0.5 mt-0.5">
+              p50 merge time
+            </span>
+</div>
+</div>
+<!-- Issue Distribution Bar Stack -->
+<div class="flex flex-col gap-1.5 pt-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm">
+<span class="text-on-surface font-medium">Issue Distribution by Pipeline State</span>
+<span class="text-outline font-label-code text-label-code">58 Total Issues</span>
+</div>
+<!-- Stacked Progress Bar -->
+<div class="w-full h-3 rounded-full bg-surface-container-highest overflow-hidden flex">
+<div class="bg-primary-container h-full transition-all" style="width: 48%;" title="Completed: 28"></div>
+<div class="bg-secondary h-full transition-all" style="width: 28%;" title="In Progress: 16"></div>
+<div class="bg-surface-variant h-full transition-all" style="width: 17%;" title="In Review: 10"></div>
+<div class="bg-error/60 h-full transition-all" style="width: 7%;" title="Blocked: 4"></div>
+</div>
+<div class="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-1 font-label-code text-[11px]">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Done: 28 (48%)</span>
+</div>
+<div class="flex items-center gap-1.5 text-secondary">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Prog: 16 (28%)</span>
+</div>
+<div class="flex items-center gap-1.5 text-outline">
+<span class="w-2 h-2 rounded-full bg-surface-variant"></span>
+<span>Review: 10 (17%)</span>
+</div>
+<div class="flex items-center gap-1.5 text-error">
+<span class="w-2 h-2 rounded-full bg-error/60"></span>
+<span>Blocked: 4 (7%)</span>
+</div>
+</div>
+</div>
+<!-- Recent Critical Issues Table/Stream -->
+<div class="flex flex-col gap-1 pt-2">
+<div class="flex items-center justify-between text-body-sm font-body-sm pb-1">
+<span class="text-outline uppercase font-label-badge text-[10px] tracking-wider">Sprint 14 Dogfood Telemetry Incidents</span>
+<span class="text-primary font-label-code text-[11px] cursor-pointer hover:underline">View in Issues</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[15px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-code text-[11px] text-primary">NX-412</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">WebGL canvas offscreen context leak under multi-tab reload</span>
+</div>
+<span class="font-label-badge text-[10px] px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-medium shrink-0 ml-2">Resolved</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[15px] text-primary" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+<span class="font-label-code text-[11px] text-primary">NX-419</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">STOMP heartbeat timeout recovery delay in low-bandwidth worker</span>
+</div>
+<span class="font-label-badge text-[10px] px-1.5 py-0.5 rounded bg-surface-container-highest text-primary font-medium shrink-0 ml-2">Resolved</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="flex items-center gap-2.5 min-w-0">
+<span class="material-symbols-outlined text-[15px] text-secondary">radio_button_checked</span>
+<span class="font-label-code text-[11px] text-secondary">NX-427</span>
+<span class="font-body-sm text-body-sm text-on-surface truncate">Bilinear interpolation shader jitter on Retina displays</span>
+</div>
+<span class="font-label-badge text-[10px] px-1.5 py-0.5 rounded bg-secondary-container text-secondary font-medium shrink-0 ml-2">Review</span>
+</div>
+</div>
+</div>
+</div>
+<!-- RIGHT COLUMN: Effort & Budget Burn Breakdown (5 Cols) -->
+<div class="lg:col-span-5 flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Section 04 //</span>
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold">Effort &amp; Capital Burn</h2>
+</div>
+<span class="font-label-code text-label-code text-outline">Paced: $1,420/day</span>
+</div>
+<div class="p-space-md rounded bg-surface-container-low shadow-sm flex flex-col gap-space-md">
+<!-- Capital Burn Status Banner -->
+<div class="p-space-sm rounded bg-surface-container flex items-center justify-between">
+<div class="flex flex-col">
+<span class="font-label-badge text-[10px] uppercase text-outline">Milestone Cap Ceiling</span>
+<span class="font-headline-md text-headline-md font-semibold text-on-surface mt-0.5">$19,880 <span class="font-body-sm text-body-sm text-outline font-normal">/ $28,500</span></span>
+</div>
+<div class="text-right">
+<span class="font-label-code text-label-code text-primary font-medium">On Pace (69.7%)</span>
+<p class="font-body-sm text-[11px] text-outline mt-0.5">$8,620 contingency left</p>
+</div>
+</div>
+<!-- Hours Logged by Discipline (Bar Visuals) -->
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-body-sm text-body-sm text-on-surface font-medium">Hours by Engineering Discipline</span>
+<span class="font-label-code text-[11px] text-outline">142h Cumulative</span>
+</div>
+<!-- Discipline 1: Frontend & Canvas -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-code text-[11px]">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="w-2 h-2 rounded-full bg-primary-container"></span>
+<span>Frontend &amp; Canvas Engine</span>
+</div>
+<span class="text-primary font-medium">82h (58%)</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 58%;"></div>
+</div>
+</div>
+<!-- Discipline 2: Core Shader -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-code text-[11px]">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span>Core Shader &amp; Compute Pipeline</span>
+</div>
+<span class="text-secondary font-medium">34h (24%)</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="bg-secondary h-full rounded-full" style="width: 24%;"></div>
+</div>
+</div>
+<!-- Discipline 3: Design -->
+<div class="flex flex-col gap-1">
+<div class="flex items-center justify-between font-label-code text-[11px]">
+<div class="flex items-center gap-1.5 text-on-surface">
+<span class="w-2 h-2 rounded-full bg-tertiary"></span>
+<span>Design Systems &amp; Tokens</span>
+</div>
+<span class="text-tertiary font-medium">26h (18%)</span>
+</div>
+<div class="w-full h-1.5 rounded-full bg-surface-container-highest overflow-hidden">
+<div class="bg-tertiary h-full rounded-full" style="width: 18%;"></div>
+</div>
+</div>
+</div>
+<!-- Squad Allocation Roster Preview Cards -->
+<div class="pt-2 border-t border-surface-variant/40 flex flex-col gap-2">
+<span class="font-label-badge text-[10px] uppercase text-outline tracking-wider">Top Contributors This Sprint</span>
+<div class="flex items-center justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 rounded bg-primary-container text-on-primary-container text-[9px] font-label-code flex items-center justify-center font-bold">AK</div>
+<span class="text-on-surface font-medium truncate">Alex K. (Staff Canvas)</span>
+</div>
+<span class="font-label-code text-[11px] text-outline">48.5h logged</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 rounded bg-secondary-container text-secondary text-[9px] font-label-code flex items-center justify-center font-bold">MV</div>
+<span class="text-on-surface font-medium truncate">Maya V. (Shader Eng)</span>
+</div>
+<span class="font-label-code text-[11px] text-outline">34.0h logged</span>
+</div>
+<div class="flex items-center justify-between text-body-sm">
+<div class="flex items-center gap-2">
+<div class="w-5 h-5 rounded bg-surface-container-highest text-on-surface text-[9px] font-label-code flex items-center justify-center font-bold">LR</div>
+<span class="text-on-surface font-medium truncate">Leo R. (Product UI)</span>
+</div>
+<span class="font-label-code text-[11px] text-outline">26.0h logged</span>
+</div>
+</div>
+<!-- Bottom Export / Log Audit Trigger -->
+<div class="pt-1 flex items-center justify-between">
+<button class="w-full py-1.5 rounded bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-code text-label-code flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[14px]">download</span>
+<span>Export Financial Audit Ledger (.csv)</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div>
+<script>
+  // Quick Copy URL micro-interaction
+  const copyBtn = document.getElementById('copyUrlBtn');
+  const copyText = document.getElementById('copyUrlText');
+  if (copyBtn && copyText) {
+    copyBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(window.location.href);
+      copyText.textContent = 'Copied!';
+      setTimeout(() => {
+        copyText.textContent = 'Copy URL';
+      }, 2000);
+    });
+  }
+</script></main></div></body></html>
