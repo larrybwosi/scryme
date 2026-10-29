@@ -157,12 +157,14 @@ class ScheduleViewModel @Inject constructor(
             val targetLocationId = locationId ?: sessionManager.getLocationId()
             val state = _uiState.value as? ScheduleUiState.Success
             val targetBranch = state?.locations?.find { it.id == targetLocationId }
+            val targetLat = targetBranch?.latitude
+            val targetLng = targetBranch?.longitude
 
-            if (deviceLocation != null && targetBranch?.latitude != null && targetBranch.longitude != null) {
+            if (deviceLocation != null && targetLat != null && targetLng != null) {
                 val validationResult = LocationHelper.validateCheckInLocation(
                     deviceLocation = deviceLocation,
-                    targetLat = targetBranch.latitude,
-                    targetLng = targetBranch.longitude,
+                    targetLat = targetLat,
+                    targetLng = targetLng,
                     maxRadiusMeters = 50.0
                 )
 
@@ -177,7 +179,8 @@ class ScheduleViewModel @Inject constructor(
                     }
                     is LocationValidationResult.OutOfRadius -> {
                         val distFormatted = "%.1f".format(validationResult.distanceMeters)
-                        val errorMsg = "Outside allowed location radius (50m). You are ${distFormatted}m away from ${targetBranch.name}."
+                        val branchName = targetBranch?.name ?: "the branch"
+                        val errorMsg = "Outside allowed location radius (50m). You are ${distFormatted}m away from ${branchName}."
                         if (state != null) {
                             _uiState.value = state.copy(errorMessage = errorMsg)
                         }
