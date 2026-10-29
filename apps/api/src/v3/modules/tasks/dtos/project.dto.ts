@@ -1,5 +1,5 @@
 import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
-import { ProjectMemberRole, ProjectStatus, ProjectTaskPriority } from '@repo/db';
+import { MilestoneStatus, ProjectMemberRole, ProjectStatus, ProjectTaskPriority } from '@repo/db';
 import { Type } from 'class-transformer';
 import {
   IsArray,
@@ -150,4 +150,54 @@ export class ProjectFilterDto {
   @IsOptional()
   @Type(() => Number)
   limit?: number = 20;
+}
+
+export class CreateProjectMilestoneDto {
+  @ApiProperty({ example: "Sprint 1 Release", description: "Title of milestone" })
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(2)
+  @MaxLength(100)
+  title!: string;
+
+  @ApiPropertyOptional({ example: "Complete MVP frontend and auth API integration" })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ example: "2026-11-15T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  dueDate?: Date;
+
+  @ApiPropertyOptional({ enum: MilestoneStatus, default: MilestoneStatus.OPEN })
+  @IsOptional()
+  @IsEnum(MilestoneStatus)
+  status?: MilestoneStatus;
+}
+
+export class UpdateProjectMilestoneDto {
+  @ApiPropertyOptional({ example: "Sprint 1 Release V2" })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  title?: string;
+
+  @ApiPropertyOptional({ example: "Updated milestone description" })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ example: "2026-11-20T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  dueDate?: Date;
+
+  @ApiPropertyOptional({ enum: MilestoneStatus })
+  @IsOptional()
+  @IsEnum(MilestoneStatus)
+  status?: MilestoneStatus;
 }

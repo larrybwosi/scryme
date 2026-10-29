@@ -16,9 +16,10 @@ model Project {
 
   departmentId String?
 
-  members ProjectMember[]
-  tasks   Task[]
-  labels  TaskLabel[]
+  members    ProjectMember[]
+  tasks      Task[]
+  milestones ProjectMilestone[]
+  labels     TaskLabel[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -58,6 +59,13 @@ enum ProjectMemberRole {
   VIEWER
 }
 
+enum MilestoneStatus {
+  OPEN
+  IN_PROGRESS
+  COMPLETED
+  CANCELLED
+}
+
 model ProjectMember {
   id        String            @id @default(cuid())
   projectId String
@@ -73,6 +81,27 @@ model ProjectMember {
   @@index([memberId])
   @@index([projectId])
   @@map("project_member")
+}
+
+model ProjectMilestone {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project         @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?         @db.Text
+  dueDate        DateTime?
+  status         MilestoneStatus @default(OPEN)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@map("project_milestone")
 }
 
 model Task {
@@ -99,6 +128,9 @@ model Task {
   parentTask   Task?   @relation("TaskSubtasks", fields: [parentTaskId], references: [id], onDelete: SetNull)
   subtasks     Task[]  @relation("TaskSubtasks")
 
+  milestoneId String?
+  milestone   ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
+
   createdById String?
   createdBy   Member? @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
@@ -108,6 +140,7 @@ model Task {
   comments     TaskComment[]
   activityLogs TaskActivityLog[]
   labels       TaskLabelOnTask[]
+  timeEntries  TaskTimeEntry[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -117,7 +150,30 @@ model Task {
   @@index([projectId])
   @@index([status])
   @@index([parentTaskId])
+  @@index([milestoneId])
   @@map("task")
+}
+
+model TaskTimeEntry {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  taskId         String
+  task           Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  memberId       String
+  member         Member       @relation("MemberTaskTimeEntries", fields: [memberId], references: [id], onDelete: Cascade)
+
+  hours       Decimal  @db.Decimal(10, 2)
+  description String?  @db.Text
+  date        DateTime @default(now())
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([taskId])
+  @@index([memberId])
+  @@map("task_time_entry")
 }
 
 model TaskAssignee {
