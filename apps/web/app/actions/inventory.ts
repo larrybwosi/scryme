@@ -22,29 +22,32 @@ async function getDefaultPieceUnit(organizationId: string): Promise<{
   systemUnitId?: string;
   orgUnitId?: string;
 }> {
-  // 1. Check for OrganizationUnit "Piece"
-  const orgUnit = await db.organizationUnit.findFirst({
-    where: {
-      organizationId,
-      name: { equals: "Piece", mode: "insensitive" },
-      isActive: true,
-    },
-  });
+  // ⚡ Bolt Optimization: Execute organization unit and system unit lookups concurrently using Promise.all with explicit select projections.
+  // Collapses 2 sequential DB roundtrips down to 1 flat concurrent roundtrip and avoids fetching unnecessary fields.
+  const [orgUnit, systemUnit] = await Promise.all([
+    db.organizationUnit.findFirst({
+      where: {
+        organizationId,
+        name: { equals: "Piece", mode: "insensitive" },
+        isActive: true,
+      },
+      select: { id: true },
+    }),
+    db.systemUnit.findFirst({
+      where: {
+        OR: [
+          { name: { equals: "Piece", mode: "insensitive" } },
+          { symbol: { equals: "pc", mode: "insensitive" } },
+        ],
+        isActive: true,
+      },
+      select: { id: true },
+    }),
+  ]);
 
   if (orgUnit) {
     return { orgUnitId: orgUnit.id };
   }
-
-  // 2. Check for SystemUnit "Piece"
-  const systemUnit = await db.systemUnit.findFirst({
-    where: {
-      OR: [
-        { name: { equals: "Piece", mode: "insensitive" } },
-        { symbol: { equals: "pc", mode: "insensitive" } },
-      ],
-      isActive: true,
-    },
-  });
 
   if (systemUnit) {
     return { systemUnitId: systemUnit.id };
@@ -599,31 +602,37 @@ export async function checkProductUniqueness(params: {
   if (!context?.organizationId) return { sku: true, slug: true };
 
   const { sku, slug, excludeId } = params;
-  const results = { sku: true, slug: true };
 
-  if (sku) {
-    const existing = await db.product.findFirst({
-      where: {
-        sku,
-        organizationId: context.organizationId,
-        id: excludeId ? { not: excludeId } : undefined,
-      },
-    });
-    results.sku = !existing;
-  }
+  // ⚡ Bolt Optimization: Execute SKU and slug uniqueness queries concurrently using Promise.all with explicit select projections.
+  // Collapses up to 2 sequential database roundtrips down to 1 flat concurrent roundtrip on the debounced user input path,
+  // and uses `select: { id: true }` to avoid over-fetching full product records.
+  const [existingSku, existingSlug] = await Promise.all([
+    sku
+      ? db.product.findFirst({
+          where: {
+            sku,
+            organizationId: context.organizationId,
+            id: excludeId ? { not: excludeId } : undefined,
+          },
+          select: { id: true },
+        })
+      : null,
+    slug
+      ? db.product.findFirst({
+          where: {
+            slug,
+            organizationId: context.organizationId,
+            id: excludeId ? { not: excludeId } : undefined,
+          },
+          select: { id: true },
+        })
+      : null,
+  ]);
 
-  if (slug) {
-    const existing = await db.product.findFirst({
-      where: {
-        slug,
-        organizationId: context.organizationId,
-        id: excludeId ? { not: excludeId } : undefined,
-      },
-    });
-    results.slug = !existing;
-  }
-
-  return results;
+  return {
+    sku: !existingSku,
+    slug: !existingSlug,
+  };
 }
 
 export async function getProduct(id: string): Promise<any> {
