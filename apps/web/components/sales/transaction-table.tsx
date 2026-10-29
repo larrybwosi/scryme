@@ -180,7 +180,7 @@ export function TransactionTable({
   const [search, setSearch] = useState("");
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
-  const [itemsPerPage, setItemsPerPage] = useState(15);
+  const [itemsPerPage, setItemsPerPage] = useState(100);
   const selectAllRef = useRef<HTMLInputElement>(null);
 
   const handleExport = async () => {
