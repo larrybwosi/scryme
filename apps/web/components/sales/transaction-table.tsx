@@ -14,6 +14,8 @@ import {
   X,
   ChevronLeft,
   ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
   Inbox,
   ExternalLink,
 } from "lucide-react";
@@ -181,7 +183,33 @@ export function TransactionTable({
   const [activeFilter, setActiveFilter] = useState("ALL");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(100);
+  const [pageInput, setPageInput] = useState(String(currentPage));
   const selectAllRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setPageInput(String(currentPage));
+  }, [currentPage]);
+
+  const handlePageInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPageInput(e.target.value);
+  };
+
+  const handlePageInputSubmit = () => {
+    const p = parseInt(pageInput, 10);
+    if (!isNaN(p)) {
+      const validPage = Math.max(1, Math.min(p, totalPages));
+      setCurrentPage(validPage);
+      setPageInput(String(validPage));
+    } else {
+      setPageInput(String(currentPage));
+    }
+  };
+
+  const handlePageInputKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Enter") {
+      handlePageInputSubmit();
+    }
+  };
 
   const handleExport = async () => {
     try {
@@ -664,60 +692,107 @@ export function TransactionTable({
             </div>
           </div>
 
-          <div className="flex items-center gap-1">
-            <Button
-              variant="outline"
-              size="icon"
-              disabled={currentPage === 1}
-              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
-              <ChevronLeft className="h-3 w-3" />
-            </Button>
-            {Array.from({ length: totalPages }, (_, i) => i + 1)
-              .filter(p => {
-                if (totalPages <= 7) return true;
-                if (p === 1 || p === totalPages) return true;
-                return Math.abs(p - currentPage) <= 1;
-              })
-              .reduce<(number | string)[]>((acc, page, index, array) => {
-                if (index > 0 && typeof array[index - 1] === "number") {
-                  const prevPage = array[index - 1] as number;
-                  if (page - prevPage > 1) {
-                    acc.push("...");
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Manual Page Jump */}
+            <div className="flex items-center gap-1 text-[11px] text-muted-foreground mr-1">
+              <span>Page</span>
+              <Input
+                type="number"
+                min={1}
+                max={totalPages}
+                value={pageInput}
+                onChange={handlePageInputChange}
+                onBlur={handlePageInputSubmit}
+                onKeyDown={handlePageInputKeyDown}
+                className="h-6 w-12 text-center text-[11px] px-1 py-0 border-border bg-background shadow-none focus-visible:ring-1 focus-visible:ring-ring [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+              />
+              <span>of {totalPages}</span>
+            </div>
+
+            <div className="flex items-center gap-1">
+              {/* First Page */}
+              <Button
+                variant="outline"
+                size="icon"
+                title="First Page"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(1)}
+                className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
+                <ChevronsLeft className="h-3 w-3" />
+              </Button>
+
+              {/* Previous Page */}
+              <Button
+                variant="outline"
+                size="icon"
+                title="Previous Page"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
+                <ChevronLeft className="h-3 w-3" />
+              </Button>
+
+              {/* Page Number Buttons */}
+              {Array.from({ length: totalPages }, (_, i) => i + 1)
+                .filter(p => {
+                  if (totalPages <= 7) return true;
+                  if (p === 1 || p === totalPages) return true;
+                  return Math.abs(p - currentPage) <= 1;
+                })
+                .reduce<(number | string)[]>((acc, page, index, array) => {
+                  if (index > 0 && typeof array[index - 1] === "number") {
+                    const prevPage = array[index - 1] as number;
+                    if (page - prevPage > 1) {
+                      acc.push("...");
+                    }
                   }
-                }
-                acc.push(page);
-                return acc;
-              }, [])
-              .map((p, idx) =>
-                typeof p === "string" ? (
-                  <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
-                    ...
-                  </span>
-                ) : (
-                  <Button
-                    key={p}
-                    variant={p === currentPage ? "default" : "outline"}
-                    size="icon"
-                    onClick={() => setCurrentPage(p)}
-                    className={cn(
-                      "h-6 w-6 rounded text-[11px]",
-                      p === currentPage
-                        ? "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
-                        : "border-border text-muted-foreground hover:text-foreground",
-                    )}>
-                    {p}
-                  </Button>
-                ),
-              )}
-            <Button
-              variant="outline"
-              size="icon"
-              disabled={currentPage === totalPages || totalPages === 0}
-              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-              className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
-              <ChevronRight className="h-3 w-3" />
-            </Button>
+                  acc.push(page);
+                  return acc;
+                }, [])
+                .map((p, idx) =>
+                  typeof p === "string" ? (
+                    <span key={`ellipsis-${idx}`} className="px-1 text-xs text-muted-foreground">
+                      ...
+                    </span>
+                  ) : (
+                    <Button
+                      key={p}
+                      variant={p === currentPage ? "default" : "outline"}
+                      size="icon"
+                      onClick={() => setCurrentPage(p)}
+                      className={cn(
+                        "h-6 w-6 rounded text-[11px]",
+                        p === currentPage
+                          ? "bg-zinc-900 hover:bg-zinc-800 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-200"
+                          : "border-border text-muted-foreground hover:text-foreground",
+                      )}>
+                      {p}
+                    </Button>
+                  ),
+                )}
+
+              {/* Next Page */}
+              <Button
+                variant="outline"
+                size="icon"
+                title="Next Page"
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
+                <ChevronRight className="h-3 w-3" />
+              </Button>
+
+              {/* Last Page */}
+              <Button
+                variant="outline"
+                size="icon"
+                title="Last Page"
+                disabled={currentPage === totalPages || totalPages === 0}
+                onClick={() => setCurrentPage(totalPages)}
+                className="h-6 w-6 rounded border-border text-muted-foreground hover:text-foreground disabled:opacity-40">
+                <ChevronsRight className="h-3 w-3" />
+              </Button>
+            </div>
           </div>
         </div>
 
