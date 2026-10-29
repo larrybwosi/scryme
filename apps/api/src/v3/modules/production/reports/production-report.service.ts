@@ -1,3 +1,4 @@
+import { env } from "@repo/env";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ScrymeService } from "@/v3/modules/scryme/scryme.service";
@@ -61,7 +62,7 @@ export class ProductionReportService {
             label: "View Full Report",
             type: "button",
             style: "primary",
-            value: `${process.env.PUBLIC_WEB_URL || "https://app.dealio.co"}/production/reports?orgId=${organizationId}`
+            value: `${env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech"}/production/reports?orgId=${organizationId}`
           }
         ]
       });

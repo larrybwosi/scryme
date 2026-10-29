@@ -22,8 +22,8 @@ inject_env_placeholders() {
   : "${VITE_API_URL:=https://api.scryme.tech}"
   : "${VITE_AUTH_URL:=https://auth.scryme.tech}"
 
-  # Get list of all environment variables starting with NEXT_PUBLIC_ or VITE_
-  DYNAMIC_VARS=$(env | grep -E '^(NEXT_PUBLIC_|VITE_)' | cut -d= -f1 || true)
+  # Get list of all environment variables starting with NEXT_PUBLIC_, VITE_, or PUBLIC_
+  DYNAMIC_VARS=$(env | grep -E '^(NEXT_PUBLIC_|VITE_|PUBLIC_)' | cut -d= -f1 || true)
 
   KNOWN_VARS="
     NEXT_PUBLIC_API_URL
@@ -48,6 +48,10 @@ inject_env_placeholders() {
     NEXT_PUBLIC_SCRYME_ORG_SLUG
     NEXT_PUBLIC_SCRYME_API_URL
     NEXT_PUBLIC_AUTH_URL
+    PUBLIC_API_URL
+    PUBLIC_WEB_URL
+    PUBLIC_APP_URL
+    PUBLIC_CRM_URL
     VITE_PUBLIC_API_URL
     VITE_API_URL
     VITE_AUTH_URL

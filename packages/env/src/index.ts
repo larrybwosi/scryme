@@ -91,10 +91,14 @@ const serverSchema = z.object({
     .optional()
     .default("amqp://admin:adminpassword@rabbitmq:5672"),
 
-  // API
+  // API & Public URL Aliases/Fallbacks
   JWT_SECRET: z.string().min(1).default("fallback-secret-for-dev"),
   INTERNAL_ADMIN_SECRET: z.string().optional(),
-    APP_VERSION: z.string().default("1.0.0"),
+  APP_VERSION: z.string().default("1.0.0"),
+  PUBLIC_API_URL: z.preprocess(sanitizeUrl, z.url().optional()),
+  PUBLIC_WEB_URL: z.preprocess(sanitizeUrl, z.url().optional()),
+  PUBLIC_APP_URL: z.preprocess(sanitizeUrl, z.url().optional()),
+  PUBLIC_CRM_URL: z.preprocess(sanitizeUrl, z.url().optional()),
 
   // GitHub
   GITHUB_OWNER: z.string().default("larrybwosi"),
@@ -304,9 +308,14 @@ function loadEnvFiles() {
 }
 
 // ─────────────────────────────────────────────
-// Collect raw process.env values
+// Collect raw process.env values with dynamic fallbacks
 // ─────────────────────────────────────────────
 function getRawEnv() {
+  const rawApiUrl = process.env.NEXT_PUBLIC_API_URL || process.env.PUBLIC_API_URL;
+  const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL;
+  const rawWebUrl = process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL;
+  const rawCrmUrl = process.env.NEXT_PUBLIC_CRM_URL || process.env.PUBLIC_CRM_URL;
+
   return {
     // Server
     NODE_ENV: process.env.NODE_ENV,
@@ -319,6 +328,7 @@ function getRawEnv() {
     DATABASE_POOL_SIZE: process.env.DATABASE_POOL_SIZE,
     PORT: process.env.PORT,
     BETTER_AUTH_SECRET: process.env.BETTER_AUTH_SECRET,
+    BETTER_AUTH_URL: process.env.BETTER_AUTH_URL || rawAppUrl,
     GITHUB_CLIENT_ID: process.env.GITHUB_CLIENT_ID,
     GITHUB_CLIENT_SECRET: process.env.GITHUB_CLIENT_SECRET,
     GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID,
@@ -332,6 +342,10 @@ function getRawEnv() {
     JWT_SECRET: process.env.JWT_SECRET,
     INTERNAL_ADMIN_SECRET: process.env.INTERNAL_ADMIN_SECRET,
     APP_VERSION: process.env.APP_VERSION,
+    PUBLIC_API_URL: rawApiUrl,
+    PUBLIC_WEB_URL: rawWebUrl,
+    PUBLIC_APP_URL: rawAppUrl,
+    PUBLIC_CRM_URL: rawCrmUrl,
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
@@ -363,7 +377,7 @@ function getRawEnv() {
     // Realtime
     REALTIME_PROVIDER: process.env.REALTIME_PROVIDER,
     ABLY_API_KEY: process.env.ABLY_API_KEY,
-    SOCKET_URL: process.env.SOCKET_URL,
+    SOCKET_URL: process.env.SOCKET_URL || rawApiUrl,
     // Sentry
     SENTRY_DSN: process.env.SENTRY_DSN,
     SENTRY_ORG: process.env.SENTRY_ORG,
@@ -392,29 +406,28 @@ function getRawEnv() {
     OPENPANEL_CLIENT_SECRET: process.env.OPENPANEL_CLIENT_SECRET,
     OPENPANEL_HOST: process.env.OPENPANEL_HOST,
 
-
-
-  // PostHog Server Configuration
+    // PostHog Server Configuration
     POSTHOG_PERSONAL_API_KEY: process.env.POSTHOG_PERSONAL_API_KEY,
     POSTHOG_PROJECT_ID: process.env.POSTHOG_PROJECT_ID,
 
-  // Resend Email Configuration
+    // Resend Email Configuration
     RESEND_API_KEY: process.env.RESEND_API_KEY,
     EMAIL_FROM: process.env.EMAIL_FROM,
     NEXT_PUBLIC_OPENPANEL_CLIENT_ID: process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
     NEXT_PUBLIC_OPENPANEL_HOST: process.env.NEXT_PUBLIC_OPENPANEL_HOST,
     VITE_OPENPANEL_CLIENT_ID: process.env.VITE_OPENPANEL_CLIENT_ID,
     VITE_OPENPANEL_HOST: process.env.VITE_OPENPANEL_HOST,
+
     // Client
-    NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
-    NEXT_PUBLIC_API_URL: process.env.NEXT_PUBLIC_API_URL,
-    NEXT_PUBLIC_WEB_URL: process.env.NEXT_PUBLIC_WEB_URL,
-    NEXT_PUBLIC_CRM_URL: process.env.NEXT_PUBLIC_CRM_URL,
+    NEXT_PUBLIC_APP_URL: rawAppUrl,
+    NEXT_PUBLIC_API_URL: rawApiUrl,
+    NEXT_PUBLIC_WEB_URL: rawWebUrl,
+    NEXT_PUBLIC_CRM_URL: rawCrmUrl,
     NEXT_PUBLIC_ADMIN_URL: process.env.NEXT_PUBLIC_ADMIN_URL,
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL,
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
-    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL,
+    NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || rawApiUrl,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_EMBED_URL: process.env.NEXT_PUBLIC_POSTHOG_EMBED_URL,
