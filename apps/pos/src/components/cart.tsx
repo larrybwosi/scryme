@@ -586,7 +586,7 @@ export function Cart() {
                                 Custom Price
                               </Badge>
                             )}
-                            {!item.selectedUnit?.isCustomPrice && item.quantity > 1 && (
+                            {!item.selectedUnit?.isCustomPrice && (item.selectedUnit as any)?.isBulkPrice && (
                               <Badge className="bg-amber-600 text-white text-[9px] px-1 py-0 h-4 gap-0.5 font-bold uppercase">
                                 Bulk Tier
                               </Badge>

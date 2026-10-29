@@ -64,24 +64,7 @@ export function ConnectionStatusBanner() {
     );
   }
 
-  if (!isOnline) {
-    return (
-      <div
-        role="alert"
-        aria-live="polite"
-        className={cn(
-          'fixed top-0 inset-x-0 z-[200] flex items-center justify-between gap-3',
-          'px-4 py-2 text-sm border-b backdrop-blur-sm transition-all duration-300',
-          'bg-amber-500/10 border-amber-400/30 text-amber-700 dark:text-amber-400'
-        )}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          <WifiOff className="h-4 w-4 shrink-0 text-amber-500" />
-          <span className="font-medium truncate">Offline Mode — changes saved locally</span>
-        </div>
-      </div>
-    );
-  }
+
 
   return null;
 }

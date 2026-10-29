@@ -154,6 +154,7 @@ export default function RealtimeInitializer() {
       const unsubPriceListUpdated = subscribe(pricingChannel, 'price-list-updated', async () => {
           console.log('[Realtime] Price list updated received');
           await syncPricing().catch(console.error);
+          queryClient.invalidateQueries({ queryKey: ['pricing-batch'] });
           queryClient.invalidateQueries({ queryKey: ['pos-pricing'] });
       });
 
