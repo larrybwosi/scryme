@@ -103,7 +103,9 @@ export async function getDashboardAnalytics() {
 
   const acquisitionSourceCounts: Record<string, number> = {};
   for (const u of allUsersWithSource) {
-    const src = u.acquisitionSource?.trim() ? u.acquisitionSource.trim() : "Direct / Organic";
+    const src = u.acquisitionSource?.trim()
+      ? u.acquisitionSource.trim()
+      : "Direct / Organic";
     acquisitionSourceCounts[src] = (acquisitionSourceCounts[src] || 0) + 1;
   }
 
@@ -128,14 +130,26 @@ export async function getDashboardAnalytics() {
   // Build daily time-series data for the last 30 days
   const timeSeriesMap: Record<
     string,
-    { date: string; users: number; organizations: number; transactions: number; volume: number }
+    {
+      date: string;
+      users: number;
+      organizations: number;
+      transactions: number;
+      volume: number;
+    }
   > = {};
 
   for (let i = 29; i >= 0; i--) {
     const d = new Date();
     d.setDate(d.getDate() - i);
     const dateStr = d.toISOString().split("T")[0];
-    timeSeriesMap[dateStr] = { date: dateStr, users: 0, organizations: 0, transactions: 0, volume: 0 };
+    timeSeriesMap[dateStr] = {
+      date: dateStr,
+      users: 0,
+      organizations: 0,
+      transactions: 0,
+      volume: 0,
+    };
   }
 
   for (const u of users) {
@@ -181,7 +195,10 @@ export async function getDashboardAnalytics() {
   };
 }
 
-export async function getOrganizationActivityLogs(organizationId?: string, limit = 20) {
+export async function getOrganizationActivityLogs(
+  organizationId?: string,
+  limit = 20,
+) {
   await requireSuperAdmin();
 
   const logs = await db.auditLog.findMany({

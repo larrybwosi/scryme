@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus, Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -16,42 +16,50 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@repo/ui/components/ui/dialog"
-import { createOrganization } from "@/app/actions/organizations"
+} from "@repo/ui/components/ui/dialog";
+import { createOrganization } from "@/app/actions/organizations";
 
 function slugify(value: string) {
   return value
     .toLowerCase()
     .trim()
     .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)/g, "")
+    .replace(/(^-|-$)/g, "");
 }
 
 export function CreateOrganizationDialog() {
-  const router = useRouter()
-  const [open, setOpen] = useState(false)
-  const [isPending, setIsPending] = useState(false)
-  const [name, setName] = useState("")
-  const [slug, setSlug] = useState("")
-  const [description, setDescription] = useState("")
-  const [slugTouched, setSlugTouched] = useState(false)
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [name, setName] = useState("");
+  const [slug, setSlug] = useState("");
+  const [description, setDescription] = useState("");
+  const [slugTouched, setSlugTouched] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setIsPending(true)
+    e.preventDefault();
+    setIsPending(true);
     try {
-      const org = await createOrganization({ name, slug, description: description || undefined })
-      toast.success(`${org.name} was created`)
-      setOpen(false)
-      setName("")
-      setSlug("")
-      setDescription("")
-      setSlugTouched(false)
-      router.refresh()
+      const org = await createOrganization({
+        name,
+        slug,
+        description: description || undefined,
+      });
+      toast.success(`${org.name} was created`);
+      setOpen(false);
+      setName("");
+      setSlug("");
+      setDescription("");
+      setSlugTouched(false);
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to create organization")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create organization",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -68,7 +76,8 @@ export function CreateOrganizationDialog() {
           <DialogHeader>
             <DialogTitle>Create organization</DialogTitle>
             <DialogDescription>
-              Provision a new organization directly. It starts on the free tier with default settings.
+              Provision a new organization directly. It starts on the free tier
+              with default settings.
             </DialogDescription>
           </DialogHeader>
 
@@ -80,8 +89,8 @@ export function CreateOrganizationDialog() {
                 value={name}
                 required
                 onChange={(e) => {
-                  setName(e.target.value)
-                  if (!slugTouched) setSlug(slugify(e.target.value))
+                  setName(e.target.value);
+                  if (!slugTouched) setSlug(slugify(e.target.value));
                 }}
                 placeholder="Acme Retail"
               />
@@ -93,8 +102,8 @@ export function CreateOrganizationDialog() {
                 value={slug}
                 required
                 onChange={(e) => {
-                  setSlugTouched(true)
-                  setSlug(slugify(e.target.value))
+                  setSlugTouched(true);
+                  setSlug(slugify(e.target.value));
                 }}
                 placeholder="acme-retail"
               />
@@ -112,16 +121,27 @@ export function CreateOrganizationDialog() {
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setOpen(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !name || !slug} className="gap-2">
-              {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            <Button
+              type="submit"
+              disabled={isPending || !name || !slug}
+              className="gap-2"
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Create organization
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

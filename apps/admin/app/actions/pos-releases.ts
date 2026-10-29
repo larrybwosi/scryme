@@ -96,15 +96,20 @@ export async function testGithubAppConnection() {
   }
 
   try {
-    const response = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
-      headers,
-    });
+    const response = await fetch(
+      `https://api.github.com/repos/${owner}/${repo}`,
+      {
+        headers,
+      },
+    );
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return {
         success: false,
-        message: errorData.message || `GitHub API responded with status ${response.status}`,
+        message:
+          errorData.message ||
+          `GitHub API responded with status ${response.status}`,
       };
     }
 
@@ -156,7 +161,9 @@ export async function triggerGithubReleaseSync(tagOrVersion?: string) {
   await requireSuperAdmin();
 
   const isDev = process.env.NODE_ENV === "development";
-  const defaultApiUrl = isDev ? "http://localhost:3000" : "https://api.scryme.tech";
+  const defaultApiUrl = isDev
+    ? "http://localhost:3000"
+    : "https://api.scryme.tech";
   const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
   const apiUrl =
     rawApiUrl &&

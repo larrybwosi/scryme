@@ -1,4 +1,4 @@
-import Link from "next/link"
+import Link from "next/link";
 import {
   Users,
   Building2,
@@ -10,15 +10,29 @@ import {
   ShieldAlert,
   Activity,
   Layers,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
-import { getUserAnalyticsAndFunnel } from "@/app/actions/analytics"
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { getUserAnalyticsAndFunnel } from "@/app/actions/analytics";
 
 export default async function AdminUserAnalyticsPage() {
-  const analyticsData = await getUserAnalyticsAndFunnel()
-  const { metrics, monthlyGrowth, churnBreakdown, posthogIntegration } = analyticsData
+  const analyticsData = await getUserAnalyticsAndFunnel();
+  const { metrics, monthlyGrowth, churnBreakdown, posthogIntegration } =
+    analyticsData;
 
   return (
     <div className="flex flex-col gap-8">
@@ -28,17 +42,24 @@ export default async function AdminUserAnalyticsPage() {
             User Interaction & Funnel Analytics
           </h1>
           <p className="text-sm text-muted-foreground">
-            Track user journey from website landing to signup conversion, workspace activation, and churn.
+            Track user journey from website landing to signup conversion,
+            workspace activation, and churn.
           </p>
         </div>
         <div className="flex items-center gap-2">
           {posthogIntegration.isConfigured ? (
-            <Badge variant="secondary" className="gap-1.5 py-1 px-2.5 text-xs text-emerald-500 bg-emerald-500/10 border-emerald-500/20">
+            <Badge
+              variant="secondary"
+              className="gap-1.5 py-1 px-2.5 text-xs text-emerald-500 bg-emerald-500/10 border-emerald-500/20"
+            >
               <span className="size-2 rounded-full bg-emerald-500 animate-pulse" />
               PostHog Connected
             </Badge>
           ) : (
-            <Badge variant="outline" className="gap-1.5 py-1 px-2.5 text-xs text-muted-foreground">
+            <Badge
+              variant="outline"
+              className="gap-1.5 py-1 px-2.5 text-xs text-muted-foreground"
+            >
               PostHog Disconnected
             </Badge>
           )}
@@ -48,7 +69,9 @@ export default async function AdminUserAnalyticsPage() {
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Total Registered Users</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Total Registered Users
+            </CardTitle>
             <Users className="size-4 text-primary" aria-hidden="true" />
           </CardHeader>
           <CardContent>
@@ -63,8 +86,13 @@ export default async function AdminUserAnalyticsPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">User Conversion Rate</CardTitle>
-            <TrendingUp className="size-4 text-emerald-500" aria-hidden="true" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              User Conversion Rate
+            </CardTitle>
+            <TrendingUp
+              className="size-4 text-emerald-500"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
@@ -78,7 +106,9 @@ export default async function AdminUserAnalyticsPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Active Workspaces</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Active Workspaces
+            </CardTitle>
             <Building2 className="size-4 text-primary" aria-hidden="true" />
           </CardHeader>
           <CardContent>
@@ -86,14 +116,17 @@ export default async function AdminUserAnalyticsPage() {
               {metrics.activeOrganizations.toLocaleString()}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {metrics.orgActivationRatePercent}% active workspace activation rate
+              {metrics.orgActivationRatePercent}% active workspace activation
+              rate
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Workspace Churn Rate</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Workspace Churn Rate
+            </CardTitle>
             <UserX className="size-4 text-rose-500" aria-hidden="true" />
           </CardHeader>
           <CardContent>
@@ -101,7 +134,8 @@ export default async function AdminUserAnalyticsPage() {
               {metrics.churnRatePercent}%
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {churnBreakdown.churnedOrganizationsCount} total suspended or churned accounts
+              {churnBreakdown.churnedOrganizationsCount} total suspended or
+              churned accounts
             </p>
           </CardContent>
         </Card>
@@ -114,31 +148,46 @@ export default async function AdminUserAnalyticsPage() {
             Landing to Active User Conversion Funnel
           </CardTitle>
           <CardDescription>
-            Step-by-step progression from website landing visit to user account creation and active organization onboarding.
+            Step-by-step progression from website landing visit to user account
+            creation and active organization onboarding.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4 py-2">
             <div className="flex flex-col p-4 rounded-lg border border-border bg-muted/20">
-              <span className="text-xs font-medium text-muted-foreground">Step 1: Website Landing</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Step 1: Website Landing
+              </span>
               <span className="text-xl font-bold text-foreground mt-1">
                 ~{metrics.totalVisitors.toLocaleString()}
               </span>
-              <span className="text-xs text-muted-foreground mt-2">Estimated unique web visitors</span>
+              <span className="text-xs text-muted-foreground mt-2">
+                Estimated unique web visitors
+              </span>
             </div>
 
             <div className="flex flex-col p-4 rounded-lg border border-border bg-muted/20 relative">
-              <span className="text-xs font-medium text-muted-foreground">Step 2: Account Signups</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Step 2: Account Signups
+              </span>
               <span className="text-xl font-bold text-foreground mt-1">
                 {metrics.totalSignups.toLocaleString()}
               </span>
               <span className="text-xs text-emerald-500 mt-2 font-medium">
-                {metrics.totalVisitors > 0 ? ((metrics.totalSignups / metrics.totalVisitors) * 100).toFixed(1) : 0}% landing conversion
+                {metrics.totalVisitors > 0
+                  ? (
+                      (metrics.totalSignups / metrics.totalVisitors) *
+                      100
+                    ).toFixed(1)
+                  : 0}
+                % landing conversion
               </span>
             </div>
 
             <div className="flex flex-col p-4 rounded-lg border border-border bg-muted/20">
-              <span className="text-xs font-medium text-muted-foreground">Step 3: Created Workspaces</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Step 3: Created Workspaces
+              </span>
               <span className="text-xl font-bold text-foreground mt-1">
                 {metrics.totalOrganizations.toLocaleString()}
               </span>
@@ -148,7 +197,9 @@ export default async function AdminUserAnalyticsPage() {
             </div>
 
             <div className="flex flex-col p-4 rounded-lg border border-border bg-muted/20">
-              <span className="text-xs font-medium text-muted-foreground">Step 4: Active Workspaces</span>
+              <span className="text-xs font-medium text-muted-foreground">
+                Step 4: Active Workspaces
+              </span>
               <span className="text-xl font-bold text-foreground mt-1">
                 {metrics.activeOrganizations.toLocaleString()}
               </span>
@@ -193,7 +244,8 @@ export default async function AdminUserAnalyticsPage() {
             Monthly Onboarding & Retention Cohorts
           </CardTitle>
           <CardDescription>
-            Historical breakdown of organization creation and churn rates over recent months.
+            Historical breakdown of organization creation and churn rates over
+            recent months.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -209,19 +261,24 @@ export default async function AdminUserAnalyticsPage() {
             </TableHeader>
             <TableBody>
               {monthlyGrowth.map((point) => {
-                const activeInCohort = point.organizations - point.churned
-                const cohortActivation = point.organizations > 0
-                  ? Math.round((activeInCohort / point.organizations) * 100)
-                  : 100
+                const activeInCohort = point.organizations - point.churned;
+                const cohortActivation =
+                  point.organizations > 0
+                    ? Math.round((activeInCohort / point.organizations) * 100)
+                    : 100;
 
                 return (
                   <TableRow key={point.month}>
-                    <TableCell className="font-medium text-foreground">{point.month}</TableCell>
+                    <TableCell className="font-medium text-foreground">
+                      {point.month}
+                    </TableCell>
                     <TableCell>{point.signups}</TableCell>
                     <TableCell>{point.organizations}</TableCell>
                     <TableCell>
                       {point.churned > 0 ? (
-                        <span className="text-rose-500 font-medium">{point.churned}</span>
+                        <span className="text-rose-500 font-medium">
+                          {point.churned}
+                        </span>
                       ) : (
                         <span className="text-muted-foreground">0</span>
                       )}
@@ -230,7 +287,7 @@ export default async function AdminUserAnalyticsPage() {
                       {cohortActivation}%
                     </TableCell>
                   </TableRow>
-                )
+                );
               })}
             </TableBody>
           </Table>
@@ -246,7 +303,8 @@ export default async function AdminUserAnalyticsPage() {
                 Churned & Suspended Workspaces
               </CardTitle>
               <CardDescription>
-                List of suspended or deleted organizations requiring review or re-engagement.
+                List of suspended or deleted organizations requiring review or
+                re-engagement.
               </CardDescription>
             </div>
             <ShieldAlert className="size-5 text-rose-500" />
@@ -267,7 +325,10 @@ export default async function AdminUserAnalyticsPage() {
             <TableBody>
               {churnBreakdown.recentChurnedOrgs.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-6">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-sm text-muted-foreground py-6"
+                  >
                     No churned or suspended organizations found.
                   </TableCell>
                 </TableRow>
@@ -277,7 +338,9 @@ export default async function AdminUserAnalyticsPage() {
                     <TableCell className="font-medium text-foreground">
                       <div className="flex flex-col">
                         <span>{org.name}</span>
-                        <span className="text-xs text-muted-foreground">/{org.slug}</span>
+                        <span className="text-xs text-muted-foreground">
+                          /{org.slug}
+                        </span>
                       </div>
                     </TableCell>
                     <TableCell className="text-xs text-muted-foreground">
@@ -308,5 +371,5 @@ export default async function AdminUserAnalyticsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

@@ -61,7 +61,10 @@ export default function LoginPage() {
       <div className="relative w-full max-w-sm">
         <div className="mb-8 flex flex-col items-center gap-3 text-center">
           <div className="flex h-11 w-11 items-center justify-center border border-[oklch(0.32_0.01_260)] bg-[oklch(0.19_0.006_260)]">
-            <Lock className="h-5 w-5 text-[oklch(0.74_0.17_160)]" aria-hidden="true" />
+            <Lock
+              className="h-5 w-5 text-[oklch(0.74_0.17_160)]"
+              aria-hidden="true"
+            />
           </div>
           <div>
             <p className="font-mono text-[11px] font-medium uppercase tracking-[0.2em] text-[oklch(0.6_0.01_260)]">
@@ -75,13 +78,20 @@ export default function LoginPage() {
 
         <div className="border border-[oklch(0.27_0.008_260)] bg-[oklch(0.17_0.006_260)] p-6 shadow-2xl">
           <div className="mb-5 flex items-center gap-2 border border-[oklch(0.3_0.03_65)] bg-[oklch(0.22_0.02_65)] px-3 py-2">
-            <ShieldAlert className="h-4 w-4 shrink-0 text-[oklch(0.75_0.17_65)]" aria-hidden="true" />
+            <ShieldAlert
+              className="h-4 w-4 shrink-0 text-[oklch(0.75_0.17_65)]"
+              aria-hidden="true"
+            />
             <p className="text-xs leading-snug text-[oklch(0.85_0.02_65)]">
               Restricted access. Super admin credentials required.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4" noValidate>
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex flex-col gap-4"
+            noValidate
+          >
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="email" className="text-[oklch(0.75_0.005_260)]">
                 Email
@@ -95,12 +105,17 @@ export default function LoginPage() {
                 {...register("email")}
               />
               {errors.email && (
-                <p className="text-xs text-[oklch(0.65_0.2_25)]">{errors.email.message}</p>
+                <p className="text-xs text-[oklch(0.65_0.2_25)]">
+                  {errors.email.message}
+                </p>
               )}
             </div>
 
             <div className="flex flex-col gap-1.5">
-              <Label htmlFor="password" className="text-[oklch(0.75_0.005_260)]">
+              <Label
+                htmlFor="password"
+                className="text-[oklch(0.75_0.005_260)]"
+              >
                 Password
               </Label>
               <Input
@@ -112,7 +127,9 @@ export default function LoginPage() {
                 {...register("password")}
               />
               {errors.password && (
-                <p className="text-xs text-[oklch(0.65_0.2_25)]">{errors.password.message}</p>
+                <p className="text-xs text-[oklch(0.65_0.2_25)]">
+                  {errors.password.message}
+                </p>
               )}
             </div>
 
@@ -123,7 +140,10 @@ export default function LoginPage() {
             >
               {submitting ? (
                 <>
-                  <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+                  <Loader2
+                    className="h-4 w-4 animate-spin"
+                    aria-hidden="true"
+                  />
                   Signing in
                 </>
               ) : (

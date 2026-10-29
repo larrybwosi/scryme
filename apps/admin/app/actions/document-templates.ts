@@ -60,7 +60,7 @@ export async function listSystemDocumentSettings() {
           isEnabled: isTemplateEnabled,
           isEffectivelyEnabled: isCategoryEnabled && isTemplateEnabled,
         };
-      }
+      },
     );
 
     return {
@@ -81,7 +81,7 @@ export async function listSystemDocumentSettings() {
 
 export async function toggleDocumentCategorySetting(
   documentType: string,
-  isEnabled: boolean
+  isEnabled: boolean,
 ) {
   await requireSuperAdmin();
 
@@ -108,7 +108,7 @@ export async function toggleDocumentCategorySetting(
 export async function toggleDocumentTemplateSetting(
   documentType: string,
   templateId: string,
-  isEnabled: boolean
+  isEnabled: boolean,
 ) {
   await requireSuperAdmin();
 

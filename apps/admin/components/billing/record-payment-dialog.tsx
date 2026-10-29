@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, Sparkles } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Badge } from "@repo/ui/components/ui/badge"
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Sparkles } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/components/ui/select"
+} from "@repo/ui/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,18 +23,18 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog"
+} from "@repo/ui/components/ui/dialog";
 import {
   initiateAdminMpesaPayment,
   checkAdminMpesaPaymentStatus,
   recordCustomPayment,
   getOrganizationEffectivePrice,
   type Tier,
-} from "@/app/actions/billing"
+} from "@/app/actions/billing";
 
 interface Organization {
-  id: string
-  name: string
+  id: string;
+  name: string;
 }
 
 export function RecordPaymentDialog({
@@ -44,37 +44,43 @@ export function RecordPaymentDialog({
   tiers = [],
   defaultOrgId,
 }: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  organizations: Organization[]
-  tiers?: Tier[]
-  defaultOrgId?: string
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+  organizations: Organization[];
+  tiers?: Tier[];
+  defaultOrgId?: string;
 }) {
-  const router = useRouter()
-  const [paymentMode, setPaymentMode] = useState<"stk_push" | "manual">("stk_push")
-  const [organizationId, setOrganizationId] = useState(defaultOrgId || "")
-  const [amount, setAmount] = useState("")
-  const [phoneNumber, setPhoneNumber] = useState("")
-  const [reference, setReference] = useState("")
-  const [tierSlug, setTierSlug] = useState("none")
-  const [durationMonths, setDurationMonths] = useState("12")
-  const [notes, setNotes] = useState("")
+  const router = useRouter();
+  const [paymentMode, setPaymentMode] = useState<"stk_push" | "manual">(
+    "stk_push",
+  );
+  const [organizationId, setOrganizationId] = useState(defaultOrgId || "");
+  const [amount, setAmount] = useState("");
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [reference, setReference] = useState("");
+  const [tierSlug, setTierSlug] = useState("none");
+  const [durationMonths, setDurationMonths] = useState("12");
+  const [notes, setNotes] = useState("");
 
-  const [isPending, setIsPending] = useState(false)
-  const [isCalculating, setIsCalculating] = useState(false)
+  const [isPending, setIsPending] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
   const [customPriceInfo, setCustomPriceInfo] = useState<{
-    isCustomPrice: boolean
-    currency: string
-  } | null>(null)
-  const [pollingCheckoutId, setPollingCheckoutId] = useState<string | null>(null)
-  const [pollStatusMessage, setPollStatusMessage] = useState<string | null>(null)
+    isCustomPrice: boolean;
+    currency: string;
+  } | null>(null);
+  const [pollingCheckoutId, setPollingCheckoutId] = useState<string | null>(
+    null,
+  );
+  const [pollStatusMessage, setPollStatusMessage] = useState<string | null>(
+    null,
+  );
 
   // Auto-calculate effective price when organization or duration changes
   useEffect(() => {
-    if (!open || !organizationId) return
+    if (!open || !organizationId) return;
 
-    let isMounted = true
-    setIsCalculating(true)
+    let isMounted = true;
+    setIsCalculating(true);
 
     getOrganizationEffectivePrice(
       organizationId,
@@ -84,44 +90,44 @@ export function RecordPaymentDialog({
       .then((res) => {
         if (isMounted) {
           if (res.price > 0) {
-            setAmount(String(res.price))
+            setAmount(String(res.price));
           }
           setCustomPriceInfo({
             isCustomPrice: res.isCustomPrice,
             currency: res.currency,
-          })
+          });
         }
       })
       .catch((err) => {
-        console.error("Error fetching price calculation:", err)
+        console.error("Error fetching price calculation:", err);
       })
       .finally(() => {
-        if (isMounted) setIsCalculating(false)
-      })
+        if (isMounted) setIsCalculating(false);
+      });
 
     return () => {
-      isMounted = false
-    }
-  }, [open, organizationId, durationMonths, tierSlug])
+      isMounted = false;
+    };
+  }, [open, organizationId, durationMonths, tierSlug]);
 
   function handleTierChange(slug: string) {
-    setTierSlug(slug)
+    setTierSlug(slug);
   }
 
   async function handleStkPushSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (!organizationId) {
-      toast.error("Please select an organization")
-      return
+      toast.error("Please select an organization");
+      return;
     }
 
     if (!phoneNumber) {
-      toast.error("Please enter M-Pesa phone number")
-      return
+      toast.error("Please enter M-Pesa phone number");
+      return;
     }
 
-    setIsPending(true)
-    setPollStatusMessage("Initiating M-Pesa STK push...")
+    setIsPending(true);
+    setPollStatusMessage("Initiating M-Pesa STK push...");
 
     try {
       const result = await initiateAdminMpesaPayment({
@@ -130,67 +136,79 @@ export function RecordPaymentDialog({
         amount: Number(amount) || 0,
         tierSlug: tierSlug === "none" ? undefined : tierSlug,
         durationMonths: Number(durationMonths) || 12,
-      })
+      });
 
       if (result.success) {
-        toast.success(result.message || "STK Push sent! Awaiting customer PIN entry...")
-        setPollingCheckoutId(result.checkoutRequestId)
-        startPolling(result.checkoutRequestId)
+        toast.success(
+          result.message || "STK Push sent! Awaiting customer PIN entry...",
+        );
+        setPollingCheckoutId(result.checkoutRequestId);
+        startPolling(result.checkoutRequestId);
       } else {
-        toast.error("Failed to initiate STK Push")
-        setIsPending(false)
-        setPollStatusMessage(null)
+        toast.error("Failed to initiate STK Push");
+        setIsPending(false);
+        setPollStatusMessage(null);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to initiate M-Pesa STK Push")
-      setIsPending(false)
-      setPollStatusMessage(null)
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to initiate M-Pesa STK Push",
+      );
+      setIsPending(false);
+      setPollStatusMessage(null);
     }
   }
 
   async function startPolling(checkoutId: string) {
-    let attempts = 0
-    const maxAttempts = 15
+    let attempts = 0;
+    const maxAttempts = 15;
 
     const interval = setInterval(async () => {
-      attempts++
-      setPollStatusMessage(`Verifying M-Pesa payment status (attempt ${attempts}/${maxAttempts})...`)
+      attempts++;
+      setPollStatusMessage(
+        `Verifying M-Pesa payment status (attempt ${attempts}/${maxAttempts})...`,
+      );
 
       try {
-        const res = await checkAdminMpesaPaymentStatus(checkoutId)
+        const res = await checkAdminMpesaPaymentStatus(checkoutId);
         if (res.status === "SUCCESS") {
-          clearInterval(interval)
-          toast.success("M-Pesa payment verified! Organization subscription updated.")
-          resetAndClose()
+          clearInterval(interval);
+          toast.success(
+            "M-Pesa payment verified! Organization subscription updated.",
+          );
+          resetAndClose();
         } else if (res.status === "FAILED") {
-          clearInterval(interval)
-          toast.error("M-Pesa payment failed or was cancelled by user.")
-          setIsPending(false)
-          setPollingCheckoutId(null)
-          setPollStatusMessage(null)
+          clearInterval(interval);
+          toast.error("M-Pesa payment failed or was cancelled by user.");
+          setIsPending(false);
+          setPollingCheckoutId(null);
+          setPollStatusMessage(null);
         }
       } catch (err) {
-        console.error("Polling error", err)
+        console.error("Polling error", err);
       }
 
       if (attempts >= maxAttempts) {
-        clearInterval(interval)
-        toast.warning("Verification timed out. You can check status later in Billing payments.")
-        setIsPending(false)
-        setPollingCheckoutId(null)
-        setPollStatusMessage(null)
+        clearInterval(interval);
+        toast.warning(
+          "Verification timed out. You can check status later in Billing payments.",
+        );
+        setIsPending(false);
+        setPollingCheckoutId(null);
+        setPollStatusMessage(null);
       }
-    }, 4000)
+    }, 4000);
   }
 
   async function handleManualSubmit(e: React.FormEvent) {
-    e.preventDefault()
+    e.preventDefault();
     if (!organizationId) {
-      toast.error("Please select an organization")
-      return
+      toast.error("Please select an organization");
+      return;
     }
 
-    setIsPending(true)
+    setIsPending(true);
     try {
       await recordCustomPayment({
         organizationId,
@@ -200,29 +218,31 @@ export function RecordPaymentDialog({
         tierSlug: tierSlug === "none" ? undefined : tierSlug,
         durationMonths: Number(durationMonths) || 12,
         notes: notes || undefined,
-      })
-      toast.success("Payment verified and recorded successfully!")
-      resetAndClose()
+      });
+      toast.success("Payment verified and recorded successfully!");
+      resetAndClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to record payment")
-      setIsPending(false)
+      toast.error(
+        error instanceof Error ? error.message : "Failed to record payment",
+      );
+      setIsPending(false);
     }
   }
 
   function resetAndClose() {
-    setIsPending(false)
-    setPollingCheckoutId(null)
-    setPollStatusMessage(null)
-    setOrganizationId(defaultOrgId || "")
-    setAmount("")
-    setPhoneNumber("")
-    setReference("")
-    setTierSlug("none")
-    setDurationMonths("12")
-    setNotes("")
-    setCustomPriceInfo(null)
-    onOpenChange(false)
-    router.refresh()
+    setIsPending(false);
+    setPollingCheckoutId(null);
+    setPollStatusMessage(null);
+    setOrganizationId(defaultOrgId || "");
+    setAmount("");
+    setPhoneNumber("");
+    setReference("");
+    setTierSlug("none");
+    setDurationMonths("12");
+    setNotes("");
+    setCustomPriceInfo(null);
+    onOpenChange(false);
+    router.refresh();
   }
 
   return (
@@ -231,7 +251,8 @@ export function RecordPaymentDialog({
         <DialogHeader>
           <DialogTitle>M-Pesa Organization Payment</DialogTitle>
           <DialogDescription>
-            Process M-Pesa payments for organization subscriptions or record manual transaction receipts.
+            Process M-Pesa payments for organization subscriptions or record
+            manual transaction receipts.
           </DialogDescription>
         </DialogHeader>
 
@@ -263,12 +284,22 @@ export function RecordPaymentDialog({
           </button>
         </div>
 
-        <form onSubmit={paymentMode === "stk_push" ? handleStkPushSubmit : handleManualSubmit}>
+        <form
+          onSubmit={
+            paymentMode === "stk_push"
+              ? handleStkPushSubmit
+              : handleManualSubmit
+          }
+        >
           <div className="flex flex-col gap-4 py-3">
             {!defaultOrgId && (
               <div className="flex flex-col gap-2">
                 <Label htmlFor="pay-org">Organization</Label>
-                <Select value={organizationId} onValueChange={setOrganizationId} disabled={isPending}>
+                <Select
+                  value={organizationId}
+                  onValueChange={setOrganizationId}
+                  disabled={isPending}
+                >
                   <SelectTrigger id="pay-org">
                     <SelectValue placeholder="Select organization" />
                   </SelectTrigger>
@@ -286,12 +317,18 @@ export function RecordPaymentDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="pay-tier">Select Plan Tier</Label>
-                <Select value={tierSlug} onValueChange={handleTierChange} disabled={isPending}>
+                <Select
+                  value={tierSlug}
+                  onValueChange={handleTierChange}
+                  disabled={isPending}
+                >
                   <SelectTrigger id="pay-tier">
                     <SelectValue placeholder="None" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="none">Custom / No Tier Upgrade</SelectItem>
+                    <SelectItem value="none">
+                      Custom / No Tier Upgrade
+                    </SelectItem>
                     {tiers.map((t) => (
                       <SelectItem key={t.slug} value={t.slug}>
                         {t.name} (${t.price})
@@ -303,7 +340,11 @@ export function RecordPaymentDialog({
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="pay-duration">Duration (Months)</Label>
-                <Select value={durationMonths} onValueChange={setDurationMonths} disabled={isPending}>
+                <Select
+                  value={durationMonths}
+                  onValueChange={setDurationMonths}
+                  disabled={isPending}
+                >
                   <SelectTrigger id="pay-duration">
                     <SelectValue placeholder="12 Months" />
                   </SelectTrigger>
@@ -325,7 +366,10 @@ export function RecordPaymentDialog({
                   {isCalculating ? (
                     <Loader2 className="size-3 animate-spin text-muted-foreground" />
                   ) : customPriceInfo?.isCustomPrice ? (
-                    <Badge variant="secondary" className="text-[10px] bg-primary/10 text-primary border-primary/20 gap-1 px-1.5 py-0">
+                    <Badge
+                      variant="secondary"
+                      className="text-[10px] bg-primary/10 text-primary border-primary/20 gap-1 px-1.5 py-0"
+                    >
                       <Sparkles className="size-2.5" />
                       Custom
                     </Badge>
@@ -385,14 +429,22 @@ export function RecordPaymentDialog({
 
             {pollStatusMessage && (
               <div className="flex items-center gap-2 rounded-md bg-muted p-3 text-xs text-foreground">
-                <Loader2 className="size-4 animate-spin text-primary shrink-0" aria-hidden="true" />
+                <Loader2
+                  className="size-4 animate-spin text-primary shrink-0"
+                  aria-hidden="true"
+                />
                 <span>{pollStatusMessage}</span>
               </div>
             )}
           </div>
 
           <DialogFooter className="mt-2">
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
             <Button
@@ -406,12 +458,16 @@ export function RecordPaymentDialog({
               }
               className="gap-2"
             >
-              {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
-              {paymentMode === "stk_push" ? "Send M-Pesa STK Push" : "Verify & Record Payment"}
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
+              {paymentMode === "stk_push"
+                ? "Send M-Pesa STK Push"
+                : "Verify & Record Payment"}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

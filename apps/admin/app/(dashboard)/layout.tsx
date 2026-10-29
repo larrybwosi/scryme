@@ -1,9 +1,13 @@
-import type { ReactNode } from "react"
-import { Sidebar } from "@/components/sidebar"
-import { requireSuperAdmin } from "@/app/actions/auth"
+import type { ReactNode } from "react";
+import { Sidebar } from "@/components/sidebar";
+import { requireSuperAdmin } from "@/app/actions/auth";
 
-export default async function DashboardLayout({ children }: { children: ReactNode }) {
-  const { user } = await requireSuperAdmin()
+export default async function DashboardLayout({
+  children,
+}: {
+  children: ReactNode;
+}) {
+  const { user } = await requireSuperAdmin();
 
   return (
     <div className="flex h-screen overflow-hidden bg-background">
@@ -12,5 +16,5 @@ export default async function DashboardLayout({ children }: { children: ReactNod
         <div className="mx-auto w-full px-8 py-8">{children}</div>
       </main>
     </div>
-  )
+  );
 }

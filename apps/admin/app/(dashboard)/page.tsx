@@ -1,49 +1,81 @@
-import Link from "next/link"
-import { Building2, Users, UserCheck, ShieldOff, CreditCard, ArrowRight } from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { getSystemStats, getDashboardAnalytics } from "@/app/actions/dashboard"
-import { getSystemIntegrationSettings } from "@/app/actions/integrations"
-import { DashboardCharts } from "@/components/dashboard/dashboard-charts"
+import Link from "next/link";
+import {
+  Building2,
+  Users,
+  UserCheck,
+  ShieldOff,
+  CreditCard,
+  ArrowRight,
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { getSystemStats, getDashboardAnalytics } from "@/app/actions/dashboard";
+import { getSystemIntegrationSettings } from "@/app/actions/integrations";
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 
 export default async function OverviewPage() {
   const [stats, analytics, integrations] = await Promise.all([
     getSystemStats(),
     getDashboardAnalytics(),
     getSystemIntegrationSettings(),
-  ])
+  ]);
 
   const cards = [
-    { label: "Organizations", value: stats.totalOrganizations, icon: Building2 },
+    {
+      label: "Organizations",
+      value: stats.totalOrganizations,
+      icon: Building2,
+    },
     { label: "Total users", value: stats.totalUsers, icon: Users },
     { label: "Active users", value: stats.activeUsers, icon: UserCheck },
-    { label: "Suspended orgs", value: stats.suspendedOrganizations, icon: ShieldOff },
-    { label: "Subscriptions", value: stats.totalSubscriptions, icon: CreditCard },
-  ]
+    {
+      label: "Suspended orgs",
+      value: stats.suspendedOrganizations,
+      icon: ShieldOff,
+    },
+    {
+      label: "Subscriptions",
+      value: stats.totalSubscriptions,
+      icon: CreditCard,
+    },
+  ];
 
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Overview</h1>
-        <p className="mt-1 text-sm text-muted-foreground">Platform-wide metrics across every organization.</p>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Overview
+        </h1>
+        <p className="mt-1 text-sm text-muted-foreground">
+          Platform-wide metrics across every organization.
+        </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map((card) => {
-          const Icon = card.icon
+          const Icon = card.icon;
           return (
             <Card key={card.label} className="border-border bg-card">
               <CardContent className="flex items-center justify-between p-5">
                 <div className="flex flex-col gap-1">
-                  <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
-                  <span className="text-2xl font-semibold tabular-nums text-foreground">{card.value}</span>
+                  <span className="text-xs font-medium text-muted-foreground">
+                    {card.label}
+                  </span>
+                  <span className="text-2xl font-semibold tabular-nums text-foreground">
+                    {card.value}
+                  </span>
                 </div>
                 <div className="flex size-9 items-center justify-center rounded-md bg-primary/10">
                   <Icon className="size-4 text-primary" aria-hidden="true" />
                 </div>
               </CardContent>
             </Card>
-          )
+          );
         })}
       </div>
 
@@ -58,7 +90,9 @@ export default async function OverviewPage() {
 
       <Card className="border-border bg-card">
         <CardHeader className="flex flex-row items-center justify-between">
-          <CardTitle className="text-base font-semibold text-foreground">Recently created organizations</CardTitle>
+          <CardTitle className="text-base font-semibold text-foreground">
+            Recently created organizations
+          </CardTitle>
           <Link
             href="/organizations"
             className="flex items-center gap-1 text-sm font-medium text-primary hover:underline"
@@ -69,7 +103,9 @@ export default async function OverviewPage() {
         </CardHeader>
         <CardContent className="flex flex-col divide-y divide-border">
           {stats.recentOrganizations.length === 0 ? (
-            <p className="py-6 text-sm text-muted-foreground">No organizations yet.</p>
+            <p className="py-6 text-sm text-muted-foreground">
+              No organizations yet.
+            </p>
           ) : (
             stats.recentOrganizations.map((org) => (
               <Link
@@ -79,12 +115,16 @@ export default async function OverviewPage() {
               >
                 <div className="flex flex-col gap-0.5">
                   <div className="flex items-center gap-2">
-                    <span className="font-medium text-foreground">{org.name}</span>
+                    <span className="font-medium text-foreground">
+                      {org.name}
+                    </span>
                     <Badge variant="outline" className="text-[10px]">
                       {org.acquisitionSource || "Direct / Organic"}
                     </Badge>
                   </div>
-                  <span className="text-xs text-muted-foreground">{org._count.members} members</span>
+                  <span className="text-xs text-muted-foreground">
+                    {org._count.members} members
+                  </span>
                 </div>
                 {org.isSuspended ? (
                   <Badge variant="destructive">Suspended</Badge>
@@ -99,5 +139,5 @@ export default async function OverviewPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

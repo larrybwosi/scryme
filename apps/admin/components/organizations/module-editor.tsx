@@ -22,7 +22,15 @@ import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Label } from "@repo/ui/components/ui/label";
 import { toast } from "sonner";
-import { RotateCcw, Lock, CheckCircle2, XCircle, Sparkles, ShieldCheck, CreditCard } from "lucide-react";
+import {
+  RotateCcw,
+  Lock,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  ShieldCheck,
+  CreditCard,
+} from "lucide-react";
 
 interface OrgModuleEditorProps {
   organizationId: string;
@@ -76,9 +84,14 @@ export function OrgModuleEditor({
   const handleEnableAll = () => {
     startTransition(async () => {
       try {
-        const updated = await enableAllOrganizationModules(organizationId, true);
+        const updated = await enableAllOrganizationModules(
+          organizationId,
+          true,
+        );
         setData(updated);
-        toast.success("Enabled all platform features and modules for this organization!");
+        toast.success(
+          "Enabled all platform features and modules for this organization!",
+        );
       } catch (err) {
         toast.error("Failed to enable all modules");
       }
@@ -96,7 +109,7 @@ export function OrgModuleEditor({
         toast.success(
           checked
             ? "Payment check override enabled! Organization can use all features without payment enforcement."
-            : "Payment check override disabled."
+            : "Payment check override disabled.",
         );
       } catch (err) {
         toast.error("Failed to update payment override status");
@@ -118,13 +131,17 @@ export function OrgModuleEditor({
               Organization Module & Feature Controls
             </CardTitle>
             {isAllEnabled && (
-              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 gap-1 text-xs">
+              <Badge
+                variant="secondary"
+                className="bg-emerald-500/10 text-emerald-600 gap-1 text-xs"
+              >
                 <ShieldCheck className="size-3" /> All Features Active
               </Badge>
             )}
           </div>
           <CardDescription className="mt-1 text-xs">
-            Super admin management for individual platform feature provisioning, bulk module enablement, and payment check overrides.
+            Super admin management for individual platform feature provisioning,
+            bulk module enablement, and payment check overrides.
           </CardDescription>
         </div>
 
@@ -154,19 +171,27 @@ export function OrgModuleEditor({
               <div className="flex items-center gap-2 font-medium text-sm text-foreground">
                 Payment Exemption & Billing Override
                 {data.bypassPaymentCheck && (
-                  <Badge variant="secondary" className="bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px]">
+                  <Badge
+                    variant="secondary"
+                    className="bg-amber-500/20 text-amber-700 dark:text-amber-400 text-[10px]"
+                  >
                     Exempt Active
                   </Badge>
                 )}
               </div>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Enable this option to allow the organization to access all features without verifying subscription payment status or blocking on outstanding invoices.
+                Enable this option to allow the organization to access all
+                features without verifying subscription payment status or
+                blocking on outstanding invoices.
               </p>
             </div>
           </div>
 
           <div className="flex items-center gap-2 shrink-0">
-            <Label htmlFor="payment-override-switch" className="text-xs font-medium cursor-pointer">
+            <Label
+              htmlFor="payment-override-switch"
+              className="text-xs font-medium cursor-pointer"
+            >
               Bypass Payment Checks
             </Label>
             <Switch
@@ -181,11 +206,14 @@ export function OrgModuleEditor({
         {/* Modules Grid */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
           {PLATFORM_MODULES.map((moduleDef) => {
-            const isSystemDisabled = data.systemModules[moduleDef.key] === false;
+            const isSystemDisabled =
+              data.systemModules[moduleDef.key] === false;
             const hasOverride =
               data.orgOverrides && moduleDef.key in data.orgOverrides;
 
-            const eff = data.effective.find((e) => e.moduleKey === moduleDef.key);
+            const eff = data.effective.find(
+              (e) => e.moduleKey === moduleDef.key,
+            );
             const isEffectiveEnabled = eff ? eff.isEnabled : false;
 
             return (
@@ -195,8 +223,8 @@ export function OrgModuleEditor({
                   isSystemDisabled
                     ? "border-muted bg-muted/30 opacity-75"
                     : isEffectiveEnabled
-                    ? "border-border bg-card"
-                    : "border-destructive/30 bg-destructive/5"
+                      ? "border-border bg-card"
+                      : "border-destructive/30 bg-destructive/5"
                 }`}
               >
                 <div className="flex flex-col gap-2">
@@ -207,7 +235,10 @@ export function OrgModuleEditor({
                       </span>
                     </div>
                     {hasOverride ? (
-                      <Badge variant="outline" className="border-primary text-primary text-[10px]">
+                      <Badge
+                        variant="outline"
+                        className="border-primary text-primary text-[10px]"
+                      >
                         Custom Override
                       </Badge>
                     ) : (
@@ -252,7 +283,10 @@ export function OrgModuleEditor({
                         disabled={isPending}
                         onClick={() => handleReset(moduleDef.key)}
                       >
-                        <RotateCcw className="size-3.5 text-muted-foreground" aria-hidden="true" />
+                        <RotateCcw
+                          className="size-3.5 text-muted-foreground"
+                          aria-hidden="true"
+                        />
                       </Button>
                     )}
                     <Switch

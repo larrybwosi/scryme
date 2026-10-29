@@ -40,6 +40,7 @@ The `HeaderInterceptor` (`tech.scryme.app.data.interceptor.HeaderInterceptor`) a
 - `Accept: application.json`
 
 Response envelopes are formatted as:
+
 ```json
 {
   "success": true,
@@ -56,6 +57,7 @@ Response envelopes are formatted as:
 ViewModels should expose immutable StateFlows representing UI State sealed interfaces or data classes.
 
 ### Example ViewModel Contract
+
 ```kotlin
 sealed interface ScheduleUiState {
     object Loading : ScheduleUiState
@@ -99,6 +101,7 @@ class ScheduleViewModel @Inject constructor(
 ## 4. UI Screen Implementation Scope
 
 ### A. Schedules Screen (`tech.scryme.app.ui.schedule`)
+
 - **Key Views**:
   - `ScheduleCalendarView`: Daily and weekly timeline for current member shifts and working hours.
   - `ShiftTradeCard`: Displays active shift swap/trade requests with `APPROVE`, `REJECT`, or `CANCEL` actions.
@@ -106,6 +109,7 @@ class ScheduleViewModel @Inject constructor(
 - **Repositories Used**: `ScheduleRepository`
 
 ### B. Profile Customization Screen (`tech.scryme.app.ui.profile`)
+
 - **Key Views**:
   - `ProfileHeader`: Displays member avatar, name, email, role badge, and active status indicator.
   - `DutyStatusPicker`: Dropdown or segmented button to switch status (`ONLINE`, `BUSY`, `OFFLINE`).
@@ -113,6 +117,7 @@ class ScheduleViewModel @Inject constructor(
 - **Repositories Used**: `ProfileRepository`
 
 ### C. Branch / Location Management Screen (`tech.scryme.app.ui.branch`)
+
 - **Key Views**:
   - `BranchList`: Card list displaying organization branches with address, code, and default location badge.
   - `ActiveBranchBanner`: Shows currently selected active branch context (`x-location-id`).

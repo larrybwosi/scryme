@@ -41,7 +41,10 @@ interface ActivityClientProps {
   };
 }
 
-export function ActivityClient({ filterOptions, initialData }: ActivityClientProps) {
+export function ActivityClient({
+  filterOptions,
+  initialData,
+}: ActivityClientProps) {
   const [data, setData] = useState(initialData);
   const [isPending, startTransition] = useTransition();
 
@@ -79,7 +82,10 @@ export function ActivityClient({ filterOptions, initialData }: ActivityClientPro
     setFilters(resetState);
 
     startTransition(async () => {
-      const result = await getUserActivityLogs({ activityType: "ALL", page: 1 });
+      const result = await getUserActivityLogs({
+        activityType: "ALL",
+        page: 1,
+      });
       setData(result);
     });
   };
@@ -101,9 +107,12 @@ export function ActivityClient({ filterOptions, initialData }: ActivityClientPro
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">User Activity & POS Sales Logins</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            User Activity & POS Sales Logins
+          </h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Monitor authentication logins, POS terminal sales, orders, and user actions across all workspaces.
+            Monitor authentication logins, POS terminal sales, orders, and user
+            actions across all workspaces.
           </p>
         </div>
         {isPending && (

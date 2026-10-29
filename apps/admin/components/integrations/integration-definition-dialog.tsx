@@ -1,21 +1,21 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Switch } from "@repo/ui/components/ui/switch"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Switch } from "@repo/ui/components/ui/switch";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@repo/ui/components/ui/select"
+} from "@repo/ui/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -23,11 +23,11 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog"
+} from "@repo/ui/components/ui/dialog";
 import {
   createIntegrationDefinition,
   updateIntegrationDefinition,
-} from "@/app/actions/integrations"
+} from "@/app/actions/integrations";
 
 export type IntegrationCategory =
   | "E_COMMERCE"
@@ -36,19 +36,19 @@ export type IntegrationCategory =
   | "PAYMENT_GATEWAY"
   | "CRM"
   | "COMMUNICATION"
-  | "OTHER"
+  | "OTHER";
 
-export type AuthType = "API_KEY" | "OAUTH2" | "OTHER"
+export type AuthType = "API_KEY" | "OAUTH2" | "OTHER";
 
 export interface IntegrationDefinitionRow {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  logoUrl: string | null
-  category: IntegrationCategory
-  authType: AuthType
-  isActive: boolean
+  id: string;
+  name: string;
+  slug: string;
+  description: string | null;
+  logoUrl: string | null;
+  category: IntegrationCategory;
+  authType: AuthType;
+  isActive: boolean;
 }
 
 const CATEGORIES: IntegrationCategory[] = [
@@ -59,41 +59,39 @@ const CATEGORIES: IntegrationCategory[] = [
   "CRM",
   "COMMUNICATION",
   "OTHER",
-]
+];
 
-const AUTH_TYPES: AuthType[] = [
-  "API_KEY",
-  "OAUTH2",
-  "OTHER",
-]
+const AUTH_TYPES: AuthType[] = ["API_KEY", "OAUTH2", "OTHER"];
 
 export function IntegrationDefinitionDialog({
   integration,
   open,
   onOpenChange,
 }: {
-  integration?: IntegrationDefinitionRow | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  integration?: IntegrationDefinitionRow | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter()
-  const isEditing = !!integration
-  const [isPending, setIsPending] = useState(false)
-  const [name, setName] = useState(integration?.name ?? "")
-  const [slug, setSlug] = useState(integration?.slug ?? "")
-  const [description, setDescription] = useState(integration?.description ?? "")
-  const [logoUrl, setLogoUrl] = useState(integration?.logoUrl ?? "")
+  const router = useRouter();
+  const isEditing = !!integration;
+  const [isPending, setIsPending] = useState(false);
+  const [name, setName] = useState(integration?.name ?? "");
+  const [slug, setSlug] = useState(integration?.slug ?? "");
+  const [description, setDescription] = useState(
+    integration?.description ?? "",
+  );
+  const [logoUrl, setLogoUrl] = useState(integration?.logoUrl ?? "");
   const [category, setCategory] = useState<IntegrationCategory>(
-    integration?.category ?? "OTHER"
-  )
+    integration?.category ?? "OTHER",
+  );
   const [authType, setAuthType] = useState<AuthType>(
-    integration?.authType ?? "API_KEY"
-  )
-  const [isActive, setIsActive] = useState(integration?.isActive ?? true)
+    integration?.authType ?? "API_KEY",
+  );
+  const [isActive, setIsActive] = useState(integration?.isActive ?? true);
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    setIsPending(true)
+    e.preventDefault();
+    setIsPending(true);
     try {
       if (isEditing && integration) {
         await updateIntegrationDefinition(integration.id, {
@@ -104,8 +102,8 @@ export function IntegrationDefinitionDialog({
           category: category as any,
           authType: authType as any,
           isActive,
-        })
-        toast.success(`Integration "${name}" updated`)
+        });
+        toast.success(`Integration "${name}" updated`);
       } else {
         await createIntegrationDefinition({
           name,
@@ -115,15 +113,17 @@ export function IntegrationDefinitionDialog({
           category: category as any,
           authType: authType as any,
           isActive,
-        })
-        toast.success(`Integration "${name}" created`)
+        });
+        toast.success(`Integration "${name}" created`);
       }
-      onOpenChange(false)
-      router.refresh()
+      onOpenChange(false);
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save integration")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save integration",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -133,7 +133,9 @@ export function IntegrationDefinitionDialog({
         <form onSubmit={handleSubmit}>
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? `Edit ${integration?.name}` : "Add Integration Definition"}
+              {isEditing
+                ? `Edit ${integration?.name}`
+                : "Add Integration Definition"}
             </DialogTitle>
             <DialogDescription>
               Define an integration available for organizations to connect.
@@ -150,9 +152,13 @@ export function IntegrationDefinitionDialog({
                   placeholder="e.g. Shopify"
                   value={name}
                   onChange={(e) => {
-                    setName(e.target.value)
+                    setName(e.target.value);
                     if (!isEditing) {
-                      setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))
+                      setSlug(
+                        e.target.value
+                          .toLowerCase()
+                          .replace(/[^a-z0-9-]/g, "-"),
+                      );
                     }
                   }}
                 />
@@ -164,7 +170,11 @@ export function IntegrationDefinitionDialog({
                   required
                   placeholder="e.g. shopify"
                   value={slug}
-                  onChange={(e) => setSlug(e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"))}
+                  onChange={(e) =>
+                    setSlug(
+                      e.target.value.toLowerCase().replace(/[^a-z0-9-]/g, "-"),
+                    )
+                  }
                 />
               </div>
             </div>
@@ -172,7 +182,10 @@ export function IntegrationDefinitionDialog({
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-2">
                 <Label htmlFor="integ-category">Category</Label>
-                <Select value={category} onValueChange={(v) => setCategory(v as IntegrationCategory)}>
+                <Select
+                  value={category}
+                  onValueChange={(v) => setCategory(v as IntegrationCategory)}
+                >
                   <SelectTrigger id="integ-category">
                     <SelectValue />
                   </SelectTrigger>
@@ -188,7 +201,10 @@ export function IntegrationDefinitionDialog({
 
               <div className="flex flex-col gap-2">
                 <Label htmlFor="integ-authtype">Authentication Type</Label>
-                <Select value={authType} onValueChange={(v) => setAuthType(v as AuthType)}>
+                <Select
+                  value={authType}
+                  onValueChange={(v) => setAuthType(v as AuthType)}
+                >
                   <SelectTrigger id="integ-authtype">
                     <SelectValue />
                   </SelectTrigger>
@@ -226,7 +242,9 @@ export function IntegrationDefinitionDialog({
 
             <div className="flex items-center justify-between rounded-lg border border-border p-3">
               <div className="flex flex-col gap-0.5">
-                <span className="text-sm font-medium text-foreground">Enable Integration</span>
+                <span className="text-sm font-medium text-foreground">
+                  Enable Integration
+                </span>
                 <span className="text-xs text-muted-foreground">
                   Allow organizations to select and connect to this service.
                 </span>
@@ -236,16 +254,27 @@ export function IntegrationDefinitionDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !name || !slug} className="gap-2">
-              {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            <Button
+              type="submit"
+              disabled={isPending || !name || !slug}
+              className="gap-2"
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Save integration
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

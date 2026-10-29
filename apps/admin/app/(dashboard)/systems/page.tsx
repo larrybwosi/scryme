@@ -15,15 +15,21 @@ import { DocumentTemplatesPanel } from "@/components/systems/document-templates-
 import { SystemModulesPanel } from "@/components/systems/system-modules-panel";
 
 export default async function SystemsPage() {
-  const [workflowMetrics, customerMetrics, posSettings, posBinaries, documentSettings, systemModules] =
-    await Promise.all([
-      getWorkflowEngineMetrics(),
-      getCustomerEngineMetrics(),
-      getPosReleaseSettings(),
-      listPosReleaseBinaries(),
-      listSystemDocumentSettings(),
-      getSystemModules(),
-    ]);
+  const [
+    workflowMetrics,
+    customerMetrics,
+    posSettings,
+    posBinaries,
+    documentSettings,
+    systemModules,
+  ] = await Promise.all([
+    getWorkflowEngineMetrics(),
+    getCustomerEngineMetrics(),
+    getPosReleaseSettings(),
+    listPosReleaseBinaries(),
+    listSystemDocumentSettings(),
+    getSystemModules(),
+  ]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -33,7 +39,8 @@ export default async function SystemsPage() {
         </h1>
         <p className="mt-1 text-sm text-muted-foreground">
           Monitor platform system health, inspect execution metrics, and execute
-          administrative controls on workflow engine, customer engine, POS app release binaries, and global module toggles.
+          administrative controls on workflow engine, customer engine, POS app
+          release binaries, and global module toggles.
         </p>
       </div>
 

@@ -1,42 +1,56 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, Save, RotateCcw, ShieldAlert } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { saveDefaultQuotaAllocations, type DefaultQuotaAllocations } from "@/app/actions/billing"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Save, RotateCcw, ShieldAlert } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  saveDefaultQuotaAllocations,
+  type DefaultQuotaAllocations,
+} from "@/app/actions/billing";
 
 export function DefaultQuotasPanel({
   initialAllocations,
 }: {
-  initialAllocations: DefaultQuotaAllocations
+  initialAllocations: DefaultQuotaAllocations;
 }) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [allocations, setAllocations] = useState<DefaultQuotaAllocations>(initialAllocations)
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [allocations, setAllocations] =
+    useState<DefaultQuotaAllocations>(initialAllocations);
 
   function handleChange(key: keyof DefaultQuotaAllocations, value: string) {
-    const num = Number(value)
+    const num = Number(value);
     setAllocations((prev) => ({
       ...prev,
       [key]: Number.isNaN(num) ? prev[key] : num,
-    }))
+    }));
   }
 
   async function handleSave() {
-    setIsPending(true)
+    setIsPending(true);
     try {
-      await saveDefaultQuotaAllocations(allocations)
-      toast.success("Default quota allocations saved successfully")
-      router.refresh()
+      await saveDefaultQuotaAllocations(allocations);
+      toast.success("Default quota allocations saved successfully");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save default quotas")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save default quotas",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -51,8 +65,10 @@ export function DefaultQuotasPanel({
       maxWebhookSubscriptions: 5,
       maxWorkflowEngineDefinitions: 10,
       maxCustomDomains: 1,
-    })
-    toast.info("Reset to recommended platform defaults (click Save to persist)")
+    });
+    toast.info(
+      "Reset to recommended platform defaults (click Save to persist)",
+    );
   }
 
   return (
@@ -63,7 +79,9 @@ export function DefaultQuotasPanel({
           Platform Default Quota Allocations
         </CardTitle>
         <CardDescription>
-          These defaults serve as fallback quota limits for unassigned organizations or standard baseline tier provisions. Use -1 for unlimited.
+          These defaults serve as fallback quota limits for unassigned
+          organizations or standard baseline tier provisions. Use -1 for
+          unlimited.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-6">
@@ -114,7 +132,9 @@ export function DefaultQuotasPanel({
               id="q-orders"
               type="number"
               value={allocations.maxOrdersPerMonth}
-              onChange={(e) => handleChange("maxOrdersPerMonth", e.target.value)}
+              onChange={(e) =>
+                handleChange("maxOrdersPerMonth", e.target.value)
+              }
             />
           </div>
 
@@ -124,7 +144,9 @@ export function DefaultQuotasPanel({
               id="q-api"
               type="number"
               value={allocations.maxApiRequestsPerDay}
-              onChange={(e) => handleChange("maxApiRequestsPerDay", e.target.value)}
+              onChange={(e) =>
+                handleChange("maxApiRequestsPerDay", e.target.value)
+              }
             />
           </div>
 
@@ -134,7 +156,9 @@ export function DefaultQuotasPanel({
               id="q-webhooks"
               type="number"
               value={allocations.maxWebhookSubscriptions}
-              onChange={(e) => handleChange("maxWebhookSubscriptions", e.target.value)}
+              onChange={(e) =>
+                handleChange("maxWebhookSubscriptions", e.target.value)
+              }
             />
           </div>
 
@@ -144,7 +168,9 @@ export function DefaultQuotasPanel({
               id="q-workflows"
               type="number"
               value={allocations.maxWorkflowEngineDefinitions}
-              onChange={(e) => handleChange("maxWorkflowEngineDefinitions", e.target.value)}
+              onChange={(e) =>
+                handleChange("maxWorkflowEngineDefinitions", e.target.value)
+              }
             />
           </div>
 
@@ -160,16 +186,25 @@ export function DefaultQuotasPanel({
         </div>
 
         <div className="flex justify-between items-center pt-2">
-          <Button variant="outline" size="sm" onClick={handleReset} className="gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleReset}
+            className="gap-2"
+          >
             <RotateCcw className="size-3.5" />
             Reset Defaults
           </Button>
           <Button onClick={handleSave} disabled={isPending} className="gap-2">
-            {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+            {isPending ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Save className="size-4" />
+            )}
             Save Default Allocations
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

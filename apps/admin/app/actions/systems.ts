@@ -41,7 +41,11 @@ export async function getWorkflowEngineMetrics() {
       orderBy: { updatedAt: "desc" },
       include: {
         workflow: {
-          select: { id: true, name: true, organization: { select: { name: true } } },
+          select: {
+            id: true,
+            name: true,
+            organization: { select: { name: true } },
+          },
         },
         record: {
           select: { id: true, data: true },
@@ -54,7 +58,9 @@ export async function getWorkflowEngineMetrics() {
   const rateLimitSetting = await db.globalSetting.findUnique({
     where: { key: "system:workflow:rate_limit_per_min" },
   });
-  const rateLimitPerMin = rateLimitSetting ? parseInt(rateLimitSetting.value, 10) : 100;
+  const rateLimitPerMin = rateLimitSetting
+    ? parseInt(rateLimitSetting.value, 10)
+    : 100;
 
   return {
     totalWorkflows,
@@ -69,7 +75,10 @@ export async function getWorkflowEngineMetrics() {
   };
 }
 
-export async function toggleWorkflowActiveStatus(workflowId: string, isActive: boolean) {
+export async function toggleWorkflowActiveStatus(
+  workflowId: string,
+  isActive: boolean,
+) {
   await requireSuperAdmin();
 
   const updated = await db.campaignWorkflow.update({
@@ -84,7 +93,9 @@ export async function toggleWorkflowActiveStatus(workflowId: string, isActive: b
 export async function clearFailedWorkflowInstances(workflowId?: string) {
   await requireSuperAdmin();
 
-  const whereCondition = workflowId ? { status: "FAILED", workflowId } : { status: "FAILED" };
+  const whereCondition = workflowId
+    ? { status: "FAILED", workflowId }
+    : { status: "FAILED" };
 
   const deleted = await db.campaignWorkflowInstance.deleteMany({
     where: whereCondition,
@@ -100,7 +111,10 @@ export async function setWorkflowRateLimit(rateLimitPerMin: number) {
   await db.globalSetting.upsert({
     where: { key: "system:workflow:rate_limit_per_min" },
     update: { value: String(rateLimitPerMin) },
-    create: { key: "system:workflow:rate_limit_per_min", value: String(rateLimitPerMin) },
+    create: {
+      key: "system:workflow:rate_limit_per_min",
+      value: String(rateLimitPerMin),
+    },
   });
 
   revalidatePath("/systems");
@@ -124,7 +138,9 @@ export async function triggerWorkflowSimulationRun(workflowId: string) {
   });
 
   if (!sampleRecord) {
-    throw new Error("No CRM record found in target organization to simulate execution");
+    throw new Error(
+      "No CRM record found in target organization to simulate execution",
+    );
   }
 
   const instance = await db.campaignWorkflowInstance.create({
@@ -133,14 +149,16 @@ export async function triggerWorkflowSimulationRun(workflowId: string) {
       recordId: sampleRecord.id,
       status: "COMPLETED",
       currentNodeId: "simulation-end",
-      context: { simulatedAt: new Date().toISOString(), simulatedBy: "SUPER_ADMIN" },
+      context: {
+        simulatedAt: new Date().toISOString(),
+        simulatedBy: "SUPER_ADMIN",
+      },
     },
   });
 
   revalidatePath("/systems");
   return { success: true, instanceId: instance.id };
 }
-
 
 // ====================================
 // CUSTOMER ENGINE ACTIONS
@@ -217,10 +235,18 @@ export async function triggerSegmentRecalculation(segmentId?: string) {
   }
 
   revalidatePath("/systems");
-  return { success: true, message: segmentId ? `Segment ${segmentId} recalculated.` : "All campaign segments recalculated and synchronized." };
+  return {
+    success: true,
+    message: segmentId
+      ? `Segment ${segmentId} recalculated.`
+      : "All campaign segments recalculated and synchronized.",
+  };
 }
 
-export async function addTagToSystemCustomers(tag: string, organizationId?: string) {
+export async function addTagToSystemCustomers(
+  tag: string,
+  organizationId?: string,
+) {
   await requireSuperAdmin();
 
   const cleanTag = tag.trim();
@@ -285,7 +311,10 @@ export async function removeTagFromSystemCustomers(tag: string) {
   return { success: true, count: customers.length, tag };
 }
 
-export async function bulkUpdateCustomersStatus(isActive: boolean, organizationId?: string) {
+export async function bulkUpdateCustomersStatus(
+  isActive: boolean,
+  organizationId?: string,
+) {
   await requireSuperAdmin();
 
   const whereCondition = organizationId ? { organizationId } : {};
@@ -341,7 +370,10 @@ export async function getSystemModules(): Promise<Record<string, boolean>> {
   }
 }
 
-export async function updateSystemModuleStatus(moduleKey: string, isEnabled: boolean) {
+export async function updateSystemModuleStatus(
+  moduleKey: string,
+  isEnabled: boolean,
+) {
   await requireSuperAdmin();
 
   const current = await getSystemModules();

@@ -1,4 +1,7 @@
-import { getActivityFilterOptions, getUserActivityLogs } from "@/app/actions/activity";
+import {
+  getActivityFilterOptions,
+  getUserActivityLogs,
+} from "@/app/actions/activity";
 import { ActivityClient } from "@/components/activity/activity-client";
 
 export default async function UserActivityPage() {
@@ -7,5 +10,7 @@ export default async function UserActivityPage() {
     getUserActivityLogs({ page: 1, limit: 20 }),
   ]);
 
-  return <ActivityClient filterOptions={filterOptions} initialData={initialData} />;
+  return (
+    <ActivityClient filterOptions={filterOptions} initialData={initialData} />
+  );
 }

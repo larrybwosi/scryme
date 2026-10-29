@@ -66,6 +66,7 @@ cd apps/android
 The signed APK will be generated at `app/build/outputs/apk/release/app-release.apk`.
 
 ### Custom Signing Configurations
+
 When custom keystore parameters are provided, release builds are signed using your production keystore. If no custom keys are provided, release builds automatically fall back to signing with the debug key so developers and CI pipelines can build installable APKs.
 
 To configure custom signing keys, create a `keystore.properties` file in `apps/android/` (see `keystore.properties.example`), or set environment variables:
@@ -78,6 +79,7 @@ To configure custom signing keys, create a `keystore.properties` file in `apps/a
 ## Architecture
 
 The project adheres strictly to **Android Clean Architecture**:
+
 - **Data Layer**: Retrofit Service Interfaces, DTOs, OkHttp Header/Auth Interceptors, DataStore Session Management, and Repository Implementations.
 - **Domain Layer**: Core Business Entities (Domain Models) and Repository Interfaces.
 - **UI Layer**: Jetpack Compose Composables, Material 3 components, and StateFlow-based ViewModels (`@HiltViewModel`).
