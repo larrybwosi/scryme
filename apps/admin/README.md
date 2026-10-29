@@ -175,3 +175,22 @@ docker logs -f scryme-admin
   - Verify PostgreSQL is accepting connections on the specified port.
 - **SSL / TLS Handshake Failure**:
   - Append `?sslmode=require` or `?sslmode=no-verify` to `DATABASE_URL` depending on your PostgreSQL provider's TLS requirements.
+
+
+---
+
+## 7. Multi-Instance & Shared Infrastructure Deployment
+
+The Admin App supports side-by-side multi-instance deployments using dynamic `INSTANCE_NAME` scoping and shared Docker network configuration.
+
+```bash
+cd apps/admin
+INSTANCE_NAME=scryme \
+SCRYME_NETWORK_NAME=scryme-network \
+ADMIN_PORT=3007 \
+DATABASE_URL="postgresql://dbuser:dbpassword@db:5432/app_db?schema=public" \
+REDIS_URL="redis://redis:6379" \
+docker compose up -d
+```
+
+See the [Multi-Instance & Shared Infrastructure Deployment Guide](../../docs/multi-instance-deployment.md) for full architecture details.

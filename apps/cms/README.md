@@ -14,3 +14,22 @@ Multi-Tenant Organization Product Marketing Headless CMS powered by Payload 3.0 
 pnpm --filter cms dev
 ```
 Access the admin portal at `http://localhost:3010/admin`.
+
+
+## 🌐 Multi-Instance & Shared Infrastructure Deployment
+
+Scryme CMS supports standalone deployment or attaching to shared system infrastructure via Docker networks.
+
+### Docker Compose Standalone / Multi-Instance
+
+```bash
+cd apps/cms
+INSTANCE_NAME=scryme \
+SCRYME_NETWORK_NAME=scryme-network \
+CMS_PORT=3010 \
+DATABASE_URL="postgresql://dbuser:dbpassword@db:5432/app_db?schema=public" \
+REDIS_URL="redis://redis:6379" \
+docker compose up -d
+```
+
+For detailed multi-tenant and multi-instance orchestration, consult the [Multi-Instance Deployment Guide](../../docs/multi-instance-deployment.md).

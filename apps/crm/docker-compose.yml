@@ -1,7 +1,7 @@
 services:
   crm:
     image: ghcr.io/larrybwosi/scryme/crm:${SCRYME_VERSION:-latest}
-    container_name: scryme-crm
+    container_name: ${INSTANCE_NAME:-scryme}-crm
     restart: always
     ports:
       - "${CRM_PORT:-3001}:3001"
