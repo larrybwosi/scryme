@@ -7,8 +7,6 @@ data class BranchLocation(
     val address: String?,
     val phone: String?,
     val locationType: String,
-    val latitude: Double?,
-    val longitude: Double?,
     val geofenceRadiusMeters: Double?,
     val isDefault: Boolean,
     val isActive: Boolean

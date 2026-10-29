@@ -7,6 +7,7 @@ import { authClient, useSession } from "@/lib/auth-client";
 import { SetupGuideTour } from "@/components/onboarding/setup-guide-tour";
 import { UserSettingsDialog } from "@repo/ui/components/user-settings-dialog";
 import { getActiveOrganization } from "@/app/actions/organization";
+import { useModules } from "@/providers/module-provider";
 import {
   Avatar,
   AvatarFallback,
@@ -40,7 +41,8 @@ interface SidebarItem {
   icon: React.ElementType;
   href: string;
   tourId?: string;
-  items?: { title: string; href: string }[];
+  moduleKey?: string;
+  items?: { title: string; href: string; moduleKey?: string }[];
 }
 
 interface SidebarSection {
@@ -61,7 +63,7 @@ const sidebarConfig: SidebarSection[] = [
         items: [
           { title: "Transactions", href: "/sales/transactions" },
           { title: "New Order", href: "/sales/new" },
-          { title: "Deliveries", href: "/sales/deliveries" },
+          { title: "Deliveries", href: "/sales/deliveries", moduleKey: "deliveries" },
         ],
       },
       {
@@ -71,9 +73,9 @@ const sidebarConfig: SidebarSection[] = [
         tourId: "staff",
         items: [
           { title: "Staff Members", href: "/staff" },
-          { title: "Shifts & Scheduling", href: "/staff/shifts" },
+          { title: "Shifts & Scheduling", href: "/staff/shifts", moduleKey: "services" },
           { title: "Departments", href: "/staff/departments" },
-          { title: "Drivers", href: "/staff/drivers" },
+          { title: "Drivers", href: "/staff/drivers", moduleKey: "deliveries" },
         ],
       },
       { title: "Locations", icon: MapPin, href: "/locations", tourId: "locations" },
@@ -84,7 +86,7 @@ const sidebarConfig: SidebarSection[] = [
         tourId: "inventory",
         items: [
           { title: "Items", href: "/inventory" },
-          { title: "Services", href: "/inventory/services" },
+          { title: "Services", href: "/inventory/services", moduleKey: "services" },
           { title: "Suppliers", href: "/inventory/supplier" },
           { title: "Units", href: "/inventory/units" },
           { title: "Archived Items", href: "/inventory/archived" },
@@ -103,7 +105,7 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Audit Trail", href: "/stocking/audit" },
         ],
       },
-      { title: "Integrations", icon: Boxes, href: "/integrations" },
+      { title: "Integrations", icon: Boxes, href: "/integrations", moduleKey: "ecommerce" },
     ],
   },
   {
@@ -117,6 +119,7 @@ const sidebarConfig: SidebarSection[] = [
         title: "Finance & Accounting",
         icon: FileBarChart,
         href: "/finance/accounting",
+        moduleKey: "finance",
         items: [
           { title: "Chart of Accounts", href: "/finance/accounting/coa" },
           { title: "Journal Entries", href: "/finance/accounting/journal" },
@@ -130,6 +133,7 @@ const sidebarConfig: SidebarSection[] = [
         title: "Purchases & Expenses",
         icon: ShoppingCart,
         href: "/finance/purchases",
+        moduleKey: "finance",
         items: [
           { title: "Expenses", href: "/finance/expenses" },
           { title: "Purchases", href: "/finance/purchases" },
@@ -161,6 +165,7 @@ export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { data: session } = useSession();
+  const { isModuleEnabled } = useModules();
 
   useEffect(() => {
     getActiveOrganization().then((org) => {
@@ -170,15 +175,15 @@ export function Sidebar() {
     });
   }, []);
 
-  const activeOrgName = activeOrg?.name || "Scryme";
+  const activeOrgName = activeOrg?.name || "Organization";
 
   useEffect(() => {
-    // Keep active parent menu open
     sidebarConfig.forEach((section) => {
       section.items.forEach((item) => {
         if (
-          item.items?.some((sub) => sub.href === pathname) ||
-          item.href === pathname
+          item.items &&
+          item.items.some((sub) => sub.href === pathname) &&
+          item.href !== pathname
         ) {
           if (!openMenus.includes(item.title)) {
             setOpenMenus((prev) => [...prev, item.title]);
@@ -274,105 +279,123 @@ export function Sidebar() {
 
         {/* Sidebar Navigation */}
         <div className="flex-1 overflow-y-auto px-3 py-4 space-y-6 custom-scrollbar">
-          {sidebarConfig.map((section, idx) => (
-            <div key={idx} className="mb-6">
-              {!isCollapsed && (
-                <div className="text-[11px] font-bold text-sidebar-foreground/60 mb-3 px-2 tracking-wider font-mono uppercase">
-                  {section.title}
-                </div>
-              )}
-              <div className="space-y-1">
-                {section.items.map((item, itemIdx) => {
-                  const hasSubmenu = item.items && item.items.length > 0;
-                  const isOpen = openMenus.includes(item.title);
-                  const isActive =
-                    pathname === item.href ||
-                    item.items?.some((sub) => sub.href === pathname);
+          {sidebarConfig.map((section, idx) => {
+            const visibleItems = section.items.filter((item) => {
+              if (item.moduleKey && !isModuleEnabled(item.moduleKey)) {
+                return false;
+              }
+              return true;
+            });
 
-                  const itemContent = (
-                    <button
-                      {...(item.tourId ? { "data-tour": item.tourId } : {})}
-                      onClick={() => {
-                        if (hasSubmenu && !isCollapsed) {
-                          toggleSubmenu(item.title);
-                        } else {
-                          router.push(item.href);
-                        }
-                      }}
-                      aria-label={item.title}
-                      title={isCollapsed ? item.title : undefined}
-                      className={cn(
-                        "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
-                        isActive
-                          ? "text-sidebar-primary bg-sidebar-accent font-medium"
-                          : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
-                        isCollapsed && "justify-center"
-                      )}
-                    >
-                      <div className="flex items-center gap-3">
-                        <item.icon
-                          size={20}
-                          className={cn(
-                            isActive
-                              ? "text-sidebar-primary"
-                              : "text-sidebar-foreground/60"
-                          )}
-                        />
-                        {!isCollapsed && <span>{item.title}</span>}
-                      </div>
-                      {!isCollapsed && hasSubmenu && (
-                        <ChevronDown
-                          size={16}
-                          className={cn(
-                            "transition-transform",
-                            isOpen && "rotate-180"
-                          )}
-                        />
-                      )}
-                    </button>
-                  );
+            if (visibleItems.length === 0) return null;
 
-                  return (
-                    <div key={itemIdx}>
-                      {isCollapsed ? (
-                        <Tooltip>
-                          <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
-                          <TooltipContent side="right">
-                            {item.title}
-                          </TooltipContent>
-                        </Tooltip>
-                      ) : (
-                        itemContent
-                      )}
+            return (
+              <div key={idx} className="mb-6">
+                {!isCollapsed && (
+                  <div className="text-[11px] font-bold text-sidebar-foreground/60 mb-3 px-2 tracking-wider font-mono uppercase">
+                    {section.title}
+                  </div>
+                )}
+                <div className="space-y-1">
+                  {visibleItems.map((item, itemIdx) => {
+                    const visibleSubItems = item.items?.filter((sub) => {
+                      if (sub.moduleKey && !isModuleEnabled(sub.moduleKey)) {
+                        return false;
+                      }
+                      return true;
+                    });
 
-                      {/* Submenu Items */}
-                      {!isCollapsed && hasSubmenu && isOpen && (
-                        <div className="ml-9 mt-1 space-y-1 border-l-2 border-sidebar-border pl-2">
-                          {item.items?.map((subItem, subIdx) => {
-                            const isSubActive = pathname === subItem.href;
-                            return (
-                              <Link
-                                key={subIdx}
-                                href={subItem.href}
-                                className={cn(
-                                  "block px-3 py-1.5 rounded-md text-xs transition-colors",
-                                  isSubActive
-                                    ? "text-sidebar-primary font-medium bg-sidebar-accent/50"
-                                    : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
-                                )}
-                              >
-                                {subItem.title}
-                              </Link>
-                            );
-                          })}
+                    const hasSubmenu = visibleSubItems && visibleSubItems.length > 0;
+                    const isOpen = openMenus.includes(item.title);
+                    const isActive =
+                      pathname === item.href ||
+                      visibleSubItems?.some((sub) => sub.href === pathname);
+
+                    const itemContent = (
+                      <button
+                        {...(item.tourId ? { "data-tour": item.tourId } : {})}
+                        onClick={() => {
+                          if (hasSubmenu && !isCollapsed) {
+                            toggleSubmenu(item.title);
+                          } else {
+                            router.push(item.href);
+                          }
+                        }}
+                        aria-label={item.title}
+                        title={isCollapsed ? item.title : undefined}
+                        className={cn(
+                          "w-full flex items-center justify-between px-3 py-2.5 rounded-lg text-sm transition-colors",
+                          isActive
+                            ? "text-sidebar-primary bg-sidebar-accent font-medium"
+                            : "text-sidebar-foreground/80 hover:bg-sidebar-accent hover:text-sidebar-foreground",
+                          isCollapsed && "justify-center"
+                        )}
+                      >
+                        <div className="flex items-center gap-3">
+                          <item.icon
+                            size={20}
+                            className={cn(
+                              isActive
+                                ? "text-sidebar-primary"
+                                : "text-sidebar-foreground/60"
+                            )}
+                          />
+                          {!isCollapsed && <span>{item.title}</span>}
                         </div>
-                      )}
-                    </div>
-                  );
-                })}
+                        {!isCollapsed && hasSubmenu && (
+                          <ChevronDown
+                            size={16}
+                            className={cn(
+                              "transition-transform",
+                              isOpen && "rotate-180"
+                            )}
+                          />
+                        )}
+                      </button>
+                    );
+
+                    return (
+                      <div key={itemIdx}>
+                        {isCollapsed ? (
+                          <Tooltip>
+                            <TooltipTrigger asChild>{itemContent}</TooltipTrigger>
+                            <TooltipContent side="right">
+                              {item.title}
+                            </TooltipContent>
+                          </Tooltip>
+                        ) : (
+                          itemContent
+                        )}
+
+                        {/* Submenu Items */}
+                        {!isCollapsed && hasSubmenu && isOpen && (
+                          <div className="ml-9 mt-1 space-y-1 border-l-2 border-sidebar-border pl-2">
+                            {visibleSubItems.map((subItem, subIdx) => {
+                              const isSubActive = pathname === subItem.href;
+                              return (
+                                <Link
+                                  key={subIdx}
+                                  href={subItem.href}
+                                  className={cn(
+                                    "block px-3 py-1.5 rounded-md text-xs transition-colors",
+                                    isSubActive
+                                      ? "text-sidebar-primary font-medium bg-sidebar-accent/50"
+                                      : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent/30"
+                                  )}
+                                >
+                                  {subItem.title}
+                                </Link>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* Footer User Profile Card */}
