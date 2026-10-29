@@ -1,20 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import Link from "next/link";
-import { ProjectsAPI, Project } from "@/lib/api";
-import { FolderKanban, Plus, Clock, CheckCircle2, AlertCircle, ArrowRight } from "lucide-react";
+import { useProjects } from "@/lib/hooks/use-projects";
+import { FolderKanban, Plus, Clock, CheckCircle2, ArrowRight } from "lucide-react";
 
 export default function ProjectsDashboardPage() {
-  const [projects, setProjects] = useState<Project[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    ProjectsAPI.getProjects().then((data) => {
-      setProjects(data);
-      setLoading(false);
-    });
-  }, []);
+  const { data: projects = [], isLoading } = useProjects();
 
   return (
     <div className="space-y-6">
@@ -76,7 +67,7 @@ export default function ProjectsDashboardPage() {
           <span className="text-xs text-slate-400">Syncing with NestJS V3 Engine</span>
         </div>
 
-        {loading ? (
+        {isLoading ? (
           <div className="py-12 text-center text-slate-500 text-sm">Loading workspace projects...</div>
         ) : projects.length === 0 ? (
           <div className="py-12 text-center text-slate-500 text-sm">No projects created yet.</div>

@@ -1,39 +1,34 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ProjectsAPI, Task } from "@/lib/api";
+import { useState } from "react";
+import { useTasks, useLogTimeEntry } from "@/lib/hooks/use-projects";
 import { Clock, Play, Plus, CheckCircle2 } from "lucide-react";
 
 export default function GanttTimePage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { data: tasks = [] } = useTasks("proj-1");
+  const logTimeMutation = useLogTimeEntry("proj-1");
+
   const [selectedTask, setSelectedTask] = useState<string>("");
   const [hours, setHours] = useState<number>(2);
   const [notes, setNotes] = useState<string>("");
   const [logSuccess, setLogSuccess] = useState<boolean>(false);
 
-  useEffect(() => {
-    ProjectsAPI.getProjectTasks("proj-1").then((data) => {
-      setTasks(data);
-      if (data.length > 0) setSelectedTask(data[0].id);
-    });
-  }, []);
+  const activeSelectedTask = selectedTask || (tasks.length > 0 ? tasks[0].id : "");
 
-  const handleLogTime = async (e: React.FormEvent) => {
+  const handleLogTime = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedTask || hours <= 0) return;
+    if (!activeSelectedTask || hours <= 0) return;
 
-    await ProjectsAPI.logTimeEntry(selectedTask, hours, notes);
-    setTasks((prev) =>
-      prev.map((t) =>
-        t.id === selectedTask
-          ? { ...t, actualHours: (t.actualHours || 0) + Number(hours) }
-          : t
-      )
+    logTimeMutation.mutate(
+      { taskId: activeSelectedTask, hours: Number(hours), notes },
+      {
+        onSuccess: () => {
+          setLogSuccess(true);
+          setTimeout(() => setLogSuccess(false), 3000);
+          setNotes("");
+        },
+      }
     );
-
-    setLogSuccess(true);
-    setTimeout(() => setLogSuccess(false), 3000);
-    setNotes("");
   };
 
   return (
@@ -103,7 +98,7 @@ export default function GanttTimePage() {
             <div>
               <label className="block text-xs font-medium text-slate-300 mb-1">Select Task *</label>
               <select
-                value={selectedTask}
+                value={activeSelectedTask}
                 onChange={(e) => setSelectedTask(e.target.value)}
                 className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
               >
@@ -141,9 +136,10 @@ export default function GanttTimePage() {
 
             <button
               type="submit"
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-medium transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2"
+              disabled={logTimeMutation.isPending}
+              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-medium transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
             >
-              <Plus className="h-4 w-4" /> Save Time Entry
+              <Plus className="h-4 w-4" /> {logTimeMutation.isPending ? "Saving..." : "Save Time Entry"}
             </button>
           </form>
         </div>

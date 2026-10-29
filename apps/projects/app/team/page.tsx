@@ -1,22 +1,13 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ProjectsAPI, OrganizationMember, Task } from "@/lib/api";
-import { Users, Mail, Shield, CheckCircle2, UserPlus, FolderKanban } from "lucide-react";
+import { useMembers, useTasks } from "@/lib/hooks/use-projects";
+import { Users, Mail, Shield, UserPlus, FolderKanban } from "lucide-react";
 
 export default function TeamAssignmentsPage() {
-  const [members, setMembers] = useState<OrganizationMember[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
+  const { data: members = [], isLoading: isMembersLoading } = useMembers();
+  const { data: tasks = [], isLoading: isTasksLoading } = useTasks("proj-1");
 
-  useEffect(() => {
-    Promise.all([
-      ProjectsAPI.getMembers(),
-      ProjectsAPI.getProjectTasks("proj-1"),
-    ]).then(([membersData, tasksData]) => {
-      setMembers(membersData);
-      setTasks(tasksData);
-    });
-  }, []);
+  const isLoading = isMembersLoading || isTasksLoading;
 
   return (
     <div className="space-y-6">
@@ -35,41 +26,45 @@ export default function TeamAssignmentsPage() {
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {members.map((member) => {
-          const assignedCount = tasks.filter((t) => t.assigneeId === member.id).length;
+      {isLoading ? (
+        <div className="py-12 text-center text-slate-500 text-sm">Loading team members...</div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          {members.map((member) => {
+            const assignedCount = tasks.filter((t) => t.assigneeId === member.id).length;
 
-          return (
-            <div
-              key={member.id}
-              className="bg-[#121824] border border-[#1F293D] rounded-xl p-5 space-y-4 hover:border-indigo-500/30 transition-all"
-            >
-              <div className="flex items-center gap-3">
-                <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">
-                  {member.name.charAt(0)}
+            return (
+              <div
+                key={member.id}
+                className="bg-[#121824] border border-[#1F293D] rounded-xl p-5 space-y-4 hover:border-indigo-500/30 transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <div className="h-10 w-10 rounded-full bg-indigo-600/20 border border-indigo-500/30 flex items-center justify-center text-indigo-400 font-bold text-sm">
+                    {member.name.charAt(0)}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-semibold text-slate-100">{member.name}</h3>
+                    <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
+                      <Mail className="h-3 w-3 text-slate-500" /> {member.email}
+                    </p>
+                  </div>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-slate-100">{member.name}</h3>
-                  <p className="text-xs text-slate-400 flex items-center gap-1 mt-0.5">
-                    <Mail className="h-3 w-3 text-slate-500" /> {member.email}
-                  </p>
+
+                <div className="pt-3 border-t border-[#1F293D] flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-1 text-slate-400">
+                    <Shield className="h-3.5 w-3.5 text-indigo-400" />
+                    <span>{member.role}</span>
+                  </div>
+                  <div className="flex items-center gap-1 text-emerald-400 font-medium">
+                    <FolderKanban className="h-3.5 w-3.5" />
+                    <span>{assignedCount} Tasks Assigned</span>
+                  </div>
                 </div>
               </div>
-
-              <div className="pt-3 border-t border-[#1F293D] flex items-center justify-between text-xs">
-                <div className="flex items-center gap-1 text-slate-400">
-                  <Shield className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>{member.role}</span>
-                </div>
-                <div className="flex items-center gap-1 text-emerald-400 font-medium">
-                  <FolderKanban className="h-3.5 w-3.5" />
-                  <span>{assignedCount} Tasks Assigned</span>
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
