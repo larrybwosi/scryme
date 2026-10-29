@@ -14,12 +14,12 @@ import { RealtimeTransactionWrapper } from "@/components/sales/realtime-transact
 import { Suspense } from "react";
 import { Skeleton } from "@repo/ui/components/ui/skeleton";
 import { db } from "@repo/db";
+import { format, startOfMonth } from "date-fns";
 
 export const metadata: Metadata = {
   title: "Sales Transactions",
   description: "Browse order history, transaction status, receipt printouts, and payment modes.",
 };
-
 
 async function TransactionList({
   searchParams,
@@ -37,11 +37,24 @@ async function TransactionList({
     sortBy?: string;
     startDate?: string;
     endDate?: string;
+    preset?: string;
   };
   organizationId?: string;
   invoiceConfigUpdatedAt?: string;
   receiptConfigUpdatedAt?: string;
 }) {
+  const isPresetAll = searchParams.preset === "all";
+  const now = new Date();
+  const startOfMonthStr = format(startOfMonth(now), "yyyy-MM-dd");
+  const todayStr = format(now, "yyyy-MM-dd");
+
+  const startDate = isPresetAll
+    ? undefined
+    : (searchParams.startDate ?? startOfMonthStr);
+  const endDate = isPresetAll
+    ? undefined
+    : (searchParams.endDate ?? todayStr);
+
   const transactions = await getTransactions({
     search: searchParams.q,
     type: searchParams.type as TransactionType | "all",
@@ -50,8 +63,8 @@ async function TransactionList({
     paymentMethod: searchParams.paymentMethod as any,
     locationId: searchParams.locationId,
     sortBy: searchParams.sortBy,
-    startDate: searchParams.startDate,
-    endDate: searchParams.endDate,
+    startDate,
+    endDate,
   });
 
   return (
@@ -86,6 +99,7 @@ export default async function TransactionsPage(props: {
     sortBy?: string;
     startDate?: string;
     endDate?: string;
+    preset?: string;
     realtime?: string;
   }>;
 }) {
