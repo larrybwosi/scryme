@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import { useState, useTransition } from "react"
-import { KeyRound, Mail, Copy, Check, RefreshCw } from "lucide-react"
-import { toast } from "sonner"
+import { useState, useTransition } from "react";
+import { KeyRound, Mail, Copy, Check, RefreshCw } from "lucide-react";
+import { toast } from "sonner";
 import {
   Dialog,
   DialogContent,
@@ -10,77 +10,87 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
-import { resetUserPassword } from "@/app/actions/users"
-import type { UserRow } from "./users-table"
+} from "@repo/ui/components/ui/dialog";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
+import { resetUserPassword } from "@/app/actions/users";
+import type { UserRow } from "./users-table";
 
 interface ResetPasswordDialogProps {
-  user: UserRow | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  user: UserRow | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 function generateRandomPassword(length = 14) {
-  const chars = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*"
-  let pass = ""
+  const chars =
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*";
+  let pass = "";
   for (let i = 0; i < length; i++) {
-    pass += chars.charAt(Math.floor(Math.random() * chars.length))
+    pass += chars.charAt(Math.floor(Math.random() * chars.length));
   }
-  return pass
+  return pass;
 }
 
-export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordDialogProps) {
-  const [mode, setMode] = useState<"email" | "manual">("email")
-  const [newPassword, setNewPassword] = useState("")
-  const [copied, setCopied] = useState(false)
-  const [isPending, startTransition] = useTransition()
+export function ResetPasswordDialog({
+  user,
+  open,
+  onOpenChange,
+}: ResetPasswordDialogProps) {
+  const [mode, setMode] = useState<"email" | "manual">("email");
+  const [newPassword, setNewPassword] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [isPending, startTransition] = useTransition();
 
-  if (!user) return null
+  if (!user) return null;
 
   const handleGeneratePassword = () => {
-    setNewPassword(generateRandomPassword())
-  }
+    setNewPassword(generateRandomPassword());
+  };
 
   const handleCopyPassword = () => {
-    if (!newPassword) return
-    navigator.clipboard.writeText(newPassword)
-    setCopied(true)
-    toast.success("Password copied to clipboard")
-    setTimeout(() => setCopied(false), 2000)
-  }
+    if (!newPassword) return;
+    navigator.clipboard.writeText(newPassword);
+    setCopied(true);
+    toast.success("Password copied to clipboard");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const handleSendResetEmail = () => {
     startTransition(async () => {
       try {
-        const res = await resetUserPassword(user.id, { sendEmail: true })
-        toast.success(res.message)
-        onOpenChange(false)
+        const res = await resetUserPassword(user.id, { sendEmail: true });
+        toast.success(res.message);
+        onOpenChange(false);
       } catch (err: any) {
-        toast.error(err.message || "Failed to send reset password email")
+        toast.error(err.message || "Failed to send reset password email");
       }
-    })
-  }
+    });
+  };
 
   const handleSetManualPassword = () => {
     if (!newPassword || newPassword.length < 8) {
-      toast.error("Password must be at least 8 characters long")
-      return
+      toast.error("Password must be at least 8 characters long");
+      return;
     }
 
     startTransition(async () => {
       try {
-        const res = await resetUserPassword(user.id, { newPassword })
-        toast.success(res.message)
-        setNewPassword("")
-        onOpenChange(false)
+        const res = await resetUserPassword(user.id, { newPassword });
+        toast.success(res.message);
+        setNewPassword("");
+        onOpenChange(false);
       } catch (err: any) {
-        toast.error(err.message || "Failed to reset password")
+        toast.error(err.message || "Failed to reset password");
       }
-    })
-  }
+    });
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -91,11 +101,20 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
             Reset User Password
           </DialogTitle>
           <DialogDescription>
-            Reset the password for <strong className="text-foreground">{user.name || user.email}</strong> ({user.email}).
+            Reset the password for{" "}
+            <strong className="text-foreground">
+              {user.name || user.email}
+            </strong>{" "}
+            ({user.email}).
           </DialogDescription>
         </DialogHeader>
 
-        <Tabs defaultValue="email" value={mode} onValueChange={(val) => setMode(val as "email" | "manual")} className="w-full">
+        <Tabs
+          defaultValue="email"
+          value={mode}
+          onValueChange={(val) => setMode(val as "email" | "manual")}
+          className="w-full"
+        >
           <TabsList className="grid w-full grid-cols-2">
             <TabsTrigger value="email" className="gap-1.5 text-xs">
               <Mail className="size-3.5" />
@@ -109,13 +128,23 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
 
           <TabsContent value="email" className="space-y-4 pt-3">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              An email containing password reset instructions will be dispatched to <strong>{user.email}</strong>.
+              An email containing password reset instructions will be dispatched
+              to <strong>{user.email}</strong>.
             </p>
             <DialogFooter className="pt-2">
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
-              <Button type="button" disabled={isPending} onClick={handleSendResetEmail} className="gap-2">
+              <Button
+                type="button"
+                disabled={isPending}
+                onClick={handleSendResetEmail}
+                className="gap-2"
+              >
                 <Mail className="size-4" />
                 {isPending ? "Sending Email..." : "Send Reset Link"}
               </Button>
@@ -125,7 +154,9 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
           <TabsContent value="manual" className="space-y-4 pt-3">
             <div className="space-y-2">
               <div className="flex items-center justify-between">
-                <label className="text-xs font-medium text-foreground">New Password</label>
+                <label className="text-xs font-medium text-foreground">
+                  New Password
+                </label>
                 <Button
                   type="button"
                   variant="ghost"
@@ -154,17 +185,30 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
                     onClick={handleCopyPassword}
                     title="Copy Password"
                   >
-                    {copied ? <Check className="size-4 text-emerald-500" /> : <Copy className="size-4" />}
+                    {copied ? (
+                      <Check className="size-4 text-emerald-500" />
+                    ) : (
+                      <Copy className="size-4" />
+                    )}
                   </Button>
                 )}
               </div>
             </div>
 
             <DialogFooter className="pt-2">
-              <Button variant="outline" type="button" onClick={() => onOpenChange(false)}>
+              <Button
+                variant="outline"
+                type="button"
+                onClick={() => onOpenChange(false)}
+              >
                 Cancel
               </Button>
-              <Button type="button" disabled={isPending || !newPassword} onClick={handleSetManualPassword} className="gap-2">
+              <Button
+                type="button"
+                disabled={isPending || !newPassword}
+                onClick={handleSetManualPassword}
+                className="gap-2"
+              >
                 <KeyRound className="size-4" />
                 {isPending ? "Saving..." : "Set Password"}
               </Button>
@@ -173,5 +217,5 @@ export function ResetPasswordDialog({ user, open, onOpenChange }: ResetPasswordD
         </Tabs>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

@@ -1,4 +1,9 @@
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 import {
   listTiers,
   listSubscriptions,
@@ -6,33 +11,44 @@ import {
   getSystemPaymentConfigs,
   getDefaultQuotaAllocations,
   getPricingConfig,
-} from "@/app/actions/billing"
-import { listOrganizations } from "@/app/actions/organizations"
-import { TiersPanel } from "@/components/billing/tiers-panel"
-import { SubscriptionsPanel } from "@/components/billing/subscriptions-panel"
-import { PaymentsPanel } from "@/components/billing/payments-panel"
-import { PaymentConfigsPanel } from "@/components/billing/payment-configs-panel"
-import { DefaultQuotasPanel } from "@/components/billing/default-quotas-panel"
-import { PricingConfigPanel } from "@/components/billing/pricing-config-panel"
+} from "@/app/actions/billing";
+import { listOrganizations } from "@/app/actions/organizations";
+import { TiersPanel } from "@/components/billing/tiers-panel";
+import { SubscriptionsPanel } from "@/components/billing/subscriptions-panel";
+import { PaymentsPanel } from "@/components/billing/payments-panel";
+import { PaymentConfigsPanel } from "@/components/billing/payment-configs-panel";
+import { DefaultQuotasPanel } from "@/components/billing/default-quotas-panel";
+import { PricingConfigPanel } from "@/components/billing/pricing-config-panel";
 
 export default async function BillingPage() {
-  const [tiers, subscriptions, payments, organizations, paymentConfigs, defaultQuotas, pricingConfig] =
-    await Promise.all([
-      listTiers(),
-      listSubscriptions(),
-      listSystemPayments(),
-      listOrganizations(),
-      getSystemPaymentConfigs(),
-      getDefaultQuotaAllocations(),
-      getPricingConfig(),
-    ])
+  const [
+    tiers,
+    subscriptions,
+    payments,
+    organizations,
+    paymentConfigs,
+    defaultQuotas,
+    pricingConfig,
+  ] = await Promise.all([
+    listTiers(),
+    listSubscriptions(),
+    listSystemPayments(),
+    listOrganizations(),
+    getSystemPaymentConfigs(),
+    getDefaultQuotaAllocations(),
+    getPricingConfig(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Billing & System Quotas</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Billing & System Quotas
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage plan tiers, system default quotas, payment gateway configurations, site pricing & Sanity CMS sync, organization subscriptions, and transaction receipts.
+          Manage plan tiers, system default quotas, payment gateway
+          configurations, site pricing & Sanity CMS sync, organization
+          subscriptions, and transaction receipts.
         </p>
       </div>
 
@@ -63,7 +79,11 @@ export default async function BillingPage() {
         </TabsContent>
 
         <TabsContent value="payments" className="mt-6">
-          <PaymentsPanel payments={payments} organizations={organizations} tiers={tiers} />
+          <PaymentsPanel
+            payments={payments}
+            organizations={organizations}
+            tiers={tiers}
+          />
         </TabsContent>
 
         <TabsContent value="default-quotas" className="mt-6">
@@ -71,5 +91,5 @@ export default async function BillingPage() {
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }

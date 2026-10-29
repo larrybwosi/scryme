@@ -1,11 +1,11 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { Loader2, MessageSquare, Shield, Check, X } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
+import { useState } from "react";
+import { Loader2, MessageSquare, Shield, Check, X } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
 import {
   Dialog,
   DialogContent,
@@ -13,14 +13,14 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
-} from "@repo/ui/components/ui/dialog"
-import { syncUserScrymeChatAccess } from "@/app/actions/users"
-import type { UserRow } from "./users-table"
+} from "@repo/ui/components/ui/dialog";
+import { syncUserScrymeChatAccess } from "@/app/actions/users";
+import type { UserRow } from "./users-table";
 
 interface ManageScrymeAccessDialogProps {
-  user: UserRow | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  user: UserRow | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }
 
 export function ManageScrymeAccessDialog({
@@ -28,28 +28,32 @@ export function ManageScrymeAccessDialog({
   open,
   onOpenChange,
 }: ManageScrymeAccessDialogProps) {
-  const [workspaceSlug, setWorkspaceSlug] = useState("system-admins")
-  const [role, setRole] = useState<"admin" | "member">("member")
-  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [workspaceSlug, setWorkspaceSlug] = useState("system-admins");
+  const [role, setRole] = useState<"admin" | "member">("member");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  if (!user) return null
+  if (!user) return null;
 
   async function handleAction(action: "grant" | "revoke") {
-    if (!user) return
-    setIsSubmitting(true)
+    if (!user) return;
+    setIsSubmitting(true);
     try {
       const res = await syncUserScrymeChatAccess({
         userId: user.id,
         workspaceSlug,
         action,
         role,
-      })
-      toast.success(res.message)
-      onOpenChange(false)
+      });
+      toast.success(res.message);
+      onOpenChange(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update Scryme Chat access")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update Scryme Chat access",
+      );
     } finally {
-      setIsSubmitting(false)
+      setIsSubmitting(false);
     }
   }
 
@@ -62,7 +66,11 @@ export function ManageScrymeAccessDialog({
           </div>
           <DialogTitle>Manage Scryme Chat Workspace Access</DialogTitle>
           <DialogDescription>
-            Grant or revoke workspace membership and permission access for <strong className="text-foreground">{user.name || user.email}</strong> across Scryme Chat workspaces.
+            Grant or revoke workspace membership and permission access for{" "}
+            <strong className="text-foreground">
+              {user.name || user.email}
+            </strong>{" "}
+            across Scryme Chat workspaces.
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +80,9 @@ export function ManageScrymeAccessDialog({
             <Input
               id="target-workspace"
               value={workspaceSlug}
-              onChange={(e) => setWorkspaceSlug(e.target.value.toLowerCase().trim())}
+              onChange={(e) =>
+                setWorkspaceSlug(e.target.value.toLowerCase().trim())
+              }
               placeholder="e.g. system-admins or org-acme"
             />
           </div>
@@ -86,7 +96,9 @@ export function ManageScrymeAccessDialog({
               className="h-9 w-full rounded-md border border-input bg-background px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring"
             >
               <option value="member">Member (Read & Send Messages)</option>
-              <option value="admin">Workspace Admin (Manage Channels & Permissions)</option>
+              <option value="admin">
+                Workspace Admin (Manage Channels & Permissions)
+              </option>
             </select>
           </div>
         </div>
@@ -108,7 +120,11 @@ export function ManageScrymeAccessDialog({
               onClick={() => handleAction("revoke")}
               className="gap-1.5 text-xs"
             >
-              {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <X className="size-3.5" />}
+              {isSubmitting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <X className="size-3.5" />
+              )}
               Revoke Access
             </Button>
             <Button
@@ -117,12 +133,16 @@ export function ManageScrymeAccessDialog({
               onClick={() => handleAction("grant")}
               className="gap-1.5 text-xs bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {isSubmitting ? <Loader2 className="size-3.5 animate-spin" /> : <Check className="size-3.5" />}
+              {isSubmitting ? (
+                <Loader2 className="size-3.5 animate-spin" />
+              ) : (
+                <Check className="size-3.5" />
+              )}
               Grant Access
             </Button>
           </div>
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

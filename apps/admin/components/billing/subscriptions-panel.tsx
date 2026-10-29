@@ -1,6 +1,6 @@
-import Link from "next/link"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Sparkles } from "lucide-react"
+import Link from "next/link";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Sparkles } from "lucide-react";
 import {
   Table,
   TableBody,
@@ -8,22 +8,26 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@repo/ui/components/ui/table"
+} from "@repo/ui/components/ui/table";
 
 interface SubscriptionRow {
-  id: string
-  dodoPriceId: string | null
-  dodoSubscriptionId: string | null
-  dodoCurrentPeriodEnd: Date | null
-  isCustomPrice?: boolean
-  customMonthlyPrice?: number | null
-  customYearlyPrice?: number | null
-  customCurrency?: string | null
-  billingInterval?: string | null
-  organization: { id: string; name: string; slug: string }
+  id: string;
+  dodoPriceId: string | null;
+  dodoSubscriptionId: string | null;
+  dodoCurrentPeriodEnd: Date | null;
+  isCustomPrice?: boolean;
+  customMonthlyPrice?: number | null;
+  customYearlyPrice?: number | null;
+  customCurrency?: string | null;
+  billingInterval?: string | null;
+  organization: { id: string; name: string; slug: string };
 }
 
-export function SubscriptionsPanel({ subscriptions }: { subscriptions: SubscriptionRow[] }) {
+export function SubscriptionsPanel({
+  subscriptions,
+}: {
+  subscriptions: SubscriptionRow[];
+}) {
   return (
     <div className="overflow-hidden rounded-lg border border-border">
       <Table>
@@ -39,21 +43,25 @@ export function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscript
         <TableBody>
           {subscriptions.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={5} className="py-10 text-center text-sm text-muted-foreground">
+              <TableCell
+                colSpan={5}
+                className="py-10 text-center text-sm text-muted-foreground"
+              >
                 No paid subscriptions recorded yet.
               </TableCell>
             </TableRow>
           ) : (
             subscriptions.map((sub) => {
-              const currency = sub.customCurrency || "$"
+              const currency = sub.customCurrency || "$";
               const formattedRate =
-                sub.billingInterval === "yearly" && sub.customYearlyPrice != null
+                sub.billingInterval === "yearly" &&
+                sub.customYearlyPrice != null
                   ? `${currency} ${sub.customYearlyPrice}/yr`
                   : sub.customMonthlyPrice != null
-                  ? `${currency} ${sub.customMonthlyPrice}/mo`
-                  : sub.customYearlyPrice != null
-                  ? `${currency} ${sub.customYearlyPrice}/yr`
-                  : null
+                    ? `${currency} ${sub.customMonthlyPrice}/mo`
+                    : sub.customYearlyPrice != null
+                      ? `${currency} ${sub.customYearlyPrice}/yr`
+                      : null;
 
               return (
                 <TableRow key={sub.id}>
@@ -66,7 +74,10 @@ export function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscript
                     </Link>
                   </TableCell>
                   <TableCell>
-                    <Badge variant="outline" className="font-mono text-xs capitalize">
+                    <Badge
+                      variant="outline"
+                      className="font-mono text-xs capitalize"
+                    >
                       {sub.dodoPriceId || "free"}
                     </Badge>
                   </TableCell>
@@ -86,7 +97,9 @@ export function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscript
                         )}
                       </div>
                     ) : (
-                      <span className="text-xs text-muted-foreground">Standard</span>
+                      <span className="text-xs text-muted-foreground">
+                        Standard
+                      </span>
                     )}
                   </TableCell>
                   <TableCell className="text-muted-foreground">
@@ -98,11 +111,11 @@ export function SubscriptionsPanel({ subscriptions }: { subscriptions: Subscript
                       : "—"}
                   </TableCell>
                 </TableRow>
-              )
+              );
             })
           )}
         </TableBody>
       </Table>
     </div>
-  )
+  );
 }

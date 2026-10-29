@@ -11,7 +11,13 @@ import {
   Clock,
   ShieldAlert,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
 
 interface OrganizationActivityPanelProps {
@@ -69,7 +75,8 @@ export function OrganizationActivityPanel({
               Organization Operations & Usage Overview
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Non-sensitive aggregated operational statistics and platform utilization metrics.
+              Non-sensitive aggregated operational statistics and platform
+              utilization metrics.
             </CardDescription>
           </div>
           {acquisitionSource && (
@@ -89,7 +96,9 @@ export function OrganizationActivityPanel({
                   className="flex flex-col gap-1 rounded-lg border border-border bg-secondary/20 p-3"
                 >
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">{card.label}</span>
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {card.label}
+                    </span>
                     <Icon className="size-3.5 text-primary" />
                   </div>
                   <span className="text-lg font-semibold tabular-nums text-foreground">
@@ -110,7 +119,8 @@ export function OrganizationActivityPanel({
             Recent Organization Activity & Operations
           </CardTitle>
           <CardDescription className="text-xs text-muted-foreground">
-            Recent activity log and administrative events for this organization (sensitive payload details excluded).
+            Recent activity log and administrative events for this organization
+            (sensitive payload details excluded).
           </CardDescription>
         </CardHeader>
         <CardContent className="pt-2">
@@ -121,19 +131,29 @@ export function OrganizationActivityPanel({
           ) : (
             <div className="flex flex-col divide-y divide-border">
               {activityLogs.map((log) => (
-                <div key={log.id} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                <div
+                  key={log.id}
+                  className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center"
+                >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex size-7 items-center justify-center rounded-full bg-primary/10">
                       <Clock className="size-3.5 text-primary" />
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-foreground">{log.action}</span>
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                        <span className="font-medium text-sm text-foreground">
+                          {log.action}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] uppercase font-mono"
+                        >
                           {log.entityType}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{log.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.description}
+                      </p>
                       {log.actorEmail && (
                         <span className="text-[11px] text-muted-foreground/80">
                           Actor: {log.actorName || log.actorEmail}
@@ -151,7 +171,9 @@ export function OrganizationActivityPanel({
                       })}
                     </span>
                     <Badge
-                      variant={log.status === "SUCCESS" ? "secondary" : "destructive"}
+                      variant={
+                        log.status === "SUCCESS" ? "secondary" : "destructive"
+                      }
                       className="text-[10px]"
                     >
                       {log.status}

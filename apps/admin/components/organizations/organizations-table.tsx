@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useMemo, useState } from "react"
-import Link from "next/link"
-import { Search, ArrowRight } from "lucide-react"
-import { Input } from "@repo/ui/components/ui/input"
-import { Badge } from "@repo/ui/components/ui/badge"
+import { useMemo, useState } from "react";
+import Link from "next/link";
+import { Search, ArrowRight } from "lucide-react";
+import { Input } from "@repo/ui/components/ui/input";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -12,36 +12,43 @@ import {
   TableHead,
   TableHeader,
   TableRow,
-} from "@repo/ui/components/ui/table"
+} from "@repo/ui/components/ui/table";
 
 interface OrganizationRow {
-  id: string
-  name: string
-  slug: string
-  isSuspended: boolean
-  acquisitionSource?: string | null
-  createdAt: Date
-  _count: { members: number; products: number }
+  id: string;
+  name: string;
+  slug: string;
+  isSuspended: boolean;
+  acquisitionSource?: string | null;
+  createdAt: Date;
+  _count: { members: number; products: number };
 }
 
-export function OrganizationsTable({ organizations }: { organizations: OrganizationRow[] }) {
-  const [query, setQuery] = useState("")
+export function OrganizationsTable({
+  organizations,
+}: {
+  organizations: OrganizationRow[];
+}) {
+  const [query, setQuery] = useState("");
 
   const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase()
-    if (!q) return organizations
+    const q = query.trim().toLowerCase();
+    if (!q) return organizations;
     return organizations.filter(
       (org) =>
         org.name.toLowerCase().includes(q) ||
         org.slug.toLowerCase().includes(q) ||
         (org.acquisitionSource || "Direct / Organic").toLowerCase().includes(q),
-    )
-  }, [organizations, query])
+    );
+  }, [organizations, query]);
 
   return (
     <div className="flex flex-col gap-4">
       <div className="relative max-w-sm">
-        <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+        <Search
+          className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+          aria-hidden="true"
+        />
         <Input
           value={query}
           onChange={(e) => setQuery(e.target.value)}
@@ -67,7 +74,10 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
           <TableBody>
             {filtered.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={7} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={7}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
                   No organizations found.
                 </TableCell>
               </TableRow>
@@ -75,9 +85,16 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
               filtered.map((org) => (
                 <TableRow key={org.id} className="group">
                   <TableCell>
-                    <Link href={`/organizations/${org.id}`} className="flex flex-col gap-0.5">
-                      <span className="font-medium text-foreground group-hover:underline">{org.name}</span>
-                      <span className="text-xs text-muted-foreground">{org.slug}</span>
+                    <Link
+                      href={`/organizations/${org.id}`}
+                      className="flex flex-col gap-0.5"
+                    >
+                      <span className="font-medium text-foreground group-hover:underline">
+                        {org.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {org.slug}
+                      </span>
                     </Link>
                   </TableCell>
                   <TableCell>
@@ -85,13 +102,20 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
                       {org.acquisitionSource || "Direct / Organic"}
                     </Badge>
                   </TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">{org._count.members}</TableCell>
-                  <TableCell className="tabular-nums text-muted-foreground">{org._count.products}</TableCell>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {org._count.members}
+                  </TableCell>
+                  <TableCell className="tabular-nums text-muted-foreground">
+                    {org._count.products}
+                  </TableCell>
                   <TableCell>
                     {org.isSuspended ? (
                       <Badge variant="destructive">Suspended</Badge>
                     ) : (
-                      <Badge variant="secondary" className="text-muted-foreground">
+                      <Badge
+                        variant="secondary"
+                        className="text-muted-foreground"
+                      >
                         Active
                       </Badge>
                     )}
@@ -100,7 +124,10 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
                     {new Date(org.createdAt).toLocaleDateString()}
                   </TableCell>
                   <TableCell>
-                    <Link href={`/organizations/${org.id}`} aria-label={`View ${org.name}`}>
+                    <Link
+                      href={`/organizations/${org.id}`}
+                      aria-label={`View ${org.name}`}
+                    >
                       <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
                     </Link>
                   </TableCell>
@@ -111,5 +138,5 @@ export function OrganizationsTable({ organizations }: { organizations: Organizat
         </Table>
       </div>
     </div>
-  )
+  );
 }

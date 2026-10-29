@@ -3,7 +3,8 @@ import { createAuthClient } from "better-auth/react";
 function getValidAuthUrl(url: string | undefined, defaultUrl: string): string {
   if (!url || typeof url !== "string") return defaultUrl;
   if (url.includes("PLACEHOLDER")) return defaultUrl;
-  if (!url.startsWith("http://") && !url.startsWith("https://")) return defaultUrl;
+  if (!url.startsWith("http://") && !url.startsWith("https://"))
+    return defaultUrl;
   return url;
 }
 

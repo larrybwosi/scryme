@@ -84,7 +84,10 @@ export async function defineTier(input: Tier) {
     limits: input.limits || {},
     features: input.features || [],
     trialDays: input.trialDays != null ? Number(input.trialDays) : undefined,
-    annualDiscountPercent: input.annualDiscountPercent != null ? Number(input.annualDiscountPercent) : undefined,
+    annualDiscountPercent:
+      input.annualDiscountPercent != null
+        ? Number(input.annualDiscountPercent)
+        : undefined,
     taxPercent: input.taxPercent != null ? Number(input.taxPercent) : undefined,
   };
 
@@ -267,7 +270,11 @@ export async function getOrganizationEffectivePrice(
 
   if (sub?.isCustomPrice) {
     let basePrice = 0;
-    if (durationMonths >= 12 && sub.customYearlyPrice != null && sub.customYearlyPrice > 0) {
+    if (
+      durationMonths >= 12 &&
+      sub.customYearlyPrice != null &&
+      sub.customYearlyPrice > 0
+    ) {
       basePrice = sub.customYearlyPrice * (durationMonths / 12);
     } else if (sub.customMonthlyPrice != null && sub.customMonthlyPrice > 0) {
       basePrice = sub.customMonthlyPrice * durationMonths;
@@ -346,7 +353,9 @@ export async function recordCustomPayment(input: {
 }) {
   await requireSuperAdmin();
 
-  const org = await db.organization.findUnique({ where: { id: input.organizationId } });
+  const org = await db.organization.findUnique({
+    where: { id: input.organizationId },
+  });
   if (!org) {
     throw new Error(`Organization with ID ${input.organizationId} not found`);
   }
@@ -374,7 +383,8 @@ export async function recordCustomPayment(input: {
         reference: input.reference,
         status: "SUCCESS",
         resultCode: 0,
-        resultDescription: input.notes || "Admin recorded custom M-Pesa payment",
+        resultDescription:
+          input.notes || "Admin recorded custom M-Pesa payment",
         mpesaReceiptNumber: input.reference,
         transactionDate: new Date(),
         saleData: {
@@ -420,12 +430,27 @@ export async function getSystemPaymentConfigs(): Promise<SystemPaymentConfigs> {
   const defaults: SystemPaymentConfigs = {
     enabledMethods: ["mpesa", "card", "bank_transfer"],
     mpesa: {
-      consumerKey: process.env.SYSTEM_MPESA_CONSUMER_KEY || process.env.MPESA_CONSUMER_KEY || "",
-      consumerSecret: process.env.SYSTEM_MPESA_CONSUMER_SECRET || process.env.MPESA_CONSUMER_SECRET || "",
-      shortCode: process.env.SYSTEM_MPESA_SHORTCODE || process.env.MPESA_SHORTCODE || process.env.MPESA_BUSINESS_SHORTCODE || "",
-      passKey: process.env.SYSTEM_MPESA_PASSKEY || process.env.MPESA_PASSKEY || "",
-      type: ((process.env.SYSTEM_MPESA_TYPE || process.env.MPESA_TYPE || "PAYBILL") as "PAYBILL" | "TILL"),
-      environment: ((process.env.MPESA_ENVIRONMENT || "SANDBOX") as "SANDBOX" | "PRODUCTION"),
+      consumerKey:
+        process.env.SYSTEM_MPESA_CONSUMER_KEY ||
+        process.env.MPESA_CONSUMER_KEY ||
+        "",
+      consumerSecret:
+        process.env.SYSTEM_MPESA_CONSUMER_SECRET ||
+        process.env.MPESA_CONSUMER_SECRET ||
+        "",
+      shortCode:
+        process.env.SYSTEM_MPESA_SHORTCODE ||
+        process.env.MPESA_SHORTCODE ||
+        process.env.MPESA_BUSINESS_SHORTCODE ||
+        "",
+      passKey:
+        process.env.SYSTEM_MPESA_PASSKEY || process.env.MPESA_PASSKEY || "",
+      type: (process.env.SYSTEM_MPESA_TYPE ||
+        process.env.MPESA_TYPE ||
+        "PAYBILL") as "PAYBILL" | "TILL",
+      environment: (process.env.MPESA_ENVIRONMENT || "SANDBOX") as
+        | "SANDBOX"
+        | "PRODUCTION",
     },
     stripe: {
       publishableKey: process.env.STRIPE_PUBLISHABLE_KEY || "",
@@ -434,14 +459,17 @@ export async function getSystemPaymentConfigs(): Promise<SystemPaymentConfigs> {
     },
     dodo: {
       apiKey: process.env.DODO_PAYMENTS_API_KEY || "",
-      environment: (process.env.DODO_PAYMENTS_MODE || "sandbox") as "sandbox" | "live",
+      environment: (process.env.DODO_PAYMENTS_MODE || "sandbox") as
+        | "sandbox"
+        | "live",
     },
     bankTransfer: {
       bankName: "Standard Chartered Bank",
       accountName: "Scryme Technologies Ltd",
       accountNumber: "0100000000000",
       swiftCode: "SCBLKENX",
-      instructions: "Include organization slug or invoice reference in payment remarks.",
+      instructions:
+        "Include organization slug or invoice reference in payment remarks.",
     },
   };
 
@@ -455,7 +483,10 @@ export async function getSystemPaymentConfigs(): Promise<SystemPaymentConfigs> {
       mpesa: { ...defaults.mpesa, ...(parsed.mpesa || {}) },
       stripe: { ...defaults.stripe, ...(parsed.stripe || {}) },
       dodo: { ...defaults.dodo, ...(parsed.dodo || {}) },
-      bankTransfer: { ...defaults.bankTransfer, ...(parsed.bankTransfer || {}) },
+      bankTransfer: {
+        ...defaults.bankTransfer,
+        ...(parsed.bankTransfer || {}),
+      },
     };
   } catch {
     return defaults;
@@ -519,13 +550,18 @@ export async function getDefaultQuotaAllocations(): Promise<DefaultQuotaAllocati
   }
 }
 
-export async function saveDefaultQuotaAllocations(allocations: DefaultQuotaAllocations) {
+export async function saveDefaultQuotaAllocations(
+  allocations: DefaultQuotaAllocations,
+) {
   await requireSuperAdmin();
 
   await db.globalSetting.upsert({
     where: { key: "system:default_quotas" },
     update: { value: JSON.stringify(allocations) },
-    create: { key: "system:default_quotas", value: JSON.stringify(allocations) },
+    create: {
+      key: "system:default_quotas",
+      value: JSON.stringify(allocations),
+    },
   });
 
   revalidatePath("/billing");
@@ -534,7 +570,6 @@ export async function saveDefaultQuotaAllocations(allocations: DefaultQuotaAlloc
 }
 
 export async function getSystemMpesaCredentials() {
-
   const setting = await db.globalSetting.findUnique({
     where: { key: "system:mpesa" },
   });
@@ -542,7 +577,11 @@ export async function getSystemMpesaCredentials() {
   if (setting?.value) {
     try {
       const parsed = JSON.parse(setting.value);
-      if (parsed.mpesaConsumerKey && parsed.mpesaConsumerSecret && parsed.mpesaShortCode) {
+      if (
+        parsed.mpesaConsumerKey &&
+        parsed.mpesaConsumerSecret &&
+        parsed.mpesaShortCode
+      ) {
         return parsed;
       }
     } catch {
@@ -550,12 +589,23 @@ export async function getSystemMpesaCredentials() {
     }
   }
 
-  const envKey = process.env.SYSTEM_MPESA_CONSUMER_KEY || process.env.MPESA_CONSUMER_KEY;
-  const envSecret = process.env.SYSTEM_MPESA_CONSUMER_SECRET || process.env.MPESA_CONSUMER_SECRET;
-  const envShortCode = process.env.SYSTEM_MPESA_SHORTCODE || process.env.MPESA_SHORTCODE || process.env.MPESA_BUSINESS_SHORTCODE;
-  const envPassKey = process.env.SYSTEM_MPESA_PASSKEY || process.env.MPESA_PASSKEY;
-  const envType = (process.env.SYSTEM_MPESA_TYPE || process.env.MPESA_TYPE || "PAYBILL") as "PAYBILL" | "TILL";
-  const envEnv = (process.env.MPESA_ENVIRONMENT || "SANDBOX") as "SANDBOX" | "PRODUCTION";
+  const envKey =
+    process.env.SYSTEM_MPESA_CONSUMER_KEY || process.env.MPESA_CONSUMER_KEY;
+  const envSecret =
+    process.env.SYSTEM_MPESA_CONSUMER_SECRET ||
+    process.env.MPESA_CONSUMER_SECRET;
+  const envShortCode =
+    process.env.SYSTEM_MPESA_SHORTCODE ||
+    process.env.MPESA_SHORTCODE ||
+    process.env.MPESA_BUSINESS_SHORTCODE;
+  const envPassKey =
+    process.env.SYSTEM_MPESA_PASSKEY || process.env.MPESA_PASSKEY;
+  const envType = (process.env.SYSTEM_MPESA_TYPE ||
+    process.env.MPESA_TYPE ||
+    "PAYBILL") as "PAYBILL" | "TILL";
+  const envEnv = (process.env.MPESA_ENVIRONMENT || "SANDBOX") as
+    | "SANDBOX"
+    | "PRODUCTION";
 
   if (envKey && envSecret && envShortCode) {
     return {
@@ -580,7 +630,9 @@ export async function initiateAdminMpesaPayment(input: {
 }) {
   await requireSuperAdmin();
 
-  const org = await db.organization.findUnique({ where: { id: input.organizationId } });
+  const org = await db.organization.findUnique({
+    where: { id: input.organizationId },
+  });
   if (!org) {
     throw new Error(`Organization with ID ${input.organizationId} not found`);
   }
@@ -589,7 +641,9 @@ export async function initiateAdminMpesaPayment(input: {
     where: { organizationId: input.organizationId },
   });
   if (!firstMember) {
-    throw new Error(`Organization "${input.organizationId}" has no members to associate payment with`);
+    throw new Error(
+      `Organization "${input.organizationId}" has no members to associate payment with`,
+    );
   }
 
   const creds = await getSystemMpesaCredentials();
@@ -624,7 +678,8 @@ export async function initiateAdminMpesaPayment(input: {
       paymentId: payReq.id,
       reference,
       isSimulated: true,
-      message: "M-Pesa push initiated in test mode (no live Safaricom credentials configured).",
+      message:
+        "M-Pesa push initiated in test mode (no live Safaricom credentials configured).",
     };
   }
 
@@ -632,8 +687,11 @@ export async function initiateAdminMpesaPayment(input: {
   const client = new MpesaClient(creds);
 
   const isDev = process.env.NODE_ENV === "development";
-  const defaultCallbackBase = isDev ? "http://localhost:4000" : "https://api.scryme.tech";
-  const callbackBase = process.env.MPESA_CALLBACK_BASE_URL || defaultCallbackBase;
+  const defaultCallbackBase = isDev
+    ? "http://localhost:4000"
+    : "https://api.scryme.tech";
+  const callbackBase =
+    process.env.MPESA_CALLBACK_BASE_URL || defaultCallbackBase;
   const callbackUrl = `${callbackBase}/api/v3/${org.slug}/payments/webhooks/mpesa/stkpush/admin-${reference}`;
 
   const stkRes = await client.initiateSTKPush({
@@ -691,7 +749,11 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
   }
 
   // Handle simulated STK push or live STK Push check
-  const saleData = payReq.saleData as { tierSlug?: string; durationMonths?: number; isSimulated?: boolean } | null;
+  const saleData = payReq.saleData as {
+    tierSlug?: string;
+    durationMonths?: number;
+    isSimulated?: boolean;
+  } | null;
 
   if (saleData?.isSimulated) {
     // If simulated, auto-fulfill after check to allow testing seamlessly
@@ -709,7 +771,9 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
 
       if (saleData.tierSlug && saleData.tierSlug !== "none") {
         const periodEnd = new Date();
-        periodEnd.setMonth(periodEnd.getMonth() + (saleData.durationMonths || 12));
+        periodEnd.setMonth(
+          periodEnd.getMonth() + (saleData.durationMonths || 12),
+        );
 
         await tx.subscription.upsert({
           where: { organizationId: payReq.organizationId },
@@ -749,14 +813,17 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
             data: {
               status: "SUCCESS",
               resultCode: 0,
-              resultDescription: queryRes.ResultDesc || "STK Push payment verified",
+              resultDescription:
+                queryRes.ResultDesc || "STK Push payment verified",
               transactionDate: new Date(),
             },
           });
 
           if (saleData?.tierSlug && saleData.tierSlug !== "none") {
             const periodEnd = new Date();
-            periodEnd.setMonth(periodEnd.getMonth() + (saleData.durationMonths || 12));
+            periodEnd.setMonth(
+              periodEnd.getMonth() + (saleData.durationMonths || 12),
+            );
 
             await tx.subscription.upsert({
               where: { organizationId: payReq.organizationId },
@@ -786,7 +853,8 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
           data: {
             status: "FAILED",
             resultCode: Number(queryRes.ResultCode) || 1,
-            resultDescription: queryRes.ResultDesc || "STK Push failed or cancelled",
+            resultDescription:
+              queryRes.ResultDesc || "STK Push failed or cancelled",
           },
         });
         return { status: "FAILED", payment: updated };
@@ -798,7 +866,6 @@ export async function checkAdminMpesaPaymentStatus(checkoutRequestId: string) {
 
   return { status: "PENDING", payment: payReq };
 }
-
 
 export type PricingConfigData = {
   title?: string;
@@ -845,11 +912,19 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         badge: "Global USD",
         growth: {
           monthly: { amount: "$599", period: "/ month" },
-          annual: { amount: "$499", period: "/ month", billedNote: "Billed annually ($5,988/yr)" },
+          annual: {
+            amount: "$499",
+            period: "/ month",
+            billedNote: "Billed annually ($5,988/yr)",
+          },
         },
         scale: {
           monthly: { amount: "$1,799", period: "/ month" },
-          annual: { amount: "$1,499", period: "/ month", billedNote: "Billed annually ($17,988/yr)" },
+          annual: {
+            amount: "$1,499",
+            period: "/ month",
+            billedNote: "Billed annually ($17,988/yr)",
+          },
         },
         enterprise: {
           monthly: { amount: "Custom", period: "" },
@@ -863,11 +938,19 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         badge: "M-Pesa Direct",
         growth: {
           monthly: { amount: "KSh 78,000", period: "/ month" },
-          annual: { amount: "KSh 65,000", period: "/ month", billedNote: "Billed annually (KSh 780,000/yr)" },
+          annual: {
+            amount: "KSh 65,000",
+            period: "/ month",
+            billedNote: "Billed annually (KSh 780,000/yr)",
+          },
         },
         scale: {
           monthly: { amount: "KSh 234,000", period: "/ month" },
-          annual: { amount: "KSh 195,000", period: "/ month", billedNote: "Billed annually (KSh 2,340,000/yr)" },
+          annual: {
+            amount: "KSh 195,000",
+            period: "/ month",
+            billedNote: "Billed annually (KSh 2,340,000/yr)",
+          },
         },
         enterprise: {
           monthly: { amount: "Custom", period: "" },
@@ -881,11 +964,19 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         badge: "Eurozone SEPA",
         growth: {
           monthly: { amount: "€550", period: "/ month" },
-          annual: { amount: "€460", period: "/ month", billedNote: "Billed annually (€5,520/yr)" },
+          annual: {
+            amount: "€460",
+            period: "/ month",
+            billedNote: "Billed annually (€5,520/yr)",
+          },
         },
         scale: {
           monthly: { amount: "€1,650", period: "/ month" },
-          annual: { amount: "€1,380", period: "/ month", billedNote: "Billed annually (€16,560/yr)" },
+          annual: {
+            amount: "€1,380",
+            period: "/ month",
+            billedNote: "Billed annually (€16,560/yr)",
+          },
         },
         enterprise: {
           monthly: { amount: "Custom", period: "" },

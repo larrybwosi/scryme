@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -15,13 +15,13 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog"
-import { setGlobalSetting } from "@/app/actions/settings"
+} from "@repo/ui/components/ui/dialog";
+import { setGlobalSetting } from "@/app/actions/settings";
 
 export interface GlobalSettingRow {
-  key: string
-  value: string
-  updatedAt: Date
+  key: string;
+  value: string;
+  updatedAt: Date;
 }
 
 export function GlobalSettingDialog({
@@ -29,34 +29,36 @@ export function GlobalSettingDialog({
   open,
   onOpenChange,
 }: {
-  setting?: GlobalSettingRow | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  setting?: GlobalSettingRow | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter()
-  const isEditing = !!setting
-  const [isPending, setIsPending] = useState(false)
-  const [key, setKey] = useState(setting?.key ?? "")
-  const [value, setValue] = useState(setting?.value ?? "")
+  const router = useRouter();
+  const isEditing = !!setting;
+  const [isPending, setIsPending] = useState(false);
+  const [key, setKey] = useState(setting?.key ?? "");
+  const [value, setValue] = useState(setting?.value ?? "");
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!key.trim()) return
+    e.preventDefault();
+    if (!key.trim()) return;
 
-    setIsPending(true)
+    setIsPending(true);
     try {
-      await setGlobalSetting(key.trim(), value)
-      toast.success(`Setting "${key}" saved`)
-      onOpenChange(false)
+      await setGlobalSetting(key.trim(), value);
+      toast.success(`Setting "${key}" saved`);
+      onOpenChange(false);
       if (!isEditing) {
-        setKey("")
-        setValue("")
+        setKey("");
+        setValue("");
       }
-      router.refresh()
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save setting")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to save setting",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -65,7 +67,11 @@ export function GlobalSettingDialog({
       <DialogContent className="sm:max-w-lg">
         <form onSubmit={handleSubmit}>
           <DialogHeader>
-            <DialogTitle>{isEditing ? `Edit Setting: ${setting?.key}` : "Add Global Setting"}</DialogTitle>
+            <DialogTitle>
+              {isEditing
+                ? `Edit Setting: ${setting?.key}`
+                : "Add Global Setting"}
+            </DialogTitle>
             <DialogDescription>
               System-wide key-value configuration setting.
             </DialogDescription>
@@ -98,16 +104,27 @@ export function GlobalSettingDialog({
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" disabled={isPending || !key.trim()} className="gap-2">
-              {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            <Button
+              type="submit"
+              disabled={isPending || !key.trim()}
+              className="gap-2"
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Save setting
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

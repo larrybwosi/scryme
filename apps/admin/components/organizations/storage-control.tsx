@@ -1,71 +1,98 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { HardDrive, Loader2, Save, Ban, CheckCircle2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { updateOrganizationStorageSettings } from "@/app/actions/organizations"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { HardDrive, Loader2, Save, Ban, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { updateOrganizationStorageSettings } from "@/app/actions/organizations";
 
 interface StorageControlProps {
-  organizationId: string
+  organizationId: string;
   storage: {
-    usedBytes: number
-    usedMB: number
-    usedGB: number
-    fileCount: number
-    limitMB: number | null
-    isStorageDisabled: boolean
-  }
+    usedBytes: number;
+    usedMB: number;
+    usedGB: number;
+    fileCount: number;
+    limitMB: number | null;
+    isStorageDisabled: boolean;
+  };
 }
 
-export function StorageControl({ organizationId, storage }: StorageControlProps) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
+export function StorageControl({
+  organizationId,
+  storage,
+}: StorageControlProps) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
   const [limitMB, setLimitMB] = useState<string>(
     storage.limitMB != null ? String(storage.limitMB) : "",
-  )
+  );
 
-  const usedMB = storage.usedMB
-  const limitMBVal = storage.limitMB
+  const usedMB = storage.usedMB;
+  const limitMBVal = storage.limitMB;
   const percentage =
-    limitMBVal && limitMBVal > 0 ? Math.min(Math.round((usedMB / limitMBVal) * 100), 100) : 0
+    limitMBVal && limitMBVal > 0
+      ? Math.min(Math.round((usedMB / limitMBVal) * 100), 100)
+      : 0;
 
-  const isOverLimit = limitMBVal != null && usedMB >= limitMBVal
+  const isOverLimit = limitMBVal != null && usedMB >= limitMBVal;
 
   async function handleSaveLimit() {
-    setIsPending(true)
+    setIsPending(true);
     try {
-      const parsed = limitMB.trim() === "" ? null : Number(limitMB)
+      const parsed = limitMB.trim() === "" ? null : Number(limitMB);
       if (parsed !== null && (Number.isNaN(parsed) || parsed < 0)) {
-        toast.error("Please enter a valid non-negative storage limit in MB")
-        return
+        toast.error("Please enter a valid non-negative storage limit in MB");
+        return;
       }
 
-      await updateOrganizationStorageSettings(organizationId, { limitMB: parsed })
-      toast.success("Storage limit updated successfully")
-      router.refresh()
+      await updateOrganizationStorageSettings(organizationId, {
+        limitMB: parsed,
+      });
+      toast.success("Storage limit updated successfully");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update storage limit")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update storage limit",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
   async function handleToggleStorageAccess(disable: boolean) {
-    setIsPending(true)
+    setIsPending(true);
     try {
-      await updateOrganizationStorageSettings(organizationId, { disableStorage: disable })
-      toast.success(disable ? "Storage access disabled for organization" : "Storage access enabled")
-      router.refresh()
+      await updateOrganizationStorageSettings(organizationId, {
+        disableStorage: disable,
+      });
+      toast.success(
+        disable
+          ? "Storage access disabled for organization"
+          : "Storage access enabled",
+      );
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update storage access")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update storage access",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -94,7 +121,8 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
           )}
         </div>
         <CardDescription>
-          Monitor file upload storage usage from RustFS/attachments, configure quota limits, or block uploads.
+          Monitor file upload storage usage from RustFS/attachments, configure
+          quota limits, or block uploads.
         </CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-5">
@@ -110,7 +138,11 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
             <div className="h-2 w-full overflow-hidden rounded-full bg-secondary">
               <div
                 className={`h-full transition-all ${
-                  percentage >= 90 ? "bg-destructive" : percentage >= 75 ? "bg-amber-500" : "bg-primary"
+                  percentage >= 90
+                    ? "bg-destructive"
+                    : percentage >= 75
+                      ? "bg-amber-500"
+                      : "bg-primary"
                 }`}
                 style={{ width: `${percentage}%` }}
               />
@@ -118,13 +150,20 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
           ) : null}
           <div className="flex items-center justify-between text-xs text-muted-foreground pt-1">
             <span>Total stored files: {storage.fileCount}</span>
-            {limitMBVal != null ? <span>{percentage}% of limit used</span> : <span>No cap set</span>}
+            {limitMBVal != null ? (
+              <span>{percentage}% of limit used</span>
+            ) : (
+              <span>No cap set</span>
+            )}
           </div>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="storage-limit-mb" className="text-xs text-muted-foreground">
+            <Label
+              htmlFor="storage-limit-mb"
+              className="text-xs text-muted-foreground"
+            >
               Storage Limit (MB)
             </Label>
             <div className="flex gap-2">
@@ -137,9 +176,17 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
                 onChange={(e) => setLimitMB(e.target.value)}
                 disabled={isPending}
               />
-              <Button size="sm" onClick={handleSaveLimit} disabled={isPending} className="gap-1.5 shrink-0">
+              <Button
+                size="sm"
+                onClick={handleSaveLimit}
+                disabled={isPending}
+                className="gap-1.5 shrink-0"
+              >
                 {isPending ? (
-                  <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
+                  <Loader2
+                    className="size-3.5 animate-spin"
+                    aria-hidden="true"
+                  />
                 ) : (
                   <Save className="size-3.5" aria-hidden="true" />
                 )}
@@ -149,7 +196,9 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
           </div>
 
           <div className="flex flex-col justify-end gap-1.5">
-            <Label className="text-xs text-muted-foreground">Upload Access Control</Label>
+            <Label className="text-xs text-muted-foreground">
+              Upload Access Control
+            </Label>
             {storage.isStorageDisabled ? (
               <Button
                 variant="outline"
@@ -175,5 +224,5 @@ export function StorageControl({ organizationId, storage }: StorageControlProps)
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

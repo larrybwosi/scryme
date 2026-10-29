@@ -1,13 +1,13 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import {
   Dialog,
   DialogContent,
@@ -15,42 +15,44 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/ui/dialog"
-import { banUser } from "@/app/actions/users"
+} from "@repo/ui/components/ui/dialog";
+import { banUser } from "@/app/actions/users";
 
 export function BanUserDialog({
   user,
   open,
   onOpenChange,
 }: {
-  user: { id: string; name: string | null; email: string } | null
-  open: boolean
-  onOpenChange: (open: boolean) => void
+  user: { id: string; name: string | null; email: string } | null;
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
 }) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [banReason, setBanReason] = useState("")
-  const [banExpires, setBanExpires] = useState("")
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [banReason, setBanReason] = useState("");
+  const [banExpires, setBanExpires] = useState("");
 
   async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault()
-    if (!user) return
+    e.preventDefault();
+    if (!user) return;
 
-    setIsPending(true)
+    setIsPending(true);
     try {
       await banUser(user.id, {
         banReason: banReason || undefined,
         banExpires: banExpires || undefined,
-      })
-      toast.success(`User ${user.name || user.email} has been banned`)
-      onOpenChange(false)
-      setBanReason("")
-      setBanExpires("")
-      router.refresh()
+      });
+      toast.success(`User ${user.name || user.email} has been banned`);
+      onOpenChange(false);
+      setBanReason("");
+      setBanExpires("");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to ban user")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to ban user",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -61,7 +63,8 @@ export function BanUserDialog({
           <DialogHeader>
             <DialogTitle>Ban User</DialogTitle>
             <DialogDescription>
-              Ban {user?.name || user?.email}. This will disable their account and suspend their organization memberships.
+              Ban {user?.name || user?.email}. This will disable their account
+              and suspend their organization memberships.
             </DialogDescription>
           </DialogHeader>
 
@@ -85,21 +88,35 @@ export function BanUserDialog({
                 value={banExpires}
                 onChange={(e) => setBanExpires(e.target.value)}
               />
-              <p className="text-xs text-muted-foreground">Leave empty for a permanent ban.</p>
+              <p className="text-xs text-muted-foreground">
+                Leave empty for a permanent ban.
+              </p>
             </div>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="ghost" onClick={() => onOpenChange(false)} disabled={isPending}>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+              disabled={isPending}
+            >
               Cancel
             </Button>
-            <Button type="submit" variant="destructive" disabled={isPending} className="gap-2">
-              {isPending ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+            <Button
+              type="submit"
+              variant="destructive"
+              disabled={isPending}
+              className="gap-2"
+            >
+              {isPending ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Ban user
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
-  )
+  );
 }

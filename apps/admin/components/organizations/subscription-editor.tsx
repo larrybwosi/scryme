@@ -1,101 +1,140 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, Save, DollarSign, SlidersHorizontal } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Label } from "@repo/ui/components/ui/label"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
-import { Input } from "@repo/ui/components/ui/input"
-import { Switch } from "@repo/ui/components/ui/switch"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { RecordPaymentDialog } from "@/components/billing/record-payment-dialog"
-import { updateOrganizationSubscription, type Tier } from "@/app/actions/billing"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Save, DollarSign, SlidersHorizontal } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Input } from "@repo/ui/components/ui/input";
+import { Switch } from "@repo/ui/components/ui/switch";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { RecordPaymentDialog } from "@/components/billing/record-payment-dialog";
+import {
+  updateOrganizationSubscription,
+  type Tier,
+} from "@/app/actions/billing";
 
 interface SubscriptionEditorProps {
-  organizationId: string
+  organizationId: string;
   subscription: {
-    tierSlug: string
-    dodoCustomerId: string | null
-    dodoSubscriptionId: string | null
-    dodoCurrentPeriodEnd: Date | null
-    isCustomPrice?: boolean
-    customMonthlyPrice?: number | null
-    customYearlyPrice?: number | null
-    billingInterval?: string | null
-    customCurrency?: string | null
-    customDiscountPercent?: number | null
-    customTaxPercent?: number | null
-    customNotes?: string | null
-  }
-  tiers: Tier[]
+    tierSlug: string;
+    dodoCustomerId: string | null;
+    dodoSubscriptionId: string | null;
+    dodoCurrentPeriodEnd: Date | null;
+    isCustomPrice?: boolean;
+    customMonthlyPrice?: number | null;
+    customYearlyPrice?: number | null;
+    billingInterval?: string | null;
+    customCurrency?: string | null;
+    customDiscountPercent?: number | null;
+    customTaxPercent?: number | null;
+    customNotes?: string | null;
+  };
+  tiers: Tier[];
 }
 
-export function SubscriptionEditor({ organizationId, subscription, tiers }: SubscriptionEditorProps) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [mpesaDialogOpen, setMpesaDialogOpen] = useState(false)
-  const [tierSlug, setTierSlug] = useState(subscription.tierSlug)
+export function SubscriptionEditor({
+  organizationId,
+  subscription,
+  tiers,
+}: SubscriptionEditorProps) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [mpesaDialogOpen, setMpesaDialogOpen] = useState(false);
+  const [tierSlug, setTierSlug] = useState(subscription.tierSlug);
   const [periodEnd, setPeriodEnd] = useState(
     subscription.dodoCurrentPeriodEnd
       ? new Date(subscription.dodoCurrentPeriodEnd).toISOString().slice(0, 10)
       : "",
-  )
+  );
 
   // Custom pricing state
-  const [isCustomPrice, setIsCustomPrice] = useState(subscription.isCustomPrice ?? false)
+  const [isCustomPrice, setIsCustomPrice] = useState(
+    subscription.isCustomPrice ?? false,
+  );
   const [customMonthlyPrice, setCustomMonthlyPrice] = useState<string>(
-    subscription.customMonthlyPrice != null ? String(subscription.customMonthlyPrice) : "",
-  )
+    subscription.customMonthlyPrice != null
+      ? String(subscription.customMonthlyPrice)
+      : "",
+  );
   const [customYearlyPrice, setCustomYearlyPrice] = useState<string>(
-    subscription.customYearlyPrice != null ? String(subscription.customYearlyPrice) : "",
-  )
+    subscription.customYearlyPrice != null
+      ? String(subscription.customYearlyPrice)
+      : "",
+  );
   const [billingInterval, setBillingInterval] = useState<"monthly" | "yearly">(
     (subscription.billingInterval as "monthly" | "yearly") || "monthly",
-  )
+  );
   const [customCurrency, setCustomCurrency] = useState<string>(
     subscription.customCurrency || "USD",
-  )
+  );
   const [customDiscountPercent, setCustomDiscountPercent] = useState<string>(
-    subscription.customDiscountPercent != null ? String(subscription.customDiscountPercent) : "",
-  )
+    subscription.customDiscountPercent != null
+      ? String(subscription.customDiscountPercent)
+      : "",
+  );
   const [customTaxPercent, setCustomTaxPercent] = useState<string>(
-    subscription.customTaxPercent != null ? String(subscription.customTaxPercent) : "",
-  )
+    subscription.customTaxPercent != null
+      ? String(subscription.customTaxPercent)
+      : "",
+  );
   const [customNotes, setCustomNotes] = useState<string>(
     subscription.customNotes || "",
-  )
+  );
 
   const availableTiers = tiers.some((t) => t.slug === "free")
     ? tiers
-    : [{ slug: "free", name: "Free", price: 0 }, ...tiers]
+    : [{ slug: "free", name: "Free", price: 0 }, ...tiers];
 
   async function handleSave() {
-    setIsPending(true)
+    setIsPending(true);
     try {
       await updateOrganizationSubscription(organizationId, {
         tierSlug,
         dodoCustomerId: subscription.dodoCustomerId || undefined,
         dodoSubscriptionId: subscription.dodoSubscriptionId || undefined,
-        dodoCurrentPeriodEnd: periodEnd ? new Date(periodEnd).toISOString() : undefined,
+        dodoCurrentPeriodEnd: periodEnd
+          ? new Date(periodEnd).toISOString()
+          : undefined,
         isCustomPrice,
-        customMonthlyPrice: customMonthlyPrice !== "" ? Number(customMonthlyPrice) : null,
-        customYearlyPrice: customYearlyPrice !== "" ? Number(customYearlyPrice) : null,
+        customMonthlyPrice:
+          customMonthlyPrice !== "" ? Number(customMonthlyPrice) : null,
+        customYearlyPrice:
+          customYearlyPrice !== "" ? Number(customYearlyPrice) : null,
         billingInterval,
         customCurrency,
-        customDiscountPercent: customDiscountPercent !== "" ? Number(customDiscountPercent) : null,
-        customTaxPercent: customTaxPercent !== "" ? Number(customTaxPercent) : null,
+        customDiscountPercent:
+          customDiscountPercent !== "" ? Number(customDiscountPercent) : null,
+        customTaxPercent:
+          customTaxPercent !== "" ? Number(customTaxPercent) : null,
         customNotes: customNotes || null,
-      })
-      toast.success("Subscription & Custom Pricing updated successfully")
-      router.refresh()
+      });
+      toast.success("Subscription & Custom Pricing updated successfully");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to update subscription")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to update subscription",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -106,14 +145,18 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
             Subscription & Pricing
             {isCustomPrice && (
-              <Badge variant="secondary" className="bg-primary/10 text-primary border-primary/20 text-xs">
+              <Badge
+                variant="secondary"
+                className="bg-primary/10 text-primary border-primary/20 text-xs"
+              >
                 Custom Pricing Active
               </Badge>
             )}
           </CardTitle>
         </div>
         <CardDescription>
-          Configure plan tier assignment, custom monthly/yearly rates, and billing cycles for this organization.
+          Configure plan tier assignment, custom monthly/yearly rates, and
+          billing cycles for this organization.
         </CardDescription>
       </CardHeader>
 
@@ -155,7 +198,8 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
                 Custom Pricing Override
               </div>
               <p className="text-xs text-muted-foreground">
-                Override standard plan prices with negotiated monthly or yearly rates for this tenant.
+                Override standard plan prices with negotiated monthly or yearly
+                rates for this tenant.
               </p>
             </div>
             <Switch
@@ -210,7 +254,9 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
                   </Label>
                   <Select
                     value={billingInterval}
-                    onValueChange={(val: "monthly" | "yearly") => setBillingInterval(val)}
+                    onValueChange={(val: "monthly" | "yearly") =>
+                      setBillingInterval(val)
+                    }
                   >
                     <SelectTrigger id="billing-interval">
                       <SelectValue placeholder="Monthly" />
@@ -233,7 +279,9 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
                     type="text"
                     placeholder="USD / KES"
                     value={customCurrency}
-                    onChange={(e) => setCustomCurrency(e.target.value.toUpperCase())}
+                    onChange={(e) =>
+                      setCustomCurrency(e.target.value.toUpperCase())
+                    }
                   />
                 </div>
 
@@ -300,7 +348,12 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
           >
             M-Pesa Payment
           </Button>
-          <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-2">
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isPending}
+            className="gap-2"
+          >
             {isPending ? (
               <Loader2 className="size-3.5 animate-spin" aria-hidden="true" />
             ) : (
@@ -319,5 +372,5 @@ export function SubscriptionEditor({ organizationId, subscription, tiers }: Subs
         />
       </CardContent>
     </Card>
-  )
+  );
 }
