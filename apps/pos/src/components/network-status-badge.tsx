@@ -49,16 +49,12 @@ export function NetworkStatusBadge() {
         };
       case 'disconnected':
       default:
-        return {
-          label: 'Hub Offline',
-          icon: <WifiOff className="w-3 h-3" />,
-          variant: 'secondary' as const,
-          className: 'bg-zinc-200 text-zinc-600 dark:bg-zinc-800 dark:text-zinc-400'
-        };
+        return null;
     }
   };
 
   const config = getStatusConfig();
+  if (!config) return null;
 
   return (
     <TooltipProvider>
