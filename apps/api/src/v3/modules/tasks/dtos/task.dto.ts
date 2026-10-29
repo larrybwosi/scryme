@@ -68,11 +68,6 @@ export class CreateTaskDto {
   @IsString()
   milestoneId?: string;
 
-  @ApiPropertyOptional({ example: 'cuid_milestone_id' })
-  @IsOptional()
-  @IsString()
-  milestoneId?: string;
-
   @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
   @IsOptional()
   @IsArray()

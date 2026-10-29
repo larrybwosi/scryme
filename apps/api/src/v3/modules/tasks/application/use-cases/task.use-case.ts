@@ -41,15 +41,6 @@ export class TaskUseCase {
       }
     }
 
-    if (dto.milestoneId) {
-      const milestone = await this.prisma.client.projectMilestone.findFirst({
-        where: { id: dto.milestoneId, organizationId, projectId: existing.projectId },
-      });
-      if (!milestone) {
-        throw new BadRequestException("Milestone not found within this project");
-      }
-    }
-
     if (dto.parentTaskId) {
       const parentTask = await this.prisma.client.task.findFirst({
         where: { id: dto.parentTaskId, organizationId, projectId: dto.projectId },
@@ -99,7 +90,6 @@ export class TaskUseCase {
         dueDate: dto.dueDate,
         estimatedHours: dto.estimatedHours,
         parentTaskId: dto.parentTaskId,
-        milestoneId: dto.milestoneId,
         milestoneId: dto.milestoneId,
         createdById: currentMemberId,
         assignees: dto.assigneeIds?.length
