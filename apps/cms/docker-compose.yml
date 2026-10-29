@@ -3,7 +3,7 @@ version: '3.8'
 services:
   cms:
     image: ghcr.io/larrybwosi/scryme/cms:${SCRYME_VERSION:-latest}
-    container_name: scryme-cms
+    container_name: ${INSTANCE_NAME:-scryme}-cms
     restart: always
     ports:
       - "${CMS_PORT:-3010}:3010"
