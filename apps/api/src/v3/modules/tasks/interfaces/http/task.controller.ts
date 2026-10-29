@@ -21,6 +21,7 @@ import {
   AddTaskDependencyDto,
   CreateTaskDto,
   CreateTaskLabelDto,
+  CreateTaskTimeEntryDto,
   ManageTaskAssigneesDto,
   TaskFilterDto,
   UpdateTaskDto,
@@ -164,5 +165,49 @@ export class TaskController {
       orgSlug: ctx.orgSlug,
       memberId: ctx.memberId || null,
     };
+  }
+  @Post(":id/time-entries")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Log time entry / hours on task" })
+  async addTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() dto: CreateTaskTimeEntryDto,
+  ) {
+    if (!ctx.memberId) {
+      throw new Error("Member ID required to log time entries");
+    }
+    return this.taskUseCase.addTimeEntry(ctx.organizationId, id, dto, ctx.memberId);
+  }
+
+  @Get(":id/time-entries")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List logged time entries on task" })
+  async listTimeEntries(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.taskUseCase.listTimeEntries(ctx.organizationId, id);
+  }
+
+  @Delete(":id/time-entries/:entryId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete a logged time entry on task" })
+  async deleteTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Param("entryId") entryId: string,
+  ) {
+    return this.taskUseCase.deleteTimeEntry(ctx.organizationId, id, entryId);
+  }
+
+  @Get(":id/subtasks")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get subtasks for a task" })
+  async getSubtasks(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.taskUseCase.getSubtasks(ctx.organizationId, id);
   }
 }
