@@ -1,64 +1,70 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { ProjectsAPI, Task } from "@/lib/api";
-import { CheckSquare, LayoutGrid, ListFilter, Plus, Clock, User, AlertCircle } from "lucide-react";
+import { useState, Suspense } from "react";
+import { useSearchParams } from "next/navigation";
+import { Task } from "@/lib/api";
+import { useTasks, useUpdateTaskStatus, useCreateTask } from "@/lib/hooks/use-projects";
+import { Plus, Clock, LayoutGrid, ListFilter } from "lucide-react";
 
 const COLUMNS: { id: Task["status"]; label: string; color: string }[] = [
-  { id: "BACKLOG", label: "Backlog", color: "text-slate-400 bg-slate-500/10 border-slate-500/20" },
-  { id: "TODO", label: "To Do", color: "text-amber-400 bg-amber-500/10 border-amber-500/20" },
-  { id: "IN_PROGRESS", label: "In Progress", color: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20" },
-  { id: "IN_REVIEW", label: "In Review", color: "text-purple-400 bg-purple-500/10 border-purple-500/20" },
-  { id: "DONE", label: "Done", color: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20" },
+  { id: "BACKLOG", label: "Backlog", color: "bg-slate-500/10 text-slate-400 border-slate-500/20" },
+  { id: "TODO", label: "To Do", color: "bg-amber-500/10 text-amber-400 border-amber-500/20" },
+  { id: "IN_PROGRESS", label: "In Progress", color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20" },
+  { id: "IN_REVIEW", label: "In Review", color: "bg-purple-500/10 text-purple-400 border-purple-500/20" },
+  { id: "DONE", label: "Done", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20" },
 ];
 
-export default function TasksPage() {
-  const [tasks, setTasks] = useState<Task[]>([]);
+function TasksContent() {
+  const searchParams = useSearchParams();
+  const projectId = searchParams.get("projectId") || "proj-1";
+
+  const { data: tasks = [], isLoading } = useTasks(projectId);
+  const updateStatusMutation = useUpdateTaskStatus(projectId);
+  const createTaskMutation = useCreateTask(projectId);
+
   const [viewMode, setViewMode] = useState<"kanban" | "list">("kanban");
   const [isModalOpen, setIsModalOpen] = useState(false);
+
+  // Form State
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskDescription, setNewTaskDescription] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("MEDIUM");
   const [newTaskStatus, setNewTaskStatus] = useState<Task["status"]>("TODO");
 
-  useEffect(() => {
-    ProjectsAPI.getProjectTasks("proj-1").then(setTasks);
-  }, []);
+  const handleStatusChange = (taskId: string, status: Task["status"]) => {
+    updateStatusMutation.mutate({ taskId, status });
+  };
 
-  const handleCreateTask = async (e: React.FormEvent) => {
+  const handleCreateTask = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    const created = await ProjectsAPI.createTask({
-      title: newTaskTitle,
-      description: newTaskDescription,
-      priority: newTaskPriority,
-      status: newTaskStatus,
-      projectId: "proj-1",
-    });
-
-    setTasks((prev) => [created, ...prev]);
-    setNewTaskTitle("");
-    setNewTaskDescription("");
-    setIsModalOpen(false);
-  };
-
-  const handleStatusChange = async (taskId: string, newStatus: Task["status"]) => {
-    setTasks((prev) =>
-      prev.map((t) => (t.id === taskId ? { ...t, status: newStatus } : t))
+    createTaskMutation.mutate(
+      {
+        title: newTaskTitle,
+        description: newTaskDescription,
+        priority: newTaskPriority,
+        status: newTaskStatus,
+        projectId,
+        estimatedHours: 8,
+      },
+      {
+        onSuccess: () => {
+          setNewTaskTitle("");
+          setNewTaskDescription("");
+          setIsModalOpen(false);
+        },
+      }
     );
-    await ProjectsAPI.updateTaskStatus(taskId, newStatus);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <CheckSquare className="h-6 w-6 text-indigo-400" /> Tasks & Kanban
-          </h1>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-100">Task Management</h1>
           <p className="text-sm text-slate-400 mt-1">
-            Manage project task boards, status columns, and sprint backlogs.
+            Manage task lifecycles, assignees, estimates, and Kanban workflow columns.
           </p>
         </div>
 
@@ -95,7 +101,9 @@ export default function TasksPage() {
         </div>
       </div>
 
-      {viewMode === "kanban" ? (
+      {isLoading ? (
+        <div className="py-12 text-center text-slate-500 text-sm">Loading project tasks...</div>
+      ) : viewMode === "kanban" ? (
         <div className="grid grid-cols-1 md:grid-cols-5 gap-4 overflow-x-auto pb-4">
           {COLUMNS.map((col) => {
             const colTasks = tasks.filter((t) => t.status === col.id);
@@ -268,9 +276,10 @@ export default function TasksPage() {
                 </button>
                 <button
                   type="submit"
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded text-xs font-medium shadow-md shadow-indigo-600/20"
+                  disabled={createTaskMutation.isPending}
+                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded text-xs font-medium shadow-md shadow-indigo-600/20 disabled:opacity-50"
                 >
-                  Save Task
+                  {createTaskMutation.isPending ? "Saving..." : "Save Task"}
                 </button>
               </div>
             </form>
@@ -278,5 +287,13 @@ export default function TasksPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function TasksPage() {
+  return (
+    <Suspense fallback={<div className="py-12 text-center text-slate-500 text-sm">Loading task workspace...</div>}>
+      <TasksContent />
+    </Suspense>
   );
 }
