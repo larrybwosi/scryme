@@ -7,6 +7,8 @@ import {
   getExpenseCategories,
   getInventoryLocations,
   getUtilityAccounts,
+  getCostCenters,
+  getPettyCashFunds,
 } from "../../actions/finance";
 import { ExpenseTable } from "../../../components/finance/expense-table";
 import { ExpenseDialog } from "../../../components/finance/expense-dialog";
@@ -24,23 +26,27 @@ export default async function ExpensesPage(props: {
     status?: string;
     categoryId?: string;
     locationId?: string;
+    costCenterId?: string;
     from?: string;
     to?: string;
   }>;
 }) {
   const searchParams = await props.searchParams;
-  const [expenses, categories, locations, utilityAccounts] = await Promise.all([
+  const [expenses, categories, locations, utilityAccounts, costCenters, pettyCashFunds] = await Promise.all([
     getExpenses({
       search: searchParams.q,
       status: searchParams.status,
       categoryId: searchParams.categoryId,
       locationId: searchParams.locationId,
+      costCenterId: searchParams.costCenterId,
       startDate: searchParams.from,
       endDate: searchParams.to,
     }),
     getExpenseCategories(),
     getInventoryLocations(),
     getUtilityAccounts(),
+    getCostCenters(),
+    getPettyCashFunds(),
   ]);
 
   return (
@@ -49,7 +55,7 @@ export default async function ExpensesPage(props: {
         title="Expenses"
         subtitle="Manage and track company spending"
         icon={<Receipt className="w-7 h-7" />}>
-        <ExpenseDialog categories={categories} utilityAccounts={utilityAccounts}>
+        <ExpenseDialog categories={categories} utilityAccounts={utilityAccounts} costCenters={costCenters} pettyCashFunds={pettyCashFunds}>
           <Button className="bg-[#34A853] hover:bg-[#2d9147]">
             <Plus className="w-4 h-4 mr-2" />
             Add Expense
@@ -57,7 +63,7 @@ export default async function ExpensesPage(props: {
         </ExpenseDialog>
       </PageHeader>
 
-      <ExpenseFilters categories={categories} locations={locations} />
+      <ExpenseFilters categories={categories} locations={locations} costCenters={costCenters} />
 
       <ExpenseTable expenses={expenses} />
     </div>

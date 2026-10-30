@@ -19,6 +19,9 @@ import {
   DropdownMenuTrigger,
 } from "@repo/ui/components/ui/dropdown-menu";
 import { Button } from "@repo/ui/components/ui/button";
+import { approveExpenseAction, rejectExpenseAction } from "../../app/actions/finance";
+import { toast } from "sonner";
+import { Check, X, Coins } from "lucide-react";
 
 interface ExpenseTableProps {
   expenses: any[];
@@ -50,6 +53,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
             <TableHead>Number</TableHead>
             <TableHead>Description</TableHead>
             <TableHead>Category</TableHead>
+            <TableHead>Cost Center</TableHead>
             <TableHead>Utility Account</TableHead>
             <TableHead>Location</TableHead>
             <TableHead>Amount</TableHead>
@@ -60,7 +64,7 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
         <TableBody>
           {expenses.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={10} className="text-center py-8 text-gray-500">
                 No expenses found
               </TableCell>
             </TableRow>
@@ -83,6 +87,19 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                   <Badge variant="outline">{expense.category.name}</Badge>
                 </TableCell>
                 <TableCell>
+                  {expense.costCenter ? (
+                    <Badge variant="secondary">{expense.costCenter.name}</Badge>
+                  ) : (
+                    <span className="text-zinc-400 italic text-xs">—</span>
+                  )}
+                </TableCell>
+                <TableCell>
+                  {expense.pettyCashFund && (
+                    <Badge variant="outline" className="mr-1 bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                      <Coins className="w-3 h-3" />
+                      Petty Cash
+                    </Badge>
+                  )}
                   {expense.utilityAccount ? (
                     <Badge variant="secondary" className="bg-amber-50 text-amber-700 border-amber-200 flex items-center gap-1 w-fit">
                       <Zap className="w-3 h-3 text-amber-500" />
@@ -118,7 +135,37 @@ export function ExpenseTable({ expenses }: ExpenseTableProps) {
                     <DropdownMenuContent align="end">
                       <DropdownMenuLabel>Actions</DropdownMenuLabel>
                       <DropdownMenuItem>View Details</DropdownMenuItem>
-                      <DropdownMenuItem>Download Receipt</DropdownMenuItem>
+                      {expense.receiptUrl && <DropdownMenuItem>Download Receipt</DropdownMenuItem>}
+                      {(expense.status === "PENDING" || expense.status === "PENDING_APPROVAL") && (
+                        <>
+                          <DropdownMenuItem
+                            className="text-green-600 font-medium"
+                            onClick={async () => {
+                              try {
+                                await approveExpenseAction(expense.id);
+                                toast.success("Expense approved");
+                              } catch (e: any) {
+                                toast.error(e.message || "Failed to approve expense");
+                              }
+                            }}>
+                            <Check className="w-4 h-4 mr-2" />
+                            Approve Expense
+                          </DropdownMenuItem>
+                          <DropdownMenuItem
+                            className="text-red-600 font-medium"
+                            onClick={async () => {
+                              try {
+                                await rejectExpenseAction(expense.id);
+                                toast.success("Expense rejected");
+                              } catch (e: any) {
+                                toast.error(e.message || "Failed to reject expense");
+                              }
+                            }}>
+                            <X className="w-4 h-4 mr-2" />
+                            Reject Expense
+                          </DropdownMenuItem>
+                        </>
+                      )}
                     </DropdownMenuContent>
                   </DropdownMenu>
                 </TableCell>

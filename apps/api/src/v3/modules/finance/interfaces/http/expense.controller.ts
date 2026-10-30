@@ -59,6 +59,40 @@ export class ExpenseController {
     return this.expenseUseCase.getExpenseCategories(req.organization.id);
   }
 
+  @Get("reports/summary")
+  @Permissions("finance:read")
+  @ApiOperation({ summary: "Get expense report summary" })
+  async getExpenseReportSummary(
+    @Req() req: any,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+  ) {
+    return this.expenseUseCase.getExpenseReportSummary(req.organization.id, {
+      startDate,
+      endDate,
+    });
+  }
+
+  @Post(":id/approve")
+  @Permissions("finance:write")
+  @ApiOperation({ summary: "Approve a pending expense" })
+  async approveExpense(@Req() req: any, @Param("id") id: string) {
+    const memberId = req.v3Context?.memberId || req.user?.memberId;
+    return this.expenseUseCase.approveExpense(req.organization.id, memberId, id);
+  }
+
+  @Post(":id/reject")
+  @Permissions("finance:write")
+  @ApiOperation({ summary: "Reject a pending expense" })
+  async rejectExpense(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body("reason") reason?: string,
+  ) {
+    const memberId = req.v3Context?.memberId || req.user?.memberId;
+    return this.expenseUseCase.rejectExpense(req.organization.id, memberId, id, reason);
+  }
+
   @Get(":id")
   @Permissions("finance:read")
   @ApiOperation({ summary: "Get expense details" })
