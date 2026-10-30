@@ -33,6 +33,9 @@ import {
 interface SubscriptionEditorProps {
   organizationId: string;
   subscription: {
+    status?: string | null;
+    trialStartedAt?: Date | string | null;
+    trialEndsAt?: Date | string | null;
     tierSlug: string;
     dodoCustomerId: string | null;
     dodoSubscriptionId: string | null;
@@ -58,6 +61,14 @@ export function SubscriptionEditor({
   const [isPending, setIsPending] = useState(false);
   const [mpesaDialogOpen, setMpesaDialogOpen] = useState(false);
   const [tierSlug, setTierSlug] = useState(subscription.tierSlug);
+  const [subStatus, setSubStatus] = useState<string>(
+    subscription.status || "ACTIVE",
+  );
+  const [trialEndsAt, setTrialEndsAt] = useState<string>(
+    subscription.trialEndsAt
+      ? new Date(subscription.trialEndsAt).toISOString().slice(0, 10)
+      : "",
+  );
   const [periodEnd, setPeriodEnd] = useState(
     subscription.dodoCurrentPeriodEnd
       ? new Date(subscription.dodoCurrentPeriodEnd).toISOString().slice(0, 10)
