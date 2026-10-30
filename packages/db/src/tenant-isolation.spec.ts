@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { runWithTenant, runWithSystemBypass, getTenantContext } from "./tenant-context";
 import { isTenantModel } from "./tenant-models";
-import { createTenantExtendedClient } from "./client";
+import { createTenantExtendedClient, isTransientDbError, executeWithRetry } from "./client";
 
 describe("Tenant Data Isolation - Database Level", () => {
   it("should return the correct active tenant context within runWithTenant", async () => {
@@ -140,6 +140,7 @@ describe("Tenant Data Isolation - Database Level", () => {
       expect(mockQuery).not.toHaveBeenCalled();
     });
   });
+
   it("should preserve nested relation filters like organization: { isSuspended: false } without flattening", async () => {
     const mockQuery = vi.fn().mockResolvedValue([]);
     const dummyBaseClient: any = {
@@ -172,5 +173,47 @@ describe("Tenant Data Isolation - Database Level", () => {
       expect(args.where.organizationId).toBe("org-aaa");
       expect(mockQuery).toHaveBeenCalledWith(args);
     });
+  });
+});
+
+describe("Transient DB Error Retry & Detection", () => {
+  it("should correctly identify transient database errors", () => {
+    expect(isTransientDbError({ code: "EAI_AGAIN", message: "getaddrinfo EAI_AGAIN db" })).toBe(true);
+    expect(isTransientDbError({ message: "Connection terminated due to connection timeout" })).toBe(true);
+    expect(isTransientDbError({ code: "ETIMEDOUT" })).toBe(true);
+    expect(isTransientDbError({ code: "P1001" })).toBe(true);
+    expect(isTransientDbError({ code: "P1008" })).toBe(true);
+    expect(isTransientDbError({ code: "P2002", message: "Unique constraint failed" })).toBe(false);
+    expect(isTransientDbError(new Error("Validation error"))).toBe(false);
+  });
+
+  it("should retry transient errors up to the max retry limit and succeed if subsequent attempt succeeds", async () => {
+    let attempts = 0;
+    const mockFn = vi.fn().mockImplementation(async () => {
+      attempts++;
+      if (attempts === 1) {
+        const err: any = new Error("getaddrinfo EAI_AGAIN db");
+        err.code = "EAI_AGAIN";
+        throw err;
+      }
+      return "SUCCESS";
+    });
+
+    const result = await executeWithRetry(mockFn, 3, 10);
+    expect(result).toBe("SUCCESS");
+    expect(attempts).toBe(2);
+  });
+
+  it("should immediately throw non-transient errors without retrying", async () => {
+    let attempts = 0;
+    const mockFn = vi.fn().mockImplementation(async () => {
+      attempts++;
+      const err: any = new Error("Record not found");
+      err.code = "P2025";
+      throw err;
+    });
+
+    await expect(executeWithRetry(mockFn, 3, 10)).rejects.toThrow("Record not found");
+    expect(attempts).toBe(1);
   });
 });
