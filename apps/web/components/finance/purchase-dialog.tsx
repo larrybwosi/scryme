@@ -21,6 +21,7 @@ import {
   FormMessage,
 } from "@repo/ui/components/ui/form";
 import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Button } from "@repo/ui/components/ui/button";
 import {
   Select,
@@ -29,12 +30,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@repo/ui/components/ui/select";
-import { createPurchase } from "../../app/actions/purchases";
+import {
+  createPurchase,
+  createPurchaseDraft,
+  updatePurchaseDraft,
+  submitPurchaseOrder,
+} from "../../app/actions/purchases";
 import { toast } from "sonner";
-import { Plus, Trash2, Loader2 } from "lucide-react";
+import { Plus, Trash2, Loader2, FileText, Send, AlertCircle } from "lucide-react";
 
 const purchaseSchema = z.object({
   supplierId: z.string().min(1, "Supplier is required"),
+  notes: z.string().optional(),
   items: z
     .array(
       z.object({
@@ -51,17 +58,30 @@ type PurchaseFormValues = z.infer<typeof purchaseSchema>;
 interface PurchaseDialogProps {
   suppliers: any[];
   products: any[];
-  children: React.ReactNode;
+  initialData?: any;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+  children?: React.ReactNode;
 }
 
 export function PurchaseDialog({
   suppliers,
   products,
+  initialData,
+  open: controlledOpen,
+  onOpenChange,
   children,
 }: PurchaseDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+  const setOpen = (value: boolean) => {
+    if (onOpenChange) onOpenChange(value);
+    if (!isControlled) setInternalOpen(value);
+  };
 
   useEffect(() => {
     setMounted(true);
@@ -70,47 +90,106 @@ export function PurchaseDialog({
   const form = useForm<PurchaseFormValues>({
     resolver: zodResolver(purchaseSchema) as any,
     defaultValues: {
-      supplierId: "",
-      items: [{ variantId: "", quantity: 1, unitCost: 0 }],
+      supplierId: initialData?.supplierId || "",
+      notes: initialData?.notes || "",
+      items: initialData?.items?.length
+        ? initialData.items.map((i: any) => ({
+            variantId: i.variantId,
+            quantity: i.quantity || i.orderedQuantity,
+            unitCost: i.unitCost,
+          }))
+        : [{ variantId: "", quantity: 1, unitCost: 0 }],
     },
   });
+
+  useEffect(() => {
+    if (initialData) {
+      form.reset({
+        supplierId: initialData.supplierId || "",
+        notes: initialData.notes || "",
+        items: initialData.items?.length
+          ? initialData.items.map((i: any) => ({
+              variantId: i.variantId,
+              quantity: i.quantity || i.orderedQuantity,
+              unitCost: i.unitCost,
+            }))
+          : [{ variantId: "", quantity: 1, unitCost: 0 }],
+      });
+    }
+  }, [initialData, form]);
 
   const { fields, append, remove } = useFieldArray({
     control: form.control,
     name: "items",
   });
 
-  async function onSubmit(values: PurchaseFormValues) {
+  async function handleSaveDraft(values: PurchaseFormValues) {
     startTransition(async () => {
       try {
-        await createPurchase(values);
-        toast.success("Purchase order created successfully");
+        if (initialData?.id) {
+          await updatePurchaseDraft({ id: initialData.id, ...values });
+          toast.success("Draft purchase order updated");
+        } else {
+          await createPurchaseDraft(values);
+          toast.success("Purchase order saved as draft");
+        }
         setOpen(false);
         form.reset();
       } catch (error: any) {
-        toast.error(error.message || "Failed to create purchase order");
+        toast.error(error.message || "Failed to save draft");
       }
     });
   }
 
-  // Products returned from getInventoryProducts are already flattened variants
+  async function handleSubmitOrder(values: PurchaseFormValues) {
+    startTransition(async () => {
+      try {
+        if (initialData?.id) {
+          await updatePurchaseDraft({ id: initialData.id, ...values });
+          await submitPurchaseOrder(initialData.id);
+          toast.success("Purchase order submitted successfully");
+        } else {
+          await createPurchase(values);
+          toast.success("Purchase order created and submitted successfully");
+        }
+        setOpen(false);
+        form.reset();
+      } catch (error: any) {
+        toast.error(error.message || "Failed to submit purchase order");
+      }
+    });
+  }
+
   const variants = products.map((p: any) => ({
     id: p.variantId,
     name: `${p.name} ${p.variantName !== "Default" ? `(${p.variantName})` : ""}`,
-    unitCost: Number(p.unitPrice || 0), // Adjusting based on user input for buying price
+    unitCost: Number(p.unitPrice || 0),
   }));
 
   if (!mounted) return null;
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
-      <DialogContent className="`sm:max-w-15 max-h-[90vh] overflow-y-auto">
+      {children && <DialogTrigger asChild>{children}</DialogTrigger>}
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Purchase Order</DialogTitle>
+          <DialogTitle>
+            {initialData ? "Edit Purchase Order Draft" : "New Purchase Order"}
+          </DialogTitle>
         </DialogHeader>
+
+        {initialData?.rejectionComment && (
+          <div className="p-3 bg-red-50 border border-red-200 text-red-700 text-sm rounded-lg flex items-start gap-2">
+            <AlertCircle className="w-5 h-5 flex-shrink-0 mt-0.5" />
+            <div>
+              <span className="font-semibold">Reviewer Rejection Note: </span>
+              {initialData.rejectionComment}
+            </div>
+          </div>
+        )}
+
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <div className="space-y-6">
             <FormField
               control={form.control}
               name="supplierId"
@@ -119,6 +198,7 @@ export function PurchaseDialog({
                   <FormLabel>Supplier</FormLabel>
                   <Select
                     onValueChange={field.onChange}
+                    value={field.value}
                     defaultValue={field.value}>
                     <FormControl>
                       <SelectTrigger>
@@ -156,7 +236,7 @@ export function PurchaseDialog({
               {fields.map((field, index) => (
                 <div
                   key={field.id}
-                  className="grid grid-cols-12 gap-4 items-end border p-3 rounded-lg relative">
+                  className="grid grid-cols-12 gap-3 items-end border p-3 rounded-lg relative">
                   <div className="col-span-6">
                     <FormField
                       control={form.control}
@@ -177,6 +257,7 @@ export function PurchaseDialog({
                                 );
                               }
                             }}
+                            value={field.value}
                             defaultValue={field.value}>
                             <FormControl>
                               <SelectTrigger>
@@ -245,16 +326,50 @@ export function PurchaseDialog({
               ))}
             </div>
 
-            <DialogFooter>
+            <FormField
+              control={form.control}
+              name="notes"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Notes & Remarks</FormLabel>
+                  <FormControl>
+                    <Textarea
+                      placeholder="Add any specific delivery instructions or notes..."
+                      {...field}
+                    />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+
+            <DialogFooter className="flex items-center justify-between gap-3 sm:justify-end">
               <Button
-                type="submit"
-                className="w-full bg-[#34A853] hover:bg-[#2d9147]"
-                disabled={isPending}>
-                {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                Create Purchase Order
+                type="button"
+                variant="outline"
+                disabled={isPending}
+                onClick={form.handleSubmit(handleSaveDraft)}>
+                {isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <FileText className="mr-2 h-4 w-4" />
+                )}
+                Save as Draft
+              </Button>
+              <Button
+                type="button"
+                className="bg-[#34A853] hover:bg-[#2d9147]"
+                disabled={isPending}
+                onClick={form.handleSubmit(handleSubmitOrder)}>
+                {isPending ? (
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                ) : (
+                  <Send className="mr-2 h-4 w-4" />
+                )}
+                Submit Purchase Order
               </Button>
             </DialogFooter>
-          </form>
+          </div>
         </Form>
       </DialogContent>
     </Dialog>

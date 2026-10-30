@@ -170,3 +170,42 @@ export class ReceivePurchaseDto {
   @IsOptional()
   notes?: string;
 }
+
+export class UpdatePurchaseDto {
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  supplierId?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  dueDate?: string;
+
+  @ApiPropertyOptional()
+  @IsDateString()
+  @IsOptional()
+  expectedDate?: string;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  currency?: string;
+
+  @ApiPropertyOptional()
+  @IsNumber()
+  @IsOptional()
+  shippingCost?: number;
+
+  @ApiPropertyOptional()
+  @IsString()
+  @IsOptional()
+  notes?: string;
+
+  @ApiPropertyOptional({ type: [CreatePurchaseItemDto] })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => CreatePurchaseItemDto)
+  @IsOptional()
+  items?: CreatePurchaseItemDto[];
+}
