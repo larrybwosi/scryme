@@ -366,7 +366,7 @@ export const auth: any = betterAuth({
     oauthProvider({
       loginPage: `${env.NEXT_PUBLIC_AUTH_URL || (env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444")}/sign-in`,
       consentPage: `${env.NEXT_PUBLIC_AUTH_URL || (env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444")}/consent`,
-      scopes: ["openid", "profile", "email", "org_info", "membership"],
+      scopes: ["openid", "profile", "email", "org_info", "membership", "mcp:read", "mcp:write"],
       allowDynamicClientRegistration: true,
       silenceWarnings: {
         oauthAuthServerConfig: true,

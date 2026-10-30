@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import {
   Boxes,
+  Bot,
   Zap,
   Layout,
   Terminal,
@@ -88,6 +89,17 @@ const ScrymeIntegrationIcon = () => {
 const queryClient = new QueryClient();
 
 const INTEGRATIONS = [
+  {
+    id: "mcp",
+    title: "Model Context Protocol (MCP)",
+    description:
+      "Connect Claude Desktop, Cursor, or custom AI agents directly to your live Scryme workspace data.",
+    icon: <Bot className="w-8 h-8 text-indigo-600 dark:text-indigo-400" />,
+    href: "/integrations/mcp",
+    category: "AI & Automation",
+    isExternal: false,
+    alwaysActive: true,
+  },
   {
     id: "developer-tools",
     title: "Developer Tools",

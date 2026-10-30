@@ -36,8 +36,8 @@ export async function createMcpApiKeyAction(data: { name: string; scopes?: strin
     },
   });
 
-  revalidatePath("/settings/mcp");
-  revalidatePath("/settings/integrations");
+  revalidatePath("/integrations");
+  revalidatePath("/integrations/mcp");
 
   return {
     id: mcpKey.id,
@@ -87,7 +87,7 @@ export async function revokeMcpApiKeyAction(id: string) {
     },
   });
 
-  revalidatePath("/settings/mcp");
-  revalidatePath("/settings/integrations");
+  revalidatePath("/integrations");
+  revalidatePath("/integrations/mcp");
   return { success: true };
 }
