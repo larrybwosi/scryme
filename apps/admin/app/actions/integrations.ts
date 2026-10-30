@@ -62,15 +62,20 @@ export async function listIntegrationDefinitions() {
     orderBy: { name: "asc" },
   });
 
-  // Seed default integration definitions if not existing
-  for (const def of DEFAULT_INTEGRATIONS) {
-    const exists = definitions.some((d) => d.slug === def.slug);
-    if (!exists) {
-      const created = await db.integrationDefinition.create({
-        data: def,
-      });
-      definitions.push(created);
-    }
+  // Seed default integration definitions concurrently if missing
+  const missingDefaults = DEFAULT_INTEGRATIONS.filter(
+    (def) => !definitions.some((d) => d.slug === def.slug),
+  );
+
+  if (missingDefaults.length > 0) {
+    const created = await Promise.all(
+      missingDefaults.map((def) =>
+        db.integrationDefinition.create({
+          data: def,
+        }),
+      ),
+    );
+    definitions.push(...created);
   }
 
   return definitions.sort((a, b) => a.name.localeCompare(b.name));
@@ -544,15 +549,18 @@ export async function updateSystemIntegrationSettings(
     ],
   ];
 
-  for (const [key, value] of keyMap) {
-    if (value !== undefined) {
-      await db.globalSetting.upsert({
+  // Performance Optimization: Parallelize independent globalSetting upsert database queries
+  // using Promise.all instead of sequential blocking roundtrips. Collapses up to 37 DB queries to 1 roundtrip.
+  const entriesToUpsert = keyMap.filter(([, value]) => value !== undefined);
+  await Promise.all(
+    entriesToUpsert.map(([key, value]) =>
+      db.globalSetting.upsert({
         where: { key },
-        update: { value },
-        create: { key, value },
-      });
-    }
-  }
+        update: { value: value! },
+        create: { key, value: value! },
+      }),
+    ),
+  );
 
   revalidatePath("/integrations");
   return { success: true };
