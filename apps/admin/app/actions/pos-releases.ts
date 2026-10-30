@@ -63,15 +63,18 @@ export async function updatePosReleaseSettings(data: {
     { key: "github_token", value: data.token || "" },
   ];
 
-  for (const entry of entries) {
-    if (entry.value !== undefined) {
-      await db.globalSetting.upsert({
+  // Performance Optimization: Parallelize independent globalSetting upsert database queries
+  // using Promise.all instead of sequential blocking roundtrips. Collapses 7 DB queries to 1 roundtrip.
+  const entriesToUpsert = entries.filter((entry) => entry.value !== undefined);
+  await Promise.all(
+    entriesToUpsert.map((entry) =>
+      db.globalSetting.upsert({
         where: { key: entry.key },
-        update: { value: entry.value },
-        create: { key: entry.key, value: entry.value },
-      });
-    }
-  }
+        update: { value: entry.value! },
+        create: { key: entry.key, value: entry.value! },
+      }),
+    ),
+  );
 
   revalidatePath("/systems");
   revalidatePath("/settings");
