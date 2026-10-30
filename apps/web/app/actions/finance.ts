@@ -49,6 +49,7 @@ export async function getExpenses(params: {
   status?: string;
   categoryId?: string;
   locationId?: string;
+  costCenterId?: string;
   startDate?: string;
   endDate?: string;
 }): Promise<
@@ -57,6 +58,8 @@ export async function getExpenses(params: {
     member: Member & { user: User };
     supplier: Supplier | null;
     location: any | null;
+    costCenter: any | null;
+    pettyCashFund: any | null;
     utilityAccount: any | null;
   })[]
 > {
@@ -90,6 +93,10 @@ export async function getExpenses(params: {
     where.locationId = params.locationId;
   }
 
+  if (params.costCenterId && params.costCenterId !== "all") {
+    where.costCenterId = params.costCenterId;
+  }
+
   if (params.startDate || params.endDate) {
     where.expenseDate = {
       ...(params.startDate && { gte: new Date(params.startDate) }),
@@ -108,6 +115,8 @@ export async function getExpenses(params: {
       },
       supplier: true,
       location: true,
+      costCenter: true,
+      pettyCashFund: true,
       utilityAccount: true,
     },
     orderBy: {
@@ -137,6 +146,15 @@ export async function createExpense(data: {
   expenseDate: Date;
   paymentMethod: PaymentMethod;
   supplierId?: string;
+  locationId?: string;
+  costCenterId?: string;
+  ledgerAccountId?: string;
+  pettyCashFundId?: string;
+  budgetId?: string;
+  taxAmount?: number;
+  taxRate?: number;
+  isReimbursable?: boolean;
+  isBillable?: boolean;
   receiptUrl?: string;
   notes?: string;
   isRecurring?: boolean;
@@ -182,6 +200,15 @@ export async function createExpense(data: {
         amount: data.amount,
         currencyCode,
         categoryId: data.categoryId,
+        locationId: data.locationId,
+        costCenterId: data.costCenterId,
+        ledgerAccountId: data.ledgerAccountId,
+        pettyCashFundId: data.pettyCashFundId,
+        budgetId: data.budgetId,
+        taxAmount: data.taxAmount,
+        taxRate: data.taxRate,
+        isReimbursable: data.isReimbursable ?? false,
+        isBillable: data.isBillable ?? false,
         expenseDate: data.expenseDate,
         paymentMethod: data.paymentMethod,
         supplierId: data.supplierId,
@@ -191,6 +218,35 @@ export async function createExpense(data: {
         status: status as ExpenseStatus,
       },
     });
+
+    if ((status as string) === "APPROVED" || status === "PENDING") {
+      if (data.pettyCashFundId) {
+        const fund = await tx.pettyCashFund.findFirst({
+          where: { id: data.pettyCashFundId, organizationId: auth.organizationId },
+        });
+        if (fund) {
+          await tx.pettyCashFund.update({
+            where: { id: fund.id },
+            data: { amount: { decrement: data.amount } },
+          });
+          await tx.pettyCashTransaction.create({
+            data: {
+              fundId: fund.id,
+              type: "EXPENSE",
+              amount: data.amount,
+              description: data.description,
+              memberId: auth.memberId,
+            },
+          });
+        }
+      }
+      if (data.budgetId) {
+        await tx.budget.update({
+          where: { id: data.budgetId },
+          data: { spentAmount: { increment: data.amount } },
+        });
+      }
+    }
 
     if (status === "PENDING_APPROVAL") {
       await submitForApproval(
@@ -604,4 +660,77 @@ export async function getFinanceOverview() {
       general: generalTotal,
     },
   };
+}
+
+export async function getCostCenters() {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ], true);
+
+  return await db.costCenter.findMany({
+    where: { organizationId: auth.organizationId, isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function getPettyCashFunds() {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "REPORTER",
+  ], true);
+
+  return await db.pettyCashFund.findMany({
+    where: { organizationId: auth.organizationId, isActive: true },
+    orderBy: { name: "asc" },
+  });
+}
+
+export async function approveExpenseAction(expenseId: string) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const expense = await db.expense.findFirst({
+    where: { id: expenseId, organizationId: auth.organizationId },
+  });
+
+  if (!expense) throw new Error("Expense not found");
+
+  await db.expense.update({
+    where: { id: expenseId },
+    data: {
+      status: "APPROVED",
+      approverId: auth.memberId,
+      approvalDate: new Date(),
+    },
+  });
+
+  revalidatePath("/finance/expenses");
+  return { success: true };
+}
+
+export async function rejectExpenseAction(expenseId: string, reason?: string) {
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
+
+  const expense = await db.expense.findFirst({
+    where: { id: expenseId, organizationId: auth.organizationId },
+  });
+
+  if (!expense) throw new Error("Expense not found");
+
+  await db.expense.update({
+    where: { id: expenseId },
+    data: {
+      status: "REJECTED",
+      approverId: auth.memberId,
+      approvalDate: new Date(),
+      notes: reason ? `Rejected: ${reason}` : expense.notes,
+    },
+  });
+
+  revalidatePath("/finance/expenses");
+  return { success: true };
 }

@@ -21,6 +21,7 @@ describe("ExpenseUseCase", () => {
     expense: {
       count: vi.fn(),
       create: vi.fn(),
+      findMany: vi.fn(),
       findFirst: vi.fn(),
       findFirstOrThrow: vi.fn(),
       update: vi.fn(),
@@ -244,6 +245,72 @@ describe("ExpenseUseCase", () => {
           where: { id: "fund-1", organizationId: orgId },
         }),
       );
+    });
+  });
+
+  describe("rejectExpense", () => {
+    it("should reject a pending expense with reason", async () => {
+      const expenseId = "exp-1";
+      const orgId = "org-1";
+      const memberId = "approver-1";
+
+      mockPrismaClient.expense.findFirst.mockResolvedValue({
+        id: expenseId,
+        status: ExpenseStatus.PENDING,
+        notes: "Original note",
+      });
+
+      mockPrismaClient.expense.updateMany.mockResolvedValue({ count: 1 });
+      mockPrismaClient.expense.findFirstOrThrow.mockResolvedValue({
+        id: expenseId,
+        status: ExpenseStatus.REJECTED,
+        notes: "Rejected: Over budget",
+      });
+
+      const result = await useCase.rejectExpense(orgId, memberId, expenseId, "Over budget");
+
+      expect(result.status).toBe(ExpenseStatus.REJECTED);
+      expect(mockPrismaClient.expense.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: expenseId, organizationId: orgId },
+          data: expect.objectContaining({ status: ExpenseStatus.REJECTED }),
+        }),
+      );
+    });
+  });
+
+  describe("getExpenseReportSummary", () => {
+    it("should aggregate expense report summary", async () => {
+      const orgId = "org-1";
+      mockPrismaClient.expense.findMany.mockResolvedValue([
+        {
+          id: "e1",
+          amount: 100,
+          taxAmount: 16,
+          status: ExpenseStatus.APPROVED,
+          categoryId: "cat1",
+          category: { id: "cat1", name: "Supplies" },
+          costCenterId: "cc1",
+          costCenter: { id: "cc1", name: "IT", code: "CC-IT" },
+        },
+        {
+          id: "e2",
+          amount: 200,
+          taxAmount: 0,
+          status: ExpenseStatus.PENDING,
+          categoryId: "cat1",
+          category: { id: "cat1", name: "Supplies" },
+        },
+      ]);
+
+      const summary = await useCase.getExpenseReportSummary(orgId);
+
+      expect(summary.totalAmount).toBe(300);
+      expect(summary.totalApproved).toBe(100);
+      expect(summary.totalPending).toBe(200);
+      expect(summary.totalTaxAmount).toBe(16);
+      expect(summary.categoryBreakdown).toHaveLength(1);
+      expect(summary.costCenterBreakdown).toHaveLength(1);
     });
   });
 });

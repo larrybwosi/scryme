@@ -5,12 +5,17 @@ import {
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import { AccountingService } from "../services/accounting.service";
+import { Optional, Inject } from "@nestjs/common";
 import { CreateExpenseDto } from "../dto/finance.dto";
 import { Prisma, ExpenseStatus, PettyCashTransactionType } from "@repo/db";
 
 @Injectable()
 export class ExpenseUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    @Optional() @Inject(AccountingService) private readonly accountingService?: AccountingService,
+  ) {}
 
   async createExpense(
     organizationId: string,
@@ -52,6 +57,7 @@ export class ExpenseUseCase {
           memberId,
           dto,
           amountDecimal,
+          expense.id,
         );
       }
 
@@ -74,6 +80,8 @@ export class ExpenseUseCase {
     if (dto.locationId) validations.push(this.prisma.client.inventoryLocation.count({ where: { id: dto.locationId, organizationId } }));
     if (dto.utilityAccountId) validations.push(this.prisma.client.utilityAccount.count({ where: { id: dto.utilityAccountId, organizationId } }));
     if (dto.pettyCashFundId) validations.push(this.prisma.client.pettyCashFund.count({ where: { id: dto.pettyCashFundId, organizationId } }));
+    if (dto.costCenterId) validations.push(this.prisma.client.costCenter.count({ where: { id: dto.costCenterId, organizationId } }));
+    if (dto.ledgerAccountId) validations.push(this.prisma.client.ledgerAccount.count({ where: { id: dto.ledgerAccountId, organizationId } }));
 
     const results = await Promise.all(validations);
     if (results.some((count) => count === 0)) {
@@ -173,6 +181,11 @@ export class ExpenseUseCase {
         pettyCashFundId: dto.pettyCashFundId,
         utilityAccountId: dto.utilityAccountId,
         budgetId: dto.budgetId,
+        costCenterId: dto.costCenterId,
+        ledgerAccountId: dto.ledgerAccountId,
+        currencyCode: dto.currencyCode ?? "KES",
+        taxAmount: dto.taxAmount !== undefined ? new Prisma.Decimal(dto.taxAmount) : undefined,
+        taxRate: dto.taxRate !== undefined ? new Prisma.Decimal(dto.taxRate) : undefined,
         ...(status === ExpenseStatus.APPROVED
           ? {
               approverId: memberId,
@@ -189,6 +202,7 @@ export class ExpenseUseCase {
     memberId: string,
     dto: CreateExpenseDto,
     amount: Prisma.Decimal,
+    expenseId?: string,
   ) {
     if (dto.pettyCashFundId) {
       await this.decrementPettyCash(
@@ -206,6 +220,13 @@ export class ExpenseUseCase {
         where: { id: dto.budgetId, organizationId },
         data: { spentAmount: { increment: amount } },
       });
+    }
+    if (this.accountingService && expenseId) {
+      try {
+        await this.accountingService.postExpenseToLedger(expenseId, organizationId);
+      } catch (err) {
+        // Soft failure for GL posting
+      }
     }
   }
 
@@ -435,9 +456,131 @@ export class ExpenseUseCase {
           budgetId: expense.budgetId,
         } as any,
         expense.amount,
+        expense.id,
       );
 
       return updatedExpense;
     });
+  }
+
+  async rejectExpense(
+    organizationId: string,
+    memberId: string,
+    expenseId: string,
+    reason?: string,
+  ) {
+    const expense = await this.prisma.client.expense.findFirst({
+      where: { id: expenseId, organizationId },
+    });
+    if (!expense) throw new NotFoundException("Expense not found");
+    if (
+      expense.status !== ExpenseStatus.PENDING &&
+      expense.status !== ExpenseStatus.PENDING_APPROVAL
+    ) {
+      throw new BadRequestException("Expense is not pending approval");
+    }
+
+    await this.prisma.client.expense.updateMany({
+      where: { id: expenseId, organizationId },
+      data: {
+        status: ExpenseStatus.REJECTED,
+        approverId: memberId,
+        approvalDate: new Date(),
+        notes: reason ? `Rejected: ${reason}` : expense.notes,
+      },
+    });
+
+    return await this.prisma.client.expense.findFirstOrThrow({
+      where: { id: expenseId, organizationId },
+    });
+  }
+
+  async getExpenseReportSummary(
+    organizationId: string,
+    filters?: { startDate?: string; endDate?: string },
+  ) {
+    const where: Prisma.ExpenseWhereInput = {
+      organizationId,
+      deletedAt: null,
+    };
+
+    if (filters?.startDate || filters?.endDate) {
+      where.expenseDate = {
+        ...(filters.startDate && { gte: new Date(filters.startDate) }),
+        ...(filters.endDate && { lte: new Date(filters.endDate) }),
+      };
+    }
+
+    const expenses = await this.prisma.client.expense.findMany({
+      where,
+      select: {
+        id: true,
+        amount: true,
+        taxAmount: true,
+        status: true,
+        expenseDate: true,
+        categoryId: true,
+        costCenterId: true,
+        pettyCashFundId: true,
+        category: { select: { id: true, name: true } },
+        costCenter: { select: { id: true, name: true, code: true } },
+      },
+    });
+
+    let totalAmount = 0;
+    let totalApproved = 0;
+    let totalPending = 0;
+    let totalRejected = 0;
+    let totalTaxAmount = 0;
+
+    const categoryMap = new Map<string, { id: string; name: string; total: number; count: number }>();
+    const costCenterMap = new Map<string, { id: string; name: string; code: string; total: number; count: number }>();
+
+    for (const exp of expenses) {
+      const amt = Number(exp.amount?.toString() || 0);
+      const tax = Number(exp.taxAmount?.toString() || 0);
+      totalAmount += amt;
+      totalTaxAmount += tax;
+
+      if (exp.status === ExpenseStatus.APPROVED || exp.status === ExpenseStatus.PAID) {
+        totalApproved += amt;
+      } else if (exp.status === ExpenseStatus.PENDING || exp.status === ExpenseStatus.PENDING_APPROVAL) {
+        totalPending += amt;
+      } else if (exp.status === ExpenseStatus.REJECTED) {
+        totalRejected += amt;
+      }
+
+      const catName = exp.category?.name || "Uncategorized";
+      const catId = exp.categoryId || "uncategorized";
+      const catEntry = categoryMap.get(catId) || { id: catId, name: catName, total: 0, count: 0 };
+      catEntry.total += amt;
+      catEntry.count += 1;
+      categoryMap.set(catId, catEntry);
+
+      if (exp.costCenterId && exp.costCenter) {
+        const ccId = exp.costCenterId;
+        const ccEntry = costCenterMap.get(ccId) || {
+          id: ccId,
+          name: exp.costCenter.name,
+          code: exp.costCenter.code,
+          total: 0,
+          count: 0,
+        };
+        ccEntry.total += amt;
+        ccEntry.count += 1;
+        costCenterMap.set(ccId, ccEntry);
+      }
+    }
+
+    return {
+      totalAmount,
+      totalApproved,
+      totalPending,
+      totalRejected,
+      totalTaxAmount,
+      totalExpensesCount: expenses.length,
+      categoryBreakdown: Array.from(categoryMap.values()),
+      costCenterBreakdown: Array.from(costCenterMap.values()),
+    };
   }
 }
