@@ -48,32 +48,39 @@ export async function createDriver(data: {
   }
 
   try {
-    // SECURITY MITIGATION (BOLA/IDOR): Validate relational vehicle ownership to prevent cross-tenant assignment
-    if (data.vehicleId) {
-      const vehicle = await db.vehicle.findFirst({
-        where: {
-          id: data.vehicleId,
-          organizationId: session.organizationId,
-        },
-        select: { id: true },
-      });
-      if (!vehicle) {
-        return { success: false, error: "Vehicle not found or belongs to another organization" };
-      }
+    /**
+     * OPTIMIZATION & SECURITY (BOLA/IDOR):
+     * Parallelize relational entity validation lookups (vehicle and delivery partner).
+     * Replacing sequential DB query roundtrips with Promise.all reduces validation latency
+     * from 2 sequential DB roundtrips to 1 concurrent roundtrip while guaranteeing BOLA multi-tenant isolation.
+     */
+    const [vehicle, partner] = await Promise.all([
+      data.vehicleId
+        ? db.vehicle.findFirst({
+            where: {
+              id: data.vehicleId,
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      data.deliveryPartnerId
+        ? db.deliveryPartner.findFirst({
+            where: {
+              id: data.deliveryPartnerId,
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (data.vehicleId && !vehicle) {
+      return { success: false, error: "Vehicle not found or belongs to another organization" };
     }
 
-    // SECURITY MITIGATION (BOLA/IDOR): Validate relational delivery partner ownership to prevent cross-tenant assignment
-    if (data.deliveryPartnerId) {
-      const partner = await db.deliveryPartner.findFirst({
-        where: {
-          id: data.deliveryPartnerId,
-          organizationId: session.organizationId,
-        },
-        select: { id: true },
-      });
-      if (!partner) {
-        return { success: false, error: "Delivery partner not found or belongs to another organization" };
-      }
+    if (data.deliveryPartnerId && !partner) {
+      return { success: false, error: "Delivery partner not found or belongs to another organization" };
     }
 
     const driver = await db.driver.create({
@@ -112,32 +119,42 @@ export async function updateDriver(
   }
 
   try {
-    // SECURITY MITIGATION (BOLA/IDOR): Validate relational vehicle ownership to prevent cross-tenant assignment
-    if (data.vehicleId && data.vehicleId !== "") {
-      const vehicle = await db.vehicle.findFirst({
-        where: {
-          id: data.vehicleId,
-          organizationId: session.organizationId,
-        },
-        select: { id: true },
-      });
-      if (!vehicle) {
-        return { success: false, error: "Vehicle not found or belongs to another organization" };
-      }
+    /**
+     * OPTIMIZATION & SECURITY (BOLA/IDOR):
+     * Parallelize relational entity validation lookups (vehicle and delivery partner).
+     * Replacing sequential DB query roundtrips with Promise.all reduces validation latency
+     * from 2 sequential DB roundtrips to 1 concurrent roundtrip while guaranteeing BOLA multi-tenant isolation.
+     */
+    const hasVehicleId = Boolean(data.vehicleId && data.vehicleId !== "");
+    const hasPartnerId = Boolean(data.deliveryPartnerId && data.deliveryPartnerId !== "");
+
+    const [vehicle, partner] = await Promise.all([
+      hasVehicleId
+        ? db.vehicle.findFirst({
+            where: {
+              id: data.vehicleId,
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      hasPartnerId
+        ? db.deliveryPartner.findFirst({
+            where: {
+              id: data.deliveryPartnerId,
+              organizationId: session.organizationId,
+            },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (hasVehicleId && !vehicle) {
+      return { success: false, error: "Vehicle not found or belongs to another organization" };
     }
 
-    // SECURITY MITIGATION (BOLA/IDOR): Validate relational delivery partner ownership to prevent cross-tenant assignment
-    if (data.deliveryPartnerId && data.deliveryPartnerId !== "") {
-      const partner = await db.deliveryPartner.findFirst({
-        where: {
-          id: data.deliveryPartnerId,
-          organizationId: session.organizationId,
-        },
-        select: { id: true },
-      });
-      if (!partner) {
-        return { success: false, error: "Delivery partner not found or belongs to another organization" };
-      }
+    if (hasPartnerId && !partner) {
+      return { success: false, error: "Delivery partner not found or belongs to another organization" };
     }
 
     /**

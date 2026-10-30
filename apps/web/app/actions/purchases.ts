@@ -229,8 +229,8 @@ export async function createPurchase(data: {
       : db.purchase.count({
           where: { organizationId: auth.organizationId },
         }),
-    db.supplier.findUnique({
-      where: { id: data.supplierId },
+    db.supplier.findFirst({
+      where: { id: data.supplierId, organizationId: auth.organizationId },
       select: { name: true },
     }),
     db.organization.findUnique({
@@ -238,6 +238,25 @@ export async function createPurchase(data: {
       select: { expenseApprovalThreshold: true, slug: true, scrymeConfiguration: true },
     }),
   ]);
+
+  if (!supplier) {
+    throw new Error("Supplier not found or access denied");
+  }
+
+  // Threat Mitigation: Verify product variant tenant ownership to prevent BOLA cross-tenant variant binding
+  const variantIds = Array.from(new Set(data.items.map(item => item.variantId)));
+  if (variantIds.length > 0) {
+    const validVariants = await db.productVariant.findMany({
+      where: {
+        id: { in: variantIds },
+        product: { organizationId: auth.organizationId },
+      },
+      select: { id: true },
+    });
+    if (validVariants.length !== variantIds.length) {
+      throw new Error("One or more product variants not found or access denied");
+    }
+  }
 
   const purchaseNumber =
     data.purchaseNumber ||
@@ -552,7 +571,16 @@ export async function receivePurchaseStockWithBatches(data: {
 
   // Resolve location (use provided or default/first location for organization)
   let targetLocationId = data.locationId;
-  if (!targetLocationId) {
+  if (targetLocationId) {
+    // Threat Mitigation: Validate caller location ownership to prevent BOLA/IDOR cross-tenant stock manipulation
+    const providedLoc = await db.inventoryLocation.findFirst({
+      where: { id: targetLocationId, organizationId: auth.organizationId },
+      select: { id: true },
+    });
+    if (!providedLoc) {
+      throw new Error("Location not found or access denied");
+    }
+  } else {
     const defaultLoc = await db.inventoryLocation.findFirst({
       where: { organizationId: auth.organizationId, isDefault: true },
     }) || await db.inventoryLocation.findFirst({
@@ -901,11 +929,12 @@ export async function recordSupplierInvoice(data: {
     "CASHIER",
   ]);
 
-  const purchase = await db.purchase.findUnique({
-    where: { id: data.purchaseId },
+  // Threat Mitigation: Validate purchase order tenant ownership to prevent BOLA/IDOR access to foreign purchases
+  const purchase = await db.purchase.findFirst({
+    where: { id: data.purchaseId, organizationId: auth.organizationId },
   });
 
-  if (!purchase) throw new Error("Purchase order not found");
+  if (!purchase) throw new Error("Purchase order not found or access denied");
 
   const invoice = await db.supplierInvoice.create({
     data: {
@@ -922,8 +951,10 @@ export async function recordSupplierInvoice(data: {
     },
   });
 
-  await db.purchase.update({
-    where: { id: data.purchaseId },
+  // Threat Mitigation: Model Purchase lacks composite unique constraint on [id, organizationId].
+  // Use updateMany to enforce database-level multi-tenant isolation during status update.
+  await db.purchase.updateMany({
+    where: { id: data.purchaseId, organizationId: auth.organizationId },
     data: { status: "BILLED" },
   });
 
@@ -943,9 +974,20 @@ export async function updatePurchaseStatus(
     "CASHIER",
   ]);
 
-  const purchase = await db.purchase.update({
+  // Threat Mitigation: Purchase model lacks a composite unique constraint on [id, organizationId].
+  // Standard update ignores non-unique organizationId in where clauses at runtime.
+  // Use updateMany followed by findFirstOrThrow to guarantee multi-tenant database isolation.
+  const result = await db.purchase.updateMany({
     where: { id, organizationId: auth.organizationId },
     data: { status },
+  });
+
+  if (result.count === 0) {
+    throw new Error("Purchase order not found or access denied");
+  }
+
+  const purchase = await db.purchase.findFirstOrThrow({
+    where: { id, organizationId: auth.organizationId },
   });
 
   revalidatePath("/finance/purchases");
@@ -966,6 +1008,16 @@ export async function createPurchasePayment(data: {
     "CASHIER",
   ]);
 
+  // Threat Mitigation: Validate purchase order tenant ownership to prevent BOLA/IDOR payment manipulation on foreign purchase orders
+  const purchase = await db.purchase.findFirst({
+    where: { id: data.purchaseId, organizationId: auth.organizationId },
+    include: { payments: true },
+  });
+
+  if (!purchase) {
+    throw new Error("Purchase order not found or access denied");
+  }
+
   const payment = await db.purchasePayment.create({
     data: {
       purchaseId: data.purchaseId,
@@ -976,29 +1028,25 @@ export async function createPurchasePayment(data: {
     },
   });
 
-  const purchase = await db.purchase.findUnique({
-    where: { id: data.purchaseId },
-    include: { payments: true },
-  });
-
-  if (purchase) {
-    const totalPaid = purchase.payments.reduce(
+  const totalPaid =
+    purchase.payments.reduce(
       (acc, p) => acc + Number(p.amount?.toString() || 0),
       0,
-    );
-    let paymentStatus: any = "PARTIALLY_PAID";
-    if (totalPaid >= Number(purchase.totalAmount?.toString() || 0)) {
-      paymentStatus = "PAID";
-    }
+    ) + Number(data.amount);
 
-    await db.purchase.update({
-      where: { id: data.purchaseId },
-      data: {
-        paidAmount: totalPaid,
-        paymentStatus: paymentStatus,
-      },
-    });
+  let paymentStatus: any = "PARTIALLY_PAID";
+  if (totalPaid >= Number(purchase.totalAmount?.toString() || 0)) {
+    paymentStatus = "PAID";
   }
+
+  // Threat Mitigation: Use updateMany to enforce multi-tenant isolation on purchase payment status update
+  await db.purchase.updateMany({
+    where: { id: data.purchaseId, organizationId: auth.organizationId },
+    data: {
+      paidAmount: totalPaid,
+      paymentStatus: paymentStatus,
+    },
+  });
 
   revalidatePath("/finance/purchases");
   return payment;

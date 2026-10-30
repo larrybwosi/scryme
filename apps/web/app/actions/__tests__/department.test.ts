@@ -199,7 +199,9 @@ describe("Department Server Actions - BOLA Hardening", () => {
 
     it("should execute updateMany scoped strictly by id and organizationId", async () => {
       (getServerAuth as any).mockResolvedValue({ organizationId: "org-1", role: "ADMIN" });
-      (db.department.findFirst as any).mockResolvedValue({ id: "dept-1", headId: null });
+      (db.department.findFirst as any)
+        .mockResolvedValueOnce({ id: "dept-1", headId: null }) // existing department lookup
+        .mockResolvedValueOnce(null); // duplicate name check lookup
       (db.department.updateMany as any).mockResolvedValue({ count: 1 });
       (db.department.findFirstOrThrow as any).mockResolvedValue({ id: "dept-1", name: "Updated Dept" });
 
