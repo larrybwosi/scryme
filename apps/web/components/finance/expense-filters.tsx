@@ -37,9 +37,10 @@ import { cn } from "@repo/ui/lib/utils";
 interface ExpenseFiltersProps {
   categories: any[];
   locations: any[];
+  costCenters?: any[];
 }
 
-export function ExpenseFilters({ categories, locations }: ExpenseFiltersProps) {
+export function ExpenseFilters({ categories, locations, costCenters = [] }: ExpenseFiltersProps) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -51,6 +52,9 @@ export function ExpenseFilters({ categories, locations }: ExpenseFiltersProps) {
   );
   const [locationId, setLocationId] = useState(
     searchParams.get("locationId") || "all",
+  );
+  const [costCenterId, setCostCenterId] = useState(
+    searchParams.get("costCenterId") || "all",
   );
   const [dateRange, setDateRange] = useState<{ from?: Date; to?: Date }>({
     from: searchParams.get("from")
@@ -81,6 +85,7 @@ export function ExpenseFilters({ categories, locations }: ExpenseFiltersProps) {
     setStatus("all");
     setCategoryId("all");
     setLocationId("all");
+    setCostCenterId("all");
     setDateRange({});
     router.push(pathname);
   };
@@ -192,6 +197,25 @@ export function ExpenseFilters({ categories, locations }: ExpenseFiltersProps) {
             </SelectContent>
           </Select>
 
+          <Select
+            value={costCenterId}
+            onValueChange={val => {
+              setCostCenterId(val);
+              updateFilters({ costCenterId: val });
+            }}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue placeholder="Cost Center" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Cost Centers</SelectItem>
+              {costCenters.map(cc => (
+                <SelectItem key={cc.id} value={cc.id}>
+                  {cc.name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           <Popover>
             <PopoverTrigger asChild>
               <Button
@@ -285,6 +309,7 @@ export function ExpenseFilters({ categories, locations }: ExpenseFiltersProps) {
             status !== "all" ||
             categoryId !== "all" ||
             locationId !== "all" ||
+            costCenterId !== "all" ||
             dateRange.from) && (
             <Button
               variant="ghost"
