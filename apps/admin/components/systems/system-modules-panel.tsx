@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import {
-  PLATFORM_MODULES,
-} from "@repo/shared/constants";
+import { PLATFORM_MODULES } from "@repo/shared/constants";
 import { updateSystemModuleStatus } from "@/app/actions/systems";
 import {
   Card,
@@ -14,14 +12,20 @@ import {
 } from "@repo/ui/components/ui/card";
 import { Switch } from "@repo/ui/components/ui/switch";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Alert, AlertDescription, AlertTitle } from "@repo/ui/components/ui/alert";
+import {
+  Alert,
+  AlertDescription,
+  AlertTitle,
+} from "@repo/ui/components/ui/alert";
 import { AlertTriangle, CheckCircle2, ShieldAlert } from "lucide-react";
 
 interface SystemModulesPanelProps {
   initialSystemModules: Record<string, boolean>;
 }
 
-export function SystemModulesPanel({ initialSystemModules }: SystemModulesPanelProps) {
+export function SystemModulesPanel({
+  initialSystemModules,
+}: SystemModulesPanelProps) {
   const [systemModules, setSystemModules] =
     useState<Record<string, boolean>>(initialSystemModules);
   const [isPending, startTransition] = useTransition();
@@ -49,10 +53,13 @@ export function SystemModulesPanel({ initialSystemModules }: SystemModulesPanelP
       {disabledCount > 0 && (
         <Alert variant="destructive">
           <ShieldAlert className="size-4" aria-hidden="true" />
-          <AlertTitle>Master Kills Active ({disabledCount} Modules Disabled)</AlertTitle>
+          <AlertTitle>
+            Master Kills Active ({disabledCount} Modules Disabled)
+          </AlertTitle>
           <AlertDescription>
-            Modules disabled system-wide are completely inaccessible across all organizations,
-            overriding any organization-level custom pricing or feature flags.
+            Modules disabled system-wide are completely inaccessible across all
+            organizations, overriding any organization-level custom pricing or
+            feature flags.
           </AlertDescription>
         </Alert>
       )}
@@ -61,7 +68,8 @@ export function SystemModulesPanel({ initialSystemModules }: SystemModulesPanelP
         <CardHeader>
           <CardTitle>System-Wide Platform Modules</CardTitle>
           <CardDescription>
-            Enable or disable platform features globally across the entire system. Disabling a module here turns it off for all tenants.
+            Enable or disable platform features globally across the entire
+            system. Disabling a module here turns it off for all tenants.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -101,12 +109,18 @@ export function SystemModulesPanel({ initialSystemModules }: SystemModulesPanelP
                     <div className="flex items-center gap-1.5 text-xs font-medium">
                       {isEnabled ? (
                         <span className="flex items-center gap-1 text-emerald-600 dark:text-emerald-400">
-                          <CheckCircle2 className="size-3.5" aria-hidden="true" />
+                          <CheckCircle2
+                            className="size-3.5"
+                            aria-hidden="true"
+                          />
                           Globally Enabled
                         </span>
                       ) : (
                         <span className="flex items-center gap-1 text-destructive">
-                          <AlertTriangle className="size-3.5" aria-hidden="true" />
+                          <AlertTriangle
+                            className="size-3.5"
+                            aria-hidden="true"
+                          />
                           Globally Disabled
                         </span>
                       )}
@@ -114,7 +128,9 @@ export function SystemModulesPanel({ initialSystemModules }: SystemModulesPanelP
                     <Switch
                       disabled={isPending}
                       checked={isEnabled}
-                      onCheckedChange={() => handleToggle(moduleDef.key, isEnabled)}
+                      onCheckedChange={() =>
+                        handleToggle(moduleDef.key, isEnabled)
+                      }
                     />
                   </div>
                 </div>

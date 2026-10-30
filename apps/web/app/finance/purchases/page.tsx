@@ -14,7 +14,6 @@ export const metadata: Metadata = {
   description: "Issue purchase orders, track vendor deliveries, and log accounts payable.",
 };
 
-
 export default async function PurchasesPage(props: {
   searchParams: Promise<{ q?: string; status?: string }>;
 }) {
@@ -45,7 +44,11 @@ export default async function PurchasesPage(props: {
 
         <FilterBar />
 
-        <PurchaseTable purchases={purchases} />
+        <PurchaseTable
+          purchases={purchases}
+          suppliers={suppliers}
+          products={products}
+        />
       </div>
     </Suspense>
   );

@@ -1,4 +1,4 @@
-import Link from "next/link"
+import Link from "next/link";
 import {
   BarChart3,
   HardDrive,
@@ -9,15 +9,28 @@ import {
   Ban,
   CheckCircle2,
   ArrowUpRight,
-} from "lucide-react"
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
-import { getSystemReportsAndAnalytics } from "@/app/actions/reports"
+} from "lucide-react";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
+import { getSystemReportsAndAnalytics } from "@/app/actions/reports";
 
 export default async function AdminReportsPage() {
-  const reports = await getSystemReportsAndAnalytics()
-  const { overview, topStorageOrganizations, recentOrganizations } = reports
+  const reports = await getSystemReportsAndAnalytics();
+  const { overview, topStorageOrganizations, recentOrganizations } = reports;
 
   return (
     <div className="flex flex-col gap-8">
@@ -26,14 +39,17 @@ export default async function AdminReportsPage() {
           System Reports & Analytics
         </h1>
         <p className="text-sm text-muted-foreground">
-          Global platform insights, aggregate RustFS storage usage, system activity metrics, and organization limits.
+          Global platform insights, aggregate RustFS storage usage, system
+          activity metrics, and organization limits.
         </p>
       </div>
 
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Total RustFS Storage Used</CardTitle>
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Total RustFS Storage Used
+            </CardTitle>
             <HardDrive className="size-4 text-primary" aria-hidden="true" />
           </CardHeader>
           <CardContent>
@@ -50,23 +66,34 @@ export default async function AdminReportsPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Organizations & Users</CardTitle>
-            <Building2 className="size-4 text-muted-foreground" aria-hidden="true" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Organizations & Users
+            </CardTitle>
+            <Building2
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
               {overview.totalOrganizations} Orgs / {overview.totalUsers} Users
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              {overview.activeUsers} active users · {overview.suspendedOrganizations} suspended orgs
+              {overview.activeUsers} active users ·{" "}
+              {overview.suspendedOrganizations} suspended orgs
             </p>
           </CardContent>
         </Card>
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">Platform Members</CardTitle>
-            <Users className="size-4 text-muted-foreground" aria-hidden="true" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              Platform Members
+            </CardTitle>
+            <Users
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
@@ -80,15 +107,25 @@ export default async function AdminReportsPage() {
 
         <Card className="border-border bg-card">
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-xs font-medium text-muted-foreground">System Sales Volume</CardTitle>
-            <Receipt className="size-4 text-muted-foreground" aria-hidden="true" />
+            <CardTitle className="text-xs font-medium text-muted-foreground">
+              System Sales Volume
+            </CardTitle>
+            <Receipt
+              className="size-4 text-muted-foreground"
+              aria-hidden="true"
+            />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-foreground">
-              ${overview.totalVolume.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              $
+              {overview.totalVolume.toLocaleString(undefined, {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
             </div>
             <p className="text-xs text-muted-foreground mt-1">
-              Across {overview.totalTransactions.toLocaleString()} total processed transactions
+              Across {overview.totalTransactions.toLocaleString()} total
+              processed transactions
             </p>
           </CardContent>
         </Card>
@@ -102,7 +139,8 @@ export default async function AdminReportsPage() {
                 Organization Storage Usage & Limits (RustFS)
               </CardTitle>
               <CardDescription>
-                Breakdown of physical file storage usage, file count, limits, and storage access status per tenant.
+                Breakdown of physical file storage usage, file count, limits,
+                and storage access status per tenant.
               </CardDescription>
             </div>
             <HardDrive className="size-5 text-muted-foreground" />
@@ -123,21 +161,28 @@ export default async function AdminReportsPage() {
             <TableBody>
               {topStorageOrganizations.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={6} className="text-center text-sm text-muted-foreground py-6">
+                  <TableCell
+                    colSpan={6}
+                    className="text-center text-sm text-muted-foreground py-6"
+                  >
                     No organizations found.
                   </TableCell>
                 </TableRow>
               ) : (
                 topStorageOrganizations.map((org) => {
-                  const limitStr = org.limitMB != null ? `${org.limitMB} MB` : "Unlimited"
-                  const isOverLimit = org.limitMB != null && org.usedMB >= org.limitMB
+                  const limitStr =
+                    org.limitMB != null ? `${org.limitMB} MB` : "Unlimited";
+                  const isOverLimit =
+                    org.limitMB != null && org.usedMB >= org.limitMB;
 
                   return (
                     <TableRow key={org.id}>
                       <TableCell className="font-medium text-foreground">
                         <div className="flex flex-col">
                           <span>{org.name}</span>
-                          <span className="text-xs text-muted-foreground">/{org.slug}</span>
+                          <span className="text-xs text-muted-foreground">
+                            /{org.slug}
+                          </span>
                         </div>
                       </TableCell>
                       <TableCell>
@@ -159,12 +204,19 @@ export default async function AdminReportsPage() {
                             Limit Exceeded
                           </Badge>
                         ) : org.isSuspended ? (
-                          <Badge variant="outline" className="text-amber-600 border-amber-500/30">
+                          <Badge
+                            variant="outline"
+                            className="text-amber-600 border-amber-500/30"
+                          >
                             Org Suspended
                           </Badge>
                         ) : (
-                          <Badge variant="secondary" className="gap-1 text-muted-foreground">
-                            <CheckCircle2 className="size-3 text-emerald-500" /> Normal
+                          <Badge
+                            variant="secondary"
+                            className="gap-1 text-muted-foreground"
+                          >
+                            <CheckCircle2 className="size-3 text-emerald-500" />{" "}
+                            Normal
                           </Badge>
                         )}
                       </TableCell>
@@ -177,7 +229,7 @@ export default async function AdminReportsPage() {
                         </Link>
                       </TableCell>
                     </TableRow>
-                  )
+                  );
                 })
               )}
             </TableBody>
@@ -191,7 +243,8 @@ export default async function AdminReportsPage() {
             Recent Organizations Activity & Scale
           </CardTitle>
           <CardDescription>
-            Activity counts (members, products, transactions) across recently onboarded organization accounts.
+            Activity counts (members, products, transactions) across recently
+            onboarded organization accounts.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -212,7 +265,9 @@ export default async function AdminReportsPage() {
                   <TableCell className="font-medium text-foreground">
                     <div className="flex flex-col">
                       <span>{org.name}</span>
-                      <span className="text-xs text-muted-foreground">/{org.slug}</span>
+                      <span className="text-xs text-muted-foreground">
+                        /{org.slug}
+                      </span>
                     </div>
                   </TableCell>
                   <TableCell className="text-xs text-muted-foreground">
@@ -236,5 +291,5 @@ export default async function AdminReportsPage() {
         </CardContent>
       </Card>
     </div>
-  )
+  );
 }

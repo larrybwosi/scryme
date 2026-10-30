@@ -28,7 +28,10 @@ export async function listUsers() {
   });
 }
 
-export async function banUser(id: string, input: { banReason?: string; banExpires?: string }) {
+export async function banUser(
+  id: string,
+  input: { banReason?: string; banExpires?: string },
+) {
   await requireSuperAdmin();
 
   const user = await db.user.findUnique({ where: { id } });
@@ -150,7 +153,7 @@ export async function unbanUser(id: string) {
 
 export async function resetUserPassword(
   userId: string,
-  options?: { newPassword?: string; sendEmail?: boolean }
+  options?: { newPassword?: string; sendEmail?: boolean },
 ) {
   await requireSuperAdmin();
 
@@ -172,7 +175,10 @@ export async function resetUserPassword(
           redirectTo: `${process.env.NEXT_PUBLIC_ADMIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://admin.scryme.tech"}/reset-password`,
         },
       });
-      return { success: true, message: `Password reset email sent to ${user.email}` };
+      return {
+        success: true,
+        message: `Password reset email sent to ${user.email}`,
+      };
     } catch (e: any) {
       console.error("Error sending reset password email via Better-Auth:", e);
       throw new Error(e.message || "Failed to send reset password email");
@@ -186,7 +192,10 @@ export async function resetUserPassword(
       data: { password: hashedPassword },
     });
     revalidatePath("/users");
-    return { success: true, message: `Password updated successfully for ${user.email}` };
+    return {
+      success: true,
+      message: `Password updated successfully for ${user.email}`,
+    };
   }
 
   throw new Error("Either newPassword or sendEmail must be provided");

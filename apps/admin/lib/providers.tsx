@@ -1,8 +1,8 @@
-"use client"
+"use client";
 
-import type { ReactNode } from "react"
-import { TooltipProvider } from "@repo/ui/components/ui/tooltip"
-import { Toaster } from "@repo/ui/components/ui/sonner"
+import type { ReactNode } from "react";
+import { TooltipProvider } from "@repo/ui/components/ui/tooltip";
+import { Toaster } from "@repo/ui/components/ui/sonner";
 
 export function Providers({ children }: { children: ReactNode }) {
   return (
@@ -10,5 +10,5 @@ export function Providers({ children }: { children: ReactNode }) {
       {children}
       <Toaster position="top-right" richColors />
     </TooltipProvider>
-  )
+  );
 }

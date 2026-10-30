@@ -38,14 +38,14 @@ This guide provides step-by-step instructions for configuring Google Firebase Cl
 
 The Scryme Android App automatically creates and manages **6 Notification Channels** upon startup (compatible with Android 8.0 Oreo+ / API 26+):
 
-| Channel Name | Channel ID | Importance | Description | Payload Keyword Match |
-| :--- | :--- | :--- | :--- | :--- |
-| **Schedule & Shift Updates** | `schedule_updates_channel` | `IMPORTANCE_HIGH` | Roster changes, shift assignments, and trades | `SHIFT`, `SCHEDULE`, `ROSTER` |
-| **Task Assignments & Updates** | `tasks_updates_channel` | `IMPORTANCE_HIGH` | New task assignments, updates, and deadlines | `TASK` |
-| **Daily Shifts & Roster Summary** | `daily_shifts_channel` | `IMPORTANCE_DEFAULT` | Daily shift reminders and scheduled task summaries | `DAILY`, `ROSTER_SUMMARY` |
-| **POS & System Alerts** | `pos_alerts_channel` | `IMPORTANCE_HIGH` | POS pairing, system alerts, and terminal status | `POS`, `PAIR`, `SYSTEM`, `SALE` |
-| **Company Announcements** | `announcements_channel` | `IMPORTANCE_HIGH` | Important broadcasts and organization updates | `ANNOUNCEMENT`, `BROADCAST` |
-| **Attendance & Geofencing Alerts** | `attendance_alerts_channel` | `IMPORTANCE_HIGH` | Clock-in reminders, geofence warnings, and attendance alerts | `ATTENDANCE`, `CLOCK`, `GEOFENCE` |
+| Channel Name                       | Channel ID                  | Importance           | Description                                                  | Payload Keyword Match             |
+| :--------------------------------- | :-------------------------- | :------------------- | :----------------------------------------------------------- | :-------------------------------- |
+| **Schedule & Shift Updates**       | `schedule_updates_channel`  | `IMPORTANCE_HIGH`    | Roster changes, shift assignments, and trades                | `SHIFT`, `SCHEDULE`, `ROSTER`     |
+| **Task Assignments & Updates**     | `tasks_updates_channel`     | `IMPORTANCE_HIGH`    | New task assignments, updates, and deadlines                 | `TASK`                            |
+| **Daily Shifts & Roster Summary**  | `daily_shifts_channel`      | `IMPORTANCE_DEFAULT` | Daily shift reminders and scheduled task summaries           | `DAILY`, `ROSTER_SUMMARY`         |
+| **POS & System Alerts**            | `pos_alerts_channel`        | `IMPORTANCE_HIGH`    | POS pairing, system alerts, and terminal status              | `POS`, `PAIR`, `SYSTEM`, `SALE`   |
+| **Company Announcements**          | `announcements_channel`     | `IMPORTANCE_HIGH`    | Important broadcasts and organization updates                | `ANNOUNCEMENT`, `BROADCAST`       |
+| **Attendance & Geofencing Alerts** | `attendance_alerts_channel` | `IMPORTANCE_HIGH`    | Clock-in reminders, geofence warnings, and attendance alerts | `ATTENDANCE`, `CLOCK`, `GEOFENCE` |
 
 ---
 
@@ -55,6 +55,7 @@ The Scryme Android App automatically creates and manages **6 Notification Channe
    - Whenever Firebase generates or refreshes a registration token, `ScrymeFirebaseMessagingService.onNewToken(token)` receives the callback.
    - The token is persisted to local Encrypted DataStore preferences via `SessionManager.saveFcmToken(token)`.
    - If an active session exists, `AuthRepository.registerDeviceToken(token)` calls the backend endpoint:
+
      ```http
      POST /v3/android/register-device
      Content-Type: application/json
@@ -87,6 +88,7 @@ The Scryme Android App automatically creates and manages **6 Notification Channe
 ## 5. Testing Push Notifications
 
 ### Option A: Using Firebase Console Notification Composer
+
 1. Go to **Firebase Console** > **Messaging** > **Create your first campaign** > **Firebase Notification messages**.
 2. Enter Title and Notification Text.
 3. Target: Select package `tech.scryme.app`.
@@ -95,6 +97,7 @@ The Scryme Android App automatically creates and manages **6 Notification Channe
 5. Click **Send Test Message** and paste your FCM Registration Token.
 
 ### Option B: Using cURL / HTTP V1 API
+
 ```bash
 curl -X POST https://fcm.googleapis.com/v1/projects/<YOUR_PROJECT_ID>/messages:send \
   -H "Authorization: Bearer <FCM_ACCESS_TOKEN>" \

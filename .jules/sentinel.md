@@ -1,261 +1,335 @@
 ## 2025-05-14 - Sensitive Data Leakage in Global Exception Logs
+
 **Vulnerability:** The global `AllExceptionsFilter` was logging raw `Error` objects directly to server logs and OpenObserve, bypassing the redaction utility for `instanceof Error` cases.
 **Learning:** `Error` objects frequently encapsulate sensitive context (e.g., database query parameters, request bodies, or internal configurations) in non-enumerable properties that standard loggers might still capture. Bypassing redaction for `Error` instances creates a significant risk of PII or secret exposure in monitoring tools.
 **Prevention:** Ensure the central redaction utility explicitly handles `Error` objects by using `Object.getOwnPropertyNames` to find and redact sensitive metadata before any exception is passed to a logging service. Always redact before logging, never after.
 
 ## 2025-05-15 - Authorization Bypass in Realtime WebSocket Gateways
+
 **Vulnerability:** The V2 and V3 Realtime Gateways allowed clients to join any channel or publish arbitrary data to any channel without organization-level authorization checks.
 **Learning:** WebSocket gateways in NestJS operate outside the standard global HTTP guards. Even if a connection is authenticated, individual event handlers (like `@SubscribeMessage("publish")`) can be exploited to inject data into other tenants' channels if they don't explicitly validate the channel ownership against the socket's authenticated context.
 **Prevention:** Always verify authentication tokens in `handleConnection` and attach the payload to the socket object. Implement a centralized `validateChannelAccess` method and apply it to every sensitive message handler (`join`, `publish`, `presence`) to ensure strict multi-tenant isolation.
 
 ## 2025-05-16 - Sensitive Data Leakage in Request Logging
+
 **Vulnerability:** The debug request logger in the API entry point was susceptible to leaking sensitive headers (like session cookies) if it used a deny-list approach for redaction.
 **Learning:** Shared redaction utilities often use a deny-list of sensitive keys. While useful for body/query objects, applying them to entire header objects is risky because new or less common sensitive headers (e.g., `Set-Cookie`, `X-Auth-Token`) might be missed. An allow-list approach for logging headers is significantly safer.
 **Prevention:** For diagnostic logging of HTTP headers, always use a strict allow-list of safe headers to log (e.g., `user-agent`, `content-type`, `x-correlation-id`). Pass even the allowed sensitive headers (like `authorization`) through a redaction utility as a second layer of defense.
 
 ## 2026-06-29 - SSRF Vulnerability in Webhook and Image Services
+
 **Vulnerability:** Outbound HTTP requests in the `WebhookProcessor` and `ImageService` were fetching user-provided URLs without IP-level validation, allowing for Server-Side Request Forgery (SSRF).
 **Learning:** Validating only the hostname or protocol is insufficient for SSRF protection as it doesn't account for hostnames that resolve to internal or reserved IP addresses (e.g., `169.254.169.254` for cloud metadata). A robust check must resolve the hostname and verify the resulting IP.
 **Prevention:** Always resolve destination hostnames using `dns.lookup` and validate the resolved IP against a blocklist of private, loopback, and metadata ranges before initiating any outbound HTTP request. Centralize this logic in an `isSafeUrl` utility.
+
 ## 2026-06-29 - Case-Insensitive Redaction in Logging Utility
+
 **Vulnerability:** The `redactSensitiveData` utility used case-sensitive matching for sensitive keys. This allowed sensitive data (like `Password` or `API_KEY`) to leak into logs if the keys didn't exactly match the lowercase entries in the deny-list.
 **Learning:** Security utilities that rely on key matching must be case-insensitive to account for different naming conventions (PascalCase, camelCase, UPPER_CASE) and potential manual overrides. Relying on case-sensitive `includes()` or `hasOwnProperty()` is insufficient for security-critical redaction.
 **Prevention:** Always normalize keys (e.g., `.toLowerCase()`) before performing lookups in sensitive data filters. Use efficient data structures like `Set` for these lookups to maintain performance while ensuring comprehensive coverage.
+
 ## 2025-05-17 - Case-Sensitivity in Data Redaction
+
 **Vulnerability:** The central `redactSensitiveData` utility performed case-sensitive key matching, meaning sensitive fields like `Password` or `Secret-Key` (common in HTTP headers) would bypass redaction if the utility was only configured for lowercase versions.
 **Learning:** Redaction utilities must be case-insensitive by default when handling data from sources with non-standard casing (like HTTP headers or third-party webhooks). Relying on exact string matches creates a bypass vector for data leakage into logs.
 **Prevention:** Always normalize keys to lowercase before comparison in redaction utilities. For performance in recursive traversals, use a `Set` of lowercase sensitive keys.
+
 ## 2026-06-28 - SSRF Vulnerability in Webhooks and Notifications
+
 **Vulnerability:** The V3 Webhooks module and the shared NotificationEngine were delivering payloads to user-provided URLs without validating if they pointed to internal/private network resources.
 **Learning:** Outbound requests to URLs provided by users or stored in configurations are primary targets for SSRF attacks. Relying on simple string checks for "localhost" is insufficient as attackers can use DNS-resolved IPs (e.g., `127.0.0.1`, `10.0.0.1`) or IPv6 loopback addresses to bypass filters and access internal metadata services or APIs.
 **Prevention:** Always use a robust URL validation utility like `isSafeUrl` (implemented in `@repo/shared/server`) that resolves the hostname via DNS and verifies that the resulting IP address does not fall within private, loopback, or reserved ranges. Apply this validation to all modules performing outbound HTTP(S) requests to external endpoints.
 
 ## 2025-05-18 - Sensitive Data Leakage at Recursion Depth Limit
+
 **Vulnerability:** The `redactSensitiveData` utility leaked raw objects and arrays when they exceeded the `maxDepth` limit, as the recursion would stop and return the remaining data as-is without further inspection.
 **Learning:** Security-critical recursion must never "fail open" by returning raw data when limits are reached. If a data structure is too deep to inspect, it must be considered potentially sensitive and replaced with a placeholder.
 **Prevention:** Ensure recursive sanitization utilities return a safe placeholder (e.g., `[Object]` or `[Array]`) when the recursion depth limit is exceeded, rather than returning the original data.
+
 ## 2026-06-30 - Sensitive Data Leakage at Redaction Depth Limit
+
 **Vulnerability:** The `redactSensitiveData` utility returned raw data when the recursion depth exceeded `maxDepth`. This allowed sensitive keys nested deeper than the limit to be leaked in plaintext to logs.
 **Learning:** Recursion limits in security-sensitive utilities must fail closed or return a safe placeholder. Returning the original data as a fallback bypasses the security purpose of the utility.
 **Prevention:** Always return a redaction placeholder or a truncated/safe representation when a recursion or iteration limit is reached in data processing utilities designed for security.
 
 ## 2026-07-01 - SSRF Vulnerability in Storage Download Streams
+
 **Vulnerability:** `StorageService.getDownloadStream` performed outbound requests to arbitrary URLs using a default `axios` implementation without validating if the URLs pointed to internal or private resources.
 **Learning:** Even internal helper methods in storage services can be vectors for SSRF if they perform outbound requests based on URLs that might originate from external data sources (like attachment records). Security checks must be applied at the common entry point of such methods to ensure all execution paths (provider-specific or default) are covered.
 **Prevention:** Always validate outbound URLs using a robust utility like `isSafeUrl` before performing any network requests. For complex services with multiple providers, place the validation at the highest possible level (e.g., the service entry point) to ensure consistent protection across all implementations.
+
 ## 2026-07-01 - SSRF Bypass via IPv4-Mapped IPv6 Addresses
+
 **Vulnerability:** The `isSafeIp` utility used for SSRF protection failed to detect restricted IPv4 addresses when provided in their IPv6-mapped format (e.g., `::ffff:127.0.0.1`).
 **Learning:** Node.js networking utilities correctly identify these addresses as IPv6, but security filters that only check for specific IPv6 loopback patterns (like `::1`) will miss the embedded restricted IPv4 address. Attackers can use this to bypass SSRF protections that don't account for dual-stack address representations.
 **Prevention:** Always check for and normalize IPv4-mapped IPv6 addresses (starting with `::ffff:`) by extracting the IPv4 portion and recursively validating it against the restricted IP blocklist. Ensure this logic is consistently applied across all shared security utilities.
 
 ## 2025-05-19 - IDOR Vulnerability in M-Pesa Payment Module
+
 **Vulnerability:** The `MpesaService.validate` and `verifyPayment` methods were performing lookups for `UnclaimedPayment` and `MpesaPaymentRequest` using only transaction identifiers, allowing cross-tenant data access.
 **Learning:** In a multi-tenant architecture, identifiers that are unique within a single provider (like M-Pesa transaction codes) are not sufficient for secure authorization. Failing to include the `organizationId` in database queries allows an authenticated user from one organization to probe or claim transactions belonging to another.
 **Prevention:** Always scope database lookups for sensitive entities using the authenticated `organizationId`. Use explicit unit tests to verify that `where` clauses in repositories and services include the necessary tenant isolation filters.
+
 ## 2026-07-02 - SSRF Bypass via Multi-IP Hostnames
+
 **Vulnerability:** The `isSafeUrl` utility only validated the first IP address returned by `dns.lookup`. An attacker could use a hostname resolving to both a safe and an unsafe IP to bypass the check.
 **Learning:** Security utilities performing DNS-based validation must account for hostnames resolving to multiple IP addresses. Validating only the first returned address is insufficient as the application's HTTP client might choose a different (unsafe) IP from the resolved list.
 **Prevention:** Always use `dns.lookup` with the `{ all: true }` option and iterate through all resolved IP addresses to ensure every single one is safe before allowing the request.
 
 ## 2026-07-05 - IDOR and Mass Assignment in Bakery Baker Management
+
 **Vulnerability:** The `BakeryService.addBaker` method lacked verification that the provided `memberId` belonged to the authenticated `organizationId`, allowing an attacker to add any member from any organization as a baker. Additionally, both `addBaker` and `updateBaker` were susceptible to mass assignment of internal fields like `bakerySettingsId`.
 **Learning:** In multi-tenant systems, every foreign key provided by a user (like `memberId`) must be validated against the current tenant's scope before being used in a write operation. Furthermore, using spread operators (`...data`) in Prisma `create`/`update` calls without explicit whitelisting can expose internal fields to unauthorized modifications.
 **Prevention:** Always perform a scoped lookup for foreign keys (e.g., `member.findFirst({ where: { id: memberId, organizationId } })`) before persisting a record that references them. Use explicit destructuring or a whitelist to select only allowed fields from user input before passing them to the database layer.
 
 ## 2025-05-20 - IDOR Vulnerability in M-Pesa and Delivery Utilities
+
 **Vulnerability:** Scoped lookups for `UnclaimedPayment`, `Transaction`, and `Fulfillment` were using `findUnique` with only the record ID, bypassing `organizationId` checks in multi-tenant environments.
 **Learning:** Prisma's `findUnique` only enforces multi-field uniqueness if a composite unique index (`@@unique`) exists. In this codebase, many models lack `@@unique([id, organizationId])`, so `where: { id, organizationId }` in `findUnique` is often invalid or ignored in favor of just `id`. This allows an authenticated user to access records from other tenants if they know or guess the ID.
 **Prevention:** Always use `findFirst` instead of `findUnique` when performing tenant-scoped lookups for models that do not have a composite unique index on `[id, organizationId]`. Explicitly include `organizationId` in the `where` clause of every sensitive lookup.
 
 ## 2025-05-21 - Role Escalation and Self-Modification in Member Management
+
 **Vulnerability:** `MemberUseCase` allowed any user with `members:write` permissions to promote themselves or others to `OWNER`/`ADMIN` roles and delete or deactivate their own accounts.
 **Learning:** Standard permission-based guards (e.g., `members:write`) are often insufficient for sensitive operations like role promotion or account deletion in multi-tenant environments. Without granular checks on the actor's role and target record, a low-privileged user with write access can escalate privileges or orphan an organization.
 **Prevention:** Implement explicit role-based authorization within service logic for sensitive field updates (like `role`). Restrict promotion to administrative roles to `OWNER`s only and enforce self-protection logic to prevent users from deleting or deactivating their own memberships at the application layer.
 
 ## 2025-05-22 - Mass Assignment and IDOR in Inventory Service
+
 **Vulnerability:** The `InventoryService` mutation methods (`createInventoryItem`, `updateInventoryItem`, `createInventoryMovement`) used unrestricted spread operators for user-provided data and lacked ownership validation for related IDs.
 **Learning:** Spread operators (`...data`) in Prisma mutations allow attackers to overwrite sensitive internal fields like `organizationId` or `id`. Furthermore, accepting a record ID (e.g., `inventoryId`) in a URL or body without verifying it belongs to the authenticated `organizationId` leads to IDOR vulnerabilities, especially when using `create` or `updateMany` which may bypass single-record ownership checks if not explicitly filtered.
 **Prevention:** Always use explicit field whitelisting for user input before passing it to database layers. For every foreign key or related record ID provided by the user, perform a scoped lookup (e.g., `findFirst({ where: { id, organizationId } })`) to verify ownership before performing a write operation that depends on that relationship.
 
 ## 2025-05-23 - IDOR in Inventory Maintenance Services
+
 **Vulnerability:** Maintenance and utility services like `InventoryIntegrityService` were performing scans and fixes using record IDs without verifying tenant ownership, assuming that the caller (Controller) had already performed the check.
 **Learning:** Security checks must be implemented at the service layer in addition to the controller/guard layer. Relying on "caller-side" validation for multi-tenant isolation is brittle and leads to IDOR vulnerabilities when new endpoints or internal tasks use the same service methods. Utility services that perform write operations (like `fixVariantIntegrity`) are particularly high-risk.
 **Prevention:** Ensure all service-layer methods that accept record IDs also require an `organizationId` and include it in the `where` clause of all database queries (`findMany`, `count`, `updateMany`). Avoid using `findUnique` with just an `id` for models that lack a composite unique index on `[id, organizationId]`.
+
 ## 2026-07-08 - Enforcement of Transitive Ownership for Linked Models
+
 **Vulnerability:** Models without a direct `organizationId` (e.g., `ProductVariant`, `ProductSupplier`) were being updated using only their primary IDs, allowing cross-tenant data modification if the ID was known.
 **Learning:** In multi-tenant systems where some models are linked to a tenant via a parent (transitive ownership), relying on a previous scoped lookup is insufficient if the subsequent `update` operation uses only the primary ID. Prisma's `update` does not automatically inherit filters from previous `findFirst` calls in the same transaction.
 **Prevention:** Always perform an explicit existence check using scoped relation filters (e.g., `{ product: { organizationId } }`) before proceeding with an update on models lacking a direct tenant foreign key. Ensure the update operation itself or the logic leading to it is strictly aborted if the check fails.
 
 ## 2026-07-09 - IDOR and Mass Assignment in CRM V3 API
+
 **Vulnerability:** The V3 CRM module allowed creating records with `objectId` and `ownerId` belonging to other organizations. Additionally, several services used spread operators (`...dto`) in Prisma `create` calls, exposing the models to mass assignment of internal fields.
 **Learning:** Even with global multi-tenancy guards, individual fields that reference other entities (like object definitions or members) must be explicitly validated against the current tenant's scope. Spread operators in mutations are dangerous as they can bypass intended field restrictions.
 **Prevention:** Always perform scoped lookups for every user-provided ID (foreign keys) before persisting them. Replace spread operators with explicit field mapping in Prisma `data` blocks to enforce a strict whitelist of modifiable fields.
+
 ## 2026-07-08 - IDOR Vulnerability in Checkout Process
+
 **Vulnerability:** The `CheckoutUseCase.execute` method was fetching a `Cart` using only its `id`, allowing any authenticated user to potentially checkout any other user's cart if they knew the `cartId`.
 **Learning:** Even if a model (like `Cart`) is considered "temporary" or "transactional", it must still enforce multi-tenant isolation. Relying on `id` alone for lookups in a multi-tenant environment is a classic IDOR vector, especially when composite unique indexes on `[id, organizationId]` are missing.
 **Prevention:** Always scope database lookups using the authenticated `organizationId`. Use `findFirst` with both `id` and `organizationId` in the `where` clause to ensure strict isolation, and verify this pattern in integration tests.
 
 ## 2026-07-10 - IDOR Prevention in Bulk Lookups
+
 **Vulnerability:** `BakeryService.completeBatch` fetched multiple `StockBatch` records using only their IDs in a `findMany` query, allowing users to consume stock from batches belonging to other organizations.
-**Learning:** Scoping a `findMany` query with `organizationId` is necessary but not sufficient for IDOR protection if the application doesn't also verify that *all* requested IDs were found. If some IDs belong to another tenant, they will simply be omitted from the result set, and the application might proceed with a partial or incorrect state if it doesn't explicitly check the count.
+**Learning:** Scoping a `findMany` query with `organizationId` is necessary but not sufficient for IDOR protection if the application doesn't also verify that _all_ requested IDs were found. If some IDs belong to another tenant, they will simply be omitted from the result set, and the application might proceed with a partial or incorrect state if it doesn't explicitly check the count.
 **Prevention:** When performing bulk lookups by ID in a multi-tenant environment, always include the `organizationId` in the `where` clause AND verify that `results.length === new Set(requestedIds).size`. This ensures that every requested resource exists and belongs to the authorized tenant.
 
 ## 2026-07-09 - IDOR and Multi-tenant Stock Manipulation in Assembly Management
+
 **Vulnerability:** The `AssemblyUseCase` allowed users to create assemblies referencing product variants and stock batches from other organizations. Upon completion, the system would decrement stock from these foreign records. Additionally, the target `locationId` for production output was trusted from the request body without ownership validation.
 **Learning:** High-level "transactional" use cases often assume that since an entity (like an Assembly) is owned by a tenant, all its related entities or subsequent operational parameters (like locations) are also safe. In multi-tenant systems, every ID provided at every stage of a multi-step process must be validated against the tenant context.
 **Prevention:** Always perform bulk validation (e.g., using `count`) for all user-provided foreign keys during record creation. For operational methods, explicitly verify that all parameters (like `locationId`) belong to the authenticated `organizationId` and use scoped updates (`updateMany` with `organizationId`) for defense in depth.
+
 ## 2026-07-09 - Invitation Hijacking and Mass Assignment in Member Invitations
+
 **Vulnerability:** `InvitationUseCase.acceptInvitation` lacked verification that the authenticated user's email matched the invitation recipient's email, allowing anyone with the token to join an organization. Additionally, `createInvitation` was vulnerable to mass assignment due to the use of a spread operator on user-provided DTOs.
 **Learning:** In token-based systems, the token itself is often treated as sufficient proof of authorization. However, for sensitive operations like joining a multi-tenant organization, the identity of the token bearer must still be validated against the intended recipient's identity (e.g., email) to prevent hijacking. Furthermore, spread operators in Prisma `create` calls without explicit field whitelisting remain a persistent risk for mass assignment of internal or unauthorized fields.
 **Prevention:** Always validate the authenticated user's email against the `email` field in the invitation before processing an acceptance. Use explicit field destructuring or mapping for all user-provided data in Prisma mutations to prevent mass assignment of sensitive fields like `organizationId` or custom internal flags.
 
 ## 2026-07-10 - IDOR Vulnerability in V3 Public Financial Documents
+
 **Vulnerability:** The V3 `PublicInvoiceController` provided document download endpoints (`/download`) that accepted database IDs without any token verification or organization scoping. This allowed unauthenticated access to sensitive invoices and receipts from any tenant.
 **Learning:** New API versions (V3) can inadvertently regress on security patterns established in older versions (V2) if central security utilities aren't strictly enforced at the routing layer. Public endpoints must never rely on guessable IDs alone, even if they are marked as "public" for sharing purposes.
 **Prevention:** Always require a signed document token for unauthenticated access to sensitive records. Implement a "belt and suspenders" approach by validating the token in the controller and enforcing strict `organizationId` scoping in the service/use-case layer using `findFirst` instead of `findUnique`.
+
 ## 2026-07-09 - Authorization Bypass via Missing Decorators (Fail-Open)
+
 **Vulnerability:** The central `AuthorizationGuard` was returning `true` (allowing access) when neither permissions nor scopes were defined on a handler or its controller class, unless it was a newly created controller explicitly annotated. This created a fail-open default where forgotten or newly registered endpoints were public-by-default to any authenticated user.
 **Learning:** Default-allow is a common but extremely critical vulnerability pattern. A secure-by-default (fail-closed) paradigm should always be enforced. If an endpoint requires authentication but is not explicitly declared as public (`@AllowPublic`) or annotated with specific permissions/scopes, the guard must throw a `ForbiddenException` to prevent accidental exposure.
 **Prevention:** Enforce default-deny (fail-closed) behavior in the main `AuthorizationGuard`. Any route that is not marked public must define either `permissions` or `scopes`. Additionally, verify that a security context exists on the request before processing checks.
 
 ## 2026-07-11 - IDOR and Mass Assignment in Bakery Ingredient Reception
+
 **Vulnerability:** The `BakeryService.receiveIngredients` method used `findUnique` with only the record ID to resolve `ingredientVariantId`, allowing users to receive stock for variants belonging to other organizations. Additionally, multiple creation methods (`createRecipe`, `createBatch`, `createTemplate`, `createCategory`, `createPartner`) used spread operators (`...data`), exposing them to mass assignment of internal fields like `organizationId`.
 **Learning:** Using `findUnique` for tenant-scoped lookups is only safe if a composite unique index on `[id, organizationId]` exists. Without it, Prisma ignores the `organizationId` filter if it's not part of a unique constraint. Furthermore, spread operators in mutations are a persistent risk as they can bypass intended field restrictions and allow overwriting of the tenant ID.
 **Prevention:** Always use `findFirst` with explicit `organizationId` scoping for all tenant-sensitive lookups on models lacking composite unique indexes. Enforce strict field whitelisting in all service mutation methods by replacing spread operators with explicit field mapping from the request DTO.
 
 ## 2026-07-12 - IDOR in Catalog Deletion Operations
+
 **Vulnerability:** The `deleteProduct` and `deleteCategory` methods in `CatalogService` were performing deletions using only the primary ID, allowing cross-tenant data destruction if the ID was known.
 **Learning:** Prisma's `delete` method requires a unique filter. Since the `Product` and `Category` models lack a composite unique index on `[id, organizationId]`, developers often fall back to using just `id`, bypassing tenant isolation. While `deleteMany` can enforce isolation, it doesn't return the deleted object, which may be needed for event payloads or API consistency.
 **Prevention:** Use a "find-then-delete" pattern for models lacking composite unique indexes. First, verify ownership using `findFirst` with both `id` and `organizationId`. Only proceed with the deletion if the record is found. This ensures strict multi-tenant isolation while preserving the ability to return the deleted record's data.
 
 ## 2026-07-13 - Mass Assignment in Catalog Service
+
 **Vulnerability:** The `CatalogService` was using unrestricted spread operators (`...data`) and direct object passing in Prisma `create` and `update` calls for Products and Categories. This allowed potential overwriting of the `organizationId` and other sensitive internal fields.
 **Learning:** Even with multi-tenant guards, service-level mutations that trust the entire request body are susceptible to mass assignment. Relying on the presence of `organizationId` in the data object is insufficient if the client can also provide a different one in the same object, which might override the intended one depending on merge order.
 **Prevention:** Always use explicit field whitelisting for `create` operations and either whitelisting or explicit blacklisting (stripping sensitive keys like `id` and `organizationId`) for `update` operations in service layers.
 
 ## 2026-07-14 - IDOR Bypass via Conditional Logic in Quote Requests
+
 **Vulnerability:** The `RequestB2BQuoteUseCase` skipped ownership verification for `customerId` and `businessAccountId` if a `locationId` was explicitly provided in the request. These unverified IDs were then persisted in the database, allowing cross-tenant data association.
 **Learning:** Security validation must be unconditional for all user-provided identifiers. Branching logic that resolves optional parameters (like location) must not inadvertently bypass the authorization checks for other sensitive inputs that are still being processed or persisted.
 **Prevention:** Implement a "Validate All Inputs" block at the start of service methods. Every user-provided ID that will be used in a query or persisted must be explicitly verified against the tenant context (e.g., `organizationId`) regardless of whether other parameters are present.
 
 ## 2026-07-15 - IDOR and Mass Assignment in Units Management
+
 **Vulnerability:** The `UnitsService` allowed mass assignment of internal fields in `createOrganizationUnit` and `updateOrganizationUnit`. Additionally, `update` and `delete` operations relied on Prisma's `update` with a non-unique `organizationId` filter, which is ignored for models lacking a composite unique index.
 **Learning:** Prisma's `update` method requires a unique selector. If a model (like `OrganizationUnit`) lacks `@@unique([id, organizationId])`, including `organizationId` in the `where` clause of an `update` call is ineffective or impossible depending on the Prisma version. This forces a choice between an insecure `update` by `id` or a secure `updateMany`.
 **Prevention:** For models lacking composite unique indices, use `updateMany` with `{ id, organizationId }` to ensure multi-tenant isolation. To maintain service contracts that expect the updated object to be returned, follow the `updateMany` with a `findFirst` lookup using the same scoped filters. Always whitelist input fields to prevent mass assignment of sensitive metadata.
+
 ## 2025-05-24 - IDOR Vulnerability in V3 Realtime Gateway and B2B Quotes
+
 **Vulnerability:** The V3 Realtime Gateway and B2B Quote Use Case were susceptible to IDOR as they performed lookups using only record IDs or were trusting Prisma to enforce multi-tenancy via 'findUnique' with an 'organizationId' filter on models lacking composite unique indices.
 **Learning:** Prisma's 'findUnique' silently ignores non-unique filters (like 'organizationId') if they aren't part of a composite unique index (@@unique) in the schema. This creates a false sense of security where developers believe a query is tenant-scoped when it is actually fetching by primary ID only.
 **Prevention:** Always use 'findFirst' with explicit 'where: { id, organizationId }' for tenant-scoped lookups on models that do not have a composite unique index on '[id, organizationId]'. Add comments explaining this pattern to prevent accidental refactoring back to 'findUnique'.
+
 ## 2026-07-14 - IDOR via Linked Entity IDs in Member Departments
+
 **Vulnerability:** The `DepartmentUseCase` allowed users to create or update departments referencing `parentId`, `headId`, `locationId`, and `costCenterId` from other organizations. The system did not verify that these IDs belonged to the requester's organization.
 **Learning:** Security guards at the controller level only protect the primary entity (the department). Secondary linked entities (foreign keys) provided in the request body are often overlooked but can be used to probe for the existence of resources in other tenants or create unauthorized cross-tenant associations.
 **Prevention:** Always perform explicit ownership validation (`findFirst` with `organizationId`) for every user-provided ID that references a related record before persisting it. Use a "find-then-mutate" pattern for models lacking composite unique indexes on `[id, organizationId]`.
 
 ## 2025-05-25 - IDOR in Bulk Related Entity Assignments
+
 **Vulnerability:** The `RoleManagementUseCase` allowed users to associate permission sets and custom roles from other organizations to their own role groups and members because it didn't verify the ownership of the provided IDs before calling Prisma's `connect`.
-**Learning:** In multi-tenant systems, any method that accepts a list of IDs (e.g., for many-to-many relationships) must validate that *every* ID in that list belongs to the current tenant. Prisma's `connect` does not perform this validation automatically.
+**Learning:** In multi-tenant systems, any method that accepts a list of IDs (e.g., for many-to-many relationships) must validate that _every_ ID in that list belongs to the current tenant. Prisma's `connect` does not perform this validation automatically.
 **Prevention:** Always perform a bulk ownership check using `count` with a `where` clause that includes both the list of IDs and the `organizationId`. Verify that the resulting count matches the unique number of IDs provided (`new Set(ids).size`) before proceeding with the operation.
+
 ## 2026-07-15 - IDOR via Unvalidated Location IDs in Attendance
+
 **Vulnerability:** The Attendance module allowed members to check in/out using location IDs belonging to other organizations, as the system only verified the member's identity but not the location's ownership.
 **Learning:** Security guards at the controller level that establish organization context do not transitively protect foreign keys provided in the request body. Each secondary ID must be explicitly validated against the established tenant context.
 **Prevention:** Always perform a scoped lookup (e.g., `inventoryLocation.findFirst({ where: { id: locationId, organizationId } })`) for all user-provided resource identifiers before using them in business logic or persisting them.
 
 ## 2026-07-16 - Multi-tenant Isolation and Mass Assignment in V2 Members Service
+
 **Vulnerability:** Mass assignment in member creation/update and IDOR risk in mutation methods (update, delete, pin change).
 **Learning:** The `Member` model lacks a composite unique index on `[id, organizationId]`. Standard Prisma `update` calls require a unique selector; using a non-unique composite filter in `update` is either a type error or potentially ignores the non-unique part of the filter depending on implementation. Using spread operators (`...data`) in service methods bypasses mass assignment protections.
 **Prevention:** Always use explicit field whitelisting for mutation payloads. For models lacking a composite unique index on `[id, organizationId]`, use `updateMany` with a scoped `where` clause to enforce multi-tenant isolation, followed by a `findFirst` if the updated record needs to be returned.
+
 ## 2026-07-16 - IDOR in Business Account Location Association
+
 **Vulnerability:** The `BusinessAccountService.createBusinessAccount` method accepted a `defaultLocationId` from the request body without verifying that it belonged to the authenticated `organizationId`, allowing cross-tenant resource association.
 **Learning:** Controller-level multi-tenancy guards (like `MultiTenancyGuard`) only establish the tenant context; they do not automatically validate foreign keys or linked resource IDs provided in the request body. Each secondary ID must be explicitly validated against the established `organizationId` to prevent IDOR vulnerabilities.
 **Prevention:** Always perform a scoped lookup (e.g., `findFirst` with `id` and `organizationId`) for all user-provided resource identifiers (foreign keys) before persisting them or using them in business logic.
 
 ## 2026-07-17 - Plaintext Storage of Standalone POS Setup Tokens and Device Keys
+
 **Vulnerability:** Standalone POS setup tokens and long-lived device keys were stored in plaintext in the database, risking exposure of sensitive active credentials if the database was compromised.
 **Learning:** API keys and device tokens are highly sensitive credentials. Storing them in plaintext violates the principle of defense-in-depth and the rule of secure credential storage.
 **Prevention:** Always hash setup tokens and long-lived keys using a cryptographically secure hash function (like SHA-256) before storing them in database records. Perform validation by hashing user-supplied inputs and performing `@unique` database lookups on the hashed values.
 
 ## 2026-07-18 - Webhook Signature Verification Timing Attack and Length Leakage
+
 **Vulnerability:** Webhook signature verification compared signature lengths using early-return and short-circuit evaluation (`signatureBuffer.length !== expectedBuffer.length || !crypto.timingSafeEqual(...)`). This allowed attackers to infer the expected signature's length via timing differences.
 **Learning:** Checking signature lengths or using short-circuit conditions prior to `crypto.timingSafeEqual` leaks structural information of the expected signature. Pre-hashing both the user-supplied and expected signatures with a fixed-length hash algorithm (such as SHA-256) ensures both inputs are of identical length, eliminating the timing difference entirely.
 **Prevention:** Always hash both comparison inputs with SHA-256 using `crypto.createHash('sha256')` before performing timing-safe buffer comparisons, guaranteeing constant-time behavior regardless of input lengths.
+
 ## 2026-07-18 - IDOR in Petty Cash Fund Creation via Linked Member ID
+
 **Vulnerability:** The `PettyCashUseCase.createFund` method accepted a `responsibleMemberId` in the request body without verifying that the referenced member belongs to the authenticated `organizationId`. This allowed users to associate any member from any organization with their organization's petty cash fund.
 **Learning:** Even when controller-level guards secure the tenant context, nested reference identifiers (foreign keys) passed in request DTOs are untrusted and can cross-cut tenant boundaries. Failing to validate association bounds inside transactional use cases can lead to illegitimate cross-tenant relationships.
 **Prevention:** Always validate all user-provided foreign keys by performing a scoped lookup or count verification (e.g., `tx.member.count({ where: { id, organizationId } })`) inside the transactional boundary before persisting the model or relations.
 
 ## 2026-07-19 - Timing Attack and Signature Length Leakage in Strapi Webhook Verification
+
 **Vulnerability:** The `StrapiWebhookVerifierService` was using raw buffer length comparisons and `crypto.timingSafeEqual` directly on variable-length signature inputs. If an attacker supplied mismatched signature lengths, the check returned early or threw errors, leaking structural information and exposing the system to timing attacks.
 **Learning:** Checking lengths of buffers before or during `crypto.timingSafeEqual` defeats its constant-time nature, as it fails-fast when lengths differ. Since the signature received in webhook requests is of arbitrary length and under attacker control, a secure comparison must normalize the input length.
 **Prevention:** Always pre-hash both the expected signature and the user-provided signature using a cryptographically secure hash function like SHA-256 before performing the timing-safe comparison. This guarantees that both buffers compared by `crypto.timingSafeEqual` are always exactly 32 bytes, regardless of the input length, completely neutralizing timing and length-leakage attacks.
+
 ## 2026-07-19 - Authorization Bypass in V3 Webhooks Controller
+
 **Vulnerability:** The V3 `WebhookController` was completely ungated by RBAC/permissions, allowing any authenticated tenant member to create, list, and delete webhooks. Additionally, the fail-open nature of the `PermissionsGuard` allowed the endpoints to remain public to all authenticated users even if the guard had been applied globally.
 **Learning:** Controller-level security context is only a partial layer of defense. In APIs where a "fail-open" permission guard pattern is used, forgetting to decorate a controller class with `PermissionsGuard` and forgetting to decorate individual methods with explicit permission scopes (such as `webhooks:read` or `webhooks:write`) creates an authorization bypass.
 **Prevention:** Always secure every routing controller class using `PermissionsGuard` and decorate individual route handlers with explicit permissions. Implement metadata unit tests to prevent regression of endpoint permissions.
 
 ## 2026-08-01 - IDOR Prevention via Strict Mandatory Tenant-Scoping in Serialization
+
 **Vulnerability:** The private `toResponse` serialization helper inside `StrapiConnectionUseCase` allowed `organizationId` to be an optional parameter, which when omitted, fetched connection details from the database by `id` only, risking IDOR/BOLA bypass during create/update flows if not pre-validated.
 **Learning:** Helper methods that serialize or query records must never allow "fail-open" optional parameters for tenant-scoping. Enforcing mandatory scoping parameters at the lowest possible layer of the use-case prevents accidental developer omissions.
 **Prevention:** Always make the tenant identification parameter (e.g. `organizationId`) strictly mandatory in internal query/serialization helpers, and avoid fallback ternary patterns in Prisma `where` clauses.
 
 ## 2026-08-03 - IDOR Prevention via Strict Product Ownership Checks in Favorites and Reviews
+
 **Vulnerability:** Endpoints for creating reviews or adding favorites accepted a user-provided `productId` and associated it with the caller's tenant without verifying that the product actually belonged to the active `organizationId`. This allowed users to make cross-tenant data associations and pollute resources.
 **Learning:** Standard multi-tenant guards on endpoints only establish context for the primary mutated entity. Any linked entity ID (foreign key) provided in request parameters or body remains untrusted and must be verified against the tenant context.
 **Prevention:** Always perform an explicit existence/ownership check on linked entity IDs (e.g. using `findFirst` with `{ id, organizationId }`) before associating them or performing writes in service layers.
 
 ## 2026-08-05 - Mass Assignment and Parameter Pollution Prevention in Template Creation
+
 **Vulnerability:** The invoice template creation endpoint accepted unvalidated raw objects with no defined DTO or validation schema, and spread them directly into database creation mutations. This exposed the model to Mass Assignment and parameter pollution.
 **Learning:** Accepting `any` inputs or raw objects on mutation endpoints bypasses application-level security and enables parameter injection. Even if some fields (like `organizationId`) are overwritten, other attributes (like custom IDs or relationships) can still be hijacked.
 **Prevention:** Always define robust, strongly-typed DTOs with validation decorators (e.g., `class-validator`) and explicitly map each allowed attribute in the database layer instead of using broad spread operators like `...data`.
 
 ## 2026-08-07 - Secure Hashing of Customer API Client Secrets to Prevent Plaintext Exposure
+
 **Vulnerability:** The `ServiceManagementService.registerCustomerApp` method stored newly generated `clientSecret` values in plaintext in the database. This caused subsequent authentication attempts using `validateV3ApiSecret` to fail since the validator expects a SHA-256 hashed secret, and it created a severe plaintext exposure risk if the database was compromised.
 **Learning:** Any generated application/client credentials (like API keys, client secrets, and setup tokens) must never be stored in plaintext. They must be safely hashed using a secure cryptographic hashing function like SHA-256 before being persisted.
 **Prevention:** Always pre-hash sensitive customer-facing client secrets with SHA-256 before storing them in database records, and only return the raw unhashed secret to the registering client once during creation.
 
 ## 2026-08-08 - Timing Attack and Username Enumeration in Customer Login
+
 **Vulnerability:** The V3 customer login endpoint returned early if a queried customer or user did not exist in the database, skipping the cryptographically expensive `bcrypt.compare` operation. This created a timing side-channel that allowed attackers to differentiate between registered and non-registered email addresses.
 **Learning:** Checking existence first and failing-fast before running heavy cryptographic calculations (like password hashing comparison) is a common performance optimization that introduces a severe username/email enumeration vulnerability. Correct timing-safe login logic must ensure identical execution flow and computational footprint for both successful and failed lookups.
 **Prevention:** Always execute `bcrypt.compare` against a valid dummy hash string when the queried customer or linked user is missing from the database. This guarantees a consistent response timing profile regardless of whether the email is registered.
 
 ## 2026-08-09 - Member cardId Timing Attack and PIN Enumeration in POS check-in
+
 **Vulnerability:** The POS check-in endpoint returned early if the member or member.pinHash was not found, bypassing the `bcrypt.compare` PIN verification. This timing side-channel allowed attackers to enumerate valid member card IDs.
 **Learning:** Security-critical check-in or login endpoints must always use dummy bcrypt comparisons to normalize processing time for valid vs. invalid credentials. Unifying the response messages and failed rate-limiting lockout increments under both branches prevents enumeration side-channels.
 **Prevention:** Perform a dummy `bcrypt.compare` against a pre-defined placeholder PIN hash when the member or their PIN is missing, and throw identical error responses with synchronized lockout counters.
+
 ## 2026-08-09 - Sensitive Data Leakage in Customer Active Sessions Listing
+
 **Vulnerability:** The V3 customer session list endpoint (`GET /auth/sessions`) was returning raw active JWT tokens for all active customer sessions in the response payload, exposing active user credentials.
 **Learning:** Returning full session state payloads directly from storage (like Redis) without explicit normalization or serialization filters risks leaking highly sensitive credentials like JWT authentication tokens. Listing active sessions should only expose session metadata (such as device agent, IP, creation time, status) and must omit the credentials themselves.
 **Prevention:** Always perform strict attribute sanitization or destructuring on session data retrieved from database/cache layers before returning it to the client. Specifically omit sensitive authentication properties like `token` or secret keys.
 
 ## 2026-08-10 - timing side-channels in V3 member login cardId lookup
+
 **Vulnerability:** The V3 member login flow performed cardId lookup using `prisma.client.member.findUnique` but only executed the cryptographically expensive `bcrypt.compare` PIN verification if a matching active member was found in the database. This created a timing side-channel that allowed attackers to enumerate valid active card IDs.
 **Learning:** Performing existence or active status checks and skipping cryptographic password/PIN validation on failure leaks the existence of that record via response timing. Consistent execution times must be maintained across both successful and failing lookups.
 **Prevention:** Always perform a dummy `bcrypt.compare` against a valid placeholder hash string when a record lookup or active check fails, ensuring synchronization of timing and lockout logic on all execution paths.
 
 ## 2026-08-13 - Broken Object Level Authorization (BOLA/IDOR) in Config Lookups
+
 **Vulnerability:** The `getConfigOrThrow` helper in the Strapi connection use-case retrieved tenant connection configuration using only the raw `connectionId` without verifying that the connection belonged to the calling organization.
 **Learning:** Shared service-level lookups and helper functions are high-risk IDOR entry points if they fetch nested configuration entities relying solely on the entity ID. If any upstream controller or use case doesn't pre-validate the connection ID, any tenant can query or sync with arbitrary third-party stores.
 **Prevention:** Always make the tenant identifier parameter (e.g. `organizationId`) strictly mandatory in internal configuration lookup/helper functions. Before performing database queries on secondary config tables, explicitly run a scoped check (`findFirst` or `getConnectionOrThrow`) to enforce strict multi-tenant isolation.
 
 ## 2026-08-14 - IDOR Vulnerability in Staff Shift Break Creation and Shift Assignment
+
 **Vulnerability:** `StaffSchedulingService.addBreak` accepted `shiftId` directly without validating whether the shift belonged to the calling organization. Additionally, `createShift` accepted `memberId` without verifying that the member belonged to the tenant.
 **Learning:** Endpoints that accept secondary entity identifiers (like `shiftId` or `memberId`) must explicitly validate tenant ownership using `organizationId` scoping before performing mutations, even if controller guards authenticate the tenant context.
 **Prevention:** Always perform a scoped lookup (`findFirst` with `{ id, organizationId }`) on foreign key parameters before creating or linking sub-entities.
 
 ## 2026-08-20 - IDOR Vulnerability in Windmill Execution Callbacks
+
 **Vulnerability:** Windmill execution status callbacks in `WindmillCallbackUseCase` queried and updated `windmillExecution` records using `jobId` only, ignoring `payload.organizationId`.
 **Learning:** Even when webhook payload signatures are verified against an organization's secret, callback handlers that update database entities must still scope database lookups (`findFirst`) and updates (`updateMany`) using the payload's `organizationId` to prevent cross-tenant record manipulation if a caller provides a foreign `jobId`.
 **Prevention:** Always scope database lookups and mutation filters on execution and event tracking models with `organizationId`, using `findFirst` and `updateMany` instead of `findUnique` when composite multi-tenant indices are absent.
 
 ## 2026-08-21 - Timing Attack and Client ID Enumeration in V3 API Client Authentication
+
 **Vulnerability:** `validateV3ApiSecret` returned `false` early when a queried `v3ApiClient` was missing or inactive, skipping `crypto.timingSafeEqual` and SHA-256 pre-hashing operations. Additionally, `V3AuthCoreService.validateClient` threw distinct exception messages (`Invalid client` vs `Invalid client secret`), exposing a client ID enumeration side-channel.
 **Learning:** Early returns when credentials or clients are missing create timing side-channels that allow attackers to probe valid client IDs. Furthermore, returning granular error messages that differentiate client existence from secret validity leaks client presence.
 **Prevention:** Always execute constant-time comparisons (`crypto.timingSafeEqual`) against a dummy hash when client lookup fails or client is inactive. Standardize error responses to a generic exception message (e.g. `Invalid client credentials`) to prevent enumeration attacks.
+
 ## 2026-08-21 - IDOR / BOLA Prevention in Cart Item Operations
+
 **Vulnerability:** `CartUseCase.addToCart` allowed users to add products, product variants, or services from other organizations into their cart because item identifiers were not validated against the authenticated `organizationId`.
 **Learning:** E-commerce cart operations often assume that since the cart itself belongs to the active tenant, all items added via `productId`, `variantId`, or `serviceId` are safe. However, unvalidated foreign keys passed in request payloads can create unauthorized cross-tenant product associations.
 **Prevention:** Always perform explicit tenant-ownership checks (`findFirst` with `{ id, organizationId }` for products/services and `{ id, productId }` for variants) before creating or updating cart items.
 
 ## 2026-08-26 - Double-Spending Prevention & Null Expiration Check in Loyalty Engine
+
 **Vulnerability:** In `LoyaltyService.redeemPointsForVoucher`, customer points were checked before entering the write transaction block. Concurrent requests allowed point balances to drop below 0 (negative balance double-spending). In addition, `validateVoucher` evaluated `voucher.expiresAt < new Date()`, which evaluated to `true` when `expiresAt` was `null`, falsely invalidating non-expiring vouchers.
 **Learning:** Atomic database updates (`decrement`) inside transactions must be accompanied by immediate post-decrement balance checks to catch race conditions and abort double-spend transactions. Furthermore, relational comparisons against `Date()` in JS evaluate `null < Date()` to `true` because `null` coerces to 0.
 **Prevention:** Always validate post-decrement balances (`balance < 0`) within transaction blocks and throw to trigger rollback. Always check `voucher.expiresAt && voucher.expiresAt < new Date()` when validating optional expiration dates.

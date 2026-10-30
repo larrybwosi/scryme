@@ -29,15 +29,14 @@ export class PurchaseOrderUseCase {
     @Optional() private readonly whatsappService?: WhatsappService,
   ) {}
 
+
   async create(
     organizationId: string,
     memberId: string,
-    dto: CreatePurchaseDto,
+    dto: CreatePurchaseDto & { saveAsDraft?: boolean },
   ) {
     const purchaseNumber = `PO-${Date.now()}`;
 
-    // SECURITY (Sentinel): Validate that supplierId belongs to the caller's organizationId
-    // to prevent cross-tenant IDOR resource association.
     const supplier = await this.prisma.client.supplier.findFirst({
       where: { id: dto.supplierId, organizationId },
     });
@@ -45,11 +44,14 @@ export class PurchaseOrderUseCase {
       throw new NotFoundException("Supplier not found");
     }
 
-    // ⚡ Bolt Optimization: Calculate subTotal upfront before starting the transaction.
     const subTotal = dto.items.reduce(
       (sum, item) => sum + item.orderedQuantity * item.unitCost,
       0,
     );
+
+    const initialStatus = dto.saveAsDraft
+      ? PurchaseStatus.DRAFT
+      : PurchaseStatus.ORDERED;
 
     const purchase = await this.prisma.client.$transaction(async (tx) => {
       return tx.purchase.create({
@@ -67,7 +69,7 @@ export class PurchaseOrderUseCase {
           subTotal,
           shippingCost: dto.shippingCost || 0,
           totalAmount: subTotal + (dto.shippingCost || 0),
-          status: PurchaseStatus.ORDERED,
+          status: initialStatus,
           notes: dto.notes,
           items: {
             create: dto.items.map((item) => ({
@@ -87,9 +89,118 @@ export class PurchaseOrderUseCase {
       });
     });
 
-    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
-    // Emitting Windmill events outside the $transaction block releases database locks immediately
-    // and prevents network latency from holding open database connections.
+    if (!dto.saveAsDraft) {
+      emitPurchaseApprovalRequested(organizationId, {
+        purchaseOrderId: purchase.id,
+        orderNumber: purchase.purchaseNumber,
+        requestedBy: purchase.member?.user?.name || "Unknown",
+        totalAmount: Number(purchase.totalAmount),
+        currency: purchase.currency,
+      }).catch((err) =>
+        console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
+      );
+
+      if (this.whatsappService) {
+        this.whatsappService
+          .sendPurchaseOrderNotification(
+            organizationId,
+            purchase.purchaseNumber,
+            supplier.phone || undefined,
+            Number(purchase.totalAmount),
+            purchase.id,
+          )
+          .catch((err) =>
+            console.error("[v3 PurchaseOrder] WhatsApp notification failed on create:", err),
+          );
+      }
+    }
+
+    return purchase;
+  }
+
+  async update(
+    organizationId: string,
+    memberId: string,
+    purchaseId: string,
+    dto: any,
+  ) {
+    const existingPurchase = await this.prisma.client.purchase.findFirst({
+      where: { id: purchaseId, organizationId },
+    });
+
+    if (!existingPurchase) {
+      throw new NotFoundException("Purchase order not found");
+    }
+
+    if (
+      existingPurchase.status !== PurchaseStatus.DRAFT &&
+      existingPurchase.status !== PurchaseStatus.REJECTED
+    ) {
+      throw new BadRequestException("Only draft or rejected purchase orders can be modified");
+    }
+
+    const supplierId = dto.supplierId || existingPurchase.supplierId;
+    const items = dto.items || [];
+
+    const subTotal = items.reduce(
+      (sum: number, item: any) => sum + item.orderedQuantity * item.unitCost,
+      0,
+    );
+
+    return this.prisma.client.$transaction(async (tx) => {
+      await tx.purchaseItem.deleteMany({
+        where: { purchaseId },
+      });
+
+      return tx.purchase.update({
+        where: { id: purchaseId },
+        data: {
+          supplierId,
+          subTotal,
+          totalAmount: subTotal + (dto.shippingCost || 0),
+          notes: dto.notes,
+          dueDate: dto.dueDate ? new Date(dto.dueDate) : undefined,
+          status: PurchaseStatus.DRAFT, // Reset status to DRAFT
+          items: {
+            create: items.map((item: any) => ({
+              variantId: item.variantId,
+              orderedQuantity: item.orderedQuantity,
+              unitCost: item.unitCost,
+              totalCost: item.orderedQuantity * item.unitCost,
+              orderedUnitId: item.orderedUnitId,
+              orderedOrgUnitId: item.orderedOrgUnitId,
+            })),
+          },
+        },
+        include: {
+          items: true,
+          supplier: true,
+        },
+      });
+    });
+  }
+
+  async submit(organizationId: string, memberId: string, purchaseId: string) {
+    const purchase = await this.prisma.client.purchase.findFirst({
+      where: { id: purchaseId, organizationId },
+      include: {
+        supplier: true,
+        member: { include: { user: true } },
+      },
+    });
+
+    if (!purchase) {
+      throw new NotFoundException("Purchase order not found");
+    }
+
+    await this.prisma.client.purchase.updateMany({
+      where: { id: purchaseId, organizationId },
+      data: {
+        status: PurchaseStatus.ORDERED,
+        updatedAt: new Date(),
+      },
+    });
+
     emitPurchaseApprovalRequested(organizationId, {
       purchaseOrderId: purchase.id,
       orderNumber: purchase.purchaseNumber,
@@ -100,24 +211,13 @@ export class PurchaseOrderUseCase {
       console.error("[v3 PurchaseOrder] Failed to emit Windmill event:", err),
     );
 
-    if (this.whatsappService) {
-      this.whatsappService
-        .sendPurchaseOrderNotification(
-          organizationId,
-          purchase.purchaseNumber,
-          supplier.phone || undefined,
-          Number(purchase.totalAmount),
-          purchase.id,
-        )
-        .catch((err) =>
-          console.error("[v3 PurchaseOrder] WhatsApp notification failed on create:", err),
-        );
-    }
-
-    return purchase;
+    return this.prisma.client.purchase.findFirst({
+      where: { id: purchaseId, organizationId },
+      include: { items: true },
+    });
   }
 
-  async receive(
+async receive(
     organizationId: string,
     memberId: string,
     purchaseId: string,

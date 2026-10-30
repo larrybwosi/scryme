@@ -43,3 +43,24 @@
 docker build -t scryme-crm -f apps/crm/Dockerfile .
 docker compose -f docker-compose.prod.yml up -d crm
 ```
+
+
+---
+
+## 🌐 Multi-Instance & Shared Infrastructure Deployment
+
+Scryme CRM can be deployed as part of the primary stack or standalone attached to a shared database and Redis cluster.
+
+### Docker Compose Standalone / Multi-Instance
+
+```bash
+cd apps/crm
+INSTANCE_NAME=scryme \
+SCRYME_NETWORK_NAME=scryme-network \
+CRM_PORT=3001 \
+DATABASE_URL="postgresql://dbuser:dbpassword@db:5432/app_db?schema=public" \
+REDIS_URL="redis://redis:6379" \
+docker compose up -d
+```
+
+For full multi-instance architecture instructions, see [Multi-Instance & Shared Infrastructure Guide](../../docs/multi-instance-deployment.md).

@@ -1,9 +1,9 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
-import { Check, ArrowRight, ShieldCheck, CreditCard, Smartphone, Building2, ChevronDown, Sparkles } from 'lucide-react'
+import { Check, ArrowRight, ShieldCheck, CreditCard, Smartphone, Building2, ChevronDown } from 'lucide-react'
 import { useState } from 'react'
-import { fetchPricingConfig, DEFAULT_PRICING_FALLBACK } from '../sanity/queries'
+import { fetchPricingConfig, DEFAULT_PRICING_FALLBACK, CurrencyData, PlanPricing } from '../sanity/queries'
 
 export const Route = createFileRoute('/pricing')({
   loader: async () => {
@@ -13,35 +13,18 @@ export const Route = createFileRoute('/pricing')({
   component: PricingComponent,
 })
 
-type Currency = string
-
-interface PlanPricing {
-  amount: string
-  period: string
-  billedNote?: string
-}
-
-interface CurrencyData {
-  code: string
-  symbol: string
-  name: string
-  badge: string
-  free: { monthly: PlanPricing; annual: PlanPricing }
-  growth: { monthly: PlanPricing; annual: PlanPricing }
-  scale: { monthly: PlanPricing; annual: PlanPricing }
-  enterprise: { monthly: PlanPricing; annual: PlanPricing }
-}
-
 export function PricingComponent() {
   const { config } = Route.useLoaderData()
   const pricingConfig = config || DEFAULT_PRICING_FALLBACK
 
   const currenciesList: CurrencyData[] = pricingConfig.currencies && pricingConfig.currencies.length > 0
     ? pricingConfig.currencies
-    : DEFAULT_PRICING_FALLBACK.currencies
+    : (DEFAULT_PRICING_FALLBACK.currencies as CurrencyData[])
 
   const currenciesMap = currenciesList.reduce((acc, item) => {
-    acc[item.code] = item
+    if (item.code) {
+      acc[item.code] = item
+    }
     return acc
   }, {} as Record<string, CurrencyData>)
 
@@ -52,7 +35,29 @@ export function PricingComponent() {
   const [legacyCost, setLegacyCost] = useState<number>(180000)
   const [openFaq, setOpenFaq] = useState<number | null>(0)
 
-  const currData = currenciesMap[currency] || currenciesList[0] || DEFAULT_PRICING_FALLBACK.currencies[0]
+  const currData = currenciesMap[currency] || currenciesList[0] || (DEFAULT_PRICING_FALLBACK.currencies![0] as CurrencyData)
+
+  const getPlanPricing = (planKey: 'free' | 'growth' | 'scale' | 'enterprise'): PlanPricing => {
+    const defaultCurrencies = DEFAULT_PRICING_FALLBACK.currencies as CurrencyData[]
+    const fallbackCurrency = defaultCurrencies[0]
+
+    const planObj = currData[planKey] || fallbackCurrency[planKey]
+    const cyclePricing = planObj?.[billingCycle] || planObj?.annual || planObj?.monthly
+
+    if (cyclePricing) {
+      return cyclePricing
+    }
+
+    if (planKey === 'free') {
+      return { amount: `${currData.symbol || '$'}0`, period: '/ month' }
+    }
+    return { amount: 'Custom', period: '' }
+  }
+
+  const freePricing = getPlanPricing('free')
+  const growthPricing = getPlanPricing('growth')
+  const scalePricing = getPlanPricing('scale')
+  const enterprisePricing = getPlanPricing('enterprise')
 
   const toggleFaq = (index: number) => {
     setOpenFaq(openFaq === index ? null : index)
@@ -67,7 +72,7 @@ export function PricingComponent() {
 
   const faqsList = pricingConfig.faqs && pricingConfig.faqs.length > 0
     ? pricingConfig.faqs
-    : DEFAULT_PRICING_FALLBACK.faqs
+    : DEFAULT_PRICING_FALLBACK.faqs || []
 
   return (
     <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#d2ff3a] selection:text-[#090a0b] transition-colors">
@@ -154,9 +159,9 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-3xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
-                    {currData.free[billingCycle].amount}
+                    {freePricing.amount}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.free[billingCycle].period}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{freePricing.period}</span>
                 </div>
                 <p className="text-[11px] font-mono text-blue-400 mt-1">No Credit Card Required</p>
               </div>
@@ -192,12 +197,12 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
-                    {currData.growth[billingCycle]?.amount}
+                    {growthPricing.amount}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.growth[billingCycle]?.period}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{growthPricing.period}</span>
                 </div>
-                {currData.growth[billingCycle]?.billedNote && (
-                  <p className="text-[11px] font-mono text-emerald-400 mt-1">{currData.growth[billingCycle]?.billedNote}</p>
+                {growthPricing.billedNote && (
+                  <p className="text-[11px] font-mono text-emerald-400 mt-1">{growthPricing.billedNote}</p>
                 )}
               </div>
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
@@ -235,12 +240,12 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-mono text-[#d2ff3a]">
-                    {currData.scale[billingCycle]?.amount}
+                    {scalePricing.amount}
                   </span>
-                  <span className="text-xs text-[var(--text-muted)] font-mono">{currData.scale[billingCycle]?.period}</span>
+                  <span className="text-xs text-[var(--text-muted)] font-mono">{scalePricing.period}</span>
                 </div>
-                {currData.scale[billingCycle]?.billedNote && (
-                  <p className="text-[11px] font-mono text-[#d2ff3a] mt-1">{currData.scale[billingCycle]?.billedNote}</p>
+                {scalePricing.billedNote && (
+                  <p className="text-[11px] font-mono text-[#d2ff3a] mt-1">{scalePricing.billedNote}</p>
                 )}
               </div>
               <p className="text-xs text-[var(--text-muted)] mb-6 leading-relaxed">
@@ -276,7 +281,7 @@ export function PricingComponent() {
               <div className="mb-6">
                 <div className="flex items-baseline gap-1">
                   <span className="text-4xl font-extrabold font-mono dark:text-white light:text-[#090a0b]">
-                    {currData.enterprise[billingCycle]?.amount || 'Custom'}
+                    {enterprisePricing.amount || 'Custom'}
                   </span>
                 </div>
                 <p className="text-[11px] font-mono text-purple-400 mt-1">Tailored Billing & SLA Contracts</p>

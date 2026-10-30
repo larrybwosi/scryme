@@ -51,9 +51,28 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
   const currentPaymentMethod = searchParams.get("paymentMethod") || "all";
   const currentLocationId = searchParams.get("locationId") || "all";
   const currentSortBy = searchParams.get("sortBy") || "createdAt_desc";
-  const currentStartDate = searchParams.get("startDate") || "";
-  const currentEndDate = searchParams.get("endDate") || "";
   const currentRealtime = searchParams.get("realtime") === "true";
+  const currentPresetParam = searchParams.get("preset");
+  const isPresetAll = currentPresetParam === "all";
+
+  const defaultStartDate = useMemo(() => {
+    if (isPresetAll) return "";
+    const start = new Date();
+    start.setDate(1);
+    return format(start, "yyyy-MM-dd");
+  }, [isPresetAll]);
+
+  const defaultEndDate = useMemo(() => {
+    if (isPresetAll) return "";
+    return format(new Date(), "yyyy-MM-dd");
+  }, [isPresetAll]);
+
+  const currentStartDate = isPresetAll
+    ? ""
+    : (searchParams.get("startDate") ?? defaultStartDate);
+  const currentEndDate = isPresetAll
+    ? ""
+    : (searchParams.get("endDate") ?? defaultEndDate);
 
   const [localSearch, setLocalSearch] = useState(currentQ);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
@@ -105,6 +124,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     (range: DateRange | undefined) => {
       setDateRange(range);
       const params = new URLSearchParams(searchParams.toString());
+      params.delete("preset");
 
       if (range?.from) {
         params.set("startDate", format(range.from, "yyyy-MM-dd"));
@@ -126,7 +146,7 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
   );
 
   const currentPreset = useMemo(() => {
-    if (!currentStartDate && !currentEndDate) return "all";
+    if (isPresetAll) return "all";
 
     const todayStr = format(new Date(), "yyyy-MM-dd");
 
@@ -167,8 +187,12 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
       return "last_month";
     }
 
+    if (!currentStartDate && !currentEndDate) {
+      return "all";
+    }
+
     return "custom";
-  }, [currentStartDate, currentEndDate]);
+  }, [isPresetAll, currentStartDate, currentEndDate]);
 
   const handlePresetChange = (presetValue: string) => {
     const params = new URLSearchParams(searchParams.toString());
@@ -177,11 +201,14 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
       setDateRange(undefined);
       params.delete("startDate");
       params.delete("endDate");
+      params.set("preset", "all");
       startTransition(() => {
         router.push(`${pathname}?${params.toString()}`);
       });
       return;
     }
+
+    params.delete("preset");
 
     if (presetValue === "custom") {
       return;
@@ -256,8 +283,9 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
     currentPaymentMethod !== "all" ||
     currentLocationId !== "all" ||
     currentSortBy !== "createdAt_desc" ||
-    currentStartDate !== "" ||
-    currentEndDate !== "" ||
+    isPresetAll ||
+    (searchParams.has("startDate") && currentStartDate !== defaultStartDate) ||
+    (searchParams.has("endDate") && currentEndDate !== defaultEndDate) ||
     currentRealtime;
 
   const isTransactionsPage = pathname === "/sales/transactions";

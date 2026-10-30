@@ -1,3 +1,4 @@
+import { SchedulingModule } from "./modules/scheduling/scheduling.module";
 import { McpModule } from "./modules/mcp/mcp.module";
 import { ReportsModule } from "./modules/reports/reports.module";
 import { AndroidModule } from "./modules/android/android.module";
@@ -57,6 +58,7 @@ export const V3_SUB_MODULES = [
   ProductionModule,
   DeliveriesModule,
   TasksModule,
+  SchedulingModule,
   AndroidModule,
   SalesModule,
   ReportsModule,

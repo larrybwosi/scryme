@@ -6,7 +6,10 @@ import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "./auth";
 import { listTiers } from "./billing";
 import { getSystemModules } from "./systems";
-import { evaluateAllModulesStatus, PLATFORM_MODULES } from "@repo/shared/constants";
+import {
+  evaluateAllModulesStatus,
+  PLATFORM_MODULES,
+} from "@repo/shared/constants";
 
 export async function listOrganizations() {
   await requireSuperAdmin();
@@ -76,7 +79,9 @@ export async function createOrganization(input: {
 
     // Create 14-day free trial subscription
     const trialStartedAt = new Date();
-    const trialEndsAt = new Date(trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+    const trialEndsAt = new Date(
+      trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000,
+    );
     await tx.subscription.create({
       data: {
         organizationId: created.id,
@@ -183,7 +188,10 @@ export async function getEffectiveQuota(id: string) {
   };
 }
 
-export async function setQuotaOverrides(id: string, overrides: Record<string, any>) {
+export async function setQuotaOverrides(
+  id: string,
+  overrides: Record<string, any>,
+) {
   await requireSuperAdmin();
   await getOrganizationDetails(id);
 
@@ -221,8 +229,8 @@ export async function getOrganizationStorageUsage(id: string) {
     overrides.storageLimitMB != null
       ? Number(overrides.storageLimitMB)
       : overrides.storageLimitBytes != null
-      ? Number(overrides.storageLimitBytes) / (1024 * 1024)
-      : null;
+        ? Number(overrides.storageLimitBytes) / (1024 * 1024)
+        : null;
 
   const isStorageDisabled = Boolean(overrides.storageDisabled);
 
@@ -296,15 +304,21 @@ export async function getOrganizationMembers(organizationId: string) {
 export async function getPlatformStats() {
   await requireSuperAdmin();
 
-  const [totalUsers, activeUsers, totalOrgs, totalMembers, activeDevices, totalConnectedApps] =
-    await Promise.all([
-      db.user.count(),
-      db.user.count({ where: { isActive: true, banned: { not: true } } }),
-      db.organization.count({ where: { deletedAt: null } }),
-      db.member.count({ where: { isActive: true, deletedAt: null } }),
-      db.deviceRegistry.count({ where: { status: "ACTIVE" } }),
-      db.oauthClient.count(),
-    ]);
+  const [
+    totalUsers,
+    activeUsers,
+    totalOrgs,
+    totalMembers,
+    activeDevices,
+    totalConnectedApps,
+  ] = await Promise.all([
+    db.user.count(),
+    db.user.count({ where: { isActive: true, banned: { not: true } } }),
+    db.organization.count({ where: { deletedAt: null } }),
+    db.member.count({ where: { isActive: true, deletedAt: null } }),
+    db.deviceRegistry.count({ where: { status: "ACTIVE" } }),
+    db.oauthClient.count(),
+  ]);
 
   return {
     totalUsers,
@@ -354,7 +368,10 @@ export async function upsertOrganizationPaymentCredentials(
     where: { organizationId: orgId },
   });
 
-  const getEncryptedValue = (newValue?: string, existingEncrypted?: string | null) => {
+  const getEncryptedValue = (
+    newValue?: string,
+    existingEncrypted?: string | null,
+  ) => {
     if (!newValue || newValue === "••••••••") {
       return existingEncrypted || "";
     }
@@ -373,13 +390,17 @@ export async function upsertOrganizationPaymentCredentials(
     ? getEncryptedValue(input.mpesaPassKey, existingCreds?.mpesaPassKey)
     : existingCreds?.mpesaPassKey || null;
   const mpesaInitiatorPass = input.mpesaInitiatorPass
-    ? getEncryptedValue(input.mpesaInitiatorPass, existingCreds?.mpesaInitiatorPass)
+    ? getEncryptedValue(
+        input.mpesaInitiatorPass,
+        existingCreds?.mpesaInitiatorPass,
+      )
     : existingCreds?.mpesaInitiatorPass || null;
 
   const creds = await db.paymentCredentials.upsert({
     where: { organizationId: orgId },
     update: {
-      mpesaShortCode: input.mpesaShortCode || existingCreds?.mpesaShortCode || "",
+      mpesaShortCode:
+        input.mpesaShortCode || existingCreds?.mpesaShortCode || "",
       mpesaType: input.mpesaType || existingCreds?.mpesaType || "PAYBILL",
       environment: input.environment || existingCreds?.environment || "SANDBOX",
       mpesaConsumerKey,
@@ -423,7 +444,6 @@ export async function syncTierDefaultsToOrganizationQuota(orgId: string) {
   revalidatePath(`/organizations/${orgId}`);
   return getEffectiveQuota(orgId);
 }
-
 
 export async function getOrganizationModules(orgId: string) {
   await requireSuperAdmin();
@@ -471,7 +491,8 @@ export async function updateOrganizationModuleStatus(
   }
 
   const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
-  const currentModules = (currentOverrides.modules as Record<string, boolean>) || {};
+  const currentModules =
+    (currentOverrides.modules as Record<string, boolean>) || {};
 
   const updatedModules = { ...currentModules };
   if (isEnabled === null) {
@@ -550,7 +571,8 @@ export async function toggleOrganizationPaymentOverride(
   }
 
   const currentOverrides = (org.quotaOverrides as Record<string, any>) || {};
-  const currentModules = (currentOverrides.modules as Record<string, boolean>) || {};
+  const currentModules =
+    (currentOverrides.modules as Record<string, boolean>) || {};
 
   const updatedModules = { ...currentModules };
   if (bypassPaymentCheck) {

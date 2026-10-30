@@ -11,6 +11,7 @@ import {
   AddTaskDependencyDto,
   CreateTaskDto,
   CreateTaskLabelDto,
+  CreateTaskTimeEntryDto,
   ManageTaskAssigneesDto,
   TaskFilterDto,
   UpdateTaskDto,
@@ -29,6 +30,15 @@ export class TaskUseCase {
     });
     if (!project) {
       throw new BadRequestException('Project not found or does not belong to this organization');
+    }
+
+    if (dto.milestoneId) {
+      const milestone = await this.prisma.client.projectMilestone.findFirst({
+        where: { id: dto.milestoneId, organizationId, projectId: dto.projectId },
+      });
+      if (!milestone) {
+        throw new BadRequestException("Milestone not found within this project");
+      }
     }
 
     if (dto.parentTaskId) {
@@ -80,6 +90,7 @@ export class TaskUseCase {
         dueDate: dto.dueDate,
         estimatedHours: dto.estimatedHours,
         parentTaskId: dto.parentTaskId,
+        milestoneId: dto.milestoneId,
         createdById: currentMemberId,
         assignees: dto.assigneeIds?.length
           ? {
@@ -106,6 +117,7 @@ export class TaskUseCase {
           include: { member: { select: { id: true, user: { select: { name: true, email: true } } } } },
         },
         labels: { include: { label: true } },
+        milestone: { select: { id: true, title: true, status: true, dueDate: true } },
         subtasks: { select: { id: true, taskKey: true, title: true, status: true, priority: true } },
         _count: { select: { comments: true, subtasks: true } },
       },
@@ -137,6 +149,7 @@ export class TaskUseCase {
         project: { select: { id: true, name: true, key: true } },
         createdBy: { select: { id: true, user: { select: { name: true, email: true } } } },
         parentTask: { select: { id: true, taskKey: true, title: true } },
+        milestone: { select: { id: true, title: true, status: true, dueDate: true } },
         subtasks: {
           select: {
             id: true,
@@ -160,6 +173,10 @@ export class TaskUseCase {
           include: {
             task: { select: { id: true, taskKey: true, title: true, status: true } },
           },
+        },
+        timeEntries: {
+          orderBy: { date: "desc" },
+          include: { member: { select: { id: true, user: { select: { name: true, email: true } } } } },
         },
         comments: {
           orderBy: { createdAt: 'desc' },
@@ -185,7 +202,7 @@ export class TaskUseCase {
   }
 
   async listTasks(organizationId: string, filter: TaskFilterDto) {
-    const { projectId, status, priority, assigneeId, search, page = 1, limit = 20 } = filter;
+    const { projectId, status, priority, assigneeId, milestoneId, parentTaskId, search, page = 1, limit = 20 } = filter;
     const skip = (page - 1) * limit;
 
     const where: any = { organizationId };
@@ -206,6 +223,14 @@ export class TaskUseCase {
       where.assignees = {
         some: { memberId: assigneeId },
       };
+    }
+
+    if (milestoneId) {
+      where.milestoneId = milestoneId;
+    }
+
+    if (parentTaskId) {
+      where.parentTaskId = parentTaskId;
     }
 
     if (search) {
@@ -525,5 +550,116 @@ export class TaskUseCase {
     });
 
     return labels;
+  }
+  async addTimeEntry(organizationId: string, taskId: string, dto: CreateTaskTimeEntryDto, currentMemberId: string) {
+    const task = await this.prisma.client.task.findFirst({
+      where: { id: taskId, organizationId },
+    });
+    if (!task) {
+      throw new NotFoundException("Task not found");
+    }
+
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: currentMemberId, organizationId },
+    });
+    if (!member) {
+      throw new BadRequestException("Member does not belong to this organization");
+    }
+
+    const timeEntry = await this.prisma.client.taskTimeEntry.create({
+      data: {
+        organizationId,
+        taskId,
+        memberId: currentMemberId,
+        hours: dto.hours,
+        description: dto.description,
+        date: dto.date || new Date(),
+      },
+      include: {
+        member: { select: { id: true, user: { select: { name: true, email: true } } } },
+      },
+    });
+
+    // Recalculate actualHours on task
+    const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
+      where: { taskId },
+      _sum: { hours: true },
+    });
+    await this.prisma.client.task.updateMany({
+      where: { id: taskId, organizationId },
+      data: { actualHours: totalHours._sum.hours || 0 },
+    });
+
+    return timeEntry;
+  }
+
+  async listTimeEntries(organizationId: string, taskId: string) {
+    const task = await this.prisma.client.task.findFirst({
+      where: { id: taskId, organizationId },
+    });
+    if (!task) {
+      throw new NotFoundException("Task not found");
+    }
+
+    return this.prisma.client.taskTimeEntry.findMany({
+      where: { taskId, organizationId },
+      orderBy: { date: "desc" },
+      include: {
+        member: { select: { id: true, user: { select: { name: true, email: true } } } },
+      },
+    });
+  }
+
+  async deleteTimeEntry(organizationId: string, taskId: string, entryId: string) {
+    const task = await this.prisma.client.task.findFirst({
+      where: { id: taskId, organizationId },
+    });
+    if (!task) {
+      throw new NotFoundException("Task not found");
+    }
+
+    const entry = await this.prisma.client.taskTimeEntry.findFirst({
+      where: { id: entryId, taskId, organizationId },
+    });
+    if (!entry) {
+      throw new NotFoundException("Time entry not found");
+    }
+
+    await this.prisma.client.taskTimeEntry.deleteMany({
+      where: { id: entryId, taskId, organizationId },
+    });
+
+    // Recalculate actualHours on task
+    const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
+      where: { taskId },
+      _sum: { hours: true },
+    });
+    await this.prisma.client.task.updateMany({
+      where: { id: taskId, organizationId },
+      data: { actualHours: totalHours._sum.hours || 0 },
+    });
+
+    return { success: true, id: entryId };
+  }
+
+  async getSubtasks(organizationId: string, taskId: string) {
+    const task = await this.prisma.client.task.findFirst({
+      where: { id: taskId, organizationId },
+    });
+    if (!task) {
+      throw new NotFoundException("Task not found");
+    }
+
+    return this.prisma.client.task.findMany({
+      where: { parentTaskId: taskId, organizationId },
+      orderBy: { taskNumber: "asc" },
+      include: {
+        assignees: {
+          include: { member: { select: { id: true, user: { select: { name: true, email: true } } } } },
+        },
+        subtasks: { select: { id: true, taskKey: true, title: true, status: true, priority: true } },
+        _count: { select: { comments: true, subtasks: true } },
+      },
+    });
   }
 }

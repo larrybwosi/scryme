@@ -92,6 +92,7 @@ Explore our dedicated deployment and security guides:
 * 🔐 **[Customer Single Sign-On & Authentication Guide](./docs/customer-authentication.md)**
 * 📦 **[Connected Apps & V3 Catalog Architecture Guide](./docs/v3-connected-apps-catalog.md)**
 * 🚀 **[Admin App Deployment & Database Guide](./docs/admin-deployment.md)**
+* 🌐 **[Multi-Instance & Shared Infrastructure Deployment Guide](./docs/multi-instance-deployment.md)**
 * 🛡️ **[Secure Prisma Studio Containerization Guide](./docs/prisma-studio-deployment.md)**
 
 ---

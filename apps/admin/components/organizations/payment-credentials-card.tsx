@@ -1,54 +1,74 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, Save, Smartphone, Lock, CheckCircle2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { upsertOrganizationPaymentCredentials } from "@/app/actions/organizations"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Loader2, Save, Smartphone, Lock, CheckCircle2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { upsertOrganizationPaymentCredentials } from "@/app/actions/organizations";
 
 interface PaymentCredentialsCardProps {
-  organizationId: string
+  organizationId: string;
   credentials: {
-    id?: string
-    mpesaShortCode?: string
-    mpesaType?: string
-    mpesaConsumerKey?: string
-    mpesaConsumerSecret?: string
-    mpesaPassKey?: string | null
-    mpesaInitiatorPass?: string | null
-    environment?: "SANDBOX" | "PRODUCTION"
-  } | null
+    id?: string;
+    mpesaShortCode?: string;
+    mpesaType?: string;
+    mpesaConsumerKey?: string;
+    mpesaConsumerSecret?: string;
+    mpesaPassKey?: string | null;
+    mpesaInitiatorPass?: string | null;
+    environment?: "SANDBOX" | "PRODUCTION";
+  } | null;
 }
 
 export function OrganizationPaymentCredentialsCard({
   organizationId,
   credentials,
 }: PaymentCredentialsCardProps) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [shortCode, setShortCode] = useState(credentials?.mpesaShortCode || "")
-  const [type, setType] = useState(credentials?.mpesaType || "PAYBILL")
-  const [consumerKey, setConsumerKey] = useState(credentials?.mpesaConsumerKey || "")
-  const [consumerSecret, setConsumerSecret] = useState(credentials?.mpesaConsumerSecret || "")
-  const [passKey, setPassKey] = useState(credentials?.mpesaPassKey || "")
-  const [initiatorPass, setInitiatorPass] = useState(credentials?.mpesaInitiatorPass || "")
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [shortCode, setShortCode] = useState(credentials?.mpesaShortCode || "");
+  const [type, setType] = useState(credentials?.mpesaType || "PAYBILL");
+  const [consumerKey, setConsumerKey] = useState(
+    credentials?.mpesaConsumerKey || "",
+  );
+  const [consumerSecret, setConsumerSecret] = useState(
+    credentials?.mpesaConsumerSecret || "",
+  );
+  const [passKey, setPassKey] = useState(credentials?.mpesaPassKey || "");
+  const [initiatorPass, setInitiatorPass] = useState(
+    credentials?.mpesaInitiatorPass || "",
+  );
   const [environment, setEnvironment] = useState<"SANDBOX" | "PRODUCTION">(
     credentials?.environment || "SANDBOX",
-  )
+  );
 
   async function handleSave() {
     if (!shortCode || !consumerKey || !consumerSecret) {
-      toast.error("Please fill in M-Pesa Shortcode, Consumer Key, and Consumer Secret")
-      return
+      toast.error(
+        "Please fill in M-Pesa Shortcode, Consumer Key, and Consumer Secret",
+      );
+      return;
     }
 
-    setIsPending(true)
+    setIsPending(true);
     try {
       await upsertOrganizationPaymentCredentials(organizationId, {
         mpesaShortCode: shortCode,
@@ -58,13 +78,17 @@ export function OrganizationPaymentCredentialsCard({
         mpesaPassKey: passKey || undefined,
         mpesaInitiatorPass: initiatorPass || undefined,
         environment,
-      })
-      toast.success("Organization payment credentials saved")
-      router.refresh()
+      });
+      toast.success("Organization payment credentials saved");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save payment credentials")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save payment credentials",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -77,11 +101,15 @@ export function OrganizationPaymentCredentialsCard({
             Organization Payment Credentials (M-Pesa)
           </CardTitle>
           <CardDescription>
-            Configure dedicated M-Pesa Till or Paybill API credentials for this specific organization.
+            Configure dedicated M-Pesa Till or Paybill API credentials for this
+            specific organization.
           </CardDescription>
         </div>
         {credentials ? (
-          <Badge variant="secondary" className="gap-1 text-emerald-600 bg-emerald-500/10">
+          <Badge
+            variant="secondary"
+            className="gap-1 text-emerald-600 bg-emerald-500/10"
+          >
             <CheckCircle2 className="size-3" />
             Configured
           </Badge>
@@ -118,7 +146,10 @@ export function OrganizationPaymentCredentialsCard({
 
           <div className="flex flex-col gap-2">
             <Label htmlFor="org-env">Environment</Label>
-            <Select value={environment} onValueChange={(v: any) => setEnvironment(v)}>
+            <Select
+              value={environment}
+              onValueChange={(v: any) => setEnvironment(v)}
+            >
               <SelectTrigger id="org-env">
                 <SelectValue />
               </SelectTrigger>
@@ -185,12 +216,21 @@ export function OrganizationPaymentCredentialsCard({
         </div>
 
         <div className="flex justify-end pt-2">
-          <Button size="sm" onClick={handleSave} disabled={isPending} className="gap-2">
-            {isPending ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+          <Button
+            size="sm"
+            onClick={handleSave}
+            disabled={isPending}
+            className="gap-2"
+          >
+            {isPending ? (
+              <Loader2 className="size-3.5 animate-spin" />
+            ) : (
+              <Save className="size-3.5" />
+            )}
             Save Payment Credentials
           </Button>
         </div>
       </CardContent>
     </Card>
-  )
+  );
 }

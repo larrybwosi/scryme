@@ -1,56 +1,66 @@
-"use client"
+"use client";
 
 import {
   useQuery,
   QueryClient,
   QueryClientProvider,
-} from "@tanstack/react-query"
+} from "@tanstack/react-query";
 import {
   listIntegrationDefinitions,
   listActiveOrganizationIntegrations,
   getSystemIntegrationSettings,
-} from "@/app/actions/integrations"
-import { IntegrationsList } from "./integrations-list"
-import { OrganizationIntegrationsTable } from "./organization-integrations-table"
+} from "@/app/actions/integrations";
+import { IntegrationsList } from "./integrations-list";
+import { OrganizationIntegrationsTable } from "./organization-integrations-table";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function IntegrationsClientContent({
   initialDefinitions,
   initialActiveIntegrations,
   initialSystemSettings,
 }: {
-  initialDefinitions: any[]
-  initialActiveIntegrations: any[]
-  initialSystemSettings: any
+  initialDefinitions: any[];
+  initialActiveIntegrations: any[];
+  initialSystemSettings: any;
 }) {
-  const { data: definitions = initialDefinitions, isLoading: isLoadingDefs } = useQuery({
-    queryKey: ["integration-definitions"],
-    queryFn: listIntegrationDefinitions,
-    initialData: initialDefinitions,
-    staleTime: 60 * 1000,
-  })
+  const { data: definitions = initialDefinitions, isLoading: isLoadingDefs } =
+    useQuery({
+      queryKey: ["integration-definitions"],
+      queryFn: listIntegrationDefinitions,
+      initialData: initialDefinitions,
+      staleTime: 60 * 1000,
+    });
 
-  const { data: activeIntegrations = initialActiveIntegrations, isLoading: isLoadingActive } = useQuery({
+  const {
+    data: activeIntegrations = initialActiveIntegrations,
+    isLoading: isLoadingActive,
+  } = useQuery({
     queryKey: ["active-organization-integrations"],
     queryFn: listActiveOrganizationIntegrations,
     initialData: initialActiveIntegrations,
     staleTime: 60 * 1000,
-  })
+  });
 
-  const { data: systemSettings = initialSystemSettings, isLoading: isLoadingSettings } = useQuery({
+  const {
+    data: systemSettings = initialSystemSettings,
+    isLoading: isLoadingSettings,
+  } = useQuery({
     queryKey: ["system-integration-settings"],
     queryFn: getSystemIntegrationSettings,
     initialData: initialSystemSettings,
     staleTime: 60 * 1000,
-  })
+  });
 
   return (
     <div className="flex flex-col gap-8">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">Integrations</h1>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Integrations
+        </h1>
         <p className="mt-1 text-sm text-muted-foreground">
-          Manage system integration definitions, credentials, admin chat workspace, and active organization connections.
+          Manage system integration definitions, credentials, admin chat
+          workspace, and active organization connections.
         </p>
       </div>
 
@@ -81,17 +91,17 @@ function IntegrationsClientContent({
         </section>
       </div>
     </div>
-  )
+  );
 }
 
 export function IntegrationsClientWrapper(props: {
-  initialDefinitions: any[]
-  initialActiveIntegrations: any[]
-  initialSystemSettings: any
+  initialDefinitions: any[];
+  initialActiveIntegrations: any[];
+  initialSystemSettings: any;
 }) {
   return (
     <QueryClientProvider client={queryClient}>
       <IntegrationsClientContent {...props} />
     </QueryClientProvider>
-  )
+  );
 }

@@ -6,7 +6,8 @@ import { PostHogProvider as PHProvider } from "@posthog/react";
 
 export function PostHogProvider({ children }: { children: React.ReactNode }) {
   const posthogKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
-  const posthogHost = process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
+  const posthogHost =
+    process.env.NEXT_PUBLIC_POSTHOG_HOST || "https://us.i.posthog.com";
 
   useEffect(() => {
     if (
@@ -39,7 +40,10 @@ export function PostHogProvider({ children }: { children: React.ReactNode }) {
 /**
  * Standardized helper for capturing cross-app telemetry events.
  */
-export function captureAnalyticsEvent(eventName: string, properties?: Record<string, any>) {
+export function captureAnalyticsEvent(
+  eventName: string,
+  properties?: Record<string, any>,
+) {
   if (typeof window !== "undefined" && (window as any).posthog) {
     try {
       posthog.capture(eventName, properties);
@@ -52,7 +56,10 @@ export function captureAnalyticsEvent(eventName: string, properties?: Record<str
 /**
  * Standardized helper for identifying authenticated users.
  */
-export function identifyUser(userId: string, userProperties?: Record<string, any>) {
+export function identifyUser(
+  userId: string,
+  userProperties?: Record<string, any>,
+) {
   if (typeof window !== "undefined" && (window as any).posthog) {
     try {
       posthog.identify(userId, userProperties);

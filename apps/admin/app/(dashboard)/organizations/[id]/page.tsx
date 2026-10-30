@@ -1,7 +1,7 @@
-import { notFound } from "next/navigation"
-import Link from "next/link"
-import { ArrowLeft } from "lucide-react"
-import { Badge } from "@repo/ui/components/ui/badge"
+import { notFound } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   getOrganizationDetails,
   getOrganizationMembers,
@@ -9,40 +9,52 @@ import {
   getOrganizationStorageUsage,
   getOrganizationPaymentCredentials,
   getOrganizationModules,
-} from "@/app/actions/organizations"
-import { getOrganizationActivityLogs, getOrganizationUsage } from "@/app/actions/dashboard"
-import { getOrganizationSubscription, listTiers } from "@/app/actions/billing"
-import { SuspensionControl } from "@/components/organizations/suspension-control"
-import { QuotaEditor } from "@/components/organizations/quota-editor"
-import { StorageControl } from "@/components/organizations/storage-control"
-import { SubscriptionEditor } from "@/components/organizations/subscription-editor"
-import { MembersTable } from "@/components/organizations/members-table"
-import { OrganizationActivityPanel } from "@/components/organizations/organization-activity-panel"
-import { OrganizationPaymentCredentialsCard } from "@/components/organizations/payment-credentials-card"
-import { OrgModuleEditor } from "@/components/organizations/module-editor"
+} from "@/app/actions/organizations";
+import {
+  getOrganizationActivityLogs,
+  getOrganizationUsage,
+} from "@/app/actions/dashboard";
+import { getOrganizationSubscription, listTiers } from "@/app/actions/billing";
+import { SuspensionControl } from "@/components/organizations/suspension-control";
+import { QuotaEditor } from "@/components/organizations/quota-editor";
+import { StorageControl } from "@/components/organizations/storage-control";
+import { SubscriptionEditor } from "@/components/organizations/subscription-editor";
+import { MembersTable } from "@/components/organizations/members-table";
+import { OrganizationActivityPanel } from "@/components/organizations/organization-activity-panel";
+import { OrganizationPaymentCredentialsCard } from "@/components/organizations/payment-credentials-card";
+import { OrgModuleEditor } from "@/components/organizations/module-editor";
 
 export default async function OrganizationDetailPage({
   params,
 }: {
-  params: Promise<{ id: string }>
+  params: Promise<{ id: string }>;
 }) {
-  const { id } = await params
+  const { id } = await params;
 
-  const org = await getOrganizationDetails(id).catch(() => null)
-  if (!org) notFound()
+  const org = await getOrganizationDetails(id).catch(() => null);
+  if (!org) notFound();
 
-  const [members, quota, subscription, tiers, storage, usage, activityLogs, credentials, modules] =
-    await Promise.all([
-      getOrganizationMembers(id),
-      getEffectiveQuota(id),
-      getOrganizationSubscription(id),
-      listTiers(),
-      getOrganizationStorageUsage(id),
-      getOrganizationUsage(id),
-      getOrganizationActivityLogs(id, 15),
-      getOrganizationPaymentCredentials(id),
-      getOrganizationModules(id),
-    ])
+  const [
+    members,
+    quota,
+    subscription,
+    tiers,
+    storage,
+    usage,
+    activityLogs,
+    credentials,
+    modules,
+  ] = await Promise.all([
+    getOrganizationMembers(id),
+    getEffectiveQuota(id),
+    getOrganizationSubscription(id),
+    listTiers(),
+    getOrganizationStorageUsage(id),
+    getOrganizationUsage(id),
+    getOrganizationActivityLogs(id, 15),
+    getOrganizationPaymentCredentials(id),
+    getOrganizationModules(id),
+  ]);
 
   return (
     <div className="flex flex-col gap-8">
@@ -57,7 +69,9 @@ export default async function OrganizationDetailPage({
         <div className="flex items-start justify-between gap-4">
           <div className="flex flex-col gap-1.5">
             <div className="flex items-center gap-3">
-              <h1 className="text-2xl font-semibold tracking-tight text-foreground">{org.name}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                {org.name}
+              </h1>
               {org.isSuspended ? (
                 <Badge variant="destructive">Suspended</Badge>
               ) : (
@@ -67,8 +81,8 @@ export default async function OrganizationDetailPage({
               )}
             </div>
             <p className="text-sm text-muted-foreground">
-              /{org.slug} · {org._count.members} members · {org._count.products} products ·{" "}
-              {org._count.transactions} transactions
+              /{org.slug} · {org._count.members} members · {org._count.products}{" "}
+              products · {org._count.transactions} transactions
             </p>
           </div>
           <SuspensionControl
@@ -90,13 +104,20 @@ export default async function OrganizationDetailPage({
       <StorageControl organizationId={org.id} storage={storage} />
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SubscriptionEditor organizationId={org.id} subscription={subscription} tiers={tiers} />
+        <SubscriptionEditor
+          organizationId={org.id}
+          subscription={subscription}
+          tiers={tiers}
+        />
         <QuotaEditor organizationId={org.id} quota={quota} />
       </div>
 
-      <OrganizationPaymentCredentialsCard organizationId={org.id} credentials={credentials} />
+      <OrganizationPaymentCredentialsCard
+        organizationId={org.id}
+        credentials={credentials}
+      />
 
       <MembersTable members={members} />
     </div>
-  )
+  );
 }

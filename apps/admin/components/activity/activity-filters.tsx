@@ -43,7 +43,10 @@ export function ActivityFilters({
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {/* Search Query */}
         <div className="relative lg:col-span-2">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
+          <Search
+            className="absolute left-2.5 top-2.5 size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
             placeholder="Search by user, email, receipt #, IP..."
             className="pl-9 text-xs"
@@ -72,7 +75,9 @@ export function ActivityFilters({
           <select
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground"
             value={filters.userId || ""}
-            onChange={(e) => onFilterChange({ userId: e.target.value || undefined })}
+            onChange={(e) =>
+              onFilterChange({ userId: e.target.value || undefined })
+            }
           >
             <option value="">All Users</option>
             {users.map((u) => (
@@ -88,7 +93,9 @@ export function ActivityFilters({
           <select
             className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-xs shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring text-foreground"
             value={filters.organizationId || ""}
-            onChange={(e) => onFilterChange({ organizationId: e.target.value || undefined })}
+            onChange={(e) =>
+              onFilterChange({ organizationId: e.target.value || undefined })
+            }
           >
             <option value="">All Organizations</option>
             {organizations.map((org) => (
@@ -103,7 +110,10 @@ export function ActivityFilters({
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
         {/* Date Range Inputs */}
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Calendar className="size-3.5 text-muted-foreground" aria-hidden="true" />
+          <Calendar
+            className="size-3.5 text-muted-foreground"
+            aria-hidden="true"
+          />
           <span>Date Range:</span>
           <Input
             type="date"

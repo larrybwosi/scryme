@@ -6301,7 +6301,7 @@ dependencies = [
 
 [[package]]
 name = "scryme"
-version = "10.2.25"
+version = "10.2.29"
 dependencies = [
  "aes-gcm",
  "anyhow",
@@ -6364,7 +6364,7 @@ dependencies = [
 
 [[package]]
 name = "scryme-sdk"
-version = "10.2.25"
+version = "10.2.29"
 dependencies = [
  "chrono",
  "reqwest 0.13.4",

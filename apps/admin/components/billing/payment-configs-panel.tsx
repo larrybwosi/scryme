@@ -1,60 +1,115 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Loader2, Save, CreditCard, Smartphone, Building2, Key } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Textarea } from "@repo/ui/components/ui/textarea"
-import { Switch } from "@repo/ui/components/ui/switch"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import {
+  Loader2,
+  Save,
+  CreditCard,
+  Smartphone,
+  Building2,
+  Key,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Switch } from "@repo/ui/components/ui/switch";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@repo/ui/components/ui/select";
 import {
   saveSystemPaymentConfigs,
   type SystemPaymentConfigs,
-} from "@/app/actions/billing"
+} from "@/app/actions/billing";
 
-export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs }) {
-  const router = useRouter()
-  const [isPending, setIsPending] = useState(false)
-  const [enabledMethods, setEnabledMethods] = useState<string[]>(configs.enabledMethods || ["mpesa", "card"])
+export function PaymentConfigsPanel({
+  configs,
+}: {
+  configs: SystemPaymentConfigs;
+}) {
+  const router = useRouter();
+  const [isPending, setIsPending] = useState(false);
+  const [enabledMethods, setEnabledMethods] = useState<string[]>(
+    configs.enabledMethods || ["mpesa", "card"],
+  );
 
   // M-Pesa State
-  const [mpesaConsumerKey, setMpesaConsumerKey] = useState(configs.mpesa?.consumerKey || "")
-  const [mpesaConsumerSecret, setMpesaConsumerSecret] = useState(configs.mpesa?.consumerSecret || "")
-  const [mpesaShortCode, setMpesaShortCode] = useState(configs.mpesa?.shortCode || "")
-  const [mpesaPassKey, setMpesaPassKey] = useState(configs.mpesa?.passKey || "")
-  const [mpesaType, setMpesaType] = useState<"PAYBILL" | "TILL">(configs.mpesa?.type || "PAYBILL")
-  const [mpesaEnv, setMpesaEnv] = useState<"SANDBOX" | "PRODUCTION">(configs.mpesa?.environment || "SANDBOX")
+  const [mpesaConsumerKey, setMpesaConsumerKey] = useState(
+    configs.mpesa?.consumerKey || "",
+  );
+  const [mpesaConsumerSecret, setMpesaConsumerSecret] = useState(
+    configs.mpesa?.consumerSecret || "",
+  );
+  const [mpesaShortCode, setMpesaShortCode] = useState(
+    configs.mpesa?.shortCode || "",
+  );
+  const [mpesaPassKey, setMpesaPassKey] = useState(
+    configs.mpesa?.passKey || "",
+  );
+  const [mpesaType, setMpesaType] = useState<"PAYBILL" | "TILL">(
+    configs.mpesa?.type || "PAYBILL",
+  );
+  const [mpesaEnv, setMpesaEnv] = useState<"SANDBOX" | "PRODUCTION">(
+    configs.mpesa?.environment || "SANDBOX",
+  );
 
   // Stripe State
-  const [stripePub, setStripePub] = useState(configs.stripe?.publishableKey || "")
-  const [stripeSecret, setStripeSecret] = useState(configs.stripe?.secretKey || "")
-  const [stripeWebhook, setStripeWebhook] = useState(configs.stripe?.webhookSecret || "")
+  const [stripePub, setStripePub] = useState(
+    configs.stripe?.publishableKey || "",
+  );
+  const [stripeSecret, setStripeSecret] = useState(
+    configs.stripe?.secretKey || "",
+  );
+  const [stripeWebhook, setStripeWebhook] = useState(
+    configs.stripe?.webhookSecret || "",
+  );
 
   // Dodo State
-  const [dodoApiKey, setDodoApiKey] = useState(configs.dodo?.apiKey || "")
-  const [dodoEnv, setDodoEnv] = useState<"sandbox" | "live">(configs.dodo?.environment || "sandbox")
+  const [dodoApiKey, setDodoApiKey] = useState(configs.dodo?.apiKey || "");
+  const [dodoEnv, setDodoEnv] = useState<"sandbox" | "live">(
+    configs.dodo?.environment || "sandbox",
+  );
 
   // Bank Transfer State
-  const [bankName, setBankName] = useState(configs.bankTransfer?.bankName || "")
-  const [accountName, setAccountName] = useState(configs.bankTransfer?.accountName || "")
-  const [accountNumber, setAccountNumber] = useState(configs.bankTransfer?.accountNumber || "")
-  const [swiftCode, setSwiftCode] = useState(configs.bankTransfer?.swiftCode || "")
-  const [instructions, setInstructions] = useState(configs.bankTransfer?.instructions || "")
+  const [bankName, setBankName] = useState(
+    configs.bankTransfer?.bankName || "",
+  );
+  const [accountName, setAccountName] = useState(
+    configs.bankTransfer?.accountName || "",
+  );
+  const [accountNumber, setAccountNumber] = useState(
+    configs.bankTransfer?.accountNumber || "",
+  );
+  const [swiftCode, setSwiftCode] = useState(
+    configs.bankTransfer?.swiftCode || "",
+  );
+  const [instructions, setInstructions] = useState(
+    configs.bankTransfer?.instructions || "",
+  );
 
   function toggleMethod(method: string) {
     if (enabledMethods.includes(method)) {
-      setEnabledMethods(enabledMethods.filter((m) => m !== method))
+      setEnabledMethods(enabledMethods.filter((m) => m !== method));
     } else {
-      setEnabledMethods([...enabledMethods, method])
+      setEnabledMethods([...enabledMethods, method]);
     }
   }
 
   async function handleSave() {
-    setIsPending(true)
+    setIsPending(true);
     try {
       const payload: SystemPaymentConfigs = {
         enabledMethods,
@@ -82,15 +137,19 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
           swiftCode,
           instructions,
         },
-      }
+      };
 
-      await saveSystemPaymentConfigs(payload)
-      toast.success("System payment configurations saved")
-      router.refresh()
+      await saveSystemPaymentConfigs(payload);
+      toast.success("System payment configurations saved");
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to save payment configs")
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to save payment configs",
+      );
     } finally {
-      setIsPending(false)
+      setIsPending(false);
     }
   }
 
@@ -104,14 +163,19 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             Platform Payment Methods
           </CardTitle>
           <CardDescription>
-            Enable or disable system-wide payment options available for subscriptions and purchases.
+            Enable or disable system-wide payment options available for
+            subscriptions and purchases.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-4">
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">M-Pesa STK Push</span>
-              <span className="text-xs text-muted-foreground">Safaricom Mobile Money</span>
+              <span className="text-sm font-medium text-foreground">
+                M-Pesa STK Push
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Safaricom Mobile Money
+              </span>
             </div>
             <Switch
               checked={enabledMethods.includes("mpesa")}
@@ -121,8 +185,12 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Card / Stripe</span>
-              <span className="text-xs text-muted-foreground">Credit & Debit Cards</span>
+              <span className="text-sm font-medium text-foreground">
+                Card / Stripe
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Credit & Debit Cards
+              </span>
             </div>
             <Switch
               checked={enabledMethods.includes("card")}
@@ -132,8 +200,12 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Dodo Payments</span>
-              <span className="text-xs text-muted-foreground">Global Merchant of Record</span>
+              <span className="text-sm font-medium text-foreground">
+                Dodo Payments
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Global Merchant of Record
+              </span>
             </div>
             <Switch
               checked={enabledMethods.includes("dodo")}
@@ -143,8 +215,12 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
 
           <div className="flex items-center justify-between rounded-lg border border-border p-3">
             <div className="flex flex-col">
-              <span className="text-sm font-medium text-foreground">Bank Wire Transfer</span>
-              <span className="text-xs text-muted-foreground">Direct Account Deposit</span>
+              <span className="text-sm font-medium text-foreground">
+                Bank Wire Transfer
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Direct Account Deposit
+              </span>
             </div>
             <Switch
               checked={enabledMethods.includes("bank_transfer")}
@@ -178,7 +254,10 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="mpesa-type">Shortcode Type</Label>
-              <Select value={mpesaType} onValueChange={(val: any) => setMpesaType(val)}>
+              <Select
+                value={mpesaType}
+                onValueChange={(val: any) => setMpesaType(val)}
+              >
                 <SelectTrigger id="mpesa-type">
                   <SelectValue />
                 </SelectTrigger>
@@ -190,7 +269,10 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             </div>
             <div className="flex flex-col gap-2">
               <Label htmlFor="mpesa-env">Environment</Label>
-              <Select value={mpesaEnv} onValueChange={(val: any) => setMpesaEnv(val)}>
+              <Select
+                value={mpesaEnv}
+                onValueChange={(val: any) => setMpesaEnv(val)}
+              >
                 <SelectTrigger id="mpesa-env">
                   <SelectValue />
                 </SelectTrigger>
@@ -226,7 +308,9 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="mpesa-passkey">Online Passkey (STK Push Passkey)</Label>
+            <Label htmlFor="mpesa-passkey">
+              Online Passkey (STK Push Passkey)
+            </Label>
             <Input
               id="mpesa-passkey"
               type="password"
@@ -246,7 +330,8 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             Stripe Payment Gateway
           </CardTitle>
           <CardDescription>
-            API Credentials for credit card payments and automated subscription billing.
+            API Credentials for credit card payments and automated subscription
+            billing.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-3">
@@ -290,7 +375,8 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             Dodo Payments Configuration
           </CardTitle>
           <CardDescription>
-            Merchant of Record API integration settings for cross-border billing.
+            Merchant of Record API integration settings for cross-border
+            billing.
           </CardDescription>
         </CardHeader>
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2">
@@ -306,7 +392,10 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
           </div>
           <div className="flex flex-col gap-2">
             <Label htmlFor="dodo-env">Environment Mode</Label>
-            <Select value={dodoEnv} onValueChange={(val: any) => setDodoEnv(val)}>
+            <Select
+              value={dodoEnv}
+              onValueChange={(val: any) => setDodoEnv(val)}
+            >
               <SelectTrigger id="dodo-env">
                 <SelectValue />
               </SelectTrigger>
@@ -327,7 +416,8 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
             Bank Wire Deposit Information
           </CardTitle>
           <CardDescription>
-            Official bank details displayed to customers paying offline via bank transfer.
+            Official bank details displayed to customers paying offline via bank
+            transfer.
           </CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
@@ -374,7 +464,9 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="instructions">Payment Instructions & Remittance Note</Label>
+            <Label htmlFor="instructions">
+              Payment Instructions & Remittance Note
+            </Label>
             <Textarea
               id="instructions"
               rows={2}
@@ -388,10 +480,14 @@ export function PaymentConfigsPanel({ configs }: { configs: SystemPaymentConfigs
 
       <div className="flex justify-end gap-3 pt-2">
         <Button onClick={handleSave} disabled={isPending} className="gap-2">
-          {isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+          {isPending ? (
+            <Loader2 className="size-4 animate-spin" />
+          ) : (
+            <Save className="size-4" />
+          )}
           Save Payment Configurations
         </Button>
       </div>
     </div>
-  )
+  );
 }

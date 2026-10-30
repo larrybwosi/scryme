@@ -8,7 +8,9 @@ interface IntegrationDetailPageProps {
   }>;
 }
 
-export default async function IntegrationDetailPage({ params }: IntegrationDetailPageProps) {
+export default async function IntegrationDetailPage({
+  params,
+}: IntegrationDetailPageProps) {
   const { slug } = await params;
 
   try {

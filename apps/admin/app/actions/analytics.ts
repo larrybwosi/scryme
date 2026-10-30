@@ -65,7 +65,9 @@ export async function getUserAnalyticsAndFunnel() {
     db.organization.count({ where: { deletedAt: null, isSuspended: true } }),
     db.organization.count({ where: { deletedAt: { not: null } } }),
     db.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
-    db.organization.count({ where: { createdAt: { gte: thirtyDaysAgo }, deletedAt: null } }),
+    db.organization.count({
+      where: { createdAt: { gte: thirtyDaysAgo }, deletedAt: null },
+    }),
     db.organization.findMany({
       orderBy: { updatedAt: "desc" },
       take: 25,
@@ -91,33 +93,48 @@ export async function getUserAnalyticsAndFunnel() {
   ]);
 
   const activeOrganizations = totalOrganizations - suspendedOrganizations;
-  const churnedOrganizationsCount = suspendedOrganizations + deletedOrganizations;
+  const churnedOrganizationsCount =
+    suspendedOrganizations + deletedOrganizations;
   const totalCreatedOrgsOverall = totalOrganizations + deletedOrganizations;
 
-  const conversionRatePercent = totalUsers > 0
-    ? Math.round((totalOrganizations / totalUsers) * 1000) / 10
-    : 0;
+  const conversionRatePercent =
+    totalUsers > 0
+      ? Math.round((totalOrganizations / totalUsers) * 1000) / 10
+      : 0;
 
-  const orgActivationRatePercent = totalOrganizations > 0
-    ? Math.round((activeOrganizations / totalOrganizations) * 1000) / 10
-    : 0;
+  const orgActivationRatePercent =
+    totalOrganizations > 0
+      ? Math.round((activeOrganizations / totalOrganizations) * 1000) / 10
+      : 0;
 
-  const churnRatePercent = totalCreatedOrgsOverall > 0
-    ? Math.round((churnedOrganizationsCount / totalCreatedOrgsOverall) * 1000) / 10
-    : 0;
+  const churnRatePercent =
+    totalCreatedOrgsOverall > 0
+      ? Math.round(
+          (churnedOrganizationsCount / totalCreatedOrgsOverall) * 1000,
+        ) / 10
+      : 0;
 
   // Compute monthly cohort aggregation
-  const monthlyDataMap = new Map<string, { signups: number; organizations: number; churned: number }>();
+  const monthlyDataMap = new Map<
+    string,
+    { signups: number; organizations: number; churned: number }
+  >();
   for (let i = 5; i >= 0; i--) {
     const d = new Date();
     d.setMonth(d.getMonth() - i);
-    const label = d.toLocaleString("default", { month: "short", year: "2-digit" });
+    const label = d.toLocaleString("default", {
+      month: "short",
+      year: "2-digit",
+    });
     monthlyDataMap.set(label, { signups: 0, organizations: 0, churned: 0 });
   }
 
   // Populate signups and orgs by month
   organizationsList.forEach((org) => {
-    const monthKey = new Date(org.createdAt).toLocaleString("default", { month: "short", year: "2-digit" });
+    const monthKey = new Date(org.createdAt).toLocaleString("default", {
+      month: "short",
+      year: "2-digit",
+    });
     if (monthlyDataMap.has(monthKey)) {
       const entry = monthlyDataMap.get(monthKey)!;
       entry.organizations += 1;
@@ -127,7 +144,9 @@ export async function getUserAnalyticsAndFunnel() {
     }
   });
 
-  const monthlyGrowth: MonthlyGrowthPoint[] = Array.from(monthlyDataMap.entries()).map(([month, stats]) => ({
+  const monthlyGrowth: MonthlyGrowthPoint[] = Array.from(
+    monthlyDataMap.entries(),
+  ).map(([month, stats]) => ({
     month,
     signups: stats.signups || Math.round(stats.organizations * 1.5),
     organizations: stats.organizations,
@@ -148,7 +167,7 @@ export async function getUserAnalyticsAndFunnel() {
 
   const posthogConfigured = Boolean(
     process.env.NEXT_PUBLIC_POSTHOG_KEY &&
-    !process.env.NEXT_PUBLIC_POSTHOG_KEY.includes("PLACEHOLDER")
+    !process.env.NEXT_PUBLIC_POSTHOG_KEY.includes("PLACEHOLDER"),
   );
 
   const embedUrl = process.env.NEXT_PUBLIC_POSTHOG_EMBED_URL || null;

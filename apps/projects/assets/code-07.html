@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head><meta charset="utf-8"/><meta content="width=device-width, initial-scale=1.0" name="viewport"/><meta content="web_dashboard" name="shell-type"/><link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/><link href="https://fonts.googleapis.com" rel="preconnect"/><link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/><link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&amp;family=JetBrains+Mono:wght@500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/><style>@layer base{html,body{margin:0;padding:0;}body{overscroll-behavior:none;}main>:first-child{margin-top:0!important;}main>:last-child{margin-bottom:0!important;}}::-webkit-scrollbar{display:none;}</style><script src="https://cdn.tailwindcss.com"></script><script id="tailwind-config">tailwind.config = { darkMode: "class", theme: { extend: { "colors": { "inverse-on-surface": "#303034", "outline-variant": "#454652", "on-secondary": "#1c2679", "on-surface-variant": "#c6c5d5", "surface": "#121316", "on-tertiary-fixed": "#191b26", "on-background": "#e3e2e6", "on-tertiary": "#2e303c", "primary-fixed": "#dfe0ff", "error-container": "#93000a", "secondary-fixed": "#dfe0ff", "on-error-container": "#ffdad6", "on-surface": "#e3e2e6", "outline": "#908f9e", "primary-container": "#5e6ad2", "surface-bright": "#38393c", "surface-container-high": "#292a2d", "surface-container-highest": "#343538", "secondary-fixed-dim": "#bdc2ff", "inverse-surface": "#e3e2e6", "on-primary-fixed": "#000965", "surface-container-lowest": "#0d0e11", "surface-tint": "#bdc2ff", "on-tertiary-fixed-variant": "#444653", "on-secondary-fixed": "#000964", "on-secondary-fixed-variant": "#343e91", "surface-dim": "#121316", "background": "#121316", "on-tertiary-container": "#fdfaff", "on-primary-container": "#fdfaff", "tertiary": "#c5c5d5", "surface-container-low": "#1b1b1f", "on-error": "#690005", "tertiary-fixed": "#e1e1f2", "primary": "#bdc2ff", "secondary": "#bdc2ff", "error": "#ffb4ab", "on-secondary-container": "#a7afff", "tertiary-fixed-dim": "#c5c5d5", "primary-fixed-dim": "#bdc2ff", "on-primary": "#121f8b", "on-primary-fixed-variant": "#2e3aa2", "inverse-primary": "#4854bb", "surface-container": "#1f1f23", "tertiary-container": "#717381", "surface-variant": "#343538", "secondary-container": "#343e91" }, "borderRadius": { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" }, "spacing": { "gutter": "0.75rem", "space-md": "0.75rem", "space-lg": "1rem", "gutter-desktop": "1rem", "space-xl": "1.5rem", "space-xs": "0.25rem", "space-sm": "0.5rem", "margin": "1rem", "margin-desktop": "1.5rem" }, "fontFamily": { "headline-sm": [ "Inter" ], "body-md": [ "Inter" ], "label-kbd": [ "JetBrains Mono" ], "body-sm": [ "Inter" ], "label-code": [ "JetBrains Mono" ], "body-lg": [ "Inter" ], "headline-md": [ "Inter" ], "display-lg": [ "Inter" ], "headline-lg": [ "Inter" ], "label-badge": [ "Inter" ] }, "fontSize": { "headline-sm": [ "15px", { "lineHeight": "20px", "letterSpacing": "-0.01em", "fontWeight": "600" } ], "body-md": [ "13px", { "lineHeight": "19px", "letterSpacing": "-0.005em", "fontWeight": "400" } ], "label-kbd": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.02em", "fontWeight": "500" } ], "body-sm": [ "12px", { "lineHeight": "16px", "letterSpacing": "0em", "fontWeight": "400" } ], "label-code": [ "12px", { "lineHeight": "16px", "letterSpacing": "-0.01em", "fontWeight": "500" } ], "body-lg": [ "14px", { "lineHeight": "22px", "letterSpacing": "-0.006em", "fontWeight": "400" } ], "headline-md": [ "18px", { "lineHeight": "24px", "letterSpacing": "-0.015em", "fontWeight": "600" } ], "display-lg": [ "32px", { "lineHeight": "38px", "letterSpacing": "-0.025em", "fontWeight": "600" } ], "headline-lg": [ "24px", { "lineHeight": "30px", "letterSpacing": "-0.02em", "fontWeight": "600" } ], "label-badge": [ "11px", { "lineHeight": "14px", "letterSpacing": "0.01em", "fontWeight": "500" } ] } } } };</script></head><body class="bg-surface font-body-md text-body-md text-on-surface antialiased"><aside class="fixed left-0 top-0 h-full w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between"><div class="flex flex-col"><div class="h-12 px-space-md border-b border-outline-variant/30 flex items-center justify-between"><button class="flex items-center gap-space-sm rounded-lg px-space-xs py-1 hover:bg-surface-container transition-colors text-left" type="button"><div class="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-sm font-semibold">S</div><div class="flex flex-col leading-none"><span class="font-headline-sm text-body-sm text-on-surface font-medium truncate max-w-[120px]">Scryme</span><span class="font-body-sm text-[10px] text-outline leading-none truncate max-w-[120px]">Acme Global</span></div><span class="material-symbols-outlined text-outline text-[16px]">unfold_more</span></button><button class="w-6 h-6 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">edit_square</span></button></div><div class="p-space-xs"><button class="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors" type="button"><div class="flex items-center gap-space-sm"><span class="material-symbols-outlined text-[16px] text-outline">search</span><span class="font-body-sm text-body-sm text-outline">Search...</span></div><div class="flex items-center gap-0.5 bg-surface-container px-1 py-0.5 rounded border border-outline-variant/40"><span class="font-label-kbd text-label-kbd text-outline">⌘K</span></div></button></div><div class="px-space-xs py-space-xs"><div class="px-space-sm py-1 text-[11px] font-label-badge text-outline uppercase tracking-wider">Workspace</div><nav class="flex flex-col gap-0.5" data-active-classes="bg-surface-container-high text-on-surface font-medium border-l-2 border-primary-container"><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="tasks" href="#">Tasks</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="board" href="#">Board</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="timeline" href="#">Timeline</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="calendar" href="#">Calendar</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="schedule" href="#">Schedule</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="task-detail" href="#">Task Detail</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="notes-and-docs" href="#">Notes &amp; Docs</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="time-tracking" href="#">Time Tracking</a><a class="flex items-center px-space-sm py-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container hover:text-on-surface transition-all font-body-md text-body-md" data-path="projects" href="#">Projects</a></nav></div></div><div class="p-space-xs border-t border-outline-variant/30"><div class="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"><div class="flex items-center gap-space-sm"><div class="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center"><span class="material-symbols-outlined text-outline text-[13px]">tune</span></div><span class="font-body-sm text-body-sm text-on-surface-variant">Settings</span></div><span class="font-label-kbd text-label-kbd text-outline">⌘,</span></div></div></aside><div class="pl-60"><header class="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md"><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 text-body-sm font-body-sm text-outline"><span class="hover:text-on-surface transition-colors cursor-pointer">Scryme</span><span class="text-outline-variant">/</span><div class="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"><span class="w-1.5 h-1.5 rounded-full bg-primary-container"></span><span class="font-medium text-body-sm text-on-surface">Nexus 2.0 Redesign</span><span class="material-symbols-outlined text-[14px] text-outline">expand_more</span></div></div></div><div class="flex items-center gap-space-md"><div class="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40"><span class="w-2 h-2 rounded-full bg-primary-container animate-pulse"></span><span class="font-label-code text-label-code text-primary">01:42:15</span><button class="text-outline hover:text-error transition-colors flex items-center" type="button"><span class="material-symbols-outlined text-[14px]">stop_circle</span></button></div><button class="relative p-1 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors" type="button"><span class="material-symbols-outlined text-[18px]">notifications</span><span class="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span></button><button class="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors" type="button"><span class="material-symbols-outlined text-[16px]">add</span><span>New Task</span><span class="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span></button><div class="h-4 w-px bg-outline-variant/40"></div><div class="w-8 h-8 rounded-full bg-primary flex items-center justify-center"><span class="material-symbols-outlined text-on-primary text-[18px]">person</span></div></div></header><main class="relative pt-12 min-h-screen bg-surface w-full px-8"><div class="flex flex-col w-full">
+<div class="flex flex-col gap-space-lg w-full py-space-md">
+<!-- Top Meta & Controls Header -->
+<div class="flex flex-col md:flex-row md:items-center justify-between gap-space-md bg-surface-container-low p-space-lg rounded-lg shadow-sm">
+<div class="flex flex-col gap-space-xs">
+<div class="flex items-center gap-space-sm font-label-code text-label-code text-outline">
+<span class="hover:text-on-surface cursor-pointer transition-colors">Projects</span>
+<span>/</span>
+<span class="text-primary font-medium">PRJ-204</span>
+<span>/</span>
+<span class="text-on-surface">Nexus 2.0 Redesign</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-sm mt-1">
+<h1 class="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">Nexus 2.0 Redesign</h1>
+<div class="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-highest text-primary font-label-badge text-label-badge">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span>Live Pipeline</span>
+</div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container font-label-badge text-label-badge text-on-surface-variant">
+<span class="material-symbols-outlined text-[14px] text-error">priority_high</span>
+<span>High Priority</span>
+</div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container font-label-badge text-label-badge text-outline">
+<span class="material-symbols-outlined text-[14px]">calendar_today</span>
+<span>Oct 29, 2024</span>
+</div>
+<div class="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-high text-primary font-label-badge text-label-badge">
+<span class="material-symbols-outlined text-[14px] text-primary" style="font-variation-settings: 'FILL' 1;">verified</span>
+<span>94% Health</span>
+</div>
+</div>
+</div>
+<div class="flex items-center flex-wrap gap-space-sm">
+<button class="h-8 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">ios_share</span>
+<span>Share</span>
+</button>
+<button class="h-8 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" onclick="navigator.clipboard?.writeText(window.location.href)" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">link</span>
+<span>Copy URL</span>
+</button>
+<button class="h-8 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">edit_document</span>
+<span>Edit Spec</span>
+</button>
+<button class="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg font-body-sm text-body-sm font-medium flex items-center gap-1.5 transition-colors shadow-sm" type="button">
+<span class="material-symbols-outlined text-[16px]">add_circle</span>
+<span>New Issue</span>
+<kbd class="font-label-kbd text-label-kbd bg-surface-container-lowest/40 px-1 py-0.2 rounded text-on-primary-container">N</kbd>
+</button>
+</div>
+</div>
+<!-- Quick Metrics Deck -->
+<div class="grid grid-cols-2 md:grid-cols-5 gap-space-sm w-full">
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<span>Execution State</span>
+<span class="material-symbols-outlined text-[16px] text-primary">donut_large</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">68%</span>
+<span class="font-body-sm text-body-sm text-outline font-label-code">42/62 Tasks</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 68%;"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<span>Active Sprint</span>
+<span class="material-symbols-outlined text-[16px] text-primary">reorder</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">Sprint 14</span>
+<span class="font-body-sm text-body-sm text-outline font-label-code">4d left</span>
+</div>
+<div class="flex items-center gap-1 mt-2 text-primary font-label-code text-[11px]">
+<span class="material-symbols-outlined text-[13px]">bolt</span>
+<span>26 Velocity Pts</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<span>Hours Logged</span>
+<span class="material-symbols-outlined text-[16px] text-primary">schedule</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">142h</span>
+<span class="font-body-sm text-body-sm text-outline font-label-code">/ 180h target</span>
+</div>
+<div class="flex items-center gap-1 mt-2 text-outline font-label-code text-[11px]">
+<span class="material-symbols-outlined text-[13px] text-primary">trending_up</span>
+<span>+18.4h this cycle</span>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between shadow-sm">
+<div class="flex items-center justify-between text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<span>Cap Utilization</span>
+<span class="material-symbols-outlined text-[16px] text-primary">attach_money</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">$19,880</span>
+<span class="font-body-sm text-body-sm text-outline font-label-code">/ $29.4k</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full mt-2 overflow-hidden">
+<div class="bg-primary h-full rounded-full" style="width: 67.6%;"></div>
+</div>
+</div>
+<div class="bg-surface-container-low p-space-md rounded-lg flex flex-col justify-between shadow-sm col-span-2 md:col-span-1">
+<div class="flex items-center justify-between text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<span>Squad Roster</span>
+<span class="material-symbols-outlined text-[16px] text-primary">group</span>
+</div>
+<div class="mt-2 flex items-baseline gap-2">
+<span class="font-headline-md text-headline-md text-on-surface font-semibold">6 Members</span>
+<span class="font-body-sm text-body-sm text-outline font-label-code">2 Guests</span>
+</div>
+<div class="flex -space-x-1.5 mt-2 overflow-hidden">
+<div class="inline-block h-5 w-5 rounded-full bg-primary-container text-on-primary-container font-label-kbd text-[10px] flex items-center justify-center font-bold">ER</div>
+<div class="inline-block h-5 w-5 rounded-full bg-secondary-container text-on-secondary-container font-label-kbd text-[10px] flex items-center justify-center font-bold">MK</div>
+<div class="inline-block h-5 w-5 rounded-full bg-surface-container-high text-on-surface font-label-kbd text-[10px] flex items-center justify-center font-bold">TL</div>
+<div class="inline-block h-5 w-5 rounded-full bg-surface-container-highest text-primary font-label-kbd text-[10px] flex items-center justify-center font-bold">+3</div>
+</div>
+</div>
+</div>
+<!-- Project Sub-Tabs Nav Rail -->
+<div class="flex items-center justify-between bg-surface-container-lowest px-space-sm pt-space-xs rounded-lg overflow-x-auto shadow-sm">
+<nav class="flex items-center gap-space-xs font-body-sm text-body-sm">
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">dashboard</span>
+<span>Overview</span>
+</button>
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">check_box</span>
+<span>Issues</span>
+<span class="px-1.5 py-0.2 bg-surface-container text-outline rounded font-label-code text-[10px]">58</span>
+</button>
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">cycle</span>
+<span>Cycles &amp; Sprints</span>
+</button>
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">flag</span>
+<span>Milestones</span>
+<span class="px-1.5 py-0.2 bg-surface-container text-outline rounded font-label-code text-[10px]">4</span>
+</button>
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">description</span>
+<span>Documents &amp; RFCs</span>
+<span class="px-1.5 py-0.2 bg-surface-container text-outline rounded font-label-code text-[10px]">6</span>
+</button>
+<!-- ACTIVE TAB -->
+<button class="px-space-md py-2 text-on-surface bg-surface-container-high rounded-t-lg font-medium flex items-center gap-1.5 relative shadow-sm" type="button">
+<span class="material-symbols-outlined text-[15px] text-primary" style="font-variation-settings: 'FILL' 1;">shield_person</span>
+<span>Team &amp; Access</span>
+<span class="w-1.5 h-1.5 rounded-full bg-primary ml-1"></span>
+</button>
+<button class="px-space-md py-2 text-outline hover:text-on-surface hover:bg-surface-container rounded-t-lg transition-colors flex items-center gap-1.5" type="button">
+<span class="material-symbols-outlined text-[15px]">monitoring</span>
+<span>Analytics &amp; Telemetry</span>
+</button>
+</nav>
+<div class="hidden lg:flex items-center gap-2 pb-1 pr-2">
+<span class="font-label-code text-[11px] text-outline">Branch lock:</span>
+<span class="px-2 py-0.5 rounded bg-surface-container text-primary font-label-code text-[11px]">release/2.0</span>
+</div>
+</div>
+<!-- Active Workspace: Team & Access -->
+<div class="flex flex-col gap-space-lg w-full">
+<!-- Section 1: Squad Controls Bar & Cost Telemetry -->
+<div class="bg-surface-container-low p-space-lg rounded-lg shadow-sm flex flex-col lg:flex-row justify-between lg:items-center gap-space-md">
+<div class="flex flex-col gap-1">
+<div class="flex items-center gap-space-sm">
+<h2 class="font-headline-sm text-headline-sm text-on-surface font-semibold tracking-tight">Project Squad &amp; Permissions</h2>
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">6 Members Assigned</span>
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-outline font-label-badge text-label-badge">2 External Guests</span>
+</div>
+<div class="flex flex-wrap items-center gap-space-md text-outline font-body-sm text-body-sm mt-1">
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-primary">payments</span>
+<span>Budget Cap:</span>
+<span class="font-label-code text-on-surface font-medium">$19,880 spent</span>
+<span>/ $29,400 cap</span>
+</div>
+<span>•</span>
+<div class="flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[15px] text-outline">speed</span>
+<span>Blended Burn:</span>
+<span class="font-label-code text-on-surface font-medium">$140/hr</span>
+</div>
+<span>•</span>
+<div class="flex items-center gap-1 text-primary">
+<span class="material-symbols-outlined text-[14px]">lock</span>
+<span class="font-label-code text-[11px]">SOC-2 Enforced Scope</span>
+</div>
+</div>
+</div>
+<div class="flex items-center flex-wrap gap-space-sm">
+<button class="h-8 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">history</span>
+<span>Export Access Audit</span>
+</button>
+<button class="h-8 px-space-sm bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-outline">policy</span>
+<span>Security Policies</span>
+</button>
+<button class="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg font-body-sm text-body-sm font-medium flex items-center gap-1.5 shadow-sm transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">person_add</span>
+<span>+ Invite Member</span>
+</button>
+</div>
+</div>
+<!-- Section 2: Team Members Table -->
+<div class="bg-surface-container-low rounded-lg shadow-sm overflow-hidden flex flex-col">
+<div class="px-space-md py-space-sm bg-surface-container-lowest flex items-center justify-between">
+<div class="flex items-center gap-space-md">
+<span class="font-label-badge text-label-badge text-outline uppercase tracking-wider">Active Core Squad</span>
+<div class="flex items-center gap-1 text-primary font-label-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+<span>All 6 Members Verified</span>
+</div>
+</div>
+<div class="flex items-center gap-space-sm">
+<span class="font-label-kbd text-label-kbd text-outline">Sprint 14 Window: Nov 4 – Nov 18</span>
+</div>
+</div>
+<div class="overflow-x-auto w-full">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead class="bg-surface-container-lowest text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<tr>
+<th class="py-2.5 px-space-md">Member</th>
+<th class="py-2.5 px-space-md">Project Role</th>
+<th class="py-2.5 px-space-md">Access Level</th>
+<th class="py-2.5 px-space-md text-center">Assigned Issues</th>
+<th class="py-2.5 px-space-md">Sprint 14 Capacity</th>
+<th class="py-2.5 px-space-md">2FA / SOC-2</th>
+<th class="py-2.5 px-space-md">Last Active</th>
+<th class="py-2.5 px-space-md text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y-0">
+<!-- Member 1: Elena Rostova -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-label-code font-bold text-[12px] shrink-0">
+                      ER
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Elena Rostova</span>
+<span class="font-label-code text-[11px] text-outline truncate">elena.r@nexus.internal</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Staff Architect &amp; Tech Lead</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-primary-container/20 text-primary font-label-badge text-label-badge font-semibold">Lead / Admin</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">14 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>38h / 40h</span>
+<span class="text-primary font-medium">95%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 95%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-1.5 text-primary font-label-code text-[11px]">
+<span class="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></span>
+<span>Active now</span>
+</div>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Member 2: Marcus Kane -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-container-low/50">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-secondary-container text-on-secondary-container flex items-center justify-center font-label-code font-bold text-[12px] shrink-0">
+                      MK
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Marcus Kane</span>
+<span class="font-label-code text-[11px] text-outline truncate">marcus.k@nexus.internal</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Senior WebGL &amp; Shader Engineer</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-badge text-label-badge">Maintainer</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">11 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>40h / 40h</span>
+<span class="text-error font-medium">100% (Cap)</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-error h-full rounded-full" style="width: 100%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<span class="text-outline font-label-code text-[11px]">14m ago</span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Member 3: Tanya Liu -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-on-surface flex items-center justify-center font-label-code font-bold text-[12px] shrink-0">
+                      TL
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Tanya Liu</span>
+<span class="font-label-code text-[11px] text-outline truncate">tanya.l@nexus.internal</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Distributed Systems Engineer</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-badge text-label-badge">Maintainer</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">8 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>32h / 40h</span>
+<span class="text-on-surface-variant">80%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 80%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<span class="text-outline font-label-code text-[11px]">2h ago</span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Member 4: Alex Nazeer -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-container-low/50">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-high text-primary font-label-code font-bold text-[12px] flex items-center justify-center shrink-0">
+                      AN
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Alex Nazeer</span>
+<span class="font-label-code text-[11px] text-outline truncate">alex.n@nexus.internal</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Fullstack &amp; Canvas Virtualization</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container-high text-on-surface-variant font-label-badge text-label-badge">Contributor</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">9 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>28h / 40h</span>
+<span class="text-on-surface-variant">70%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 70%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<span class="text-outline font-label-code text-[11px]">1h ago</span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Member 5: Azahra Ge -->
+<tr class="hover:bg-surface-container transition-colors group">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-primary/20 text-primary flex items-center justify-center font-label-code font-bold text-[12px] shrink-0">
+                      AG
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Azahra Ge</span>
+<span class="font-label-code text-[11px] text-outline truncate">azahra.ge@nexus.design</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Principal Product Designer</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container text-secondary font-label-badge text-label-badge">Maintainer</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">5 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>25h / 40h</span>
+<span class="text-on-surface-variant">62%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 62%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<span class="text-outline font-label-code text-[11px]">Yesterday</span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+<!-- Member 6: Arbian Musaf -->
+<tr class="hover:bg-surface-container transition-colors group bg-surface-container-low/50">
+<td class="py-3 px-space-md">
+<div class="flex items-center gap-space-sm">
+<div class="w-8 h-8 rounded-full bg-surface-container-highest text-tertiary flex items-center justify-center font-label-code font-bold text-[12px] shrink-0">
+                      AM
+                    </div>
+<div class="flex flex-col min-w-0">
+<span class="font-headline-sm text-headline-sm text-on-surface truncate">Arbian Musaf</span>
+<span class="font-label-code text-[11px] text-outline truncate">a.musaf@audit-corp.io</span>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md text-on-surface-variant font-medium">Security &amp; Code Reviewer</td>
+<td class="py-3 px-space-md">
+<span class="px-2 py-0.5 rounded bg-surface-container-highest text-outline font-label-badge text-label-badge">Auditor / Viewer</span>
+</td>
+<td class="py-3 px-space-md text-center">
+<span class="font-label-code text-on-surface bg-surface-container px-2 py-0.5 rounded">4 issues</span>
+</td>
+<td class="py-3 px-space-md">
+<div class="flex flex-col gap-1 w-36">
+<div class="flex justify-between font-label-code text-[11px] text-on-surface">
+<span>15h / 20h</span>
+<span class="text-on-surface-variant">75%</span>
+</div>
+<div class="w-full bg-surface-container-highest h-1 rounded-full overflow-hidden">
+<div class="bg-primary-container h-full rounded-full" style="width: 75%;"></div>
+</div>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<div class="inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-surface-container font-label-code text-[11px] text-on-surface">
+<span class="material-symbols-outlined text-[13px] text-primary" style="font-variation-settings: 'FILL' 1;">security</span>
+<span>Enforced</span>
+</div>
+</td>
+<td class="py-3 px-space-md">
+<span class="text-outline font-label-code text-[11px]">3h ago</span>
+</td>
+<td class="py-3 px-space-md text-right">
+<button class="p-1 text-outline hover:text-on-surface rounded hover:bg-surface-container-high transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px]">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section 3 & 4: Linear Permissions Matrix + SSO Audit Security Banner -->
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-space-lg w-full">
+<!-- Granular Permissions Matrix (2 Cols) -->
+<div class="lg:col-span-2 bg-surface-container-low p-space-lg rounded-lg shadow-sm flex flex-col gap-space-md">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-primary text-[18px]">tune</span>
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold">PRJ-204 Granular Matrix</h3>
+</div>
+<span class="font-label-code text-outline text-[11px]">Enforced via GitOps policy #POL-894</span>
+</div>
+<div class="w-full overflow-x-auto">
+<table class="w-full text-left font-body-sm text-body-sm">
+<thead class="bg-surface-container text-outline font-label-badge text-label-badge uppercase tracking-wider">
+<tr>
+<th class="py-2 px-space-md">Permission Scope</th>
+<th class="py-2 px-space-sm text-center">Lead / Admin</th>
+<th class="py-2 px-space-sm text-center">Maintainer</th>
+<th class="py-2 px-space-sm text-center">Contributor</th>
+<th class="py-2 px-space-sm text-center">Auditor</th>
+</tr>
+</thead>
+<tbody class="divide-y-0">
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-2.5 px-space-md text-on-surface flex flex-col">
+<span class="font-medium">Branch merge rights</span>
+<span class="font-label-code text-[11px] text-outline">main, release/2.0 strict signing</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors bg-surface-container-lowest/30">
+<td class="py-2.5 px-space-md text-on-surface flex flex-col">
+<span class="font-medium">Issue deletion &amp; cycle closure</span>
+<span class="font-label-code text-[11px] text-outline">State transition destruction protection</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">lock</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors">
+<td class="py-2.5 px-space-md text-on-surface flex flex-col">
+<span class="font-medium">Client billable time log edits</span>
+<span class="font-label-code text-[11px] text-outline">Direct invoice item adjustment</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">remove</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</td>
+</tr>
+<tr class="hover:bg-surface-container-high transition-colors bg-surface-container-lowest/30">
+<td class="py-2.5 px-space-md text-on-surface flex flex-col">
+<span class="font-medium">STOMP cluster telemetry access</span>
+<span class="font-label-code text-[11px] text-outline">Live WebSocket log tail &amp; traces</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-primary">
+<span class="material-symbols-outlined text-[18px]" style="font-variation-settings: 'FILL' 1;">check_circle</span>
+</td>
+<td class="py-2.5 px-space-sm text-center text-outline">
+<span class="material-symbols-outlined text-[18px]">visibility</span>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<!-- Section 4: Security Policy & Audit Telemetry -->
+<div class="bg-surface-container-low p-space-lg rounded-lg shadow-sm flex flex-col justify-between gap-space-md">
+<div class="flex flex-col gap-space-sm">
+<div class="flex items-center justify-between">
+<span class="font-label-badge text-label-badge uppercase tracking-wider text-outline">Access Compliance</span>
+<span class="px-2 py-0.5 rounded bg-primary-container text-on-primary-container font-label-code text-[10px] font-semibold">Tier-1 Enforced</span>
+</div>
+<!-- Okta SSO + YubiKey Policy Box -->
+<div class="bg-surface-container p-space-md rounded-lg flex flex-col gap-2 mt-1">
+<div class="flex items-center gap-2 text-on-surface font-headline-sm text-body-lg font-medium">
+<span class="material-symbols-outlined text-primary text-[20px]">verified_user</span>
+<span>Okta SSO + Hardware YubiKey</span>
+</div>
+<p class="font-body-sm text-body-sm text-outline">
+                Mandatory cryptographic FIDO2 token verification for all git push, pull requests, and telemetry sockets targeting PRJ-204 repository resources.
+              </p>
+<div class="flex items-center gap-2 mt-1 pt-2 font-label-code text-[11px] text-primary">
+<span class="w-2 h-2 rounded-full bg-primary"></span>
+<span>Zero Bypass Exceptions Active</span>
+</div>
+</div>
+<!-- Recent Access Audit Entries -->
+<div class="flex flex-col gap-2 mt-2">
+<span class="font-label-badge text-label-badge uppercase text-outline">Live Security Log</span>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-primary">key</span>
+<div class="flex flex-col">
+<span class="font-label-code text-[11px] text-on-surface">elena.r (Admin)</span>
+<span class="text-[10px] text-outline font-label-code">Signed release/2.0 tag</span>
+</div>
+</div>
+<span class="text-[10px] text-outline font-label-code">4m ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-secondary">login</span>
+<div class="flex flex-col">
+<span class="font-label-code text-[11px] text-on-surface">marcus.k (Maintainer)</span>
+<span class="text-[10px] text-outline font-label-code">WebAuthn challenge PASS</span>
+</div>
+</div>
+<span class="text-[10px] text-outline font-label-code">14m ago</span>
+</div>
+<div class="flex items-center justify-between p-2 rounded bg-surface-container-lowest text-body-sm">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-[14px] text-outline">sync_alt</span>
+<div class="flex flex-col">
+<span class="font-label-code text-[11px] text-on-surface">a.musaf (Auditor)</span>
+<span class="text-[10px] text-outline font-label-code">Read STOMP trace logs</span>
+</div>
+</div>
+<span class="text-[10px] text-outline font-label-code">3h ago</span>
+</div>
+</div>
+</div>
+<button class="w-full py-2 px-space-md bg-surface-container hover:bg-surface-container-high text-on-surface rounded-lg font-body-sm text-body-sm flex items-center justify-center gap-1.5 transition-colors" type="button">
+<span class="material-symbols-outlined text-[16px] text-primary">manage_history</span>
+<span>View Full SOC-2 Immutable Trail</span>
+</button>
+</div>
+</div>
+</div>
+</div>
+</div></main></div></body></html>

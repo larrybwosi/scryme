@@ -1,12 +1,19 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Input } from "@repo/ui/components/ui/input"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@repo/ui/components/ui/table"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import { Input } from "@repo/ui/components/ui/input";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@repo/ui/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,35 +23,42 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/ui/alert-dialog"
-import { deleteGlobalSetting } from "@/app/actions/settings"
-import { GlobalSettingDialog, type GlobalSettingRow } from "./global-setting-dialog"
+} from "@repo/ui/components/ui/alert-dialog";
+import { deleteGlobalSetting } from "@/app/actions/settings";
+import {
+  GlobalSettingDialog,
+  type GlobalSettingRow,
+} from "./global-setting-dialog";
 
 export function SettingsTable({ settings }: { settings: GlobalSettingRow[] }) {
-  const router = useRouter()
-  const [search, setSearch] = useState("")
-  const [createOpen, setCreateOpen] = useState(false)
-  const [editingItem, setEditingItem] = useState<GlobalSettingRow | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<GlobalSettingRow | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter();
+  const [search, setSearch] = useState("");
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editingItem, setEditingItem] = useState<GlobalSettingRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<GlobalSettingRow | null>(
+    null,
+  );
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const filteredSettings = settings.filter((s) => {
-    const q = search.toLowerCase()
-    return s.key.toLowerCase().includes(q) || s.value.toLowerCase().includes(q)
-  })
+    const q = search.toLowerCase();
+    return s.key.toLowerCase().includes(q) || s.value.toLowerCase().includes(q);
+  });
 
   async function handleDelete() {
-    if (!deleteTarget) return
-    setIsDeleting(true)
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await deleteGlobalSetting(deleteTarget.key)
-      toast.success(`Setting "${deleteTarget.key}" deleted`)
-      setDeleteTarget(null)
-      router.refresh()
+      await deleteGlobalSetting(deleteTarget.key);
+      toast.success(`Setting "${deleteTarget.key}" deleted`);
+      setDeleteTarget(null);
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete setting")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete setting",
+      );
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
   }
 
@@ -52,7 +66,10 @@ export function SettingsTable({ settings }: { settings: GlobalSettingRow[] }) {
     <div className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <div className="relative w-full max-w-sm">
-          <Search className="absolute left-2.5 top-2.5 size-4 text-muted-foreground" aria-hidden="true" />
+          <Search
+            className="absolute left-2.5 top-2.5 size-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
             placeholder="Search settings..."
             className="pl-9"
@@ -79,7 +96,10 @@ export function SettingsTable({ settings }: { settings: GlobalSettingRow[] }) {
           <TableBody>
             {filteredSettings.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={4} className="py-10 text-center text-sm text-muted-foreground">
+                <TableCell
+                  colSpan={4}
+                  className="py-10 text-center text-sm text-muted-foreground"
+                >
                   No settings found matching search filter.
                 </TableCell>
               </TableRow>
@@ -133,30 +153,38 @@ export function SettingsTable({ settings }: { settings: GlobalSettingRow[] }) {
         onOpenChange={(open) => !open && setEditingItem(null)}
       />
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete setting &quot;{deleteTarget?.key}&quot;?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete setting &quot;{deleteTarget?.key}&quot;?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete this setting? Features relying on this global key may fall back to default behavior.
+              Are you sure you want to delete this setting? Features relying on
+              this global key may fall back to default behavior.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
-                e.preventDefault()
-                handleDelete()
+                e.preventDefault();
+                handleDelete();
               }}
               disabled={isDeleting}
               className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+              {isDeleting ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }
