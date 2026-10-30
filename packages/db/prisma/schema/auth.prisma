@@ -67,6 +67,7 @@ model Account {
   createdAt             DateTime
   updatedAt             DateTime
 
+  @@unique([providerId, accountId])
   @@index([issuer, accountId])
   @@map("account")
 }
