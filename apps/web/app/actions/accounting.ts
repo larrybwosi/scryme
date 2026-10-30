@@ -51,6 +51,24 @@ export async function createLedgerAccount(data: {
   parentId?: string;
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
+
+  // THREAT: Broken Object Level Authorization (BOLA / IDOR)
+  // Cross-tenant resource binding via unverified parentId. An attacker could supply a parentId
+  // belonging to a foreign organization to manipulate chart of accounts hierarchy.
+  // MITIGATION: Validate that parentId belongs to the caller's organizationId before creation.
+  if (data.parentId) {
+    const parentAccount = await db.ledgerAccount.findFirst({
+      where: {
+        id: data.parentId,
+        organizationId: auth.organizationId,
+      },
+    });
+
+    if (!parentAccount) {
+      throw new Error("Parent ledger account not found or belongs to another organization");
+    }
+  }
+
   const account = await db.ledgerAccount.create({
     data: {
       ...data,

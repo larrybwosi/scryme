@@ -113,3 +113,7 @@
 ## 2026-10-29 - Purchase Order BOLA Isolation & Multi-Tenant Scoping
 **Learning:** In purchase server actions (`apps/web/app/actions/purchases.ts`), client-supplied relational parameters (`supplierId`, `variantId`, `locationId`, `purchaseId`) were not scoped to `auth.organizationId` before mutation operations, permitting cross-tenant resource binding and BOLA status manipulation. Furthermore, because `Purchase` lacks a composite unique constraint on `[id, organizationId]`, calling standard `db.purchase.update({ where: { id } })` ignores non-unique `organizationId` parameters at runtime.
 **Action:** Validate foreign key parameters (`supplierId`, `variantId`, `locationId`) against `auth.organizationId` using `findFirst` / `findMany` pre-checks, and use `updateMany({ where: { id: purchaseId, organizationId }, data })` followed by `findFirstOrThrow` to enforce database-level multi-tenant BOLA isolation.
+
+## 2026-10-30 - Parent Ledger Account BOLA Isolation in COA Creation
+**Learning:** In `createLedgerAccount` (`apps/web/app/actions/accounting.ts`), client-supplied `parentId` was accepted without checking whether the parent ledger account belonged to `auth.organizationId`. An attacker could supply a foreign organization's `parentId` to bind sub-accounts across tenant boundaries and expose/corrupt chart of account hierarchies.
+**Action:** Always validate `parentId` using `db.ledgerAccount.findFirst` scoped by `organizationId: auth.organizationId` before creating child ledger accounts.
