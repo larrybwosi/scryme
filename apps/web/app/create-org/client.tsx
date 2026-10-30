@@ -20,6 +20,9 @@ import {
   Check,
   X,
   AlertCircle,
+  Zap,
+  Sparkles,
+  Smartphone,
 } from "lucide-react";
 import slugify from "slugify";
 import { toast } from "sonner";
