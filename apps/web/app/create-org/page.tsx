@@ -1,5 +1,7 @@
 import { Metadata } from "next";
+import { Suspense } from "react";
 import ClientPage from "./client";
+import { Loader2 } from "lucide-react";
 
 export const metadata: Metadata = {
   title: "Create Organization",
@@ -7,5 +9,15 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <ClientPage />;
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center bg-gray-50">
+          <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        </div>
+      }
+    >
+      <ClientPage />
+    </Suspense>
+  );
 }
