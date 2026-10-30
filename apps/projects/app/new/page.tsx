@@ -1,134 +1,170 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import Link from "next/link";
-import { Project } from "@/lib/api";
-import { useCreateProject } from "@/lib/hooks/use-projects";
-import { FolderPlus, ArrowLeft } from "lucide-react";
+import { useCreateProject, useCreateTask } from "@/lib/hooks/use-projects";
+import { Folder, CheckSquare, ArrowLeft, Plus, Flame, Clock } from "lucide-react";
 
-export default function CreateProjectPage() {
+export default function NewProjectOrTaskPage() {
   const router = useRouter();
-  const createProjectMutation = useCreateProject();
+  const createProject = useCreateProject();
+  const createTask = useCreateTask();
 
-  const [name, setName] = useState("");
+  const [type, setType] = useState<"PROJECT" | "TASK">("TASK");
+  const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
-  const [status, setStatus] = useState<Project["status"]>("PLANNING");
-  const [startDate, setStartDate] = useState("");
-  const [endDate, setEndDate] = useState("");
+  const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "URGENT">("HIGH");
+  const [estimatedHours, setEstimatedHours] = useState("4");
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!name.trim()) return;
+    if (!title.trim()) return;
 
-    createProjectMutation.mutate(
-      {
-        name,
-        description,
-        status,
-        startDate,
-        endDate,
-      },
-      {
-        onSuccess: () => {
-          router.push("/");
+    if (type === "PROJECT") {
+      createProject.mutate(
+        { name: title, description },
+        {
+          onSuccess: () => {
+            router.push("/projects");
+          }
+        }
+      );
+    } else {
+      createTask.mutate(
+        {
+          title,
+          description,
+          priority,
+          estimatedHours: parseFloat(estimatedHours) || 4
         },
-      }
-    );
+        {
+          onSuccess: () => {
+            router.push("/tasks");
+          }
+        }
+      );
+    }
   };
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      <div className="flex items-center gap-3">
-        <Link
-          href="/"
-          className="p-2 rounded-lg bg-[#121824] border border-[#1F293D] text-slate-400 hover:text-slate-100 transition-colors"
-        >
-          <ArrowLeft className="h-4 w-4" />
-        </Link>
+    <div className="max-w-2xl mx-auto space-y-6 pt-4">
+      {/* Header */}
+      <div className="flex items-center justify-between border-b border-[#2E3039]/50 pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <FolderPlus className="h-6 w-6 text-indigo-400" /> Create New Project
+          <Link href="/projects" className="text-xs text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 mb-1">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            <span>Back to Workspace</span>
+          </Link>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">
+            Create New {type === "PROJECT" ? "Project" : "Task / Issue"}
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Initialize a new project, schedule sprint targets, and configure workspace settings.
+          <p className="text-xs text-slate-400 mt-0.5">
+            Add a new initiative or execution task to your Scryme workspace.
           </p>
+        </div>
+
+        {/* Type Switcher */}
+        <div className="flex items-center gap-1 bg-[#12141A] p-1 rounded-md border border-[#2E3039] text-xs">
+          <button
+            type="button"
+            onClick={() => setType("TASK")}
+            className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+              type === "TASK" ? "bg-[#5E6AD2] text-white font-semibold" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <CheckSquare className="h-3.5 w-3.5" />
+            <span>Task</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setType("PROJECT")}
+            className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+              type === "PROJECT" ? "bg-[#5E6AD2] text-white font-semibold" : "text-slate-400 hover:text-slate-200"
+            }`}
+          >
+            <Folder className="h-3.5 w-3.5" />
+            <span>Project</span>
+          </button>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-[#121824] border border-[#1F293D] rounded-xl p-6 space-y-4">
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">Project Name *</label>
+      {/* Creation Form */}
+      <form onSubmit={handleSubmit} className="bg-[#12141A] border border-[#2E3039] rounded-lg p-5 space-y-4">
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
+            {type === "PROJECT" ? "Project Name" : "Task Title"}
+          </label>
           <input
             type="text"
             required
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="e.g., V3 Realtime Analytics Engine"
-            className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3.5 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder={type === "PROJECT" ? "e.g. Nexus 2.0 Redesign" : "e.g. Implement WebGL streaming buffer"}
+            className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
           />
         </div>
 
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">Status</label>
-          <select
-            value={status}
-            onChange={(e) => setStatus(e.target.value as Project["status"])}
-            className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-          >
-            <option value="PLANNING">PLANNING</option>
-            <option value="ACTIVE">ACTIVE</option>
-            <option value="ON_HOLD">ON_HOLD</option>
-            <option value="COMPLETED">COMPLETED</option>
-          </select>
-        </div>
-
-        <div>
-          <label className="block text-xs font-medium text-slate-300 mb-1.5">Description</label>
+        <div className="space-y-1.5">
+          <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
+            Description / Scope
+          </label>
           <textarea
-            rows={3}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            placeholder="Brief scope, target objectives, and milestones..."
-            className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3.5 py-2 text-sm text-slate-100 placeholder:text-slate-600 focus:outline-none focus:border-indigo-500"
+            rows={4}
+            placeholder="Technical details, acceptance criteria, or specification links..."
+            className="w-full bg-[#171922] border border-[#2E3039] rounded-md p-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
           />
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Start Date</label>
-            <input
-              type="date"
-              value={startDate}
-              onChange={(e) => setStartDate(e.target.value)}
-              className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
-          </div>
+        {type === "TASK" && (
+          <div className="grid grid-cols-2 gap-4 pt-2">
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
+                <Flame className="h-3.5 w-3.5 text-amber-400" />
+                <span>Priority</span>
+              </label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as "LOW" | "MEDIUM" | "HIGH" | "URGENT")}
+                className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
+              >
+                <option value="URGENT">Urgent</option>
+                <option value="HIGH">High</option>
+                <option value="MEDIUM">Medium</option>
+                <option value="LOW">Low</option>
+              </select>
+            </div>
 
-          <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Target End Date</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3.5 py-2 text-sm text-slate-100 focus:outline-none focus:border-indigo-500"
-            />
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
+                <Clock className="h-3.5 w-3.5 text-[#5E6AD2]" />
+                <span>Estimated Hours</span>
+              </label>
+              <input
+                type="number"
+                value={estimatedHours}
+                onChange={(e) => setEstimatedHours(e.target.value)}
+                className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
+              />
+            </div>
           </div>
-        </div>
+        )}
 
-        <div className="pt-4 border-t border-[#1F293D] flex justify-end gap-3">
+        <div className="pt-4 border-t border-[#2E3039]/50 flex items-center justify-end gap-3">
           <Link
-            href="/"
-            className="px-4 py-2 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition-colors"
+            href="/projects"
+            className="px-3 py-1.5 bg-[#171922] hover:bg-[#1f1f23] border border-[#2E3039] text-slate-300 rounded-md text-xs font-medium transition-colors"
           >
             Cancel
           </Link>
           <button
             type="submit"
-            disabled={createProjectMutation.isPending}
-            className="bg-indigo-600 hover:bg-indigo-500 text-white px-5 py-2 rounded-lg text-xs font-medium transition-all shadow-md shadow-indigo-600/20 disabled:opacity-50"
+            className="px-4 py-1.5 bg-[#5E6AD2] hover:bg-[#717DE3] text-white rounded-md text-xs font-medium flex items-center gap-1.5 shadow-sm transition-colors"
           >
-            {createProjectMutation.isPending ? "Saving..." : "Create Project"}
+            <Plus className="h-3.5 w-3.5" />
+            <span>Create {type === "PROJECT" ? "Project" : "Task"}</span>
           </button>
         </div>
       </form>

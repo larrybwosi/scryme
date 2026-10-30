@@ -1,192 +1,82 @@
 "use client";
 
-import { useState } from "react";
-import { useMilestones, useCreateMilestone } from "@/lib/hooks/use-projects";
-import { Milestone as MilestoneIcon, Plus, CheckCircle2, Clock, AlertCircle, Calendar } from "lucide-react";
+import Link from "next/link";
+import { useMilestones } from "@/lib/hooks/use-projects";
+import { Milestone, Calendar, Plus, Flag } from "lucide-react";
 
 export default function MilestonesPage() {
-  const projectId = "proj-1";
-  const { data: milestones = [], isLoading } = useMilestones(projectId);
-  const createMilestoneMutation = useCreateMilestone(projectId);
-
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [title, setTitle] = useState("");
-  const [description, setDescription] = useState("");
-  const [dueDate, setDueDate] = useState("");
-
-  const handleCreateMilestone = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!title.trim()) return;
-
-    createMilestoneMutation.mutate(
-      {
-        title,
-        description,
-        dueDate,
-        projectId,
-        status: "PLANNED",
-      },
-      {
-        onSuccess: () => {
-          setTitle("");
-          setDescription("");
-          setDueDate("");
-          setIsModalOpen(false);
-        },
-      }
-    );
-  };
+  const { data: milestones = [], isLoading } = useMilestones();
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2E3039]/50 pb-4">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-            <MilestoneIcon className="h-6 w-6 text-indigo-400" /> Project Milestones
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <span className="text-[#5E6AD2]">Nexus 2.0</span>
+            <span>/</span>
+            <span className="text-slate-200 font-medium">Release Milestones</span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">
+            Project Milestones & Deliverables
           </h1>
-          <p className="text-sm text-slate-400 mt-1">
-            Track key delivery goals, target deadlines, and project baseline progress.
+          <p className="text-xs text-slate-400 mt-0.5">
+            Key delivery targets, milestone completion tracking, and sprint goals.
           </p>
         </div>
 
-        <button
-          onClick={() => setIsModalOpen(true)}
-          className="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md shadow-indigo-600/20"
+        <Link
+          href="/new"
+          className="inline-flex items-center gap-1.5 bg-[#5E6AD2] hover:bg-[#717DE3] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
         >
-          <Plus className="h-4 w-4" /> Add Milestone
-        </button>
+          <Plus className="h-3.5 w-3.5" />
+          <span>New Milestone</span>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <div className="bg-[#121824] border border-[#1F293D] p-5 rounded-xl flex items-center justify-between">
-          <div>
-            <div className="text-xs font-medium text-slate-400 uppercase">Total Milestones</div>
-            <div className="text-2xl font-bold text-slate-100 mt-1">{milestones.length}</div>
-          </div>
-          <MilestoneIcon className="h-6 w-6 text-indigo-400" />
+      {/* Milestones Grid */}
+      {isLoading ? (
+        <div className="py-12 text-center text-slate-500 text-xs">
+          Loading milestones...
         </div>
-
-        <div className="bg-[#121824] border border-[#1F293D] p-5 rounded-xl flex items-center justify-between">
-          <div>
-            <div className="text-xs font-medium text-slate-400 uppercase">In Progress</div>
-            <div className="text-2xl font-bold text-indigo-400 mt-1">
-              {milestones.filter((m) => m.status === "IN_PROGRESS").length}
-            </div>
-          </div>
-          <Clock className="h-6 w-6 text-indigo-400" />
+      ) : milestones.length === 0 ? (
+        <div className="py-12 text-center text-slate-500 text-xs bg-[#12141A] rounded-lg border border-[#2E3039]">
+          No milestones defined yet.
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {milestones.map((m) => (
+            <div
+              key={m.id}
+              className="bg-[#12141A] border border-[#2E3039] hover:border-[#5E6AD2]/50 rounded-lg p-4 space-y-3 transition-all"
+            >
+              <div className="flex items-center justify-between">
+                <span className="px-2 py-0.5 rounded text-[10px] font-semibold tracking-wide uppercase bg-[#5E6AD2]/10 text-[#5E6AD2] border border-[#5E6AD2]/20 flex items-center gap-1">
+                  <Flag className="h-3 w-3" />
+                  <span>{m.status || "PLANNED"}</span>
+                </span>
+                <span className="text-[11px] font-mono text-slate-400 flex items-center gap-1">
+                  <Calendar className="h-3 w-3 text-slate-500" />
+                  <span>{m.dueDate || "Oct 30, 2024"}</span>
+                </span>
+              </div>
 
-        <div className="bg-[#121824] border border-[#1F293D] p-5 rounded-xl flex items-center justify-between">
-          <div>
-            <div className="text-xs font-medium text-slate-400 uppercase">Completed</div>
-            <div className="text-2xl font-bold text-emerald-400 mt-1">
-              {milestones.filter((m) => m.status === "COMPLETED").length}
-            </div>
-          </div>
-          <CheckCircle2 className="h-6 w-6 text-emerald-400" />
-        </div>
-      </div>
+              <h2 className="text-sm font-semibold text-slate-200">{m.title}</h2>
+              <p className="text-xs text-slate-400 leading-relaxed">
+                {m.description || "Core milestone tracking critical delivery objectives and architectural benchmarks."}
+              </p>
 
-      <div className="bg-[#121824] border border-[#1F293D] rounded-xl p-6 space-y-4">
-        <h2 className="text-base font-semibold text-slate-100">Milestone Timeline</h2>
-
-        {isLoading ? (
-          <div className="py-12 text-center text-slate-500 text-sm">Loading milestones...</div>
-        ) : milestones.length === 0 ? (
-          <div className="py-12 text-center text-slate-500 text-sm">No milestones created yet.</div>
-        ) : (
-          <div className="space-y-4">
-            {milestones.map((milestone) => (
-              <div
-                key={milestone.id}
-                className="bg-[#0B0F17] border border-[#1F293D] rounded-lg p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4"
-              >
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-slate-100">{milestone.title}</span>
-                    <span
-                      className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase ${
-                        milestone.status === "COMPLETED"
-                          ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20"
-                          : milestone.status === "IN_PROGRESS"
-                          ? "bg-indigo-500/10 text-indigo-400 border border-indigo-500/20"
-                          : "bg-slate-500/10 text-slate-400 border border-slate-500/20"
-                      }`}
-                    >
-                      {milestone.status}
-                    </span>
-                  </div>
-                  {milestone.description && (
-                    <p className="text-xs text-slate-400">{milestone.description}</p>
-                  )}
+              <div className="space-y-1 pt-2 border-t border-[#2E3039]/50">
+                <div className="flex items-center justify-between text-[11px] text-slate-400">
+                  <span>Completion</span>
+                  <span className="font-mono text-slate-200">75%</span>
                 </div>
-
-                <div className="flex items-center gap-2 text-xs text-slate-400 font-mono bg-[#121824] px-3 py-1.5 rounded-lg border border-[#1F293D] self-start sm:self-auto">
-                  <Calendar className="h-3.5 w-3.5 text-indigo-400" />
-                  <span>Due: {milestone.dueDate || "Not set"}</span>
+                <div className="w-full bg-[#1f1f23] h-1.5 rounded-full overflow-hidden">
+                  <div className="bg-[#5E6AD2] h-full rounded-full" style={{ width: "75%" }}></div>
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {isModalOpen && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-[#121824] border border-[#1F293D] rounded-xl max-w-md w-full p-6 space-y-4 shadow-2xl">
-            <h3 className="text-base font-semibold text-slate-100">Add New Milestone</h3>
-            <form onSubmit={handleCreateMilestone} className="space-y-3">
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Milestone Title *</label>
-                <input
-                  type="text"
-                  required
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="e.g., Release v1.0 Production Readiness"
-                  className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Description</label>
-                <textarea
-                  rows={2}
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Scope criteria and verification targets..."
-                  className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-xs font-medium text-slate-300 mb-1">Target Due Date</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-                />
-              </div>
-
-              <div className="pt-3 border-t border-[#1F293D] flex justify-end gap-2">
-                <button
-                  type="button"
-                  onClick={() => setIsModalOpen(false)}
-                  className="px-3 py-1.5 rounded text-xs text-slate-400 hover:text-slate-200"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMilestoneMutation.isPending}
-                  className="bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-1.5 rounded text-xs font-medium shadow-md shadow-indigo-600/20 disabled:opacity-50"
-                >
-                  {createMilestoneMutation.isPending ? "Saving..." : "Save Milestone"}
-                </button>
-              </div>
-            </form>
-          </div>
+            </div>
+          ))}
         </div>
       )}
     </div>

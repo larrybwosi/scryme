@@ -5,73 +5,84 @@ import { usePathname } from "next/navigation";
 import {
   FolderKanban,
   CheckSquare,
+  Kanban,
   Calendar,
   Clock,
   Milestone,
   Users,
-  Settings,
   PlusCircle,
+  FileText,
+  Timer,
+  CalendarDays,
+  FolderDot
 } from "lucide-react";
 
 const navigation = [
-  { name: "Projects", href: "/", icon: FolderKanban },
-  { name: "Tasks & Kanban", href: "/tasks", icon: CheckSquare },
-  { name: "Schedule & Shifts", href: "/schedule", icon: Calendar },
+  { name: "Projects", href: "/projects", icon: FolderKanban },
+  { name: "Tasks", href: "/tasks", icon: CheckSquare },
+  { name: "Board", href: "/board", icon: Kanban },
+  { name: "Timeline / Gantt", href: "/gantt", icon: Clock },
+  { name: "Calendar", href: "/calendar", icon: CalendarDays },
+  { name: "Schedule", href: "/schedule", icon: Calendar },
   { name: "Milestones", href: "/milestones", icon: Milestone },
-  { name: "Gantt Timeline", href: "/gantt", icon: Clock },
-  { name: "Team & Assignments", href: "/team", icon: Users },
+  { name: "Notes & Docs", href: "/notes-and-docs", icon: FileText },
+  { name: "Time Tracking", href: "/time-tracking", icon: Timer },
+  { name: "Team & Workload", href: "/team", icon: Users },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-64 bg-[#121824] border-r border-[#1F293D] min-h-screen flex flex-col justify-between p-4">
+    <aside className="w-60 bg-[#0d0e11] border-r border-[#2E3039]/50 min-h-screen flex flex-col justify-between p-3 select-none shrink-0">
       <div>
-        <div className="flex items-center gap-3 px-3 py-2 mb-6">
-          <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center font-bold text-white shadow-md">
-            P
-          </div>
-          <div>
-            <h1 className="font-semibold text-slate-100 text-sm tracking-wide">Scryme Projects</h1>
-            <p className="text-xs text-slate-400">Task & Schedule Hub</p>
-          </div>
+        <div className="flex items-center justify-between px-2 py-2 mb-4 border-b border-[#2E3039]/40 pb-3">
+          <Link href="/projects" className="flex items-center gap-2.5 group">
+            <div className="h-7 w-7 rounded-lg bg-[#5E6AD2] flex items-center justify-center font-bold text-white text-xs shadow-sm group-hover:bg-[#717DE3] transition-colors">
+              S
+            </div>
+            <div className="flex flex-col">
+              <h1 className="font-semibold text-slate-100 text-xs tracking-tight">Scryme Workspace</h1>
+              <p className="text-[10px] text-slate-400 font-mono">Nexus 2.0 Engine</p>
+            </div>
+          </Link>
         </div>
 
-        <nav className="space-y-1">
+        <div className="px-2 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
+          Workspace Views
+        </div>
+
+        <nav className="space-y-0.5">
           {navigation.map((item) => {
-            const isActive = pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+            const isActive =
+              pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
             const Icon = item.icon;
             return (
               <Link
                 key={item.name}
                 href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-indigo-600/20 text-indigo-400 border border-indigo-500/30"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-[#1A2333]"
+                    ? "bg-[#1f1f23] text-indigo-300 border-l-2 border-[#5E6AD2] font-semibold shadow-sm"
+                    : "text-slate-400 hover:text-slate-200 hover:bg-[#171922]"
                 }`}
               >
-                <Icon className="h-4 w-4" />
-                {item.name}
+                <Icon className={`h-4 w-4 ${isActive ? "text-[#5E6AD2]" : "text-slate-400"}`} />
+                <span>{item.name}</span>
               </Link>
             );
           })}
         </nav>
       </div>
 
-      <div className="pt-4 border-t border-[#1F293D] space-y-2">
+      <div className="pt-3 border-t border-[#2E3039]/40 space-y-2">
         <Link
           href="/new"
-          className="w-full flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all shadow-md hover:shadow-indigo-500/20"
+          className="w-full flex items-center justify-center gap-2 bg-[#5E6AD2] hover:bg-[#717DE3] text-white px-3 py-2 rounded-md text-xs font-medium transition-all shadow-md"
         >
           <PlusCircle className="h-4 w-4" />
-          New Project
+          <span>New Project / Task</span>
         </Link>
-        <div className="flex items-center gap-2 text-xs text-slate-500 px-3 py-2">
-          <Settings className="h-3.5 w-3.5" />
-          <span>V3 Enterprise Engine</span>
-        </div>
       </div>
     </aside>
   );

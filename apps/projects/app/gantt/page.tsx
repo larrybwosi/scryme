@@ -1,148 +1,104 @@
 "use client";
 
-import { useState } from "react";
-import { useTasks, useLogTimeEntry } from "@/lib/hooks/use-projects";
-import { Clock, Play, Plus, CheckCircle2 } from "lucide-react";
+import Link from "next/link";
+import { useMilestones } from "@/lib/hooks/use-projects";
+import { useTasks } from "@/lib/hooks/use-projects";
+import {
+  Clock,
+  Plus,
+  Milestone,
+  Calendar,
+  CheckCircle2,
+  ChevronRight
+} from "lucide-react";
 
-export default function GanttTimePage() {
-  const { data: tasks = [] } = useTasks("proj-1");
-  const logTimeMutation = useLogTimeEntry("proj-1");
-
-  const [selectedTask, setSelectedTask] = useState<string>("");
-  const [hours, setHours] = useState<number>(2);
-  const [notes, setNotes] = useState<string>("");
-  const [logSuccess, setLogSuccess] = useState<boolean>(false);
-
-  const activeSelectedTask = selectedTask || (tasks.length > 0 ? tasks[0].id : "");
-
-  const handleLogTime = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!activeSelectedTask || hours <= 0) return;
-
-    logTimeMutation.mutate(
-      { taskId: activeSelectedTask, hours: Number(hours), notes },
-      {
-        onSuccess: () => {
-          setLogSuccess(true);
-          setTimeout(() => setLogSuccess(false), 3000);
-          setNotes("");
-        },
-      }
-    );
-  };
+export default function GanttTimelinePage() {
+  const { data: milestones = [], isLoading: loadingMilestones } = useMilestones();
+  const { data: tasks = [] } = useTasks();
 
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
-          <Clock className="h-6 w-6 text-indigo-400" /> Gantt Timeline & Time Tracking
-        </h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Interactive task schedules, gantt timeline visualizer, and time entry logging.
-        </p>
+    <div className="space-y-5">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2E3039]/50 pb-4">
+        <div>
+          <div className="flex items-center gap-2 text-xs text-slate-400 mb-1">
+            <span className="text-[#5E6AD2]">Nexus 2.0</span>
+            <span>/</span>
+            <span className="text-slate-200 font-medium">Gantt Timeline</span>
+          </div>
+          <h1 className="text-xl font-bold tracking-tight text-slate-100">
+            Roadmap & Milestone Schedule
+          </h1>
+          <p className="text-xs text-slate-400 mt-0.5">
+            Sequential task dependencies, milestone release targets, and critical path timelines.
+          </p>
+        </div>
+
+        <Link
+          href="/new"
+          className="inline-flex items-center gap-1.5 bg-[#5E6AD2] hover:bg-[#717DE3] text-white px-3 py-1.5 rounded-md text-xs font-medium transition-all shadow-sm"
+        >
+          <Plus className="h-3.5 w-3.5" />
+          <span>Add Milestone</span>
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 bg-[#121824] border border-[#1F293D] rounded-xl p-5 space-y-4">
-          <div className="flex items-center justify-between border-b border-[#1F293D] pb-3">
-            <h2 className="text-base font-semibold text-slate-100">Gantt Schedule Bar Chart</h2>
-            <span className="text-xs text-slate-400 font-mono">Q1 2025 Roadmap</span>
+      {/* Gantt View Container */}
+      <div className="bg-[#12141A] border border-[#2E3039] rounded-lg overflow-hidden p-4 space-y-4">
+        {/* Timeline Header Scale */}
+        <div className="grid grid-cols-12 gap-1 bg-[#171922] p-2 rounded border border-[#2E3039]/60 text-[10px] font-mono text-slate-400 text-center uppercase tracking-wider">
+          <div className="col-span-3 text-left pl-2 text-slate-200 font-semibold">Milestone / Scope</div>
+          <div className="col-span-1">Oct W1</div>
+          <div className="col-span-1">Oct W2</div>
+          <div className="col-span-1">Oct W3</div>
+          <div className="col-span-1 text-[#5E6AD2] font-semibold">Oct W4</div>
+          <div className="col-span-1">Nov W1</div>
+          <div className="col-span-1">Nov W2</div>
+          <div className="col-span-1">Nov W3</div>
+          <div className="col-span-1">Nov W4</div>
+          <div className="col-span-1">Dec W1</div>
+        </div>
+
+        {/* Milestone Timeline Rows */}
+        {loadingMilestones ? (
+          <div className="py-12 text-center text-slate-500 text-xs">
+            Loading timeline dependencies...
           </div>
-
-          <div className="space-y-4 pt-2">
-            {tasks.map((task, idx) => {
-              const progress = task.estimatedHours
-                ? Math.min(100, Math.round(((task.actualHours || 0) / task.estimatedHours) * 100))
-                : 0;
-              const startOffset = (idx * 15) % 40;
-              const barWidth = Math.max(30, 80 - startOffset);
-
-              return (
-                <div key={task.id} className="space-y-1.5">
-                  <div className="flex items-center justify-between text-xs">
-                    <span className="font-semibold text-slate-200">{task.title}</span>
-                    <span className="text-slate-400 font-mono">
-                      {task.actualHours || 0} / {task.estimatedHours || 0} hrs ({progress}%)
-                    </span>
-                  </div>
-
-                  <div className="h-7 bg-[#0B0F17] rounded-lg border border-[#1F293D] p-1 relative flex items-center">
-                    <div
-                      style={{ left: `${startOffset}%`, width: `${barWidth}%` }}
-                      className="absolute top-1 bottom-1 rounded bg-indigo-900/60 border border-indigo-500/40 flex items-center overflow-hidden"
-                    >
-                      <div
-                        style={{ width: `${progress}%` }}
-                        className="h-full bg-indigo-500 transition-all duration-500"
-                      />
-                    </div>
+        ) : milestones.length === 0 ? (
+          <div className="py-12 text-center text-slate-500 text-xs">
+            No milestones scheduled yet.
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {milestones.map((m, idx) => (
+              <div
+                key={m.id}
+                className="grid grid-cols-12 gap-1 items-center bg-[#171922] p-2.5 rounded border border-[#2E3039]/50 hover:border-[#5E6AD2]/50 transition-colors text-xs"
+              >
+                <div className="col-span-3 flex items-center gap-2 pr-2">
+                  <Milestone className="h-4 w-4 text-[#5E6AD2] shrink-0" />
+                  <div className="truncate">
+                    <div className="font-semibold text-slate-200 truncate">{m.title}</div>
+                    <div className="text-[10px] text-slate-400 font-mono">Due {m.dueDate || "Oct 30"}</div>
                   </div>
                 </div>
-              );
-            })}
+
+                {/* Timeline Bar (Dynamic Offset Visualizer) */}
+                <div className="col-span-9 bg-[#0d0e11] h-6 rounded border border-[#2E3039]/40 relative overflow-hidden flex items-center px-2">
+                  <div
+                    className="bg-[#5E6AD2]/80 hover:bg-[#5E6AD2] h-4 rounded text-[10px] font-mono text-white flex items-center px-2 shadow-sm transition-all"
+                    style={{
+                      marginLeft: `${(idx * 15) % 50}%`,
+                      width: `${40 + (idx * 10) % 40}%`
+                    }}
+                  >
+                    <span className="truncate">Progress 75%</span>
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
-        </div>
-
-        <div className="bg-[#121824] border border-[#1F293D] rounded-xl p-5 space-y-4">
-          <h2 className="text-base font-semibold text-slate-100 flex items-center gap-2">
-            <Play className="h-4 w-4 text-emerald-400" /> Log Time Entry
-          </h2>
-
-          {logSuccess && (
-            <div className="bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 p-2.5 rounded-lg text-xs flex items-center gap-2">
-              <CheckCircle2 className="h-4 w-4" /> Time entry saved successfully!
-            </div>
-          )}
-
-          <form onSubmit={handleLogTime} className="space-y-3">
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Select Task *</label>
-              <select
-                value={activeSelectedTask}
-                onChange={(e) => setSelectedTask(e.target.value)}
-                className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              >
-                {tasks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.title}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Hours Logged *</label>
-              <input
-                type="number"
-                step="0.5"
-                min="0.5"
-                required
-                value={hours}
-                onChange={(e) => setHours(Number(e.target.value))}
-                className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <div>
-              <label className="block text-xs font-medium text-slate-300 mb-1">Notes / Work Summary</label>
-              <textarea
-                rows={3}
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Implemented Gantt timeline progress bar components..."
-                className="w-full bg-[#0B0F17] border border-[#1F293D] rounded-lg px-3 py-1.5 text-xs text-slate-100 focus:outline-none focus:border-indigo-500"
-              />
-            </div>
-
-            <button
-              type="submit"
-              disabled={logTimeMutation.isPending}
-              className="w-full bg-emerald-600 hover:bg-emerald-500 text-white py-2 rounded-lg text-xs font-medium transition-all shadow-md shadow-emerald-600/20 flex items-center justify-center gap-2 disabled:opacity-50"
-            >
-              <Plus className="h-4 w-4" /> {logTimeMutation.isPending ? "Saving..." : "Save Time Entry"}
-            </button>
-          </form>
-        </div>
+        )}
       </div>
     </div>
   );
