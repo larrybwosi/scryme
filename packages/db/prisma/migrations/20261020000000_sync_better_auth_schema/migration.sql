@@ -86,6 +86,7 @@ ALTER TABLE "oauth_access_token" ADD COLUMN IF NOT EXISTS "authorizationCodeId" 
 ALTER TABLE "oauth_access_token" ADD COLUMN IF NOT EXISTS "resources" TEXT[];
 ALTER TABLE "oauth_access_token" ADD COLUMN IF NOT EXISTS "requestedUserInfoClaims" TEXT[];
 ALTER TABLE "oauth_access_token" ADD COLUMN IF NOT EXISTS "confirmation" JSONB;
+ALTER TABLE "oauth_access_token" ADD COLUMN IF NOT EXISTS "revoked" TIMESTAMP(3);
 ALTER TABLE "oauth_access_token" ALTER COLUMN "token" DROP NOT NULL;
 ALTER TABLE "oauth_access_token" ALTER COLUMN "expiresAt" DROP NOT NULL;
 ALTER TABLE "oauth_access_token" ALTER COLUMN "createdAt" DROP NOT NULL;
