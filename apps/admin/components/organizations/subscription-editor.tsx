@@ -124,6 +124,8 @@ export function SubscriptionEditor({
         customTaxPercent:
           customTaxPercent !== "" ? Number(customTaxPercent) : null,
         customNotes: customNotes || null,
+        status: subStatus || null,
+        trialEndsAt: trialEndsAt ? new Date(trialEndsAt).toISOString() : null,
       });
       toast.success("Subscription & Custom Pricing updated successfully");
       router.refresh();
@@ -161,7 +163,7 @@ export function SubscriptionEditor({
       </CardHeader>
 
       <CardContent className="flex flex-col gap-5">
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="tier-select">Plan tier</Label>
             <Select value={tierSlug} onValueChange={setTierSlug}>
@@ -176,6 +178,32 @@ export function SubscriptionEditor({
                 ))}
               </SelectContent>
             </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="sub-status">Subscription Status</Label>
+            <Select value={subStatus} onValueChange={setSubStatus}>
+              <SelectTrigger id="sub-status">
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                <SelectItem value="TRIALING">TRIALING</SelectItem>
+                <SelectItem value="PAST_DUE">PAST_DUE</SelectItem>
+                <SelectItem value="CANCELED">CANCELED</SelectItem>
+                <SelectItem value="EXPIRED">EXPIRED</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="trial-ends-at">Free Trial Ends At</Label>
+            <Input
+              id="trial-ends-at"
+              type="date"
+              value={trialEndsAt}
+              onChange={(e) => setTrialEndsAt(e.target.value)}
+            />
           </div>
 
           <div className="flex flex-col gap-1.5">

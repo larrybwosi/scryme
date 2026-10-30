@@ -149,6 +149,9 @@ export async function getOrganizationSubscription(orgId: string) {
   if (!sub) {
     return {
       organizationId: orgId,
+      status: null,
+      trialStartedAt: null,
+      trialEndsAt: null,
       tierSlug: "free",
       dodoCustomerId: null,
       dodoSubscriptionId: null,
@@ -168,6 +171,9 @@ export async function getOrganizationSubscription(orgId: string) {
   return {
     id: sub.id,
     organizationId: sub.organizationId,
+    status: sub.status,
+    trialStartedAt: sub.trialStartedAt,
+    trialEndsAt: sub.trialEndsAt,
     tierSlug: sub.dodoPriceId || "free",
     dodoCustomerId: sub.dodoCustomerId,
     dodoSubscriptionId: sub.dodoSubscriptionId,
@@ -199,6 +205,9 @@ export async function updateOrganizationSubscription(
     customDiscountPercent?: number | null;
     customTaxPercent?: number | null;
     customNotes?: string | null;
+    status?: string | null;
+    trialStartedAt?: string | null;
+    trialEndsAt?: string | null;
   },
 ) {
   await requireSuperAdmin();
@@ -213,6 +222,16 @@ export async function updateOrganizationSubscription(
     dodoSubscriptionId: input.dodoSubscriptionId || null,
     dodoCurrentPeriodEnd: currentPeriodEnd,
   };
+
+  if (input.status !== undefined) {
+    updateData.status = input.status;
+  }
+  if (input.trialStartedAt !== undefined) {
+    updateData.trialStartedAt = input.trialStartedAt ? new Date(input.trialStartedAt) : null;
+  }
+  if (input.trialEndsAt !== undefined) {
+    updateData.trialEndsAt = input.trialEndsAt ? new Date(input.trialEndsAt) : null;
+  }
 
   if (input.isCustomPrice !== undefined) {
     updateData.isCustomPrice = input.isCustomPrice;

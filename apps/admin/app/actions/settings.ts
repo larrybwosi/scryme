@@ -37,3 +37,28 @@ export async function deleteGlobalSetting(key: string) {
   revalidatePath("/settings");
   return { success: true };
 }
+
+export async function getPaymentTrackingStatus(): Promise<boolean> {
+  await requireSuperAdmin();
+
+  const setting = await db.globalSetting.findUnique({
+    where: { key: "system:payment_tracking_enabled" },
+  });
+
+  return setting ? setting.value !== "false" : true;
+}
+
+export async function togglePaymentTracking(enabled: boolean) {
+  await requireSuperAdmin();
+
+  const value = enabled ? "true" : "false";
+
+  const setting = await db.globalSetting.upsert({
+    where: { key: "system:payment_tracking_enabled" },
+    update: { value },
+    create: { key: "system:payment_tracking_enabled", value },
+  });
+
+  revalidatePath("/settings");
+  return setting;
+}

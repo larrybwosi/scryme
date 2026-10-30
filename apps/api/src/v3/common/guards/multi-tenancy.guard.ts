@@ -133,7 +133,12 @@ export class MultiTenancyGuard implements CanActivate {
         (organization.quotaOverrides as Record<string, any>)?.bypassPaymentCheck,
       );
 
-      if (isMutatingMethod && !isExemptRoute && !isPaymentOverride) {
+      const globalPaymentSetting = await this.prisma.client.globalSetting.findUnique({
+        where: { key: "system:payment_tracking_enabled" },
+      });
+      const isGlobalPaymentTrackingDisabled = globalPaymentSetting?.value === "false";
+
+      if (isMutatingMethod && !isExemptRoute && !isPaymentOverride && !isGlobalPaymentTrackingDisabled) {
         const subscription = await this.prisma.client.subscription.findUnique({
           where: { organizationId: organization.id },
         });

@@ -1,8 +1,12 @@
-import { listGlobalSettings } from "@/app/actions/settings";
+import { listGlobalSettings, getPaymentTrackingStatus } from "@/app/actions/settings";
 import { SettingsTable } from "@/components/settings/settings-table";
+import { PaymentTrackingSwitcher } from "@/components/settings/payment-tracking-switcher";
 
 export default async function SettingsPage() {
-  const settings = await listGlobalSettings();
+  const [settings, isPaymentTrackingEnabled] = await Promise.all([
+    listGlobalSettings(),
+    getPaymentTrackingStatus(),
+  ]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -15,6 +19,8 @@ export default async function SettingsPage() {
           {settings.length} total).
         </p>
       </div>
+
+      <PaymentTrackingSwitcher initialEnabled={isPaymentTrackingEnabled} />
 
       <SettingsTable settings={settings} />
     </div>
