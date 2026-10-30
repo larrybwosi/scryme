@@ -78,26 +78,124 @@ export async function getPurchases(params: {
           },
         },
       },
+      approvalRequest: {
+        include: {
+          decisions: {
+            include: {
+              approver: {
+                include: { user: true },
+              },
+            },
+            orderBy: { decisionDate: "desc" },
+          },
+        },
+      },
     },
     orderBy: {
       createdAt: "desc",
     },
   });
 
-  return purchases.map(p => ({
-    id: p.id,
-    purchaseNumber: p.purchaseNumber,
-    supplierName: p.supplier.name,
-    amount: Number(p.totalAmount?.toString() || 0),
-    status: p.status,
-    date: p.orderDate,
-    itemCount: p.items.length,
-    product: p.items[0]?.variant.product.name || "N/A",
-    category: p.items[0]?.variant.product.categoryId || "N/A",
-    image:
-      p.items[0]?.variant.product.imageUrls[0] ||
-      "https://api.dicebear.com/7.x/shapes/svg?seed=" + p.id,
-  }));
+  return purchases.map(p => {
+    const latestRejectionDecision = p.approvalRequest?.decisions.find(
+      (d: any) => d.status === "REJECTED" || d.status === "REQUEST_INFO",
+    );
+
+    return {
+      id: p.id,
+      purchaseNumber: p.purchaseNumber,
+      supplierId: p.supplierId,
+      supplierName: p.supplier.name,
+      amount: Number(p.totalAmount?.toString() || 0),
+      status: p.status,
+      date: p.orderDate,
+      dueDate: p.dueDate,
+      notes: p.notes,
+      rejectionComment: latestRejectionDecision?.comments || null,
+      itemCount: p.items.length,
+      product: p.items[0]?.variant.product.name || "N/A",
+      category: p.items[0]?.variant.product.categoryId || "N/A",
+      image:
+        p.items[0]?.variant.product.imageUrls[0] ||
+        "https://api.dicebear.com/7.x/shapes/svg?seed=" + p.id,
+      items: p.items.map((i: any) => ({
+        id: i.id,
+        variantId: i.variantId,
+        productName: i.variant.product.name,
+        variantName: i.variant.name,
+        quantity: Number(i.orderedQuantity.toString()),
+        unitCost: Number(i.unitCost.toString()),
+        totalCost: Number(i.totalCost.toString()),
+      })),
+    };
+  });
+}
+
+export async function getPurchaseDetails(id: string): Promise<any> {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+    "REPORTER",
+  ], true);
+
+  const purchase = await db.purchase.findFirst({
+    where: { id, organizationId: auth.organizationId },
+    include: {
+      supplier: true,
+      items: {
+        include: {
+          variant: {
+            include: {
+              product: true,
+            },
+          },
+        },
+      },
+      approvalRequest: {
+        include: {
+          decisions: {
+            include: {
+              approver: {
+                include: { user: true },
+              },
+            },
+            orderBy: { decisionDate: "desc" },
+          },
+        },
+      },
+    },
+  });
+
+  if (!purchase) throw new Error("Purchase order not found");
+
+  const latestRejectionDecision = purchase.approvalRequest?.decisions.find(
+    (d: any) => d.status === "REJECTED" || d.status === "REQUEST_INFO",
+  );
+
+  return {
+    id: purchase.id,
+    purchaseNumber: purchase.purchaseNumber,
+    supplierId: purchase.supplierId,
+    supplierName: purchase.supplier.name,
+    amount: Number(purchase.totalAmount?.toString() || 0),
+    status: purchase.status,
+    dueDate: purchase.dueDate,
+    orderDate: purchase.orderDate,
+    notes: purchase.notes,
+    rejectionComment: latestRejectionDecision?.comments || null,
+    items: purchase.items.map((i: any) => ({
+      id: i.id,
+      variantId: i.variantId,
+      productName: i.variant.product.name,
+      variantName: i.variant.name,
+      quantity: Number(i.orderedQuantity.toString()),
+      unitCost: Number(i.unitCost.toString()),
+      totalCost: Number(i.totalCost.toString()),
+    })),
+  };
 }
 
 export async function createPurchase(data: {
@@ -105,7 +203,13 @@ export async function createPurchase(data: {
   items: { variantId: string; quantity: number; unitCost: number }[];
   purchaseNumber?: string;
   dueDate?: Date;
+  notes?: string;
+  saveAsDraft?: boolean;
 }): Promise<any> {
+  if (data.saveAsDraft) {
+    return createPurchaseDraft(data);
+  }
+
   const { auth, member } = await checkPermission([
     "OWNER",
     "ADMIN",
@@ -119,10 +223,6 @@ export async function createPurchase(data: {
     0,
   );
 
-  // ⚡ Bolt Optimization: Parallelize independent read queries outside active transaction.
-  // Executing purchase count, supplier name lookup, and organization approval threshold concurrently
-  // via Promise.all collapses 3 sequential database roundtrips down to 1 flat concurrent roundtrip,
-  // while also reducing transaction duration and database row locking time.
   const [count, supplier, org] = await Promise.all([
     data.purchaseNumber
       ? null
@@ -154,7 +254,8 @@ export async function createPurchase(data: {
         memberId: auth.memberId,
         supplierId: data.supplierId,
         purchaseNumber,
-        totalAmount: totalAmount,
+        totalAmount,
+        notes: data.notes,
         dueDate: data.dueDate ? (isNaN(new Date(data.dueDate).getTime()) ? undefined : new Date(data.dueDate)) : undefined,
         status: "DRAFT",
         items: {
@@ -192,7 +293,7 @@ export async function createPurchase(data: {
     return purchase;
   });
 
-  // Dispatch ScrymeChat alert if Scryme is configured (using pre-fetched org configuration)
+  // Dispatch ScrymeChat alert if Scryme is configured
   try {
     if (org?.scrymeConfiguration && org.slug) {
       const { ScrymeChatApiClient } = await import("@repo/chat");
@@ -214,6 +315,195 @@ export async function createPurchase(data: {
   return createdPurchase;
 }
 
+export async function createPurchaseDraft(data: {
+  supplierId: string;
+  items: { variantId: string; quantity: number; unitCost: number }[];
+  purchaseNumber?: string;
+  dueDate?: Date;
+  notes?: string;
+}): Promise<any> {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
+
+  const totalAmount = data.items.reduce(
+    (acc, item) => acc + item.quantity * item.unitCost,
+    0,
+  );
+
+  const [count] = await Promise.all([
+    data.purchaseNumber
+      ? null
+      : db.purchase.count({
+          where: { organizationId: auth.organizationId },
+        }),
+  ]);
+
+  const purchaseNumber =
+    data.purchaseNumber ||
+    `PO-${new Date().getFullYear()}-${((count || 0) + 1).toString().padStart(4, "0")}`;
+
+  const purchase = await db.purchase.create({
+    data: {
+      organizationId: auth.organizationId,
+      memberId: auth.memberId,
+      supplierId: data.supplierId,
+      purchaseNumber,
+      totalAmount,
+      notes: data.notes,
+      dueDate: data.dueDate ? (isNaN(new Date(data.dueDate).getTime()) ? undefined : new Date(data.dueDate)) : undefined,
+      status: "DRAFT",
+      items: {
+        create: data.items.map((item) => ({
+          variantId: item.variantId,
+          orderedQuantity: item.quantity,
+          unitCost: item.unitCost,
+          totalCost: item.quantity * item.unitCost,
+        })),
+      },
+    },
+  });
+
+  revalidatePath("/finance/purchases");
+  revalidatePath(`/inventory/supplier/${data.supplierId}`);
+  return purchase;
+}
+
+export async function updatePurchaseDraft(data: {
+  id: string;
+  supplierId: string;
+  items: { variantId: string; quantity: number; unitCost: number }[];
+  dueDate?: Date;
+  notes?: string;
+}): Promise<any> {
+  const { auth } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
+
+  const existingPurchase = await db.purchase.findFirst({
+    where: { id: data.id, organizationId: auth.organizationId },
+  });
+
+  if (!existingPurchase) throw new Error("Purchase order not found");
+  if (existingPurchase.status !== "DRAFT" && existingPurchase.status !== "REJECTED") {
+    throw new Error("Only draft or rejected purchase orders can be updated");
+  }
+
+  const totalAmount = data.items.reduce(
+    (acc, item) => acc + item.quantity * item.unitCost,
+    0,
+  );
+
+  const updatedPurchase = await db.$transaction(async (tx) => {
+    // Delete existing items
+    await tx.purchaseItem.deleteMany({
+      where: { purchaseId: data.id },
+    });
+
+    // Update purchase and recreate items
+    const p = await tx.purchase.update({
+      where: { id: data.id },
+      data: {
+        supplierId: data.supplierId,
+        totalAmount,
+        notes: data.notes,
+        dueDate: data.dueDate ? (isNaN(new Date(data.dueDate).getTime()) ? undefined : new Date(data.dueDate)) : undefined,
+        status: "DRAFT", // Reset to draft if it was REJECTED
+        items: {
+          create: data.items.map((item) => ({
+            variantId: item.variantId,
+            orderedQuantity: item.quantity,
+            unitCost: item.unitCost,
+            totalCost: item.quantity * item.unitCost,
+          })),
+        },
+      },
+    });
+
+    return p;
+  });
+
+  revalidatePath("/finance/purchases");
+  revalidatePath(`/finance/purchases/${data.id}`);
+  return updatedPurchase;
+}
+
+export async function submitPurchaseOrder(id: string): Promise<any> {
+  const { auth, member } = await checkPermission([
+    "OWNER",
+    "ADMIN",
+    "MANAGER",
+    "EMPLOYEE",
+    "CASHIER",
+  ]);
+
+  const purchase = await db.purchase.findFirst({
+    where: { id, organizationId: auth.organizationId },
+    include: {
+      supplier: { select: { name: true } },
+    },
+  });
+
+  if (!purchase) throw new Error("Purchase order not found");
+
+  const totalAmount = Number(purchase.totalAmount?.toString() || 0);
+
+  const org = await db.organization.findUnique({
+    where: { id: auth.organizationId },
+    select: { expenseApprovalThreshold: true, slug: true, scrymeConfiguration: true },
+  });
+
+  const threshold = org?.expenseApprovalThreshold
+    ? Number(org.expenseApprovalThreshold)
+    : 0;
+
+  const requiresApproval =
+    !["OWNER", "ADMIN"].includes(member.role) || (threshold > 0 && totalAmount > threshold);
+
+  if (requiresApproval) {
+    await submitForApproval({
+      relatedId: purchase.id,
+      type: "PURCHASE_ORDER",
+      amount: totalAmount,
+      relatedRecordNumber: purchase.purchaseNumber,
+    });
+  } else {
+    await db.purchase.update({
+      where: { id: purchase.id },
+      data: { status: "ORDERED" },
+    });
+  }
+
+  // Dispatch ScrymeChat alert if Scryme is configured
+  try {
+    if (org?.scrymeConfiguration && org.slug) {
+      const { ScrymeChatApiClient } = await import("@repo/chat");
+      const scrymeClient = new ScrymeChatApiClient();
+
+      const dueDateStr = purchase.dueDate
+        ? new Date(purchase.dueDate).toLocaleDateString()
+        : "N/A";
+
+      await scrymeClient.sendMessage(org.slug, "general", {
+        content: `📦 **New Purchase Order Submitted**\n- **Order #**: ${purchase.purchaseNumber}\n- **Supplier**: ${purchase.supplier?.name || "Supplier"}\n- **Total Amount**: KES ${totalAmount.toLocaleString()}\n- **Repayment Due Date**: ${dueDateStr}`,
+      });
+    }
+  } catch (err: any) {
+    console.error("Failed to send ScrymeChat notification for purchase order:", err?.message || err);
+  }
+
+  revalidatePath("/finance/purchases");
+  revalidatePath(`/finance/purchases/${id}`);
+  return db.purchase.findUnique({ where: { id } });
+}
 export async function receivePurchaseItems(
   purchaseId: string,
   items: { itemId: string; quantity: number }[],

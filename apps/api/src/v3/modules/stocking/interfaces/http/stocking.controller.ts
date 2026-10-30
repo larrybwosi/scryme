@@ -87,6 +87,43 @@ export class StockingController {
     );
   }
 
+  @Patch("purchases/:id")
+  @Permissions("stock:write")
+  @ApiOperation({
+    summary: "Update draft purchase order",
+    operationId: "Stocking_UpdatePurchase",
+  })
+  async updatePurchase(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() body: any,
+  ) {
+    return this.purchaseOrderUseCase.update(
+      req.organization.id,
+      req.user.memberId,
+      id,
+      body,
+    );
+  }
+
+  @Post("purchases/:id/submit")
+  @Permissions("stock:write")
+  @ApiOperation({
+    summary: "Submit purchase order for approval",
+    operationId: "Stocking_SubmitPurchase",
+  })
+  async submitPurchase(
+    @Req() req: any,
+    @Param("id") id: string,
+  ) {
+    return this.purchaseOrderUseCase.submit(
+      req.organization.id,
+      req.user.memberId,
+      id,
+    );
+  }
+
+
   @Post("purchases/:id/receive")
   @Permissions("stock:write")
   @ApiOperation({
