@@ -1,3 +1,4 @@
+import { env } from "@repo/env";
 import { Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { ScrymeService } from "@/v3/modules/scryme/scryme.service";
@@ -173,7 +174,7 @@ export class ReportsService {
             );
           } catch (e: any) {}
 
-          const webBaseUrl = process.env.PUBLIC_WEB_URL || "https://app.dealio.co";
+          const webBaseUrl = env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
           await this.scrymeClient.sendMessage(scrymeConfig.workspaceSlug, channelSlug, {
             content: markdownMessage,
             actions: [
@@ -391,7 +392,7 @@ export class ReportsService {
     days: number,
     orgId: string,
   ): string {
-    const webBaseUrl = process.env.PUBLIC_WEB_URL || "https://app.dealio.co";
+    const webBaseUrl = env.NEXT_PUBLIC_APP_URL || env.NEXT_PUBLIC_WEB_URL || "https://app.scryme.tech";
 
     let html = `
 <!DOCTYPE html>

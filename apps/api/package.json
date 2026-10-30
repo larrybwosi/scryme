@@ -1,6 +1,6 @@
 {
   "name": "api",
-  "version": "10.2.28",
+  "version": "10.2.30",
   "private": true,
   "prisma": {
     "seed": "tsx prisma/seed.ts"
@@ -12,7 +12,7 @@
     "dev": "nest start --watch",
     "start:debug": "nest start --debug --watch",
     "start:prod": "node dist/main",
-    "generate": "prisma generate",
+    "generate": "prisma generate --schema=src/customer-auth/prisma/schema.prisma",
     "generate:openapi": "nest start --entryFile generate-openapi",
     "lint": "eslint \"{src,apps,libs,test}/**/*.ts\" --fix",
     "test": "vitest run --passWithNoTests",

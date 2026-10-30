@@ -18,9 +18,11 @@ import { Permissions } from '../../../../common/decorators/permissions.decorator
 import { ProjectUseCase } from '../../application/use-cases/project.use-case';
 import {
   CreateProjectDto,
+  CreateProjectMilestoneDto,
   ManageProjectMemberDto,
   ProjectFilterDto,
   UpdateProjectDto,
+  UpdateProjectMilestoneDto,
 } from '../../dtos/project.dto';
 
 @ApiTags('V3 Enterprise Tasks')
@@ -102,5 +104,56 @@ export class ProjectController {
     @Param('memberId') memberId: string,
   ) {
     return this.projectUseCase.removeProjectMember(ctx.organizationId, id, memberId);
+  }
+  @Post(":id/milestones")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Create a new milestone for project" })
+  async createMilestone(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() dto: CreateProjectMilestoneDto,
+  ) {
+    return this.projectUseCase.createMilestone(ctx.organizationId, id, dto);
+  }
+
+  @Get(":id/milestones")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List milestones for project" })
+  async listMilestones(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.projectUseCase.listMilestones(ctx.organizationId, id);
+  }
+
+  @Get("milestones/:milestoneId")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get milestone details" })
+  async getMilestone(
+    @v3Context() ctx: V3ApiContext,
+    @Param("milestoneId") milestoneId: string,
+  ) {
+    return this.projectUseCase.getMilestone(ctx.organizationId, milestoneId);
+  }
+
+  @Patch("milestones/:milestoneId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Update milestone" })
+  async updateMilestone(
+    @v3Context() ctx: V3ApiContext,
+    @Param("milestoneId") milestoneId: string,
+    @Body() dto: UpdateProjectMilestoneDto,
+  ) {
+    return this.projectUseCase.updateMilestone(ctx.organizationId, milestoneId, dto);
+  }
+
+  @Delete("milestones/:milestoneId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete milestone" })
+  async deleteMilestone(
+    @v3Context() ctx: V3ApiContext,
+    @Param("milestoneId") milestoneId: string,
+  ) {
+    return this.projectUseCase.deleteMilestone(ctx.organizationId, milestoneId);
   }
 }

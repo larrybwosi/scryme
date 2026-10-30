@@ -31,9 +31,20 @@ import {
   Clock,
   Radio,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@repo/ui/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@repo/ui/components/ui/card";
 import { Badge } from "@repo/ui/components/ui/badge";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@repo/ui/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@repo/ui/components/ui/tabs";
 
 interface DashboardChartsProps {
   growthTrend: Array<{
@@ -111,7 +122,11 @@ export function DashboardCharts({
   // Formatting date labels (e.g. "Oct 12")
   const formattedTrend = growthTrend.map((item) => {
     const parts = item.date.split("-");
-    const month = new Date(Number(parts[0]), Number(parts[1]) - 1, 1).toLocaleString("en-US", {
+    const month = new Date(
+      Number(parts[0]),
+      Number(parts[1]) - 1,
+      1,
+    ).toLocaleString("en-US", {
       month: "short",
     });
     return {
@@ -132,7 +147,8 @@ export function DashboardCharts({
             </CardTitle>
 
             <CardDescription className="text-xs text-muted-foreground">
-              Daily user signups, organization registrations, and transaction volume over time.
+              Daily user signups, organization registrations, and transaction
+              volume over time.
             </CardDescription>
           </div>
         </CardHeader>
@@ -145,7 +161,10 @@ export function DashboardCharts({
 
             <TabsContent value="overview" className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={formattedTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <AreaChart
+                  data={formattedTrend}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
                   <defs>
                     <linearGradient id="colorUsers" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.4} />
@@ -156,13 +175,20 @@ export function DashboardCharts({
                       <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                     </linearGradient>
                   </defs>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted/30"
+                  />
                   <XAxis
                     dataKey="displayDate"
                     className="text-[11px] fill-muted-foreground"
                     tickLine={false}
                   />
-                  <YAxis className="text-[11px] fill-muted-foreground" tickLine={false} allowDecimals={false} />
+                  <YAxis
+                    className="text-[11px] fill-muted-foreground"
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--card)",
@@ -171,7 +197,9 @@ export function DashboardCharts({
                       color: "var(--foreground)",
                     }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: "10px", fontSize: "12px" }} />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "10px", fontSize: "12px" }}
+                  />
                   <Area
                     type="monotone"
                     dataKey="users"
@@ -196,10 +224,24 @@ export function DashboardCharts({
 
             <TabsContent value="transactions" className="h-[320px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={formattedTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                  <XAxis dataKey="displayDate" className="text-[11px] fill-muted-foreground" tickLine={false} />
-                  <YAxis className="text-[11px] fill-muted-foreground" tickLine={false} allowDecimals={false} />
+                <BarChart
+                  data={formattedTrend}
+                  margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+                >
+                  <CartesianGrid
+                    strokeDasharray="3 3"
+                    className="stroke-muted/30"
+                  />
+                  <XAxis
+                    dataKey="displayDate"
+                    className="text-[11px] fill-muted-foreground"
+                    tickLine={false}
+                  />
+                  <YAxis
+                    className="text-[11px] fill-muted-foreground"
+                    tickLine={false}
+                    allowDecimals={false}
+                  />
                   <Tooltip
                     contentStyle={{
                       backgroundColor: "var(--card)",
@@ -208,8 +250,15 @@ export function DashboardCharts({
                       color: "var(--foreground)",
                     }}
                   />
-                  <Legend wrapperStyle={{ paddingTop: "10px", fontSize: "12px" }} />
-                  <Bar dataKey="transactions" name="Transactions Completed" fill="#8b5cf6" radius={[4, 4, 0, 0]} />
+                  <Legend
+                    wrapperStyle={{ paddingTop: "10px", fontSize: "12px" }}
+                  />
+                  <Bar
+                    dataKey="transactions"
+                    name="Transactions Completed"
+                    fill="#8b5cf6"
+                    radius={[4, 4, 0, 0]}
+                  />
                 </BarChart>
               </ResponsiveContainer>
             </TabsContent>
@@ -234,7 +283,9 @@ export function DashboardCharts({
           </CardHeader>
           <CardContent className="pt-2">
             {acquisitionSources.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">No acquisition source data available.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                No acquisition source data available.
+              </p>
             ) : (
               <div className="flex flex-col items-center gap-4 sm:flex-row">
                 <div className="h-[220px] w-full sm:w-1/2">
@@ -251,7 +302,10 @@ export function DashboardCharts({
                         paddingAngle={2}
                       >
                         {acquisitionSources.map((_, index) => (
-                          <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          <Cell
+                            key={`cell-${index}`}
+                            fill={COLORS[index % COLORS.length]}
+                          />
                         ))}
                       </Pie>
                       <Tooltip
@@ -267,15 +321,24 @@ export function DashboardCharts({
                 </div>
                 <div className="flex w-full flex-col gap-2 sm:w-1/2">
                   {acquisitionSources.slice(0, 6).map((item, idx) => (
-                    <div key={item.source} className="flex items-center justify-between text-xs">
+                    <div
+                      key={item.source}
+                      className="flex items-center justify-between text-xs"
+                    >
                       <div className="flex items-center gap-2">
                         <span
                           className="size-3 rounded-full"
-                          style={{ backgroundColor: COLORS[idx % COLORS.length] }}
+                          style={{
+                            backgroundColor: COLORS[idx % COLORS.length],
+                          }}
                         />
-                        <span className="font-medium text-foreground">{item.source}</span>
+                        <span className="font-medium text-foreground">
+                          {item.source}
+                        </span>
                       </div>
-                      <span className="font-semibold tabular-nums text-muted-foreground">{item.count} users</span>
+                      <span className="font-semibold tabular-nums text-muted-foreground">
+                        {item.count} users
+                      </span>
                     </div>
                   ))}
                 </div>
@@ -299,14 +362,33 @@ export function DashboardCharts({
           </CardHeader>
           <CardContent className="pt-2">
             {subscriptionTiers.length === 0 ? (
-              <p className="py-12 text-center text-sm text-muted-foreground">No active subscription data available.</p>
+              <p className="py-12 text-center text-sm text-muted-foreground">
+                No active subscription data available.
+              </p>
             ) : (
               <div className="h-[220px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={subscriptionTiers} layout="vertical" margin={{ top: 10, right: 20, left: 20, bottom: 0 }}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted/30" />
-                    <XAxis type="number" className="text-[11px] fill-muted-foreground" tickLine={false} allowDecimals={false} />
-                    <YAxis dataKey="tier" type="category" className="text-[11px] fill-muted-foreground" tickLine={false} />
+                  <BarChart
+                    data={subscriptionTiers}
+                    layout="vertical"
+                    margin={{ top: 10, right: 20, left: 20, bottom: 0 }}
+                  >
+                    <CartesianGrid
+                      strokeDasharray="3 3"
+                      className="stroke-muted/30"
+                    />
+                    <XAxis
+                      type="number"
+                      className="text-[11px] fill-muted-foreground"
+                      tickLine={false}
+                      allowDecimals={false}
+                    />
+                    <YAxis
+                      dataKey="tier"
+                      type="category"
+                      className="text-[11px] fill-muted-foreground"
+                      tickLine={false}
+                    />
                     <Tooltip
                       contentStyle={{
                         backgroundColor: "var(--card)",
@@ -315,7 +397,12 @@ export function DashboardCharts({
                         color: "var(--foreground)",
                       }}
                     />
-                    <Bar dataKey="count" name="Organizations" fill="#10b981" radius={[0, 4, 4, 0]} />
+                    <Bar
+                      dataKey="count"
+                      name="Organizations"
+                      fill="#10b981"
+                      radius={[0, 4, 4, 0]}
+                    />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -333,10 +420,14 @@ export function DashboardCharts({
               Telemetry & Analytics Integrations Status
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Integration health, event collection status, and provider dashboards.
+              Integration health, event collection status, and provider
+              dashboards.
             </CardDescription>
           </div>
-          <Link href="/integrations" className="text-xs font-medium text-primary hover:underline flex items-center gap-1">
+          <Link
+            href="/integrations"
+            className="text-xs font-medium text-primary hover:underline flex items-center gap-1"
+          >
             Configure Integrations
             <ArrowUpRight className="size-3" />
           </Link>
@@ -344,14 +435,22 @@ export function DashboardCharts({
         <CardContent className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4 pt-2">
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">OpenPanel Analytics</span>
+              <span className="text-xs font-medium text-foreground">
+                OpenPanel Analytics
+              </span>
               {integrations.openpanelEnabled ? (
-                <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-500">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-emerald-500/10 text-emerald-500"
+                >
                   <CheckCircle2 className="size-3" />
                   Active
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="gap-1 text-muted-foreground">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 text-muted-foreground"
+                >
                   <XCircle className="size-3" />
                   Disabled
                 </Badge>
@@ -366,34 +465,52 @@ export function DashboardCharts({
 
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">PostHog Analytics</span>
+              <span className="text-xs font-medium text-foreground">
+                PostHog Analytics
+              </span>
               {integrations.posthogEnabled ? (
-                <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-500">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-emerald-500/10 text-emerald-500"
+                >
                   <CheckCircle2 className="size-3" />
                   Active
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="gap-1 text-muted-foreground">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 text-muted-foreground"
+                >
                   <XCircle className="size-3" />
                   Disabled
                 </Badge>
               )}
             </div>
             <p className="text-xs text-muted-foreground">
-              {integrations.posthogEnabled ? "Event pipeline connected" : "Not configured or disabled"}
+              {integrations.posthogEnabled
+                ? "Event pipeline connected"
+                : "Not configured or disabled"}
             </p>
           </div>
 
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">Sentry Monitoring</span>
+              <span className="text-xs font-medium text-foreground">
+                Sentry Monitoring
+              </span>
               {integrations.sentryEnabled ? (
-                <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-500">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 bg-emerald-500/10 text-emerald-500"
+                >
                   <CheckCircle2 className="size-3" />
                   Active
                 </Badge>
               ) : (
-                <Badge variant="secondary" className="gap-1 text-muted-foreground">
+                <Badge
+                  variant="secondary"
+                  className="gap-1 text-muted-foreground"
+                >
                   <XCircle className="size-3" />
                   Disabled
                 </Badge>
@@ -408,14 +525,21 @@ export function DashboardCharts({
 
           <div className="flex flex-col gap-2 rounded-lg border border-border bg-secondary/20 p-4">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-medium text-foreground">Scryme Chat Alerts</span>
-              <Badge variant="secondary" className="gap-1 bg-emerald-500/10 text-emerald-500">
+              <span className="text-xs font-medium text-foreground">
+                Scryme Chat Alerts
+              </span>
+              <Badge
+                variant="secondary"
+                className="gap-1 bg-emerald-500/10 text-emerald-500"
+              >
                 <CheckCircle2 className="size-3" />
                 {integrations.adminWorkspaceStatus || "Configured"}
               </Badge>
             </div>
             <p className="text-xs text-muted-foreground">
-              {integrations.scrymeChatBaseUrl ? "Notification gateway ready" : "Local fallback"}
+              {integrations.scrymeChatBaseUrl
+                ? "Notification gateway ready"
+                : "Local fallback"}
             </p>
           </div>
         </CardContent>
@@ -430,29 +554,42 @@ export function DashboardCharts({
               Recent System Operations & Audit Feed
             </CardTitle>
             <CardDescription className="text-xs text-muted-foreground">
-              Real-time audit log of operations and system activities across organizations (non-sensitive details).
+              Real-time audit log of operations and system activities across
+              organizations (non-sensitive details).
             </CardDescription>
           </div>
         </CardHeader>
         <CardContent className="pt-2">
           {recentAuditLogs.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">No recent system operations logged.</p>
+            <p className="py-8 text-center text-sm text-muted-foreground">
+              No recent system operations logged.
+            </p>
           ) : (
             <div className="flex flex-col divide-y divide-border">
               {recentAuditLogs.map((log) => (
-                <div key={log.id} className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center">
+                <div
+                  key={log.id}
+                  className="flex flex-col justify-between gap-2 py-3 sm:flex-row sm:items-center"
+                >
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5 flex size-7 items-center justify-center rounded-full bg-primary/10">
                       <Clock className="size-3.5 text-primary" />
                     </div>
                     <div className="flex flex-col gap-0.5">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm text-foreground">{log.action}</span>
-                        <Badge variant="outline" className="text-[10px] uppercase font-mono">
+                        <span className="font-medium text-sm text-foreground">
+                          {log.action}
+                        </span>
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] uppercase font-mono"
+                        >
                           {log.entityType}
                         </Badge>
                       </div>
-                      <p className="text-xs text-muted-foreground">{log.description}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {log.description}
+                      </p>
                       {log.actorEmail && (
                         <span className="text-[11px] text-muted-foreground/80">
                           By: {log.actorName || log.actorEmail}
@@ -470,7 +607,9 @@ export function DashboardCharts({
                       })}
                     </span>
                     <Badge
-                      variant={log.status === "SUCCESS" ? "secondary" : "destructive"}
+                      variant={
+                        log.status === "SUCCESS" ? "secondary" : "destructive"
+                      }
                       className="text-[10px]"
                     >
                       {log.status}

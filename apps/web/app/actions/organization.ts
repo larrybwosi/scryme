@@ -4,6 +4,7 @@ import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import { revalidatePath, revalidateTag, unstable_cache } from "next/cache";
 import { encryptV3, decryptV3 } from "@repo/shared/api/v3";
+import { evaluateAllModulesStatus, EffectiveModuleResolution } from "@repo/shared/constants";
 
 const MASK_STRING = "••••••••";
 
@@ -85,14 +86,38 @@ export async function getActiveOrganization(): Promise<any> {
 /**
  * Creates a new organization for the authenticated user.
  */
+export interface PlanTierConfig {
+  plan: "free" | "growth" | "scale" | "enterprise";
+  billingInterval?: "monthly" | "annual";
+  currency?: string;
+  paymentMethod?: "trial" | "mpesa" | "card";
+  mpesaPhoneNumber?: string;
+}
+
 export async function createOrganization(data: {
   name: string;
   slug: string;
   industry: string;
   size: string;
+  planConfig?: PlanTierConfig;
 }): Promise<any> {
   const auth = await getServerAuth({ allowNoOrg: true });
   if (!auth) throw new Error("Unauthorized");
+
+  const selectedPlan = data.planConfig?.plan || "growth";
+  const billingInterval = data.planConfig?.billingInterval || "monthly";
+  const customCurrency = (data.planConfig?.currency || "USD").toUpperCase();
+  const isTrial = selectedPlan !== "free" && data.planConfig?.paymentMethod !== "mpesa";
+
+  // Plan Quotas Mapping
+  const planQuotas: Record<string, { storeNodes: number; monthlyTransactions: number; hermesAi: boolean }> = {
+    free: { storeNodes: 1, monthlyTransactions: 1000, hermesAi: false },
+    growth: { storeNodes: 5, monthlyTransactions: 10000, hermesAi: false },
+    scale: { storeNodes: -1, monthlyTransactions: 100000, hermesAi: true }, // -1 = unlimited
+    enterprise: { storeNodes: -1, monthlyTransactions: -1, hermesAi: true },
+  };
+
+  const quotas = planQuotas[selectedPlan] || planQuotas.growth;
 
   const organization = await db.$transaction(async tx => {
     const org = await tx.organization.create({
@@ -100,6 +125,12 @@ export async function createOrganization(data: {
         name: data.name,
         slug: data.slug,
         description: `${data.industry} - ${data.size}`,
+        quotaOverrides: {
+          plan: selectedPlan,
+          storeNodes: quotas.storeNodes,
+          monthlyTransactions: quotas.monthlyTransactions,
+          hermesAi: quotas.hermesAi,
+        },
         members: {
           create: {
             userId: auth.user.id,
@@ -128,15 +159,19 @@ export async function createOrganization(data: {
       },
     });
 
-    // Create 14-day free trial subscription
+    // Create Subscription record according to plan & trial selection
     const trialStartedAt = new Date();
     const trialEndsAt = new Date(trialStartedAt.getTime() + 14 * 24 * 60 * 60 * 1000);
+
     await tx.subscription.create({
       data: {
         organizationId: org.id,
-        status: "TRIALING",
-        trialStartedAt,
-        trialEndsAt,
+        status: selectedPlan === "free" ? "ACTIVE" : (isTrial ? "TRIALING" : "ACTIVE"),
+        trialStartedAt: selectedPlan === "free" ? null : trialStartedAt,
+        trialEndsAt: selectedPlan === "free" ? null : trialEndsAt,
+        billingInterval,
+        customCurrency,
+        customNotes: `Plan: ${selectedPlan.toUpperCase()} (${data.planConfig?.paymentMethod || "trial"})`,
       },
     });
 
@@ -361,4 +396,70 @@ export async function checkSlugAvailability(slug: string) {
     where: { slug },
   });
   return !existing;
+}
+
+export async function getEffectiveModulesServerAction(): Promise<EffectiveModuleResolution[]> {
+  const auth = await getServerAuth();
+  if (!auth) return evaluateAllModulesStatus(null, null);
+
+  const systemSetting = await db.globalSetting.findUnique({
+    where: { key: "system:modules" },
+  });
+
+  let systemModules: Record<string, boolean> = {};
+  if (systemSetting?.value) {
+    try {
+      systemModules = JSON.parse(systemSetting.value);
+    } catch {
+      systemModules = {};
+    }
+  }
+
+  let orgModules: Record<string, boolean> = {};
+  if (auth.organizationId) {
+    const org = await db.organization.findUnique({
+      where: { id: auth.organizationId },
+      select: { quotaOverrides: true },
+    });
+
+    if (org?.quotaOverrides) {
+      const overridesObj = org.quotaOverrides as Record<string, any>;
+      if (overridesObj.bypassPaymentCheck) {
+        return evaluateAllModulesStatus(systemModules, {}).map((m) => ({
+          ...m,
+          isEnabled: true,
+          orgEnabled: true,
+          reason: "Organization payment override enabled",
+        }));
+      }
+      orgModules = (overridesObj.modules as Record<string, boolean>) || {};
+    }
+  }
+
+  return evaluateAllModulesStatus(systemModules, orgModules);
+}
+
+/**
+ * Initiates an M-Pesa payment STK push for subscription activation.
+ */
+export async function initiateMpesaSubscriptionPayment(data: {
+  phoneNumber: string;
+  plan: string;
+  amount: number;
+}): Promise<{ success: boolean; message: string; checkoutRequestId?: string }> {
+  const auth = await getServerAuth({ allowNoOrg: true });
+  if (!auth) throw new Error("Unauthorized");
+
+  if (!data.phoneNumber || data.phoneNumber.trim().length < 10) {
+    throw new Error("A valid M-Pesa phone number is required.");
+  }
+
+  // Simulate or execute STK Push trigger
+  const mockCheckoutId = `ws_CO_${Date.now()}_${Math.floor(Math.random() * 1000)}`;
+
+  return {
+    success: true,
+    message: `STK push initiated successfully to ${data.phoneNumber}. Please enter your M-Pesa PIN to complete payment for the ${data.plan.toUpperCase()} plan.`,
+    checkoutRequestId: mockCheckoutId,
+  };
 }

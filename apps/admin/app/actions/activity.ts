@@ -3,7 +3,12 @@
 import { db } from "@repo/db";
 import { requireSuperAdmin } from "./auth";
 
-export type ActivityType = "LOGIN" | "POS_SALE" | "ONLINE_ORDER" | "SALES_ORDER" | "OTHER_TRANSACTION";
+export type ActivityType =
+  | "LOGIN"
+  | "POS_SALE"
+  | "ONLINE_ORDER"
+  | "SALES_ORDER"
+  | "OTHER_TRANSACTION";
 
 export interface ActivityLogItem {
   id: string;
@@ -138,12 +143,19 @@ export async function getUserActivityLogs(filters: ActivityFiltersInput = {}) {
       { number: { contains: search, mode: "insensitive" } },
       { notes: { contains: search, mode: "insensitive" } },
       { member: { user: { name: { contains: search, mode: "insensitive" } } } },
-      { member: { user: { email: { contains: search, mode: "insensitive" } } } },
+      {
+        member: { user: { email: { contains: search, mode: "insensitive" } } },
+      },
       { customer: { name: { contains: search, mode: "insensitive" } } },
     ];
   }
 
-  const [rawSessions, rawTransactions, totalSessionsCount, totalTransactionsCount] = await Promise.all([
+  const [
+    rawSessions,
+    rawTransactions,
+    totalSessionsCount,
+    totalTransactionsCount,
+  ] = await Promise.all([
     fetchSessions
       ? db.session.findMany({
           where: sessionWhere,
@@ -178,8 +190,12 @@ export async function getUserActivityLogs(filters: ActivityFiltersInput = {}) {
           take: 500,
         })
       : Promise.resolve([]),
-    fetchSessions ? db.session.count({ where: sessionWhere }) : Promise.resolve(0),
-    fetchTransactions ? db.transaction.count({ where: transactionWhere }) : Promise.resolve(0),
+    fetchSessions
+      ? db.session.count({ where: sessionWhere })
+      : Promise.resolve(0),
+    fetchTransactions
+      ? db.transaction.count({ where: transactionWhere })
+      : Promise.resolve(0),
   ]);
 
   const mappedSessions: ActivityLogItem[] = rawSessions.map((s) => ({
@@ -190,7 +206,9 @@ export async function getUserActivityLogs(filters: ActivityFiltersInput = {}) {
     userName: s.user?.name || "Unknown User",
     userEmail: s.user?.email || null,
     organizationId: s.activeOrganizationId,
-    organizationName: s.activeOrganizationId ? orgMap.get(s.activeOrganizationId) || "Organization" : "Global Admin",
+    organizationName: s.activeOrganizationId
+      ? orgMap.get(s.activeOrganizationId) || "Organization"
+      : "Global Admin",
     channel: "WEB_APP",
     title: "User Login Session",
     description: `User authenticated from IP ${s.ipAddress || "Unknown"}`,
@@ -239,7 +257,7 @@ export async function getUserActivityLogs(filters: ActivityFiltersInput = {}) {
 
   // Combine and sort by timestamp descending
   const allLogs = [...mappedSessions, ...mappedTransactions].sort(
-    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime(),
   );
 
   const totalItems = totalSessionsCount + totalTransactionsCount;
@@ -248,7 +266,9 @@ export async function getUserActivityLogs(filters: ActivityFiltersInput = {}) {
   const paginatedLogs = allLogs.slice(startIndex, startIndex + limit);
 
   // Compute stats
-  const posSalesCount = mappedTransactions.filter((t) => t.type === "POS_SALE").length;
+  const posSalesCount = mappedTransactions.filter(
+    (t) => t.type === "POS_SALE",
+  ).length;
   const loginCount = mappedSessions.length;
   const activeOrgs = new Set([
     ...mappedSessions.map((s) => s.organizationId).filter(Boolean),

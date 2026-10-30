@@ -122,8 +122,6 @@ class BranchRepositoryImpl @Inject constructor(
         code = code,
         address = address,
         phone = phone,
-        latitude = latitude,
-        longitude = longitude,
         locationType = locationType ?: "STORE",
         geofenceRadiusMeters = geofenceRadiusMeters ?: 100.0,
         isDefault = isDefault,

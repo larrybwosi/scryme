@@ -7,9 +7,11 @@ import {
 import { PrismaService } from '../../../../../prisma/prisma.service';
 import {
   CreateProjectDto,
+  CreateProjectMilestoneDto,
   ManageProjectMemberDto,
   ProjectFilterDto,
   UpdateProjectDto,
+  UpdateProjectMilestoneDto,
 } from '../../dtos/project.dto';
 
 @Injectable()
@@ -268,5 +270,104 @@ export class ProjectUseCase {
     });
 
     return { success: true, memberId };
+  }
+  async createMilestone(
+    organizationId: string,
+    projectId: string,
+    dto: CreateProjectMilestoneDto,
+  ) {
+    const project = await this.prisma.client.project.findFirst({
+      where: { id: projectId, organizationId },
+    });
+    if (!project) {
+      throw new NotFoundException("Project not found");
+    }
+
+    const milestone = await this.prisma.client.projectMilestone.create({
+      data: {
+        organizationId,
+        projectId,
+        title: dto.title,
+        description: dto.description,
+        dueDate: dto.dueDate,
+        status: dto.status,
+      },
+    });
+
+    return milestone;
+  }
+
+  async listMilestones(organizationId: string, projectId: string) {
+    const project = await this.prisma.client.project.findFirst({
+      where: { id: projectId, organizationId },
+    });
+    if (!project) {
+      throw new NotFoundException("Project not found");
+    }
+
+    return this.prisma.client.projectMilestone.findMany({
+      where: { projectId, organizationId },
+      orderBy: { dueDate: "asc" },
+      include: {
+        _count: { select: { tasks: true } },
+      },
+    });
+  }
+
+  async getMilestone(organizationId: string, milestoneId: string) {
+    const milestone = await this.prisma.client.projectMilestone.findFirst({
+      where: { id: milestoneId, organizationId },
+      include: {
+        project: { select: { id: true, name: true, key: true } },
+        tasks: { select: { id: true, taskKey: true, title: true, status: true, priority: true } },
+        _count: { select: { tasks: true } },
+      },
+    });
+
+    if (!milestone) {
+      throw new NotFoundException("Project milestone not found");
+    }
+
+    return milestone;
+  }
+
+  async updateMilestone(
+    organizationId: string,
+    milestoneId: string,
+    dto: UpdateProjectMilestoneDto,
+  ) {
+    const milestone = await this.prisma.client.projectMilestone.findFirst({
+      where: { id: milestoneId, organizationId },
+    });
+    if (!milestone) {
+      throw new NotFoundException("Project milestone not found");
+    }
+
+    await this.prisma.client.projectMilestone.updateMany({
+      where: { id: milestoneId, organizationId },
+      data: {
+        title: dto.title,
+        description: dto.description,
+        dueDate: dto.dueDate,
+        status: dto.status,
+      },
+    });
+
+    return this.getMilestone(organizationId, milestoneId);
+  }
+
+  async deleteMilestone(organizationId: string, milestoneId: string) {
+    const milestone = await this.prisma.client.projectMilestone.findFirst({
+      where: { id: milestoneId, organizationId },
+    });
+    if (!milestone) {
+      throw new NotFoundException("Project milestone not found");
+    }
+
+    await this.prisma.client.projectMilestone.deleteMany({
+      where: { id: milestoneId, organizationId },
+    });
+
+    return { success: true, id: milestoneId };
   }
 }

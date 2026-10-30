@@ -1,7 +1,7 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { usePathname } from "next/navigation"
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import {
   LayoutDashboard,
   Building2,
@@ -15,10 +15,10 @@ import {
   ShieldCheck,
   Cpu,
   TrendingUp,
-} from "lucide-react"
-import { cn } from "@repo/ui/lib/utils"
-import { Button } from "@repo/ui/components/ui/button"
-import { authClient } from "@/lib/auth-client"
+} from "lucide-react";
+import { cn } from "@repo/ui/lib/utils";
+import { Button } from "@repo/ui/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 const NAV_ITEMS = [
   { href: "/", label: "Overview", icon: LayoutDashboard },
@@ -31,10 +31,10 @@ const NAV_ITEMS = [
   { href: "/activity", label: "User Activity", icon: Activity },
   { href: "/integrations", label: "Integrations", icon: Plug },
   { href: "/settings", label: "Settings", icon: Settings },
-]
+];
 
 export function Sidebar({ userEmail }: { userEmail?: string | null }) {
-  const pathname = usePathname()
+  const pathname = usePathname();
 
   return (
     <aside className="flex h-full w-60 shrink-0 flex-col border-r border-border bg-card">
@@ -43,15 +43,25 @@ export function Sidebar({ userEmail }: { userEmail?: string | null }) {
           <ShieldCheck className="size-4 text-primary" aria-hidden="true" />
         </div>
         <div className="flex flex-col">
-          <span className="text-sm font-semibold leading-tight text-foreground">Platform Admin</span>
-          <span className="text-xs leading-tight text-muted-foreground">Scryme</span>
+          <span className="text-sm font-semibold leading-tight text-foreground">
+            Platform Admin
+          </span>
+          <span className="text-xs leading-tight text-muted-foreground">
+            Scryme
+          </span>
         </div>
       </div>
 
-      <nav className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4" aria-label="Admin navigation">
+      <nav
+        className="flex flex-1 flex-col gap-1 overflow-y-auto px-3 py-4"
+        aria-label="Admin navigation"
+      >
         {NAV_ITEMS.map((item) => {
-          const isActive = item.href === "/" ? pathname === "/" : pathname?.startsWith(item.href)
-          const Icon = item.icon
+          const isActive =
+            item.href === "/"
+              ? pathname === "/"
+              : pathname?.startsWith(item.href);
+          const Icon = item.icon;
           return (
             <Link
               key={item.href}
@@ -67,12 +77,16 @@ export function Sidebar({ userEmail }: { userEmail?: string | null }) {
               <Icon className="size-4" aria-hidden="true" />
               {item.label}
             </Link>
-          )
+          );
         })}
       </nav>
 
       <div className="flex flex-col gap-2 border-t border-border px-3 py-4">
-        {userEmail ? <p className="truncate px-3 text-xs text-muted-foreground">{userEmail}</p> : null}
+        {userEmail ? (
+          <p className="truncate px-3 text-xs text-muted-foreground">
+            {userEmail}
+          </p>
+        ) : null}
         <Button
           variant="ghost"
           size="sm"
@@ -81,7 +95,7 @@ export function Sidebar({ userEmail }: { userEmail?: string | null }) {
             authClient.signOut({
               fetchOptions: {
                 onSuccess: () => {
-                  window.location.href = "/login"
+                  window.location.href = "/login";
                 },
               },
             })
@@ -92,5 +106,5 @@ export function Sidebar({ userEmail }: { userEmail?: string | null }) {
         </Button>
       </div>
     </aside>
-  )
+  );
 }

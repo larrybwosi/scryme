@@ -1,7 +1,7 @@
 services:
   admin:
     image: ghcr.io/larrybwosi/scryme/admin:${SCRYME_VERSION:-latest}
-    container_name: scryme-admin
+    container_name: ${INSTANCE_NAME:-scryme}-admin
     restart: always
     ports:
       - "${ADMIN_PORT:-3007}:3007"

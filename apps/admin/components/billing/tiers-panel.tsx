@@ -1,12 +1,17 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
-import { Plus, Pencil, Trash2, Loader2 } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Plus, Pencil, Trash2, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -16,29 +21,31 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
-} from "@repo/ui/components/ui/alert-dialog"
-import { deleteTier, type Tier } from "@/app/actions/billing"
-import { TierFormDialog } from "./tier-form-dialog"
+} from "@repo/ui/components/ui/alert-dialog";
+import { deleteTier, type Tier } from "@/app/actions/billing";
+import { TierFormDialog } from "./tier-form-dialog";
 
 export function TiersPanel({ tiers }: { tiers: Tier[] }) {
-  const router = useRouter()
-  const [editingTier, setEditingTier] = useState<Tier | null>(null)
-  const [createOpen, setCreateOpen] = useState(false)
-  const [deleteTarget, setDeleteTarget] = useState<Tier | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
+  const router = useRouter();
+  const [editingTier, setEditingTier] = useState<Tier | null>(null);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [deleteTarget, setDeleteTarget] = useState<Tier | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   async function handleDelete() {
-    if (!deleteTarget) return
-    setIsDeleting(true)
+    if (!deleteTarget) return;
+    setIsDeleting(true);
     try {
-      await deleteTier(deleteTarget.slug)
-      toast.success(`${deleteTarget.name} tier deleted`)
-      setDeleteTarget(null)
-      router.refresh()
+      await deleteTier(deleteTarget.slug);
+      toast.success(`${deleteTarget.name} tier deleted`);
+      setDeleteTarget(null);
+      router.refresh();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to delete tier")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to delete tier",
+      );
     } finally {
-      setIsDeleting(false)
+      setIsDeleting(false);
     }
   }
 
@@ -60,13 +67,20 @@ export function TiersPanel({ tiers }: { tiers: Tier[] }) {
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {tiers.map((tier) => (
-            <Card key={tier.slug} className="flex flex-col border-border bg-card">
+            <Card
+              key={tier.slug}
+              className="flex flex-col border-border bg-card"
+            >
               <CardHeader className="flex flex-row items-start justify-between gap-2">
                 <div>
-                  <CardTitle className="text-base font-semibold text-foreground">{tier.name}</CardTitle>
+                  <CardTitle className="text-base font-semibold text-foreground">
+                    {tier.name}
+                  </CardTitle>
                   <p className="mt-1 text-2xl font-semibold text-foreground">
                     ${tier.price}
-                    <span className="text-sm font-normal text-muted-foreground">/mo</span>
+                    <span className="text-sm font-normal text-muted-foreground">
+                      /mo
+                    </span>
                   </p>
                 </div>
                 <Badge variant="outline" className="font-mono text-xs">
@@ -75,7 +89,9 @@ export function TiersPanel({ tiers }: { tiers: Tier[] }) {
               </CardHeader>
               <CardContent className="flex flex-1 flex-col gap-4">
                 {tier.description ? (
-                  <p className="text-sm text-muted-foreground">{tier.description}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tier.description}
+                  </p>
                 ) : null}
                 {tier.features && tier.features.length > 0 ? (
                   <ul className="flex flex-col gap-1.5 text-sm text-muted-foreground">
@@ -88,7 +104,12 @@ export function TiersPanel({ tiers }: { tiers: Tier[] }) {
                   </ul>
                 ) : null}
                 <div className="mt-auto flex justify-end gap-2 pt-2">
-                  <Button variant="ghost" size="sm" className="gap-2" onClick={() => setEditingTier(tier)}>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    className="gap-2"
+                    onClick={() => setEditingTier(tier)}
+                  >
                     <Pencil className="size-3.5" aria-hidden="true" />
                     Edit
                   </Button>
@@ -117,31 +138,39 @@ export function TiersPanel({ tiers }: { tiers: Tier[] }) {
         />
       ) : null}
 
-      <AlertDialog open={!!deleteTarget} onOpenChange={(open) => !open && setDeleteTarget(null)}>
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => !open && setDeleteTarget(null)}
+      >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete {deleteTarget?.name} tier?</AlertDialogTitle>
+            <AlertDialogTitle>
+              Delete {deleteTarget?.name} tier?
+            </AlertDialogTitle>
             <AlertDialogDescription>
-              Organizations currently on this tier will keep their subscription record, but the tier
-              definition will no longer be available to assign.
+              Organizations currently on this tier will keep their subscription
+              record, but the tier definition will no longer be available to
+              assign.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={(e) => {
-                e.preventDefault()
-                handleDelete()
+                e.preventDefault();
+                handleDelete();
               }}
               disabled={isDeleting}
               className="gap-2 bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
-              {isDeleting ? <Loader2 className="size-4 animate-spin" aria-hidden="true" /> : null}
+              {isDeleting ? (
+                <Loader2 className="size-4 animate-spin" aria-hidden="true" />
+              ) : null}
               Delete tier
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
     </div>
-  )
+  );
 }

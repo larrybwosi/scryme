@@ -1,7 +1,7 @@
 {
   "private": true,
   "name": "web",
-  "version": "10.2.28",
+  "version": "10.2.30",
   "type": "module",
   "scripts": {
     "dev": "next dev",

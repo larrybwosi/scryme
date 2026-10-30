@@ -63,6 +63,11 @@ export class CreateTaskDto {
   @IsString()
   parentTaskId?: string;
 
+  @ApiPropertyOptional({ example: 'cuid_milestone_id' })
+  @IsOptional()
+  @IsString()
+  milestoneId?: string;
+
   @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
   @IsOptional()
   @IsArray()
@@ -193,6 +198,16 @@ export class TaskFilterDto {
   @IsString()
   assigneeId?: string;
 
+  @ApiPropertyOptional({ example: 'cuid_milestone_id' })
+  @IsOptional()
+  @IsString()
+  milestoneId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_parent_task_id' })
+  @IsOptional()
+  @IsString()
+  parentTaskId?: string;
+
   @ApiPropertyOptional({ example: 'Search text' })
   @IsOptional()
   @IsString()
@@ -207,4 +222,24 @@ export class TaskFilterDto {
   @IsOptional()
   @Type(() => Number)
   limit?: number = 20;
+}
+
+
+export class CreateTaskTimeEntryDto {
+  @ApiProperty({ example: 3.5, description: "Hours worked on task" })
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0.1)
+  hours!: number;
+
+  @ApiPropertyOptional({ example: "Implemented JWT auth middleware and unit tests" })
+  @IsOptional()
+  @IsString()
+  description?: string;
+
+  @ApiPropertyOptional({ example: "2026-10-15T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  date?: Date;
 }

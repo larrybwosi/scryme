@@ -71,18 +71,20 @@ export function DocumentTemplatesPanel({
 
   const totalTemplates = data.categories.reduce(
     (acc, cat) => acc + cat.templates.length,
-    0
+    0,
   );
-  const activeCategoriesCount = data.categories.filter((c) => c.isEnabled).length;
+  const activeCategoriesCount = data.categories.filter(
+    (c) => c.isEnabled,
+  ).length;
   const approvedTemplatesCount = data.categories.reduce(
     (acc, cat) =>
       acc + cat.templates.filter((t) => t.isEffectivelyEnabled).length,
-    0
+    0,
   );
 
   const handleCategoryToggle = async (
     documentType: string,
-    currentStatus: boolean
+    currentStatus: boolean,
   ) => {
     const nextStatus = !currentStatus;
     setPendingKey(`cat:${documentType}`);
@@ -111,7 +113,7 @@ export function DocumentTemplatesPanel({
       try {
         await toggleDocumentCategorySetting(documentType, nextStatus);
         toast.success(
-          `${documentType} category ${nextStatus ? "enabled" : "disabled"} system wide`
+          `${documentType} category ${nextStatus ? "enabled" : "disabled"} system wide`,
         );
         router.refresh();
       } catch (error) {
@@ -126,7 +128,7 @@ export function DocumentTemplatesPanel({
   const handleTemplateToggle = async (
     documentType: string,
     templateId: string,
-    currentStatus: boolean
+    currentStatus: boolean,
   ) => {
     const nextStatus = !currentStatus;
     setPendingKey(`tmpl:${documentType}:${templateId}`);
@@ -161,10 +163,10 @@ export function DocumentTemplatesPanel({
         await toggleDocumentTemplateSetting(
           documentType,
           templateId,
-          nextStatus
+          nextStatus,
         );
         toast.success(
-          `Template "${templateId}" ${nextStatus ? "approved" : "disabled"}`
+          `Template "${templateId}" ${nextStatus ? "approved" : "disabled"}`,
         );
         router.refresh();
       } catch (error) {
@@ -253,7 +255,9 @@ export function DocumentTemplatesPanel({
                         variant={cat.isEnabled ? "default" : "secondary"}
                         className="text-[11px] font-medium"
                       >
-                        {cat.isEnabled ? "Category Enabled" : "Category Disabled"}
+                        {cat.isEnabled
+                          ? "Category Enabled"
+                          : "Category Disabled"}
                       </Badge>
                     </div>
                     <CardDescription className="text-xs mt-0.5 text-muted-foreground">
@@ -285,9 +289,10 @@ export function DocumentTemplatesPanel({
                   <div className="mb-4 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 text-xs flex items-center gap-2">
                     <AlertTriangle className="size-4 shrink-0" />
                     <span>
-                      Because the <strong>{cat.label}</strong> category is disabled
-                      system wide, all templates below are currently hidden from
-                      organization document settings regardless of individual approval status.
+                      Because the <strong>{cat.label}</strong> category is
+                      disabled system wide, all templates below are currently
+                      hidden from organization document settings regardless of
+                      individual approval status.
                     </span>
                   </div>
                 )}
@@ -358,7 +363,7 @@ export function DocumentTemplatesPanel({
                                     handleTemplateToggle(
                                       cat.id,
                                       template.id,
-                                      template.isEnabled
+                                      template.isEnabled,
                                     )
                                   }
                                 />

@@ -1,9 +1,9 @@
 import { ModuleAccessService } from "../module-access.service";
-import { PrismaService } from "@/prisma/prisma.service";
+import { describe, it, expect, beforeEach, vi } from "vitest";
 
 describe("ModuleAccessService", () => {
   let service: ModuleAccessService;
-  let prisma: PrismaService;
+  let prisma: any;
 
   beforeEach(() => {
     prisma = {
@@ -15,29 +15,42 @@ describe("ModuleAccessService", () => {
           findUnique: vi.fn(),
         },
       },
-    } as any;
-
+    };
     service = new ModuleAccessService(prisma);
   });
 
-  it("should return isEnabled: true when bypassPaymentCheck is enabled on organization", async () => {
-    (prisma.client.globalSetting.findUnique as any).mockResolvedValue(null);
-    (prisma.client.organization.findUnique as any).mockResolvedValue({
+  it("should evaluate all modules as enabled by default when no settings exist", async () => {
+    prisma.client.globalSetting.findUnique.mockResolvedValue(null);
+    prisma.client.organization.findUnique.mockResolvedValue(null);
+
+    const res = await service.getAllModulesAccess("org-123");
+    expect(res.length).toBeGreaterThan(0);
+    expect(res.every((m) => m.isEnabled)).toBe(true);
+  });
+
+  it("should disable module when globally disabled in system settings", async () => {
+    prisma.client.globalSetting.findUnique.mockResolvedValue({
+      value: JSON.stringify({ finance: false }),
+    });
+    prisma.client.organization.findUnique.mockResolvedValue(null);
+
+    const res = await service.getAllModulesAccess("org-123");
+    const finance = res.find((m) => m.moduleKey === "finance");
+    expect(finance?.isEnabled).toBe(false);
+    expect(finance?.systemEnabled).toBe(false);
+  });
+
+  it("should respect payment check override on organization", async () => {
+    prisma.client.globalSetting.findUnique.mockResolvedValue({
+      value: JSON.stringify({ finance: false }),
+    });
+    prisma.client.organization.findUnique.mockResolvedValue({
       quotaOverrides: { bypassPaymentCheck: true },
     });
 
-    const result = await service.checkModuleAccess("org-1", "finance");
-    expect(result.isEnabled).toBe(true);
-    expect(result.reason).toBe("Organization payment override enabled");
-  });
-
-  it("should respect module flags when bypassPaymentCheck is false", async () => {
-    (prisma.client.globalSetting.findUnique as any).mockResolvedValue(null);
-    (prisma.client.organization.findUnique as any).mockResolvedValue({
-      quotaOverrides: { bypassPaymentCheck: false, modules: { finance: false } },
-    });
-
-    const result = await service.checkModuleAccess("org-1", "finance");
-    expect(result.isEnabled).toBe(false);
+    const res = await service.getAllModulesAccess("org-123");
+    const finance = res.find((m) => m.moduleKey === "finance");
+    expect(finance?.isEnabled).toBe(true);
+    expect(finance?.reason).toBe("Organization payment override enabled");
   });
 });

@@ -2,9 +2,9 @@ name: Test
 
 on:
   push:
-    branches: [main, dev, nextgen, crm]
+    branches: [main, dev, nextgen]
   pull_request:
-    branches: [main, dev, nextgen, crm]
+    branches: [main, dev, nextgen]
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}

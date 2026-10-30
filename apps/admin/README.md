@@ -14,14 +14,14 @@ This guide covers building, deploying, and connecting the Admin App container to
 
 The Admin App requires the following runtime environment variables:
 
-| Variable | Required | Default | Description |
-| :--- | :---: | :---: | :--- |
-| `DATABASE_URL` | **Yes** | - | PostgreSQL connection URL used by `@repo/db` (Prisma) |
-| `NEXT_PUBLIC_API_URL` | **Yes** | `https://api.scryme.tech` | Base URL of the Scryme API service |
-| `NEXT_PUBLIC_ADMIN_URL` | **Yes** | `http://localhost:3007` | Public-facing URL of this Admin App |
-| `BETTER_AUTH_SECRET` | **Yes** | - | Shared secret key for Better Auth session encryption |
-| `BETTER_AUTH_URL` | Optional | `http://localhost:3007` | Base authentication URL |
-| `PORT` | Optional | `3007` | Internal server port for Next.js standalone server |
+| Variable                | Required |          Default          | Description                                           |
+| :---------------------- | :------: | :-----------------------: | :---------------------------------------------------- |
+| `DATABASE_URL`          | **Yes**  |             -             | PostgreSQL connection URL used by `@repo/db` (Prisma) |
+| `NEXT_PUBLIC_API_URL`   | **Yes**  | `https://api.scryme.tech` | Base URL of the Scryme API service                    |
+| `NEXT_PUBLIC_ADMIN_URL` | **Yes**  |  `http://localhost:3007`  | Public-facing URL of this Admin App                   |
+| `BETTER_AUTH_SECRET`    | **Yes**  |             -             | Shared secret key for Better Auth session encryption  |
+| `BETTER_AUTH_URL`       | Optional |  `http://localhost:3007`  | Base authentication URL                               |
+| `PORT`                  | Optional |          `3007`           | Internal server port for Next.js standalone server    |
 
 ---
 
@@ -30,6 +30,7 @@ The Admin App requires the following runtime environment variables:
 The Admin App uses Server Actions and server-side utilities from `@repo/db` (Prisma ORM) to interact directly with the PostgreSQL database.
 
 ### Connection String Format
+
 ```bash
 DATABASE_URL="postgresql://<USER>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>?schema=public&sslmode=<SSL_MODE>"
 ```
@@ -37,6 +38,7 @@ DATABASE_URL="postgresql://<USER>:<PASSWORD>@<HOST>:<PORT>/<DATABASE>?schema=pub
 ### Deployment Scenarios
 
 #### Scenario A: Same Docker Network (Stack Deployment)
+
 When running alongside the main Scryme stack using Docker Compose, the database service is reachable by its container service name (`db` or `scryme-db`):
 
 ```bash
@@ -46,6 +48,7 @@ DATABASE_URL="postgresql://postgres:postgres_password@db:5432/app_db?schema=publ
 Ensure the Admin App container belongs to the shared network (`scryme-network` or `scryme-prod-network`).
 
 #### Scenario B: External PostgreSQL Database
+
 If your system database is hosted on a managed database platform (such as AWS RDS, Supabase, Neon, or a dedicated database host):
 
 1. **Format the Connection String**:
@@ -57,6 +60,7 @@ If your system database is hosted on a managed database platform (such as AWS RD
    - If using cloud provider security groups (e.g., AWS Security Groups or GCP Firewall), grant ingress access to the Admin host IP.
 
 #### Scenario C: Host Network / Port Forwarding
+
 If the database runs on the Docker host machine directly and is published to `localhost:5438` or `localhost:5432`:
 
 - **Linux**: Use host IP (e.g., `172.17.0.1` or `host.docker.internal` with `extra_hosts`).
@@ -70,6 +74,7 @@ If the database runs on the Docker host machine directly and is published to `lo
 ## 3. Database Permissions & Schema Requirements
 
 The Admin App requires read and write permissions on the core schema managed by `@repo/db` (Prisma). Key models accessed include:
+
 - `Organization`
 - `User` & `Member`
 - `IntegrationDefinition` & `OrganizationIntegration`
@@ -79,6 +84,7 @@ The Admin App requires read and write permissions on the core schema managed by 
 Ensure the database user configured in `DATABASE_URL` has `SELECT`, `INSERT`, `UPDATE`, `DELETE` privileges on the `public` schema.
 
 Database migrations are managed centrally via `@repo/db`. Deploy migrations prior to starting the Admin App:
+
 ```bash
 pnpm --filter @repo/db run db:migrate:deploy
 ```
@@ -133,6 +139,7 @@ ghcr.io/larrybwosi/scryme/admin:<VERSION>
 ```
 
 To pull and run the release image:
+
 ```bash
 docker pull ghcr.io/larrybwosi/scryme/admin:latest
 ```
@@ -142,23 +149,48 @@ docker pull ghcr.io/larrybwosi/scryme/admin:latest
 ## 6. Health Check & Troubleshooting
 
 ### Healthcheck
+
 The container exposes a health check endpoint at `/api/health`:
+
 ```bash
 curl http://localhost:3007/api/health
 ```
+
 Response:
+
 ```json
-{"status":"ok","timestamp":"2026-03-31T00:00:00.000Z"}
+{ "status": "ok", "timestamp": "2026-03-31T00:00:00.000Z" }
 ```
 
 ### Viewing Logs
+
 ```bash
 docker logs -f scryme-admin
 ```
 
 ### Common Issues
+
 - **Database Connection Refused**:
   - Check if `DATABASE_URL` host is reachable from inside the container (`docker exec -it scryme-admin ping <db_host>`).
   - Verify PostgreSQL is accepting connections on the specified port.
 - **SSL / TLS Handshake Failure**:
   - Append `?sslmode=require` or `?sslmode=no-verify` to `DATABASE_URL` depending on your PostgreSQL provider's TLS requirements.
+
+
+---
+
+## 7. Multi-Instance & Shared Infrastructure Deployment
+
+The Admin App supports side-by-side multi-instance deployments using dynamic `INSTANCE_NAME` scoping and shared Docker network configuration.
+
+```bash
+cd apps/admin
+INSTANCE_NAME=scryme \
+SCRYME_NETWORK_NAME=scryme-network \
+ADMIN_PORT=3007 \
+DATABASE_URL="postgresql://dbuser:dbpassword@db:5432/app_db?schema=public" \
+REDIS_URL="redis://redis:6379" \
+docker compose up -d
+```
+
+See the [Multi-Instance & Shared Infrastructure Deployment Guide](../../docs/multi-instance-deployment.md) for full architecture details.

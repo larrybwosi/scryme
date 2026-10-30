@@ -8,7 +8,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "Scryme Chat",
     slug: "scryme-chat",
-    description: "Internal team messaging, automated approval notifications, and system alert channels.",
+    description:
+      "Internal team messaging, automated approval notifications, and system alert channels.",
     category: IntegrationCategory.COMMUNICATION,
     authType: AuthType.API_KEY,
     isActive: true,
@@ -16,7 +17,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "Hermes Agent",
     slug: "hermes-agent",
-    description: "Autonomous AI agent for automated tasks, system monitoring, and operational workflows.",
+    description:
+      "Autonomous AI agent for automated tasks, system monitoring, and operational workflows.",
     category: IntegrationCategory.OTHER,
     authType: AuthType.API_KEY,
     isActive: true,
@@ -24,7 +26,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "Resend Email",
     slug: "resend",
-    description: "Transactional and marketing email delivery service with domain authentication and event webhooks.",
+    description:
+      "Transactional and marketing email delivery service with domain authentication and event webhooks.",
     category: IntegrationCategory.COMMUNICATION,
     authType: AuthType.API_KEY,
     isActive: true,
@@ -32,7 +35,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "Sentry",
     slug: "sentry",
-    description: "Application error tracking, exception performance monitoring, and webhook event processing.",
+    description:
+      "Application error tracking, exception performance monitoring, and webhook event processing.",
     category: IntegrationCategory.MONITORING,
     authType: AuthType.WEBHOOK_SECRET,
     isActive: true,
@@ -40,7 +44,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "OpenPanel",
     slug: "openpanel",
-    description: "Product and usage analytics, user event tracking, and session telemetry.",
+    description:
+      "Product and usage analytics, user event tracking, and session telemetry.",
     category: IntegrationCategory.MONITORING,
     authType: AuthType.API_KEY,
     isActive: true,
@@ -48,7 +53,8 @@ const DEFAULT_INTEGRATIONS = [
   {
     name: "PostHog",
     slug: "posthog",
-    description: "Product analytics, feature flags, session recording, and user behavior analytics.",
+    description:
+      "Product analytics, feature flags, session recording, and user behavior analytics.",
     category: IntegrationCategory.MONITORING,
     authType: AuthType.API_KEY,
     isActive: true,
@@ -189,7 +195,8 @@ export async function updateIntegrationDefinition(
     data: {
       name: input.name,
       slug: input.slug,
-      description: input.description !== undefined ? input.description : undefined,
+      description:
+        input.description !== undefined ? input.description : undefined,
       logoUrl: input.logoUrl !== undefined ? input.logoUrl : undefined,
       category: input.category,
       authType: input.authType,
@@ -355,10 +362,9 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.get("system:integration:hermes:model") ||
       process.env.HERMES_MODEL ||
       "hermes-3-llama-3.1-8b",
-    hermesEnabled:
-      settingsMap.has("system:integration:hermes:enabled")
-        ? settingsMap.get("system:integration:hermes:enabled") === "true"
-        : process.env.HERMES_ENABLED === "true",
+    hermesEnabled: settingsMap.has("system:integration:hermes:enabled")
+      ? settingsMap.get("system:integration:hermes:enabled") === "true"
+      : process.env.HERMES_ENABLED === "true",
 
     resendApiKey:
       settingsMap.get("system:integration:resend:apiKey") ||
@@ -369,44 +375,41 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       process.env.EMAIL_FROM ||
       "Scryme <no-reply@scryme.tech>",
     resendDomain:
-      settingsMap.get("system:integration:resend:domain") ||
-      "scryme.tech",
+      settingsMap.get("system:integration:resend:domain") || "scryme.tech",
     resendRegion:
-      settingsMap.get("system:integration:resend:region") ||
-      "us-east-1",
-    resendOpenTracking:
-      settingsMap.has("system:integration:resend:openTracking")
-        ? settingsMap.get("system:integration:resend:openTracking") === "true"
-        : true,
-    resendClickTracking:
-      settingsMap.has("system:integration:resend:clickTracking")
-        ? settingsMap.get("system:integration:resend:clickTracking") === "true"
-        : true,
+      settingsMap.get("system:integration:resend:region") || "us-east-1",
+    resendOpenTracking: settingsMap.has(
+      "system:integration:resend:openTracking",
+    )
+      ? settingsMap.get("system:integration:resend:openTracking") === "true"
+      : true,
+    resendClickTracking: settingsMap.has(
+      "system:integration:resend:clickTracking",
+    )
+      ? settingsMap.get("system:integration:resend:clickTracking") === "true"
+      : true,
     resendTrackingSubdomain:
-      settingsMap.get("system:integration:resend:trackingSubdomain") ||
-      "links",
-    resendEnabled:
-      settingsMap.has("system:integration:resend:enabled")
-        ? settingsMap.get("system:integration:resend:enabled") === "true"
-        : Boolean(process.env.RESEND_API_KEY),
+      settingsMap.get("system:integration:resend:trackingSubdomain") || "links",
+    resendEnabled: settingsMap.has("system:integration:resend:enabled")
+      ? settingsMap.get("system:integration:resend:enabled") === "true"
+      : Boolean(process.env.RESEND_API_KEY),
 
     adminWorkspaceSlug:
       settingsMap.get("system:admin:chat:workspaceSlug") || "system-admins",
     adminWorkspaceName:
-      settingsMap.get("system:admin:chat:workspaceName") || "System Admin Workspace",
+      settingsMap.get("system:admin:chat:workspaceName") ||
+      "System Admin Workspace",
     adminChannelSlug:
       settingsMap.get("system:admin:chat:channelSlug") || "system-alerts",
     adminWorkspaceStatus:
       settingsMap.get("system:admin:chat:status") || "Not Configured",
 
-    errorAlertsEnabled:
-      settingsMap.has("system:error:alerts:enabled")
-        ? settingsMap.get("system:error:alerts:enabled") === "true"
-        : process.env.ERROR_ALERTS_ENABLED !== "false",
-    errorAlertsMinStatus:
-      settingsMap.has("system:error:alerts:minStatus")
-        ? parseInt(settingsMap.get("system:error:alerts:minStatus")!, 10)
-        : Number(process.env.ERROR_ALERTS_MIN_STATUS || 500),
+    errorAlertsEnabled: settingsMap.has("system:error:alerts:enabled")
+      ? settingsMap.get("system:error:alerts:enabled") === "true"
+      : process.env.ERROR_ALERTS_ENABLED !== "false",
+    errorAlertsMinStatus: settingsMap.has("system:error:alerts:minStatus")
+      ? parseInt(settingsMap.get("system:error:alerts:minStatus")!, 10)
+      : Number(process.env.ERROR_ALERTS_MIN_STATUS || 500),
 
     sentryDsn:
       settingsMap.get("system:integration:sentry:dsn") ||
@@ -438,10 +441,9 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       settingsMap.get("system:integration:sentry:tracesSampleRate") ||
       process.env.SENTRY_TRACES_SAMPLE_RATE ||
       "1.0",
-    sentryEnabled:
-      settingsMap.has("system:integration:sentry:enabled")
-        ? settingsMap.get("system:integration:sentry:enabled") === "true"
-        : process.env.SENTRY_INTEGRATION_ENABLED !== "false",
+    sentryEnabled: settingsMap.has("system:integration:sentry:enabled")
+      ? settingsMap.get("system:integration:sentry:enabled") === "true"
+      : process.env.SENTRY_INTEGRATION_ENABLED !== "false",
 
     openpanelClientId:
       settingsMap.get("system:integration:openpanel:clientId") ||
@@ -457,10 +459,12 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       process.env.OPENPANEL_HOST ||
       process.env.NEXT_PUBLIC_OPENPANEL_HOST ||
       "https://api.openpanel.dev",
-    openpanelEnabled:
-      settingsMap.has("system:integration:openpanel:enabled")
-        ? settingsMap.get("system:integration:openpanel:enabled") === "true"
-        : Boolean(process.env.OPENPANEL_CLIENT_ID || process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID),
+    openpanelEnabled: settingsMap.has("system:integration:openpanel:enabled")
+      ? settingsMap.get("system:integration:openpanel:enabled") === "true"
+      : Boolean(
+          process.env.OPENPANEL_CLIENT_ID ||
+          process.env.NEXT_PUBLIC_OPENPANEL_CLIENT_ID,
+        ),
 
     posthogApiKey:
       settingsMap.get("system:integration:posthog:apiKey") ||
@@ -472,10 +476,11 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       process.env.POSTHOG_HOST ||
       process.env.NEXT_PUBLIC_POSTHOG_HOST ||
       "https://us.i.posthog.com",
-    posthogEnabled:
-      settingsMap.has("system:integration:posthog:enabled")
-        ? settingsMap.get("system:integration:posthog:enabled") === "true"
-        : Boolean(process.env.POSTHOG_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY),
+    posthogEnabled: settingsMap.has("system:integration:posthog:enabled")
+      ? settingsMap.get("system:integration:posthog:enabled") === "true"
+      : Boolean(
+          process.env.POSTHOG_API_KEY || process.env.NEXT_PUBLIC_POSTHOG_KEY,
+        ),
   };
 }
 
@@ -493,7 +498,9 @@ export async function updateSystemIntegrationSettings(
     ["system:integration:hermes:model", input.hermesModel],
     [
       "system:integration:hermes:enabled",
-      input.hermesEnabled !== undefined ? String(input.hermesEnabled) : undefined,
+      input.hermesEnabled !== undefined
+        ? String(input.hermesEnabled)
+        : undefined,
     ],
     ["system:integration:resend:apiKey", input.resendApiKey],
     ["system:integration:resend:fromEmail", input.resendFromEmail],
@@ -501,27 +508,40 @@ export async function updateSystemIntegrationSettings(
     ["system:integration:resend:region", input.resendRegion],
     [
       "system:integration:resend:openTracking",
-      input.resendOpenTracking !== undefined ? String(input.resendOpenTracking) : undefined,
+      input.resendOpenTracking !== undefined
+        ? String(input.resendOpenTracking)
+        : undefined,
     ],
     [
       "system:integration:resend:clickTracking",
-      input.resendClickTracking !== undefined ? String(input.resendClickTracking) : undefined,
+      input.resendClickTracking !== undefined
+        ? String(input.resendClickTracking)
+        : undefined,
     ],
-    ["system:integration:resend:trackingSubdomain", input.resendTrackingSubdomain],
+    [
+      "system:integration:resend:trackingSubdomain",
+      input.resendTrackingSubdomain,
+    ],
     [
       "system:integration:resend:enabled",
-      input.resendEnabled !== undefined ? String(input.resendEnabled) : undefined,
+      input.resendEnabled !== undefined
+        ? String(input.resendEnabled)
+        : undefined,
     ],
     ["system:admin:chat:workspaceSlug", input.adminWorkspaceSlug],
     ["system:admin:chat:workspaceName", input.adminWorkspaceName],
     ["system:admin:chat:channelSlug", input.adminChannelSlug],
     [
       "system:error:alerts:enabled",
-      input.errorAlertsEnabled !== undefined ? String(input.errorAlertsEnabled) : undefined,
+      input.errorAlertsEnabled !== undefined
+        ? String(input.errorAlertsEnabled)
+        : undefined,
     ],
     [
       "system:error:alerts:minStatus",
-      input.errorAlertsMinStatus !== undefined ? String(input.errorAlertsMinStatus) : undefined,
+      input.errorAlertsMinStatus !== undefined
+        ? String(input.errorAlertsMinStatus)
+        : undefined,
     ],
     ["system:integration:sentry:dsn", input.sentryDsn],
     ["system:integration:sentry:org", input.sentryOrg],
@@ -529,23 +549,32 @@ export async function updateSystemIntegrationSettings(
     ["system:integration:sentry:authToken", input.sentryAuthToken],
     ["system:integration:sentry:webhookSecret", input.sentryWebhookSecret],
     ["system:integration:sentry:environment", input.sentryEnvironment],
-    ["system:integration:sentry:tracesSampleRate", input.sentryTracesSampleRate],
+    [
+      "system:integration:sentry:tracesSampleRate",
+      input.sentryTracesSampleRate,
+    ],
     [
       "system:integration:sentry:enabled",
-      input.sentryEnabled !== undefined ? String(input.sentryEnabled) : undefined,
+      input.sentryEnabled !== undefined
+        ? String(input.sentryEnabled)
+        : undefined,
     ],
     ["system:integration:openpanel:clientId", input.openpanelClientId],
     ["system:integration:openpanel:clientSecret", input.openpanelClientSecret],
     ["system:integration:openpanel:host", input.openpanelHost],
     [
       "system:integration:openpanel:enabled",
-      input.openpanelEnabled !== undefined ? String(input.openpanelEnabled) : undefined,
+      input.openpanelEnabled !== undefined
+        ? String(input.openpanelEnabled)
+        : undefined,
     ],
     ["system:integration:posthog:apiKey", input.posthogApiKey],
     ["system:integration:posthog:host", input.posthogHost],
     [
       "system:integration:posthog:enabled",
-      input.posthogEnabled !== undefined ? String(input.posthogEnabled) : undefined,
+      input.posthogEnabled !== undefined
+        ? String(input.posthogEnabled)
+        : undefined,
     ],
   ];
 
@@ -606,7 +635,8 @@ export async function testResendConnection() {
     if (res.status === 401) {
       return {
         success: false,
-        message: "Resend API key authentication failed. Please check your API key.",
+        message:
+          "Resend API key authentication failed. Please check your API key.",
       };
     }
 
@@ -645,11 +675,14 @@ export async function testHermesConnection() {
     });
 
     if (!response.ok) {
-      const rootResponse = await fetch(`${settings.hermesBaseUrl.replace(/\/$/, "")}/`, {
-        method: "GET",
-        headers,
-        signal: AbortSignal.timeout(5000),
-      });
+      const rootResponse = await fetch(
+        `${settings.hermesBaseUrl.replace(/\/$/, "")}/`,
+        {
+          method: "GET",
+          headers,
+          signal: AbortSignal.timeout(5000),
+        },
+      );
 
       if (!rootResponse.ok) {
         throw new Error(`HTTP ${response.status}: ${response.statusText}`);
@@ -706,9 +739,24 @@ export async function getAdminChatWorkspaceDetails() {
     return {
       workspaceSlug,
       channels: [
-        { id: "ch_system_alerts", slug: settings.adminChannelSlug || "system-alerts", name: "System Alerts", type: "public" },
-        { id: "ch_approvals", slug: "approvals", name: "Approval Notifications", type: "public" },
-        { id: "ch_general", slug: "general", name: "General System Chat", type: "public" },
+        {
+          id: "ch_system_alerts",
+          slug: settings.adminChannelSlug || "system-alerts",
+          name: "System Alerts",
+          type: "public",
+        },
+        {
+          id: "ch_approvals",
+          slug: "approvals",
+          name: "Approval Notifications",
+          type: "public",
+        },
+        {
+          id: "ch_general",
+          slug: "general",
+          name: "General System Chat",
+          type: "public",
+        },
       ],
       members: dbAdmins.map((u) => ({
         id: u.id,
@@ -729,7 +777,9 @@ export async function createAdminChatChannel(input: {
 
   const settings = await getSystemIntegrationSettings();
   const workspaceSlug = settings.adminWorkspaceSlug || "system-admins";
-  const channelSlug = (input.slug || input.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")).trim();
+  const channelSlug = (
+    input.slug || input.name.toLowerCase().replace(/[^a-z0-9-]/g, "-")
+  ).trim();
 
   try {
     const { ScrymeChatApiClient } = await import("@repo/chat");
@@ -748,7 +798,12 @@ export async function createAdminChatChannel(input: {
     revalidatePath("/integrations");
     return {
       success: true,
-      channel: { id: `ch_${Date.now()}`, name: input.name, slug: channelSlug, type: input.type || "public" },
+      channel: {
+        id: `ch_${Date.now()}`,
+        name: input.name,
+        slug: channelSlug,
+        type: input.type || "public",
+      },
       message: `Channel created locally. (${error.message || "Scryme Chat API fallback"})`,
     };
   }
@@ -833,10 +888,13 @@ export async function testScrymeChatConnection() {
     };
   } catch (error: any) {
     try {
-      const pingRes = await fetch(`${settings.scrymeChatBaseUrl.replace(/\/$/, "")}/health`, {
-        method: "GET",
-        signal: AbortSignal.timeout(5000),
-      });
+      const pingRes = await fetch(
+        `${settings.scrymeChatBaseUrl.replace(/\/$/, "")}/health`,
+        {
+          method: "GET",
+          signal: AbortSignal.timeout(5000),
+        },
+      );
 
       if (pingRes.ok) {
         return {
@@ -964,16 +1022,20 @@ export async function provisionAdminChatWorkspace(input: {
       }));
 
     const defaultChannels = Array.from(
-      new Set([channelSlug, "system-alerts", "approvals", "general"])
+      new Set([channelSlug, "system-alerts", "approvals", "general"]),
     );
 
-    const workspace = await scrymeClient.createWorkspace(workspaceName, workspaceSlug, {
-      ownerEmail,
-      ownerName: sessionUser.user?.name || undefined,
-      ownerAvatar: sessionUser.user?.image || undefined,
-      channels: defaultChannels,
-      initialMembers,
-    });
+    const workspace = await scrymeClient.createWorkspace(
+      workspaceName,
+      workspaceSlug,
+      {
+        ownerEmail,
+        ownerName: sessionUser.user?.name || undefined,
+        ownerAvatar: sessionUser.user?.image || undefined,
+        channels: defaultChannels,
+        initialMembers,
+      },
+    );
 
     await updateSystemIntegrationSettings({
       adminWorkspaceSlug: workspace.slug,
@@ -1063,19 +1125,23 @@ export async function testOpenPanelConnection() {
   if (!settings.openpanelEnabled) {
     return {
       success: false,
-      message: "OpenPanel integration is currently disabled in system settings.",
+      message:
+        "OpenPanel integration is currently disabled in system settings.",
     };
   }
 
   if (!settings.openpanelClientId) {
     return {
       success: false,
-      message: "OpenPanel Client ID is missing. Please enter a valid Client ID.",
+      message:
+        "OpenPanel Client ID is missing. Please enter a valid Client ID.",
     };
   }
 
   try {
-    const host = (settings.openpanelHost || "https://api.openpanel.dev").replace(/\/$/, "");
+    const host = (
+      settings.openpanelHost || "https://api.openpanel.dev"
+    ).replace(/\/$/, "");
     const res = await fetch(`${host}/health`, {
       method: "GET",
       signal: AbortSignal.timeout(5000),
@@ -1119,11 +1185,17 @@ export async function testPostHogConnection() {
   }
 
   try {
-    const host = (settings.posthogHost || "https://us.i.posthog.com").replace(/\/$/, "");
+    const host = (settings.posthogHost || "https://us.i.posthog.com").replace(
+      /\/$/,
+      "",
+    );
     const res = await fetch(`${host}/decide/?v=3`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ token: settings.posthogApiKey, distinct_id: "system-test" }),
+      body: JSON.stringify({
+        token: settings.posthogApiKey,
+        distinct_id: "system-test",
+      }),
       signal: AbortSignal.timeout(5000),
     });
 

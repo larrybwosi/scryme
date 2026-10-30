@@ -177,14 +177,20 @@ export function POS() {
     currentOrder.items.forEach(item => {
       if ((item.selectedUnit as any)?.isCustomPrice) return;
       const keyWithQty = `${item.variantId}:${item.selectedUnit.unitId ?? 'null'}:${item.quantity}`;
+      const keyBase = `${item.variantId}:${item.selectedUnit.unitId ?? 'null'}`;
       const resolvedPrice = priceMap[keyWithQty];
-      if (typeof resolvedPrice === 'number' && resolvedPrice !== item.selectedUnit.price) {
+      const basePrice = priceMap[keyBase] ?? (item.selectedUnit as any).originalRetailPrice ?? item.selectedUnit.price;
+      const isBulkTier = typeof resolvedPrice === 'number' && typeof basePrice === 'number' && resolvedPrice !== basePrice && item.quantity > 1;
+
+      if (typeof resolvedPrice === 'number' && (resolvedPrice !== item.selectedUnit.price || (item.selectedUnit as any).isBulkPrice !== isBulkTier)) {
         updateItemInOrder({
           ...item,
           selectedUnit: {
             ...item.selectedUnit,
+            originalRetailPrice: (item.selectedUnit as any).originalRetailPrice ?? basePrice,
             price: resolvedPrice,
-          },
+            isBulkPrice: isBulkTier,
+          } as any,
         });
       }
     });

@@ -1,89 +1,113 @@
-"use client"
+"use client";
 
-import { useState } from "react"
-import Link from "next/link"
-import Image from "next/image"
-import { useRouter } from "next/navigation"
-import { ArrowLeft, Plug, Play, Loader2, Save, ExternalLink } from "lucide-react"
-import { toast } from "sonner"
-import { Button } from "@repo/ui/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/components/ui/card"
-import { Badge } from "@repo/ui/components/ui/badge"
-import { Input } from "@repo/ui/components/ui/input"
-import { Label } from "@repo/ui/components/ui/label"
-import { Switch } from "@repo/ui/components/ui/switch"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/components/ui/tabs"
+import { useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { useRouter } from "next/navigation";
+import {
+  ArrowLeft,
+  Plug,
+  Play,
+  Loader2,
+  Save,
+  ExternalLink,
+} from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@repo/ui/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@repo/ui/components/ui/card";
+import { Badge } from "@repo/ui/components/ui/badge";
+import { Input } from "@repo/ui/components/ui/input";
+import { Label } from "@repo/ui/components/ui/label";
+import { Switch } from "@repo/ui/components/ui/switch";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 import {
   QueryClient,
   QueryClientProvider,
   useQuery,
   useMutation,
-} from "@tanstack/react-query"
+} from "@tanstack/react-query";
 import {
   getIntegrationBySlug,
   updateSystemIntegrationSettings,
   testIntegrationConnectionBySlug,
   type SystemIntegrationSettings,
-} from "@/app/actions/integrations"
-import { OrganizationIntegrationsTable } from "./organization-integrations-table"
-import { SystemIntegrationsPanel } from "./system-integrations-panel"
+} from "@/app/actions/integrations";
+import { OrganizationIntegrationsTable } from "./organization-integrations-table";
+import { SystemIntegrationsPanel } from "./system-integrations-panel";
 
-const queryClient = new QueryClient()
+const queryClient = new QueryClient();
 
 function IntegrationDetailContent({
   initialData,
   slug,
 }: {
   initialData: {
-    definition: any
-    activeConnections: any[]
-    systemSettings: SystemIntegrationSettings
-  }
-  slug: string
+    definition: any;
+    activeConnections: any[];
+    systemSettings: SystemIntegrationSettings;
+  };
+  slug: string;
 }) {
-  const router = useRouter()
-  const [testing, setTesting] = useState(false)
+  const router = useRouter();
+  const [testing, setTesting] = useState(false);
 
   const { data = initialData, refetch } = useQuery({
     queryKey: ["integration-detail", slug],
     queryFn: () => getIntegrationBySlug(slug),
     initialData,
     staleTime: 60 * 1000,
-  })
+  });
 
-  const { definition, activeConnections, systemSettings } = data
-  const [formData, setFormData] = useState<SystemIntegrationSettings>(systemSettings)
+  const { definition, activeConnections, systemSettings } = data;
+  const [formData, setFormData] =
+    useState<SystemIntegrationSettings>(systemSettings);
 
   const updateMutation = useMutation({
-    mutationFn: (newSettings: SystemIntegrationSettings) => updateSystemIntegrationSettings(newSettings),
+    mutationFn: (newSettings: SystemIntegrationSettings) =>
+      updateSystemIntegrationSettings(newSettings),
     onSuccess: () => {
-      toast.success(`${definition.name} settings updated successfully`)
-      refetch()
+      toast.success(`${definition.name} settings updated successfully`);
+      refetch();
     },
     onError: (error) => {
-      toast.error(error instanceof Error ? error.message : "Failed to update settings")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to update settings",
+      );
     },
-  })
+  });
 
   async function handleTestConnection() {
-    setTesting(true)
+    setTesting(true);
     try {
-      const res = await testIntegrationConnectionBySlug(slug)
+      const res = await testIntegrationConnectionBySlug(slug);
       if (res.success) {
-        toast.success(res.message)
+        toast.success(res.message);
       } else {
-        toast.error(res.message)
+        toast.error(res.message);
       }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Failed to test connection")
+      toast.error(
+        error instanceof Error ? error.message : "Failed to test connection",
+      );
     } finally {
-      setTesting(false)
+      setTesting(false);
     }
   }
 
   function handleSaveSettings(e: React.FormEvent) {
-    e.preventDefault()
-    updateMutation.mutate(formData)
+    e.preventDefault();
+    updateMutation.mutate(formData);
   }
 
   return (
@@ -113,19 +137,39 @@ function IntegrationDetailContent({
             )}
             <div>
               <div className="flex items-center gap-2">
-                <h1 className="text-2xl font-semibold tracking-tight text-foreground">{definition.name}</h1>
-                <Badge variant={definition.isActive ? "secondary" : "outline"} className={definition.isActive ? "text-emerald-600 bg-emerald-500/10" : ""}>
+                <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+                  {definition.name}
+                </h1>
+                <Badge
+                  variant={definition.isActive ? "secondary" : "outline"}
+                  className={
+                    definition.isActive
+                      ? "text-emerald-600 bg-emerald-500/10"
+                      : ""
+                  }
+                >
                   {definition.isActive ? "Active" : "Disabled"}
                 </Badge>
               </div>
-              <p className="text-sm font-mono text-muted-foreground">{definition.slug}</p>
+              <p className="text-sm font-mono text-muted-foreground">
+                {definition.slug}
+              </p>
             </div>
           </div>
         </div>
 
         <div className="flex items-center gap-2">
-          <Button variant="outline" className="gap-2" onClick={handleTestConnection} disabled={testing}>
-            {testing ? <Loader2 className="size-4 animate-spin" /> : <Play className="size-4 text-emerald-500" />}
+          <Button
+            variant="outline"
+            className="gap-2"
+            onClick={handleTestConnection}
+            disabled={testing}
+          >
+            {testing ? (
+              <Loader2 className="size-4 animate-spin" />
+            ) : (
+              <Play className="size-4 text-emerald-500" />
+            )}
             Test Connection
           </Button>
         </div>
@@ -135,7 +179,9 @@ function IntegrationDetailContent({
 
       <Tabs defaultValue="configuration">
         <TabsList>
-          <TabsTrigger value="configuration">Configuration Settings</TabsTrigger>
+          <TabsTrigger value="configuration">
+            Configuration Settings
+          </TabsTrigger>
           <TabsTrigger value="connections">
             Active Connections ({activeConnections.length})
           </TabsTrigger>
@@ -149,21 +195,27 @@ function IntegrationDetailContent({
               <CardHeader>
                 <CardTitle>Resend Email Integration Configuration</CardTitle>
                 <CardDescription>
-                  Configure Resend API key, sender address, verified domain, and tracking capabilities.
+                  Configure Resend API key, sender address, verified domain, and
+                  tracking capabilities.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveSettings} className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Enable Resend Integration</Label>
+                      <Label className="text-base">
+                        Enable Resend Integration
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        Enable or disable Resend for transactional and system emails.
+                        Enable or disable Resend for transactional and system
+                        emails.
                       </p>
                     </div>
                     <Switch
                       checked={formData.resendEnabled ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, resendEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, resendEnabled: checked })
+                      }
                     />
                   </div>
 
@@ -175,16 +227,28 @@ function IntegrationDetailContent({
                         type="password"
                         placeholder="re_xxxxxxxxxxxx"
                         value={formData.resendApiKey || ""}
-                        onChange={(e) => setFormData({ ...formData, resendApiKey: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            resendApiKey: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="resendFromEmail">Default From Address</Label>
+                      <Label htmlFor="resendFromEmail">
+                        Default From Address
+                      </Label>
                       <Input
                         id="resendFromEmail"
                         placeholder="Scryme <no-reply@scryme.tech>"
                         value={formData.resendFromEmail || ""}
-                        onChange={(e) => setFormData({ ...formData, resendFromEmail: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            resendFromEmail: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -196,7 +260,12 @@ function IntegrationDetailContent({
                         id="resendDomain"
                         placeholder="scryme.tech"
                         value={formData.resendDomain || ""}
-                        onChange={(e) => setFormData({ ...formData, resendDomain: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            resendDomain: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -205,7 +274,12 @@ function IntegrationDetailContent({
                         id="resendRegion"
                         placeholder="us-east-1"
                         value={formData.resendRegion || ""}
-                        onChange={(e) => setFormData({ ...formData, resendRegion: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            resendRegion: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -214,39 +288,68 @@ function IntegrationDetailContent({
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div className="space-y-0.5">
                         <Label>Open Tracking</Label>
-                        <p className="text-xs text-muted-foreground">Track when recipients open emails.</p>
+                        <p className="text-xs text-muted-foreground">
+                          Track when recipients open emails.
+                        </p>
                       </div>
                       <Switch
                         checked={formData.resendOpenTracking ?? true}
-                        onCheckedChange={(checked) => setFormData({ ...formData, resendOpenTracking: checked })}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            resendOpenTracking: checked,
+                          })
+                        }
                       />
                     </div>
 
                     <div className="flex items-center justify-between rounded-lg border p-3">
                       <div className="space-y-0.5">
                         <Label>Click Tracking</Label>
-                        <p className="text-xs text-muted-foreground">Track when recipients click links.</p>
+                        <p className="text-xs text-muted-foreground">
+                          Track when recipients click links.
+                        </p>
                       </div>
                       <Switch
                         checked={formData.resendClickTracking ?? true}
-                        onCheckedChange={(checked) => setFormData({ ...formData, resendClickTracking: checked })}
+                        onCheckedChange={(checked) =>
+                          setFormData({
+                            ...formData,
+                            resendClickTracking: checked,
+                          })
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="resendTrackingSubdomain">Tracking Subdomain</Label>
+                    <Label htmlFor="resendTrackingSubdomain">
+                      Tracking Subdomain
+                    </Label>
                     <Input
                       id="resendTrackingSubdomain"
                       placeholder="links"
                       value={formData.resendTrackingSubdomain || ""}
-                      onChange={(e) => setFormData({ ...formData, resendTrackingSubdomain: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          resendTrackingSubdomain: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    <Button
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                      className="gap-2"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
                       Save Resend Settings
                     </Button>
                   </div>
@@ -258,7 +361,8 @@ function IntegrationDetailContent({
               <CardHeader>
                 <CardTitle>Hermes Agent Integration Configuration</CardTitle>
                 <CardDescription>
-                  Configure Hermes Agent base URL, API key, model selection, and background automation settings.
+                  Configure Hermes Agent base URL, API key, model selection, and
+                  background automation settings.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -267,12 +371,15 @@ function IntegrationDetailContent({
                     <div className="space-y-0.5">
                       <Label className="text-base">Enable Hermes Agent</Label>
                       <p className="text-sm text-muted-foreground">
-                        Enable autonomous background task orchestration and monitoring.
+                        Enable autonomous background task orchestration and
+                        monitoring.
                       </p>
                     </div>
                     <Switch
                       checked={formData.hermesEnabled ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, hermesEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, hermesEnabled: checked })
+                      }
                     />
                   </div>
 
@@ -283,7 +390,12 @@ function IntegrationDetailContent({
                         id="hermesBaseUrl"
                         placeholder="http://hermes:8080"
                         value={formData.hermesBaseUrl || ""}
-                        onChange={(e) => setFormData({ ...formData, hermesBaseUrl: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hermesBaseUrl: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -293,24 +405,44 @@ function IntegrationDetailContent({
                         type="password"
                         placeholder="••••••••••••"
                         value={formData.hermesApiKey || ""}
-                        onChange={(e) => setFormData({ ...formData, hermesApiKey: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            hermesApiKey: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="hermesModel">Default LLM Model / Agent Engine</Label>
+                    <Label htmlFor="hermesModel">
+                      Default LLM Model / Agent Engine
+                    </Label>
                     <Input
                       id="hermesModel"
                       placeholder="hermes-3-llama-3.1-8b"
                       value={formData.hermesModel || ""}
-                      onChange={(e) => setFormData({ ...formData, hermesModel: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          hermesModel: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    <Button
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                      className="gap-2"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
                       Save Hermes Settings
                     </Button>
                   </div>
@@ -322,21 +454,27 @@ function IntegrationDetailContent({
               <CardHeader>
                 <CardTitle>Sentry Monitoring Configuration</CardTitle>
                 <CardDescription>
-                  Configure application exception tracking, Sentry Dsn, webhook secret, and sample rates.
+                  Configure application exception tracking, Sentry Dsn, webhook
+                  secret, and sample rates.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveSettings} className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Enable Sentry Integration</Label>
+                      <Label className="text-base">
+                        Enable Sentry Integration
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        Capture uncaught errors and send alerts to the admin channel.
+                        Capture uncaught errors and send alerts to the admin
+                        channel.
                       </p>
                     </div>
                     <Switch
                       checked={formData.sentryEnabled ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, sentryEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, sentryEnabled: checked })
+                      }
                     />
                   </div>
 
@@ -346,7 +484,9 @@ function IntegrationDetailContent({
                       id="sentryDsn"
                       placeholder="https://xxxxxx@sentry.io/123456"
                       value={formData.sentryDsn || ""}
-                      onChange={(e) => setFormData({ ...formData, sentryDsn: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({ ...formData, sentryDsn: e.target.value })
+                      }
                     />
                   </div>
 
@@ -357,7 +497,12 @@ function IntegrationDetailContent({
                         id="sentryOrg"
                         placeholder="scryme-tech"
                         value={formData.sentryOrg || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryOrg: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryOrg: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
@@ -366,30 +511,49 @@ function IntegrationDetailContent({
                         id="sentryProject"
                         placeholder="admin-portal"
                         value={formData.sentryProject || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryProject: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryProject: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="sentryAuthToken">Auth Token / API Token</Label>
+                      <Label htmlFor="sentryAuthToken">
+                        Auth Token / API Token
+                      </Label>
                       <Input
                         id="sentryAuthToken"
                         type="password"
                         placeholder="sntrys_xxxxxxxx"
                         value={formData.sentryAuthToken || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryAuthToken: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryAuthToken: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sentryWebhookSecret">Webhook Client Secret</Label>
+                      <Label htmlFor="sentryWebhookSecret">
+                        Webhook Client Secret
+                      </Label>
                       <Input
                         id="sentryWebhookSecret"
                         type="password"
                         placeholder="sentry_whsec_xxxx"
                         value={formData.sentryWebhookSecret || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryWebhookSecret: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryWebhookSecret: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -401,23 +565,43 @@ function IntegrationDetailContent({
                         id="sentryEnvironment"
                         placeholder="production"
                         value={formData.sentryEnvironment || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryEnvironment: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryEnvironment: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="sentryTracesSampleRate">Traces Sample Rate</Label>
+                      <Label htmlFor="sentryTracesSampleRate">
+                        Traces Sample Rate
+                      </Label>
                       <Input
                         id="sentryTracesSampleRate"
                         placeholder="1.0"
                         value={formData.sentryTracesSampleRate || ""}
-                        onChange={(e) => setFormData({ ...formData, sentryTracesSampleRate: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            sentryTracesSampleRate: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
 
                   <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    <Button
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                      className="gap-2"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
                       Save Sentry Settings
                     </Button>
                   </div>
@@ -429,21 +613,26 @@ function IntegrationDetailContent({
               <CardHeader>
                 <CardTitle>OpenPanel Analytics Configuration</CardTitle>
                 <CardDescription>
-                  Configure Client ID, Secret, and Host endpoint for OpenPanel telemetry.
+                  Configure Client ID, Secret, and Host endpoint for OpenPanel
+                  telemetry.
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <form onSubmit={handleSaveSettings} className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Enable OpenPanel Integration</Label>
+                      <Label className="text-base">
+                        Enable OpenPanel Integration
+                      </Label>
                       <p className="text-sm text-muted-foreground">
                         Track product usage events and application metrics.
                       </p>
                     </div>
                     <Switch
                       checked={formData.openpanelEnabled ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, openpanelEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, openpanelEnabled: checked })
+                      }
                     />
                   </div>
 
@@ -454,17 +643,29 @@ function IntegrationDetailContent({
                         id="openpanelClientId"
                         placeholder="op_client_xxxx"
                         value={formData.openpanelClientId || ""}
-                        onChange={(e) => setFormData({ ...formData, openpanelClientId: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            openpanelClientId: e.target.value,
+                          })
+                        }
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="openpanelClientSecret">Client Secret</Label>
+                      <Label htmlFor="openpanelClientSecret">
+                        Client Secret
+                      </Label>
                       <Input
                         id="openpanelClientSecret"
                         type="password"
                         placeholder="op_secret_xxxx"
                         value={formData.openpanelClientSecret || ""}
-                        onChange={(e) => setFormData({ ...formData, openpanelClientSecret: e.target.value })}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            openpanelClientSecret: e.target.value,
+                          })
+                        }
                       />
                     </div>
                   </div>
@@ -475,13 +676,26 @@ function IntegrationDetailContent({
                       id="openpanelHost"
                       placeholder="https://api.openpanel.dev"
                       value={formData.openpanelHost || ""}
-                      onChange={(e) => setFormData({ ...formData, openpanelHost: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          openpanelHost: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    <Button
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                      className="gap-2"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
                       Save OpenPanel Settings
                     </Button>
                   </div>
@@ -500,25 +714,37 @@ function IntegrationDetailContent({
                 <form onSubmit={handleSaveSettings} className="space-y-4">
                   <div className="flex items-center justify-between rounded-lg border p-4">
                     <div className="space-y-0.5">
-                      <Label className="text-base">Enable PostHog Integration</Label>
+                      <Label className="text-base">
+                        Enable PostHog Integration
+                      </Label>
                       <p className="text-sm text-muted-foreground">
-                        Enable session recording, feature flags, and product analytics.
+                        Enable session recording, feature flags, and product
+                        analytics.
                       </p>
                     </div>
                     <Switch
                       checked={formData.posthogEnabled ?? false}
-                      onCheckedChange={(checked) => setFormData({ ...formData, posthogEnabled: checked })}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, posthogEnabled: checked })
+                      }
                     />
                   </div>
 
                   <div className="space-y-2">
-                    <Label htmlFor="posthogApiKey">PostHog API Key / Project Token</Label>
+                    <Label htmlFor="posthogApiKey">
+                      PostHog API Key / Project Token
+                    </Label>
                     <Input
                       id="posthogApiKey"
                       type="password"
                       placeholder="phc_xxxxxxxxxxxx"
                       value={formData.posthogApiKey || ""}
-                      onChange={(e) => setFormData({ ...formData, posthogApiKey: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          posthogApiKey: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
@@ -528,13 +754,26 @@ function IntegrationDetailContent({
                       id="posthogHost"
                       placeholder="https://us.i.posthog.com"
                       value={formData.posthogHost || ""}
-                      onChange={(e) => setFormData({ ...formData, posthogHost: e.target.value })}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          posthogHost: e.target.value,
+                        })
+                      }
                     />
                   </div>
 
                   <div className="flex justify-end pt-2">
-                    <Button type="submit" disabled={updateMutation.isPending} className="gap-2">
-                      {updateMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : <Save className="size-4" />}
+                    <Button
+                      type="submit"
+                      disabled={updateMutation.isPending}
+                      className="gap-2"
+                    >
+                      {updateMutation.isPending ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Save className="size-4" />
+                      )}
                       Save PostHog Settings
                     </Button>
                   </div>
@@ -551,13 +790,21 @@ function IntegrationDetailContent({
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="text-sm text-muted-foreground">
-                  Authentication Type: <span className="font-mono font-medium text-foreground">{definition.authType}</span>
+                  Authentication Type:{" "}
+                  <span className="font-mono font-medium text-foreground">
+                    {definition.authType}
+                  </span>
                 </div>
                 <div className="text-sm text-muted-foreground">
-                  Category: <span className="font-medium text-foreground">{definition.category}</span>
+                  Category:{" "}
+                  <span className="font-medium text-foreground">
+                    {definition.category}
+                  </span>
                 </div>
                 <p className="text-sm text-muted-foreground">
-                  This integration uses standard organization credentials. Individual organizations can configure their credentials on the organization settings page.
+                  This integration uses standard organization credentials.
+                  Individual organizations can configure their credentials on
+                  the organization settings page.
                 </p>
               </CardContent>
             </Card>
@@ -565,24 +812,26 @@ function IntegrationDetailContent({
         </TabsContent>
 
         <TabsContent value="connections" className="mt-6">
-          <OrganizationIntegrationsTable activeIntegrations={activeConnections} />
+          <OrganizationIntegrationsTable
+            activeIntegrations={activeConnections}
+          />
         </TabsContent>
       </Tabs>
     </div>
-  )
+  );
 }
 
 export function IntegrationDetailClientWrapper(props: {
   initialData: {
-    definition: any
-    activeConnections: any[]
-    systemSettings: SystemIntegrationSettings
-  }
-  slug: string
+    definition: any;
+    activeConnections: any[];
+    systemSettings: SystemIntegrationSettings;
+  };
+  slug: string;
 }) {
   return (
     <QueryClientProvider client={queryClient}>
       <IntegrationDetailContent {...props} />
     </QueryClientProvider>
-  )
+  );
 }

@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "crm", "cms", "web", "site", "admin", "tasks", "auth", "docs", "prisma-studio"]
+  targets = ["api", "crm", "cms", "web", "site", "admin", "auth", "docs", "prisma-studio"]
 }
 
 variable "REPO_LOWER" {
@@ -99,15 +99,6 @@ target "prisma-studio" {
   tags = [
     "ghcr.io/${REPO_LOWER}/prisma-studio:latest",
     "ghcr.io/${REPO_LOWER}/prisma-studio:${VERSION}"
-  ]
-}
-
-target "tasks" {
-  context = "."
-  dockerfile = "apps/tasks/Dockerfile"
-  tags = [
-    "ghcr.io/${REPO_LOWER}/tasks:latest",
-    "ghcr.io/${REPO_LOWER}/tasks:${VERSION}"
   ]
 }
 

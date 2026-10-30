@@ -3,12 +3,12 @@ import React from "react";
 import { getServices, getServiceCategories } from "../../actions/services";
 import { getOrganizationSettings } from "../../actions/organization";
 import { ServicesPageClient } from "./services-client";
+import { ModuleRouteGuard } from "@/components/module-route-guard";
 
 export const metadata: Metadata = {
   title: "Service Catalog",
   description: "Manage bookable services, durations, staff assignments, and service billing.",
 };
-
 
 export default async function ServicesPage() {
   const [services, categories, organization] = await Promise.all([
@@ -28,10 +28,12 @@ export default async function ServicesPage() {
   }));
 
   return (
-    <ServicesPageClient
-      initialServices={serializedServices}
-      initialCategories={categories}
-      currency={currency}
-    />
+    <ModuleRouteGuard moduleKey="services">
+      <ServicesPageClient
+        initialServices={serializedServices}
+        initialCategories={categories}
+        currency={currency}
+      />
+    </ModuleRouteGuard>
   );
 }

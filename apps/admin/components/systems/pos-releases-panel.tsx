@@ -112,7 +112,9 @@ export function PosReleasesPanel({
       toast.success("GitHub release binary sync completed successfully");
       router.refresh();
     } catch (error: any) {
-      toast.error(error.message || "Failed to sync release binaries from GitHub");
+      toast.error(
+        error.message || "Failed to sync release binaries from GitHub",
+      );
     } finally {
       setIsSyncing(false);
     }
@@ -150,10 +152,16 @@ export function PosReleasesPanel({
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Server className="size-4 text-primary" /> GitHub App / Repository Webhook Integration
+            <Server className="size-4 text-primary" /> GitHub App / Repository
+            Webhook Integration
           </CardTitle>
           <CardDescription>
-            Configure this webhook URL in your GitHub App or Repository settings under Settings &gt; Webhooks. Set Content type to <code>application/json</code> and subscribe to <code>Release</code> and <code>Pushes / Tag Creation</code> events. When a new tag or release is published, Scryme automatically fetches and updates the latest POS version in RustFS.
+            Configure this webhook URL in your GitHub App or Repository settings
+            under Settings &gt; Webhooks. Set Content type to{" "}
+            <code>application/json</code> and subscribe to <code>Release</code>{" "}
+            and <code>Pushes / Tag Creation</code> events. When a new tag or
+            release is published, Scryme automatically fetches and updates the
+            latest POS version in RustFS.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -182,20 +190,28 @@ export function PosReleasesPanel({
       <Card className="border-border bg-card">
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center gap-2">
-            <Github className="size-4 text-purple-500" /> GitHub App & Webhook Secret Configuration
+            <Github className="size-4 text-purple-500" /> GitHub App & Webhook
+            Secret Configuration
           </CardTitle>
           <CardDescription>
-            Provide your GitHub App authorization parameters, repository details, and webhook secret to authenticate release events and synchronize binaries.
+            Provide your GitHub App authorization parameters, repository
+            details, and webhook secret to authenticate release events and
+            synchronize binaries.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSaveSettings} className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <form
+            onSubmit={handleSaveSettings}
+            className="grid grid-cols-1 md:grid-cols-2 gap-4"
+          >
             <div className="flex flex-col gap-2">
               <Label htmlFor="github-app-id">GitHub App ID (Optional)</Label>
               <Input
                 id="github-app-id"
                 value={settings.appId || ""}
-                onChange={(e) => setSettings({ ...settings, appId: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, appId: e.target.value })
+                }
                 placeholder="e.g. 123456"
               />
             </div>
@@ -205,18 +221,24 @@ export function PosReleasesPanel({
               <Input
                 id="github-client-id"
                 value={settings.clientId || ""}
-                onChange={(e) => setSettings({ ...settings, clientId: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, clientId: e.target.value })
+                }
                 placeholder="Iv1.xxxxxx"
               />
             </div>
 
             <div className="flex flex-col gap-2">
-              <Label htmlFor="github-client-secret">Client Secret (Optional)</Label>
+              <Label htmlFor="github-client-secret">
+                Client Secret (Optional)
+              </Label>
               <Input
                 id="github-client-secret"
                 type="password"
                 value={settings.clientSecret || ""}
-                onChange={(e) => setSettings({ ...settings, clientSecret: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, clientSecret: e.target.value })
+                }
                 placeholder="GitHub OAuth / App Client Secret"
               />
             </div>
@@ -226,7 +248,9 @@ export function PosReleasesPanel({
               <Input
                 id="github-owner"
                 value={settings.owner}
-                onChange={(e) => setSettings({ ...settings, owner: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, owner: e.target.value })
+                }
                 placeholder="e.g. dealio-org"
               />
             </div>
@@ -236,7 +260,9 @@ export function PosReleasesPanel({
               <Input
                 id="github-repo"
                 value={settings.repo}
-                onChange={(e) => setSettings({ ...settings, repo: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, repo: e.target.value })
+                }
                 placeholder="e.g. scryme"
               />
             </div>
@@ -247,18 +273,24 @@ export function PosReleasesPanel({
                 id="github-secret"
                 type="password"
                 value={settings.webhookSecret}
-                onChange={(e) => setSettings({ ...settings, webhookSecret: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, webhookSecret: e.target.value })
+                }
                 placeholder="HMAC secret used to verify webhook signatures"
               />
             </div>
 
             <div className="col-span-1 md:col-span-2 flex flex-col gap-2">
-              <Label htmlFor="github-token">Personal Access Token / Installation Token</Label>
+              <Label htmlFor="github-token">
+                Personal Access Token / Installation Token
+              </Label>
               <Input
                 id="github-token"
                 type="password"
                 value={settings.token}
-                onChange={(e) => setSettings({ ...settings, token: e.target.value })}
+                onChange={(e) =>
+                  setSettings({ ...settings, token: e.target.value })
+                }
                 placeholder="ghp_... or ghs_... for authenticating release downloads"
               />
             </div>
@@ -294,7 +326,11 @@ export function PosReleasesPanel({
                 Sync Latest Version Now
               </Button>
 
-              <Button type="submit" disabled={isSavingSettings} className="gap-2">
+              <Button
+                type="submit"
+                disabled={isSavingSettings}
+                className="gap-2"
+              >
                 {isSavingSettings ? (
                   <Loader2 className="size-4 animate-spin" />
                 ) : (
@@ -312,14 +348,19 @@ export function PosReleasesPanel({
         <CardHeader>
           <CardTitle className="text-base font-semibold text-foreground flex items-center justify-between">
             <span className="flex items-center gap-2">
-              <HardDrive className="size-4 text-emerald-500" /> Stored POS App Release Binaries (RustFS)
+              <HardDrive className="size-4 text-emerald-500" /> Stored POS App
+              Release Binaries (RustFS)
             </span>
-            <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
+            <Badge
+              variant="secondary"
+              className="bg-emerald-500/10 text-emerald-600"
+            >
               {initialBinaries.length} Binaries Stored
             </Badge>
           </CardTitle>
           <CardDescription>
-            These binaries are stored in RustFS and served directly to site users when they select POS app variants.
+            These binaries are stored in RustFS and served directly to site
+            users when they select POS app variants.
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -339,8 +380,12 @@ export function PosReleasesPanel({
               <tbody className="divide-y divide-border">
                 {initialBinaries.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="p-6 text-center text-muted-foreground">
-                      No release binaries stored in RustFS yet. Webhook events or manual syncs will auto-populate this list.
+                    <td
+                      colSpan={7}
+                      className="p-6 text-center text-muted-foreground"
+                    >
+                      No release binaries stored in RustFS yet. Webhook events
+                      or manual syncs will auto-populate this list.
                     </td>
                   </tr>
                 ) : (
@@ -350,7 +395,10 @@ export function PosReleasesPanel({
                         {bin.platform}
                       </td>
                       <td className="p-3">
-                        <Badge variant="outline" className="capitalize font-mono text-xs">
+                        <Badge
+                          variant="outline"
+                          className="capitalize font-mono text-xs"
+                        >
                           {bin.variant}
                         </Badge>
                       </td>
@@ -365,11 +413,17 @@ export function PosReleasesPanel({
                       </td>
                       <td className="p-3">
                         {bin.isLatest ? (
-                          <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600">
+                          <Badge
+                            variant="secondary"
+                            className="bg-emerald-500/10 text-emerald-600"
+                          >
                             Latest
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="text-muted-foreground">
+                          <Badge
+                            variant="outline"
+                            className="text-muted-foreground"
+                          >
                             Archived
                           </Badge>
                         )}
@@ -382,7 +436,11 @@ export function PosReleasesPanel({
                             size="sm"
                             className="h-8 gap-1 text-xs"
                           >
-                            <a href={bin.fileUrl} target="_blank" rel="noopener noreferrer">
+                            <a
+                              href={bin.fileUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                            >
                               <Download className="size-3 text-primary" />
                               Download
                             </a>

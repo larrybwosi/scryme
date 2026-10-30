@@ -13,7 +13,8 @@ export async function requireSuperAdmin() {
     redirect("/login");
   }
 
-  const systemRole = (session.user as any).systemRole || (session.user as any).role;
+  const systemRole =
+    (session.user as any).systemRole || (session.user as any).role;
   if (systemRole !== "SUPER_ADMIN") {
     redirect("/forbidden");
   }

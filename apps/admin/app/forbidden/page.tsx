@@ -1,9 +1,9 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { ShieldAlert } from "lucide-react"
-import { Button } from "@repo/ui/components/ui/button"
-import { authClient } from "@/lib/auth-client"
+import Link from "next/link";
+import { ShieldAlert } from "lucide-react";
+import { Button } from "@repo/ui/components/ui/button";
+import { authClient } from "@/lib/auth-client";
 
 export default function ForbiddenPage() {
   return (
@@ -13,10 +13,12 @@ export default function ForbiddenPage() {
           <ShieldAlert className="size-6 text-destructive" aria-hidden="true" />
         </div>
         <div className="flex flex-col gap-2">
-          <h1 className="text-xl font-semibold tracking-tight text-foreground">Access restricted</h1>
+          <h1 className="text-xl font-semibold tracking-tight text-foreground">
+            Access restricted
+          </h1>
           <p className="text-sm leading-relaxed text-muted-foreground">
-            This console is limited to platform super administrators. Your account does not have the required
-            permissions to view this page.
+            This console is limited to platform super administrators. Your
+            account does not have the required permissions to view this page.
           </p>
         </div>
         <div className="flex w-full flex-col gap-2">
@@ -30,7 +32,7 @@ export default function ForbiddenPage() {
               authClient.signOut({
                 fetchOptions: {
                   onSuccess: () => {
-                    window.location.href = "/login"
+                    window.location.href = "/login";
                   },
                 },
               })
@@ -41,5 +43,5 @@ export default function ForbiddenPage() {
         </div>
       </div>
     </main>
-  )
+  );
 }
