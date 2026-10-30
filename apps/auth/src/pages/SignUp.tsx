@@ -9,6 +9,7 @@ import {
   ArrowRight,
   Lock,
   KeyRound,
+  Building2,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -297,6 +298,16 @@ export function SignUpPage() {
           Sign in
         </Link>
       </p>
+
+      <div className="mt-4 pt-4 border-t border-[#E7E2D9] text-center">
+        <Link
+          to="/onboarding"
+          className="inline-flex items-center gap-1.5 text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors"
+        >
+          <Building2 className="w-3.5 h-3.5 text-[#A9824C]" />
+          <span>Setting up a new organization? View plans & subscribe →</span>
+        </Link>
+      </div>
     </div>
   );
 }

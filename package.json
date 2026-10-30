@@ -1,71 +1,16 @@
 {
+  "name": "scryme-monorepo",
   "private": true,
-  "license": "AGPL-3.0-only",
-  "prisma": {
-    "schema": "packages/db/prisma/schema.prisma",
-    "seed": "tsx packages/db/prisma/seed.ts"
-  },
+  "workspaces": [
+    "apps/auth"
+  ],
   "scripts": {
-    "build": "turbo run build",
-    "release": "changeset publish --no-git-tag",
-    "version-packages": "changeset version && node scripts/ensure-unique-version.js",
-    "db:migrate:deploy": "turbo run db:migrate:deploy",
-    "db:migrate:dev": "turbo run db:migrate:dev",
-    "db:push": "turbo run db:push",
-    "db:seed": "turbo run db:seed",
-    "dev": "turbo run dev",
-    "start:dev": "docker compose -f docker-compose.dev.yml up -d",
-    "deploy": "./deploy.sh",
-    "format": "prettier --write \"**/*.{ts,tsx,md}\"",
-    "generate": "turbo run generate",
-    "lint": "turbo run lint",
-    "postinstall": "pnpm --filter @repo/env build && pnpm generate"
+    "dev": "npm run dev --workspace=auth",
+    "build": "npm run build --workspace=auth",
+    "lint": "npm run lint --workspace=auth",
+    "type-check": "npm run type-check --workspace=auth"
   },
   "devDependencies": {
-    "@changesets/cli": "^2.31.0",
-    "eslint": "10.9.1",
-    "eslint-config-prettier": "^10.1.8",
-    "prettier": "^3.2.5",
-    "tsx": "4.21.0",
-    "turbo": "^2.10.0",
-    "typescript": "5.7.3"
-  },
-  "engines": {
-    "node": ">=24"
-  },
-  "packageManager": "pnpm@10.34.1",
-  "name": "scryme",
-  "dependencies": {
-    "axios": "^1.16.1",
-    "clsx": "^2.1.1",
-    "decimal.js": "^10.6.0",
-    "rrule": "^2.8.1",
-    "socket.io-client": "^4.8.3",
-    "tsup": "^8.5.1",
-    "zod": "^4.4.3"
-  },
-  "pnpm": {
-    "overrides": {
-      "typescript": "5.7.3",
-      "eslint": "10.9.1",
-      "@types/react": "19.3.0",
-      "@types/react-dom": "19.3.0",
-      "react": "19.3.1",
-      "react-dom": "19.3.1",
-      "@tauri-apps/plugin-log": "2.8.0"
-    },
-    "ignoredBuiltDependencies": [
-      "@prisma/engines",
-      "@scarf/scarf",
-      "@sentry/cli",
-      "@swc/core",
-      "argon2",
-      "core-js",
-      "esbuild",
-      "msgpackr-extract",
-      "prisma",
-      "sharp",
-      "unrs-resolver"
-    ]
+    "eslint": "^10.13.0"
   }
 }

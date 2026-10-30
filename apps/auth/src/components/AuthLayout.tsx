@@ -1,4 +1,5 @@
 import React, { ReactNode } from "react";
+import { useLocation } from "@tanstack/react-router";
 import { Shield, Building2, CheckCircle2 } from "lucide-react";
 
 const monoClass = "font-mono";
@@ -95,6 +96,25 @@ function StatCard({ value, label }: { value: string; label: string }) {
 }
 
 export function AuthLayout({ children }: { children: ReactNode }) {
+  const location = useLocation();
+  const isOnboarding = location.pathname.startsWith("/onboarding");
+
+  if (isOnboarding) {
+    return (
+      <div className="min-h-screen w-full bg-[#FBFAF7] text-[#0F1B2E] flex flex-col justify-between">
+        <main className="flex-1 w-full">
+          {children}
+        </main>
+        <footer className="py-6 border-t border-[#E7E2D9] text-center text-xs text-[#9AA6B2] flex items-center justify-center gap-2">
+          <Shield className="h-3.5 w-3.5 text-[#A9824C]" />
+          <span className="font-mono tracking-wide uppercase text-[10px]">
+            SOC 2 TYPE II · 256-BIT ENCRYPTION · DARAJA M-PESA & PCI-DSS COMPLIANT
+          </span>
+        </footer>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen w-full flex bg-[#FBFAF7] text-[#0F1B2E]">
       {/* Left Panel */}

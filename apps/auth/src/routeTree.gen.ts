@@ -14,6 +14,7 @@ import { Route as ConsentRouteImport } from './routes/consent'
 import { Route as ErrorRouteImport } from './routes/error'
 import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
 import { Route as MobileCallbackRouteImport } from './routes/mobile-callback'
+import { Route as OnboardingRouteImport } from './routes/onboarding'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SignInRouteImport } from './routes/sign-in'
 import { Route as SignUpRouteImport } from './routes/sign-up'
@@ -44,6 +45,11 @@ const MobileCallbackRoute = MobileCallbackRouteImport.update({
   path: '/mobile-callback',
   getParentRoute: () => rootRouteImport,
 } as any)
+const OnboardingRoute = OnboardingRouteImport.update({
+  id: '/onboarding',
+  path: '/onboarding',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ResetPasswordRoute = ResetPasswordRouteImport.update({
   id: '/reset-password',
   path: '/reset-password',
@@ -71,6 +77,7 @@ export interface FileRoutesByFullPath {
   '/error': typeof ErrorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/mobile-callback': typeof MobileCallbackRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -82,6 +89,7 @@ export interface FileRoutesByTo {
   '/error': typeof ErrorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/mobile-callback': typeof MobileCallbackRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -94,6 +102,7 @@ export interface FileRoutesById {
   '/error': typeof ErrorRoute
   '/forgot-password': typeof ForgotPasswordRoute
   '/mobile-callback': typeof MobileCallbackRoute
+  '/onboarding': typeof OnboardingRoute
   '/reset-password': typeof ResetPasswordRoute
   '/sign-in': typeof SignInRoute
   '/sign-up': typeof SignUpRoute
@@ -107,6 +116,7 @@ export interface FileRouteTypes {
     | '/error'
     | '/forgot-password'
     | '/mobile-callback'
+    | '/onboarding'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
@@ -118,6 +128,7 @@ export interface FileRouteTypes {
     | '/error'
     | '/forgot-password'
     | '/mobile-callback'
+    | '/onboarding'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
@@ -129,6 +140,7 @@ export interface FileRouteTypes {
     | '/error'
     | '/forgot-password'
     | '/mobile-callback'
+    | '/onboarding'
     | '/reset-password'
     | '/sign-in'
     | '/sign-up'
@@ -141,6 +153,7 @@ export interface RootRouteChildren {
   ErrorRoute: typeof ErrorRoute
   ForgotPasswordRoute: typeof ForgotPasswordRoute
   MobileCallbackRoute: typeof MobileCallbackRoute
+  OnboardingRoute: typeof OnboardingRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   SignInRoute: typeof SignInRoute
   SignUpRoute: typeof SignUpRoute
@@ -184,6 +197,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MobileCallbackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/onboarding': {
+      id: '/onboarding'
+      path: '/onboarding'
+      fullPath: '/onboarding'
+      preLoaderRoute: typeof OnboardingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/reset-password': {
       id: '/reset-password'
       path: '/reset-password'
@@ -221,6 +241,7 @@ const rootRouteChildren: RootRouteChildren = {
   ErrorRoute: ErrorRoute,
   ForgotPasswordRoute: ForgotPasswordRoute,
   MobileCallbackRoute: MobileCallbackRoute,
+  OnboardingRoute: OnboardingRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   SignInRoute: SignInRoute,
   SignUpRoute: SignUpRoute,

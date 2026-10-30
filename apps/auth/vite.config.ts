@@ -22,7 +22,9 @@ export default defineConfig({
     },
   },
   server: {
-    port: 4444,
+    host: "0.0.0.0",
+    port: 3000,
+    allowedHosts: true,
     proxy: {
       "/api": {
         target: process.env.VITE_PUBLIC_API_URL || (IS_PROD ? "https://api.scryme.tech" : "http://localhost:3002"),

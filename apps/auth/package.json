@@ -2,22 +2,19 @@
   "name": "auth",
   "private": true,
   "version": "10.2.29",
-  "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
-    "dev": "vite --port 4444",
+    "dev": "vite --host 0.0.0.0 --port 3000",
     "auth:build": "vite build",
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "type-check": "pnpm exec tsc --noEmit"
+    "type-check": "tsc --noEmit"
   },
   "dependencies": {
     "@better-auth/oauth-provider": "^1.7.10",
     "@better-auth/passkey": "^1.7.10",
     "@better-auth/sso": "^1.7.10",
-    "@repo/db": "workspace:*",
-    "@repo/ui": "workspace:*",
     "@simplewebauthn/browser": "^13.3.0",
     "@tanstack/react-cross-context": "^1.99.0",
     "@tanstack/react-router": "^1.170.40",
@@ -39,8 +36,6 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
-    "@repo/eslint-config": "workspace:*",
-    "@repo/typescript-config": "workspace:*",
     "@tailwindcss/postcss": "^4.3.0",
     "@tailwindcss/vite": "^4.3.0",
     "@tanstack/router-plugin": "^1.168.41",
