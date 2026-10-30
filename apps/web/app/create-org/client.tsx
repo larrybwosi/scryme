@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import {
   Loader2,
@@ -20,6 +20,9 @@ import {
   Check,
   X,
   AlertCircle,
+  Zap,
+  Sparkles,
+  Smartphone,
 } from "lucide-react";
 import slugify from "slugify";
 import { toast } from "sonner";
@@ -44,6 +47,55 @@ import {
 } from "@/app/actions/invitations";
 
 // Re-using the schema but focusing on what we need for the simple flow
+
+type PlanKey = "free" | "growth" | "scale" | "enterprise";
+
+interface PlanOption {
+  key: PlanKey;
+  name: string;
+  priceMonthly: string;
+  priceAnnual: string;
+  features: string[];
+  trialDays: number;
+  isPopular?: boolean;
+}
+
+const PLAN_OPTIONS: PlanOption[] = [
+  {
+    key: "free",
+    name: "Free Tier",
+    priceMonthly: "$0",
+    priceAnnual: "$0",
+    trialDays: 0,
+    features: ["1 Store Node", "1,000 tx/month", "Community Support"],
+  },
+  {
+    key: "growth",
+    name: "Growth",
+    priceMonthly: "$99",
+    priceAnnual: "$79",
+    trialDays: 14,
+    features: ["Up to 5 Store Nodes", "10,000 tx/month", "99.9% Uptime SLA", "Email Support"],
+  },
+  {
+    key: "scale",
+    name: "Scale",
+    priceMonthly: "$299",
+    priceAnnual: "$239",
+    trialDays: 14,
+    isPopular: true,
+    features: ["Unlimited Store Nodes", "100,000 tx/month", "Hermes AI Autonomous Agents", "24/7 Priority Support"],
+  },
+  {
+    key: "enterprise",
+    name: "Enterprise",
+    priceMonthly: "Custom",
+    priceAnnual: "Custom",
+    trialDays: 14,
+    features: ["Isolated Infrastructure", "Custom Throughput", "Dedicated Account Manager"],
+  },
+];
+
 const createOrgFormSchema = z.object({
   name: z.string().min(1, "Organization name is required"),
   slug: z
@@ -102,6 +154,22 @@ const StatCard = ({ value, label }: { value: string; label: string }) => (
 
 export default function CreateOrgPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialPlan = (searchParams.get("plan") as PlanKey) || "growth";
+  const initialBilling = (searchParams.get("billing") as "monthly" | "annual") || "annual";
+  const initialCurrency = searchParams.get("currency") || "USD";
+
+  const [selectedPlan, setSelectedPlan] = useState<PlanKey>(
+    ["free", "growth", "scale", "enterprise"].includes(initialPlan) ? initialPlan : "growth"
+  );
+  const [billingCycle, setBillingCycle] = useState<"monthly" | "annual">(
+    initialBilling === "monthly" ? "monthly" : "annual"
+  );
+  const [currency, setCurrency] = useState<string>(initialCurrency);
+  const [paymentMethod, setPaymentMethod] = useState<"trial" | "mpesa">("trial");
+  const [mpesaPhone, setMpesaPhone] = useState<string>("");
+  const [isProcessingMpesa, setIsProcessingMpesa] = useState<boolean>(false);
+
   const [isLoading, setIsLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   interface Invitation {
@@ -406,6 +474,138 @@ export default function CreateOrgPage() {
                         )}
                       </div>
                     </div>
+
+                    {/* Plan Selection Section */}
+                    <div className="space-y-3 pt-2">
+                      <div className="flex items-center justify-between">
+                        <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
+                          <Zap className="h-4 w-4 text-emerald-600" />
+                          Selected Subscription Plan
+                        </label>
+                        <div className="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200">
+                          <button
+                            type="button"
+                            onClick={() => setBillingCycle("monthly")}
+                            className={cn(
+                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+                              billingCycle === "monthly" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
+                            )}
+                          >
+                            Monthly
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setBillingCycle("annual")}
+                            className={cn(
+                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1",
+                              billingCycle === "annual" ? "bg-emerald-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-900"
+                            )}
+                          >
+                            Annual <span className="text-[10px] bg-emerald-100 text-emerald-700 px-1 rounded font-bold">-20%</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {PLAN_OPTIONS.map((plan) => {
+                          const isSelected = selectedPlan === plan.key;
+                          const price = billingCycle === "annual" ? plan.priceAnnual : plan.priceMonthly;
+                          return (
+                            <div
+                              key={plan.key}
+                              onClick={() => setSelectedPlan(plan.key)}
+                              className={cn(
+                                "relative p-3 rounded-xl border transition-all cursor-pointer flex flex-col justify-between",
+                                isSelected
+                                  ? "border-emerald-600 bg-emerald-50/50 ring-2 ring-emerald-500/20"
+                                  : "border-gray-200 bg-white hover:border-gray-300"
+                              )}
+                            >
+                              {plan.isPopular && (
+                                <span className="absolute -top-2 right-2 px-1.5 py-0.5 bg-emerald-600 text-[9px] font-bold uppercase text-white rounded-full">
+                                  Popular
+                                </span>
+                              )}
+                              <div>
+                                <div className="flex items-center justify-between mb-1">
+                                  <span className="font-bold text-xs text-gray-900">{plan.name}</span>
+                                  {isSelected && <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0" />}
+                                </div>
+                                <div className="text-base font-extrabold text-gray-900">
+                                  {price}
+                                  {price !== "$0" && price !== "Custom" && (
+                                    <span className="text-[10px] font-normal text-gray-500">/mo</span>
+                                  )}
+                                </div>
+                              </div>
+                              <ul className="mt-2 space-y-1">
+                                {plan.features.slice(0, 2).map((feat, i) => (
+                                  <li key={i} className="text-[10px] text-gray-500 flex items-center gap-1">
+                                    <Check className="h-2.5 w-2.5 text-emerald-500 shrink-0" />
+                                    <span className="truncate">{feat}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Payment / Trial Options for Paid Plans */}
+                    {selectedPlan !== "free" && (
+                      <div className="space-y-2 pt-1 p-3 bg-emerald-50/40 rounded-xl border border-emerald-100">
+                        <label className="text-xs font-bold text-emerald-900 flex items-center gap-1.5">
+                          <Sparkles className="h-3.5 w-3.5 text-emerald-600" />
+                          Choose Activation Option
+                        </label>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("trial")}
+                            className={cn(
+                              "p-2.5 text-left rounded-lg border transition-all text-xs",
+                              paymentMethod === "trial"
+                                ? "bg-white border-emerald-600 text-emerald-950 font-bold shadow-sm"
+                                : "bg-white/60 border-gray-200 text-gray-600 hover:border-gray-300"
+                            )}
+                          >
+                            <div className="font-semibold text-emerald-800">14-Day Free Trial</div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">No immediate payment required</div>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => setPaymentMethod("mpesa")}
+                            className={cn(
+                              "p-2.5 text-left rounded-lg border transition-all text-xs",
+                              paymentMethod === "mpesa"
+                                ? "bg-white border-emerald-600 text-emerald-950 font-bold shadow-sm"
+                                : "bg-white/60 border-gray-200 text-gray-600 hover:border-gray-300"
+                            )}
+                          >
+                            <div className="font-semibold text-emerald-800 flex items-center gap-1">
+                              <Smartphone className="h-3 w-3 text-emerald-600" /> Pay with M-Pesa
+                            </div>
+                            <div className="text-[10px] text-gray-500 mt-0.5">Instant STK push activation</div>
+                          </button>
+                        </div>
+
+                        {paymentMethod === "mpesa" && (
+                          <div className="pt-2 space-y-1">
+                            <label className="text-[11px] font-semibold text-gray-700">M-Pesa Phone Number</label>
+                            <Input
+                              type="tel"
+                              placeholder="e.g. 254712345678"
+                              value={mpesaPhone}
+                              onChange={(e) => setMpesaPhone(e.target.value)}
+                              className="h-9 text-xs rounded-lg border-gray-200 focus-visible:ring-emerald-500/20"
+                            />
+                            <p className="text-[10px] text-gray-500">STK push prompt will be sent upon creating workspace.</p>
+                          </div>
+                        )}
+                      </div>
+                    )}
 
                     {/* Industry & Size Row */}
                     <div className="grid grid-cols-2 gap-4">
