@@ -1,0 +1,53 @@
+services:
+  projects:
+    image: ghcr.io/larrybwosi/scryme/projects:${SCRYME_VERSION:-latest}
+    container_name: ${INSTANCE_NAME:-scryme}-projects
+    restart: always
+    ports:
+      - "${PROJECTS_PORT:-3002}:3002"
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    env_file:
+      - path: .env
+        required: false
+      - path: ../../.env
+        required: false
+    environment:
+      - NODE_ENV=production
+      - PORT=${PROJECTS_PORT:-3002}
+      - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-app_db}?schema=public}
+      - REDIS_HOST=${REDIS_HOST:-redis}
+      - REDIS_PORT=${REDIS_PORT:-6379}
+      - REDIS_URL=${REDIS_URL:-redis://redis:6379}
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.scryme.tech}
+      - NEXT_PUBLIC_REALTIME_PROVIDER=${NEXT_PUBLIC_REALTIME_PROVIDER:-socketio}
+      - NEXT_PUBLIC_SOCKET_URL=${NEXT_PUBLIC_SOCKET_URL:-https://api.scryme.tech}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-betterauthsecret1234567890secret}
+    networks:
+      - scryme-network
+      - proxy-network
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--timeout=3",
+          "--spider",
+          "http://localhost:${PROJECTS_PORT:-3002}/api/health",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+
+networks:
+  scryme-network:
+    name: ${SCRYME_NETWORK_NAME:-${INSTANCE_NAME:-scryme}-network}
+    external: true
+  proxy-network:
+    name: ${PROXY_NETWORK_NAME:-${PROXY_NETWORK:-dokploy-network}}
+    external: true
