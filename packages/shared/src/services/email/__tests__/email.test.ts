@@ -4,6 +4,9 @@ import {
   sendVerificationEmail,
   sendPasswordResetEmail,
   sendTwoFactorOTPEmail,
+  sendOrganizationInvitationEmail,
+  sendPaymentDueEmail,
+  sendSubscriptionExpiredEmail,
 } from "../index";
 
 describe("Email Service Tests", () => {
@@ -84,6 +87,54 @@ describe("Email Service Tests", () => {
       email: "test@realdomain.com",
       otp: "654321",
       user: { name: "Charlie" },
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should construct organization invitation email and call sendEmail", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendOrganizationInvitationEmail({
+      email: "test@realdomain.com",
+      url: "https://app.scryme.tech/accept-invite?token=inv123",
+      inviterName: "David",
+      organizationName: "Acme Corp",
+      role: "ADMIN",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should construct payment due email and call sendEmail", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendPaymentDueEmail({
+      email: "billing@realdomain.com",
+      userName: "Dave",
+      organizationName: "Acme Corp",
+      planName: "Scale Tier",
+      dueDate: "2025-04-15",
+      amount: 199.0,
+      currency: "USD",
+      actionUrl: "https://app.scryme.tech/settings/billing",
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it("should construct subscription expired email and call sendEmail", async () => {
+    delete process.env.RESEND_API_KEY;
+
+    const result = await sendSubscriptionExpiredEmail({
+      email: "billing@realdomain.com",
+      userName: "Eve",
+      organizationName: "Beta LLC",
+      planName: "Growth Tier",
+      expirationDate: "2025-03-31",
+      amount: "99.00",
+      currency: "USD",
+      actionUrl: "https://app.scryme.tech/settings/billing/renew",
     });
 
     expect(result.success).toBe(true);
