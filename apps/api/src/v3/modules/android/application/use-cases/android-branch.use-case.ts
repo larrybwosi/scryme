@@ -29,7 +29,7 @@ export class AndroidBranchUseCase {
           locationType: loc.locationType || "STORE",
           latitude: loc.latitude ? Number(loc.latitude) : null,
           longitude: loc.longitude ? Number(loc.longitude) : null,
-          geofenceRadiusMeters: loc.geofenceRadiusMeters ? Number(loc.geofenceRadiusMeters) : 100,
+          geofenceRadiusMeters: loc.radiusMeters ? Number(loc.radiusMeters) : 100,
           isDefault: loc.isDefault || false,
           isActive: loc.isActive ?? true,
         };
@@ -62,7 +62,7 @@ export class AndroidBranchUseCase {
       locationType: location.locationType || "STORE",
       latitude: location.latitude ? Number(location.latitude) : null,
       longitude: location.longitude ? Number(location.longitude) : null,
-      geofenceRadiusMeters: location.geofenceRadiusMeters ? Number(location.geofenceRadiusMeters) : 100,
+      geofenceRadiusMeters: location.radiusMeters ? Number(location.radiusMeters) : 100,
       isDefault: location.isDefault || false,
       isActive: location.isActive ?? true,
     };
