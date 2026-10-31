@@ -250,6 +250,8 @@ model InventoryAllocation {
   inventoryLocation   InventoryLocation @relation(fields: [inventoryLocationId], references: [id], onDelete: Restrict)
 
   quantity Int
+  quantityReturned   Int?     @default(0)
+  quantityDamaged    Int?     @default(0)
   status   AllocationStatus @default(PENDING)
 
   createdAt DateTime @default(now())
@@ -514,6 +516,10 @@ model Fulfillment {
   // Tracks when the physical paper was returned to office and verified
   reconciledAt DateTime?
   reconciledBy String? // ID of the Member/Staff who verified the paper
+  failureReason      String?
+  cancellationReason String?
+  reconciliationNotes String?
+  codAmountCollected Decimal? @db.Decimal(12, 2)
 
   // --- Timestamps ---
   scheduledAt  DateTime?
@@ -546,6 +552,8 @@ model FulfillmentItem {
   stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id], onDelete: SetNull)
 
   quantity Int
+  quantityReturned   Int?     @default(0)
+  quantityDamaged    Int?     @default(0)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -621,6 +629,8 @@ model ReturnItem {
   transactionItem   TransactionItem @relation(fields: [transactionItemId], references: [id], onDelete: Restrict)
 
   quantity Int
+  quantityReturned   Int?     @default(0)
+  quantityDamaged    Int?     @default(0)
   reason   ReturnReason?
   status   ReturnItemStatus @default(PENDING)
 
