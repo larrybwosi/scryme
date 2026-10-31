@@ -14,8 +14,6 @@ import {
   Loader2,
   Cloud,
   CheckCircle2,
-  Wifi,
-  WifiOff,
   Trash2,
   AlertTriangle,
   Eye,
@@ -479,17 +477,6 @@ export function TransactionsPage() {
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Network Badge */}
-            <Badge
-              variant={isOnline ? 'default' : 'destructive'}
-              className={cn(
-                'gap-2 px-3 py-1.5',
-                isOnline ? 'bg-emerald-500 hover:bg-emerald-600' : 'bg-red-500 hover:bg-red-600'
-              )}
-            >
-              {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-              {isOnline ? 'Online' : 'Offline'}
-            </Badge>
 
             {/* Manual Sync Button */}
             <Button

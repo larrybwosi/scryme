@@ -11,6 +11,9 @@ import {
   AlertTriangle,
   PackageSearch,
   Loader2,
+  Scan,
+  ShieldCheck,
+  Paperclip,
 } from "lucide-react";
 import {
   Select,
@@ -31,6 +34,10 @@ import {
   CardTitle,
   CardDescription,
 } from "@repo/ui/components/ui/card";
+import { Switch } from "@repo/ui/components/ui/switch";
+import { BarcodeScannerDialog } from "./barcode-scanner-dialog";
+import { StockAttachmentManager, StockAttachment } from "./stock-attachment-manager";
+import { toast } from "sonner";
 
 interface Product {
   variantId: string;
@@ -38,6 +45,7 @@ interface Product {
   sku: string;
   currentStock: number;
   variantName?: string;
+  barcode?: string;
 }
 
 interface Location {
@@ -52,11 +60,16 @@ interface LineItem {
   sku: string;
   quantity: number;
   availableStock: number;
+  batchNumber?: string;
+  serialNumbers?: string[];
+  serialInput?: string;
 }
 
 const PRIORITIES = [
-  { value: "standard", label: "Standard" },
-  { value: "urgent", label: "Urgent" },
+  { value: "LOW", label: "Low" },
+  { value: "MEDIUM", label: "Medium (Standard)" },
+  { value: "HIGH", label: "High" },
+  { value: "URGENT", label: "Urgent" },
 ] as const;
 
 function makeId() {
@@ -69,432 +82,418 @@ export function NewTransferForm({
   products,
   locations,
   onSave,
+  userRole = "ADMIN",
 }: {
   products: Product[];
   locations: Location[];
   onSave: (formData: FormData) => Promise<void>;
+  userRole?: string;
 }) {
   const [fromLocationId, setFromLocationId] = useState("");
   const [toLocationId, setToLocationId] = useState("");
-  const [priority, setPriority] = useState<string>("standard");
-  const [expectedDate, setExpectedDate] = useState("");
+  const [priority, setPriority] = useState<string>("MEDIUM");
   const [notes, setNotes] = useState("");
-
-  const [draftVariantId, setDraftVariantId] = useState("");
-  const [draftQuantity, setDraftQuantity] = useState("");
-  const [items, setItems] = useState<LineItem[]>([]);
-  const [itemError, setItemError] = useState<string | null>(null);
+  const [lineItems, setLineItems] = useState<LineItem[]>([]);
+  const [autoApproveAndShip, setAutoApproveAndShip] = useState(false);
+  const [attachments, setAttachments] = useState<StockAttachment[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
 
-  // ⚡ Bolt Optimization: Memoize transformed variants array to prevent redundant
-  // array allocations and iterations on every form state update / re-render.
-  const variants = useMemo(
-    () =>
-      products.map(p => ({
-        id: p.variantId,
-        name: p.variantName || "Default",
-        productName: p.name,
-        sku: p.sku,
-        stock: p.currentStock,
-      })),
-    [products],
+  const isPrivilegedUser = userRole === "OWNER" || userRole === "ADMIN";
+
+  const totalQuantity = useMemo(
+    () => lineItems.reduce((acc, item) => acc + (item.quantity || 0), 0),
+    [lineItems],
   );
 
-  const productByVariant = useMemo(() => {
-    const map = new Map<string, Product>();
-    for (const p of products) map.set(p.variantId, p);
-    return map;
-  }, [products]);
-
-  const locationsMismatch =
-    !!fromLocationId && !!toLocationId && fromLocationId === toLocationId;
-
-  const totalUnits = items.reduce((sum, i) => sum + i.quantity, 0);
-  const overStockCount = items.filter(
-    i => i.quantity > i.availableStock,
-  ).length;
-
-  const canAddItem = !!draftVariantId && Number(draftQuantity) > 0;
-  const canSubmit =
-    items.length > 0 &&
-    !!fromLocationId &&
-    !!toLocationId &&
-    !locationsMismatch &&
-    !isPending;
-
-  function handleAddItem() {
-    setItemError(null);
-    const qty = Number(draftQuantity);
-
-    if (!draftVariantId) {
-      setItemError("Choose a product before adding it to the transfer.");
-      return;
-    }
-    if (!qty || qty <= 0) {
-      setItemError("Enter a quantity greater than zero.");
-      return;
-    }
-    if (items.some(i => i.variantId === draftVariantId)) {
-      setItemError(
-        "That product is already on this transfer. Update its quantity instead.",
-      );
-      return;
-    }
-
-    const product = productByVariant.get(draftVariantId);
+  const handleAddProduct = (variantId: string) => {
+    const product = products.find((p) => p.variantId === variantId);
     if (!product) return;
 
-    setItems(prev => [
+    if (lineItems.some((item) => item.variantId === variantId)) {
+      toast.info("Product variant already in transfer list");
+      return;
+    }
+
+    setLineItems((prev) => [
       ...prev,
       {
         id: makeId(),
         variantId: product.variantId,
         productName: product.name,
         sku: product.sku,
-        quantity: qty,
+        quantity: 1,
         availableStock: product.currentStock,
+        serialNumbers: [],
       },
     ]);
-    setDraftVariantId("");
-    setDraftQuantity("");
-  }
+  };
 
-  function handleRemoveItem(id: string) {
-    setItems(prev => prev.filter(i => i.id !== id));
-  }
-
-  function handleQuantityChange(id: string, value: string) {
-    const qty = Math.max(0, Number(value) || 0);
-    setItems(prev =>
-      prev.map(i => (i.id === id ? { ...i, quantity: qty } : i)),
+  const handleBarcodeScanned = (scannedCode: string) => {
+    const cleanCode = scannedCode.trim().toLowerCase();
+    const matched = products.find(
+      (p) =>
+        (p.barcode && p.barcode.toLowerCase() === cleanCode) ||
+        p.sku.toLowerCase() === cleanCode ||
+        p.variantId.toLowerCase() === cleanCode,
     );
-  }
 
-  function swapLocations() {
-    setFromLocationId(toLocationId);
-    setToLocationId(fromLocationId);
-  }
+    if (matched) {
+      handleAddProduct(matched.variantId);
+      toast.success(`Matched & added: ${matched.name} (${matched.sku})`);
+    } else {
+      toast.error(`No variant found matching barcode: ${scannedCode}`);
+    }
+  };
+
+  const updateItemQuantity = (id: string, qty: number) => {
+    setLineItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, quantity: Math.max(1, qty) } : item)),
+    );
+  };
+
+  const updateItemBatch = (id: string, batchNumber: string) => {
+    setLineItems((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, batchNumber } : item)),
+    );
+  };
+
+  const updateItemSerials = (id: string, rawSerials: string) => {
+    const list = rawSerials
+      .split(/[,\n]/)
+      .map((s) => s.trim())
+      .filter(Boolean);
+    setLineItems((prev) =>
+      prev.map((item) =>
+        item.id === id ? { ...item, serialInput: rawSerials, serialNumbers: list } : item,
+      ),
+    );
+  };
+
+  const removeItem = (id: string) => {
+    setLineItems((prev) => prev.filter((item) => item.id !== id));
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!fromLocationId || !toLocationId) {
+      toast.error("Please select both source and destination locations.");
+      return;
+    }
+
+    if (fromLocationId === toLocationId) {
+      toast.error("Source and destination locations must be different.");
+      return;
+    }
+
+    if (lineItems.length === 0) {
+      toast.error("Please add at least one product to the transfer.");
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("fromLocationId", fromLocationId);
+    formData.append("toLocationId", toLocationId);
+    formData.append("priority", priority);
+    formData.append("notes", notes);
+    formData.append("autoApproveAndShip", String(autoApproveAndShip));
+    formData.append(
+      "attachmentIds",
+      JSON.stringify(attachments.map((a) => a.id)),
+    );
+    formData.append(
+      "items",
+      JSON.stringify(
+        lineItems.map((item) => ({
+          variantId: item.variantId,
+          quantity: item.quantity,
+          batchNumber: item.batchNumber || undefined,
+          serialNumbers: item.serialNumbers || [],
+        })),
+      ),
+    );
+
+    startTransition(async () => {
+      try {
+        await onSave(formData);
+        toast.success("Stock transfer initiated successfully!");
+      } catch (err: any) {
+        toast.error(err.message || "Failed to initiate transfer");
+      }
+    });
+  };
 
   return (
-    <form
-      action={formData => {
-        formData.set("fromLocationId", fromLocationId);
-        formData.set("toLocationId", toLocationId);
-        formData.set("priority", priority);
-        formData.set("expectedDate", expectedDate);
-        formData.set("notes", notes);
-        formData.set(
-          "items",
-          JSON.stringify(
-            items.map(({ variantId, sku, quantity }) => ({
-              variantId,
-              sku,
-              quantity,
-            })),
-          ),
-        );
-        startTransition(async () => {
-          await onSave(formData);
-        });
-      }}
-      className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <div className="lg:col-span-2 space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Transfer Items</CardTitle>
-            <CardDescription>
-              Add each product and the quantity to move between locations.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-12 gap-4 items-end">
-              <div className="col-span-7">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                  Product
-                </Label>
-                <ProductVariantSelect
-                  variants={variants}
-                  value={draftVariantId}
-                  onValueChange={setDraftVariantId}
-                  placeholder="Select a product..."
-                  allowZeroStock={true}
-                />
+    <form onSubmit={handleSubmit} className="space-y-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-2 space-y-6">
+          <Card>
+            <CardHeader className="pb-4">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <ArrowRightLeft className="w-4 h-4 text-primary" />
+                Transfer Route & Details
+              </CardTitle>
+              <CardDescription>
+                Select originating facility, destination warehouse, and urgency priority.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="from-loc">Source Location (From)</Label>
+                <Select value={fromLocationId} onValueChange={setFromLocationId}>
+                  <SelectTrigger id="from-loc">
+                    <SelectValue placeholder="Select Origin Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem
+                        key={loc.id}
+                        value={loc.id}
+                        disabled={loc.id === toLocationId}
+                      >
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-              <div className="col-span-3">
-                <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                  Quantity
-                </Label>
-                <Input
-                  type="number"
-                  min="1"
-                  value={draftQuantity}
-                  onChange={e => setDraftQuantity(e.target.value)}
-                  onKeyDown={e => {
-                    if (e.key === "Enter") {
-                      e.preventDefault();
-                      handleAddItem();
-                    }
-                  }}
-                  className="bg-white"
-                  placeholder="0"
-                />
-              </div>
-              <div className="col-span-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={handleAddItem}
-                  disabled={!canAddItem}
-                  className="w-full gap-2 border-dashed">
-                  <Plus size={14} /> Add
-                </Button>
-              </div>
-            </div>
 
-            {itemError && (
-              <p className="text-sm text-red-600 flex items-center gap-1.5">
-                <AlertTriangle size={14} /> {itemError}
-              </p>
-            )}
+              <div className="space-y-2">
+                <Label htmlFor="to-loc">Destination Location (To)</Label>
+                <Select value={toLocationId} onValueChange={setToLocationId}>
+                  <SelectTrigger id="to-loc">
+                    <SelectValue placeholder="Select Destination Branch" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {locations.map((loc) => (
+                      <SelectItem
+                        key={loc.id}
+                        value={loc.id}
+                        disabled={loc.id === fromLocationId}
+                      >
+                        {loc.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div className="pt-2 border-t">
-              {items.length === 0 ? (
-                <div className="text-sm text-gray-500 text-center py-10 bg-gray-50 rounded-lg border border-dashed flex flex-col items-center gap-2">
-                  <PackageSearch size={22} className="text-gray-400" />
-                  <span>No items added yet.</span>
-                  <span className="text-xs font-medium">
-                    Select a product and quantity above, then click Add.
-                  </span>
-                </div>
-              ) : (
-                <div className="overflow-hidden rounded-lg border">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="bg-gray-50 text-xs font-bold text-gray-500 uppercase">
-                        <th className="text-left px-4 py-2">Product</th>
-                        <th className="text-left px-4 py-2">SKU</th>
-                        <th className="text-right px-4 py-2">Available</th>
-                        <th className="text-right px-4 py-2 w-28">Qty</th>
-                        <th className="px-4 py-2 w-10" />
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y">
-                      {items.map(item => {
-                        const overStock = item.quantity > item.availableStock;
-                        return (
-                          <tr
-                            key={item.id}
-                            className={overStock ? "bg-red-50/50" : undefined}>
-                            <td className="px-4 py-2.5 font-medium text-gray-900">
-                              {item.productName}
-                            </td>
-                            <td className="px-4 py-2.5 text-gray-500">
-                              {item.sku}
-                            </td>
-                            <td className="px-4 py-2.5 text-right text-gray-500">
-                              {item.availableStock}
-                            </td>
-                            <td className="px-4 py-2.5">
-                              <Input
-                                type="number"
-                                min="1"
-                                value={item.quantity}
-                                onChange={e =>
-                                  handleQuantityChange(item.id, e.target.value)
-                                }
-                                className={`bg-white h-8 text-right ${
-                                  overStock ? "border-red-400" : ""
-                                }`}
-                              />
-                            </td>
-                            <td className="px-4 py-2.5 text-right">
-                              <Button
-                                type="button"
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleRemoveItem(item.id)}
-                                className="h-8 w-8 text-gray-400 hover:text-red-600">
-                                <Trash2 size={14} />
-                              </Button>
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
+              <div className="space-y-2">
+                <Label htmlFor="priority-select">Dispatch Priority</Label>
+                <Select value={priority} onValueChange={setPriority}>
+                  <SelectTrigger id="priority-select">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {PRIORITIES.map((p) => (
+                      <SelectItem key={p.value} value={p.value}>
+                        {p.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {isPrivilegedUser && (
+                <div className="space-y-2 flex flex-col justify-end">
+                  <div className="flex items-center justify-between p-2.5 rounded-lg border border-border bg-muted/30">
+                    <div className="space-y-0.5">
+                      <Label className="text-xs font-semibold cursor-pointer">
+                        Instant Dispatch (Auto-Approve)
+                      </Label>
+                      <p className="text-[11px] text-muted-foreground">
+                        Skip multi-step queue and dispatch immediately.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={autoApproveAndShip}
+                      onCheckedChange={setAutoApproveAndShip}
+                    />
+                  </div>
                 </div>
               )}
-              {overStockCount > 0 && (
-                <p className="text-xs text-red-600 flex items-center gap-1.5 mt-2">
-                  <AlertTriangle size={13} />
-                  {overStockCount === 1
-                    ? "1 item exceeds available stock at the source location."
-                    : `${overStockCount} items exceed available stock at the source location.`}
-                </p>
-              )}
-            </div>
-          </CardContent>
-        </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Additional Notes</CardTitle>
-            <CardDescription>
-              Reason for transfer, handling instructions, or approval
-              references.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Textarea
-              value={notes}
-              onChange={e => setNotes(e.target.value)}
-              className="bg-white min-h-[100px]"
-              placeholder="e.g. Rebalancing stock ahead of the Q3 promotion..."
-            />
-          </CardContent>
-        </Card>
-      </div>
+              <div className="sm:col-span-2 space-y-2">
+                <Label htmlFor="notes">Transfer Notes / Reason</Label>
+                <Textarea
+                  id="notes"
+                  placeholder="e.g. Replenishing high-demand stock for weekend sale..."
+                  value={notes}
+                  onChange={(e) => setNotes(e.target.value)}
+                  rows={2}
+                />
+              </div>
+            </CardContent>
+          </Card>
 
-      <div className="space-y-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Transfer Details</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                Source Location
-              </Label>
-              <Select value={fromLocationId} onValueChange={setFromLocationId}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select source..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map(l => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex justify-center -my-1">
+          <Card>
+            <CardHeader className="pb-4 flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="text-base font-semibold flex items-center gap-2">
+                  <PackageSearch className="w-4 h-4 text-primary" />
+                  Transfer Items & Batches
+                </CardTitle>
+                <CardDescription>
+                  Scan barcode, pick items, specify batches and serial numbers.
+                </CardDescription>
+              </div>
               <Button
                 type="button"
-                variant="ghost"
-                size="icon"
-                onClick={swapLocations}
-                disabled={!fromLocationId && !toLocationId}
-                className="h-7 w-7 text-gray-400 hover:text-gray-700"
-                aria-label="Swap source and destination">
-                <ArrowRightLeft size={14} />
+                variant="outline"
+                size="sm"
+                onClick={() => setIsScannerOpen(true)}
+                className="gap-2"
+              >
+                <Scan className="w-4 h-4 text-primary" />
+                Scan Barcode / QR
               </Button>
-            </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2">
+                <Label>Add Product Variant</Label>
+                <Select onValueChange={handleAddProduct}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select product variant to add..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {products.map((p) => (
+                      <SelectItem key={p.variantId} value={p.variantId}>
+                        {p.name} ({p.sku}) - {p.currentStock} in stock
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                Destination Location
-              </Label>
-              <Select value={toLocationId} onValueChange={setToLocationId}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Select destination..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {locations.map(l => (
-                    <SelectItem key={l.id} value={l.id}>
-                      {l.name}
-                    </SelectItem>
+              {lineItems.length > 0 ? (
+                <div className="divide-y divide-border border rounded-lg overflow-hidden">
+                  {lineItems.map((item) => (
+                    <div key={item.id} className="p-4 space-y-3 bg-card">
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <div className="font-semibold text-foreground text-sm">
+                            {item.productName}
+                          </div>
+                          <div className="text-xs text-muted-foreground">
+                            SKU: {item.sku} | In Stock: {item.availableStock}
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="text-destructive hover:bg-destructive/10"
+                          onClick={() => removeItem(item.id)}
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </Button>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div>
+                          <Label className="text-xs">Transfer Quantity</Label>
+                          <Input
+                            type="number"
+                            min="1"
+                            value={item.quantity}
+                            onChange={(e) =>
+                              updateItemQuantity(item.id, Number(e.target.value))
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Batch / Lot (Optional)</Label>
+                          <Input
+                            placeholder="Auto FEFO if empty"
+                            value={item.batchNumber || ""}
+                            onChange={(e) =>
+                              updateItemBatch(item.id, e.target.value)
+                            }
+                          />
+                        </div>
+                        <div>
+                          <Label className="text-xs">Serial Numbers (Comma / Newline)</Label>
+                          <Input
+                            placeholder="SN1, SN2, SN3"
+                            value={item.serialInput || ""}
+                            onChange={(e) =>
+                              updateItemSerials(item.id, e.target.value)
+                            }
+                          />
+                        </div>
+                      </div>
+                    </div>
                   ))}
-                </SelectContent>
-              </Select>
-            </div>
-            {locationsMismatch && (
-              <p className="text-xs text-red-600 flex items-center gap-1.5">
-                <AlertTriangle size={13} /> Source and destination must be
-                different.
-              </p>
-            )}
-
-            <Separator />
-
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                Priority
-              </Label>
-              <Select value={priority} onValueChange={setPriority}>
-                <SelectTrigger className="bg-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {PRIORITIES.map(p => (
-                    <SelectItem key={p.value} value={p.value}>
-                      {p.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label className="text-xs font-bold text-gray-500 uppercase mb-1 block">
-                Expected Arrival
-              </Label>
-              <Input
-                type="date"
-                value={expectedDate}
-                onChange={e => setExpectedDate(e.target.value)}
-                className="bg-white"
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Summary</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Line items</span>
-              <span className="font-medium text-gray-900">{items.length}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Total units</span>
-              <span className="font-medium text-gray-900">{totalUnits}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-gray-500">Priority</span>
-              <Badge
-                variant={priority === "urgent" ? "destructive" : "secondary"}>
-                {PRIORITIES.find(p => p.value === priority)?.label}
-              </Badge>
-            </div>
-
-            <Separator />
-
-            <Button
-              type="submit"
-              disabled={!canSubmit}
-              className="w-full gap-2">
-              {isPending ? (
-                <>
-                  <Loader2 size={16} className="animate-spin" /> Creating...
-                </>
+                </div>
               ) : (
-                <>
-                  <Save size={16} /> Create Transfer
-                </>
+                <div className="text-center py-8 border border-dashed rounded-lg bg-muted/10 text-muted-foreground text-sm">
+                  No products added yet. Use the selector above or barcode scanner to add line items.
+                </div>
               )}
-            </Button>
-            {!canSubmit && !isPending && (
-              <p className="text-xs text-gray-400 text-center">
-                Add at least one item and choose both locations to continue.
-              </p>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="space-y-6">
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold">
+                Summary & Approvals
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total Unique Items:</span>
+                  <span className="font-semibold">{lineItems.length}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Total Units:</span>
+                  <span className="font-semibold">{totalQuantity}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Priority:</span>
+                  <Badge variant="outline">{priority}</Badge>
+                </div>
+                <div className="flex justify-between items-center">
+                  <span className="text-muted-foreground">Dispatch Mode:</span>
+                  <Badge variant={autoApproveAndShip ? "default" : "secondary"}>
+                    {autoApproveAndShip ? "Instant Dispatch" : "Pending Approval"}
+                  </Badge>
+                </div>
+              </div>
+
+              <Separator />
+
+              <StockAttachmentManager
+                attachments={attachments}
+                onChange={setAttachments}
+              />
+
+              <Button
+                type="submit"
+                className="w-full gap-2 mt-4"
+                disabled={isPending || lineItems.length === 0}
+              >
+                {isPending ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4" />
+                )}
+                {autoApproveAndShip ? "Dispatch Stock Immediately" : "Submit Stock Transfer"}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
+
+      <BarcodeScannerDialog
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={handleBarcodeScanned}
+        title="Scan Item Barcode for Transfer"
+      />
     </form>
   );
 }

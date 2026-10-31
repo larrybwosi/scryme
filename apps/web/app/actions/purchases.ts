@@ -550,7 +550,9 @@ export async function receivePurchaseStockWithBatches(data: {
     receivedDate?: Date | string;
     unitCost?: number;
     notes?: string;
+    serialNumbers?: string[];
   }[];
+  attachmentIds?: string[];
 }) {
   const { auth, member } = await checkPermission([
     "OWNER",
@@ -703,6 +705,32 @@ export async function receivePurchaseStockWithBatches(data: {
 
         const [, batch] = await Promise.all([updateItemOp, createBatchOp]);
 
+        if (itemInput.serialNumbers && itemInput.serialNumbers.length > 0) {
+          for (const sn of itemInput.serialNumbers) {
+            await tx.serialNumber.upsert({
+              where: {
+                organizationId_serialNumber: {
+                  organizationId: auth.organizationId,
+                  serialNumber: sn,
+                },
+              },
+              update: {
+                status: "IN_STOCK",
+                locationId: targetLocationId,
+                stockBatchId: batch.id,
+              },
+              create: {
+                organizationId: auth.organizationId,
+                serialNumber: sn,
+                variantId: pItem.variantId,
+                locationId: targetLocationId,
+                stockBatchId: batch.id,
+                status: "IN_STOCK",
+              },
+            });
+          }
+        }
+
         // 3. Log Stock Movement
         const movementOp = tx.stockMovement.create({
           data: {
@@ -743,6 +771,13 @@ export async function receivePurchaseStockWithBatches(data: {
       });
 
       await Promise.all([...stockOps, ...itemOps]);
+    }
+
+    if (data.attachmentIds && data.attachmentIds.length > 0) {
+      await tx.attachment.updateMany({
+        where: { id: { in: data.attachmentIds }, organizationId: auth.organizationId },
+        data: { purchaseId: data.purchaseId },
+      });
     }
 
     // Check overall purchase status

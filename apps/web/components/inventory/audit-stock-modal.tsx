@@ -1,3 +1,6 @@
+import { BarcodeScannerDialog } from "../stocking/barcode-scanner-dialog";
+import { StockAttachmentManager, StockAttachment } from "../stocking/stock-attachment-manager";
+import { Scan } from "lucide-react";
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
@@ -77,6 +80,10 @@ export function AuditStockModal({
     "INVENTORY_COUNT" as StockAdjustmentReason,
   );
   const [notes, setNotes] = useState("");
+  const [stockBatchId, setStockBatchId] = useState("");
+  const [serialNumbersRaw, setSerialNumbersRaw] = useState("");
+  const [attachments, setAttachments] = useState<StockAttachment[]>([]);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [newValue, setNewValue] = useState<string>(
     product.unitPrice.toString(),
   );
@@ -133,12 +140,20 @@ export function AuditStockModal({
           toast.error("Please select a location");
           return;
         }
+        const serialsList = serialNumbersRaw
+          .split(/[,\n]/)
+          .map(s => s.trim())
+          .filter(Boolean);
+
         await adjustStock({
           variantId: product.variantId,
           locationId: selectedLocation,
           quantity: discrepancy,
           reason,
           notes,
+          stockBatchId: stockBatchId.trim() || undefined,
+          serialNumbers: serialsList.length > 0 ? serialsList : undefined,
+          attachmentIds: attachments.map(a => a.id),
         });
       } else {
         await updateValue({
@@ -321,6 +336,45 @@ export function AuditStockModal({
                   </div>
                 </div>
 
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label className="text-xs font-semibold text-gray-700">Stock Batch / Lot (Optional)</Label>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => setIsScannerOpen(true)}
+                        className="h-6 text-[11px] gap-1 px-1.5 text-primary"
+                      >
+                        <Scan className="w-3 h-3" />
+                        Scan
+                      </Button>
+                    </div>
+                    <Input
+                      placeholder="e.g. BATCH-2026-A"
+                      value={stockBatchId}
+                      onChange={e => setStockBatchId(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-semibold text-gray-700">Serial Numbers (Comma / Newline)</Label>
+                    <Input
+                      placeholder="SN-001, SN-002"
+                      value={serialNumbersRaw}
+                      onChange={e => setSerialNumbersRaw(e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <StockAttachmentManager
+                    attachments={attachments}
+                    onChange={setAttachments}
+                    label="Audit Evidence & Documentation"
+                  />
+                </div>
+
                 <div className="space-y-2">
                   <Label className="text-sm font-medium">Note</Label>
                   <Textarea
@@ -458,6 +512,15 @@ export function AuditStockModal({
           </div>
         </div>
       </SheetContent>
+      <BarcodeScannerDialog
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScan={(scanned) => {
+          setStockBatchId(scanned);
+          toast.success(`Scanned code: ${scanned}`);
+        }}
+        title="Scan Batch or Serial Barcode"
+      />
     </Sheet>
   );
 }

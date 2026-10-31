@@ -11,31 +11,54 @@ import { ArrowLeft, Plus } from "lucide-react";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { NewTransferForm } from "../../../../components/stocking/new-transfer-form";
+import { getServerAuth } from "@repo/auth/server";
+import { db } from "@repo/db";
 
 export const metadata: Metadata = {
   title: "New Stock Transfer",
   description: "Initiate an inter-warehouse stock transfer movement.",
 };
 
-
 export default async function NewTransferPage() {
-  const [locations, products] = await Promise.all([
+  const [locations, products, context] = await Promise.all([
     getInventoryLocations(),
     getInventoryProducts({ stockLevel: "all" }),
+    getServerAuth(),
   ]);
+
+  let userRole = "ADMIN";
+  if (context?.memberId) {
+    const member = await db.member.findUnique({
+      where: { id: context.memberId },
+      select: { role: true },
+    });
+    if (member?.role) userRole = member.role;
+  }
 
   const handleSubmit = async (formData: FormData) => {
     "use server";
     const fromLocationId = formData.get("fromLocationId") as string;
     const toLocationId = formData.get("toLocationId") as string;
+    const priority = formData.get("priority") as any;
     const notes = formData.get("notes") as string;
+    const autoApproveAndShip = formData.get("autoApproveAndShip") === "true";
+
+    const attachmentIdsRaw = formData.get("attachmentIds") as string;
+    let attachmentIds: string[] = [];
+    if (attachmentIdsRaw) {
+      try {
+        attachmentIds = JSON.parse(attachmentIdsRaw);
+      } catch (err) {
+        console.error("Failed to parse attachmentIds:", err);
+      }
+    }
 
     if (fromLocationId === toLocationId) {
       throw new Error("Source and destination locations must be different");
     }
 
     const itemsRaw = formData.get("items") as string;
-    let items: { variantId: string; quantity: number }[] = [];
+    let items: any[] = [];
     if (itemsRaw) {
       try {
         const parsed = JSON.parse(itemsRaw);
@@ -43,6 +66,8 @@ export default async function NewTransferPage() {
           items = parsed.map((item: any) => ({
             variantId: item.variantId,
             quantity: Number(item.quantity),
+            batchNumber: item.batchNumber || undefined,
+            serialNumbers: item.serialNumbers || [],
           }));
         }
       } catch (e) {
@@ -54,8 +79,11 @@ export default async function NewTransferPage() {
       await createStockTransfer({
         fromLocationId,
         toLocationId,
+        priority,
         items,
         notes,
+        attachmentIds,
+        autoApproveAndShip,
       });
       redirect("/stocking/transfers");
     }
@@ -71,15 +99,16 @@ export default async function NewTransferPage() {
         </Link>
         <PageHeader
           title="New Stock Transfer"
-          description="Initiate a movement of goods between your business locations."
+          description="Initiate an inter-branch transfer movement with lot tracking and barcode scanning."
           icon={<Plus size={24} />}
         />
       </div>
 
       <NewTransferForm
-        products={products}
+        products={products as any}
         locations={locations}
         onSave={handleSubmit}
+        userRole={userRole}
       />
     </div>
   );

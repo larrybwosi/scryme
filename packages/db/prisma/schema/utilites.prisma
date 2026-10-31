@@ -31,6 +31,15 @@ model Attachment {
   stockBatchId String?
   stockBatch   StockBatch? @relation(fields: [stockBatchId], references: [id])
 
+  stockTransferId String?
+  stockTransfer   StockTransfer? @relation(fields: [stockTransferId], references: [id])
+
+  stockAdjustmentId String?
+  stockAdjustment   StockAdjustment? @relation(fields: [stockAdjustmentId], references: [id])
+
+  stockReconciliationId String?
+  stockReconciliation   StockReconciliation? @relation(fields: [stockReconciliationId], references: [id])
+
   fulfillmentId String?
   fulfillment   Fulfillment? @relation(fields: [fulfillmentId], references: [id])
 
