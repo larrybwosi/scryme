@@ -16,12 +16,26 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className="min-h-screen bg-[#0d0e11] text-slate-100 flex antialiased">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"
+          rel="stylesheet"
+        />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200"
+          rel="stylesheet"
+        />
+      </head>
+      <body className="bg-surface font-body-md text-body-md text-on-surface antialiased">
         <QueryProvider>
           <Sidebar />
-          <div className="flex-1 flex flex-col min-w-0">
+          <div className="pl-60 min-h-screen flex flex-col">
             <Header />
-            <main className="flex-1 p-5 overflow-y-auto">{children}</main>
+            <main className="relative pt-12 min-h-screen bg-surface w-full px-8 pb-16">
+              {children}
+            </main>
           </div>
         </QueryProvider>
       </body>

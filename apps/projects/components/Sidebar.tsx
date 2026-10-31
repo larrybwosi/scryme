@@ -2,87 +2,111 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import {
-  FolderKanban,
-  CheckSquare,
-  Kanban,
-  Calendar,
-  Clock,
-  Milestone,
-  Users,
-  PlusCircle,
-  FileText,
-  Timer,
-  CalendarDays,
-  FolderDot
-} from "lucide-react";
 
 const navigation = [
-  { name: "Projects", href: "/projects", icon: FolderKanban },
-  { name: "Tasks", href: "/tasks", icon: CheckSquare },
-  { name: "Board", href: "/board", icon: Kanban },
-  { name: "Timeline / Gantt", href: "/gantt", icon: Clock },
-  { name: "Calendar", href: "/calendar", icon: CalendarDays },
-  { name: "Schedule", href: "/schedule", icon: Calendar },
-  { name: "Milestones", href: "/milestones", icon: Milestone },
-  { name: "Notes & Docs", href: "/notes-and-docs", icon: FileText },
-  { name: "Time Tracking", href: "/time-tracking", icon: Timer },
-  { name: "Team & Workload", href: "/team", icon: Users },
+  { name: "Tasks", href: "/tasks", icon: "check_circle" },
+  { name: "Board", href: "/board", icon: "view_kanban" },
+  { name: "Timeline", href: "/gantt", icon: "reorder" },
+  { name: "Calendar", href: "/calendar", icon: "calendar_today" },
+  { name: "Schedule", href: "/schedule", icon: "date_range" },
+  { name: "Task Detail", href: "/task-detail", icon: "assignment" },
+  { name: "Notes & Docs", href: "/notes-and-docs", icon: "description" },
+  { name: "Time Tracking", href: "/time-tracking", icon: "timer" },
+  { name: "Projects", href: "/projects", icon: "folder" },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="w-60 bg-[#0d0e11] border-r border-[#2E3039]/50 min-h-screen flex flex-col justify-between p-3 select-none shrink-0">
-      <div>
-        <div className="flex items-center justify-between px-2 py-2 mb-4 border-b border-[#2E3039]/40 pb-3">
-          <Link href="/projects" className="flex items-center gap-2.5 group">
-            <div className="h-7 w-7 rounded-lg bg-[#5E6AD2] flex items-center justify-center font-bold text-white text-xs shadow-sm group-hover:bg-[#717DE3] transition-colors">
+    <aside className="fixed left-0 top-0 h-full w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between">
+      <div className="flex flex-col">
+        {/* Workspace Brand Switcher */}
+        <div className="h-12 px-space-md border-b border-outline-variant/30 flex items-center justify-between">
+          <Link
+            href="/projects"
+            className="flex items-center gap-space-sm rounded-lg px-space-xs py-1 hover:bg-surface-container transition-colors text-left"
+          >
+            <div className="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-sm font-semibold">
               S
             </div>
-            <div className="flex flex-col">
-              <h1 className="font-semibold text-slate-100 text-xs tracking-tight">Scryme Workspace</h1>
-              <p className="text-[10px] text-slate-400 font-mono">Nexus 2.0 Engine</p>
+            <div className="flex flex-col leading-none">
+              <span className="font-headline-sm text-body-sm text-on-surface font-medium truncate max-w-[120px]">
+                Scryme
+              </span>
+              <span className="font-body-sm text-[10px] text-outline leading-none truncate max-w-[120px]">
+                Acme Global
+              </span>
             </div>
+            <span className="material-symbols-outlined text-outline text-[16px]">unfold_more</span>
           </Link>
+          <button
+            className="w-6 h-6 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+            type="button"
+            title="Edit workspace"
+          >
+            <span className="material-symbols-outlined text-[16px]">edit_square</span>
+          </button>
         </div>
 
-        <div className="px-2 mb-2 text-[10px] font-semibold text-slate-500 uppercase tracking-wider">
-          Workspace Views
+        {/* Global Search Input Trigger */}
+        <div className="p-space-xs">
+          <button
+            className="w-full flex items-center justify-between px-space-sm py-1.5 rounded-lg bg-surface-container-low border border-outline-variant/30 text-on-surface-variant hover:text-on-surface hover:border-outline transition-colors"
+            type="button"
+          >
+            <div className="flex items-center gap-space-sm">
+              <span className="material-symbols-outlined text-[16px] text-outline">search</span>
+              <span className="font-body-sm text-body-sm text-outline">Search...</span>
+            </div>
+            <div className="flex items-center gap-0.5 bg-surface-container px-1 py-0.5 rounded border border-outline-variant/40">
+              <span className="font-label-kbd text-label-kbd text-outline">⌘K</span>
+            </div>
+          </button>
         </div>
 
-        <nav className="space-y-0.5">
-          {navigation.map((item) => {
-            const isActive =
-              pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.name}
-                href={item.href}
-                className={`flex items-center gap-2.5 px-2.5 py-2 rounded-md text-xs font-medium transition-all ${
-                  isActive
-                    ? "bg-[#1f1f23] text-indigo-300 border-l-2 border-[#5E6AD2] font-semibold shadow-sm"
-                    : "text-slate-400 hover:text-slate-200 hover:bg-[#171922]"
-                }`}
-              >
-                <Icon className={`h-4 w-4 ${isActive ? "text-[#5E6AD2]" : "text-slate-400"}`} />
-                <span>{item.name}</span>
-              </Link>
-            );
-          })}
-        </nav>
+        {/* Navigation Section */}
+        <div className="px-space-xs py-space-xs">
+          <div className="px-space-sm py-1 text-[11px] font-label-badge text-outline uppercase tracking-wider">
+            Workspace
+          </div>
+          <nav className="flex flex-col gap-0.5">
+            {navigation.map((item) => {
+              const isActive =
+                item.href === "/projects"
+                  ? pathname === "/projects" || pathname.startsWith("/projects/")
+                  : pathname === item.href || (item.href !== "/" && pathname.startsWith(item.href));
+
+              return (
+                <Link
+                  key={item.name}
+                  href={item.href}
+                  className={`flex items-center gap-space-sm px-space-sm py-1.5 rounded-lg transition-all font-body-md text-body-md ${
+                    isActive
+                      ? "bg-surface-container-high text-on-surface font-medium border-l-2 border-primary-container"
+                      : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+                  }`}
+                >
+                  <span className="material-symbols-outlined text-[18px]">{item.icon}</span>
+                  <span>{item.name}</span>
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
       </div>
 
-      <div className="pt-3 border-t border-[#2E3039]/40 space-y-2">
-        <Link
-          href="/new"
-          className="w-full flex items-center justify-center gap-2 bg-[#5E6AD2] hover:bg-[#717DE3] text-white px-3 py-2 rounded-md text-xs font-medium transition-all shadow-md"
-        >
-          <PlusCircle className="h-4 w-4" />
-          <span>New Project / Task</span>
-        </Link>
+      {/* Footer Settings */}
+      <div className="p-space-xs border-t border-outline-variant/30">
+        <div className="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer">
+          <div className="flex items-center gap-space-sm">
+            <div className="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center">
+              <span className="material-symbols-outlined text-outline text-[13px]">tune</span>
+            </div>
+            <span className="font-body-sm text-body-sm text-on-surface-variant">Settings</span>
+          </div>
+          <span className="font-label-kbd text-label-kbd text-outline">⌘,</span>
+        </div>
       </div>
     </aside>
   );

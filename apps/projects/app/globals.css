@@ -2,31 +2,165 @@
 
 @layer base {
   :root {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 217.2 91.2% 59.8%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 224.3 76.3% 48%;
-    --radius: 0.5rem;
+    --background: #121316;
+    --foreground: #e3e2e6;
   }
 }
 
+@theme {
+  --color-inverse-on-surface: #303034;
+  --color-outline-variant: #454652;
+  --color-on-secondary: #1c2679;
+  --color-on-surface-variant: #c6c5d5;
+  --color-surface: #121316;
+  --color-on-tertiary-fixed: #191b26;
+  --color-on-background: #e3e2e6;
+  --color-on-tertiary: #2e303c;
+  --color-primary-fixed: #dfe0ff;
+  --color-error-container: #93000a;
+  --color-secondary-fixed: #dfe0ff;
+  --color-on-error-container: #ffdad6;
+  --color-on-surface: #e3e2e6;
+  --color-outline: #908f9e;
+  --color-primary-container: #5e6ad2;
+  --color-surface-bright: #38393c;
+  --color-surface-container-high: #292a2d;
+  --color-surface-container-highest: #343538;
+  --color-secondary-fixed-dim: #bdc2ff;
+  --color-inverse-surface: #e3e2e6;
+  --color-on-primary-fixed: #000965;
+  --color-surface-container-lowest: #0d0e11;
+  --color-surface-tint: #bdc2ff;
+  --color-on-tertiary-fixed-variant: #444653;
+  --color-on-secondary-fixed: #000964;
+  --color-on-secondary-fixed-variant: #343e91;
+  --color-surface-dim: #121316;
+  --color-background: #121316;
+  --color-on-tertiary-container: #fdfaff;
+  --color-on-primary-container: #fdfaff;
+  --color-tertiary: #c5c5d5;
+  --color-surface-container-low: #1b1b1f;
+  --color-on-error: #690005;
+  --color-tertiary-fixed: #e1e1f2;
+  --color-primary: #bdc2ff;
+  --color-secondary: #bdc2ff;
+  --color-error: #ffb4ab;
+  --color-on-secondary-container: #a7afff;
+  --color-tertiary-fixed-dim: #c5c5d5;
+  --color-primary-fixed-dim: #bdc2ff;
+  --color-on-primary: #121f8b;
+  --color-on-primary-fixed-variant: #2e3aa2;
+  --color-inverse-primary: #4854bb;
+  --color-surface-container: #1f1f23;
+  --color-tertiary-container: #717381;
+  --color-surface-variant: #343538;
+  --color-secondary-container: #343e91;
+
+  --spacing-gutter: 0.75rem;
+  --spacing-space-md: 0.75rem;
+  --spacing-space-lg: 1rem;
+  --spacing-gutter-desktop: 1rem;
+  --spacing-space-xl: 1.5rem;
+  --spacing-space-xs: 0.25rem;
+  --spacing-space-sm: 0.5rem;
+  --spacing-margin: 1rem;
+  --spacing-margin-desktop: 1.5rem;
+
+  --radius: 0.125rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.5rem;
+  --radius-full: 0.75rem;
+
+  --font-headline-sm: Inter, sans-serif;
+  --font-body-md: Inter, sans-serif;
+  --font-label-kbd: 'JetBrains Mono', monospace;
+  --font-body-sm: Inter, sans-serif;
+  --font-label-code: 'JetBrains Mono', monospace;
+  --font-body-lg: Inter, sans-serif;
+  --font-headline-md: Inter, sans-serif;
+  --font-display-lg: Inter, sans-serif;
+  --font-headline-lg: Inter, sans-serif;
+  --font-label-badge: Inter, sans-serif;
+
+  --text-headline-sm: 15px;
+  --text-headline-sm--line-height: 20px;
+  --text-headline-sm--letter-spacing: -0.01em;
+  --text-headline-sm--font-weight: 600;
+
+  --text-body-md: 13px;
+  --text-body-md--line-height: 19px;
+  --text-body-md--letter-spacing: -0.005em;
+  --text-body-md--font-weight: 400;
+
+  --text-label-kbd: 11px;
+  --text-label-kbd--line-height: 14px;
+  --text-label-kbd--letter-spacing: 0.02em;
+  --text-label-kbd--font-weight: 500;
+
+  --text-body-sm: 12px;
+  --text-body-sm--line-height: 16px;
+  --text-body-sm--letter-spacing: 0em;
+  --text-body-sm--font-weight: 400;
+
+  --text-label-code: 12px;
+  --text-label-code--line-height: 16px;
+  --text-label-code--letter-spacing: -0.01em;
+  --text-label-code--font-weight: 500;
+
+  --text-body-lg: 14px;
+  --text-body-lg--line-height: 22px;
+  --text-body-lg--letter-spacing: -0.006em;
+  --text-body-lg--font-weight: 400;
+
+  --text-headline-md: 18px;
+  --text-headline-md--line-height: 24px;
+  --text-headline-md--letter-spacing: -0.015em;
+  --text-headline-md--font-weight: 600;
+
+  --text-display-lg: 32px;
+  --text-display-lg--line-height: 38px;
+  --text-display-lg--letter-spacing: -0.025em;
+  --text-display-lg--font-weight: 600;
+
+  --text-headline-lg: 24px;
+  --text-headline-lg--line-height: 30px;
+  --text-headline-lg--letter-spacing: -0.02em;
+  --text-headline-lg--font-weight: 600;
+
+  --text-label-badge: 11px;
+  --text-label-badge--line-height: 14px;
+  --text-label-badge--letter-spacing: 0.01em;
+  --text-label-badge--font-weight: 500;
+}
+
 body {
-  background-color: #0b0f17;
-  color: #f8fafc;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  background-color: #121316;
+  color: #e3e2e6;
+  font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  overscroll-behavior: none;
+}
+
+/* Material Symbols settings */
+.material-symbols-outlined {
+  font-family: 'Material Symbols Outlined';
+  font-weight: normal;
+  font-style: normal;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: normal;
+  text-transform: none;
+  display: inline-block;
+  white-space: nowrap;
+  word-wrap: normal;
+  direction: ltr;
+  -webkit-font-feature-settings: 'liga';
+  -webkit-font-smoothing: antialiased;
+}
+
+::-webkit-scrollbar {
+  display: none;
+}
+
+* {
+  scrollbar-width: none;
 }
