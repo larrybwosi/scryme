@@ -293,12 +293,12 @@ class AuthRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun pairPosDevice(qrContent: String): Result<String> {
+    override suspend fun pairPosDevice(qrContent: String, locationId: String?): Result<String> {
         return try {
             var sessionId: String? = null
             var pairingCode: String? = null
             var orgSlug: String? = sessionManager.getOrgSlug()
-            var locationId: String? = sessionManager.getLocationId()
+            var effectiveLocationId: String? = locationId?.ifBlank { null } ?: sessionManager.getLocationId()
 
             val trimmed = qrContent.trim()
             if (trimmed.startsWith("{") && trimmed.endsWith("}")) {
@@ -307,7 +307,7 @@ class AuthRepositoryImpl @Inject constructor(
                     if (json.has("sessionId")) sessionId = json.get("sessionId").asString
                     if (json.has("pairingCode")) pairingCode = json.get("pairingCode").asString
                     if (json.has("orgSlug")) orgSlug = json.get("orgSlug").asString
-                    if (json.has("locationId")) locationId = json.get("locationId").asString
+                    if (json.has("locationId")) effectiveLocationId = json.get("locationId").asString
                 } catch (e: Exception) {
                     sessionId = trimmed
                 }
@@ -316,7 +316,7 @@ class AuthRepositoryImpl @Inject constructor(
                 sessionId = uri.getQueryParameter("sessionId") ?: uri.getQueryParameter("session")
                 pairingCode = uri.getQueryParameter("pairingCode") ?: uri.getQueryParameter("code")
                 orgSlug = uri.getQueryParameter("orgSlug") ?: uri.getQueryParameter("org") ?: orgSlug
-                locationId = uri.getQueryParameter("locationId") ?: locationId
+                effectiveLocationId = uri.getQueryParameter("locationId") ?: effectiveLocationId
             } else {
                 sessionId = trimmed
                 pairingCode = trimmed
@@ -325,7 +325,7 @@ class AuthRepositoryImpl @Inject constructor(
             val pairReq = PosPairRequestDto(
                 sessionId = sessionId,
                 pairingCode = pairingCode,
-                locationId = locationId,
+                locationId = effectiveLocationId,
                 deviceName = "Android POS Terminal",
                 deviceType = "ANDROID"
             )

@@ -10,7 +10,9 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
+import tech.scryme.app.domain.model.BranchLocation
 import tech.scryme.app.domain.repository.AuthRepository
+import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.ProfileRepository
 import javax.inject.Inject
 
@@ -27,6 +29,7 @@ data class SettingsUiState(
     val orgCurrency: String = "USD",
     val orgCurrencySymbol: String = "$",
     val locationId: String = "",
+    val locations: List<BranchLocation> = emptyList(),
     val showQrScanner: Boolean = false,
     val isPairingPos: Boolean = false,
     val posPairingMessage: String? = null
@@ -57,16 +60,25 @@ private data class AccountState(
     val locationId: String
 )
 
+private data class PosPairingState(
+    val showScanner: Boolean,
+    val isPairing: Boolean,
+    val pairingMsg: String?,
+    val locations: List<BranchLocation>
+)
+
 @HiltViewModel
 class SettingsViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val branchRepository: BranchRepository
 ) : ViewModel() {
 
     private val _showQrScanner = MutableStateFlow(false)
     private val _isPairingPos = MutableStateFlow(false)
     private val _posPairingMessage = MutableStateFlow<String?>(null)
+    private val _locations = MutableStateFlow<List<BranchLocation>>(emptyList())
 
     private val prefsFlow = combine(
         sessionManager.themeModeFlow,
@@ -115,13 +127,29 @@ class SettingsViewModel @Inject constructor(
         )
     }
 
+    private val pairingFlow = combine(
+        _showQrScanner,
+        _isPairingPos,
+        _posPairingMessage,
+        _locations
+    ) { showScanner, isPairing, pairingMsg, locations ->
+        PosPairingState(
+            showScanner = showScanner,
+            isPairing = isPairing,
+            pairingMsg = pairingMsg,
+            locations = locations
+        )
+    }
+
+    init {
+        loadBranchLocations()
+    }
+
     val uiState: StateFlow<SettingsUiState> = combine(
         prefsFlow,
         accountFlow,
-        _showQrScanner,
-        _isPairingPos,
-        _posPairingMessage
-    ) { prefs, account, showScanner, isPairing, pairingMsg ->
+        pairingFlow
+    ) { prefs, account, pairing ->
         SettingsUiState(
             themeMode = prefs.themeMode,
             dutyStatus = prefs.dutyStatus,
@@ -135,15 +163,30 @@ class SettingsViewModel @Inject constructor(
             orgCurrency = account.orgCurrency,
             orgCurrencySymbol = account.orgCurrencySymbol,
             locationId = account.locationId,
-            showQrScanner = showScanner,
-            isPairingPos = isPairing,
-            posPairingMessage = pairingMsg
+            locations = pairing.locations,
+            showQrScanner = pairing.showScanner,
+            isPairingPos = pairing.isPairing,
+            posPairingMessage = pairing.pairingMsg
         )
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5000),
         initialValue = SettingsUiState()
     )
+
+    fun loadBranchLocations() {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+            branchRepository.getBranchLocations(orgSlug).fold(
+                onSuccess = { branchList ->
+                    _locations.value = branchList
+                },
+                onFailure = {
+                    // Fall back to empty or keep existing
+                }
+            )
+        }
+    }
 
     fun setThemeMode(mode: String) {
         viewModelScope.launch {
@@ -184,11 +227,11 @@ class SettingsViewModel @Inject constructor(
         _showQrScanner.value = show
     }
 
-    fun pairPosDevice(qrContent: String) {
+    fun pairPosDevice(qrContent: String, locationId: String? = null) {
         viewModelScope.launch {
             _isPairingPos.value = true
             _posPairingMessage.value = "Authenticating POS Device..."
-            val result = authRepository.pairPosDevice(qrContent)
+            val result = authRepository.pairPosDevice(qrContent, locationId)
             _isPairingPos.value = false
             result.fold(
                 onSuccess = { msg ->
