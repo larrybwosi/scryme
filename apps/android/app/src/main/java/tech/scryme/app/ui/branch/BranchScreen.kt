@@ -1,6 +1,7 @@
 package tech.scryme.app.ui.branch
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -10,6 +11,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.LocationOn
@@ -30,7 +32,8 @@ import tech.scryme.app.ui.theme.Emerald500
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BranchScreen(
-    viewModel: BranchViewModel
+    viewModel: BranchViewModel,
+    onNavigateToBranchDetails: ((branchId: String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
@@ -112,6 +115,7 @@ fun BranchScreen(
                                 branch = branch,
                                 isActive = isActive,
                                 isAdmin = state.isAdmin,
+                                onCardClick = { onNavigateToBranchDetails?.invoke(branch.id) },
                                 onSelect = { viewModel.switchBranch(branch.id) },
                                 onEdit = { locationToEdit = branch },
                                 onEditGeofence = { locationToEditGeofence = branch },
@@ -217,6 +221,7 @@ fun BranchItemCard(
     branch: BranchLocation,
     isActive: Boolean,
     isAdmin: Boolean,
+    onCardClick: () -> Unit,
     onSelect: () -> Unit,
     onEdit: () -> Unit,
     onEditGeofence: () -> Unit,
@@ -226,7 +231,9 @@ fun BranchItemCard(
     var showMenu by remember { mutableStateOf(false) }
 
     Card(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCardClick() },
         colors = CardDefaults.cardColors(
             containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
         )
@@ -350,6 +357,14 @@ fun BranchItemCard(
                                 expanded = showMenu,
                                 onDismissRequest = { showMenu = false }
                             ) {
+                                DropdownMenuItem(
+                                    text = { Text("View Branch Details") },
+                                    leadingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
+                                    onClick = {
+                                        showMenu = false
+                                        onCardClick()
+                                    }
+                                )
                                 DropdownMenuItem(
                                     text = { Text("Edit Details") },
                                     leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },

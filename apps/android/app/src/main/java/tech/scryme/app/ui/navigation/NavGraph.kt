@@ -4,12 +4,16 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
+import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
+import androidx.navigation.navArgument
 import tech.scryme.app.ui.admin.AdminScreen
 import tech.scryme.app.ui.admin.AdminViewModel
 import tech.scryme.app.ui.auth.AuthScreen
 import tech.scryme.app.ui.auth.AuthViewModel
+import tech.scryme.app.ui.branch.BranchDetailsScreen
+import tech.scryme.app.ui.branch.BranchDetailsViewModel
 import tech.scryme.app.ui.branch.BranchScreen
 import tech.scryme.app.ui.branch.BranchViewModel
 import tech.scryme.app.ui.overview.OverviewScreen
@@ -89,7 +93,8 @@ fun AppNavGraph(
             val viewModel: AdminViewModel = hiltViewModel()
             AdminScreen(
                 viewModel = viewModel,
-                onNavigateToSales = { navController.navigate(Screen.Sales.route) }
+                onNavigateToSales = { navController.navigate(Screen.Sales.route) },
+                onNavigateToBranches = { navController.navigate(Screen.Branch.route) }
             )
         }
         composable(Screen.Sales.route) {
@@ -101,7 +106,22 @@ fun AppNavGraph(
         }
         composable(Screen.Branch.route) {
             val viewModel: BranchViewModel = hiltViewModel()
-            BranchScreen(viewModel = viewModel)
+            BranchScreen(
+                viewModel = viewModel,
+                onNavigateToBranchDetails = { branchId ->
+                    navController.navigate(Screen.BranchDetails.createRoute(branchId))
+                }
+            )
+        }
+        composable(
+            route = Screen.BranchDetails.route,
+            arguments = listOf(navArgument("branchId") { type = NavType.StringType })
+        ) {
+            val viewModel: BranchDetailsViewModel = hiltViewModel()
+            BranchDetailsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.Profile.route) {
             val viewModel: ProfileViewModel = hiltViewModel()
