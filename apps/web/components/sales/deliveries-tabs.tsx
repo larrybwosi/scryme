@@ -9,6 +9,7 @@ import {
   Users,
   CheckCircle2,
   Building2,
+  Smartphone,
 } from "lucide-react";
 
 const tabs = [
@@ -17,6 +18,7 @@ const tabs = [
   { label: "Drivers & Fleet", href: "/sales/deliveries/drivers", icon: Users },
   { label: "Reconciliation", href: "/sales/deliveries/reconciliation", icon: CheckCircle2 },
   { label: "Partners & Settings", href: "/sales/deliveries/partners", icon: Building2 },
+  { label: "Driver Mobile Portal", href: "/sales/deliveries/driver", icon: Smartphone },
 ];
 
 export function DeliveriesTabs() {

@@ -1,5 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
-import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean, IsEnum } from "class-validator";
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsBoolean, IsEnum, IsArray, ValidateNested } from "class-validator";
+import { Type } from "class-transformer";
 
 export enum DeliveryStatus {
   PENDING = "PENDING",
@@ -142,6 +143,21 @@ export class DispatchDeliveryDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: "Estimated delivery time (ISO format)" })
+  @IsOptional()
+  @IsString()
+  estimatedTime?: string;
+
+  @ApiPropertyOptional({ description: "Delivery fee amount" })
+  @IsOptional()
+  @IsNumber()
+  deliveryFee?: number;
+
+  @ApiPropertyOptional({ description: "Custom 4 or 6 digit verification PIN/OTP" })
+  @IsOptional()
+  @IsString()
+  verificationOtp?: string;
 }
 
 export class AssignDriverPartnerDto {
@@ -174,6 +190,11 @@ export class UpdateDeliveryStatusDto {
   @IsOptional()
   @IsString()
   notes?: string;
+
+  @ApiPropertyOptional({ description: "Recipient OTP verification code" })
+  @IsOptional()
+  @IsString()
+  otpCode?: string;
 }
 
 export class ProofOfDeliveryDto {
@@ -196,6 +217,26 @@ export class ProofOfDeliveryDto {
   @IsOptional()
   @IsString()
   recipientName?: string;
+}
+
+export class ReturnedItemDto {
+  @ApiProperty({ description: "Fulfillment Item ID or Transaction Item ID" })
+  @IsString()
+  itemId!: string;
+
+  @ApiProperty({ description: "Quantity returned" })
+  @IsNumber()
+  quantityReturned!: number;
+
+  @ApiPropertyOptional({ description: "Quantity damaged (not restocked)" })
+  @IsOptional()
+  @IsNumber()
+  quantityDamaged?: number;
+
+  @ApiPropertyOptional({ description: "Reason for return/damage" })
+  @IsOptional()
+  @IsString()
+  reason?: string;
 }
 
 export class ReconcileDeliveryDto {
@@ -227,4 +268,21 @@ export class ReconcileDeliveryDto {
   @IsOptional()
   @IsString()
   reasonCode?: string;
+
+  @ApiPropertyOptional({ description: "Cash on delivery (COD) amount collected" })
+  @IsOptional()
+  @IsNumber()
+  codAmountCollected?: number;
+
+  @ApiPropertyOptional({ description: "Payment method used for COD (CASH, MPESA, CARD)", default: "CASH" })
+  @IsOptional()
+  @IsString()
+  codPaymentMethod?: string;
+
+  @ApiPropertyOptional({ description: "List of returned/damaged items for restocking", type: [ReturnedItemDto] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ReturnedItemDto)
+  returnedItems?: ReturnedItemDto[];
 }

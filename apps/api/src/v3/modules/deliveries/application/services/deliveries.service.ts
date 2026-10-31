@@ -1,4 +1,14 @@
-import { BenefitType, WalletTxType, DriverStatus, FulfillmentStatus, TransactionStatus, PaymentStatus } from "@repo/db";
+import {
+  BenefitType,
+  WalletTxType,
+  DriverStatus,
+  FulfillmentStatus,
+  TransactionStatus,
+  PaymentStatus,
+  PaymentMethod,
+  MovementType,
+  AllocationStatus,
+} from "@repo/db";
 import { Injectable, NotFoundException, BadRequestException, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { WebhookService } from "@/v3/modules/webhooks/infrastructure/services/webhook.service";
@@ -14,7 +24,7 @@ import {
   DeliveryStatus,
 } from "../../dto/deliveries.dto";
 
-// Map our domain DeliveryStatus to Prisma's FulfillmentStatus enum where necessary
+// Map domain DeliveryStatus to Prisma FulfillmentStatus
 const DOMAIN_TO_FULFILLMENT_STATUS_MAP: Record<DeliveryStatus, FulfillmentStatus> = {
   [DeliveryStatus.PENDING]: FulfillmentStatus.PENDING,
   [DeliveryStatus.ASSIGNED]: FulfillmentStatus.PREPARING,
@@ -78,8 +88,8 @@ export class DeliveriesService {
         address,
         commissionRate,
         fixedFee,
-        benefitType: benefitType as BenefitType || BenefitType.COMMISSION,
-        reconciliationPolicy: reconciliationPolicy as any,
+        benefitType: (benefitType as BenefitType) || BenefitType.COMMISSION,
+        reconciliationPolicy: (reconciliationPolicy as any) || "RETURN_TO_STOCK",
         isActive: isActive !== undefined ? isActive : true,
         organizationId,
       },
@@ -91,85 +101,89 @@ export class DeliveriesService {
       where: { id, organizationId },
       include: {
         drivers: true,
-        walletLogs: { take: 50, orderBy: { createdAt: "desc" } },
+        walletLogs: {
+          orderBy: { createdAt: "desc" },
+          take: 50,
+        },
+        _count: {
+          select: { transactions: true },
+        },
       },
     });
+
     if (!partner) throw new NotFoundException("Delivery partner not found");
     return partner;
   }
 
   async updatePartner(organizationId: string, id: string, data: UpdateDeliveryPartnerDto) {
-    const partner = await this.prisma.client.deliveryPartner.findFirst({
+    await this.getPartner(organizationId, id);
+
+    const {
+      name,
+      email,
+      phone,
+      address,
+      commissionRate,
+      fixedFee,
+      benefitType,
+      reconciliationPolicy,
+      isActive,
+    } = data;
+
+    return this.prisma.client.deliveryPartner.updateMany({
       where: { id, organizationId },
+      data: {
+        name,
+        email,
+        phone,
+        address,
+        commissionRate,
+        fixedFee,
+        benefitType: benefitType as BenefitType,
+        reconciliationPolicy: reconciliationPolicy as any,
+        isActive,
+      },
     });
-    if (!partner) throw new NotFoundException("Delivery partner not found");
-
-    const updateData: any = {};
-    if (data.name !== undefined) updateData.name = data.name;
-    if (data.email !== undefined) updateData.email = data.email;
-    if (data.phone !== undefined) updateData.phone = data.phone;
-    if (data.address !== undefined) updateData.address = data.address;
-    if (data.commissionRate !== undefined) updateData.commissionRate = data.commissionRate;
-    if (data.fixedFee !== undefined) updateData.fixedFee = data.fixedFee;
-    if (data.benefitType !== undefined) updateData.benefitType = data.benefitType;
-    if (data.reconciliationPolicy !== undefined) updateData.reconciliationPolicy = data.reconciliationPolicy;
-    if (data.isActive !== undefined) updateData.isActive = data.isActive;
-
-    await this.prisma.client.deliveryPartner.updateMany({
-      where: { id, organizationId },
-      data: updateData,
-    });
-
-    return this.getPartner(organizationId, id);
   }
 
-  async adjustPartnerWallet(organizationId: string, id: string, data: AdjustWalletDto) {
-    const partner = await this.prisma.client.deliveryPartner.findFirst({
-      where: { id, organizationId },
-    });
-    if (!partner) throw new NotFoundException("Delivery partner not found");
-
-    const currentBalance = Number(partner.walletBalance);
-    const adjustAmount = Number(data.amount);
-    const newBalance = currentBalance + adjustAmount;
-
-    if (newBalance < 0 && data.type === WalletTxType.WITHDRAWAL) {
-      throw new BadRequestException("Insufficient partner wallet balance for withdrawal");
-    }
+  async adjustPartnerWallet(organizationId: string, partnerId: string, data: AdjustWalletDto) {
+    const partner = await this.getPartner(organizationId, partnerId);
+    const { amount, type, notes } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
-      const updatedPartner = await tx.deliveryPartner.update({
-        where: { id },
+      const currentBalance = Number(partner.walletBalance);
+      const isDeduction = type === "DEDUCTION" || amount < 0;
+      const absAmount = Math.abs(amount);
+      const newBalance = isDeduction ? currentBalance - absAmount : currentBalance + absAmount;
+
+      await tx.deliveryPartner.update({
+        where: { id: partnerId },
         data: { walletBalance: newBalance },
       });
 
       const log = await tx.partnerWalletLog.create({
         data: {
-          partnerId: id,
-          amount: adjustAmount,
+          partnerId,
+          amount: isDeduction ? -absAmount : absAmount,
           balanceAfter: newBalance,
-          transactionType: (data.type as WalletTxType) || WalletTxType.ADJUSTMENT,
-          notes: data.notes || "Manual wallet adjustment",
+          transactionType: isDeduction ? WalletTxType.WITHDRAWAL : WalletTxType.ADJUSTMENT,
+          notes,
         },
       });
 
-      return { partner: updatedPartner, log };
+      return { partnerId, newBalance, log };
     });
   }
 
   async dispatchDelivery(ctx: V3ApiContext, data: DispatchDeliveryDto) {
-    const { organizationId } = ctx;
-    const { transactionId, partnerId, driverId, notes } = data;
+    const { organizationId, memberId } = ctx;
+    const { transactionId, driverId, partnerId, notes, estimatedTime, deliveryFee, verificationOtp } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
-      // ⚡ Bolt Optimization: Parallelize independent validation lookups
-      // (transaction, driver, deliveryPartner, existingFulfillment) inside the $transaction
-      // callback using Promise.all. This reduces database latency from 4 sequential roundtrips (O(4))
-      // down to 1 concurrent roundtrip (O(1)), minimizing active connection hold duration and pool lock contention.
-      const [transaction, driver, partner, existingFulfillment] = await Promise.all([
+      const [transaction, driver, partner] = await Promise.all([
         tx.transaction.findFirst({
           where: { id: transactionId, organizationId },
-          include: { customer: true, deliveryPartner: true },
+          include: { customer: true, items: true },
         }),
         driverId
           ? tx.driver.findFirst({
@@ -181,64 +195,68 @@ export class DeliveriesService {
               where: { id: partnerId, organizationId },
             })
           : Promise.resolve(null),
-        tx.fulfillment.findFirst({
-          where: { transactionId },
-        }),
       ]);
 
       if (!transaction) throw new NotFoundException("Transaction not found");
 
-      // Validate internal driver if provided
       if (driverId) {
         if (!driver) throw new NotFoundException("Driver not found");
         if (driver.availability === DriverStatus.OFFLINE) {
-          throw new BadRequestException("Assigned driver is currently offline");
+          throw new BadRequestException("Driver is currently offline");
         }
       }
 
-      // Validate external delivery partner if provided
       if (partnerId) {
         if (!partner) throw new NotFoundException("Delivery partner not found");
-        if (!partner.isActive) {
-          throw new BadRequestException("Delivery partner is not active");
-        }
+        if (!partner.isActive) throw new BadRequestException("Delivery partner is not active");
       }
 
-      // Check existing fulfillment or create a new one
-      let fulfillment = existingFulfillment;
+      // Generate a secure 6-digit confirmation token (OTP) if not provided
+      const confirmationToken =
+        verificationOtp || Math.floor(100000 + Math.random() * 900000).toString();
 
-      if (fulfillment) {
+      // Check for existing fulfillment
+      let fulfillment = await tx.fulfillment.findFirst({
+        where: {
+          transactionId,
+          type: "DELIVERY",
+        },
+      });
+
+      if (!fulfillment) {
+        fulfillment = await tx.fulfillment.create({
+          data: {
+            transactionId,
+            type: "DELIVERY",
+            status: FulfillmentStatus.IN_TRANSIT,
+            driverId: driverId || null,
+            deliveryNotes: notes || null,
+            scheduledAt: estimatedTime ? new Date(estimatedTime) : null,
+            confirmationToken,
+            dispatchedAt: new Date(),
+            items: {
+              create: transaction.items.map((item) => ({
+                transactionItemId: item.id,
+                quantity: item.quantity,
+              })),
+            },
+          },
+        });
+      } else {
         fulfillment = await tx.fulfillment.update({
           where: { id: fulfillment.id },
           data: {
             status: FulfillmentStatus.IN_TRANSIT,
-            driverId: driverId || fulfillment.driverId,
+            driverId: driverId !== undefined ? driverId : fulfillment.driverId,
             deliveryNotes: notes || fulfillment.deliveryNotes,
-            dispatchedAt: new Date(),
-          },
-        });
-      } else {
-        fulfillment = await tx.fulfillment.create({
-          data: {
-            transactionId,
-            type: "DELIVERY" as any,
-            status: FulfillmentStatus.IN_TRANSIT,
-            driverId: driverId || null,
-            deliveryNotes: notes || null,
+            scheduledAt: estimatedTime ? new Date(estimatedTime) : fulfillment.scheduledAt,
+            confirmationToken: fulfillment.confirmationToken || confirmationToken,
             dispatchedAt: new Date(),
           },
         });
       }
 
-      // Link partner to transaction if provided
-      if (partnerId) {
-        await tx.transaction.update({
-          where: { id: transactionId },
-          data: { deliveryPartnerId: partnerId },
-        });
-      }
-
-      // Update driver availability status to ON_DELIVERY
+      // Update driver status if internal driver
       if (driverId) {
         await tx.driver.update({
           where: { id: driverId },
@@ -246,9 +264,20 @@ export class DeliveriesService {
         });
       }
 
+      // Update transaction status & link partner if provided
+      await tx.transaction.update({
+        where: { id: transactionId },
+        data: {
+          deliveryPartnerId: partnerId || transaction.deliveryPartnerId,
+          status: TransactionStatus.PROCESSING,
+          shippingTotal: deliveryFee !== undefined ? deliveryFee : transaction.shippingTotal,
+        },
+      });
+
       const result = {
-        fulfillment,
+        fulfillmentId: fulfillment.id,
         transactionId,
+        confirmationToken: fulfillment.confirmationToken || confirmationToken,
         driverId: driverId || null,
         partnerId: partnerId || null,
         status: DeliveryStatus.IN_TRANSIT,
@@ -263,6 +292,7 @@ export class DeliveriesService {
             driverId,
             partnerId,
             status: DeliveryStatus.IN_TRANSIT,
+            confirmationToken: result.confirmationToken,
             dispatchedAt: new Date().toISOString(),
           })
           .catch((err) => this.logger.error("Failed to dispatch delivery.dispatched webhook", err));
@@ -277,9 +307,6 @@ export class DeliveriesService {
     const { driverId, partnerId } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
-      // ⚡ Bolt Optimization: Parallelize independent lookups (fulfillment, driver, deliveryPartner)
-      // inside the $transaction callback using Promise.all to reduce database latency from O(3)
-      // sequential roundtrips to O(1) concurrent roundtrip.
       const [fulfillment, driver, partner] = await Promise.all([
         tx.fulfillment.findFirst({
           where: {
@@ -325,7 +352,7 @@ export class DeliveriesService {
 
   async updateDeliveryStatus(ctx: V3ApiContext, fulfillmentId: string, data: UpdateDeliveryStatusDto) {
     const { organizationId } = ctx;
-    const { status, reason, notes } = data;
+    const { status, reason, notes, otpCode } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
       const fulfillment = await tx.fulfillment.findFirst({
@@ -338,6 +365,13 @@ export class DeliveriesService {
 
       if (!fulfillment) throw new NotFoundException("Fulfillment not found");
 
+      // Verify OTP if transitioning to DELIVERED and OTP is configured
+      if (status === DeliveryStatus.DELIVERED && fulfillment.confirmationToken) {
+        if (otpCode && otpCode.trim() !== fulfillment.confirmationToken.trim()) {
+          throw new BadRequestException("Invalid delivery OTP confirmation code");
+        }
+      }
+
       const prismaStatus = DOMAIN_TO_FULFILLMENT_STATUS_MAP[status];
 
       const updatedFulfillment = await tx.fulfillment.update({
@@ -346,6 +380,8 @@ export class DeliveriesService {
           status: prismaStatus,
           deliveryNotes: notes ? `${fulfillment.deliveryNotes || ""}\n${notes}`.trim() : fulfillment.deliveryNotes,
           deliveredAt: status === DeliveryStatus.DELIVERED ? new Date() : fulfillment.deliveredAt,
+          confirmedByCustomerAt: status === DeliveryStatus.DELIVERED && otpCode ? new Date() : fulfillment.confirmedByCustomerAt,
+          failureReason: [DeliveryStatus.FAILED, DeliveryStatus.CANCELLED].includes(status) ? reason : fulfillment.failureReason,
         },
       });
 
@@ -356,7 +392,7 @@ export class DeliveriesService {
         ) {
           await tx.transaction.update({
             where: { id: fulfillment.transaction.id },
-            data: { status: TransactionStatus.COMPLETED },
+            data: { status: TransactionStatus.COMPLETED, completedAt: new Date() },
           });
         }
       }
@@ -390,8 +426,18 @@ export class DeliveriesService {
   }
 
   async reconcileDelivery(ctx: V3ApiContext, data: ReconcileDeliveryDto) {
-    const { organizationId } = ctx;
-    const { fulfillmentId, status, quantityDelivered, pod, notes, reasonCode } = data;
+    const { organizationId, memberId } = ctx;
+    const {
+      fulfillmentId,
+      status,
+      quantityDelivered,
+      pod,
+      notes,
+      reasonCode,
+      codAmountCollected,
+      codPaymentMethod,
+      returnedItems,
+    } = data;
 
     return this.prisma.client.$transaction(async (tx) => {
       const fulfillment = await tx.fulfillment.findFirst({
@@ -401,7 +447,13 @@ export class DeliveriesService {
         },
         include: {
           transaction: {
-            include: { deliveryPartner: true },
+            include: { deliveryPartner: true, items: true },
+          },
+          items: {
+            include: {
+              transactionItem: true,
+              stockBatch: true,
+            },
           },
           driver: true,
         },
@@ -409,17 +461,128 @@ export class DeliveriesService {
 
       if (!fulfillment) throw new NotFoundException("Fulfillment not found");
 
+      // Verify OTP if provided in POD
+      if (pod?.deliveryPin && fulfillment.confirmationToken) {
+        if (pod.deliveryPin.trim() !== fulfillment.confirmationToken.trim()) {
+          throw new BadRequestException("Invalid delivery OTP confirmation PIN");
+        }
+      }
+
       const isSuccess = status === DeliveryStatus.DELIVERED;
       const prismaStatus = isSuccess ? FulfillmentStatus.DELIVERED : FulfillmentStatus.CANCELLED;
 
-      // Update fulfillment reconciliation details
+      // 1. Process COD (Cash on Delivery) if recorded
+      let createdPayment: any = null;
+      if (codAmountCollected && Number(codAmountCollected) > 0) {
+        const amountNum = Number(codAmountCollected);
+        const method = (codPaymentMethod?.toUpperCase() as PaymentMethod) || PaymentMethod.CASH;
+
+        createdPayment = await tx.payment.create({
+          data: {
+            transactionId: fulfillment.transactionId,
+            organizationId,
+            method,
+            status: PaymentStatus.COMPLETED,
+            amount: amountNum,
+            amountReceived: amountNum,
+            payerName: pod?.recipientName || fulfillment.receivedBy || "Customer",
+            processedAt: new Date(),
+            notes: `COD collected during delivery reconciliation (${fulfillment.transaction.number})`,
+          },
+        });
+
+        const newTotalPaid = Number(fulfillment.transaction.totalPaid || 0) + amountNum;
+        const finalTotal = Number(fulfillment.transaction.finalTotal || 0);
+        const newPaymentStatus = newTotalPaid >= finalTotal ? PaymentStatus.PAID : PaymentStatus.PARTIALLY_PAID;
+
+        await tx.transaction.update({
+          where: { id: fulfillment.transactionId },
+          data: {
+            totalPaid: newTotalPaid,
+            paymentStatus: newPaymentStatus,
+          },
+        });
+      }
+
+      // 2. Restock returned items if any
+      if (returnedItems && returnedItems.length > 0) {
+        for (const ret of returnedItems) {
+          const matchedItem = fulfillment.items.find(
+            (fi) => fi.id === ret.itemId || fi.transactionItemId === ret.itemId,
+          );
+
+          if (matchedItem) {
+            const qtyReturned = Math.max(0, Number(ret.quantityReturned) || 0);
+            const qtyDamaged = Math.max(0, Number(ret.quantityDamaged) || 0);
+            const qtyToRestock = Math.max(0, qtyReturned - qtyDamaged);
+
+            await tx.fulfillmentItem.update({
+              where: { id: matchedItem.id },
+              data: {
+                quantityReturned: qtyReturned,
+                quantityDamaged: qtyDamaged,
+              },
+            });
+
+            // Restock undamaged goods back into StockBatch and ProductVariantStock
+            if (qtyToRestock > 0) {
+              if (matchedItem.stockBatchId) {
+                await tx.stockBatch.update({
+                  where: { id: matchedItem.stockBatchId },
+                  data: {
+                    currentQuantity: { increment: qtyToRestock },
+                  },
+                });
+              }
+
+              const variantId = matchedItem.transactionItem?.variantId;
+              const locationId = fulfillment.transaction.locationId;
+
+              if (variantId && locationId) {
+                await tx.productVariantStock.updateMany({
+                  where: { variantId, locationId },
+                  data: {
+                    currentStock: { increment: qtyToRestock },
+                  },
+                });
+
+                await tx.stockMovement.create({
+                  data: {
+                    organizationId,
+                    movementType: MovementType.CUSTOMER_RETURN,
+                    quantity: qtyToRestock,
+                    variantId,
+                    toLocationId: locationId,
+                    stockBatchId: matchedItem.stockBatchId || undefined,
+                    referenceId: fulfillment.id,
+                    referenceType: "FULFILLMENT_RETURN",
+                    memberId: memberId || "SYSTEM",
+                    notes: `Restocked ${qtyToRestock} units from returned delivery. Reason: ${ret.reason || "Returned by customer"}`,
+                    movementDate: new Date(),
+                  },
+                });
+              }
+            }
+          }
+        }
+      }
+
+      // 3. Update fulfillment reconciliation details
       const updatedFulfillment = await tx.fulfillment.update({
         where: { id: fulfillmentId },
         data: {
           status: prismaStatus,
           quantityDelivered: quantityDelivered !== undefined ? quantityDelivered : fulfillment.quantityHandedOver,
           isReconciled: true,
+          reconciledAt: new Date(),
+          reconciledBy: memberId || null,
           deliveredAt: isSuccess ? new Date() : null,
+          receivedBy: pod?.recipientName || fulfillment.receivedBy,
+          proofOfDeliveryUrl: pod?.signatureUrl || pod?.photoUrl || fulfillment.proofOfDeliveryUrl,
+          confirmedByCustomerAt: isSuccess && (pod?.deliveryPin || fulfillment.confirmationToken) ? new Date() : fulfillment.confirmedByCustomerAt,
+          codAmountCollected: codAmountCollected ? Number(codAmountCollected) : null,
+          reconciliationNotes: notes || null,
+          failureReason: !isSuccess ? reasonCode || notes : fulfillment.failureReason,
           deliveryNotes: [
             fulfillment.deliveryNotes,
             notes,
@@ -434,17 +597,24 @@ export class DeliveriesService {
         },
       });
 
-      // Update transaction status
+      // 4. Update transaction status
+      const currentTx = await tx.transaction.findUnique({
+        where: { id: fulfillment.transactionId },
+      });
+
+      const shouldCompleteTx =
+        isSuccess && (currentTx?.paymentStatus === PaymentStatus.PAID || (currentTx?.totalPaid && Number(currentTx.totalPaid) > 0));
+
       await tx.transaction.update({
         where: { id: fulfillment.transactionId },
         data: {
-          status: isSuccess ? TransactionStatus.COMPLETED : TransactionStatus.CANCELLED,
-          completedAt: isSuccess ? new Date() : null,
+          status: shouldCompleteTx ? TransactionStatus.COMPLETED : isSuccess ? TransactionStatus.PROCESSING : TransactionStatus.CANCELLED,
+          completedAt: shouldCompleteTx ? new Date() : null,
           cancelledAt: !isSuccess ? new Date() : null,
         },
       });
 
-      // Process Partner Wallet financial calculation if delivery partner attached
+      // 5. Process Partner Wallet financial calculation if delivery partner attached
       const partner = fulfillment.transaction.deliveryPartner;
       if (partner && isSuccess) {
         let earnedFee = 0;
@@ -475,7 +645,7 @@ export class DeliveriesService {
         }
       }
 
-      // Free up internal driver availability
+      // 6. Free up internal driver availability
       if (fulfillment.driverId) {
         await tx.driver.update({
           where: { id: fulfillment.driverId },
@@ -491,12 +661,16 @@ export class DeliveriesService {
             status,
             isReconciled: true,
             pod,
+            codAmountCollected,
             reconciledAt: new Date().toISOString(),
           })
           .catch((err) => this.logger.error("Failed to dispatch delivery.reconciled webhook", err));
       });
 
-      return updatedFulfillment;
+      return {
+        ...updatedFulfillment,
+        codPayment: createdPayment,
+      };
     });
   }
 
@@ -513,7 +687,9 @@ export class DeliveriesService {
             id: true,
             number: true,
             status: true,
+            paymentStatus: true,
             finalTotal: true,
+            totalPaid: true,
             currencyCode: true,
             createdAt: true,
             customer: {
@@ -527,8 +703,75 @@ export class DeliveriesService {
         driver: {
           select: { id: true, name: true, phone: true, availability: true },
         },
+        items: {
+          include: {
+            transactionItem: true,
+            stockBatch: true,
+          },
+        },
       },
       orderBy: { createdAt: "desc" },
     });
+  }
+
+  async getDriverDeliveries(organizationId: string, driverId: string) {
+    return this.prisma.client.fulfillment.findMany({
+      where: {
+        driverId,
+        transaction: { organizationId },
+        type: "DELIVERY",
+      },
+      include: {
+        transaction: {
+          include: {
+            customer: {
+              include: { addresses: true },
+            },
+            items: true,
+          },
+        },
+        shippingAddress: true,
+        items: {
+          include: {
+            transactionItem: true,
+            stockBatch: true,
+          },
+        },
+      },
+      orderBy: { createdAt: "desc" },
+      take: 20,
+    });
+  }
+
+  async getDeliveryMetrics(organizationId: string) {
+    const [totalDeliveries, activeDeliveries, reconciledDeliveries, drivers, partners] = await Promise.all([
+      this.prisma.client.fulfillment.count({
+        where: { transaction: { organizationId }, type: "DELIVERY" },
+      }),
+      this.prisma.client.fulfillment.count({
+        where: {
+          transaction: { organizationId },
+          type: "DELIVERY",
+          status: { in: [FulfillmentStatus.PENDING, FulfillmentStatus.PREPARING, FulfillmentStatus.READY, FulfillmentStatus.IN_TRANSIT] },
+        },
+      }),
+      this.prisma.client.fulfillment.count({
+        where: { transaction: { organizationId }, type: "DELIVERY", isReconciled: true },
+      }),
+      this.prisma.client.driver.count({
+        where: { organizationId },
+      }),
+      this.prisma.client.deliveryPartner.count({
+        where: { organizationId, isActive: true },
+      }),
+    ]);
+
+    return {
+      totalDeliveries,
+      activeDeliveries,
+      reconciledDeliveries,
+      driversCount: drivers,
+      partnersCount: partners,
+    };
   }
 }
