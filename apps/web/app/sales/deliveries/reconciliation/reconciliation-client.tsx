@@ -118,7 +118,7 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
         );
         setDialogOpen(false);
       } else {
-        toast.error(res.error || "Failed to reconcile delivery");
+        toast.error((res as any).error || "Failed to reconcile delivery");
       }
     } catch (err: any) {
       toast.error(err.message || "An error occurred during reconciliation");

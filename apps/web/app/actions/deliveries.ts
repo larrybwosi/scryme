@@ -41,7 +41,7 @@ async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
 }
 
 export async function getActiveDeliveriesList() {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "STAFF"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]);
 
   return db.fulfillment.findMany({
     where: {
@@ -75,7 +75,7 @@ export async function getActiveDeliveriesList() {
 }
 
 export async function getDriverActiveDeliveries(driverId?: string) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "STAFF"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]);
 
   let resolvedDriverId = driverId;
   if (!resolvedDriverId && auth.memberId) {
@@ -125,7 +125,7 @@ export async function completeDriverDelivery(data: {
   codPaymentMethod?: string;
   notes?: string;
 }) {
-  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "STAFF"]);
+  const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER", "EMPLOYEE"]);
 
   const fulfillment = await db.fulfillment.findFirst({
     where: {
@@ -341,12 +341,15 @@ export async function reconcileDeliveryFull(data: {
 
               await tx.stockMovement.create({
                 data: {
-                  type: MovementType.CUSTOMER_RETURN,
+                  organizationId: auth.organizationId,
+                  movementType: MovementType.CUSTOMER_RETURN,
                   quantity: qtyToRestock,
                   variantId,
-                  locationId,
+                  toLocationId: locationId,
                   stockBatchId: item.stockBatchId || undefined,
-                  reference: `RECONCILIATION_${fulfillment.id}`,
+                  referenceId: fulfillment.id,
+                  referenceType: "FULFILLMENT_RETURN",
+                  memberId: auth.memberId,
                   notes: `Restocked ${qtyToRestock} units. Reason: ${ret.reason || "Reconciliation return"}`,
                   movementDate: new Date(),
                 },

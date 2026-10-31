@@ -166,7 +166,7 @@ export class DeliveriesService {
           partnerId,
           amount: isDeduction ? -absAmount : absAmount,
           balanceAfter: newBalance,
-          transactionType: isDeduction ? WalletTxType.PAYOUT : WalletTxType.ADJUSTMENT,
+          transactionType: isDeduction ? WalletTxType.WITHDRAWAL : WalletTxType.ADJUSTMENT,
           notes,
         },
       });
@@ -548,12 +548,15 @@ export class DeliveriesService {
 
                 await tx.stockMovement.create({
                   data: {
-                    type: MovementType.CUSTOMER_RETURN,
+                    organizationId,
+                    movementType: MovementType.CUSTOMER_RETURN,
                     quantity: qtyToRestock,
                     variantId,
-                    locationId,
+                    toLocationId: locationId,
                     stockBatchId: matchedItem.stockBatchId || undefined,
-                    reference: `DELIVERY_RETURN_${fulfillment.id}`,
+                    referenceId: fulfillment.id,
+                    referenceType: "FULFILLMENT_RETURN",
+                    memberId: memberId || "SYSTEM",
                     notes: `Restocked ${qtyToRestock} units from returned delivery. Reason: ${ret.reason || "Returned by customer"}`,
                     movementDate: new Date(),
                   },

@@ -80,7 +80,7 @@ export function DriverPortalClient({ deliveries: initialDeliveries }: { deliveri
         );
         setDialogOpen(false);
       } else {
-        toast.error(res.error || "Failed to complete delivery handover");
+        toast.error((res as any).error || "Failed to complete delivery handover");
       }
     } catch (err: any) {
       toast.error(err.message || "An error occurred");

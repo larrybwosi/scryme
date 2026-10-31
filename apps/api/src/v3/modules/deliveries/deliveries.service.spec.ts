@@ -339,10 +339,11 @@ describe("DeliveriesService", () => {
 
       expect(mockTx.stockMovement.create).toHaveBeenCalledWith({
         data: expect.objectContaining({
-          type: "CUSTOMER_RETURN",
+          movementType: "CUSTOMER_RETURN",
           quantity: 4,
           variantId: "var-1",
-          locationId: "loc-1",
+          toLocationId: "loc-1",
+          organizationId: mockOrgId,
         }),
       });
     });
