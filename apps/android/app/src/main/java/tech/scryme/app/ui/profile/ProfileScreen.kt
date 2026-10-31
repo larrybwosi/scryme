@@ -48,7 +48,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 import tech.scryme.app.ui.components.ErrorMessageCard
-import tech.scryme.app.ui.components.QrScannerDialog
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
 
@@ -65,7 +64,6 @@ fun ProfileScreen(
     val context = LocalContext.current
 
     var showAddPasskeyDialog by remember { mutableStateOf(false) }
-    var showQrScannerDialog by remember { mutableStateOf(false) }
     var showLogoutConfirm by remember { mutableStateOf(false) }
 
     // Locally picked avatar, shown immediately while the upload runs.
@@ -101,22 +99,6 @@ fun ProfileScreen(
     // If the upload failed, fall back to the previous avatar.
     LaunchedEffect(successState?.updateError) {
         if (successState?.updateError != null) pendingAvatarUri = null
-    }
-
-    if (showQrScannerDialog) {
-        QrScannerDialog(
-            onDismissRequest = { showQrScannerDialog = false },
-            onQrCodeScanned = { qrContent ->
-                showQrScannerDialog = false
-                viewModel.authorizeWebSession(qrContent) { success, message ->
-                    Toast.makeText(
-                        context,
-                        message,
-                        if (success) Toast.LENGTH_SHORT else Toast.LENGTH_LONG
-                    ).show()
-                }
-            }
-        )
     }
 
     if (showAddPasskeyDialog) {
@@ -218,8 +200,7 @@ fun ProfileScreen(
                     PasskeysCard(
                         state = state,
                         viewModel = viewModel,
-                        onAddPasskey = { showAddPasskeyDialog = true },
-                        onScanQr = { showQrScannerDialog = true }
+                        onAddPasskey = { showAddPasskeyDialog = true }
                     )
                 }
                 item { DutyStatusCard(state = state, viewModel = viewModel) }
@@ -690,13 +671,12 @@ private fun OrganizationCard(
 private fun PasskeysCard(
     state: ProfileUiState.Success,
     viewModel: ProfileViewModel,
-    onAddPasskey: () -> Unit,
-    onScanQr: () -> Unit
+    onAddPasskey: () -> Unit
 ) {
     SectionCard {
         SectionTitle(
             icon = Icons.Default.Fingerprint,
-            title = "Passkeys & web auth",
+            title = "Passkeys & authentication",
             trailing = {
                 IconButton(onClick = onAddPasskey) {
                     Icon(
@@ -709,23 +689,10 @@ private fun PasskeysCard(
         )
 
         Text(
-            text = "Sign in without a password and authorize web apps by scanning a QR code.",
+            text = "Sign in without a password using your biometrics or screen lock passkey.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant
         )
-
-        Button(
-            onClick = onScanQr,
-            modifier = Modifier.fillMaxWidth(),
-            shape = RoundedCornerShape(12.dp)
-        ) {
-            Icon(
-                imageVector = Icons.Default.QrCodeScanner,
-                contentDescription = null,
-                modifier = Modifier.padding(end = 8.dp)
-            )
-            Text("Scan QR to authorize web app")
-        }
 
         HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
         SubHeading("Registered passkeys")
