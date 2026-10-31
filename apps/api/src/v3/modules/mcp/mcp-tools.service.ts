@@ -1,4 +1,4 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
 import { db } from "@repo/db";
 
 @Injectable()
@@ -30,7 +30,7 @@ export class McpToolsService {
           properties: {
             query: { type: "string", description: "Search term for product name or SKU" },
             categoryId: { type: "string", description: "Filter products by category ID" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -42,9 +42,9 @@ export class McpToolsService {
           properties: {
             status: { type: "string", description: "Order status (COMPLETED, PENDING, CANCELLED)" },
             customerId: { type: "string", description: "Filter orders by customer ID" },
-            startDate: { type: "string", description: "Start date filter (ISO format)" },
-            endDate: { type: "string", description: "End date filter (ISO format)" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            startDate: { type: "string", description: "Start date filter in ISO 8601 format (e.g. 2026-01-01T00:00:00Z)" },
+            endDate: { type: "string", description: "End date filter in ISO 8601 format (e.g. 2026-01-31T23:59:59Z)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -66,7 +66,7 @@ export class McpToolsService {
           type: "object",
           properties: {
             query: { type: "string", description: "Search term for customer name, email, or phone" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -90,7 +90,7 @@ export class McpToolsService {
         inputSchema: {
           type: "object",
           properties: {
-            limit: { type: "number", description: "Number of top products to retrieve (default 10)" },
+            limit: { type: "number", description: "Number of top products to retrieve (default 10, max 50)" },
           },
         },
       },
@@ -102,7 +102,7 @@ export class McpToolsService {
           properties: {
             status: { type: "string", description: "Task status filter (PENDING, IN_PROGRESS, COMPLETED)" },
             assignedMemberId: { type: "string", description: "Filter by assigned staff member ID" },
-            limit: { type: "number", description: "Max tasks to return (default 20)" },
+            limit: { type: "number", description: "Max tasks to return (default 20, max 100)" },
           },
         },
       },
@@ -112,7 +112,7 @@ export class McpToolsService {
         inputSchema: {
           type: "object",
           properties: {
-            date: { type: "string", description: "Target date in YYYY-MM-DD format (defaults to today)" },
+            date: { type: "string", description: "Target date in YYYY-MM-DD or ISO format (defaults to today)" },
             locationId: { type: "string", description: "Filter shifts by location ID" },
           },
         },
@@ -121,6 +121,10 @@ export class McpToolsService {
   }
 
   async executeTool(name: string, args: Record<string, any>, organizationId: string) {
+    if (!organizationId) {
+      throw new BadRequestException("Organization ID context is required for MCP tool execution");
+    }
+
     this.logger.log(`Executing MCP Tool name=${name} orgId=${organizationId}`);
 
     switch (name) {
@@ -143,14 +147,14 @@ export class McpToolsService {
       case "get_shift_schedules":
         return this.getShiftSchedules(args, organizationId);
       default:
-        throw new Error(`Unknown tool name: ${name}`);
+        throw new BadRequestException(`Unknown tool name: ${name}`);
     }
   }
 
   private async queryInventory(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const search = args.search?.trim();
-    const locationId = args.locationId;
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const search = typeof args?.search === "string" ? args.search.trim() : "";
+    const locationId = typeof args?.locationId === "string" ? args.locationId.trim() : undefined;
 
     const where: any = { organizationId, isArchived: false };
     if (search) {
@@ -199,7 +203,7 @@ export class McpToolsService {
             sku: v.sku,
             price,
             totalStock,
-            locations: v.variantStocks?.map((s) => ({ locationId: s.locationId, quantity: Number(s.currentStock) })),
+            locations: v.variantStocks?.map((s) => ({ locationId: s.locationId, quantity: Number(s.currentStock || 0) })),
           };
         }),
       })),
@@ -207,9 +211,9 @@ export class McpToolsService {
   }
 
   private async searchProducts(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const query = args.query?.trim();
-    const categoryId = args.categoryId;
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const query = typeof args?.query === "string" ? args.query.trim() : "";
+    const categoryId = typeof args?.categoryId === "string" ? args.categoryId.trim() : undefined;
 
     const where: any = { organizationId, isArchived: false };
     if (categoryId) where.categoryId = categoryId;
@@ -250,15 +254,21 @@ export class McpToolsService {
   }
 
   private async listOrders(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
     const where: any = { organizationId };
 
-    if (args.status) where.status = args.status;
-    if (args.customerId) where.customerId = args.customerId;
-    if (args.startDate || args.endDate) {
+    if (args?.status && typeof args.status === "string") where.status = args.status.trim();
+    if (args?.customerId && typeof args.customerId === "string") where.customerId = args.customerId.trim();
+    if (args?.startDate || args?.endDate) {
       where.createdAt = {};
-      if (args.startDate) where.createdAt.gte = new Date(args.startDate);
-      if (args.endDate) where.createdAt.lte = new Date(args.endDate);
+      if (args.startDate) {
+        const start = new Date(args.startDate);
+        if (!isNaN(start.getTime())) where.createdAt.gte = start;
+      }
+      if (args.endDate) {
+        const end = new Date(args.endDate);
+        if (!isNaN(end.getTime())) where.createdAt.lte = end;
+      }
     }
 
     const transactions = await db.transaction.findMany({
@@ -282,8 +292,10 @@ export class McpToolsService {
   }
 
   private async getOrderDetails(args: Record<string, any>, organizationId: string) {
-    const { transactionId } = args;
-    if (!transactionId) throw new Error("transactionId is required");
+    const transactionId = typeof args?.transactionId === "string" ? args.transactionId.trim() : "";
+    if (!transactionId) {
+      throw new BadRequestException("transactionId parameter is required");
+    }
 
     const transaction = await db.transaction.findFirst({
       where: {
@@ -298,13 +310,15 @@ export class McpToolsService {
       },
     });
 
-    if (!transaction) throw new Error(`Transaction ${transactionId} not found`);
+    if (!transaction) {
+      throw new NotFoundException(`Transaction '${transactionId}' not found in this organization`);
+    }
     return transaction;
   }
 
   private async searchCustomers(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const query = args.query?.trim();
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const query = typeof args?.query === "string" ? args.query.trim() : "";
 
     const where: any = { organizationId, isActive: true };
     if (query) {
@@ -332,7 +346,7 @@ export class McpToolsService {
   }
 
   private async getSalesAnalytics(args: Record<string, any>, organizationId: string) {
-    const timeframe = args.timeframe || "month";
+    const timeframe = args?.timeframe || "month";
     const now = new Date();
     const startDate = new Date();
 
@@ -381,7 +395,7 @@ export class McpToolsService {
   }
 
   private async getTopSellingProducts(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 10, 50);
+    const limit = Math.min(Math.max(Number(args?.limit) || 10, 1), 50);
 
     const items = await db.transactionItem.findMany({
       where: {
@@ -418,15 +432,15 @@ export class McpToolsService {
       .sort((a, b) => b.totalRevenue - a.totalRevenue)
       .slice(0, limit);
 
-    return { topProducts };
+    return { count: topProducts.length, topProducts };
   }
 
   private async listStaffTasks(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
     const where: any = { organizationId };
 
-    if (args.status) where.status = args.status;
-    if (args.assignedMemberId) where.memberId = args.assignedMemberId;
+    if (args?.status && typeof args.status === "string") where.status = args.status.trim();
+    if (args?.assignedMemberId && typeof args.assignedMemberId === "string") where.memberId = args.assignedMemberId.trim();
 
     const tasks = await db.staffTask.findMany({
       where,
@@ -448,7 +462,14 @@ export class McpToolsService {
   }
 
   private async getShiftSchedules(args: Record<string, any>, organizationId: string) {
-    const targetDate = args.date ? new Date(args.date) : new Date();
+    let targetDate = new Date();
+    if (args?.date) {
+      const parsed = new Date(args.date);
+      if (!isNaN(parsed.getTime())) {
+        targetDate = parsed;
+      }
+    }
+
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate);
@@ -458,7 +479,9 @@ export class McpToolsService {
       organizationId,
       startTime: { gte: startOfDay, lte: endOfDay },
     };
-    if (args.locationId) where.locationId = args.locationId;
+    if (args?.locationId && typeof args.locationId === "string") {
+      where.locationId = args.locationId.trim();
+    }
 
     const shifts = await db.staffShift.findMany({
       where,
