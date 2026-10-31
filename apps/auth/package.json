@@ -1,7 +1,7 @@
 {
   "name": "auth",
   "private": true,
-  "version": "10.2.30",
+  "version": "10.2.31",
   "packageManager": "pnpm@10.34.1",
   "type": "module",
   "scripts": {
