@@ -1,6 +1,8 @@
 import { Injectable, Logger, UnauthorizedException, NotFoundException } from "@nestjs/common";
 import { createHash } from "crypto";
+import jwt from "jsonwebtoken";
 import { db } from "@repo/db";
+import { env } from "@repo/env";
 import { McpToolsService } from "./mcp-tools.service";
 
 export interface McpAuthContext {
@@ -8,6 +10,7 @@ export interface McpAuthContext {
   organizationId: string;
   name: string;
   scopes: string[];
+  userId?: string;
 }
 
 @Injectable()
@@ -16,18 +19,66 @@ export class McpService {
 
   constructor(private readonly mcpToolsService: McpToolsService) {}
 
+  private getJwtSecret(): string {
+    return process.env.JWT_SECRET || (env as any).JWT_SECRET || "fallback-secret-for-dev";
+  }
+
   /**
-   * Validate raw MCP API Key string (e.g. "mcp_live_...")
+   * Validate raw MCP token string (supports both API keys e.g. "mcp_live_..." and JWT Bearer tokens)
    */
   async validateApiKey(rawKey: string): Promise<McpAuthContext> {
     if (!rawKey || typeof rawKey !== "string") {
-      throw new UnauthorizedException("Invalid or missing MCP API key");
+      throw new UnauthorizedException("Invalid or missing MCP API key / token");
     }
 
     const keyToken = rawKey.startsWith("Bearer ") ? rawKey.slice(7).trim() : rawKey.trim();
+
+    // 1. Check if token is a signed JWT (format: header.payload.signature)
+    if (keyToken.split(".").length === 3) {
+      try {
+        const decoded = jwt.verify(keyToken, this.getJwtSecret(), {
+          algorithms: ["HS256"],
+        }) as any;
+
+        const organizationId = decoded.organizationId || decoded.orgId;
+        if (!organizationId) {
+          throw new UnauthorizedException("JWT token is missing organizationId claim");
+        }
+
+        // Validate scopes: must have mcp:read, mcp:write, or admin/wildcard
+        const tokenScopes = Array.isArray(decoded.scopes)
+          ? decoded.scopes
+          : typeof decoded.scopes === "string"
+            ? decoded.scopes.split(" ")
+            : [];
+
+        const hasMcpScope =
+          tokenScopes.length === 0 || // standard auth token with org access defaults to access
+          tokenScopes.some((s: string) => s === "mcp:read" || s === "mcp:write" || s === "*" || s === "admin");
+
+        if (!hasMcpScope) {
+          throw new UnauthorizedException("Insufficient token scopes for MCP operations");
+        }
+
+        return {
+          keyId: decoded.sub || "jwt-session",
+          organizationId,
+          name: decoded.name || decoded.email || "JWT Authenticated User",
+          scopes: tokenScopes.length > 0 ? tokenScopes : ["mcp:read", "mcp:write"],
+          userId: decoded.userId || decoded.sub,
+        };
+      } catch (err: any) {
+        if (err instanceof UnauthorizedException) {
+          throw err;
+        }
+        // If JWT verify failed, don't immediately throw if it could still be an API key with dots
+        this.logger.debug(`JWT verification failed, falling back to API Key lookup: ${err.message}`);
+      }
+    }
+
+    // 2. Look up in McpApiKey table
     const hashedKey = createHash("sha256").update(keyToken).digest("hex");
 
-    // 1. Look up in McpApiKey table
     const mcpKey = await db.mcpApiKey.findFirst({
       where: {
         OR: [
@@ -58,7 +109,7 @@ export class McpService {
       };
     }
 
-    // 2. Fallback lookup in standard ApiKey table if prefix matches "mcp_"
+    // 3. Fallback lookup in standard ApiKey table if prefix matches "mcp_"
     if (keyToken.startsWith("mcp_")) {
       const apiKey = await db.apiKey.findFirst({
         where: {
@@ -95,7 +146,7 @@ export class McpService {
       },
       serverInfo: {
         name: "Scryme MCP Server",
-        version: "10.2.23",
+        version: "10.2.30",
       },
     };
   }
