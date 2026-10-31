@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Param,
+  Query,
   Req,
   UseGuards,
   UseInterceptors,
@@ -12,6 +13,7 @@ import {
   ApiResponse,
   ApiBearerAuth,
   ApiHeader,
+  ApiQuery,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "../../../../common/guards/v3-auth.guard";
 import { StandardResponseInterceptor } from "../../../../common/interceptors/standard-response.interceptor";
@@ -38,5 +40,53 @@ export class AndroidBranchController {
   @ApiResponse({ status: 200, description: "Branch location details retrieved" })
   async getBranchDetails(@Req() req: any, @Param("id") id: string) {
     return this.androidBranchUseCase.getBranchDetails(req.v3Context, id);
+  }
+
+  @Get("locations/:id/activity")
+  @ApiOperation({ summary: "Get recent user activity and attendance check-ins for a branch location" })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({ status: 200, description: "Branch activity logs retrieved" })
+  async getBranchActivity(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Query("limit") limit?: number
+  ) {
+    return this.androidBranchUseCase.getBranchActivity(
+      req.v3Context,
+      id,
+      limit ? Number(limit) : 20
+    );
+  }
+
+  @Get("locations/:id/sales")
+  @ApiOperation({ summary: "Get recent sales transactions for a branch location" })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({ status: 200, description: "Branch sales transactions retrieved" })
+  async getBranchSales(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Query("limit") limit?: number
+  ) {
+    return this.androidBranchUseCase.getBranchSales(
+      req.v3Context,
+      id,
+      limit ? Number(limit) : 20
+    );
+  }
+
+  @Get("locations/:id/stock-movements")
+  @ApiOperation({ summary: "Get recent stock movements for a branch location" })
+  @ApiQuery({ name: "limit", required: false, type: Number })
+  @ApiResponse({ status: 200, description: "Branch stock movements retrieved" })
+  async getBranchStockMovements(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Query("limit") limit?: number
+  ) {
+    return this.androidBranchUseCase.getBranchStockMovements(
+      req.v3Context,
+      id,
+      limit ? Number(limit) : 20
+    );
   }
 }
