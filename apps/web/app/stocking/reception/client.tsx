@@ -1,7 +1,8 @@
+"use client";
+
 import { BarcodeScannerDialog } from "@/components/stocking/barcode-scanner-dialog";
 import { StockAttachmentManager, StockAttachment } from "@/components/stocking/stock-attachment-manager";
 import { Scan } from "lucide-react";
-"use client";
 
 import React, { useState, useEffect } from "react";
 import {
