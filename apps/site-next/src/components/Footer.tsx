@@ -47,13 +47,13 @@ export function Footer() {
 
         {/* Column 2: Platform & Specs */}
         <div>
-          <h4 className="text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] font-mono mb-4">Architecture</h4>
+          <h4 className="text-xs font-bold uppercase tracking-wider dark:text-white light:text-[#090a0b] font-mono mb-4">Architecture & Dev</h4>
           <ul className="space-y-2.5 text-sm">
+            <li><Link to="/developers/apps" className="hover:text-[#d2ff3a] transition-colors">Developer Console (OAuth 2.0)</Link></li>
+            <li><Link to="/light" className="hover:text-[#d2ff3a] transition-colors">Light Mode Canvas</Link></li>
             <li><a href="#telemetry" className="hover:text-[#d2ff3a] transition-colors">12ms Sync Pipeline</a></li>
             <li><a href="#security" className="hover:text-[#d2ff3a] transition-colors">Hardware-Isolated Edge</a></li>
-            <li><a href="#ai" className="hover:text-[#d2ff3a] transition-colors">Hermes Agent AI</a></li>
-            <li><Link to="/light" className="hover:text-[#d2ff3a] transition-colors">Light Mode Canvas</Link></li>
-            <li><a href="https://app.scryme.tech" className="hover:text-[#d2ff3a] transition-colors">API Docs & OpenAPI</a></li>
+            <li><a href="https://api.scryme.tech" target="_blank" rel="noreferrer" className="hover:text-[#d2ff3a] transition-colors">API Docs & OpenAPI</a></li>
           </ul>
         </div>
 

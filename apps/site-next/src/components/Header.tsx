@@ -79,25 +79,32 @@ export function Header() {
 
       {/* Mobile Navigation Drawer */}
       {mobileMenuOpen && (
-        <div className="lg:hidden fixed inset-x-0 top-[73px] bg-[var(--bg-main)] border-b border-white/10 dark:border-white/10 light:border-black/10 p-6 shadow-2xl flex flex-col gap-4 animate-in slide-in-from-top duration-200">
-          <nav className="flex flex-col gap-3 text-base font-medium text-[var(--nav-text)]">
+        <div className="lg:hidden fixed inset-x-0 top-[73px] bg-[var(--bg-main)] border-b border-white/10 dark:border-white/10 light:border-black/10 p-6 shadow-2xl flex flex-col gap-4 animate-in slide-in-from-top duration-200 z-50">
+          <nav className="flex flex-col gap-2 text-base font-medium text-[var(--nav-text)]">
             <Link onClick={() => setMobileMenuOpen(false)} to="/" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Platform</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/inventory" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Inventory</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/sales" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Sales & RevOps</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/crm" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">CRM</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/cms" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Catalog Cloud</Link>
+            <Link onClick={() => setMobileMenuOpen(false)} to="/payments" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Payments</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/pricing" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold">Pricing</Link>
             <Link onClick={() => setMobileMenuOpen(false)} to="/developers/apps" className="py-2 hover:text-[var(--nav-hover)] transition-colors [&.active]:text-[#d2ff3a] [&.active]:font-bold flex items-center gap-2">
               <Code2 className="w-4 h-4 text-[#d2ff3a]" />
               <span>Developers (Auth Clients)</span>
             </Link>
           </nav>
-          <div className="pt-4 border-t border-white/10 flex flex-col gap-3">
+          <div className="pt-4 border-t border-white/10 flex flex-col sm:flex-row gap-3">
             <a
               href="https://app.scryme.tech/login"
-              className="text-center py-2.5 text-xs font-semibold uppercase tracking-wider dark:text-[#e3e2e3] light:text-[#121314] border border-white/15 rounded-full hover:bg-white/5 transition"
+              className="text-center py-2.5 text-xs font-semibold uppercase tracking-wider dark:text-[#e3e2e3] light:text-[#121314] border border-white/15 rounded-full hover:bg-white/5 transition flex-1"
             >
               Sign In
+            </a>
+            <a
+              href="https://app.scryme.tech/signup?plan=free"
+              className="text-center py-2.5 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition flex-1"
+            >
+              Get Started
             </a>
           </div>
         </div>

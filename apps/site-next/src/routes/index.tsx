@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Header } from '../components/Header'
+import { Footer } from '../components/Footer'
 import {
   ArrowRight,
   CheckCircle2,
@@ -8,46 +10,12 @@ import {
   MonitorSmartphone,
   RefreshCw,
   Terminal,
-  User,
   X,
 } from 'lucide-react'
 
 export const Route = createFileRoute('/')({
   component: HomeComponent,
 })
-
-/*
- * Fonts (add once, e.g. in __root.tsx head links or index.html):
- *   https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700
- *     &family=JetBrains+Mono:wght@500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;1,6..72,400&display=swap
- */
-
-/* ---------- design tokens ---------- */
-
-const C = {
-  surface: '#faf9f6',
-  white: '#ffffff',
-  low: '#f4f3f0',
-  mid: '#efeeeb',
-  high: '#e9e8e5',
-  primary: '#002116',
-  primaryContainer: '#12372a',
-  onSurface: '#1a1c1a',
-  muted: '#414844',
-  secondary: '#4d6700',
-  lime: '#bef529',
-  limeDim: '#a4d700',
-  onLime: '#151f00',
-  onPrimaryContainer: '#7ba190',
-  error: '#ba1a1a',
-  errorContainer: '#ffdad6',
-  onErrorContainer: '#93000a',
-  tertiaryFixedDim: '#9dd2b3',
-}
-
-const SERIF = "font-['Newsreader',serif]"
-const MONO = "font-['JetBrains_Mono',monospace]"
-const SANS = "font-['Inter',sans-serif]"
 
 const HERO_IMG =
   'https://lh3.googleusercontent.com/aida-public/AB6AXuCEcL6RQ6LruIwODktib1Z-LtAxbtJdLE_O7f1exFDsOc7JvSDz-k9MKgGrYPAdoe9EY_QgL8sN7K_t0jZNVXOUz4mAu0gbuNSyQ7SifZwM8g-jrhEVfJP3SymEuoxeNApEO1pZuMzI0agi683zEbZ6Ubvu-LFu8toq30QpFrZEovSpAYDvx-oj5W4auHNRvuYQidD6at9cfhTQ57t0E2OwlhyOFaXV7svyQ3c8M5FVSplYNGb1tg8'
@@ -59,123 +27,19 @@ const BOARDROOM_IMG =
 function PingDot({ className = '' }: { className?: string }) {
   return (
     <span className={`relative flex h-2 w-2 ${className}`}>
-      <span
-        className="absolute inline-flex h-full w-full animate-ping rounded-full opacity-75"
-        style={{ background: C.limeDim }}
-      />
-      <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: C.lime }} />
+      <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#d2ff3a] opacity-75" />
+      <span className="relative inline-flex h-2 w-2 rounded-full bg-[#d2ff3a]" />
     </span>
   )
-}
-
-function Dot({ color, size = 'h-1.5 w-1.5' }: { color: string; size?: string }) {
-  return <span className={`inline-block shrink-0 rounded-full ${size}`} style={{ background: color }} />
 }
 
 function Eyebrow({ children, className = '' }: { children: React.ReactNode; className?: string }) {
   return (
     <span
-      className={`${MONO} text-[10px] font-bold uppercase tracking-widest ${className}`}
-      style={{ color: C.secondary }}
+      className={`font-mono text-[10px] font-bold uppercase tracking-widest text-[#d2ff3a] ${className}`}
     >
       {children}
     </span>
-  )
-}
-
-/* ---------- header ---------- */
-
-const SOLUTIONS = [
-  ['Sales Automation', 'Revenue engines & pipeline velocity'],
-  ['Multi-Location Inventory', 'Real-time node synchronisation'],
-  ['360° CRM', 'Unified global partner telemetry'],
-  ['Headless CMS', 'Decoupled omnichannel catalog'],
-]
-
-function Header() {
-  const link = 'text-sm transition-colors hover:text-[#1a1c1a]'
-  return (
-    <header
-      className="fixed top-0 z-50 w-full backdrop-blur-xl"
-      style={{ background: 'rgba(255,255,255,0.9)', boxShadow: '0 1px 8px rgba(18,55,42,0.04)' }}
-    >
-      <div className="flex h-20 w-full items-center justify-between gap-4 px-4 md:px-8">
-        <div className="flex items-center gap-6">
-          <a href="#" className="flex items-center gap-2">
-            <span className={`${SERIF} text-[28px] font-medium tracking-tight`} style={{ color: C.primary }}>
-              Scryme
-            </span>
-            <span
-              className="flex items-center gap-1.5 rounded-full border px-2 py-0.5"
-              style={{ background: C.low, borderColor: 'rgba(18,55,42,0.1)' }}
-            >
-              <PingDot />
-              <span className={`${MONO} text-[10px] font-medium uppercase tracking-wider`} style={{ color: C.muted }}>
-                ERP OS 3.2
-              </span>
-            </span>
-          </a>
-
-          <nav className={`${SANS} hidden items-center gap-6 lg:flex`} style={{ color: C.muted }}>
-            <div className="group relative py-2">
-              <button className="flex cursor-pointer items-center gap-1 text-sm transition-colors group-hover:text-[#002116]">
-                Solutions
-                <ChevronDown className="h-4 w-4 transition-transform duration-200 group-hover:rotate-180" />
-              </button>
-              <div className="invisible absolute left-0 top-full z-50 translate-y-1 pt-2 opacity-0 transition-all duration-150 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
-                <div
-                  className="flex w-72 flex-col gap-1 rounded-xl border bg-white p-2"
-                  style={{
-                    borderColor: 'rgba(18,55,42,0.1)',
-                    boxShadow: '0 20px 48px rgba(18,55,42,0.12), 0 4px 12px rgba(18,55,42,0.04)',
-                  }}
-                >
-                  {SOLUTIONS.map(([t, d]) => (
-                    <a key={t} href="#" className="flex flex-col rounded-lg px-2 py-2 transition-colors hover:bg-[#f4f3f0]">
-                      <span className="text-sm font-semibold" style={{ color: C.onSurface }}>
-                        {t}
-                      </span>
-                      <span className="text-xs" style={{ color: C.muted }}>
-                        {d}
-                      </span>
-                    </a>
-                  ))}
-                </div>
-              </div>
-            </div>
-            <a href="#" className={link}>Platform</a>
-            <a href="#" className={link}>Architecture</a>
-            <Link to="/pricing" className={link}>Pricing</Link>
-            <a href="#" className={link}>Resources</a>
-            <a href="#" className={link}>Enterprise</a>
-          </nav>
-        </div>
-
-        <div className={`${SANS} flex items-center gap-4`}>
-          <a href="#" className="hidden px-2 py-1.5 text-sm transition-colors hover:text-[#002116] sm:inline-flex" style={{ color: C.muted }}>
-            Log In
-          </a>
-          <a
-            href="#"
-            className="inline-flex items-center justify-center rounded-lg px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-[#12372a]"
-            style={{ background: C.primary, boxShadow: '0 1px 3px rgba(18,55,42,0.03), 0 4px 16px rgba(18,55,42,0.02)' }}
-          >
-            <span className="mr-2 h-1.5 w-1.5 rounded-full" style={{ background: C.lime }} />
-            Book Demo
-          </a>
-          <a
-            href="https://app.scryme.tech/signup"
-            className="hidden items-center justify-center rounded-full px-4 py-2 text-sm font-semibold shadow-sm transition-colors hover:bg-[#a4d700] xl:inline-flex"
-            style={{ background: C.lime, color: C.onLime }}
-          >
-            Start Free Trial
-          </a>
-          <div className="flex h-8 w-8 items-center justify-center rounded-full" style={{ background: C.primary }}>
-            <User className="h-[18px] w-[18px] text-white" />
-          </div>
-        </div>
-      </div>
-    </header>
   )
 }
 
@@ -186,89 +50,78 @@ function Hero() {
     <section className="relative w-full overflow-hidden px-4 pb-20 pt-12 md:px-8 md:pt-16">
       <div className="mx-auto flex max-w-7xl flex-col gap-10">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full px-3 py-1.5 shadow-sm" style={{ background: C.high }}>
+          <div className="inline-flex items-center gap-2 rounded-full px-3.5 py-1.5 shadow-sm bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10">
             <PingDot />
-            <span className={`${MONO} text-[11px] font-semibold uppercase tracking-wider`} style={{ color: C.primary }}>
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#d2ff3a]">
               Scryme ERP OS v3.2 • Unified Operational Kernel
             </span>
           </div>
           <div
-            className={`${MONO} hidden items-center gap-2 rounded-full px-2.5 py-1 text-[11px] sm:inline-flex`}
-            style={{ background: C.low, color: C.muted }}
+            className="font-mono hidden items-center gap-2 rounded-full px-3 py-1 text-[11px] sm:inline-flex bg-white/5 border border-white/10 dark:border-white/10 light:border-black/10 text-[var(--text-muted)]"
           >
-            <Dot color={C.secondary} />
+            <span className="h-1.5 w-1.5 rounded-full bg-[#10b981]" />
             <span>180+ NODES SYNCHRONIZED</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-8">
-            <h1
-              className={`${SERIF} max-w-4xl text-[38px] font-normal leading-[44px] tracking-tight md:text-[56px] md:leading-[64px]`}
-              style={{ color: C.primary }}
-            >
+            <h1 className="font-serif max-w-4xl text-4xl font-normal leading-[1.08] tracking-tight sm:text-6xl md:text-7xl dark:text-white light:text-[#090a0b]">
               Can one smarter engine scale your entire enterprise?
             </h1>
           </div>
           <div className="flex flex-col gap-6 lg:col-span-4">
-            <p className={`${SANS} text-base leading-relaxed`} style={{ color: C.muted }}>
+            <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
               Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship
               intelligence, and decoupled catalog engines across an immutable sub-millisecond mesh. Zero fragmented
               connectors.
             </p>
-            <div className={`${SANS} flex flex-wrap items-center gap-3`}>
+            <div className="flex flex-wrap items-center gap-3">
               <a
-                href="https://app.scryme.tech/signup"
-                className="group inline-flex items-center justify-center rounded-lg px-6 py-3.5 text-sm font-semibold text-white shadow-md transition-all hover:bg-[#12372a] hover:shadow-lg"
-                style={{ background: C.primary }}
+                href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
+                className="group inline-flex items-center justify-center rounded-full px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] hover:shadow-[0_0_20px_rgba(210,255,58,0.4)] transition-all transform active:scale-95"
               >
-                <span
-                  className="mr-2.5 h-2 w-2 rounded-full transition-transform group-hover:scale-125"
-                  style={{ background: C.lime }}
-                />
-                Start 14-Day Enterprise Trial
+                <span>Start 14-Day Enterprise Trial</span>
+                <ArrowRight className="w-3.5 h-3.5 ml-2 transition-transform group-hover:translate-x-1" />
               </a>
-              <a
-                href="#"
-                className="inline-flex items-center justify-center rounded-lg px-5 py-3.5 text-sm font-semibold transition-colors hover:bg-[#e3e2e0]"
-                style={{ background: C.high, color: C.primary }}
+              <Link
+                to="/pricing"
+                className="inline-flex items-center justify-center rounded-full px-5 py-3.5 text-xs font-semibold uppercase tracking-wider border border-white/15 dark:border-white/15 light:border-black/15 hover:bg-white/10 transition"
               >
-                Schedule Enterprise Demo
-              </a>
+                View Transparent Pricing
+              </Link>
             </div>
           </div>
         </div>
 
-        <div className="group relative mt-4 w-full overflow-hidden rounded-2xl shadow-xl" style={{ background: '#e3e2e0' }}>
+        <div className="group relative mt-4 w-full overflow-hidden rounded-2xl glass-panel shadow-2xl border-white/10">
           <div className="relative aspect-[16/9] w-full overflow-hidden md:aspect-[21/9]">
             <img
               alt="Autonomous Global Operations Command Headquarters"
               src={HERO_IMG}
-              className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
+              className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01] opacity-90"
             />
             <div
-              className="absolute inset-0"
-              style={{ background: 'linear-gradient(to top, rgba(0,33,22,0.9), rgba(0,33,22,0.2), transparent)' }}
+              className="absolute inset-0 bg-gradient-to-t from-[#090a0b]/90 via-[#090a0b]/30 to-transparent"
             />
             <div className="absolute inset-x-0 bottom-0 flex flex-col justify-between gap-4 p-6 sm:flex-row sm:items-end md:p-8">
-              <div className="flex max-w-xl flex-col gap-1">
-                <span className={`${MONO} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.lime }}>
+              <div className="flex max-w-xl flex-col gap-1.5">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#d2ff3a]">
                   Global Control Substrate
                 </span>
-                <p className={`${SANS} text-base font-semibold text-white`}>
+                <p className="font-sans text-sm sm:text-base font-semibold text-white">
                   Autonomous Global Operations Command • Sub-12ms Telemetry Fabric across 180+ Enterprise Nodes
                 </p>
               </div>
               <div
-                className="flex items-center gap-3 self-start rounded-xl px-4 py-2 shadow-sm backdrop-blur-md sm:self-auto"
-                style={{ background: 'rgba(255,255,255,0.8)', color: C.onSurface }}
+                className="flex items-center gap-3 self-start rounded-xl px-4 py-2 shadow-lg backdrop-blur-md sm:self-auto glass-panel border-white/10"
               >
-                <Gauge className="h-4 w-4" style={{ color: C.secondary }} />
+                <Gauge className="h-4 w-4 text-[#d2ff3a]" />
                 <div className="flex flex-col">
-                  <span className={`${MONO} text-[10px] uppercase tracking-wider`} style={{ color: C.muted }}>
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                     Sync State
                   </span>
-                  <span className={`${MONO} text-xs font-semibold`} style={{ color: C.primary }}>
+                  <span className="font-mono text-xs font-bold text-white">
                     0.008s Consensus
                   </span>
                 </div>
@@ -287,59 +140,56 @@ const PILLARS = [
   {
     label: 'Pillar 01 / Commercial',
     badge: '12ms Ledger Settlement',
-    badgeDot: C.secondary,
     stat: '+42% Win-Rate Velocity',
     title: 'Sales Automation & RevOps',
     body: 'Compress enterprise sales cycles from months to days. Automate multi-currency proposals, dynamic discount margin guardrails, and real-time inventory reservation right from the live sales pipeline.',
     cta: 'Explore Sales Automation & RevOps',
+    href: '/sales',
   },
   {
     label: 'Pillar 02 / Logistics',
     badge: '184 Global Nodes Synced',
-    badgeDot: C.lime,
     stat: '0.02% Incident Rate',
     title: 'Smart Multi-Location Inventory',
     body: 'Track millions of physical units across distributed 3PL networks, regional fulfillment hubs, and retail stores with sub-second RFID and barcode ingestion. Never lose inventory to phantom stockouts.',
     cta: 'Explore Multi-Location Inventory Hub',
+    href: '/inventory',
   },
   {
     label: 'Pillar 03 / Intelligence',
     badge: 'Unified Account Graph',
-    badgeDot: C.tertiaryFixedDim,
     stat: '89.4% Net Retention',
     title: '360° Relationship CRM',
     body: 'Turn fragmented customer conversations, contract proposals, support escalations, and fulfillment statuses into a unified real-time reactive customer graph with sub-minute churn prediction.',
     cta: 'Explore 360° Relationship CRM',
+    href: '/crm',
   },
   {
     label: 'Pillar 04 / Omnichannel',
-    badge: 'GraphQL v3.4 Ready',
-    badgeDot: C.lime,
+    badge: 'Catalog Cloud & Headless CMS',
     stat: '38ms P95 Latency',
-    title: 'Headless CMS & Catalog Cloud',
+    title: 'Catalog Cloud Edge Engine',
     body: 'Synchronize multi-brand marketing pages, regional localized product catalogs, and custom customer portals directly from your ERP core without re-authoring content or managing brittle webhooks.',
-    cta: 'Explore Headless CMS & Catalog Cloud',
+    cta: 'Explore Catalog Cloud & Headless CMS',
+    href: '/cms',
   },
 ]
 
 function Pillars() {
   return (
-    <section className="w-full px-4 py-20 md:px-8" style={{ background: C.low }}>
+    <section className="w-full px-4 py-20 md:px-8 border-t border-white/10 dark:border-white/10 light:border-black/10 bg-white/[0.01]">
       <div className="mx-auto flex max-w-7xl flex-col gap-12">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="flex max-w-2xl flex-col gap-2">
             <div className="flex items-center gap-2">
               <Eyebrow>01 // Architectural Pillars</Eyebrow>
-              <span className="h-px w-8" style={{ background: '#c1c8c3' }} />
+              <span className="h-px w-8 bg-[#d2ff3a]/40" />
             </div>
-            <h2
-              className={`${SERIF} text-[30px] font-normal leading-9 tracking-tight md:text-[40px] md:leading-[48px]`}
-              style={{ color: C.primary }}
-            >
+            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight sm:text-4xl md:text-5xl dark:text-white light:text-[#090a0b]">
               Four specialized engines. Zero operational friction.
             </h2>
           </div>
-          <p className={`${SANS} max-w-md text-sm leading-5`} style={{ color: C.muted }}>
+          <p className="font-sans max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
             Explore the modular, single-state systems powering multinational enterprises. Every action updates the
             kernel in sub-millisecond real time.
           </p>
@@ -349,88 +199,89 @@ function Pillars() {
           {PILLARS.map((p) => (
             <div
               key={p.title}
-              className="group relative flex flex-col justify-between rounded-2xl bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl"
+              className="glass-panel group relative flex flex-col justify-between rounded-3xl p-8 transition-all duration-300 hover:border-[#d2ff3a]/50 hover:shadow-2xl"
             >
               <div className="flex flex-col gap-6">
                 <div className="flex items-center justify-between gap-2">
-                  <span className={`${MONO} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.muted }}>
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                     {p.label}
                   </span>
-                  <span
-                    className={`${MONO} inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium`}
-                    style={{ background: C.mid, color: C.primary }}
-                  >
-                    <Dot color={p.badgeDot} />
+                  <span className="font-mono inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium bg-white/5 border border-white/10 text-[#d2ff3a]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#d2ff3a]" />
                     {p.badge}
                   </span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className={`${SERIF} text-[30px] leading-9 md:text-[40px] md:leading-[48px]`} style={{ color: C.primary }}>
+                  <span className="font-serif text-3xl md:text-4xl text-[#d2ff3a]">
                     {p.stat}
                   </span>
-                  <h3 className={`${SERIF} text-[22px] font-medium leading-7`} style={{ color: C.primary }}>
+                  <h3 className="font-serif text-2xl font-medium dark:text-white light:text-[#090a0b]">
                     {p.title}
                   </h3>
                 </div>
-                <p className={`${SANS} text-sm leading-relaxed`} style={{ color: C.muted }}>
+                <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                   {p.body}
                 </p>
               </div>
-              <div className="mt-6 pt-8">
-                <a
-                  href="#"
-                  className={`${SANS} inline-flex items-center gap-2 text-sm font-semibold transition-colors group-hover:text-[#4d6700]`}
-                  style={{ color: C.primary }}
+              <div className="mt-8 pt-6 border-t border-white/10">
+                <Link
+                  to={p.href}
+                  className="font-sans inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#d2ff3a] hover:underline transition-colors"
                 >
-                  {p.cta}
+                  <span>{p.cta}</span>
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />
-                </a>
+                </Link>
               </div>
             </div>
           ))}
         </div>
 
-        <div className="mt-2 grid grid-cols-1 gap-6 md:grid-cols-2">
-          {[
-            {
-              Icon: Terminal,
-              bg: C.primary,
-              fg: '#ffffff',
-              t: 'Model Context Protocol (MCP) & APIs',
-              d: 'Stream programmatic ERP state to Claude, GPT-4, and custom AI agents.',
-            },
-            {
-              Icon: MonitorSmartphone,
-              bg: C.lime,
-              fg: C.onLime,
-              t: 'Native Mobile Operations Hub',
-              d: 'Real-time floor scans, inventory audit adjustments, and pipeline approvals on iOS & Android.',
-            },
-          ].map(({ Icon, bg, fg, t, d }) => (
-            <div key={t} className="flex items-center justify-between gap-4 rounded-xl p-6" style={{ background: C.mid }}>
-              <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg" style={{ background: bg, color: fg }}>
-                  <Icon className="h-6 w-6" />
-                </div>
-                <div className={`${SANS} flex flex-col`}>
-                  <span className="text-sm font-semibold" style={{ color: C.primary }}>
-                    {t}
-                  </span>
-                  <span className="text-xs" style={{ color: C.muted }}>
-                    {d}
-                  </span>
-                </div>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="glass-panel flex items-center justify-between gap-4 rounded-2xl p-6 border-white/10">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#d2ff3a]/10 text-[#d2ff3a]">
+                <Terminal className="h-6 w-6" />
               </div>
-              <a
-                href="#"
-                aria-label={t}
-                className="shrink-0 rounded-lg bg-white p-2.5 transition-colors hover:bg-[#002116] hover:text-white"
-                style={{ color: C.primary }}
-              >
-                <ArrowRight className="h-3.5 w-3.5" />
-              </a>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">
+                  Model Context Protocol (MCP) & Developer APIs
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">
+                  Stream programmatic ERP state to Claude, GPT-4, and custom AI agents.
+                </span>
+              </div>
             </div>
-          ))}
+            <Link
+              to="/developers/apps"
+              aria-label="Developer Console"
+              className="shrink-0 rounded-xl p-3 bg-white/5 border border-white/10 hover:border-[#d2ff3a] text-[#d2ff3a] transition-colors"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
+
+          <div className="glass-panel flex items-center justify-between gap-4 rounded-2xl p-6 border-white/10">
+            <div className="flex items-center gap-4">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-[#10b981]/10 text-[#10b981]">
+                <MonitorSmartphone className="h-6 w-6" />
+              </div>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">
+                  Omnichannel Payments & POS Reconciliation
+                </span>
+                <span className="text-xs text-[var(--text-muted)]">
+                  Instant M-Pesa STK Push, card settlement, and automated general ledger posting.
+                </span>
+              </div>
+            </div>
+            <Link
+              to="/payments"
+              aria-label="Payments Architecture"
+              className="shrink-0 rounded-xl p-3 bg-white/5 border border-white/10 hover:border-[#10b981] text-[#10b981] transition-colors"
+            >
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </div>
         </div>
       </div>
     </section>
@@ -451,29 +302,26 @@ function Paradigm() {
     ['Zero Middleware Tax', 'Native modules communicate through zero-overhead internal bus, eliminating middleware maintenance.'],
   ]
   return (
-    <section className="w-full px-4 py-24 md:px-8" style={{ background: C.surface }}>
-      <div className="mx-auto flex max-w-7xl flex-col gap-16">
-        <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
+    <section className="w-full px-4 py-24 md:px-8 max-w-7xl mx-auto">
+      <div className="flex flex-col gap-16">
+        <div className="grid grid-cols-1 items-center gap-10 lg:grid-cols-12">
           <div className="flex flex-col gap-6 lg:col-span-5">
             <Eyebrow>02 // Paradigm Shift</Eyebrow>
-            <h2
-              className={`${SERIF} text-[30px] font-normal leading-tight tracking-tight md:text-[40px]`}
-              style={{ color: C.primary }}
-            >
+            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight sm:text-4xl md:text-5xl dark:text-white light:text-[#090a0b]">
               Stop paying the middleware tax on broken operational data.
             </h2>
-            <p className={`${SANS} text-base leading-relaxed`} style={{ color: C.muted }}>
+            <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
               Enterprise systems failed because they bolted isolated SaaS point solutions together with duct-tape
               webhooks. When data is replicated across 9 different vendors, truth becomes obsolete within 15 minutes.
             </p>
-            <div className="flex flex-col gap-3 rounded-xl p-5" style={{ background: C.low }}>
+            <div className="glass-panel flex flex-col gap-3 rounded-2xl p-5 border-amber-500/20 bg-amber-500/5">
               <div className="flex items-center gap-2">
-                <RefreshCw className="h-[18px] w-[18px]" style={{ color: C.error }} />
-                <span className={`${SANS} text-sm font-semibold`} style={{ color: C.primary }}>
+                <RefreshCw className="h-[18px] w-[18px] text-amber-400" />
+                <span className="font-sans text-sm font-semibold text-amber-300">
                   The True Cost of Legacy SaaS Sprawl
                 </span>
               </div>
-              <p className={`${SANS} text-xs`} style={{ color: C.muted }}>
+              <p className="font-sans text-xs text-amber-200/80 leading-relaxed">
                 The average $100M+ enterprise spends $184,000 annually maintaining API sync scripts, reconciling
                 ledger mismatches, and investigating phantom inventory orders.
               </p>
@@ -481,25 +329,25 @@ function Paradigm() {
           </div>
 
           <div className="lg:col-span-7">
-            <div className="relative overflow-hidden rounded-2xl shadow-xl" style={{ background: C.high }}>
-              <div className="aspect-[16/10] w-full">
+            <div className="relative overflow-hidden rounded-3xl glass-panel shadow-2xl border-white/10">
+              <div className="aspect-[16/10] w-full overflow-hidden">
                 <img
-                  alt="Senior enterprise leadership reviewing real-time global supply chain telemetry in modern boardroom"
+                  alt="Senior enterprise leadership reviewing real-time global supply chain telemetry"
                   src={BOARDROOM_IMG}
-                  className="h-full w-full object-cover object-center"
+                  className="h-full w-full object-cover object-center opacity-85"
                 />
               </div>
-              <div className="flex flex-col items-start justify-between gap-4 bg-white p-6 sm:flex-row sm:items-center">
-                <div className={`${SANS} flex flex-col`}>
-                  <span className="text-sm font-semibold" style={{ color: C.primary }}>
+              <div className="flex flex-col items-start justify-between gap-4 p-6 sm:flex-row sm:items-center border-t border-white/10">
+                <div className="flex flex-col">
+                  <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">
                     Executive Visibility Room
                   </span>
-                  <span className="text-xs" style={{ color: C.muted }}>
+                  <span className="text-xs text-[var(--text-muted)]">
                     Cross-node revenue &amp; logistics consensus active
                   </span>
                 </div>
-                <div className={`${MONO} flex items-center gap-2 text-xs font-semibold`} style={{ color: C.secondary }}>
-                  <Dot color={C.lime} size="h-2 w-2" />
+                <div className="font-mono flex items-center gap-2 text-xs font-semibold text-[#10b981]">
+                  <span className="h-2 w-2 rounded-full bg-[#10b981] animate-pulse" />
                   ZERO SYNCHRONIZATION DELAY
                 </div>
               </div>
@@ -507,28 +355,25 @@ function Paradigm() {
           </div>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex flex-col gap-6 rounded-2xl p-8" style={{ background: C.high }}>
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+          <div className="glass-panel flex flex-col gap-6 rounded-3xl p-8 border-red-500/20">
             <div className="flex items-center justify-between">
-              <span className={`${SANS} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.muted }}>
+              <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                 The Conventional Pattern
               </span>
-              <span
-                className={`${MONO} rounded px-2.5 py-1 text-xs font-semibold`}
-                style={{ background: C.errorContainer, color: C.onErrorContainer }}
-              >
+              <span className="font-mono rounded-full px-2.5 py-1 text-xs font-semibold bg-red-500/10 text-red-400 border border-red-500/20">
                 Legacy Sprawl
               </span>
             </div>
             <div className="flex flex-col gap-4">
               {legacy.map(([t, d]) => (
                 <div key={t} className="flex items-start gap-3">
-                  <X className="mt-0.5 h-5 w-5 shrink-0" style={{ color: C.error }} />
-                  <div className={`${SANS} flex flex-col`}>
-                    <span className="text-sm font-semibold" style={{ color: C.primary }}>
+                  <X className="mt-0.5 h-5 w-5 shrink-0 text-red-400" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">
                       {t}
                     </span>
-                    <span className="text-xs" style={{ color: C.muted }}>
+                    <span className="text-xs text-[var(--text-muted)] leading-relaxed">
                       {d}
                     </span>
                   </div>
@@ -537,28 +382,22 @@ function Paradigm() {
             </div>
           </div>
 
-          <div
-            className="relative flex flex-col gap-6 overflow-hidden rounded-2xl p-8 text-white shadow-xl"
-            style={{ background: C.primary }}
-          >
+          <div className="glass-panel-elevated relative flex flex-col gap-6 overflow-hidden rounded-3xl p-8 border-[#d2ff3a]/40 shadow-2xl">
             <div className="relative z-10 flex items-center justify-between">
-              <span className={`${SANS} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.lime }}>
+              <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-[#d2ff3a]">
                 Scryme Unified Kernel
               </span>
-              <span
-                className={`${MONO} rounded-full px-2.5 py-1 text-xs font-bold`}
-                style={{ background: C.secondary, color: '#ffffff' }}
-              >
+              <span className="font-mono rounded-full px-3 py-1 text-xs font-bold bg-[#d2ff3a]/20 text-[#d2ff3a] border border-[#d2ff3a]/40">
                 Sub-12ms Mesh
               </span>
             </div>
             <div className="relative z-10 flex flex-col gap-4">
               {kernel.map(([t, d]) => (
                 <div key={t} className="flex items-start gap-3">
-                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" style={{ color: C.lime }} />
-                  <div className={`${SANS} flex flex-col`}>
-                    <span className="text-sm font-semibold text-white">{t}</span>
-                    <span className="text-xs" style={{ color: C.onPrimaryContainer }}>
+                  <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-[#d2ff3a]" />
+                  <div className="flex flex-col">
+                    <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">{t}</span>
+                    <span className="text-xs text-[var(--text-muted)] leading-relaxed">
                       {d}
                     </span>
                   </div>
@@ -587,81 +426,74 @@ function MetricsAndCase() {
     ['Migration Timeframe:', '31 Business Days'],
   ]
   return (
-    <section className="w-full px-4 py-20 md:px-8" style={{ background: C.low }}>
+    <section className="w-full px-4 py-20 md:px-8 border-t border-white/10 dark:border-white/10 light:border-black/10 bg-white/[0.01]">
       <div className="mx-auto flex max-w-7xl flex-col gap-16">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {metrics.map(([k, v, d]) => (
-            <div key={k} className="flex flex-col gap-2 rounded-2xl bg-white p-6">
-              <span className={`${MONO} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.muted }}>
+            <div key={k} className="glass-panel flex flex-col gap-2 rounded-2xl p-6 border-white/10">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                 {k}
               </span>
-              <span className={`${SERIF} text-[30px] leading-9 md:text-[40px] md:leading-[48px]`} style={{ color: C.primary }}>
+              <span className="font-serif text-3xl md:text-4xl font-bold text-[#d2ff3a]">
                 {v}
               </span>
-              <span className={`${SANS} text-xs`} style={{ color: C.muted }}>
+              <span className="font-sans text-xs text-[var(--text-muted)]">
                 {d}
               </span>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-10 rounded-3xl bg-white p-8 shadow-md md:p-12 lg:flex-row">
+        <div className="glass-panel flex flex-col items-center justify-between gap-10 rounded-3xl p-8 md:p-12 lg:flex-row border-white/10">
           <div className="flex max-w-2xl flex-col gap-6">
             <div className="flex flex-wrap items-center gap-3">
-              <span
-                className={`${MONO} rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider`}
-                style={{ background: C.lime, color: C.onLime }}
-              >
+              <span className="font-mono rounded-full px-3 py-1 text-xs font-bold uppercase tracking-wider bg-[#d2ff3a] text-[#090a0b]">
                 Customer Spotlight
               </span>
-              <span className={`${SANS} text-sm font-semibold`} style={{ color: C.primary }}>
+              <span className="font-sans text-sm font-semibold dark:text-white light:text-[#090a0b]">
                 Veloce Global Logistics AG
               </span>
             </div>
-            <blockquote className={`${SERIF} text-[22px] font-medium leading-snug md:text-[28px]`} style={{ color: C.primary }}>
+            <blockquote className="font-serif text-xl sm:text-2xl md:text-3xl font-medium leading-relaxed dark:text-white light:text-[#090a0b]">
               "Migrating to Scryme’s single-kernel architecture collapsed our reconciliation cycle from 3 days to
               literally 4 seconds. Our ops teams in Zurich and Singapore are finally looking at the exact same ledger
               numbers without questioning data freshness."
             </blockquote>
             <div className="flex items-center gap-4">
-              <div
-                className={`${SANS} flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold text-white`}
-                style={{ background: C.primary }}
-              >
+              <div className="font-sans flex h-12 w-12 items-center justify-center rounded-full text-sm font-bold bg-[#d2ff3a] text-[#090a0b]">
                 ER
               </div>
-              <div className={`${SANS} flex flex-col`}>
-                <span className="text-sm font-semibold" style={{ color: C.primary }}>
+              <div className="flex flex-col">
+                <span className="text-sm font-bold dark:text-white light:text-[#090a0b]">
                   Elena Rostova
                 </span>
-                <span className="text-xs" style={{ color: C.muted }}>
+                <span className="text-xs text-[var(--text-muted)]">
                   Chief Operating Officer, Veloce Global Logistics
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex w-full shrink-0 flex-col gap-4 rounded-2xl p-6 lg:w-80" style={{ background: C.low }}>
-            <span className={`${MONO} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.muted }}>
+          <div className="glass-panel flex w-full shrink-0 flex-col gap-4 rounded-2xl p-6 lg:w-80 border-white/10">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#d2ff3a]">
               Deployment Summary
             </span>
             <div className="flex flex-col gap-3">
               {deploy.map(([k, v]) => (
-                <div key={k} className={`${SANS} flex items-center justify-between text-sm`}>
-                  <span style={{ color: C.muted }}>{k}</span>
-                  <span className={`${MONO} font-semibold`} style={{ color: C.primary }}>
+                <div key={k} className="flex items-center justify-between text-sm">
+                  <span className="text-[var(--text-muted)]">{k}</span>
+                  <span className="font-mono font-bold dark:text-white light:text-[#090a0b]">
                     {v}
                   </span>
                 </div>
               ))}
             </div>
-            <a
-              href="#"
-              className={`${SANS} mt-2 rounded-lg px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-[#12372a]`}
-              style={{ background: C.primary }}
+            <Link
+              to="/crm"
+              className="mt-2 rounded-xl py-2.5 text-center text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] transition-colors"
             >
-              Read Full Case Study
-            </a>
+              Explore 360° CRM Case Study
+            </Link>
           </div>
         </div>
       </div>
@@ -693,14 +525,11 @@ const FAQS = [
 function Faq() {
   const [open, setOpen] = useState<number | null>(null)
   return (
-    <section className="w-full px-4 py-24 md:px-8" style={{ background: C.surface }}>
-      <div className="mx-auto flex max-w-4xl flex-col gap-12">
+    <section className="w-full px-4 py-24 md:px-8 max-w-4xl mx-auto">
+      <div className="flex flex-col gap-12">
         <div className="flex flex-col items-center gap-3 text-center">
           <Eyebrow>03 // Architectural Inquiries</Eyebrow>
-          <h2
-            className={`${SERIF} text-[30px] font-normal leading-9 tracking-tight md:text-[40px] md:leading-[48px]`}
-            style={{ color: C.primary }}
-          >
+          <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight sm:text-4xl md:text-5xl dark:text-white light:text-[#090a0b]">
             Frequently asked questions by enterprise engineering &amp; leadership
           </h2>
         </div>
@@ -709,22 +538,20 @@ function Faq() {
           {FAQS.map(([q, a], i) => {
             const isOpen = open === i
             return (
-              <div key={q} className="overflow-hidden rounded-xl transition-all duration-200" style={{ background: C.low }}>
+              <div key={q} className="glass-panel overflow-hidden rounded-2xl border-white/10 transition-all duration-200">
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className={`${SANS} flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left text-base font-semibold`}
-                  style={{ color: C.primary }}
+                  className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left text-base font-bold dark:text-white light:text-[#090a0b]"
                 >
                   <span>{q}</span>
                   <ChevronDown
-                    className="h-5 w-5 shrink-0 transition-transform duration-200"
-                    style={{ transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}
+                    className={`h-5 w-5 shrink-0 transition-transform duration-200 ${isOpen ? 'rotate-180 text-[#d2ff3a]' : 'text-slate-400'}`}
                   />
                 </button>
                 {isOpen && (
-                  <div className={`${SANS} px-6 pb-5 text-sm leading-relaxed`} style={{ color: C.muted }}>
+                  <div className="px-6 pb-5 text-sm leading-relaxed text-[var(--text-muted)] border-t border-white/5 pt-3">
                     {a}
                   </div>
                 )}
@@ -741,50 +568,37 @@ function Faq() {
 
 function FinalCta() {
   return (
-    <section className="w-full px-4 py-20 text-white md:px-8" style={{ background: C.primary }}>
-      <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 py-10 text-center">
-        <div
-          className={`${MONO} inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-semibold uppercase tracking-widest`}
-          style={{ background: C.primaryContainer, color: C.lime }}
-        >
+    <section className="w-full px-4 py-20 md:px-8 max-w-7xl mx-auto text-center">
+      <div className="glass-panel-elevated p-10 md:p-16 rounded-3xl relative overflow-hidden">
+        <div className="font-mono inline-flex items-center gap-2 rounded-full px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest bg-[#d2ff3a]/20 text-[#d2ff3a] border border-[#d2ff3a]/30 mb-6">
           Autonomous Enterprise Orchestration
         </div>
-        <h2
-          className={`${SERIF} max-w-3xl text-[30px] font-normal leading-[1.1] tracking-tight md:text-[56px]`}
-        >
+        <h2 className="font-serif max-w-3xl mx-auto text-3xl md:text-5xl lg:text-6xl font-normal leading-[1.1] tracking-tight dark:text-white light:text-[#090a0b] mb-6">
           Reclaim command of your global operations today.
         </h2>
-        <p className={`${SANS} max-w-2xl text-base leading-relaxed`} style={{ color: C.onPrimaryContainer }}>
+        <p className="max-w-2xl mx-auto text-base text-[var(--text-muted)] leading-relaxed mb-8">
           Speak directly with a Principal Enterprise Solutions Architect or spin up an isolated staging sandbox loaded
           with your sample catalog and node taxonomy.
         </p>
-        <div className={`${SANS} mt-2 flex flex-wrap items-center justify-center gap-4`}>
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <a
             href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
-            className="inline-flex items-center justify-center rounded-xl px-8 py-4 text-sm font-bold shadow-lg transition-all hover:bg-[#a4d700] hover:shadow-xl"
-            style={{ background: C.lime, color: C.onLime }}
+            className="inline-flex items-center justify-center rounded-full px-8 py-4 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] hover:shadow-[0_0_25px_rgba(210,255,58,0.4)] transition-all"
           >
             Start 14-Day Enterprise Trial
           </a>
           <Link
             to="/pricing"
-            className="inline-flex items-center justify-center rounded-xl px-8 py-4 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-[#003923]"
-            style={{ background: C.primaryContainer }}
+            className="inline-flex items-center justify-center rounded-full px-8 py-4 text-xs font-semibold uppercase tracking-wider border border-white/20 dark:border-white/20 light:border-black/20 hover:bg-white/10 transition-colors"
           >
             Schedule Architecture Review
           </Link>
         </div>
-        <div
-          className={`${MONO} mt-6 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs`}
-          style={{ color: C.onPrimaryContainer }}
-        >
+        <div className="font-mono mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-xs text-[var(--text-muted)]">
           {['NO LEGACY CONNECTORS NEEDED', 'DEDICATED SOVEREIGN HOSTING', '99.999% RUNTIME SLA'].map((t, i) => (
-            <span key={t} className="flex items-center gap-6">
-              {i > 0 && <span>•</span>}
-              <span className="flex items-center gap-1.5">
-                <Dot color={C.lime} />
-                {t}
-              </span>
+            <span key={t} className="flex items-center gap-2">
+              <span className="h-1.5 w-1.5 rounded-full bg-[#d2ff3a]" />
+              {t}
             </span>
           ))}
         </div>
@@ -793,109 +607,13 @@ function FinalCta() {
   )
 }
 
-/* ---------- footer ---------- */
-
-function SiteFooter() {
-  const cols: [string, string[]][] = [
-    ['Solutions', ['Sales Automation', 'Multi-Location Inventory', '360° CRM Intelligence', 'Headless CMS Gateway', 'Automated Procurement']],
-    ['Platform', ['Core Kernel', 'Global Architecture', 'SOC2 & Sovereignty', 'Audit Telemetry', 'Ecosystem Hub']],
-    ['Governance', ['Privacy Architecture', 'Terms of Provisioning', 'Enterprise SLA (99.99%)', 'ISO/IEC 27001 Standard', 'Data Residency Matrix']],
-  ]
-  return (
-    <footer className="w-full border-t" style={{ background: C.low, borderColor: 'rgba(18,55,42,0.05)' }}>
-      <div className="w-full px-4 py-10 md:px-8">
-        <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-6">
-          <div className="flex flex-col gap-4 lg:col-span-2">
-            <div className="flex items-center gap-2">
-              <span className={`${SERIF} text-[22px] font-medium tracking-tight`} style={{ color: C.primary }}>
-                Scryme
-              </span>
-              <span
-                className={`${SANS} rounded px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-widest`}
-                style={{ background: C.mid, color: C.muted }}
-              >
-                Core Suite
-              </span>
-            </div>
-            <p className={`${SANS} max-w-sm text-sm`} style={{ color: C.muted }}>
-              High-fidelity enterprise operating kernel coordinating sales velocity, multi-node inventories, and
-              multi-tenant telemetry with sub-millisecond precision.
-            </p>
-            <div
-              className={`${MONO} flex w-fit items-center gap-2 rounded-full border bg-white px-3 py-1.5 text-[13px]`}
-              style={{ borderColor: 'rgba(18,55,42,0.1)', color: C.muted }}
-            >
-              <Dot color={C.lime} size="h-2 w-2" />
-              99.99% Operational - All global regions live
-            </div>
-          </div>
-
-          {cols.map(([h, links]) => (
-            <div key={h} className="flex flex-col gap-2">
-              <span className={`${SANS} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.onSurface }}>
-                {h}
-              </span>
-              {links.map((l) => (
-                <a key={l} href="#" className={`${SANS} text-xs transition-colors hover:text-[#1a1c1a]`} style={{ color: C.muted }}>
-                  {l}
-                </a>
-              ))}
-            </div>
-          ))}
-
-          <div className="flex flex-col gap-2">
-            <span className={`${SANS} text-[10px] font-bold uppercase tracking-widest`} style={{ color: C.onSurface }}>
-              Dispatch
-            </span>
-            <p className={`${SANS} text-xs`} style={{ color: C.muted }}>
-              Executive analysis, kernel release logs, and architectural briefs delivered weekly.
-            </p>
-            <form className="mt-1 flex items-center" onSubmit={(e) => e.preventDefault()}>
-              <input
-                type="email"
-                placeholder="executive@enterprise.com"
-                className={`${SANS} h-10 w-full min-w-0 rounded-l-lg border bg-white px-3 text-xs outline-none placeholder:text-[#414844]/60 focus:border-[#002116]`}
-                style={{ borderColor: 'rgba(193,200,195,0.6)', color: C.onSurface }}
-              />
-              <button
-                type="submit"
-                aria-label="Subscribe"
-                className="flex h-10 items-center justify-center rounded-r-lg px-3 text-white transition-colors hover:bg-[#12372a]"
-                style={{ background: C.primary }}
-              >
-                <ArrowRight className="h-[18px] w-[18px]" />
-              </button>
-            </form>
-          </div>
-        </div>
-
-        <div
-          className="flex flex-col items-center justify-between gap-2 border-t pt-4 md:flex-row"
-          style={{ borderColor: 'rgba(18,55,42,0.1)' }}
-        >
-          <span className={`${SANS} text-xs`} style={{ color: C.muted }}>
-            © 2026 Scryme ERP AG. All rights reserved. Registered Enterprise OS.
-          </span>
-          <div className={`${MONO} flex items-center gap-4 text-[11px]`} style={{ color: C.muted }}>
-            <span>NODE_LATENCY: 12ms</span>
-            <span>TLS 1.3 / ENCRYPTED</span>
-          </div>
-        </div>
-      </div>
-    </footer>
-  )
-}
-
 /* ---------- page ---------- */
 
 function HomeComponent() {
   return (
-    <div
-      className={`${SANS} min-h-screen antialiased selection:bg-[#bef529] selection:text-[#526d00]`}
-      style={{ background: C.surface, color: C.onSurface }}
-    >
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#d2ff3a] selection:text-[#090a0b] transition-colors">
       <Header />
-      <main className="w-full pt-20">
+      <main className="w-full">
         <Hero />
         <Pillars />
         <Paradigm />
@@ -903,7 +621,7 @@ function HomeComponent() {
         <Faq />
         <FinalCta />
       </main>
-      <SiteFooter />
+      <Footer />
     </div>
   )
 }
