@@ -457,6 +457,8 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
         time: batch?.scheduledStartAt ? format(new Date(batch.scheduledStartAt), 'HH:mm') : '09:00',
         shelfLifeDays: batch?.shelfLifeDays || undefined,
         tags: batch?.tags || [],
+        runType: batch?.runType || 'MAKE_TO_STOCK',
+        orderReference: batch?.orderReference || '',
       };
     }, [batch]),
   });
@@ -561,6 +563,26 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
     const shouldAddAnother = (e?.nativeEvent as any)?.submitter?.name === 'add-another';
 
     try {
+    // If on-demand, ensure custom order tag and order ref tag are attached
+    if (data.runType === 'ON_DEMAND') {
+      const currentTags = new Set(data.tags || []);
+      currentTags.add('custom-order');
+      if (data.orderReference) {
+        currentTags.add(`order:${data.orderReference}`);
+      }
+      data.tags = Array.from(currentTags);
+    }
+
+    // If on-demand, ensure custom order tag and order ref tag are attached
+    if (data.runType === 'ON_DEMAND') {
+      const currentTags = new Set(data.tags || []);
+      currentTags.add('custom-order');
+      if (data.orderReference) {
+        currentTags.add(`order:${data.orderReference}`);
+      }
+      data.tags = Array.from(currentTags);
+    }
+
       if (isEditing && batch) {
         await updateBatchMutation.mutateAsync({ ...data, id: batch.id });
       } else {
@@ -699,7 +721,163 @@ export function BatchForm({ batch, onCancel, onSuccess }: BatchFormProps) {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-0 flex-1 overflow-y-auto pb-20 sm:pb-0">
         {/* LEFT: Main fields */}
         <div className="lg:col-span-8 px-6 py-8 border-r border-slate-100">
-          {/* ── STEP 1: Source ──────────────────────────────────────── */}
+          {/* ── PRODUCTION RUN MODE (Make-to-stock vs On-demand) ─────── */}
+          <div className="mb-6 p-4 rounded-xl border border-border bg-card/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Production Run Initiation Mode
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Select whether this batch is scheduled for standard inventory or initiated by an on-demand custom order / POS trigger.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setValue('runType', 'MAKE_TO_STOCK', { shouldDirty: true })}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
+                  watchedValues.runType === 'MAKE_TO_STOCK' || !watchedValues.runType
+                    ? 'border-primary bg-primary/10 text-primary font-medium shadow-sm'
+                    : 'border-border text-muted-foreground hover:bg-muted/40'
+                )}
+              >
+                <div className="w-3.5 h-3.5 rounded-full border border-primary flex items-center justify-center shrink-0">
+                  {(watchedValues.runType === 'MAKE_TO_STOCK' || !watchedValues.runType) && (
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold block text-foreground">Make-to-Stock</span>
+                  <span className="text-[11px] text-muted-foreground">Standard daily bake schedule</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('runType', 'ON_DEMAND', { shouldDirty: true });
+                  if (!watchedValues.tags?.includes('custom-order')) {
+                    setValue('tags', [...(watchedValues.tags || []), 'custom-order'], { shouldDirty: true });
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
+                  watchedValues.runType === 'ON_DEMAND'
+                    ? 'border-purple-600 bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium shadow-sm'
+                    : 'border-border text-muted-foreground hover:bg-muted/40'
+                )}
+              >
+                <div className="w-3.5 h-3.5 rounded-full border border-purple-600 flex items-center justify-center shrink-0">
+                  {watchedValues.runType === 'ON_DEMAND' && (
+                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold block text-foreground">On-Demand / Custom Order</span>
+                  <span className="text-[11px] text-muted-foreground">POS or custom pre-order trigger</span>
+                </div>
+              </button>
+            </div>
+
+            {watchedValues.runType === 'ON_DEMAND' && (
+              <div className="pt-2 space-y-1.5 animate-in fade-in-50">
+                <FieldLabel
+                  required
+                  hint="Enter the POS sales order number, customer name, or wedding/event tag.">
+                  Order Tag / Reference Number
+                </FieldLabel>
+                <Input
+                  placeholder="e.g. POS-ORD-9021 or Customer: Sarah Jenkins (Wedding Cake)"
+                  {...register('orderReference')}
+                  className="h-9 text-xs font-medium"
+                />
+              </div>
+            )}
+          </div>
+
+          {/* ── PRODUCTION RUN MODE (Make-to-stock vs On-demand) ─────── */}
+          <div className="mb-6 p-4 rounded-xl border border-border bg-card/60 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <Label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                  Production Run Initiation Mode
+                </Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Select whether this batch is scheduled for standard inventory or initiated by an on-demand custom order / POS trigger.
+                </p>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <button
+                type="button"
+                onClick={() => setValue('runType', 'MAKE_TO_STOCK', { shouldDirty: true })}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
+                  watchedValues.runType === 'MAKE_TO_STOCK' || !watchedValues.runType
+                    ? 'border-primary bg-primary/10 text-primary font-medium shadow-sm'
+                    : 'border-border text-muted-foreground hover:bg-muted/40'
+                )}
+              >
+                <div className="w-3.5 h-3.5 rounded-full border border-primary flex items-center justify-center shrink-0">
+                  {(watchedValues.runType === 'MAKE_TO_STOCK' || !watchedValues.runType) && (
+                    <div className="w-2 h-2 rounded-full bg-primary" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold block text-foreground">Make-to-Stock</span>
+                  <span className="text-[11px] text-muted-foreground">Standard daily bake schedule</span>
+                </div>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setValue('runType', 'ON_DEMAND', { shouldDirty: true });
+                  if (!watchedValues.tags?.includes('custom-order')) {
+                    setValue('tags', [...(watchedValues.tags || []), 'custom-order'], { shouldDirty: true });
+                  }
+                }}
+                className={cn(
+                  'flex items-center gap-3 p-3 rounded-lg border text-left transition-all',
+                  watchedValues.runType === 'ON_DEMAND'
+                    ? 'border-purple-600 bg-purple-500/10 text-purple-700 dark:text-purple-300 font-medium shadow-sm'
+                    : 'border-border text-muted-foreground hover:bg-muted/40'
+                )}
+              >
+                <div className="w-3.5 h-3.5 rounded-full border border-purple-600 flex items-center justify-center shrink-0">
+                  {watchedValues.runType === 'ON_DEMAND' && (
+                    <div className="w-2 h-2 rounded-full bg-purple-600" />
+                  )}
+                </div>
+                <div>
+                  <span className="text-xs font-semibold block text-foreground">On-Demand / Custom Order</span>
+                  <span className="text-[11px] text-muted-foreground">POS or custom pre-order trigger</span>
+                </div>
+              </button>
+            </div>
+
+            {watchedValues.runType === 'ON_DEMAND' && (
+              <div className="pt-2 space-y-1.5 animate-in fade-in-50">
+                <FieldLabel
+                  required
+                  hint="Enter the POS sales order number, customer name, or wedding/event tag.">
+                  Order Tag / Reference Number
+                </FieldLabel>
+                <Input
+                  placeholder="e.g. POS-ORD-9021 or Customer: Sarah Jenkins (Wedding Cake)"
+                  {...register('orderReference')}
+                  className="h-9 text-xs font-medium"
+                />
+              </div>
+            )}
+          </div>
+
+{/* ── STEP 1: Source ──────────────────────────────────────── */}
           <SectionHeader
             step={1}
             title="Source Material"

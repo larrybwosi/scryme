@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { BatchStatus, DisposalReason, ExpirationStatus, RecipeDifficulty } from '@/prisma/enums';
+import { ProductionRunType, WasteReasonCode } from '@/types/bakery';
 
 // --- Shared Helper Schemas ---
 
@@ -104,6 +105,9 @@ const baseBatchSchema = z.object({
   notes: z.string().optional().nullable(),
   createdFromTemplateId: z.string().optional().nullable(),
   outputLocationId: z.string().optional().nullable(),
+  runType: z.enum(['MAKE_TO_STOCK', 'ON_DEMAND']).default('MAKE_TO_STOCK').optional(),
+  orderReference: z.string().optional().nullable(),
+  tags: z.array(z.string()).optional().default([]),
 
   // Expiration fields
   productionDate: z.coerce.date().optional().nullable(),

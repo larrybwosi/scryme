@@ -9,15 +9,14 @@ import {
   XCircle,
   Eye,
   Edit,
-  User,
-  Users,
   Clock,
   Calendar,
   AlertTriangle,
   Copy,
   ClipboardList,
-  Tag,
-  Printer
+  Printer,
+  Flame,
+  FileSpreadsheet
 } from 'lucide-react';
 import { BatchStatus, FormattedBatch } from '@/types/bakery';
 import { useFormattedCurrency } from '@/lib/utils';
@@ -32,6 +31,8 @@ interface BatchCardProps {
   onDuplicate: (id: string) => void;
   onPrint: (batch: FormattedBatch) => void;
   onSaveTemplate: (batch: FormattedBatch) => void;
+  onOpenWorkstation?: (batch: FormattedBatch) => void;
+  onPrintTicket?: (batch: FormattedBatch) => void;
   isStarting: boolean;
   isCompleting: boolean;
   isCancelling: boolean;
@@ -78,6 +79,8 @@ export function BatchCard({
   onDuplicate,
   onPrint,
   onSaveTemplate,
+  onOpenWorkstation,
+  onPrintTicket,
   isStarting,
   isCompleting,
   isCancelling,
@@ -94,6 +97,28 @@ export function BatchCard({
     <Card className="group relative overflow-hidden transition-all duration-500 hover:shadow-2xl border-border/40 hover:border-primary/30 bg-card/40 backdrop-blur-md flex flex-col h-full rounded-2xl">
       {/* Quick Actions Overlay */}
       <div className="absolute top-4 right-4 flex flex-col gap-2 z-10 opacity-0 group-hover:opacity-100 transition-all translate-x-2 group-hover:translate-x-0">
+        {onOpenWorkstation && (batch.status === BatchStatus.IN_PROGRESS || batch.status === BatchStatus.PLANNED) && (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-9 w-9 bg-background/90 backdrop-blur-md border border-border/50 shadow-lg hover:bg-amber-600 hover:text-white transition-all cursor-pointer rounded-xl"
+            onClick={() => onOpenWorkstation(batch)}
+            title="Open Kitchen Workstation"
+          >
+            <Flame className="h-4 w-4" />
+          </Button>
+        )}
+        {onPrintTicket && (
+          <Button
+            variant="secondary"
+            size="icon"
+            className="h-9 w-9 bg-background/90 backdrop-blur-md border border-border/50 shadow-lg hover:bg-primary hover:text-primary-foreground transition-all cursor-pointer rounded-xl"
+            onClick={() => onPrintTicket(batch)}
+            title="Print Production Ticket"
+          >
+            <FileSpreadsheet className="h-4 w-4" />
+          </Button>
+        )}
         <Button
           variant="secondary"
           size="icon"
@@ -142,11 +167,21 @@ export function BatchCard({
                 </TooltipProvider>
               )}
             </CardTitle>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 flex-wrap">
               <span className="font-mono text-[10px] bg-primary/5 text-primary/70 font-bold px-2 py-0.5 rounded-full border border-primary/10 tracking-widest uppercase">
                 {batch.batchNumber}
               </span>
               <span className="text-[11px] font-semibold text-muted-foreground/60 uppercase tracking-tight">{batch.recipe.name}</span>
+              {batch.runType === 'ON_DEMAND' && (
+                <span className="text-[9px] font-bold uppercase bg-purple-100 text-purple-700 dark:bg-purple-950 dark:text-purple-300 px-2 py-0.5 rounded-full">
+                  On-Demand
+                </span>
+              )}
+              {batch.orderReference && (
+                <span className="text-[9px] font-mono text-muted-foreground bg-muted/60 px-1.5 py-0.5 rounded">
+                  Ref: {batch.orderReference}
+                </span>
+              )}
             </div>
           </div>
         </div>
@@ -210,15 +245,27 @@ export function BatchCard({
               </Button>
             )}
             {batch.status === BatchStatus.IN_PROGRESS && (
-              <Button
-                size="lg"
-                onClick={() => onComplete(batch)}
-                disabled={isCompleting}
-                className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 font-bold text-xs uppercase tracking-widest h-11 rounded-xl"
-              >
-                <CheckCircle className="h-3.5 w-3.5 mr-2" />
-                {isCompleting ? 'Finalizing' : 'Complete'}
-              </Button>
+              <div className="flex gap-2 w-full">
+                {onOpenWorkstation && (
+                  <Button
+                    size="lg"
+                    onClick={() => onOpenWorkstation(batch)}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white shadow-xl shadow-amber-500/20 font-bold text-xs uppercase tracking-wider h-11 rounded-xl"
+                  >
+                    <Flame className="h-3.5 w-3.5 mr-1.5" />
+                    Workstation
+                  </Button>
+                )}
+                <Button
+                  size="lg"
+                  onClick={() => onComplete(batch)}
+                  disabled={isCompleting}
+                  className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-xl shadow-emerald-500/20 font-bold text-xs uppercase tracking-widest h-11 rounded-xl"
+                >
+                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                  {isCompleting ? 'Finalizing' : 'Complete'}
+                </Button>
+              </div>
             )}
             {(batch.status === BatchStatus.COMPLETED || batch.status === BatchStatus.CANCELLED) && (
               <Button
