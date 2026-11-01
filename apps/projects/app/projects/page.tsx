@@ -2,84 +2,49 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { INITIAL_PROJECTS, ProjectItem } from "@/lib/mock-data";
 import { useProjects, useCreateProject } from "@/lib/hooks/use-projects";
 
 export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [activeFilter, setActiveFilter] = useState<"all" | "in-progress" | "planning" | "paused">("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "ACTIVE" | "ON_HOLD" | "COMPLETED">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: apiProjects } = useProjects();
+  const { data: projects = [], isLoading, error } = useProjects();
   const createProjectMutation = useCreateProject();
-  const [localProjects, setLocalProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
-  const [newProjectTagline, setNewProjectTagline] = useState("");
-
-  const projects: ProjectItem[] = (apiProjects && apiProjects.length > 0)
-    ? apiProjects.map((p, idx) => {
-        const fallback = INITIAL_PROJECTS[idx % INITIAL_PROJECTS.length];
-        return {
-          id: p.id,
-          name: p.name,
-          tagline: p.description || fallback.tagline,
-          badge: fallback.badge || "Active",
-          badgeColor: fallback.badgeColor || "bg-surface-container-highest text-primary",
-          health: fallback.health || "On Track",
-          healthColor: fallback.healthColor || "bg-emerald-400",
-          targetDate: fallback.targetDate || "Dec 15",
-          sprint: fallback.sprint || "Sprint 1",
-          progress: fallback.progress || 50,
-          totalIssues: fallback.totalIssues || 10,
-          closedIssues: fallback.closedIssues || 5,
-          inProgressIssues: fallback.inProgressIssues || 3,
-          backlogIssues: fallback.backlogIssues || 2,
-          status: (p.status === "ACTIVE" ? "in-progress" : p.status === "COMPLETED" ? "completed" : "planning") as any,
-          leadName: fallback.leadName || "Lead",
-          leadAvatar: fallback.leadAvatar,
-        };
-      })
-    : localProjects;
+  const [newProjectKey, setNewProjectKey] = useState("");
+  const [newProjectDesc, setNewProjectDesc] = useState("");
 
   const filteredProjects = projects.filter((project) => {
     const matchesFilter =
       activeFilter === "all" ? true : project.status === activeFilter;
     const matchesSearch =
       project.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.tagline.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      project.leadName.toLowerCase().includes(searchQuery.toLowerCase());
+      project.key.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (project.description && project.description.toLowerCase().includes(searchQuery.toLowerCase()));
     return matchesFilter && matchesSearch;
   });
 
-  const handleCreateProject = (e: React.FormEvent) => {
+  const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newProjectName.trim()) return;
 
-    const newProject: ProjectItem = {
-      id: `prj-${Date.now().toString().slice(-4)}`,
+    await createProjectMutation.mutateAsync({
       name: newProjectName.trim(),
-      tagline: newProjectTagline.trim() || "Next-gen development track",
-      badge: "Active",
-      badgeColor: "bg-surface-container-highest text-primary",
-      health: "On Track",
-      healthColor: "bg-emerald-400",
-      targetDate: "Dec 15",
-      sprint: "Sprint 1",
-      progress: 0,
-      totalIssues: 0,
-      closedIssues: 0,
-      inProgressIssues: 0,
-      backlogIssues: 0,
-      status: "in-progress",
-      leadName: "Current User",
-      leadAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
-    };
+      key: newProjectKey.trim().toUpperCase() || undefined,
+      description: newProjectDesc.trim() || undefined,
+      status: "ACTIVE",
+    });
 
-    setLocalProjects([newProject, ...localProjects]);
     setNewProjectName("");
-    setNewProjectTagline("");
+    setNewProjectKey("");
+    setNewProjectDesc("");
     setIsNewProjectOpen(false);
   };
+
+  const activeCount = projects.filter((p) => p.status === "ACTIVE").length;
+  const completedCount = projects.filter((p) => p.status === "COMPLETED").length;
 
   return (
     <div className="flex flex-col w-full pb-16">
@@ -92,10 +57,10 @@ export default function ProjectsPage() {
                 <span className="font-headline-lg text-headline-lg text-on-surface tracking-tight">Projects</span>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-high text-outline text-label-badge font-label-badge">
                   <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-                  {projects.filter((p) => p.status === "in-progress").length} Active
+                  {activeCount} Active
                 </span>
                 <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-low text-outline text-label-badge font-label-badge">
-                  {projects.filter((p) => p.status === "completed").length} Completed
+                  {completedCount} Completed
                 </span>
               </div>
             </div>
@@ -157,44 +122,44 @@ export default function ProjectsPage() {
               </button>
               <button
                 type="button"
-                onClick={() => setActiveFilter("in-progress")}
+                onClick={() => setActiveFilter("ACTIVE")}
                 className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "in-progress"
+                  activeFilter === "ACTIVE"
                     ? "bg-surface-container text-on-surface font-headline-sm"
                     : "text-outline hover:text-on-surface hover:bg-surface-container-low"
                 }`}
               >
-                <span>In Progress</span>
+                <span>Active</span>
                 <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {projects.filter((p) => p.status === "in-progress").length}
+                  {activeCount}
                 </span>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveFilter("planning")}
+                onClick={() => setActiveFilter("ON_HOLD")}
                 className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "planning"
+                  activeFilter === "ON_HOLD"
                     ? "bg-surface-container text-on-surface font-headline-sm"
                     : "text-outline hover:text-on-surface hover:bg-surface-container-low"
                 }`}
               >
-                <span>Planning</span>
+                <span>On Hold</span>
                 <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {projects.filter((p) => p.status === "planning").length}
+                  {projects.filter((p) => p.status === "ON_HOLD").length}
                 </span>
               </button>
               <button
                 type="button"
-                onClick={() => setActiveFilter("paused")}
+                onClick={() => setActiveFilter("COMPLETED")}
                 className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "paused"
+                  activeFilter === "COMPLETED"
                     ? "bg-surface-container text-on-surface font-headline-sm"
                     : "text-outline hover:text-on-surface hover:bg-surface-container-low"
                 }`}
               >
-                <span>Paused</span>
+                <span>Completed</span>
                 <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {projects.filter((p) => p.status === "paused").length}
+                  {completedCount}
                 </span>
               </button>
             </div>
@@ -205,7 +170,7 @@ export default function ProjectsPage() {
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search projects, leads, tags..."
+                  placeholder="Search projects, keys, tags..."
                   className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-44 md:w-60"
                 />
                 {searchQuery && (
@@ -249,12 +214,22 @@ export default function ProjectsPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Tagline / Description</label>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Project Key (Optional)</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. KINETIC"
+                    value={newProjectKey}
+                    onChange={(e) => setNewProjectKey(e.target.value)}
+                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm uppercase focus:outline-none focus:border-primary-container"
+                  />
+                </div>
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
                   <input
                     type="text"
                     placeholder="Brief objective"
-                    value={newProjectTagline}
-                    onChange={(e) => setNewProjectTagline(e.target.value)}
+                    value={newProjectDesc}
+                    onChange={(e) => setNewProjectDesc(e.target.value)}
                     className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
                   />
                 </div>
@@ -268,9 +243,10 @@ export default function ProjectsPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm"
+                    disabled={createProjectMutation.isPending}
+                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
                   >
-                    Create Project
+                    {createProjectMutation.isPending ? "Creating..." : "Create Project"}
                   </button>
                 </div>
               </form>
@@ -278,13 +254,46 @@ export default function ProjectsPage() {
           </div>
         )}
 
+        {/* Loading State */}
+        {isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/20 animate-pulse h-48 flex flex-col justify-between">
+                <div className="flex flex-col gap-2">
+                  <div className="w-24 h-4 bg-surface-container-highest rounded"></div>
+                  <div className="w-40 h-3 bg-surface-container rounded"></div>
+                </div>
+                <div className="w-full h-2 bg-surface-container rounded"></div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Empty State */}
+        {!isLoading && filteredProjects.length === 0 && (
+          <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center gap-3 my-6">
+            <span className="material-symbols-outlined text-[36px] text-outline">folder_open</span>
+            <div className="text-on-surface font-headline-sm text-body-md">No projects found</div>
+            <p className="text-outline text-body-sm max-w-sm">
+              Get started by creating your first project workspace to collaborate on tasks, cycles, and milestones.
+            </p>
+            <button
+              type="button"
+              onClick={() => setIsNewProjectOpen(true)}
+              className="mt-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm"
+            >
+              Create New Project
+            </button>
+          </div>
+        )}
+
         {/* View Layout: Grid vs Table */}
-        {viewMode === "grid" ? (
+        {!isLoading && filteredProjects.length > 0 && viewMode === "grid" && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
             {filteredProjects.map((project) => (
               <Link
                 key={project.id}
-                href={`/projects/${project.id.replace("prj-", "")}?tab=overview`}
+                href={`/projects/${project.id}?tab=overview`}
                 className="group relative flex flex-col justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all duration-150 shadow-sm border border-outline-variant/30 hover:border-outline-variant"
               >
                 <div className="flex flex-col gap-3">
@@ -297,72 +306,36 @@ export default function ProjectsPage() {
                         <h3 className="font-headline-sm text-headline-sm text-on-surface truncate group-hover:text-primary transition-colors">
                           {project.name}
                         </h3>
-                        <p className="font-body-sm text-body-sm text-outline truncate">{project.tagline}</p>
+                        <p className="font-body-sm text-body-sm text-outline truncate">{project.description || "Project Workspace"}</p>
                       </div>
                     </div>
-                    {project.badge && (
-                      <span className={`shrink-0 flex items-center gap-1 px-1.5 py-0.5 rounded-lg text-[10px] font-label-badge uppercase tracking-wider ${project.badgeColor}`}>
-                        {project.badge}
-                      </span>
-                    )}
+                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-label-code uppercase tracking-wider bg-surface-container-highest text-primary">
+                      {project.key}
+                    </span>
                   </div>
 
-                  {/* Health and Metadata strip */}
+                  {/* Status Strip */}
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-highest">
-                      <span className={`w-1.5 h-1.5 rounded-full ${project.healthColor}`}></span>
-                      <span className="font-label-badge text-label-badge text-on-surface">{project.health}</span>
+                      <span className={`w-1.5 h-1.5 rounded-full ${
+                        project.status === "ACTIVE" ? "bg-emerald-400" : project.status === "COMPLETED" ? "bg-primary" : "bg-amber-400"
+                      }`}></span>
+                      <span className="font-label-badge text-label-badge text-on-surface">{project.status}</span>
                     </div>
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-highest text-outline font-label-code text-label-code">
-                      <span className="material-symbols-outlined text-[13px]">date_range</span>
-                      <span>{project.targetDate}</span>
-                    </div>
-                    <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-highest text-outline font-label-code text-label-code">
-                      <span>{project.sprint}</span>
-                    </div>
-                  </div>
-
-                  {/* Burnup Progress Indicator */}
-                  <div className="flex flex-col gap-1.5 pt-2">
-                    <div className="flex items-center justify-between text-body-sm font-body-sm">
-                      <span className="text-outline">Execution Progress</span>
-                      <span className="font-label-code text-label-code text-on-surface font-medium">{project.progress}%</span>
-                    </div>
-                    <div className="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-primary-container rounded-full transition-all duration-500"
-                        style={{ width: `${project.progress}%` }}
-                      ></div>
-                    </div>
-                  </div>
-
-                  {/* Issues Breakdown Matrix */}
-                  <div className="grid grid-cols-3 gap-1 pt-2 border-t border-outline-variant/30 text-center font-label-code">
-                    <div className="p-1 rounded bg-surface-container-lowest">
-                      <div className="text-[10px] text-outline">Closed</div>
-                      <div className="text-[12px] text-on-surface font-medium">{project.closedIssues}</div>
-                    </div>
-                    <div className="p-1 rounded bg-surface-container-lowest">
-                      <div className="text-[10px] text-outline">In Prog</div>
-                      <div className="text-[12px] text-primary font-medium">{project.inProgressIssues}</div>
-                    </div>
-                    <div className="p-1 rounded bg-surface-container-lowest">
-                      <div className="text-[10px] text-outline">Backlog</div>
-                      <div className="text-[12px] text-outline font-medium">{project.backlogIssues}</div>
-                    </div>
+                    {project._count && (
+                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-highest text-outline font-label-code text-label-code">
+                        <span className="material-symbols-outlined text-[13px]">checklist</span>
+                        <span>{project._count.tasks} Tasks</span>
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                {/* Footer Lead strip */}
+                {/* Footer strip */}
                 <div className="flex items-center justify-between pt-3 mt-3 border-t border-outline-variant/30 text-body-sm">
-                  <div className="flex items-center gap-2">
-                    <img
-                      src={project.leadAvatar}
-                      alt={project.leadName}
-                      className="w-5 h-5 rounded-full object-cover ring-1 ring-outline-variant"
-                    />
-                    <span className="text-outline text-[12px]">{project.leadName}</span>
-                  </div>
+                  <span className="font-label-code text-[11px] text-outline">
+                    {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                  </span>
                   <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[16px]">
                     arrow_forward
                   </span>
@@ -370,18 +343,18 @@ export default function ProjectsPage() {
               </Link>
             ))}
           </div>
-        ) : (
+        )}
+
+        {!isLoading && filteredProjects.length > 0 && viewMode === "table" && (
           <div className="w-full overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm mb-6">
             <table className="w-full text-left font-body-sm">
               <thead className="bg-surface-container-high/60 text-outline text-[11px] font-label-badge uppercase tracking-wider border-b border-outline-variant/30">
                 <tr>
+                  <th className="px-4 py-2.5">Key</th>
                   <th className="px-4 py-2.5">Project</th>
                   <th className="px-4 py-2.5">Status</th>
-                  <th className="px-4 py-2.5">Health</th>
-                  <th className="px-4 py-2.5">Progress</th>
-                  <th className="px-4 py-2.5">Issues</th>
-                  <th className="px-4 py-2.5">Target Date</th>
-                  <th className="px-4 py-2.5">Lead</th>
+                  <th className="px-4 py-2.5">Tasks</th>
+                  <th className="px-4 py-2.5">Updated</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20">
@@ -390,57 +363,28 @@ export default function ProjectsPage() {
                     key={project.id}
                     className="hover:bg-surface-container transition-colors group cursor-pointer"
                   >
+                    <td className="px-4 py-3 font-label-code text-primary text-[11px]">
+                      {project.key}
+                    </td>
                     <td className="px-4 py-3">
                       <Link
-                        href={`/projects/${project.id.replace("prj-", "")}?tab=overview`}
-                        className="flex items-center gap-2"
+                        href={`/projects/${project.id}?tab=overview`}
+                        className="flex flex-col"
                       >
                         <span className="font-headline-sm text-body-sm text-on-surface group-hover:text-primary transition-colors">
                           {project.name}
                         </span>
-                        {project.badge && (
-                          <span className={`px-1.5 py-0.2 rounded text-[10px] font-label-badge ${project.badgeColor}`}>
-                            {project.badge}
-                          </span>
-                        )}
+                        <span className="text-[11px] text-outline">{project.description || "--"}</span>
                       </Link>
-                      <div className="text-[11px] text-outline">{project.tagline}</div>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="capitalize text-on-surface-variant">{project.status}</span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <span className="flex items-center gap-1.5">
-                        <span className={`w-1.5 h-1.5 rounded-full ${project.healthColor}`}></span>
-                        <span className="text-on-surface">{project.health}</span>
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-2">
-                        <div className="w-20 h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
-                          <div
-                            className="h-full bg-primary-container rounded-full"
-                            style={{ width: `${project.progress}%` }}
-                          ></div>
-                        </div>
-                        <span className="font-label-code text-[11px] text-on-surface">{project.progress}%</span>
-                      </div>
+                      <span className="capitalize text-on-surface-variant font-label-code text-[11px]">{project.status}</span>
                     </td>
                     <td className="px-4 py-3 font-label-code text-[11px]">
-                      {project.closedIssues} / {project.totalIssues}
+                      {project._count?.tasks ?? 0}
                     </td>
                     <td className="px-4 py-3 font-label-code text-[11px] text-outline">
-                      {project.targetDate}
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-1.5">
-                        <img
-                          src={project.leadAvatar}
-                          alt={project.leadName}
-                          className="w-4 h-4 rounded-full object-cover"
-                        />
-                        <span className="text-[12px] text-on-surface-variant">{project.leadName}</span>
-                      </div>
+                      {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                     </td>
                   </tr>
                 ))}
@@ -448,46 +392,6 @@ export default function ProjectsPage() {
             </table>
           </div>
         )}
-
-        {/* Milestone Tracker Bottom Section */}
-        <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-3">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="material-symbols-outlined text-primary text-[18px]">flag</span>
-              <h4 className="font-headline-sm text-body-md text-on-surface font-semibold">Active Milestone Delivery</h4>
-            </div>
-            <Link
-              href="/milestones"
-              className="text-body-sm text-primary hover:underline flex items-center gap-1"
-            >
-              <span>View all milestones</span>
-              <span className="material-symbols-outlined text-[14px]">arrow_forward</span>
-            </Link>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-            <div className="p-3 rounded bg-surface-container-lowest border border-outline-variant/20 flex flex-col gap-1">
-              <span className="text-on-surface font-medium text-body-sm">Nexus 2.0 Beta Release Candidate</span>
-              <span className="text-outline text-[11px]">Sprint 14 • Oct 29</span>
-              <div className="w-full h-1 bg-surface-container-highest rounded-full mt-2">
-                <div className="h-full bg-primary-container rounded-full w-[85%]"></div>
-              </div>
-            </div>
-            <div className="p-3 rounded bg-surface-container-lowest border border-outline-variant/20 flex flex-col gap-1">
-              <span className="text-on-surface font-medium text-body-sm">Okta & Google SSO Certification</span>
-              <span className="text-outline text-[11px]">Enterprise SSO • Oct 31</span>
-              <div className="w-full h-1 bg-surface-container-highest rounded-full mt-2">
-                <div className="h-full bg-emerald-400 rounded-full w-[90%]"></div>
-              </div>
-            </div>
-            <div className="p-3 rounded bg-surface-container-lowest border border-outline-variant/20 flex flex-col gap-1">
-              <span className="text-on-surface font-medium text-body-sm">Telemetry Sharding & STOMP Jitter</span>
-              <span className="text-outline text-[11px]">Core Engine v3 • Nov 12</span>
-              <div className="w-full h-1 bg-surface-container-highest rounded-full mt-2">
-                <div className="h-full bg-amber-400 rounded-full w-[45%]"></div>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   );

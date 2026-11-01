@@ -2,85 +2,64 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { INITIAL_TASKS, TaskItem } from "@/lib/mock-data";
-import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { Task } from "@/lib/api";
 
-const COLUMNS: TaskItem["status"][] = ["Backlog", "Todo", "In Progress", "In Review", "Done"];
+const COLUMNS: { id: Task["status"]; label: string }[] = [
+  { id: "BACKLOG", label: "Backlog" },
+  { id: "TODO", label: "Todo" },
+  { id: "IN_PROGRESS", label: "In Progress" },
+  { id: "IN_REVIEW", label: "In Review" },
+  { id: "DONE", label: "Done" },
+];
 
 export default function BoardPage() {
-  const { data: apiTasks } = useTasks();
-  const createTaskMutation = useCreateTask();
-  const updateTaskStatusMutation = useUpdateTaskStatus();
-  const [localTasks, setLocalTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const { data: projects = [] } = useProjects();
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("");
 
-  const tasks: TaskItem[] = (apiTasks && apiTasks.length > 0)
-    ? apiTasks.map((t, idx) => {
-        const fallback = INITIAL_TASKS[idx % INITIAL_TASKS.length];
-        return {
-          id: t.id,
-          title: t.title,
-          projectId: t.projectId,
-          projectName: fallback.projectName || "Nexus 2.0 Redesign",
-          status: (t.status === "DONE" ? "Done" : t.status === "IN_REVIEW" ? "In Review" : t.status === "IN_PROGRESS" ? "In Progress" : t.status === "BACKLOG" ? "Backlog" : "Todo") as any,
-          priority: (t.priority === "URGENT" ? "Urgent" : t.priority === "HIGH" ? "High" : t.priority === "LOW" ? "Low" : "Medium") as any,
-          assigneeName: fallback.assigneeName || "Lead",
-          assigneeAvatar: fallback.assigneeAvatar,
-          dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : fallback.dueDate,
-          cycle: fallback.cycle || "Sprint 14",
-          completed: t.status === "DONE",
-        };
-      })
-    : localTasks;
+  const currentProjectId = selectedProjectId || (projects.length > 0 ? projects[0].id : "");
+  const { data: tasks = [], isLoading } = useTasks(currentProjectId || undefined);
+  const createTaskMutation = useCreateTask(currentProjectId);
+  const updateTaskStatusMutation = useUpdateTaskStatus(currentProjectId);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [targetColumn, setTargetColumn] = useState<TaskItem["status"]>("Todo");
+  const [targetColumn, setTargetColumn] = useState<Task["status"]>("TODO");
   const [newTitle, setNewTitle] = useState("");
-  const [newPriority, setNewPriority] = useState<TaskItem["priority"]>("Medium");
+  const [newPriority, setNewPriority] = useState<Task["priority"]>("MEDIUM");
+
+  const currentProject = projects.find((p) => p.id === currentProjectId) || projects[0];
 
   const filteredTasks = tasks.filter((t) => {
-    if (selectedPriority !== "all" && t.priority.toLowerCase() !== selectedPriority.toLowerCase()) return false;
+    if (selectedPriority !== "all" && t.priority !== selectedPriority) return false;
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      return t.title.toLowerCase().includes(q) || t.id.toLowerCase().includes(q);
+      return (
+        t.title.toLowerCase().includes(q) ||
+        (t.taskKey && t.taskKey.toLowerCase().includes(q))
+      );
     }
     return true;
   });
 
-  const handleAddTask = (e: React.FormEvent) => {
+  const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim()) return;
+    if (!newTitle.trim() || !currentProjectId) return;
 
-    createTaskMutation.mutate({
+    await createTaskMutation.mutateAsync({
       title: newTitle.trim(),
-      priority: (newPriority.toUpperCase()) as any,
+      projectId: currentProjectId,
+      priority: newPriority,
+      status: targetColumn,
     });
 
-    const newTask: TaskItem = {
-      id: `SCR-${Math.floor(100 + Math.random() * 900)}`,
-      title: newTitle.trim(),
-      projectId: "prj-204",
-      projectName: "Nexus 2.0 Redesign",
-      status: targetColumn,
-      priority: newPriority,
-      assigneeName: "Elena Rostova",
-      assigneeAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
-      dueDate: "Nov 02",
-      cycle: "Sprint 14",
-      completed: targetColumn === "Done",
-    };
-
-    setLocalTasks([newTask, ...localTasks]);
     setNewTitle("");
     setIsAddModalOpen(false);
   };
 
-  const moveTaskStatus = (id: string, newStatus: TaskItem["status"]) => {
-    setLocalTasks((prev: any) =>
-      prev.map((t: any) =>
-        t.id === id ? { ...t, status: newStatus, completed: newStatus === "Done" } : t
-      )
-    );
+  const moveTaskStatus = (id: string, newStatus: Task["status"]) => {
+    updateTaskStatusMutation.mutate({ taskId: id, status: newStatus });
   };
 
   return (
@@ -89,12 +68,26 @@ export default function BoardPage() {
         {/* Board Secondary Sub-Header & Controls */}
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2">
           <div className="flex items-center gap-3">
-            <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">Nexus 2.0 Redesign</h1>
+            {projects.length > 0 ? (
+              <select
+                value={currentProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="font-headline-lg text-headline-lg text-on-surface bg-transparent border-0 tracking-tight font-semibold focus:outline-none cursor-pointer"
+              >
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id} className="bg-surface-container-high text-on-surface">
+                    {p.name}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
+                Workspace Board
+              </h1>
+            )}
             <span className="w-1.5 h-1.5 rounded-full bg-secondary"></span>
-            <span className="text-outline font-label-code text-label-code">Sprint 14 (4d left)</span>
-            <span className="flex items-center gap-1 text-primary font-label-code text-label-code">
-              <span className="material-symbols-outlined text-[13px]">data_thresholding</span>
-              {tasks.length} issues • 84% velocity
+            <span className="text-outline font-label-code text-label-code">
+              {tasks.length} issues
             </span>
           </div>
 
@@ -118,7 +111,7 @@ export default function BoardPage() {
             <button
               type="button"
               onClick={() => {
-                setTargetColumn("Todo");
+                setTargetColumn("TODO");
                 setIsAddModalOpen(true);
               }}
               className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1 shadow-sm transition-all"
@@ -144,7 +137,7 @@ export default function BoardPage() {
             </div>
             <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
               <span className="text-outline text-[11px] px-1 font-label-badge">Priority:</span>
-              {["all", "urgent", "high", "medium", "low"].map((p) => (
+              {(["all", "URGENT", "HIGH", "MEDIUM", "LOW"] as const).map((p) => (
                 <button
                   key={p}
                   type="button"
@@ -155,13 +148,13 @@ export default function BoardPage() {
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
-                  {p}
+                  {p.toLowerCase()}
                 </button>
               ))}
             </div>
           </div>
           <div className="text-outline text-[11px] font-label-code">
-            5 Columns • Active Sprint
+            {COLUMNS.length} Columns • Live Sync
           </div>
         </div>
 
@@ -171,7 +164,7 @@ export default function BoardPage() {
             <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
                 <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Add to {targetColumn}
+                  Add Task
                 </h3>
                 <button
                   type="button"
@@ -194,15 +187,15 @@ export default function BoardPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Column</label>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Column / Status</label>
                   <select
                     value={targetColumn}
-                    onChange={(e) => setTargetColumn(e.target.value as TaskItem["status"])}
+                    onChange={(e) => setTargetColumn(e.target.value as Task["status"])}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
                     {COLUMNS.map((col) => (
-                      <option key={col} value={col}>
-                        {col}
+                      <option key={col.id} value={col.id}>
+                        {col.label}
                       </option>
                     ))}
                   </select>
@@ -211,13 +204,13 @@ export default function BoardPage() {
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Priority</label>
                   <select
                     value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as TaskItem["priority"])}
+                    onChange={(e) => setNewPriority(e.target.value as Task["priority"])}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
-                    <option value="Urgent">Urgent</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
+                    <option value="URGENT">Urgent</option>
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LOW">Low</option>
                   </select>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -230,9 +223,10 @@ export default function BoardPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm"
+                    disabled={createTaskMutation.isPending}
+                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
                   >
-                    Add Card
+                    {createTaskMutation.isPending ? "Adding..." : "Add Card"}
                   </button>
                 </div>
               </form>
@@ -240,107 +234,113 @@ export default function BoardPage() {
           </div>
         )}
 
+        {/* Loading */}
+        {isLoading && (
+          <div className="w-full py-16 flex justify-center text-outline text-body-sm">
+            Loading Kanban board...
+          </div>
+        )}
+
         {/* Kanban Board Columns */}
-        <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start">
-          {COLUMNS.map((col) => {
-            const columnTasks = filteredTasks.filter((t) => t.status === col);
-            return (
-              <div
-                key={col}
-                className="flex flex-col rounded-lg bg-surface-container-low border border-outline-variant/30 p-2.5 min-h-[500px]"
-              >
-                {/* Column Header */}
-                <div className="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/20 px-1">
-                  <div className="flex items-center gap-2">
-                    <span className="font-headline-sm text-body-sm text-on-surface font-semibold">{col}</span>
-                    <span className="px-1.5 py-0.2 rounded bg-surface-container-highest text-outline font-label-code text-[10px]">
-                      {columnTasks.length}
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setTargetColumn(col);
-                      setIsAddModalOpen(true);
-                    }}
-                    className="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-                  >
-                    <span className="material-symbols-outlined text-[15px]">add</span>
-                  </button>
-                </div>
-
-                {/* Card List */}
-                <div className="flex flex-col gap-2 flex-1">
-                  {columnTasks.map((task) => (
-                    <div
-                      key={task.id}
-                      className="group p-3 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all shadow-xs flex flex-col gap-2"
+        {!isLoading && (
+          <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start">
+            {COLUMNS.map((col) => {
+              const columnTasks = filteredTasks.filter((t) => t.status === col.id);
+              return (
+                <div
+                  key={col.id}
+                  className="flex flex-col rounded-lg bg-surface-container-low border border-outline-variant/30 p-2.5 min-h-[500px]"
+                >
+                  {/* Column Header */}
+                  <div className="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/20 px-1">
+                    <div className="flex items-center gap-2">
+                      <span className="font-headline-sm text-body-sm text-on-surface font-semibold">{col.label}</span>
+                      <span className="px-1.5 py-0.2 rounded bg-surface-container-highest text-outline font-label-code text-[10px]">
+                        {columnTasks.length}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setTargetColumn(col.id);
+                        setIsAddModalOpen(true);
+                      }}
+                      className="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
                     >
-                      <div className="flex items-start justify-between gap-1">
-                        <Link
-                          href={`/tasks/${task.id}`}
-                          className="font-label-code text-[11px] text-outline group-hover:text-primary transition-colors"
-                        >
-                          {task.id}
-                        </Link>
-                        <span
-                          className={`px-1.5 py-0.2 rounded text-[9px] font-label-badge uppercase ${
-                            task.priority === "Urgent"
-                              ? "bg-red-500/20 text-red-400"
-                              : task.priority === "High"
-                              ? "bg-amber-500/20 text-amber-400"
-                              : task.priority === "Medium"
-                              ? "bg-primary-container/20 text-primary"
-                              : "bg-surface-container-highest text-outline"
-                          }`}
-                        >
-                          {task.priority}
-                        </span>
-                      </div>
+                      <span className="material-symbols-outlined text-[15px]">add</span>
+                    </button>
+                  </div>
 
-                      <Link
-                        href={`/tasks/${task.id}`}
-                        className="font-body-sm text-body-sm text-on-surface font-medium hover:text-primary transition-colors line-clamp-2"
+                  {/* Card List */}
+                  <div className="flex flex-col gap-2 flex-1">
+                    {columnTasks.map((task) => (
+                      <div
+                        key={task.id}
+                        className="group p-3 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all shadow-xs flex flex-col gap-2"
                       >
-                        {task.title}
-                      </Link>
-
-                      <div className="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-[11px]">
-                        <div className="flex items-center gap-1.5">
-                          <img
-                            src={task.assigneeAvatar}
-                            alt={task.assigneeName}
-                            className="w-4 h-4 rounded-full object-cover"
-                          />
-                          <span className="text-outline text-[10px]">{task.assigneeName.split(" ")[0]}</span>
+                        <div className="flex items-start justify-between gap-1">
+                          <Link
+                            href={`/tasks/${task.id}`}
+                            className="font-label-code text-[11px] text-outline group-hover:text-primary transition-colors"
+                          >
+                            {task.taskKey || task.id.slice(-6).toUpperCase()}
+                          </Link>
+                          <span
+                            className={`px-1.5 py-0.2 rounded text-[9px] font-label-badge uppercase ${
+                              task.priority === "URGENT"
+                                ? "bg-red-500/20 text-red-400"
+                                : task.priority === "HIGH"
+                                ? "bg-amber-500/20 text-amber-400"
+                                : task.priority === "MEDIUM"
+                                ? "bg-primary-container/20 text-primary"
+                                : "bg-surface-container-highest text-outline"
+                            }`}
+                          >
+                            {task.priority}
+                          </span>
                         </div>
 
-                        {/* Move status dropdown */}
-                        <select
-                          value={task.status}
-                          onChange={(e) => moveTaskStatus(task.id, e.target.value as TaskItem["status"])}
-                          className="bg-surface-container-lowest text-outline text-[10px] rounded px-1 py-0.5 border border-outline-variant/20"
+                        <Link
+                          href={`/tasks/${task.id}`}
+                          className="font-body-sm text-body-sm text-on-surface font-medium hover:text-primary transition-colors line-clamp-2"
                         >
-                          {COLUMNS.map((c) => (
-                            <option key={c} value={c}>
-                              {c}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-                    </div>
-                  ))}
+                          {task.title}
+                        </Link>
 
-                  {columnTasks.length === 0 && (
-                    <div className="flex items-center justify-center h-24 border border-dashed border-outline-variant/30 rounded-lg text-outline text-[11px]">
-                      No issues
-                    </div>
-                  )}
+                        <div className="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-outline text-[10px]">
+                              {task.assignees?.[0]?.member?.user?.name?.split(" ")[0] || "Unassigned"}
+                            </span>
+                          </div>
+
+                          {/* Move status dropdown */}
+                          <select
+                            value={task.status}
+                            onChange={(e) => moveTaskStatus(task.id, e.target.value as Task["status"])}
+                            className="bg-surface-container-lowest text-outline text-[10px] rounded px-1 py-0.5 border border-outline-variant/20"
+                          >
+                            {COLUMNS.map((c) => (
+                              <option key={c.id} value={c.id}>
+                                {c.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      </div>
+                    ))}
+
+                    {columnTasks.length === 0 && (
+                      <div className="flex items-center justify-center h-24 border border-dashed border-outline-variant/30 rounded-lg text-outline text-[11px]">
+                        No issues
+                      </div>
+                    )}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

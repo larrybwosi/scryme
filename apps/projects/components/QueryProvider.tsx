@@ -4,6 +4,7 @@ import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
 import { createSyncStoragePersister } from "@tanstack/query-sync-storage-persister";
+import { RealtimeProvider } from "@/lib/realtime-provider";
 
 export function QueryProvider({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(
@@ -35,7 +36,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
   if (!persister) {
     return (
       <QueryClientProvider client={queryClient}>
-        {children}
+        <RealtimeProvider>{children}</RealtimeProvider>
       </QueryClientProvider>
     );
   }
@@ -45,7 +46,7 @@ export function QueryProvider({ children }: { children: React.ReactNode }) {
       client={queryClient}
       persistOptions={{ persister }}
     >
-      {children}
+      <RealtimeProvider>{children}</RealtimeProvider>
     </PersistQueryClientProvider>
   );
 }

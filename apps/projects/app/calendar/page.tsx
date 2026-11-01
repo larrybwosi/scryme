@@ -25,12 +25,26 @@ const EVENTS: CalendarEvent[] = [
   { id: "e7", day: 31, title: "Okta & Google SSO Certification", type: "milestone", color: "bg-surface-container-highest text-on-surface" },
 ];
 
+import { useTasks, useProjects } from "@/lib/hooks/use-projects";
+
 export default function CalendarPage() {
+  const { data: tasks = [] } = useTasks();
+  const { data: projects = [] } = useProjects();
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [currentMonth, setCurrentMonth] = useState("October");
   const [currentYear, setCurrentYear] = useState(2024);
   const [selectedDay, setSelectedDay] = useState<number | null>(24);
   const [filterType, setFilterType] = useState<string>("all");
+
+  const taskEvents: CalendarEvent[] = tasks.map((t, idx) => ({
+    id: t.id,
+    day: t.dueDate ? new Date(t.dueDate).getDate() : ((idx * 3 + 2) % 30) + 1,
+    title: `${t.taskKey || t.id.slice(-6)}: ${t.title}`,
+    type: "task",
+    color: t.status === "DONE" ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30" : "bg-surface-container-high text-primary border border-primary/30",
+  }));
+
+  const dynamicEvents = taskEvents.length > 0 ? taskEvents : [];
 
   const prevMonth = () => {
     if (currentMonth === "October") setCurrentMonth("September");
@@ -42,7 +56,7 @@ export default function CalendarPage() {
     else if (currentMonth === "October") setCurrentMonth("November");
   };
 
-  const filteredEvents = EVENTS.filter(
+  const filteredEvents = dynamicEvents.filter(
     (e) => filterType === "all" || e.type === filterType
   );
 

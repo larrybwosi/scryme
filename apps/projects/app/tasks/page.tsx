@@ -2,122 +2,75 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { INITIAL_TASKS, TaskItem } from "@/lib/mock-data";
-import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { Task } from "@/lib/api";
 
 export default function TasksPage() {
-  const { data: apiTasks } = useTasks();
+  const { data: tasks = [], isLoading } = useTasks();
+  const { data: projects = [] } = useProjects();
   const createTaskMutation = useCreateTask();
   const updateTaskStatusMutation = useUpdateTaskStatus();
-  const [localTasks, setLocalTasks] = useState<TaskItem[]>(INITIAL_TASKS);
 
-  const tasks: TaskItem[] = (apiTasks && apiTasks.length > 0)
-    ? apiTasks.map((t, idx) => {
-        const fallback = INITIAL_TASKS[idx % INITIAL_TASKS.length];
-        return {
-          id: t.id,
-          title: t.title,
-          projectId: t.projectId,
-          projectName: fallback.projectName || "Nexus 2.0 Redesign",
-          status: (t.status === "DONE" ? "Done" : t.status === "IN_PROGRESS" ? "In Progress" : t.status === "BACKLOG" ? "Backlog" : "Todo") as any,
-          priority: (t.priority === "URGENT" ? "Urgent" : t.priority === "HIGH" ? "High" : t.priority === "LOW" ? "Low" : "Medium") as any,
-          assigneeName: fallback.assigneeName || "Lead",
-          assigneeAvatar: fallback.assigneeAvatar,
-          dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : fallback.dueDate,
-          cycle: fallback.cycle || "Sprint 14",
-          completed: t.status === "DONE",
-        };
-      })
-    : localTasks;
   const [scopeFilter, setScopeFilter] = useState<"all" | "active" | "backlog" | "completed">("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
-  const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
+  const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedTaskIds, setSelectedTaskIds] = useState<string[]>([]);
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState<TaskItem["priority"]>("Medium");
-  const [newTaskProject, setNewTaskProject] = useState("Nexus 2.0 Redesign");
+  const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("MEDIUM");
+  const [newTaskProjectId, setNewTaskProjectId] = useState("");
 
-  const toggleSelectTask = (id: string) => {
-    setSelectedTaskIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
-    );
+  const toggleTaskCompletion = (task: Task) => {
+    const nextStatus: Task["status"] = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
+    updateTaskStatusMutation.mutate({ taskId: task.id, status: nextStatus });
   };
 
-  const toggleTaskCompletion = (id: string) => {
-    const existing = tasks.find((t) => t.id === id);
-    const nextStatus = existing?.completed ? "IN_PROGRESS" : "DONE";
-    updateTaskStatusMutation.mutate({ taskId: id, status: nextStatus as any });
-
-    setLocalTasks((prev) =>
-      prev.map((t) => {
-        if (t.id === id) {
-          const nextCompleted = !t.completed;
-          return {
-            ...t,
-            completed: nextCompleted,
-            status: nextCompleted ? "Done" : "In Progress",
-          };
-        }
-        return t;
-      })
-    );
-  };
-
-  const handleCreateTask = (e: React.FormEvent) => {
+  const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newTaskTitle.trim()) return;
 
-    const newTask: TaskItem = {
-      id: `SCR-${Math.floor(100 + Math.random() * 900)}`,
-      title: newTaskTitle.trim(),
-      projectId: "prj-204",
-      projectName: newTaskProject,
-      status: "Todo",
-      priority: newTaskPriority,
-      assigneeName: "Elena Rostova",
-      assigneeAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
-      dueDate: "Nov 15",
-      cycle: "Sprint 14",
-      completed: false,
-    };
+    const projectId = newTaskProjectId || (projects.length > 0 ? projects[0].id : "");
+    if (!projectId) return;
 
-    setLocalTasks([newTask, ...localTasks]);
+    await createTaskMutation.mutateAsync({
+      title: newTaskTitle.trim(),
+      priority: newTaskPriority,
+      projectId,
+      status: "TODO",
+    });
+
     setNewTaskTitle("");
     setIsNewTaskOpen(false);
   };
 
   const filteredTasks = tasks.filter((task) => {
-    if (scopeFilter === "active" && (task.status === "Done" || task.status === "Backlog")) return false;
-    if (scopeFilter === "backlog" && task.status !== "Backlog") return false;
-    if (scopeFilter === "completed" && task.status !== "Done") return false;
+    if (scopeFilter === "active" && (task.status === "DONE" || task.status === "BACKLOG" || task.status === "CANCELED")) return false;
+    if (scopeFilter === "backlog" && task.status !== "BACKLOG") return false;
+    if (scopeFilter === "completed" && task.status !== "DONE") return false;
 
-    if (priorityFilter !== "all" && task.priority.toLowerCase() !== priorityFilter.toLowerCase()) return false;
-    if (assigneeFilter !== "all" && !task.assigneeName.toLowerCase().includes(assigneeFilter.toLowerCase())) return false;
+    if (priorityFilter !== "all" && task.priority !== priorityFilter) return false;
+    if (selectedProjectId !== "all" && task.projectId !== selectedProjectId) return false;
 
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
       return (
         task.title.toLowerCase().includes(q) ||
-        task.id.toLowerCase().includes(q) ||
-        task.projectName.toLowerCase().includes(q) ||
-        task.assigneeName.toLowerCase().includes(q)
+        (task.taskKey && task.taskKey.toLowerCase().includes(q)) ||
+        (task.description && task.description.toLowerCase().includes(q))
       );
     }
     return true;
   });
 
-  const activeCount = tasks.filter((t) => t.status !== "Done" && t.status !== "Backlog").length;
-  const backlogCount = tasks.filter((t) => t.status === "Backlog").length;
-  const completedCount = tasks.filter((t) => t.status === "Done").length;
+  const activeCount = tasks.filter((t) => t.status !== "DONE" && t.status !== "BACKLOG" && t.status !== "CANCELED").length;
+  const backlogCount = tasks.filter((t) => t.status === "BACKLOG").length;
+  const completedCount = tasks.filter((t) => t.status === "DONE").length;
 
   return (
     <div className="flex flex-col w-full pb-16">
       <div className="flex flex-col gap-space-lg pb-16 pt-2">
         {/* Top Action & View Toolbar */}
         <div className="flex flex-col gap-space-md">
-          {/* Upper Tier: View Modes & Quick Insights */}
           <div className="flex flex-wrap items-center justify-between gap-space-md">
             {/* View Scope Tabs */}
             <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30">
@@ -213,7 +166,7 @@ export default function TasksPage() {
             </div>
           </div>
 
-          {/* Lower Tier: Interactive Filter Pills & Global Filter Input */}
+          {/* Filter Bar */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex flex-wrap items-center gap-2">
               <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30">
@@ -225,21 +178,12 @@ export default function TasksPage() {
                   placeholder="Filter issues..."
                   className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-40 md:w-56"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    className="text-outline hover:text-on-surface"
-                  >
-                    <span className="material-symbols-outlined text-[14px]">close</span>
-                  </button>
-                )}
               </div>
 
               {/* Priority Filter */}
               <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
                 <span className="text-outline text-[11px] px-1 font-label-badge">Priority:</span>
-                {["all", "urgent", "high", "medium", "low"].map((p) => (
+                {(["all", "URGENT", "HIGH", "MEDIUM", "LOW"] as const).map((p) => (
                   <button
                     key={p}
                     type="button"
@@ -250,7 +194,7 @@ export default function TasksPage() {
                         : "text-outline hover:text-on-surface"
                     }`}
                   >
-                    {p}
+                    {p.toLowerCase()}
                   </button>
                 ))}
               </div>
@@ -267,7 +211,7 @@ export default function TasksPage() {
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
             <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
               <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Task / Issue</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Task</h3>
                 <button
                   type="button"
                   onClick={() => setIsNewTaskOpen(false)}
@@ -292,26 +236,26 @@ export default function TasksPage() {
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
                     <select
-                      value={newTaskProject}
-                      onChange={(e) => setNewTaskProject(e.target.value)}
+                      value={newTaskProjectId || (projects[0]?.id || "")}
+                      onChange={(e) => setNewTaskProjectId(e.target.value)}
                       className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
                     >
-                      <option value="Nexus 2.0 Redesign">Nexus 2.0 Redesign</option>
-                      <option value="Core Engine v3">Core Engine v3</option>
-                      <option value="Enterprise SSO & RBAC">Enterprise SSO & RBAC</option>
+                      {projects.map((p) => (
+                        <option key={p.id} value={p.id}>{p.name}</option>
+                      ))}
                     </select>
                   </div>
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Priority</label>
                     <select
                       value={newTaskPriority}
-                      onChange={(e) => setNewTaskPriority(e.target.value as TaskItem["priority"])}
+                      onChange={(e) => setNewTaskPriority(e.target.value as Task["priority"])}
                       className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
                     >
-                      <option value="Urgent">Urgent</option>
-                      <option value="High">High</option>
-                      <option value="Medium">Medium</option>
-                      <option value="Low">Low</option>
+                      <option value="URGENT">Urgent</option>
+                      <option value="HIGH">High</option>
+                      <option value="MEDIUM">Medium</option>
+                      <option value="LOW">Low</option>
                     </select>
                   </div>
                 </div>
@@ -325,9 +269,10 @@ export default function TasksPage() {
                   </button>
                   <button
                     type="submit"
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm"
+                    disabled={createTaskMutation.isPending}
+                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
                   >
-                    Create Issue
+                    {createTaskMutation.isPending ? "Creating..." : "Create Issue"}
                   </button>
                 </div>
               </form>
@@ -335,102 +280,112 @@ export default function TasksPage() {
           </div>
         )}
 
-        {/* Task List Table */}
-        <div className="w-full rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm overflow-hidden">
-          <div className="px-4 py-3 bg-surface-container-high/40 border-b border-outline-variant/30 flex items-center justify-between text-outline text-[11px] font-label-badge uppercase tracking-wider">
-            <div className="flex items-center gap-3">
-              <span className="w-4"></span>
-              <span>Issue</span>
-            </div>
-            <div className="flex items-center gap-8">
-              <span className="w-24 text-center">Status</span>
-              <span className="w-20 text-center">Priority</span>
-              <span className="w-28 text-center">Cycle</span>
-              <span className="w-24 text-right">Assignee</span>
-            </div>
+        {/* Loading State */}
+        {isLoading && (
+          <div className="w-full p-8 flex justify-center text-outline text-body-sm">
+            Loading tasks...
           </div>
+        )}
 
-          <div className="divide-y divide-outline-variant/20">
-            {filteredTasks.map((task) => {
-              const isSelected = selectedTaskIds.includes(task.id);
-              return (
-                <div
-                  key={task.id}
-                  className={`flex items-center justify-between px-4 py-2.5 hover:bg-surface-container transition-colors group ${
-                    task.completed ? "opacity-60 bg-surface-container-lowest/50" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
-                    <button
-                      type="button"
-                      onClick={() => toggleTaskCompletion(task.id)}
-                      className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
-                        task.completed
-                          ? "bg-primary-container border-primary-container text-on-primary-container"
-                          : "border-outline-variant group-hover:border-outline bg-surface-container"
-                      }`}
-                    >
-                      {task.completed && (
-                        <span className="material-symbols-outlined text-[13px]">check</span>
-                      )}
-                    </button>
-                    <Link
-                      href={`/tasks/${task.id}`}
-                      className="font-label-code text-label-code text-outline group-hover:text-primary transition-colors shrink-0"
-                    >
-                      {task.id}
-                    </Link>
-                    <Link
-                      href={`/tasks/${task.id}`}
-                      className={`font-body-md text-body-md truncate group-hover:text-primary transition-colors ${
-                        task.completed ? "line-through text-outline" : "text-on-surface"
-                      }`}
-                    >
-                      {task.title}
-                    </Link>
-                  </div>
+        {/* Empty State */}
+        {!isLoading && filteredTasks.length === 0 && (
+          <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center gap-3">
+            <span className="material-symbols-outlined text-[36px] text-outline">check_box</span>
+            <div className="text-on-surface font-headline-sm text-body-md">No tasks found</div>
+            <p className="text-outline text-body-sm max-w-sm">
+              All caught up! Create a new task or adjust your filters.
+            </p>
+          </div>
+        )}
 
-                  <div className="flex items-center gap-8 shrink-0">
-                    <div className="w-24 flex justify-center">
-                      <span className="px-2 py-0.5 rounded text-[11px] font-label-code bg-surface-container-high text-on-surface-variant">
-                        {task.status}
-                      </span>
-                    </div>
-                    <div className="w-20 flex justify-center">
-                      <span
-                        className={`px-1.5 py-0.5 rounded text-[10px] font-label-badge uppercase ${
-                          task.priority === "Urgent"
-                            ? "bg-red-500/20 text-red-400"
-                            : task.priority === "High"
-                            ? "bg-amber-500/20 text-amber-400"
-                            : task.priority === "Medium"
-                            ? "bg-primary-container/20 text-primary"
-                            : "bg-surface-container text-outline"
+        {/* Task List Table */}
+        {!isLoading && filteredTasks.length > 0 && (
+          <div className="w-full rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm overflow-hidden">
+            <div className="px-4 py-3 bg-surface-container-high/40 border-b border-outline-variant/30 flex items-center justify-between text-outline text-[11px] font-label-badge uppercase tracking-wider">
+              <div className="flex items-center gap-3">
+                <span className="w-4"></span>
+                <span>Issue</span>
+              </div>
+              <div className="flex items-center gap-8">
+                <span className="w-24 text-center">Status</span>
+                <span className="w-20 text-center">Priority</span>
+                <span className="w-24 text-right">Assignee</span>
+              </div>
+            </div>
+
+            <div className="divide-y divide-outline-variant/20">
+              {filteredTasks.map((task) => {
+                const isCompleted = task.status === "DONE";
+                return (
+                  <div
+                    key={task.id}
+                    className={`flex items-center justify-between px-4 py-2.5 hover:bg-surface-container transition-colors group ${
+                      isCompleted ? "opacity-60 bg-surface-container-lowest/50" : ""
+                    }`}
+                  >
+                    <div className="flex items-center gap-3 min-w-0 flex-1 pr-4">
+                      <button
+                        type="button"
+                        onClick={() => toggleTaskCompletion(task)}
+                        className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
+                          isCompleted
+                            ? "bg-primary-container border-primary-container text-on-primary-container"
+                            : "border-outline-variant group-hover:border-outline bg-surface-container"
                         }`}
                       >
-                        {task.priority}
-                      </span>
+                        {isCompleted && (
+                          <span className="material-symbols-outlined text-[13px]">check</span>
+                        )}
+                      </button>
+                      <Link
+                        href={`/tasks/${task.id}`}
+                        className="font-label-code text-label-code text-outline group-hover:text-primary transition-colors shrink-0"
+                      >
+                        {task.taskKey || task.id.slice(-6).toUpperCase()}
+                      </Link>
+                      <Link
+                        href={`/tasks/${task.id}`}
+                        className={`font-body-md text-body-md truncate group-hover:text-primary transition-colors ${
+                          isCompleted ? "line-through text-outline" : "text-on-surface"
+                        }`}
+                      >
+                        {task.title}
+                      </Link>
                     </div>
-                    <div className="w-28 flex justify-center text-[11px] font-label-code text-outline">
-                      {task.cycle}
-                    </div>
-                    <div className="w-24 flex items-center justify-end gap-1.5">
-                      <img
-                        src={task.assigneeAvatar}
-                        alt={task.assigneeName}
-                        className="w-5 h-5 rounded-full object-cover ring-1 ring-outline-variant"
-                        title={task.assigneeName}
-                      />
-                      <span className="text-[11px] text-outline truncate max-w-[70px]">
-                        {task.assigneeName.split(" ")[0]}
-                      </span>
+
+                    <div className="flex items-center gap-8 shrink-0">
+                      <div className="w-24 flex justify-center">
+                        <span className="px-2 py-0.5 rounded text-[11px] font-label-code bg-surface-container-high text-on-surface-variant">
+                          {task.status}
+                        </span>
+                      </div>
+                      <div className="w-20 flex justify-center">
+                        <span
+                          className={`px-1.5 py-0.5 rounded text-[10px] font-label-badge uppercase ${
+                            task.priority === "URGENT"
+                              ? "bg-red-500/20 text-red-400"
+                              : task.priority === "HIGH"
+                              ? "bg-amber-500/20 text-amber-400"
+                              : task.priority === "MEDIUM"
+                              ? "bg-primary-container/20 text-primary"
+                              : "bg-surface-container text-outline"
+                          }`}
+                        >
+                          {task.priority}
+                        </span>
+                      </div>
+                      <div className="w-24 flex items-center justify-end gap-1.5">
+                        <span className="text-[11px] text-outline truncate max-w-[70px]">
+                          {task.assignees?.[0]?.member?.user?.name?.split(" ")[0] || "Unassigned"}
+                        </span>
+                      </div>
                     </div>
                   </div>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );

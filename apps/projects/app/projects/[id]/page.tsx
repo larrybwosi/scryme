@@ -2,6 +2,7 @@
 
 import React, { use } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { useProject } from "@/lib/hooks/use-projects";
 import { OverviewTab } from "@/components/project-tabs/OverviewTab";
 import { IssuesTab } from "@/components/project-tabs/IssuesTab";
 import { CyclesTab } from "@/components/project-tabs/CyclesTab";
@@ -12,21 +13,22 @@ import { AnalyticsTab } from "@/components/project-tabs/AnalyticsTab";
 
 const tabs = [
   { id: "overview", label: "Overview", icon: "dashboard" },
-  { id: "issues", label: "Issues", icon: "check_box", count: "58" },
+  { id: "issues", label: "Issues", icon: "check_box" },
   { id: "cycles", label: "Cycles & Sprints", icon: "cycle" },
-  { id: "milestones", label: "Milestones", icon: "flag", count: "4" },
-  { id: "docs", label: "Documents & RFCs", icon: "description", count: "6" },
+  { id: "milestones", label: "Milestones", icon: "flag" },
+  { id: "docs", label: "Documents & RFCs", icon: "description" },
   { id: "team", label: "Team & Access", icon: "shield_person" },
   { id: "analytics", label: "Analytics & Telemetry", icon: "monitoring" },
 ];
 
-export default function ProjectWorkspacePage({
+function ProjectWorkspaceContent({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const resolvedParams = use(params);
   const projectId = resolvedParams.id;
+  const { data: project, isLoading } = useProject(projectId);
   const searchParams = useSearchParams();
   const router = useRouter();
 
@@ -35,6 +37,14 @@ export default function ProjectWorkspacePage({
   const handleTabChange = (tabId: string) => {
     router.replace(`/projects/${projectId}?tab=${tabId}`, { scroll: false });
   };
+
+  if (isLoading) {
+    return (
+      <div className="flex flex-col w-full p-8 text-outline text-body-sm">
+        Loading project workspace...
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col w-full pb-16">
@@ -63,11 +73,6 @@ export default function ProjectWorkspacePage({
                   {tab.icon}
                 </span>
                 <span>{tab.label}</span>
-                {tab.count && (
-                  <span className="px-1.5 py-0.2 bg-surface-container text-outline rounded font-label-code text-[10px]">
-                    {tab.count}
-                  </span>
-                )}
                 {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></span>}
               </button>
             );
@@ -76,18 +81,31 @@ export default function ProjectWorkspacePage({
 
         <div className="hidden xl:flex items-center gap-2 px-3 text-outline font-label-code text-[11px]">
           <span className="w-2 h-2 rounded-full bg-primary animate-pulse"></span>
-          <span>Live Workspace: PRJ-{projectId.toUpperCase()}</span>
+          <span>{project?.key || "WORKSPACE"}: {project?.name}</span>
         </div>
       </div>
 
       {/* Dynamic Tab Body View */}
-      {activeTab === "overview" && <OverviewTab />}
-      {activeTab === "issues" && <IssuesTab />}
+      {activeTab === "overview" && <OverviewTab projectId={projectId} />}
+      {activeTab === "issues" && <IssuesTab projectId={projectId} />}
       {activeTab === "cycles" && <CyclesTab projectId={projectId} />}
-      {activeTab === "milestones" && <MilestonesTab />}
+      {activeTab === "milestones" && <MilestonesTab projectId={projectId} />}
       {activeTab === "docs" && <DocsTab projectId={projectId} />}
-      {activeTab === "team" && <TeamTab />}
-      {activeTab === "analytics" && <AnalyticsTab />}
+      {activeTab === "team" && <TeamTab projectId={projectId} />}
+      {activeTab === "analytics" && <AnalyticsTab projectId={projectId} />}
     </div>
+  );
+}
+
+
+export default function ProjectWorkspacePage({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}) {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-outline text-body-sm">Loading workspace...</div>}>
+      <ProjectWorkspaceContent params={params} />
+    </React.Suspense>
   );
 }
