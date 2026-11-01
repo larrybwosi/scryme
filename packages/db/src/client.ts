@@ -1,5 +1,52 @@
-function normalizeWhereClause(where: any): any {
-  return where;
+const PRISMA_FILTER_OPERATORS = new Set([
+  "equals", "in", "notIn", "lt", "lte", "gt", "gte",
+  "contains", "startsWith", "endsWith", "mode", "not",
+  "set", "push", "is", "isNot", "some", "every", "none",
+  "search", "has", "hasEvery", "hasSome", "isEmpty",
+]);
+
+function isPrimitiveValue(val: any): boolean {
+  if (val === null || val === undefined) return true;
+  const type = typeof val;
+  return type === "string" || type === "number" || type === "boolean" || type === "bigint" || val instanceof Date;
+}
+
+export function normalizeWhereClause(where: any): any {
+  if (!where || typeof where !== "object" || Array.isArray(where)) {
+    return where;
+  }
+
+  const normalized: Record<string, any> = {};
+
+  for (const [key, val] of Object.entries(where)) {
+    if (
+      val &&
+      typeof val === "object" &&
+      !Array.isArray(val) &&
+      !(val instanceof Date) &&
+      !(val.constructor && val.constructor.name === "Decimal")
+    ) {
+      // Prisma compound unique keys contain an underscore (e.g., variantId_locationId, organizationId_name)
+      // or match known compound unique input structures.
+      // If the key contains an underscore and its object values are non-filter primitives, unwrap it.
+      if (key.includes("_")) {
+        const subKeys = Object.keys(val);
+        const isFilterObject = subKeys.some((k) => PRISMA_FILTER_OPERATORS.has(k));
+        const allPrimitives = subKeys.length > 0 && subKeys.every((k) => isPrimitiveValue((val as any)[k]));
+
+        if (!isFilterObject && allPrimitives) {
+          Object.assign(normalized, val);
+          continue;
+        }
+      }
+
+      normalized[key] = val;
+    } else {
+      normalized[key] = val;
+    }
+  }
+
+  return normalized;
 }
 import { Pool, Client } from "pg";
 import { PrismaPg } from "@prisma/adapter-pg";
@@ -195,7 +242,8 @@ export function createTenantExtendedClient<T extends PrismaClient>(baseClient: T
               newArgs.where = normalizeWhereClause(newArgs.where || {});
               newArgs.where.organizationId = activeOrgId;
               const client = baseClient as any;
-              const targetModel = client[model] || client[model.toLowerCase()];
+              const camelModel = model.charAt(0).toLowerCase() + model.slice(1);
+              const targetModel = client[camelModel] || client[model] || client[model.toLowerCase()];
               if (targetModel && typeof targetModel.findFirst === "function") {
                 const res = await targetModel.findFirst(newArgs);
                 if (!res && operation === "findUniqueOrThrow") {
@@ -222,7 +270,8 @@ export function createTenantExtendedClient<T extends PrismaClient>(baseClient: T
             } else if (operation === "update" || operation === "delete") {
               // Verify that the record belongs to activeOrgId before mutating
               const client = baseClient as any;
-              const targetModel = client[model] || client[model.toLowerCase()];
+              const camelModel = model.charAt(0).toLowerCase() + model.slice(1);
+              const targetModel = client[camelModel] || client[model] || client[model.toLowerCase()];
               if (targetModel && typeof targetModel.findFirst === "function") {
                 const checkWhere = normalizeWhereClause({ ...(args.where || {}), organizationId: activeOrgId });
                 const record = await targetModel.findFirst({ where: checkWhere });
