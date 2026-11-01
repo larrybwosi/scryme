@@ -174,6 +174,94 @@ describe("Tenant Data Isolation - Database Level", () => {
       expect(mockQuery).toHaveBeenCalledWith(args);
     });
   });
+
+  it("should unwrap compound unique key in update operation findFirst pre-check", async () => {
+    const mockQuery = vi.fn().mockResolvedValue({ id: "stock-1", organizationId: "org-aaa" });
+    const mockFindFirst = vi.fn().mockResolvedValue({ id: "stock-1", organizationId: "org-aaa" });
+    const dummyBaseClient: any = {
+      productVariantStock: {
+        findFirst: mockFindFirst,
+      },
+      $extends: (extensionFn: any) => {
+        return extensionFn;
+      },
+    };
+
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
+    const allOpsFn = extensionObj.query.$allModels.$allOperations;
+
+    await runWithTenant({ organizationId: "org-aaa" }, async () => {
+      const args: any = {
+        where: {
+          variantId_locationId: {
+            variantId: "var-123",
+            locationId: "loc-456",
+          },
+        },
+        data: {
+          currentStock: { decrement: 5 },
+        },
+      };
+
+      await allOpsFn({
+        model: "ProductVariantStock",
+        operation: "update",
+        args,
+        query: mockQuery,
+      });
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          variantId: "var-123",
+          locationId: "loc-456",
+          organizationId: "org-aaa",
+        },
+      });
+      expect(mockQuery).toHaveBeenCalledWith(args);
+    });
+  });
+
+  it("should unwrap compound unique key in findUnique operation", async () => {
+    const mockFindFirst = vi.fn().mockResolvedValue({ id: "stock-1", organizationId: "org-aaa" });
+    const dummyBaseClient: any = {
+      productVariantStock: {
+        findFirst: mockFindFirst,
+      },
+      $extends: (extensionFn: any) => {
+        return extensionFn;
+      },
+    };
+
+    const extensionObj: any = createTenantExtendedClient(dummyBaseClient);
+    const allOpsFn = extensionObj.query.$allModels.$allOperations;
+
+    await runWithTenant({ organizationId: "org-aaa" }, async () => {
+      const args: any = {
+        where: {
+          variantId_locationId: {
+            variantId: "var-123",
+            locationId: "loc-456",
+          },
+        },
+      };
+
+      const result = await allOpsFn({
+        model: "ProductVariantStock",
+        operation: "findUnique",
+        args,
+        query: vi.fn(),
+      });
+
+      expect(mockFindFirst).toHaveBeenCalledWith({
+        where: {
+          variantId: "var-123",
+          locationId: "loc-456",
+          organizationId: "org-aaa",
+        },
+      });
+      expect(result).toEqual({ id: "stock-1", organizationId: "org-aaa" });
+    });
+  });
 });
 
 describe("Transient DB Error Retry & Detection", () => {
