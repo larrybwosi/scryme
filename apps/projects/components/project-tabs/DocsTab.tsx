@@ -55,7 +55,7 @@ const DOCUMENTS: DocumentItem[] = [
   },
 ];
 
-export function DocsTab() {
+export function DocsTab({ projectId = "prj-204" }: { projectId?: string } = {}) {
   const [docs, setDocs] = useState<DocumentItem[]>(DOCUMENTS);
   const [selectedDocId, setSelectedDocId] = useState<string>("RFC-8819");
   const [search, setSearch] = useState("");

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -14,10 +14,11 @@ export interface Task {
   id: string;
   title: string;
   description?: string;
-  status: "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE";
+  status: "BACKLOG" | "TODO" | "IN_PROGRESS" | "IN_REVIEW" | "DONE" | "CANCELED";
   priority: "LOW" | "MEDIUM" | "HIGH" | "URGENT";
   projectId: string;
   milestoneId?: string;
+  sprintId?: string;
   assigneeId?: string;
   estimatedHours?: number;
   actualHours?: number;
@@ -33,8 +34,39 @@ export interface Milestone {
   description?: string;
   projectId: string;
   dueDate?: string;
-  status: "PLANNED" | "IN_PROGRESS" | "COMPLETED";
+  status: "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   createdAt: string;
+}
+
+export interface Sprint {
+  id: string;
+  projectId: string;
+  name: string;
+  goal?: string;
+  status: "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
+  startDate?: string;
+  endDate?: string;
+  scopePoints: number;
+  completedPoints: number;
+  createdAt: string;
+}
+
+export interface ProjectDocument {
+  id: string;
+  projectId: string;
+  title: string;
+  type: "RFC" | "SPEC" | "PLAN" | "GUIDE";
+  status: "DRAFT" | "REVIEW" | "APPROVED" | "DEPRECATED";
+  content?: string;
+  summary?: string;
+  authorId?: string;
+  author?: {
+    id: string;
+    role: string;
+    user: { id: string; name: string; email: string };
+  };
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface TimeEntry {
@@ -42,21 +74,24 @@ export interface TimeEntry {
   taskId: string;
   memberId: string;
   hours: number;
-  notes?: string;
+  description?: string;
   date: string;
 }
 
 export interface Project {
   id: string;
+  key?: string;
   name: string;
   description?: string;
-  status: "PLANNING" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
+  status: "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
   startDate?: string;
   endDate?: string;
   ownerId?: string;
   organizationId: string;
   tasks?: Task[];
   milestones?: Milestone[];
+  sprints?: Sprint[];
+  documents?: ProjectDocument[];
   createdAt: string;
   updatedAt: string;
 }
@@ -69,31 +104,70 @@ export interface OrganizationMember {
   avatarUrl?: string;
 }
 
+export interface WorkspaceContext {
+  organizationId: string;
+  orgSlug: string;
+  orgName?: string;
+  memberId: string | null;
+}
+
 export const ProjectsAPI = {
+  async getWorkspaceContext(): Promise<WorkspaceContext> {
+    try {
+      const res = await apiClient.get("/v3/tasks/workspace");
+      const data = res.data?.data || res.data;
+      return data;
+    } catch {
+      return {
+        organizationId: "org-demo",
+        orgSlug: "scryme-hq",
+        orgName: "Scryme HQ",
+        memberId: "mem-1",
+      };
+    }
+  },
+
   async getProjects(): Promise<Project[]> {
     try {
-      const res = await apiClient.get("/v3/tasks/projects");
-      return res.data;
-    } catch {
+      const res = await apiClient.get("/v3/projects");
+      const data = res.data?.data?.items || res.data?.items || res.data;
+      if (Array.isArray(data) && data.length > 0) return data;
       return [
         {
-          id: "proj-1",
-          name: "ERP Mobile Redesign",
-          description: "Mobile app overhaul for Android & POS modules",
+          id: "prj-204",
+          key: "NEXUS",
+          name: "Nexus 2.0 Redesign",
+          description: "Next-gen UI engine & unified tokens",
           status: "ACTIVE",
           startDate: "2025-01-01",
-          endDate: "2025-06-30",
+          endDate: "2025-10-29",
           organizationId: "org-demo",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
         },
         {
-          id: "proj-2",
-          name: "V3 API Microservices & Performance",
-          description: "Database queries parallelization and security hardening",
+          id: "prj-102",
+          key: "ENGINE",
+          name: "Core Engine v3",
+          description: "Zero-latency telemetry pipeline",
           status: "ACTIVE",
           startDate: "2025-02-01",
-          endDate: "2025-04-30",
+          endDate: "2025-11-15",
+          organizationId: "org-demo",
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString(),
+        },
+      ];
+    } catch {
+      return [
+        {
+          id: "prj-204",
+          key: "NEXUS",
+          name: "Nexus 2.0 Redesign",
+          description: "Next-gen UI engine & unified tokens",
+          status: "ACTIVE",
+          startDate: "2025-01-01",
+          endDate: "2025-10-29",
           organizationId: "org-demo",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),
@@ -103,15 +177,22 @@ export const ProjectsAPI = {
   },
 
   async createProject(data: Partial<Project>): Promise<Project> {
+    const payload = {
+      name: data.name || "Untitled Project",
+      key: data.key || (data.name ? data.name.substring(0, 5).toUpperCase().replace(/[^A-Z]/g, "PRJ") : `PRJ${Date.now().toString().slice(-4)}`),
+      description: data.description,
+      status: data.status || "ACTIVE",
+    };
     try {
-      const res = await apiClient.post("/v3/tasks/projects", data);
-      return res.data;
+      const res = await apiClient.post("/v3/projects", payload);
+      return res.data?.data || res.data;
     } catch {
       return {
-        id: `proj-${Date.now()}`,
-        name: data.name || "Untitled Project",
-        description: data.description,
-        status: data.status || "PLANNING",
+        id: `prj-${Date.now()}`,
+        name: payload.name,
+        key: payload.key,
+        description: payload.description,
+        status: payload.status as any,
         organizationId: "org-demo",
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
@@ -119,44 +200,39 @@ export const ProjectsAPI = {
     }
   },
 
-  async getProjectTasks(projectId: string): Promise<Task[]> {
+  async getProject(projectId: string): Promise<Project> {
     try {
-      const res = await apiClient.get(`/v3/tasks?projectId=${projectId}`);
-      return res.data;
+      const res = await apiClient.get(`/v3/projects/${projectId}`);
+      return res.data?.data || res.data;
     } catch {
-      return [
-        {
-          id: "task-101",
-          title: "Implement Task Kanban Drag-and-Drop",
-          description: "Allow status updates directly via column cards",
-          status: "IN_PROGRESS",
-          priority: "HIGH",
-          projectId,
-          estimatedHours: 12,
-          actualHours: 4,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-        {
-          id: "task-102",
-          title: "Setup Gantt Timeline View",
-          description: "Render task schedules and milestones visually",
-          status: "TODO",
-          priority: "MEDIUM",
-          projectId,
-          estimatedHours: 20,
-          actualHours: 0,
-          createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString(),
-        },
-      ];
+      return {
+        id: projectId,
+        name: "Nexus 2.0 Redesign",
+        description: "Next-gen UI engine & unified tokens",
+        status: "ACTIVE",
+        organizationId: "org-demo",
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+    }
+  },
+
+  async getProjectTasks(projectId?: string): Promise<Task[]> {
+    try {
+      const url = projectId ? `/v3/tasks?projectId=${projectId}` : "/v3/tasks";
+      const res = await apiClient.get(url);
+      const data = res.data?.data?.items || res.data?.items || res.data;
+      if (Array.isArray(data) && data.length > 0) return data;
+      return [];
+    } catch {
+      return [];
     }
   },
 
   async createTask(taskData: Partial<Task>): Promise<Task> {
     try {
       const res = await apiClient.post("/v3/tasks", taskData);
-      return res.data;
+      return res.data?.data || res.data;
     } catch {
       return {
         id: `task-${Date.now()}`,
@@ -164,7 +240,7 @@ export const ProjectsAPI = {
         description: taskData.description,
         status: taskData.status || "TODO",
         priority: taskData.priority || "MEDIUM",
-        projectId: taskData.projectId || "proj-1",
+        projectId: taskData.projectId || "prj-204",
         estimatedHours: taskData.estimatedHours || 0,
         actualHours: 0,
         createdAt: new Date().toISOString(),
@@ -177,21 +253,21 @@ export const ProjectsAPI = {
     try {
       await apiClient.patch(`/v3/tasks/${taskId}`, { status });
     } catch {
-      // Mock fallback state update
+      // Handled
     }
   },
 
-  async logTimeEntry(taskId: string, hours: number, notes?: string): Promise<TimeEntry> {
+  async logTimeEntry(taskId: string, hours: number, description?: string): Promise<TimeEntry> {
     try {
-      const res = await apiClient.post(`/v3/tasks/${taskId}/time-entries`, { hours, notes });
-      return res.data;
+      const res = await apiClient.post(`/v3/tasks/${taskId}/time-entries`, { hours, description });
+      return res.data?.data || res.data;
     } catch {
       return {
         id: `time-${Date.now()}`,
         taskId,
         memberId: "mem-current",
         hours,
-        notes,
+        description,
         date: new Date().toISOString(),
       };
     }
@@ -199,27 +275,19 @@ export const ProjectsAPI = {
 
   async getProjectMilestones(projectId: string): Promise<Milestone[]> {
     try {
-      const res = await apiClient.get(`/v3/tasks/projects/${projectId}/milestones`);
-      return res.data;
+      const res = await apiClient.get(`/v3/projects/${projectId}/milestones`);
+      const data = res.data?.data || res.data;
+      if (Array.isArray(data)) return data;
+      return [];
     } catch {
-      return [
-        {
-          id: "ms-1",
-          title: "Beta Launch Baseline",
-          description: "Core features verified and tested",
-          projectId,
-          dueDate: "2025-04-15",
-          status: "IN_PROGRESS",
-          createdAt: new Date().toISOString(),
-        },
-      ];
+      return [];
     }
   },
 
   async createMilestone(milestoneData: Partial<Milestone>): Promise<Milestone> {
     try {
-      const res = await apiClient.post(`/v3/tasks/projects/${milestoneData.projectId}/milestones`, milestoneData);
-      return res.data;
+      const res = await apiClient.post(`/v3/projects/${milestoneData.projectId}/milestones`, milestoneData);
+      return res.data?.data || res.data;
     } catch {
       return {
         id: `ms-${Date.now()}`,
@@ -227,21 +295,93 @@ export const ProjectsAPI = {
         description: milestoneData.description,
         projectId: milestoneData.projectId!,
         dueDate: milestoneData.dueDate,
-        status: "PLANNED",
+        status: "OPEN",
         createdAt: new Date().toISOString(),
+      };
+    }
+  },
+
+  async getProjectSprints(projectId: string): Promise<Sprint[]> {
+    try {
+      const res = await apiClient.get(`/v3/projects/${projectId}/sprints`);
+      const data = res.data?.data || res.data;
+      if (Array.isArray(data)) return data;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  async createSprint(projectId: string, sprintData: Partial<Sprint>): Promise<Sprint> {
+    try {
+      const res = await apiClient.post(`/v3/projects/${projectId}/sprints`, sprintData);
+      return res.data?.data || res.data;
+    } catch {
+      return {
+        id: `sprint-${Date.now()}`,
+        projectId,
+        name: sprintData.name || "New Sprint",
+        goal: sprintData.goal,
+        status: sprintData.status || "PLANNED",
+        scopePoints: sprintData.scopePoints || 0,
+        completedPoints: 0,
+        createdAt: new Date().toISOString(),
+      };
+    }
+  },
+
+  async getProjectDocuments(projectId?: string): Promise<ProjectDocument[]> {
+    try {
+      const url = projectId ? `/v3/projects/${projectId}/documents` : "/v3/projects/documents";
+      const res = await apiClient.get(url);
+      const data = res.data?.data || res.data;
+      if (Array.isArray(data)) return data;
+      return [];
+    } catch {
+      return [];
+    }
+  },
+
+  async createProjectDocument(projectId: string, docData: Partial<ProjectDocument>): Promise<ProjectDocument> {
+    try {
+      const res = await apiClient.post(`/v3/projects/${projectId}/documents`, docData);
+      return res.data?.data || res.data;
+    } catch {
+      return {
+        id: `doc-${Date.now()}`,
+        projectId,
+        title: docData.title || "New Document",
+        type: docData.type || "RFC",
+        status: docData.status || "DRAFT",
+        content: docData.content,
+        summary: docData.summary,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
       };
     }
   },
 
   async getMembers(): Promise<OrganizationMember[]> {
     try {
-      const res = await apiClient.get("/v3/organization/members");
-      return res.data;
+      const res = await apiClient.get("/v3/members");
+      const data = res.data?.data?.items || res.data?.items || res.data?.data || res.data;
+      if (Array.isArray(data) && data.length > 0) {
+        return data.map((m: any) => ({
+          id: m.id,
+          name: m.user?.name || m.name || "Member",
+          email: m.user?.email || m.email || "",
+          role: m.role || "Member",
+          avatarUrl: m.user?.image || m.avatarUrl,
+        }));
+      }
+      return [
+        { id: "mem-1", name: "Alex Johnson", email: "alex@scryme.tech", role: "Lead" },
+        { id: "mem-2", name: "Sarah Chen", email: "sarah@scryme.tech", role: "Product" },
+      ];
     } catch {
       return [
-        { id: "mem-1", name: "Alex Johnson", email: "alex@scryme.tech", role: "Engineering Lead" },
-        { id: "mem-2", name: "Sarah Chen", email: "sarah@scryme.tech", role: "Product Manager" },
-        { id: "mem-3", name: "David Kim", email: "david@scryme.tech", role: "Fullstack Developer" },
+        { id: "mem-1", name: "Alex Johnson", email: "alex@scryme.tech", role: "Lead" },
+        { id: "mem-2", name: "Sarah Chen", email: "sarah@scryme.tech", role: "Product" },
       ];
     }
   },

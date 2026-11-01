@@ -3,9 +3,32 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { INITIAL_TASKS, TaskItem } from "@/lib/mock-data";
+import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 
 export default function TasksPage() {
-  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const { data: apiTasks } = useTasks();
+  const createTaskMutation = useCreateTask();
+  const updateTaskStatusMutation = useUpdateTaskStatus();
+  const [localTasks, setLocalTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+
+  const tasks: TaskItem[] = (apiTasks && apiTasks.length > 0)
+    ? apiTasks.map((t, idx) => {
+        const fallback = INITIAL_TASKS[idx % INITIAL_TASKS.length];
+        return {
+          id: t.id,
+          title: t.title,
+          projectId: t.projectId,
+          projectName: fallback.projectName || "Nexus 2.0 Redesign",
+          status: (t.status === "DONE" ? "Done" : t.status === "IN_PROGRESS" ? "In Progress" : t.status === "BACKLOG" ? "Backlog" : "Todo") as any,
+          priority: (t.priority === "URGENT" ? "Urgent" : t.priority === "HIGH" ? "High" : t.priority === "LOW" ? "Low" : "Medium") as any,
+          assigneeName: fallback.assigneeName || "Lead",
+          assigneeAvatar: fallback.assigneeAvatar,
+          dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : fallback.dueDate,
+          cycle: fallback.cycle || "Sprint 14",
+          completed: t.status === "DONE",
+        };
+      })
+    : localTasks;
   const [scopeFilter, setScopeFilter] = useState<"all" | "active" | "backlog" | "completed">("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
@@ -23,7 +46,11 @@ export default function TasksPage() {
   };
 
   const toggleTaskCompletion = (id: string) => {
-    setTasks((prev) =>
+    const existing = tasks.find((t) => t.id === id);
+    const nextStatus = existing?.completed ? "IN_PROGRESS" : "DONE";
+    updateTaskStatusMutation.mutate({ taskId: id, status: nextStatus as any });
+
+    setLocalTasks((prev) =>
       prev.map((t) => {
         if (t.id === id) {
           const nextCompleted = !t.completed;
@@ -56,7 +83,7 @@ export default function TasksPage() {
       completed: false,
     };
 
-    setTasks([newTask, ...tasks]);
+    setLocalTasks([newTask, ...localTasks]);
     setNewTaskTitle("");
     setIsNewTaskOpen(false);
   };

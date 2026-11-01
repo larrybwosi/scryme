@@ -3,15 +3,43 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { INITIAL_PROJECTS, ProjectItem } from "@/lib/mock-data";
+import { useProjects, useCreateProject } from "@/lib/hooks/use-projects";
 
 export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
   const [activeFilter, setActiveFilter] = useState<"all" | "in-progress" | "planning" | "paused">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [projects, setProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
+  const { data: apiProjects } = useProjects();
+  const createProjectMutation = useCreateProject();
+  const [localProjects, setLocalProjects] = useState<ProjectItem[]>(INITIAL_PROJECTS);
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectTagline, setNewProjectTagline] = useState("");
+
+  const projects: ProjectItem[] = (apiProjects && apiProjects.length > 0)
+    ? apiProjects.map((p, idx) => {
+        const fallback = INITIAL_PROJECTS[idx % INITIAL_PROJECTS.length];
+        return {
+          id: p.id,
+          name: p.name,
+          tagline: p.description || fallback.tagline,
+          badge: fallback.badge || "Active",
+          badgeColor: fallback.badgeColor || "bg-surface-container-highest text-primary",
+          health: fallback.health || "On Track",
+          healthColor: fallback.healthColor || "bg-emerald-400",
+          targetDate: fallback.targetDate || "Dec 15",
+          sprint: fallback.sprint || "Sprint 1",
+          progress: fallback.progress || 50,
+          totalIssues: fallback.totalIssues || 10,
+          closedIssues: fallback.closedIssues || 5,
+          inProgressIssues: fallback.inProgressIssues || 3,
+          backlogIssues: fallback.backlogIssues || 2,
+          status: (p.status === "ACTIVE" ? "in-progress" : p.status === "COMPLETED" ? "completed" : "planning") as any,
+          leadName: fallback.leadName || "Lead",
+          leadAvatar: fallback.leadAvatar,
+        };
+      })
+    : localProjects;
 
   const filteredProjects = projects.filter((project) => {
     const matchesFilter =
@@ -47,7 +75,7 @@ export default function ProjectsPage() {
       leadAvatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
     };
 
-    setProjects([newProject, ...projects]);
+    setLocalProjects([newProject, ...localProjects]);
     setNewProjectName("");
     setNewProjectTagline("");
     setIsNewProjectOpen(false);

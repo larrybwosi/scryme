@@ -2,6 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useSession } from "@/lib/auth-client";
+import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 
 const navigation = [
   { name: "Tasks", href: "/tasks", icon: "check_circle" },
@@ -17,6 +19,11 @@ const navigation = [
 
 export function Sidebar() {
   const pathname = usePathname();
+  const { data: session } = useSession();
+  const { data: workspace } = useWorkspaceContext();
+
+  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme";
+  const orgSlug = workspace?.orgSlug || session?.session?.activeOrganizationSlug || "workspace";
 
   return (
     <aside className="fixed left-0 top-0 h-full w-60 bg-surface-container-lowest border-r border-outline-variant/30 z-50 flex flex-col justify-between">
@@ -28,14 +35,14 @@ export function Sidebar() {
             className="flex items-center gap-space-sm rounded-lg px-space-xs py-1 hover:bg-surface-container transition-colors text-left"
           >
             <div className="w-5 h-5 rounded-lg bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-sm font-semibold">
-              S
+              {orgName.charAt(0).toUpperCase()}
             </div>
             <div className="flex flex-col leading-none">
               <span className="font-headline-sm text-body-sm text-on-surface font-medium truncate max-w-[120px]">
-                Scryme
+                {orgName}
               </span>
               <span className="font-body-sm text-[10px] text-outline leading-none truncate max-w-[120px]">
-                Acme Global
+                {orgSlug}
               </span>
             </div>
             <span className="material-symbols-outlined text-outline text-[16px]">unfold_more</span>
@@ -98,7 +105,10 @@ export function Sidebar() {
 
       {/* Footer Settings */}
       <div className="p-space-xs border-t border-outline-variant/30">
-        <div className="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer">
+        <Link
+          href="/team"
+          className="flex items-center justify-between px-space-sm py-1.5 rounded-lg hover:bg-surface-container transition-colors cursor-pointer"
+        >
           <div className="flex items-center gap-space-sm">
             <div className="w-5 h-5 rounded-full bg-surface-container-high border border-outline-variant flex items-center justify-center">
               <span className="material-symbols-outlined text-outline text-[13px]">tune</span>
@@ -106,7 +116,7 @@ export function Sidebar() {
             <span className="font-body-sm text-body-sm text-on-surface-variant">Settings</span>
           </div>
           <span className="font-label-kbd text-label-kbd text-outline">⌘,</span>
-        </div>
+        </Link>
       </div>
     </aside>
   );

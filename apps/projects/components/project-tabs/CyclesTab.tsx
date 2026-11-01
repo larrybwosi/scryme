@@ -56,7 +56,7 @@ const CYCLES: CycleItem[] = [
   },
 ];
 
-export function CyclesTab() {
+export function CyclesTab({ projectId = "prj-204" }: { projectId?: string } = {}) {
   const [cycles, setCycles] = useState<CycleItem[]>(CYCLES);
   const [filter, setFilter] = useState<"all" | "Active" | "Upcoming" | "Completed">("all");
 

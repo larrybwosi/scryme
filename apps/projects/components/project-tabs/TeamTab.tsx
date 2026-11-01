@@ -51,8 +51,26 @@ const INITIAL_TEAM: TeamMember[] = [
   },
 ];
 
+import { useMembers } from '@/lib/hooks/use-projects';
+
 export function TeamTab() {
-  const [team, setTeam] = useState<TeamMember[]>(INITIAL_TEAM);
+  const { data: apiMembers } = useMembers();
+  const [localTeam, setLocalTeam] = useState<TeamMember[]>(INITIAL_TEAM);
+
+  const team: TeamMember[] = (apiMembers && apiMembers.length > 0)
+    ? apiMembers.map((m, idx) => {
+        const fallback = INITIAL_TEAM[idx % INITIAL_TEAM.length];
+        return {
+          id: m.id,
+          name: m.name,
+          role: m.role || fallback.role,
+          email: m.email || fallback.email,
+          access: (m.role === 'ADMIN' || m.role === 'OWNER' ? 'Admin' : 'Developer') as any,
+          avatar: m.avatarUrl || fallback.avatar,
+          assignedTasks: fallback.assignedTasks,
+        };
+      })
+    : localTeam;
   const [search, setSearch] = useState("");
   const [isInviteOpen, setIsInviteOpen] = useState(false);
   const [inviteEmail, setInviteEmail] = useState("");
@@ -66,8 +84,8 @@ export function TeamTab() {
   );
 
   const handleAccessChange = (id: string, newAccess: TeamMember["access"]) => {
-    setTeam((prev) =>
-      prev.map((m) => (m.id === id ? { ...m, access: newAccess } : m))
+    setLocalTeam((prev: any) =>
+      prev.map((m: any) => (m.id === id ? { ...m, access: newAccess } : m))
     );
   };
 
@@ -85,7 +103,7 @@ export function TeamTab() {
       assignedTasks: 0,
     };
 
-    setTeam([...team, newMember]);
+    setLocalTeam([...team, newMember]);
     setInviteEmail("");
     setIsInviteOpen(false);
   };
@@ -229,7 +247,7 @@ export function TeamTab() {
                 <td className="px-4 py-3 text-right">
                   <button
                     type="button"
-                    onClick={() => setTeam(team.filter((m) => m.id !== member.id))}
+                    onClick={() => setLocalTeam(team.filter((m) => m.id !== member.id))}
                     className="text-outline hover:text-red-400 p-1 transition-colors"
                     title="Remove Member"
                   >

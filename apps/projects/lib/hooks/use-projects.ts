@@ -1,17 +1,47 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ProjectsAPI, Project, Task, Milestone, TimeEntry, OrganizationMember } from "../api";
+import {
+  ProjectsAPI,
+  Project,
+  Task,
+  Milestone,
+  Sprint,
+  ProjectDocument,
+  TimeEntry,
+  OrganizationMember,
+  WorkspaceContext,
+} from "../api";
 
 export const QUERY_KEYS = {
+  workspace: ["workspace-context"] as const,
   projects: ["projects"] as const,
-  projectTasks: (projectId: string) => ["tasks", projectId] as const,
+  project: (projectId: string) => ["project", projectId] as const,
+  projectTasks: (projectId?: string) => ["tasks", projectId || "all"] as const,
   projectMilestones: (projectId: string) => ["milestones", projectId] as const,
+  projectSprints: (projectId: string) => ["sprints", projectId] as const,
+  projectDocuments: (projectId?: string) => ["documents", projectId || "all"] as const,
   members: ["members"] as const,
 };
+
+export function useWorkspaceContext() {
+  return useQuery<WorkspaceContext>({
+    queryKey: QUERY_KEYS.workspace,
+    queryFn: () => ProjectsAPI.getWorkspaceContext(),
+    staleTime: 5 * 60 * 1000,
+  });
+}
 
 export function useProjects() {
   return useQuery<Project[]>({
     queryKey: QUERY_KEYS.projects,
     queryFn: () => ProjectsAPI.getProjects(),
+  });
+}
+
+export function useProject(projectId: string) {
+  return useQuery<Project>({
+    queryKey: QUERY_KEYS.project(projectId),
+    queryFn: () => ProjectsAPI.getProject(projectId),
+    enabled: !!projectId,
   });
 }
 
@@ -30,14 +60,14 @@ export function useCreateProject() {
   });
 }
 
-export function useTasks(projectId: string = "proj-1") {
+export function useTasks(projectId?: string) {
   return useQuery<Task[]>({
     queryKey: QUERY_KEYS.projectTasks(projectId),
     queryFn: () => ProjectsAPI.getProjectTasks(projectId),
   });
 }
 
-export function useCreateTask(projectId: string = "proj-1") {
+export function useCreateTask(projectId: string = "prj-204") {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -52,11 +82,14 @@ export function useCreateTask(projectId: string = "proj-1") {
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.projectTasks(targetProjectId),
       });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectTasks(undefined),
+      });
     },
   });
 }
 
-export function useUpdateTaskStatus(projectId: string = "proj-1") {
+export function useUpdateTaskStatus(projectId: string = "prj-204") {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -88,18 +121,20 @@ export function useUpdateTaskStatus(projectId: string = "proj-1") {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(projectId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(undefined) });
     },
   });
 }
 
-export function useMilestones(projectId: string = "proj-1") {
+export function useMilestones(projectId: string = "prj-204") {
   return useQuery<Milestone[]>({
     queryKey: QUERY_KEYS.projectMilestones(projectId),
     queryFn: () => ProjectsAPI.getProjectMilestones(projectId),
+    enabled: !!projectId,
   });
 }
 
-export function useCreateMilestone(projectId: string = "proj-1") {
+export function useCreateMilestone(projectId: string = "prj-204") {
   const queryClient = useQueryClient();
 
   return useMutation({
@@ -118,19 +153,69 @@ export function useCreateMilestone(projectId: string = "proj-1") {
   });
 }
 
-export function useLogTimeEntry(projectId: string = "proj-1") {
+export function useSprints(projectId: string = "prj-204") {
+  return useQuery<Sprint[]>({
+    queryKey: QUERY_KEYS.projectSprints(projectId),
+    queryFn: () => ProjectsAPI.getProjectSprints(projectId),
+    enabled: !!projectId,
+  });
+}
+
+export function useCreateSprint(projectId: string = "prj-204") {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Partial<Sprint>) =>
+      ProjectsAPI.createSprint(projectId, data),
+    onSuccess: (newSprint) => {
+      queryClient.setQueryData<Sprint[]>(
+        QUERY_KEYS.projectSprints(projectId),
+        (old = []) => [newSprint, ...old]
+      );
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectSprints(projectId),
+      });
+    },
+  });
+}
+
+export function useProjectDocuments(projectId?: string) {
+  return useQuery<ProjectDocument[]>({
+    queryKey: QUERY_KEYS.projectDocuments(projectId),
+    queryFn: () => ProjectsAPI.getProjectDocuments(projectId),
+  });
+}
+
+export function useCreateProjectDocument(projectId: string = "prj-204") {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Partial<ProjectDocument>) =>
+      ProjectsAPI.createProjectDocument(projectId, data),
+    onSuccess: (newDoc) => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(undefined),
+      });
+    },
+  });
+}
+
+export function useLogTimeEntry(projectId: string = "prj-204") {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({
       taskId,
       hours,
-      notes,
+      description,
     }: {
       taskId: string;
       hours: number;
-      notes?: string;
-    }) => ProjectsAPI.logTimeEntry(taskId, hours, notes),
+      description?: string;
+    }) => ProjectsAPI.logTimeEntry(taskId, hours, description),
     onMutate: async ({ taskId, hours }) => {
       await queryClient.cancelQueries({ queryKey: QUERY_KEYS.projectTasks(projectId) });
 
@@ -161,6 +246,7 @@ export function useLogTimeEntry(projectId: string = "proj-1") {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(projectId) });
+      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(undefined) });
     },
   });
 }

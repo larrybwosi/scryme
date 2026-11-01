@@ -2,25 +2,45 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 
 export function Header() {
   const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { data: session } = useSession();
+  const { data: workspace } = useWorkspaceContext();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch {
+      // Fallback
+    }
+    const isDev = process.env.NODE_ENV === "development";
+    const defaultAuthUrl = isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
+    const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
+    window.location.href = `${authUrl}/sign-in`;
+  };
+
+  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme Workspace";
+  const user = session?.user;
 
   return (
     <header className="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md">
       {/* Workspace Breadcrumb Context */}
       <div className="flex items-center gap-space-md">
         <div className="flex items-center gap-1.5 text-body-sm font-body-sm text-outline">
-          <Link href="/projects" className="hover:text-on-surface transition-colors cursor-pointer">
-            Scryme
+          <Link href="/projects" className="hover:text-on-surface transition-colors cursor-pointer font-medium text-on-surface">
+            {orgName}
           </Link>
           <span className="text-outline-variant">/</span>
           <Link
-            href="/projects/prj-204"
+            href="/projects"
             className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"
           >
             <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-            <span className="font-medium text-body-sm text-on-surface">Nexus 2.0 Redesign</span>
+            <span className="font-medium text-body-sm text-on-surface">Projects Hub</span>
             <span className="material-symbols-outlined text-[14px] text-outline">expand_more</span>
           </Link>
         </div>
@@ -68,9 +88,46 @@ export function Header() {
 
         <div className="h-4 w-px bg-outline-variant/40"></div>
 
-        {/* User Profile Avatar */}
-        <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center">
-          <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+        {/* User Profile Avatar & Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity focus:outline-none"
+            title={user?.name || "User profile"}
+          >
+            {user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.image} alt={user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+            )}
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-lg bg-surface-container-high border border-outline-variant/40 shadow-xl py-1 z-50">
+              <div className="px-3 py-2 border-b border-outline-variant/30">
+                <p className="text-body-sm font-medium text-on-surface truncate">{user?.name || "Authenticated User"}</p>
+                <p className="text-[11px] text-outline truncate">{user?.email || "user@scryme.tech"}</p>
+              </div>
+              <Link
+                href="/team"
+                onClick={() => setIsProfileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px] text-outline">group</span>
+                <span>Team & Squad</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-error hover:bg-surface-container transition-colors text-left"
+              >
+                <span className="material-symbols-outlined text-[16px]">logout</span>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

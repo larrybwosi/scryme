@@ -83,9 +83,9 @@ export default function ProjectWorkspacePage({
       {/* Dynamic Tab Body View */}
       {activeTab === "overview" && <OverviewTab />}
       {activeTab === "issues" && <IssuesTab />}
-      {activeTab === "cycles" && <CyclesTab />}
+      {activeTab === "cycles" && <CyclesTab projectId={projectId} />}
       {activeTab === "milestones" && <MilestonesTab />}
-      {activeTab === "docs" && <DocsTab />}
+      {activeTab === "docs" && <DocsTab projectId={projectId} />}
       {activeTab === "team" && <TeamTab />}
       {activeTab === "analytics" && <AnalyticsTab />}
     </div>

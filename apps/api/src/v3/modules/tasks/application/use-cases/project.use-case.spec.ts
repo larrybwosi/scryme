@@ -104,4 +104,46 @@ describe('ProjectUseCase', () => {
       });
     });
   });
+
+  describe('sprint and document use cases', () => {
+    it('should create a sprint for project under tenant isolation', async () => {
+      mockPrisma.client.project.findFirst.mockResolvedValue({ id: 'prj_1', organizationId: 'org_1' });
+      mockPrisma.client.projectSprint = {
+        create: vi.fn().mockResolvedValue({ id: 'sprint_1', name: 'Sprint 1', projectId: 'prj_1', organizationId: 'org_1' }),
+      };
+
+      const result = await useCase.createSprint('org_1', 'prj_1', { name: 'Sprint 1', scopePoints: 50 });
+      expect(result.id).toBe('sprint_1');
+      expect(mockPrisma.client.projectSprint.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: 'org_1',
+            projectId: 'prj_1',
+            name: 'Sprint 1',
+          }),
+        }),
+      );
+    });
+
+    it('should create a project document under tenant isolation', async () => {
+      mockPrisma.client.project.findFirst.mockResolvedValue({ id: 'prj_1', organizationId: 'org_1' });
+      mockPrisma.client.projectDocument = {
+        create: vi.fn().mockResolvedValue({ id: 'doc_1', title: 'Architecture RFC', projectId: 'prj_1', organizationId: 'org_1' }),
+      };
+
+      const result = await useCase.createDocument('org_1', 'prj_1', { title: 'Architecture RFC', type: 'RFC' }, 'member_1');
+      expect(result.id).toBe('doc_1');
+      expect(mockPrisma.client.projectDocument.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            organizationId: 'org_1',
+            projectId: 'prj_1',
+            title: 'Architecture RFC',
+            authorId: 'member_1',
+          }),
+        }),
+      );
+    });
+  });
+
 });

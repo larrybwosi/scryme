@@ -3,11 +3,34 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { INITIAL_TASKS, TaskItem } from "@/lib/mock-data";
+import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 
 const COLUMNS: TaskItem["status"][] = ["Backlog", "Todo", "In Progress", "In Review", "Done"];
 
 export default function BoardPage() {
-  const [tasks, setTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+  const { data: apiTasks } = useTasks();
+  const createTaskMutation = useCreateTask();
+  const updateTaskStatusMutation = useUpdateTaskStatus();
+  const [localTasks, setLocalTasks] = useState<TaskItem[]>(INITIAL_TASKS);
+
+  const tasks: TaskItem[] = (apiTasks && apiTasks.length > 0)
+    ? apiTasks.map((t, idx) => {
+        const fallback = INITIAL_TASKS[idx % INITIAL_TASKS.length];
+        return {
+          id: t.id,
+          title: t.title,
+          projectId: t.projectId,
+          projectName: fallback.projectName || "Nexus 2.0 Redesign",
+          status: (t.status === "DONE" ? "Done" : t.status === "IN_REVIEW" ? "In Review" : t.status === "IN_PROGRESS" ? "In Progress" : t.status === "BACKLOG" ? "Backlog" : "Todo") as any,
+          priority: (t.priority === "URGENT" ? "Urgent" : t.priority === "HIGH" ? "High" : t.priority === "LOW" ? "Low" : "Medium") as any,
+          assigneeName: fallback.assigneeName || "Lead",
+          assigneeAvatar: fallback.assigneeAvatar,
+          dueDate: t.dueDate ? new Date(t.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : fallback.dueDate,
+          cycle: fallback.cycle || "Sprint 14",
+          completed: t.status === "DONE",
+        };
+      })
+    : localTasks;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
@@ -28,6 +51,11 @@ export default function BoardPage() {
     e.preventDefault();
     if (!newTitle.trim()) return;
 
+    createTaskMutation.mutate({
+      title: newTitle.trim(),
+      priority: (newPriority.toUpperCase()) as any,
+    });
+
     const newTask: TaskItem = {
       id: `SCR-${Math.floor(100 + Math.random() * 900)}`,
       title: newTitle.trim(),
@@ -42,14 +70,14 @@ export default function BoardPage() {
       completed: targetColumn === "Done",
     };
 
-    setTasks([newTask, ...tasks]);
+    setLocalTasks([newTask, ...localTasks]);
     setNewTitle("");
     setIsAddModalOpen(false);
   };
 
   const moveTaskStatus = (id: string, newStatus: TaskItem["status"]) => {
-    setTasks((prev) =>
-      prev.map((t) =>
+    setLocalTasks((prev: any) =>
+      prev.map((t: any) =>
         t.id === id ? { ...t, status: newStatus, completed: newStatus === "Done" } : t
       )
     );
