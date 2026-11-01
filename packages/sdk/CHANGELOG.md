@@ -1,5 +1,11 @@
 # @scryme/sdk
 
+## 10.2.33
+
+### Patch Changes
+
+- 0c54f85: Prepare release v10.2.8
+
 ## 10.2.32
 
 ### Patch Changes

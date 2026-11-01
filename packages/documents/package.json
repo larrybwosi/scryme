@@ -1,6 +1,6 @@
 {
   "name": "@repo/documents",
-  "version": "10.2.32",
+  "version": "10.2.33",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
