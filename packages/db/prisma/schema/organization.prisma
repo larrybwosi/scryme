@@ -243,6 +243,8 @@ model Organization {
   tasks                      Task[]
   taskLabels                 TaskLabel[]
   projectMilestones          ProjectMilestone[]
+  projectSprints             ProjectSprint[]
+  projectDocuments           ProjectDocument[]
   taskTimeEntries            TaskTimeEntry[]
 
   @@index([slug])
@@ -452,6 +454,7 @@ model Member {
   taskComments            TaskComment[]     @relation("TaskCommentAuthor")
   taskActivityLogs        TaskActivityLog[] @relation("TaskActivityActor")
   taskTimeEntries         TaskTimeEntry[]   @relation("MemberTaskTimeEntries")
+  projectDocuments        ProjectDocument[] @relation("ProjectDocumentAuthor")
 
   @@unique([organizationId, userId])
   @@unique([organizationId, cardId])
