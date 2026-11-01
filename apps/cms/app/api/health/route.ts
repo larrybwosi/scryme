@@ -5,12 +5,81 @@ import { Redis } from 'ioredis';
 
 export const dynamic = 'force-dynamic';
 
+function formatErrorMessage(err: unknown): string {
+  if (!err) return 'Unknown error';
+  if (typeof err === 'string') return err;
+  if (typeof err !== 'object') return String(err);
+
+  const errorObj = err as Record<string, any>;
+  const parts: string[] = [];
+
+  const mainMsg = typeof errorObj.message === 'string' ? errorObj.message.trim() : '';
+
+  const subErrors = Array.isArray(errorObj.errors)
+    ? errorObj.errors
+    : Array.isArray(errorObj.aggregateErrors)
+      ? errorObj.aggregateErrors
+      : null;
+
+  let subMsg = '';
+  if (subErrors && subErrors.length > 0) {
+    const formattedSubs = subErrors
+      .map((sub) => formatErrorMessage(sub))
+      .filter((msg) => msg && msg !== 'Unknown error');
+    if (formattedSubs.length > 0) {
+      subMsg = formattedSubs.join('; ');
+    }
+  }
+
+  if (mainMsg && mainMsg.length > 0) {
+    if (subMsg && !mainMsg.includes(subMsg)) {
+      parts.push(`${mainMsg} (${subMsg})`);
+    } else {
+      parts.push(mainMsg);
+    }
+  } else if (subMsg) {
+    parts.push(subMsg);
+  }
+
+  if (errorObj.cause) {
+    const causeMsg = formatErrorMessage(errorObj.cause);
+    if (causeMsg && !parts.some((p) => p.includes(causeMsg))) {
+      parts.push(`Cause: ${causeMsg}`);
+    }
+  }
+
+  if (parts.length === 0) {
+    const networkDetails = [errorObj.syscall, errorObj.code, errorObj.address, errorObj.port]
+      .filter(Boolean)
+      .join(' ');
+    if (networkDetails) return networkDetails;
+    if (typeof errorObj.name === 'string') return errorObj.name;
+    return 'Unknown error';
+  }
+
+  return parts.join(': ');
+}
+
+function withTimeout<T>(promise: Promise<T>, ms: number, timeoutMsg: string): Promise<T> {
+  let timer: NodeJS.Timeout;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timer = setTimeout(() => reject(new Error(timeoutMsg)), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => {
+    clearTimeout(timer);
+  });
+}
+
 export async function GET() {
   const healthStatus: {
-    status: string;
-    db: string;
-    redis: string;
+    status: 'ok' | 'degraded' | 'error';
+    db: 'connected' | 'disconnected' | 'unknown';
+    redis: 'connected' | 'disconnected' | 'not_configured' | 'unknown';
     timestamp: string;
+    errors?: {
+      db?: string;
+      redis?: string;
+    };
     error?: string;
   } = {
     status: 'ok',
@@ -20,20 +89,37 @@ export async function GET() {
   };
 
   let hasError = false;
+  const errorDetails: { db?: string; redis?: string } = {};
 
-  // 1. Check Payload DB connection
+  // 1. Check Payload DB connection with timeout (5000ms)
   try {
-    const payload = await getPayload({ config: configPromise });
-    await payload.find({
-      collection: 'users',
-      limit: 1,
-      overrideAccess: true,
-      depth: 0,
-    });
+    await withTimeout(
+      (async () => {
+        const resolvedConfig = await configPromise;
+        // Suppress unhandled rejection on adapter.initializing if DB connection fails
+        if (resolvedConfig?.db && 'initializing' in resolvedConfig.db) {
+          const initPromise = (resolvedConfig.db as { initializing?: Promise<unknown> }).initializing;
+          if (initPromise && typeof initPromise.catch === 'function') {
+            initPromise.catch(() => {});
+          }
+        }
+
+        const payload = await getPayload({ config: resolvedConfig });
+        await payload.find({
+          collection: 'users',
+          limit: 1,
+          overrideAccess: true,
+          depth: 0,
+        });
+      })(),
+      5000,
+      'Payload DB query timed out after 5000ms'
+    );
     healthStatus.db = 'connected';
-  } catch (err: any) {
+  } catch (err: unknown) {
     healthStatus.db = 'disconnected';
-    healthStatus.error = `DB error: ${err?.message || err}`;
+    const formattedMsg = `DB error: ${formatErrorMessage(err)}`;
+    errorDetails.db = formattedMsg;
     hasError = true;
   }
 
@@ -46,6 +132,7 @@ export async function GET() {
       redisUrl || `redis://${redisHost}:${process.env.REDIS_PORT || 6379}`;
 
     let redis: Redis | null = null;
+    let redisLastError: unknown = null;
     try {
       redis = new Redis(targetUrl, {
         connectTimeout: 3000,
@@ -53,26 +140,31 @@ export async function GET() {
         lazyConnect: true,
         enableOfflineQueue: false,
       });
-      redis.on('error', () => {});
+      // Capture error and suppress unhandled error event exceptions
+      redis.on('error', (err) => {
+        redisLastError = err;
+      });
 
-      await redis.connect();
-      const pingRes = await redis.ping();
+      const pingRes = await withTimeout(
+        (async () => {
+          await redis!.connect();
+          return await redis!.ping();
+        })(),
+        4000,
+        'Redis ping timed out after 4000ms'
+      );
+
       if (pingRes === 'PONG') {
         healthStatus.redis = 'connected';
       } else {
         healthStatus.redis = 'disconnected';
-        const redisErrMsg = 'Redis ping failed';
-        healthStatus.error = healthStatus.error
-          ? `${healthStatus.error}; ${redisErrMsg}`
-          : redisErrMsg;
+        errorDetails.redis = 'Redis ping failed: Unexpected ping response';
         hasError = true;
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       healthStatus.redis = 'disconnected';
-      const redisErrMsg = `Redis error: ${err?.message || err}`;
-      healthStatus.error = healthStatus.error
-        ? `${healthStatus.error}; ${redisErrMsg}`
-        : redisErrMsg;
+      const actualError = redisLastError || err;
+      errorDetails.redis = `Redis error: ${formatErrorMessage(actualError)}`;
       hasError = true;
     } finally {
       if (redis) {
@@ -86,8 +178,12 @@ export async function GET() {
   }
 
   if (hasError) {
-    healthStatus.status = 'error';
-    return NextResponse.json(healthStatus, { status: 500 });
+    // If database is disconnected, service is not available (503).
+    // If only Redis is failing while DB is connected, service is degraded (503).
+    healthStatus.status = healthStatus.db === 'disconnected' ? 'error' : 'degraded';
+    healthStatus.errors = errorDetails;
+    healthStatus.error = Object.values(errorDetails).join('; ');
+    return NextResponse.json(healthStatus, { status: 503 });
   }
 
   return NextResponse.json(healthStatus, { status: 200 });
