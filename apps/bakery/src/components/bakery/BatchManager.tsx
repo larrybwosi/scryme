@@ -50,6 +50,8 @@ import {
   Filter,
   MoreVertical,
   Printer,
+  Flame,
+  FileSpreadsheet,
   Package,
   Calendar,
   Download,
@@ -97,7 +99,11 @@ import {
   BatchStatus,
   FormattedBatch,
   UnifiedBatchDetails,
+  WasteReasonCode,
+  ProductionExecutionState,
 } from "@/types/bakery";
+import { ProductionWorkstation } from "@/components/bakery/ProductionWorkstation";
+import { ProductionTicket } from "@/components/bakery/ProductionTicket";
 
 // Components
 import { BatchForm } from "@/components/bakery/BatchForm";
@@ -181,6 +187,10 @@ export default function BatchManager() {
   const [printingBatch, setPrintingBatch] = useState<FormattedBatch | null>(
     null,
   );
+  const [workstationBatch, setWorkstationBatch] = useState<FormattedBatch | null>(null);
+  const [isWorkstationOpen, setIsWorkstationOpen] = useState(false);
+  const [ticketBatch, setTicketBatch] = useState<FormattedBatch | null>(null);
+  const [isTicketDialogOpen, setIsTicketDialogOpen] = useState(false);
 
   const [isSuccessDialogOpen, setIsSuccessDialogOpen] = useState(false);
   const [successBatch, setSuccessBatch] = useState<FormattedBatch | null>(null);
@@ -197,7 +207,7 @@ export default function BatchManager() {
   });
   const [actualProducedQty, setActualProducedQty] = useState<string>("0");
   const [spoiltQty, setSpoiltQty] = useState<string>("0");
-  const [spoilageReason, setSpoilageReason] = useState<string>("none");
+  const [spoilageReason, setSpoilageReason] = useState<string>(WasteReasonCode.BURNT);
   const [qcNotes, setQcNotes] = useState<string>("");
 
   const [localSearchTerm, setLocalSearchTerm] = useState("");
@@ -313,6 +323,16 @@ export default function BatchManager() {
   const handlePrintLabel = (batch: FormattedBatch) => {
     setPrintingBatch(batch);
     setIsPrintDialogOpen(true);
+  };
+
+  const handleOpenWorkstation = (batch: FormattedBatch) => {
+    setWorkstationBatch(batch);
+    setIsWorkstationOpen(true);
+  };
+
+  const handlePrintTicket = (batch: FormattedBatch) => {
+    setTicketBatch(batch);
+    setIsTicketDialogOpen(true);
   };
 
   const [selectedStockBatches, setSelectedStockBatches] = useState<
@@ -686,6 +706,19 @@ export default function BatchManager() {
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
+                            {(batch.status === BatchStatus.IN_PROGRESS || batch.status === BatchStatus.PLANNED) && (
+                              <DropdownMenuItem
+                                onClick={() => handleOpenWorkstation(batch)}
+                                className="text-amber-600 focus:text-amber-600 font-medium"
+                              >
+                                <Flame className="mr-2 h-4 w-4" /> Open workstation
+                              </DropdownMenuItem>
+                            )}
+                            <DropdownMenuItem
+                              onClick={() => handlePrintTicket(batch)}
+                            >
+                              <FileSpreadsheet className="mr-2 h-4 w-4" /> Production ticket
+                            </DropdownMenuItem>
                             <DropdownMenuItem
                               onClick={() => handlePrintLabel(batch)}
                             >
@@ -788,6 +821,8 @@ export default function BatchManager() {
                   }}
                   onDuplicate={(id) => handleDuplicate(id)}
                   onPrint={(b) => handlePrintLabel(b)}
+                  onOpenWorkstation={(b) => handleOpenWorkstation(b)}
+                  onPrintTicket={(b) => handlePrintTicket(b)}
                   onSaveTemplate={(b) => {
                     setBatchToTemplate(b);
                     setIsTemplateDialogOpen(true);
@@ -915,6 +950,26 @@ export default function BatchManager() {
                   className="h-10 text-sm font-medium"
                 />
               </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                Waste / Defect Reason Code
+              </Label>
+              <Select value={spoilageReason} onValueChange={setSpoilageReason}>
+                <SelectTrigger className="h-10 text-sm font-medium">
+                  <SelectValue placeholder="Select defect reason" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value={WasteReasonCode.BURNT}>BURNT - Charred or overbaked</SelectItem>
+                  <SelectItem value={WasteReasonCode.UNDERCOOKED}>UNDERCOOKED - Raw or dense core</SelectItem>
+                  <SelectItem value={WasteReasonCode.SHAPE_DEFECT}>SHAPE_DEFECT - Collapsed or deformed</SelectItem>
+                  <SelectItem value={WasteReasonCode.CONTAMINATED}>CONTAMINATED - Foreign matter or compromised</SelectItem>
+                  <SelectItem value={WasteReasonCode.DOUGH_FAILURE}>DOUGH_FAILURE - Proof/gluten structure failed</SelectItem>
+                  <SelectItem value={WasteReasonCode.OVER_PROOFED}>OVER_PROOFED - Over-fermented / sunken</SelectItem>
+                  <SelectItem value={WasteReasonCode.OTHER}>OTHER - Miscellaneous defect</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             <div className="space-y-1.5">
@@ -1092,6 +1147,32 @@ export default function BatchManager() {
               <Printer className="mr-2 h-4 w-4" /> Print
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {workstationBatch && (
+        <ProductionWorkstation
+          batch={workstationBatch}
+          recipe={recipes.find(r => r.id === workstationBatch.recipe?.id)}
+          isOpen={isWorkstationOpen}
+          onClose={() => setIsWorkstationOpen(false)}
+          onCompleteBatch={(b: FormattedBatch) => initiateCompletion(b)}
+          onSaveExecutionState={(batchId: string, state: ProductionExecutionState) => {
+            // Update local state and toast
+            toast.success('Workstation progress saved');
+          }}
+        />
+      )}
+
+      <Dialog open={isTicketDialogOpen} onOpenChange={setIsTicketDialogOpen}>
+        <DialogContent className="max-w-4xl p-0 max-h-[90vh] overflow-y-auto bg-slate-100">
+          {ticketBatch && (
+            <ProductionTicket
+              batch={ticketBatch}
+              recipe={recipes.find(r => r.id === ticketBatch.recipe?.id)}
+              onClose={() => setIsTicketDialogOpen(false)}
+            />
+          )}
         </DialogContent>
       </Dialog>
 

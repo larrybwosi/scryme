@@ -106,7 +106,7 @@ interface WizardProps {
   recipes: Recipe[];
   inventory: InventoryItem[];
   bakers?: any[];
-  onCreateBatch: (calculation: BatchCalculation & { scheduledDate?: Date; leadBakerId?: string; assistantBakerIds?: string[] }) => Promise<void>;
+  onCreateBatch: (calculation: BatchCalculation & { scheduledDate?: Date; leadBakerId?: string; assistantBakerIds?: string[]; runType?: 'MAKE_TO_STOCK' | 'ON_DEMAND'; orderReference?: string; tags?: string[] }) => Promise<void>;
   onClose: () => void;
 }
 
@@ -162,6 +162,8 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
   const [scheduledDate, setScheduledDate] = useState<Date>(new Date());
   const [selectedLeadBakerId, setSelectedLeadBakerId] = useState<string>('');
   const [selectedAssistantBakerIds, setSelectedAssistantBakerIds] = useState<string[]>([]);
+  const [runType, setRunType] = useState<'MAKE_TO_STOCK' | 'ON_DEMAND'>('MAKE_TO_STOCK');
+  const [orderReference, setOrderReference] = useState<string>('');
   const formatCurrency = useFormattedCurrency()
 
   // ── Inventory map ────────────────────────────────────────────────────────────
@@ -253,11 +255,17 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
     if (!batchCalculation?.canProduce) return;
     setIsSubmitting(true);
     try {
+      const tags = runType === 'ON_DEMAND'
+        ? ['custom-order', ...(orderReference ? [`order:${orderReference}`] : [])]
+        : [];
       await onCreateBatch({
         ...batchCalculation,
         scheduledDate,
         leadBakerId: selectedLeadBakerId,
         assistantBakerIds: selectedAssistantBakerIds,
+        runType,
+        orderReference: runType === 'ON_DEMAND' ? orderReference : undefined,
+        tags,
       });
     } finally {
       setIsSubmitting(false);
@@ -612,6 +620,50 @@ export function SmartProductionWizard({ recipes, inventory, bakers = [], onCreat
                       <h3 className="text-sm font-semibold text-slate-900 dark:text-slate-100 mb-4 border-b pb-2">
                         Schedule & Assignment
                       </h3>
+                      <div className="mb-5 p-3.5 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/40 space-y-3">
+                        <div>
+                          <Label className="text-xs font-semibold text-slate-700 dark:text-slate-300">Production Run Mode</Label>
+                          <p className="text-xs text-slate-500">Choose Make-to-Stock for scheduled list or On-Demand for custom order.</p>
+                        </div>
+                        <div className="grid grid-cols-2 gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setRunType('MAKE_TO_STOCK')}
+                            className={cn(
+                              'px-3 py-2 text-xs rounded-md border font-medium text-left transition-colors',
+                              runType === 'MAKE_TO_STOCK'
+                                ? 'bg-blue-600 text-white border-blue-600'
+                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+                            )}
+                          >
+                            Make-to-Stock
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setRunType('ON_DEMAND')}
+                            className={cn(
+                              'px-3 py-2 text-xs rounded-md border font-medium text-left transition-colors',
+                              runType === 'ON_DEMAND'
+                                ? 'bg-purple-600 text-white border-purple-600'
+                                : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:bg-slate-50'
+                            )}
+                          >
+                            On-Demand Order
+                          </button>
+                        </div>
+                        {runType === 'ON_DEMAND' && (
+                          <div className="space-y-1 pt-1">
+                            <Label className="text-xs text-slate-600 dark:text-slate-400">Order Reference / POS Tag</Label>
+                            <Input
+                              placeholder="e.g. POS-9812 or Customer Name"
+                              value={orderReference}
+                              onChange={(e) => setOrderReference(e.target.value)}
+                              className="h-8 text-xs bg-white dark:bg-slate-950"
+                            />
+                          </div>
+                        )}
+                      </div>
+
                       <div className="grid gap-4 sm:grid-cols-2">
                         <div className="space-y-2">
                           <Label className="text-xs font-medium text-slate-500">Launch Date</Label>

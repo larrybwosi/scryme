@@ -1,7 +1,76 @@
 import { z } from 'zod';
-import { BatchStatus, ExpirationStatus, DisposalReason, RecipeDifficulty, ProductType } from './bakery-fix';
+import {
+  BatchStatus,
+  ExpirationStatus,
+  DisposalReason,
+  RecipeDifficulty,
+  ProductType,
+  ProductionRunType,
+  WasteReasonCode,
+  ProductionStage,
+} from './bakery-fix';
 
-export { BatchStatus, ExpirationStatus, DisposalReason, RecipeDifficulty, ProductType };
+export {
+  BatchStatus,
+  ExpirationStatus,
+  DisposalReason,
+  RecipeDifficulty,
+  ProductType,
+  ProductionRunType,
+  WasteReasonCode,
+  ProductionStage,
+};
+
+export interface StageStep {
+  id: string;
+  stage: ProductionStage;
+  label: string;
+  isCompleted: boolean;
+  completedAt?: Date | string;
+  notes?: string;
+}
+
+export interface StageTimer {
+  id: string;
+  stage: ProductionStage;
+  label: string;
+  durationMinutes: number;
+  remainingSeconds: number;
+  isRunning: boolean;
+  startedAt?: Date | string;
+  completedAt?: Date | string;
+}
+
+export interface TemperatureLog {
+  id: string;
+  stage: ProductionStage;
+  targetTempCelsius?: number;
+  recordedTempCelsius: number;
+  type: 'OVEN' | 'CORE_INTERNAL' | 'AMBIENT' | 'DOUGH';
+  loggedAt: Date | string;
+  notes?: string;
+}
+
+export interface IngredientLotTrace {
+  ingredientVariantId?: string;
+  ingredientName: string;
+  requiredQuantity: number;
+  consumedQuantity: number;
+  unitSymbol: string;
+  lotNumber: string;
+  supplierBatchNumber?: string;
+  verified: boolean;
+}
+
+export interface ProductionExecutionState {
+  currentStage: ProductionStage;
+  stagesCompleted: ProductionStage[];
+  stageSteps: Record<string, boolean>;
+  temperatureLogs: TemperatureLog[];
+  timers: Record<string, StageTimer>;
+  ingredientLots: IngredientLotTrace[];
+}
+
 
 export interface SystemUnit {
   id: string;
@@ -134,6 +203,11 @@ export interface Template {
   orgUnitId?: string;
   orgUnit?: OrganizationUnit;
   recipeMultiplier?: number;
+  runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
+  orderReference?: string;
+  executionState?: ProductionExecutionState;
+  wasteReason?: string | WasteReasonCode;
+  wasteQuantity?: number;
   duration?: number;
   leadBakerId?: string;
   leadBaker?: BakeryBaker;
@@ -196,7 +270,10 @@ export interface Batch {
   tags?: string[];
   qcData?: any;
   wasteQuantity?: number;
-  wasteReason?: string;
+  wasteReason?: string | WasteReasonCode;
+  runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
+  orderReference?: string;
+  executionState?: ProductionExecutionState;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -319,6 +396,11 @@ export interface FormattedBatch {
   bakerName?: string;
   ingredients?: any[];
   recipeMultiplier?: number;
+  runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
+  orderReference?: string;
+  executionState?: ProductionExecutionState;
+  wasteReason?: string | WasteReasonCode;
+  wasteQuantity?: number;
 }
 
 // Form interfaces for creating/editing
@@ -349,6 +431,11 @@ export interface CreateTemplateForm {
   systemUnitId?: string;
   orgUnitId?: string;
   recipeMultiplier?: number;
+  runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
+  orderReference?: string;
+  executionState?: ProductionExecutionState;
+  wasteReason?: string | WasteReasonCode;
+  wasteQuantity?: number;
   duration?: number;
   leadBakerId?: string;
   assistantBakerIds: string[];
@@ -364,6 +451,11 @@ export interface CreateBatchForm {
   systemUnitId?: string;
   orgUnitId?: string;
   recipeMultiplier?: number;
+  runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
+  orderReference?: string;
+  executionState?: ProductionExecutionState;
+  wasteReason?: string | WasteReasonCode;
+  wasteQuantity?: number;
   date: Date;
   time: string;
   leadBakerId?: string;

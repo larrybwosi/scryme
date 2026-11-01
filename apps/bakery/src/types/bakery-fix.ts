@@ -5,6 +5,31 @@ export enum ExpirationStatus {
   DISPOSED = 'DISPOSED',
 }
 
+
+export enum ProductionRunType {
+  MAKE_TO_STOCK = 'MAKE_TO_STOCK',
+  ON_DEMAND = 'ON_DEMAND',
+}
+
+export enum WasteReasonCode {
+  BURNT = 'BURNT',
+  UNDERCOOKED = 'UNDERCOOKED',
+  SHAPE_DEFECT = 'SHAPE_DEFECT',
+  CONTAMINATED = 'CONTAMINATED',
+  DOUGH_FAILURE = 'DOUGH_FAILURE',
+  OVER_PROOFED = 'OVER_PROOFED',
+  OTHER = 'OTHER',
+}
+
+export enum ProductionStage {
+  SCALING_PREP = 'SCALING_PREP',
+  MIXING = 'MIXING',
+  PROOFING = 'PROOFING',
+  BAKING = 'BAKING',
+  COOLING = 'COOLING',
+  QUALITY_AUDIT = 'QUALITY_AUDIT',
+}
+
 export enum DisposalReason {
   EXPIRED = 'EXPIRED',
   NEAR_EXPIRY_UNSOLD = 'NEAR_EXPIRY_UNSOLD',
