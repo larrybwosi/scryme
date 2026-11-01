@@ -2,93 +2,84 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import {
+  useTask,
+  useUpdateTask,
+  useUpdateTaskStatus,
+  useSubtasks,
+  useCreateTask,
+  useAddTaskComment,
+  useMembers,
+  useManageTaskAssignees,
+} from "@/lib/hooks/use-projects";
+import { Task } from "@/lib/api";
 
-interface Subtask {
-  id: string;
-  title: string;
-  done: boolean;
-}
+export default function TaskDetailPage({ taskId }: { taskId: string }) {
+  const { data: task, isLoading } = useTask(taskId);
+  const { data: subtasks = [] } = useSubtasks(taskId);
+  const { data: members = [] } = useMembers();
 
-interface ActivityItem {
-  id: string;
-  author: string;
-  avatar: string;
-  action: string;
-  time: string;
-}
+  const updateTaskMutation = useUpdateTask(task?.projectId);
+  const updateTaskStatusMutation = useUpdateTaskStatus(task?.projectId);
+  const createSubtaskMutation = useCreateTask(task?.projectId);
+  const addCommentMutation = useAddTaskComment(taskId);
+  const manageAssigneesMutation = useManageTaskAssignees(taskId);
 
-export default function TaskDetailPage() {
-  const [taskStatus, setTaskStatus] = useState("In Progress");
-  const [taskPriority, setTaskPriority] = useState("Urgent");
-  const [taskAssignee, setTaskAssignee] = useState("Elena Rostova");
-  const [taskCycle, setTaskCycle] = useState("Sprint 14");
   const [copied, setCopied] = useState(false);
-  const [isSubscribed, setIsSubscribed] = useState(true);
-  const [subtasks, setSubtasks] = useState<Subtask[]>([
-    { id: "sub-1", title: "Render WebGL frame-rate canvas telemetry", done: true },
-    { id: "sub-2", title: "Bind memory-mapped buffer pooling hook", done: true },
-    { id: "sub-3", title: "Validate WebSocket heartbeat disconnect reconnection", done: false },
-    { id: "sub-4", title: "Profile garbage collector overhead on 10,000 nodes", done: false },
-  ]);
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
-  const [activities, setActivities] = useState<ActivityItem[]>([
-    {
-      id: "act-1",
-      author: "Elena Rostova",
-      avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
-      action: "pushed commit 8a4f91b · memory pool reuse",
-      time: "45 mins ago",
-    },
-    {
-      id: "act-2",
-      author: "Marcus Vance",
-      avatar: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=64&h=64&fit=crop&crop=faces",
-      action: "changed status from Todo to In Progress",
-      time: "3 hours ago",
-    },
-  ]);
   const [commentText, setCommentText] = useState("");
 
-  const toggleSubtask = (id: string) => {
-    setSubtasks((prev) =>
-      prev.map((s) => (s.id === id ? { ...s, done: !s.done } : s))
+  if (isLoading) {
+    return (
+      <div className="flex flex-col w-full p-8 text-outline text-body-sm">
+        Loading task details...
+      </div>
     );
+  }
+
+  if (!task) {
+    return (
+      <div className="flex flex-col w-full p-8 text-outline text-body-sm">
+        Task not found.
+      </div>
+    );
+  }
+
+  const toggleSubtask = (subtask: Task) => {
+    const nextStatus = subtask.status === "DONE" ? "TODO" : "DONE";
+    updateTaskStatusMutation.mutate({ taskId: subtask.id, status: nextStatus });
   };
 
-  const addSubtask = (e: React.FormEvent) => {
+  const addSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubtaskTitle.trim()) return;
+    if (!newSubtaskTitle.trim() || !task.projectId) return;
 
-    setSubtasks([
-      ...subtasks,
-      { id: `sub-${Date.now()}`, title: newSubtaskTitle.trim(), done: false },
-    ]);
+    await createSubtaskMutation.mutateAsync({
+      title: newSubtaskTitle.trim(),
+      projectId: task.projectId,
+      parentTaskId: task.id,
+      status: "TODO",
+    });
     setNewSubtaskTitle("");
   };
 
-  const addComment = (e: React.FormEvent) => {
+  const addComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
 
-    setActivities([
-      {
-        id: `act-${Date.now()}`,
-        author: "Current Engineer",
-        avatar: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=64&h=64&fit=crop&crop=faces",
-        action: `commented: "${commentText.trim()}"`,
-        time: "Just now",
-      },
-      ...activities,
-    ]);
+    await addCommentMutation.mutateAsync(commentText.trim());
     setCommentText("");
   };
 
   const handleCopyLink = () => {
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    if (typeof window !== "undefined") {
+      navigator.clipboard.writeText(window.location.href);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    }
   };
 
-  const doneCount = subtasks.filter((s) => s.done).length;
+  const doneCount = subtasks.filter((s) => s.status === "DONE").length;
 
   return (
     <div className="flex flex-col w-full pb-16">
@@ -96,13 +87,14 @@ export default function TaskDetailPage() {
         {/* Top Navigation & Action Context Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2 border-b border-outline-variant/30">
           <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-body-sm text-outline">
-            <Link href="/projects" className="hover:text-on-surface">Nexus 2.0 Redesign</Link>
+            <Link href={`/projects/${task.projectId}?tab=overview`} className="hover:text-on-surface">
+              {task.project?.name || "Project"}
+            </Link>
             <span>/</span>
             <Link href="/tasks" className="hover:text-on-surface">Issues</Link>
             <span>/</span>
-            <span className="font-label-code text-on-surface font-semibold">SCR-104</span>
-            <span className="px-1.5 py-0.2 rounded bg-surface-container text-[11px] font-label-code text-primary">
-              Sprint 14
+            <span className="font-label-code text-on-surface font-semibold">
+              {task.taskKey || task.id.slice(-6).toUpperCase()}
             </span>
           </nav>
 
@@ -116,22 +108,6 @@ export default function TaskDetailPage() {
                 {copied ? "check" : "link"}
               </span>
               <span>{copied ? "Copied!" : "Copy Link"}</span>
-              <kbd className="font-label-kbd text-[10px] text-outline ml-1">⌘L</kbd>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => setIsSubscribed(!isSubscribed)}
-              className={`flex items-center gap-1 px-3 py-1 rounded-lg font-body-sm text-body-sm border border-outline-variant/30 transition-colors ${
-                isSubscribed
-                  ? "bg-primary-container text-on-primary-container"
-                  : "bg-surface-container text-on-surface"
-              }`}
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {isSubscribed ? "notifications_active" : "notifications"}
-              </span>
-              <span>{isSubscribed ? "Subscribed" : "Subscribe"}</span>
             </button>
           </div>
         </div>
@@ -144,14 +120,14 @@ export default function TaskDetailPage() {
               {/* Header Title */}
               <div>
                 <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">
-                  SCR-104: Interactive Analytics Dashboard & Real-time Canvas
+                  {task.taskKey ? `${task.taskKey}: ` : ""}{task.title}
                 </h1>
                 <p className="text-body-md text-on-surface-variant mt-2 leading-relaxed">
-                  Design and execute the primary engineering telemetry workspace view. Render real-time WebGL buffer frames, connect to the Socket.IO cluster, and track cycle velocities with sub-16ms interactive response rates.
+                  {task.description || "No detailed description provided."}
                 </p>
               </div>
 
-              {/* Subtasks / Checklist Component */}
+              {/* Subtasks Component */}
               <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -164,31 +140,34 @@ export default function TaskDetailPage() {
                 </div>
 
                 <div className="divide-y divide-outline-variant/20 rounded-lg bg-surface-container-lowest border border-outline-variant/20 overflow-hidden">
-                  {subtasks.map((st) => (
-                    <div
-                      key={st.id}
-                      onClick={() => toggleSubtask(st.id)}
-                      className="p-3 flex items-center gap-3 hover:bg-surface-container/50 transition-colors cursor-pointer"
-                    >
-                      <button
-                        type="button"
-                        className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
-                          st.done
-                            ? "bg-primary-container border-primary-container text-on-primary-container"
-                            : "border-outline-variant bg-surface-container"
-                        }`}
+                  {subtasks.map((st) => {
+                    const isDone = st.status === "DONE";
+                    return (
+                      <div
+                        key={st.id}
+                        onClick={() => toggleSubtask(st)}
+                        className="p-3 flex items-center gap-3 hover:bg-surface-container/50 transition-colors cursor-pointer"
                       >
-                        {st.done && <span className="material-symbols-outlined text-[12px]">check</span>}
-                      </button>
-                      <span
-                        className={`text-body-sm ${
-                          st.done ? "line-through text-outline" : "text-on-surface"
-                        }`}
-                      >
-                        {st.title}
-                      </span>
-                    </div>
-                  ))}
+                        <button
+                          type="button"
+                          className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
+                            isDone
+                              ? "bg-primary-container border-primary-container text-on-primary-container"
+                              : "border-outline-variant bg-surface-container"
+                          }`}
+                        >
+                          {isDone && <span className="material-symbols-outlined text-[12px]">check</span>}
+                        </button>
+                        <span
+                          className={`text-body-sm ${
+                            isDone ? "line-through text-outline" : "text-on-surface"
+                          }`}
+                        >
+                          {st.title}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
 
                 {/* Add Subtask Input */}
@@ -213,18 +192,19 @@ export default function TaskDetailPage() {
               <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
                 <div className="flex items-center gap-2">
                   <span className="material-symbols-outlined text-[16px] text-primary">history</span>
-                  <span className="font-headline-sm text-body-md text-on-surface font-semibold">Activity & History</span>
+                  <span className="font-headline-sm text-body-md text-on-surface font-semibold">Activity & Comments</span>
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  {activities.map((act) => (
-                    <div key={act.id} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/20 flex items-center justify-between text-body-sm">
-                      <div className="flex items-center gap-2">
-                        <img src={act.avatar} alt={act.author} className="w-5 h-5 rounded-full object-cover" />
-                        <span className="font-medium text-on-surface">{act.author}</span>
-                        <span className="text-outline">{act.action}</span>
+                  {task.comments?.map((comment: any) => (
+                    <div key={comment.id} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/20 flex flex-col gap-1 text-body-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-on-surface">{comment.author?.user?.name || "Member"}</span>
+                        <span className="text-[10px] font-label-code text-outline">
+                          {new Date(comment.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
                       </div>
-                      <span className="text-[10px] font-label-code text-outline">{act.time}</span>
+                      <p className="text-on-surface-variant text-body-sm">{comment.content}</p>
                     </div>
                   ))}
                 </div>
@@ -240,9 +220,10 @@ export default function TaskDetailPage() {
                   <div className="flex justify-end">
                     <button
                       type="submit"
-                      className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm"
+                      disabled={addCommentMutation.isPending}
+                      className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
                     >
-                      Post Update
+                      {addCommentMutation.isPending ? "Posting..." : "Post Update"}
                     </button>
                   </div>
                 </form>
@@ -261,73 +242,64 @@ export default function TaskDetailPage() {
                 <div>
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Status</label>
                   <select
-                    value={taskStatus}
-                    onChange={(e) => setTaskStatus(e.target.value)}
+                    value={task.status}
+                    onChange={(e) => updateTaskStatusMutation.mutate({ taskId: task.id, status: e.target.value as Task["status"] })}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
-                    <option value="Backlog">Backlog</option>
-                    <option value="Todo">Todo</option>
-                    <option value="In Progress">In Progress</option>
-                    <option value="In Review">In Review</option>
-                    <option value="Done">Done</option>
+                    <option value="BACKLOG">Backlog</option>
+                    <option value="TODO">Todo</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="IN_REVIEW">In Review</option>
+                    <option value="DONE">Done</option>
+                    <option value="CANCELED">Canceled</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Priority</label>
                   <select
-                    value={taskPriority}
-                    onChange={(e) => setTaskPriority(e.target.value)}
+                    value={task.priority}
+                    onChange={(e) => updateTaskMutation.mutate({ taskId: task.id, data: { priority: e.target.value as Task["priority"] } })}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
-                    <option value="Urgent">Urgent</option>
-                    <option value="High">High</option>
-                    <option value="Medium">Medium</option>
-                    <option value="Low">Low</option>
+                    <option value="URGENT">Urgent</option>
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LOW">Low</option>
                   </select>
                 </div>
 
                 <div>
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Assignee</label>
                   <select
-                    value={taskAssignee}
-                    onChange={(e) => setTaskAssignee(e.target.value)}
+                    value={task.assignees?.[0]?.member?.id || ""}
+                    onChange={(e) => {
+                      const memberId = e.target.value;
+                      manageAssigneesMutation.mutate(memberId ? [memberId] : []);
+                    }}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
-                    <option value="Elena Rostova">Elena Rostova</option>
-                    <option value="Marcus Vance">Marcus Vance</option>
-                    <option value="Sarah Chen">Sarah Chen</option>
-                    <option value="David Kim">David Kim</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Cycle / Sprint</label>
-                  <select
-                    value={taskCycle}
-                    onChange={(e) => setTaskCycle(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    <option value="Sprint 14">Sprint 14 (Active)</option>
-                    <option value="Sprint 15">Sprint 15</option>
-                    <option value="Sprint 16">Sprint 16</option>
+                    <option value="">Unassigned</option>
+                    {members.map((m) => (
+                      <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                    ))}
                   </select>
                 </div>
 
                 <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2">
                   <div className="flex justify-between text-[11px] text-outline font-label-code">
                     <span>Logged Hours</span>
-                    <span className="text-on-surface font-medium">14h 20m</span>
+                    <span className="text-on-surface font-medium">{task.actualHours || 0}h</span>
                   </div>
                   <div className="flex justify-between text-[11px] text-outline font-label-code">
                     <span>Estimated</span>
-                    <span className="text-on-surface font-medium">20h 00m</span>
+                    <span className="text-on-surface font-medium">{task.estimatedHours || 0}h</span>
                   </div>
                   <Link
-                    href="/time-tracking"
+                    href={`/time-tracking?taskId=${task.id}`}
                     className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-body-sm font-medium border border-outline-variant/30 mt-2 transition-colors"
                   >
-                    Track Time on SCR-104
+                    Track Time on {task.taskKey || "Task"}
                   </Link>
                 </div>
               </div>

@@ -212,13 +212,28 @@ export class V3RealtimeGateway
       return true;
     }
 
-    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments, organization:orgId:orders)
+    // Organization specific channels check (e.g., organization:orgId:inventory, organization:orgId:pricing, organization:orgId:customers, organization:orgId:payments, organization:orgId:orders, organization:orgId:tasks, organization:orgId:projects)
     if (channel.startsWith("organization:") || channel.startsWith("org:")) {
       const parts = channel.split(":");
       const targetOrg = parts[1];
       if (targetOrg && (targetOrg === context.organizationId || targetOrg === context.orgSlug)) {
         return true;
       }
+    }
+
+    // Project & task channels (e.g., tasks:orgId, projects:orgId, project:projectId)
+    if (channel.startsWith("tasks:") || channel.startsWith("projects:")) {
+      const targetOrg = channel.split(":")[1];
+      return targetOrg === context.organizationId || targetOrg === context.orgSlug;
+    }
+
+    if (channel.startsWith("project:")) {
+      const projectId = channel.split(":")[1];
+      const project = await this.prisma.client.project.findFirst({
+        where: { id: projectId, organizationId: context.organizationId },
+        select: { id: true },
+      });
+      return !!project;
     }
 
     // Basic ownership check for common V3 patterns
