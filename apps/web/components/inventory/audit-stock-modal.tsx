@@ -1,7 +1,8 @@
+"use client";
+
 import { BarcodeScannerDialog } from "../stocking/barcode-scanner-dialog";
 import { StockAttachmentManager, StockAttachment } from "../stocking/stock-attachment-manager";
 import { Scan } from "lucide-react";
-"use client";
 
 import React, { useState, useEffect, useCallback } from "react";
 import Image from "next/image";
