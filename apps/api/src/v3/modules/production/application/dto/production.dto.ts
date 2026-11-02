@@ -674,7 +674,12 @@ export class UpdateProductionSettingsDto {
   @IsBoolean()
   enableProductionStaging?: boolean;
 
-  @ApiPropertyOptional({ description: "Default baker ID" })
+  @ApiPropertyOptional({ description: "Default operator ID" })
+  @IsOptional()
+  @IsString()
+  defaultOperatorId?: string;
+
+  @ApiPropertyOptional({ description: "Default baker ID (alias)" })
   @IsOptional()
   @IsString()
   defaultBakerId?: string;
@@ -1049,3 +1054,6 @@ export class DisposeStagedStockDto {
   @IsString()
   notes?: string;
 }
+
+export class AddOperatorDto extends AddBakerDto {}
+export class UpdateOperatorDto extends UpdateBakerDto {}

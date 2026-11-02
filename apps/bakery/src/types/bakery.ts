@@ -316,13 +316,40 @@ export interface BakeryBranding {
   };
 }
 
-export interface BakerySettings {
+export interface ProductionSettings {
   enableProductionStaging?: boolean;
   id: string;
   organizationId: string;
+  defaultOperatorId?: string;
+  defaultOperator?: BakeryBaker;
+  operators?: BakeryBaker[];
   defaultBakerId?: string;
   defaultBaker?: BakeryBaker;
   bakers?: BakeryBaker[];
+  autoCreateDailyBatches: boolean;
+  expiryWarningDays: number;
+  authMode: 'SSO' | 'CARD_PIN';
+  apiKey?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  batchPrefix?: string;
+  batchSeparator?: string;
+  batchDateFormat?: string;
+  batchSequence?: string;
+  batchGenerationType?: string;
+  autoApproveBatches?: boolean;
+  lowStockAlerts?: boolean;
+  timezone?: string;
+  scrymeReportEnabled?: boolean;
+  scrymeReportDay?: number;
+  scrymeReportTime?: string;
+  scrymeReportSections?: any;
+  scrymeReportChannel?: string | null;
+  isEnabled?: boolean;
+  defaultLocationId?: string | null;
+}
+
+export interface BakerySettings extends ProductionSettings {
   autoCreateDailyBatches: boolean;
   expiryWarningDays: number;
   authMode: 'SSO' | 'CARD_PIN';
@@ -602,3 +629,6 @@ export interface BatchDispatch {
   notes?: string;
   organizationId: string;
 }
+
+export type ProductionOperator = BakeryBaker;
+export type ProductionCategory = BakeryCategory;

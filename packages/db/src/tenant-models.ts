@@ -11,6 +11,8 @@ export const TENANT_MODELS = new Set<string>([
   "AuditLog",
   "BakeryCategory",
   "BakerySettings",
+  "ProductionCategory",
+  "ProductionSettings",
   "BankStatement",
   "Batch",
   "BatchIngredientConsumption",
