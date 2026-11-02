@@ -23,6 +23,7 @@ export const QUERY_KEYS = {
   projectSprints: (projectId: string) => ["sprints", projectId] as const,
   projectDocuments: (projectId?: string) => ["documents", projectId || "all"] as const,
   members: ["members"] as const,
+  calendarEvents: (projectId?: string) => ["calendar-events", projectId || "all"] as const,
 };
 
 export function useWorkspaceContext() {
@@ -472,5 +473,12 @@ export function useMembers() {
   return useQuery<OrganizationMember[]>({
     queryKey: QUERY_KEYS.members,
     queryFn: () => ProjectsAPI.getMembers(),
+  });
+}
+
+export function useCalendarEvents(projectId?: string) {
+  return useQuery<{ tasks: Task[]; milestones: Milestone[]; sprints: Sprint[] }>({
+    queryKey: QUERY_KEYS.calendarEvents(projectId),
+    queryFn: () => ProjectsAPI.getCalendarEvents(projectId),
   });
 }

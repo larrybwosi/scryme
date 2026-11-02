@@ -2,7 +2,9 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { useProject, useTasks, useMilestones, useSprints, useProjectDocuments } from "@/lib/hooks/use-projects";
+import { useProject, useTasks, useMilestones, useSprints, useProjectDocuments, useUpdateProject } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
+import { Project } from "@/lib/api";
 
 export function OverviewTab({ projectId }: { projectId: string }) {
   const { data: project } = useProject(projectId);
@@ -10,8 +12,17 @@ export function OverviewTab({ projectId }: { projectId: string }) {
   const { data: milestones = [] } = useMilestones(projectId);
   const { data: sprints = [] } = useSprints(projectId);
   const { data: docs = [] } = useProjectDocuments(projectId);
+  const updateProjectMutation = useUpdateProject();
+  const { canManageTasks, checkProjectRole } = usePermissions();
+
+  const projectAuth = checkProjectRole(project?.members as any);
+  const canEdit = canManageTasks || projectAuth.canEditProject;
 
   const [copied, setCopied] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editStatus, setEditStatus] = useState<Project["status"]>("ACTIVE");
 
   const handleCopy = () => {
     if (typeof window !== "undefined") {
@@ -21,9 +32,37 @@ export function OverviewTab({ projectId }: { projectId: string }) {
     }
   };
 
+  const openEditModal = () => {
+    if (!project) return;
+    setEditName(project.name);
+    setEditDesc(project.description || "");
+    setEditStatus(project.status);
+    setIsEditModalOpen(true);
+  };
+
+  const handleSaveProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editName.trim()) return;
+
+    await updateProjectMutation.mutateAsync({
+      id: projectId,
+      data: {
+        name: editName.trim(),
+        description: editDesc.trim() || undefined,
+        status: editStatus,
+      },
+    });
+
+    setIsEditModalOpen(false);
+  };
+
   const closedTasks = tasks.filter((t) => t.status === "DONE").length;
+  const inProgressTasks = tasks.filter((t) => t.status === "IN_PROGRESS").length;
   const progressPct = tasks.length > 0 ? Math.round((closedTasks / tasks.length) * 100) : 0;
   const activeSprint = sprints.find((s) => s.status === "ACTIVE") || sprints[0];
+
+  const totalEstimatedHours = tasks.reduce((sum, t) => sum + (Number(t.estimatedHours) || 0), 0);
+  const totalActualHours = tasks.reduce((sum, t) => sum + (Number(t.actualHours) || 0), 0);
 
   return (
     <div className="flex flex-col w-full">
@@ -54,13 +93,26 @@ export function OverviewTab({ projectId }: { projectId: string }) {
               <span>{copied ? "Copied" : "Copy URL"}</span>
             </button>
 
-            <Link
-              href="/tasks"
-              className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-body-sm font-headline-sm flex items-center gap-1.5 shadow-sm transition-colors"
-            >
-              <span className="material-symbols-outlined text-[15px]">add_circle</span>
-              <span>New Issue</span>
-            </Link>
+            {canEdit && (
+              <button
+                type="button"
+                onClick={openEditModal}
+                className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30"
+              >
+                <span className="material-symbols-outlined text-[15px]">settings</span>
+                <span>Settings</span>
+              </button>
+            )}
+
+            {canEdit && (
+              <Link
+                href={`/tasks?projectId=${projectId}`}
+                className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-body-sm font-headline-sm flex items-center gap-1.5 shadow-sm transition-colors"
+              >
+                <span className="material-symbols-outlined text-[15px]">add_circle</span>
+                <span>New Issue</span>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -70,18 +122,101 @@ export function OverviewTab({ projectId }: { projectId: string }) {
             <h1 className="font-display-lg text-display-lg text-on-surface tracking-tight">
               {project?.name}
             </h1>
-            <span className="px-2 py-0.5 rounded text-[11px] font-label-badge bg-primary-container/20 text-primary uppercase">
+            <span className={`px-2 py-0.5 rounded text-[11px] font-label-badge uppercase ${
+              project?.status === "ACTIVE"
+                ? "bg-emerald-500/20 text-emerald-300"
+                : project?.status === "COMPLETED"
+                ? "bg-primary-container/20 text-primary"
+                : "bg-surface-container text-outline"
+            }`}>
               {project?.status}
             </span>
+            {projectAuth.isProjectAdmin && (
+              <span className="px-1.5 py-0.5 rounded text-[10px] font-label-code bg-surface-container-high text-secondary">
+                Admin
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 font-label-code text-[12px] text-outline">
             <span>Tasks: {tasks.length}</span>
             <span>•</span>
             <span>Milestones: {milestones.length}</span>
+            <span>•</span>
+            <span>Hours: {totalActualHours}h / {totalEstimatedHours}h</span>
           </div>
         </div>
       </div>
+
+      {/* Edit Project Dialog */}
+      {isEditModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+          <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
+            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
+              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                Project Settings: {project?.key}
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsEditModalOpen(false)}
+                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
+              >
+                <span className="material-symbols-outlined text-[18px]">close</span>
+              </button>
+            </div>
+            <form onSubmit={handleSaveProject} className="flex flex-col gap-4 mt-4">
+              <div>
+                <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
+                <input
+                  type="text"
+                  required
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                />
+              </div>
+              <div>
+                <label className="block text-body-sm font-medium text-on-surface mb-1">Description / Objective</label>
+                <textarea
+                  rows={3}
+                  value={editDesc}
+                  onChange={(e) => setEditDesc(e.target.value)}
+                  className="w-full p-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                />
+              </div>
+              <div>
+                <label className="block text-body-sm font-medium text-on-surface mb-1">Lifecycle Status</label>
+                <select
+                  value={editStatus}
+                  onChange={(e) => setEditStatus(e.target.value as Project["status"])}
+                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none"
+                >
+                  <option value="ACTIVE">ACTIVE</option>
+                  <option value="ON_HOLD">ON_HOLD</option>
+                  <option value="COMPLETED">COMPLETED</option>
+                  <option value="ARCHIVED">ARCHIVED</option>
+                </select>
+              </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setIsEditModalOpen(false)}
+                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={updateProjectMutation.isPending}
+                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+                >
+                  {updateProjectMutation.isPending ? "Saving..." : "Save Settings"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
 
       {/* KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
@@ -91,13 +226,13 @@ export function OverviewTab({ projectId }: { projectId: string }) {
             {progressPct}%
           </span>
           <span className="text-[11px] text-emerald-400 font-label-code">
-            {closedTasks} / {tasks.length} issues closed
+            {closedTasks} / {tasks.length} issues closed ({inProgressTasks} active)
           </span>
         </div>
         <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
           <span className="text-outline text-body-sm">Active Sprints</span>
           <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
-            {activeSprint ? activeSprint.name : "No active sprint"}
+            {activeSprint ? activeSprint.name : "No active cycle"}
           </span>
           <span className="text-[11px] text-primary font-label-code">
             {sprints.length} total cycles
@@ -130,6 +265,30 @@ export function OverviewTab({ projectId }: { projectId: string }) {
               {project?.description || "No extended description provided for this project workspace."}
             </p>
           </div>
+
+          {/* Quick Task Activity */}
+          <div className="p-5 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <h2 className="font-headline-sm text-body-md text-on-surface font-semibold">Recent Tasks</h2>
+              <Link href={`/projects/${projectId}?tab=issues`} className="text-body-sm text-primary hover:underline">
+                View all ({tasks.length})
+              </Link>
+            </div>
+            <div className="divide-y divide-outline-variant/20 flex flex-col">
+              {tasks.slice(0, 5).map((t) => (
+                <div key={t.id} className="py-2.5 flex items-center justify-between">
+                  <div className="flex items-center gap-2 min-w-0 pr-2">
+                    <span className="font-label-code text-[11px] text-primary">{t.taskKey || t.id.slice(-6)}</span>
+                    <span className="text-body-sm text-on-surface truncate">{t.title}</span>
+                  </div>
+                  <span className="text-[11px] font-label-code text-outline shrink-0">{t.status}</span>
+                </div>
+              ))}
+              {tasks.length === 0 && (
+                <div className="py-4 text-center text-outline text-body-sm italic">No tasks created yet</div>
+              )}
+            </div>
+          </div>
         </div>
 
         <div className="xl:col-span-4 flex flex-col gap-4">
@@ -146,6 +305,22 @@ export function OverviewTab({ projectId }: { projectId: string }) {
                 <span className="text-outline text-body-sm italic">No milestones configured</span>
               )}
             </div>
+          </div>
+
+          <div className="p-5 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-3">
+            <h2 className="font-headline-sm text-body-md text-on-surface font-semibold">Sprint Cadence</h2>
+            {activeSprint ? (
+              <div className="flex flex-col gap-2">
+                <span className="text-body-sm text-on-surface font-medium">{activeSprint.name}</span>
+                <p className="text-[11px] text-outline">{activeSprint.goal || "Focus iteration on deliverables."}</p>
+                <div className="flex items-center justify-between text-[11px] font-label-code text-primary">
+                  <span>Scope: {activeSprint.scopePoints} pts</span>
+                  <span>Completed: {activeSprint.completedPoints} pts</span>
+                </div>
+              </div>
+            ) : (
+              <span className="text-outline text-body-sm italic">No active cycle</span>
+            )}
           </div>
         </div>
       </div>

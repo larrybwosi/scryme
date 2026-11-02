@@ -662,4 +662,70 @@ export class TaskUseCase {
       },
     });
   }
+
+  async getCalendarEvents(organizationId: string, projectId?: string) {
+    const taskWhere: any = { organizationId };
+    const milestoneWhere: any = { organizationId };
+    const sprintWhere: any = { organizationId };
+
+    if (projectId) {
+      taskWhere.projectId = projectId;
+      milestoneWhere.projectId = projectId;
+      sprintWhere.projectId = projectId;
+    }
+
+    const [tasks, milestones, sprints] = await Promise.all([
+      this.prisma.client.task.findMany({
+        where: taskWhere,
+        orderBy: { dueDate: "asc" },
+        select: {
+          id: true,
+          taskKey: true,
+          title: true,
+          status: true,
+          priority: true,
+          startDate: true,
+          dueDate: true,
+          projectId: true,
+          project: { select: { id: true, name: true, key: true } },
+          assignees: {
+            include: { member: { select: { id: true, user: { select: { name: true, email: true } } } } },
+          },
+        },
+      }),
+      this.prisma.client.projectMilestone.findMany({
+        where: milestoneWhere,
+        orderBy: { dueDate: "asc" },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          dueDate: true,
+          projectId: true,
+          project: { select: { id: true, name: true, key: true } },
+        },
+      }),
+      this.prisma.client.projectSprint.findMany({
+        where: sprintWhere,
+        orderBy: { startDate: "asc" },
+        select: {
+          id: true,
+          name: true,
+          goal: true,
+          status: true,
+          startDate: true,
+          endDate: true,
+          projectId: true,
+          project: { select: { id: true, name: true, key: true } },
+        },
+      }),
+    ]);
+
+    return {
+      tasks,
+      milestones,
+      sprints,
+    };
+  }
 }

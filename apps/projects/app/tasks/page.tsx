@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
 
 export default function TasksPage() {
@@ -10,6 +11,7 @@ export default function TasksPage() {
   const { data: projects = [] } = useProjects();
   const createTaskMutation = useCreateTask();
   const updateTaskStatusMutation = useUpdateTaskStatus();
+  const { canManageTasks } = usePermissions();
 
   const [scopeFilter, setScopeFilter] = useState<"all" | "active" | "backlog" | "completed">("all");
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
@@ -19,15 +21,18 @@ export default function TasksPage() {
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("MEDIUM");
   const [newTaskProjectId, setNewTaskProjectId] = useState("");
+  const [newTaskDueDate, setNewTaskDueDate] = useState("");
+  const [newTaskEstHours, setNewTaskEstHours] = useState("");
 
   const toggleTaskCompletion = (task: Task) => {
+    if (!canManageTasks) return;
     const nextStatus: Task["status"] = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
     updateTaskStatusMutation.mutate({ taskId: task.id, status: nextStatus });
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTaskTitle.trim()) return;
+    if (!newTaskTitle.trim() || !canManageTasks) return;
 
     const projectId = newTaskProjectId || (projects.length > 0 ? projects[0].id : "");
     if (!projectId) return;
@@ -36,10 +41,14 @@ export default function TasksPage() {
       title: newTaskTitle.trim(),
       priority: newTaskPriority,
       projectId,
+      dueDate: newTaskDueDate || undefined,
+      estimatedHours: newTaskEstHours ? parseFloat(newTaskEstHours) : undefined,
       status: "TODO",
     });
 
     setNewTaskTitle("");
+    setNewTaskDueDate("");
+    setNewTaskEstHours("");
     setIsNewTaskOpen(false);
   };
 
@@ -73,7 +82,7 @@ export default function TasksPage() {
         <div className="flex flex-col gap-space-md">
           <div className="flex flex-wrap items-center justify-between gap-space-md">
             {/* View Scope Tabs */}
-            <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30">
+            <div className="flex flex-wrap items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30">
               <button
                 type="button"
                 onClick={() => setScopeFilter("all")}
@@ -154,15 +163,17 @@ export default function TasksPage() {
                 </Link>
               </div>
               <div className="h-4 w-px bg-surface-variant"></div>
-              <button
-                type="button"
-                onClick={() => setIsNewTaskOpen(true)}
-                className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
-              >
-                <span className="material-symbols-outlined text-[16px]">add</span>
-                <span>New Issue</span>
-                <span className="font-label-kbd text-label-kbd bg-on-primary-fixed/20 text-on-primary-container/80 px-1 py-0.2 rounded ml-1">C</span>
-              </button>
+              {canManageTasks && (
+                <button
+                  type="button"
+                  onClick={() => setIsNewTaskOpen(true)}
+                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
+                >
+                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  <span>New Issue</span>
+                  <span className="font-label-kbd text-label-kbd bg-on-primary-fixed/20 text-on-primary-container/80 px-1 py-0.2 rounded ml-1">C</span>
+                </button>
+              )}
             </div>
           </div>
 
@@ -179,6 +190,20 @@ export default function TasksPage() {
                   className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-40 md:w-56"
                 />
               </div>
+
+              {/* Project filter */}
+              {projects.length > 0 && (
+                <select
+                  value={selectedProjectId}
+                  onChange={(e) => setSelectedProjectId(e.target.value)}
+                  className="px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-body-sm focus:outline-none"
+                >
+                  <option value="all">All Projects</option>
+                  {projects.map((p) => (
+                    <option key={p.id} value={p.id}>{p.name}</option>
+                  ))}
+                </select>
+              )}
 
               {/* Priority Filter */}
               <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
@@ -259,6 +284,29 @@ export default function TasksPage() {
                     </select>
                   </div>
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-body-sm font-medium text-on-surface mb-1">Due Date</label>
+                    <input
+                      type="date"
+                      value={newTaskDueDate}
+                      onChange={(e) => setNewTaskDueDate(e.target.value)}
+                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-body-sm font-medium text-on-surface mb-1">Estimated Hours</label>
+                    <input
+                      type="number"
+                      step="0.5"
+                      min="0.5"
+                      value={newTaskEstHours}
+                      onChange={(e) => setNewTaskEstHours(e.target.value)}
+                      placeholder="e.g. 4"
+                      className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    />
+                  </div>
+                </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
@@ -327,11 +375,12 @@ export default function TasksPage() {
                       <button
                         type="button"
                         onClick={() => toggleTaskCompletion(task)}
+                        disabled={!canManageTasks}
                         className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
                           isCompleted
                             ? "bg-primary-container border-primary-container text-on-primary-container"
                             : "border-outline-variant group-hover:border-outline bg-surface-container"
-                        }`}
+                        } ${!canManageTasks ? "cursor-default" : "cursor-pointer"}`}
                       >
                         {isCompleted && (
                           <span className="material-symbols-outlined text-[13px]">check</span>
