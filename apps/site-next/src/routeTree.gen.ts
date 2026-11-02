@@ -14,9 +14,11 @@ import { Route as CmsRouteImport } from './routes/cms'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LightRouteImport } from './routes/light'
+import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as PaymentsRouteImport } from './routes/payments'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as StockOpsRouteImport } from './routes/stock-ops'
 import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
 import { Route as DevelopersAppsRouteImport } from './routes/developers/apps'
 import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
@@ -48,6 +50,11 @@ const LightRoute = LightRouteImport.update({
   path: '/light',
   getParentRoute: () => rootRouteImport,
 } as any)
+const LocationsRoute = LocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
@@ -61,6 +68,11 @@ const PricingRoute = PricingRouteImport.update({
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockOpsRoute = StockOpsRouteImport.update({
+  id: '/stock-ops',
+  path: '/stock-ops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareSlugRoute = CompareSlugRouteImport.update({
@@ -95,9 +107,11 @@ export interface FileRoutesByFullPath {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -110,9 +124,11 @@ export interface FileRoutesByTo {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -126,9 +142,11 @@ export interface FileRoutesById {
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
   '/payments': typeof PaymentsRoute
   '/pricing': typeof PricingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -143,9 +161,11 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/locations'
     | '/payments'
     | '/pricing'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -158,9 +178,11 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/locations'
     | '/payments'
     | '/pricing'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -173,9 +195,11 @@ export interface FileRouteTypes {
     | '/crm'
     | '/inventory'
     | '/light'
+    | '/locations'
     | '/payments'
     | '/pricing'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -189,9 +213,11 @@ export interface RootRouteChildren {
   CrmRoute: typeof CrmRoute
   InventoryRoute: typeof InventoryRoute
   LightRoute: typeof LightRoute
+  LocationsRoute: typeof LocationsRoute
   PaymentsRoute: typeof PaymentsRoute
   PricingRoute: typeof PricingRoute
   SalesRoute: typeof SalesRoute
+  StockOpsRoute: typeof StockOpsRoute
   CompareSlugRoute: typeof CompareSlugRoute
   DevelopersAppsRoute: typeof DevelopersAppsRoute
   PagesSlugRoute: typeof PagesSlugRoute
@@ -236,6 +262,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LightRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payments': {
       id: '/payments'
       path: '/payments'
@@ -255,6 +288,13 @@ declare module '@tanstack/react-router' {
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof SalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock-ops': {
+      id: '/stock-ops'
+      path: '/stock-ops'
+      fullPath: '/stock-ops'
+      preLoaderRoute: typeof StockOpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare/$slug': {
@@ -301,9 +341,11 @@ const rootRouteChildren: RootRouteChildren = {
   CrmRoute: CrmRoute,
   InventoryRoute: InventoryRoute,
   LightRoute: LightRoute,
+  LocationsRoute: LocationsRoute,
   PaymentsRoute: PaymentsRoute,
   PricingRoute: PricingRoute,
   SalesRoute: SalesRoute,
+  StockOpsRoute: StockOpsRoute,
   CompareSlugRoute: CompareSlugRoute,
   DevelopersAppsRoute: DevelopersAppsRoute,
   PagesSlugRoute: PagesSlugRoute,
