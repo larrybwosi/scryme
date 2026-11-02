@@ -61,6 +61,13 @@ export interface Task {
   actualHours?: number;
   startDate?: string;
   dueDate?: string;
+  batches?: {
+    id: string;
+    batchNumber: string;
+    runType: string;
+    orderReference?: string;
+    status: string;
+  }[];
   createdAt: string;
   updatedAt: string;
 }

@@ -108,6 +108,11 @@ export function IssuesTab({ projectId }: { projectId: string }) {
                 <Link href={`/tasks/${task.id}`} className={`text-body-sm ${task.status === "DONE" ? "line-through text-outline" : "text-on-surface"}`}>
                   {task.title}
                 </Link>
+                {task.title?.includes("[On-Demand]") && (
+                  <span className="text-[10px] font-label-code px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-bold uppercase tracking-wider">
+                    On-Demand
+                  </span>
+                )}
               </div>
               <span className="text-[10px] font-label-code px-2 py-0.5 rounded bg-surface-container text-outline">
                 {task.status}

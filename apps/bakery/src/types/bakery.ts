@@ -205,6 +205,7 @@ export interface Template {
   recipeMultiplier?: number;
   runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
   orderReference?: string;
+  taskId?: string;
   executionState?: ProductionExecutionState;
   wasteReason?: string | WasteReasonCode;
   wasteQuantity?: number;
@@ -273,6 +274,7 @@ export interface Batch {
   wasteReason?: string | WasteReasonCode;
   runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
   orderReference?: string;
+  taskId?: string;
   executionState?: ProductionExecutionState;
   createdAt: Date;
   updatedAt: Date;
@@ -398,6 +400,7 @@ export interface FormattedBatch {
   recipeMultiplier?: number;
   runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
   orderReference?: string;
+  taskId?: string;
   executionState?: ProductionExecutionState;
   wasteReason?: string | WasteReasonCode;
   wasteQuantity?: number;
@@ -433,6 +436,7 @@ export interface CreateTemplateForm {
   recipeMultiplier?: number;
   runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
   orderReference?: string;
+  taskId?: string;
   executionState?: ProductionExecutionState;
   wasteReason?: string | WasteReasonCode;
   wasteQuantity?: number;
@@ -453,6 +457,7 @@ export interface CreateBatchForm {
   recipeMultiplier?: number;
   runType?: ProductionRunType | 'MAKE_TO_STOCK' | 'ON_DEMAND';
   orderReference?: string;
+  taskId?: string;
   executionState?: ProductionExecutionState;
   wasteReason?: string | WasteReasonCode;
   wasteQuantity?: number;

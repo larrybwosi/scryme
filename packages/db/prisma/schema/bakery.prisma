@@ -44,6 +44,11 @@ enum BatchStatus {
   CANCELLED
 }
 
+enum ProductionRunType {
+  MAKE_TO_STOCK
+  ON_DEMAND
+}
+
 enum BatchStagingStatus {
   NOT_STAGED
   STAGED
@@ -127,6 +132,12 @@ model Batch {
   // Recipe scaling
   recipeMultiplier Decimal @default(1.0) @db.Decimal(10, 4)
 
+  // Production Run Type & On-Demand Order Tracking
+  runType        ProductionRunType @default(MAKE_TO_STOCK)
+  orderReference String?
+  taskId         String?
+  task           Task?             @relation("BatchTask", fields: [taskId], references: [id], onDelete: SetNull)
+
   // Scheduling & execution
   status           BatchStatus @default(PLANNED)
   scheduledStartAt DateTime
@@ -197,6 +208,9 @@ model Batch {
   @@index([organizationId, scheduledStartAt])
   @@index([organizationId, status, scheduledStartAt])
   @@index([organizationId, expirationStatus, expiresAt])
+  @@index([taskId])
+  @@index([orderReference])
+  @@index([runType])
   @@index([recipeId])
   @@index([leadBakerId])
   @@index([createdFromTemplateId])

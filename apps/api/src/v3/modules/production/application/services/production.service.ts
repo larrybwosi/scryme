@@ -1,3 +1,9 @@
+import { Optional, Inject, forwardRef } from "@nestjs/common";
+import { ProductionRunType } from "@repo/db";
+import { TaskUseCase } from "../../../tasks/application/use-cases/task.use-case";
+import { WhatsappService } from "../../../crm-integrations/application/use-cases/whatsapp.service";
+import { ApiRealtimeService } from "@/common/services/realtime.service";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 import { ProductVariantQueryDto } from "../../../catalog/application/dto/product.dto";
 import {
   Injectable,
@@ -79,6 +85,10 @@ export class ProductionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authCoreService: V3AuthCoreService,
+    @Optional() private readonly taskUseCase?: TaskUseCase,
+    @Optional() @Inject(forwardRef(() => WhatsappService)) private readonly whatsappService?: WhatsappService,
+    @Optional() private readonly realtimeService?: ApiRealtimeService,
+    @Optional() private readonly firebaseMessagingService?: FirebaseMessagingService,
   ) {}
 
   private async resolveUnitId(
@@ -1116,7 +1126,86 @@ export class ProductionService {
       scheduledStartAt = d;
     }
 
-    return this.prisma.client.batch.create({
+    const runType = data.runType || (data.tags?.includes('custom-order') ? ProductionRunType.ON_DEMAND : ProductionRunType.MAKE_TO_STOCK);
+    let linkedTaskId = data.taskId;
+
+    // Auto-create task in projects app if requested or on-demand
+    if (!linkedTaskId && data.autoCreateTask !== false && this.taskUseCase) {
+      try {
+        let project = await this.prisma.client.project.findFirst({
+          where: { organizationId, key: "BAKERY" },
+        });
+
+        if (!project) {
+          project = await this.prisma.client.project.findFirst({
+            where: { organizationId, status: "ACTIVE" },
+          });
+        }
+
+        if (!project) {
+          project = await this.prisma.client.project.create({
+            data: {
+              organizationId,
+              name: "Bakery Production",
+              key: "BAKERY",
+              description: "Automated Production Orders & Workflows",
+              status: "ACTIVE",
+            },
+          });
+        }
+
+        const recipe = await this.prisma.client.recipe.findUnique({
+          where: { id: recipeId },
+          select: { name: true, totalTime: true, prepTime: true, bakeTime: true },
+        });
+
+        let assigneeMemberIds: string[] = [];
+        if (leadBakerId) {
+          const baker = await this.prisma.client.bakeryBaker.findUnique({
+            where: { id: leadBakerId },
+            select: { memberId: true },
+          });
+          if (baker?.memberId) assigneeMemberIds.push(baker.memberId);
+        }
+
+        if (assistantBakerIds && assistantBakerIds.length > 0) {
+          const assistants = await this.prisma.client.bakeryBaker.findMany({
+            where: { id: { in: assistantBakerIds } },
+            select: { memberId: true },
+          });
+          assigneeMemberIds.push(...assistants.map((a) => a.memberId));
+        }
+
+        const totalMinutes = recipe?.totalTime || (Number(recipe?.prepTime || 0) + Number(recipe?.bakeTime || 0)) || 60;
+        const estHours = Number((totalMinutes / 60).toFixed(2));
+        const start = scheduledStartAt || new Date();
+        const due = new Date(start.getTime() + totalMinutes * 60000);
+
+        const taskTitle = runType === ProductionRunType.ON_DEMAND
+          ? `[On-Demand] ${recipe?.name || 'Production Batch'} - ${batchNumber}${data.orderReference ? ` (Ref: ${data.orderReference})` : ''}`
+          : `[Production] ${recipe?.name || 'Batch'} - ${batchNumber}`;
+
+        const createdTask = await this.taskUseCase.createTask(
+          organizationId,
+          {
+            projectId: project.id,
+            title: taskTitle,
+            description: `Production Batch ${batchNumber} (${runType}). Planned quantity: ${plannedQuantity}.\n${notes || ''}`,
+            status: 'TODO' as any,
+            priority: runType === ProductionRunType.ON_DEMAND ? ('HIGH' as any) : ('MEDIUM' as any),
+            startDate: start,
+            dueDate: due,
+            estimatedHours: estHours,
+            assigneeIds: assigneeMemberIds.length > 0 ? Array.from(new Set(assigneeMemberIds)) : undefined,
+          },
+        );
+        linkedTaskId = createdTask.id;
+      } catch (err: any) {
+        this.logger.warn(`Failed to auto-create project task for batch ${batchNumber}: ${err.message}`);
+      }
+    }
+
+    const batch = await this.prisma.client.batch.create({
       data: {
         recipeId,
         plannedQuantity,
@@ -1128,6 +1217,9 @@ export class ProductionService {
         outputLocationId,
         tags,
         batchNumber,
+        runType,
+        orderReference: data.orderReference,
+        taskId: linkedTaskId,
         scheduledStartAt: scheduledStartAt || new Date(),
         organizationId,
         assistantBakers: assistantBakerIds?.length
@@ -1137,6 +1229,20 @@ export class ProductionService {
           : undefined,
       },
     });
+
+    if (this.realtimeService) {
+      this.realtimeService
+        .publish(`production:org:${organizationId}`, "batch:created", {
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          runType: batch.runType,
+          orderReference: batch.orderReference,
+          scheduledStartAt: batch.scheduledStartAt,
+        })
+        .catch(() => {});
+    }
+
+    return batch;
   }
 
   async updateBatch(organizationId: string, id: string, data: UpdateBatchDto) {
@@ -1210,7 +1316,7 @@ export class ProductionService {
       };
     }
 
-    return await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async tx => {
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
         data: {
@@ -1392,6 +1498,84 @@ export class ProductionService {
 
       return updatedBatch;
     });
+
+    // Post-completion workflows for on-demand batch & notifications
+    try {
+      // 1. Update linked task status in projects to DONE
+      if (batch.taskId && this.taskUseCase) {
+        this.taskUseCase
+          .updateTask(organizationId, batch.taskId, { status: 'DONE' as any })
+          .catch((err) => this.logger.warn(`Failed to update linked task ${batch.taskId} status: ${err.message}`));
+      }
+
+      // 2. Multi-channel real-time broadcast to POS / Web clients
+      if (this.realtimeService) {
+        const payload = {
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          runType: (batch as any).runType,
+          orderReference: (batch as any).orderReference,
+          recipeName: batch.recipe?.name,
+          completedAt: new Date().toISOString(),
+          actualQuantity: grossQuantity,
+          netQuantity,
+        };
+        this.realtimeService.publish(`production:org:${organizationId}`, 'batch:completed', payload).catch(() => {});
+        this.realtimeService.publish(`pos:org:${organizationId}`, 'production:batch:completed', payload).catch(() => {});
+        if ((batch as any).orderReference) {
+          this.realtimeService.publish(`order:${(batch as any).orderReference}`, 'production:batch:completed', payload).catch(() => {});
+        }
+      }
+
+      // 3. Client push notification via Firebase FCM
+      if (this.firebaseMessagingService) {
+        this.firebaseMessagingService
+          .sendToOrganization(organizationId, {
+            title: `Batch Completed: ${batch.batchNumber}`,
+            body: `${batch.recipe?.name || 'Item'} is ready (${netQuantity} produced)${(batch as any).orderReference ? ` for Order ${(batch as any).orderReference}` : ''}.`,
+            data: {
+              eventType: 'BATCH_COMPLETED',
+              batchId: batch.id,
+              batchNumber: batch.batchNumber,
+              orderReference: (batch as any).orderReference || '',
+              organizationId,
+            },
+          })
+          .catch((err) => this.logger.warn(`FCM batch completion push failed: ${err.message}`));
+      }
+
+      // 4. Client Notification via WhatsApp if batch is linked to an order
+      const orderRef = (batch as any).orderReference;
+      if (orderRef && this.whatsappService) {
+        const transaction = await this.prisma.client.transaction.findFirst({
+          where: {
+            organizationId,
+            OR: [
+              { id: orderRef },
+              { number: orderRef },
+            ],
+          },
+          include: { customer: true },
+        });
+
+        const targetPhone = transaction?.customer?.phone || (transaction?.metadata as any)?.customerPhone;
+        const targetName = transaction?.customer?.name || (transaction?.metadata as any)?.customerName || 'Valued Customer';
+
+        if (targetPhone) {
+          const messageText = `Hello ${targetName}! Great news: your custom order #${transaction?.number || orderRef} (${batch.recipe?.name || 'Production Item'}) is freshly prepared and ready for pickup. Thank you!`;
+          this.whatsappService
+            .sendMessage(organizationId, ctx.memberId, {
+              recipientPhone: targetPhone,
+              text: messageText,
+            })
+            .catch((err) => this.logger.warn(`WhatsApp order completion notification failed: ${err.message}`));
+        }
+      }
+    } catch (postErr: any) {
+      this.logger.error(`Error executing post-completion workflows for batch ${batch.batchNumber}: ${postErr.message}`);
+    }
+
+    return result;
   }
 
 

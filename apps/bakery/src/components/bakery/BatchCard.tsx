@@ -182,6 +182,11 @@ export function BatchCard({
                   Ref: {batch.orderReference}
                 </span>
               )}
+              {batch.taskId && (
+                <span className="text-[9px] font-mono bg-blue-50 text-blue-700 dark:bg-blue-950/60 dark:text-blue-300 px-1.5 py-0.5 rounded border border-blue-200/40">
+                  Task Linked
+                </span>
+              )}
             </div>
           </div>
         </div>

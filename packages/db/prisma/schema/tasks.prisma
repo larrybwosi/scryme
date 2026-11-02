@@ -145,6 +145,7 @@ model Task {
   comments     TaskComment[]
   activityLogs TaskActivityLog[]
   labels       TaskLabelOnTask[]
+  batches      Batch[]           @relation("BatchTask")
   timeEntries  TaskTimeEntry[]
 
   createdAt DateTime @default(now())
