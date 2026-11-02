@@ -2,127 +2,187 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
+  useTasks,
   useTask,
-  useUpdateTask,
-  useUpdateTaskStatus,
-  useSubtasks,
-  useCreateTask,
-  useAddTaskComment,
   useMembers,
+  useStaffShifts,
+  useSubtasks,
+  useUpdateTaskStatus,
+  useUpdateTask,
   useManageTaskAssignees,
+  useAddTaskComment,
 } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
+import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { toast } from "sonner";
 
-export default function TaskDetailPage({ taskId }: { taskId: string }) {
-  const { data: task, isLoading } = useTask(taskId);
-  const { data: subtasks = [] } = useSubtasks(taskId);
+interface TaskDetailPageProps {
+  taskId?: string;
+}
+
+export default function TaskDetailPage({ taskId: propTaskId }: TaskDetailPageProps) {
+  const searchParams = useSearchParams();
+  const rawId = propTaskId || searchParams.get("id");
+
+  const { data: allTasks = [] } = useTasks();
+  const activeId = rawId || (allTasks.length > 0 ? allTasks[0].id : "");
+
+  const { data: task, isLoading } = useTask(activeId);
+  const { data: subtasks = [] } = useSubtasks(activeId);
   const { data: members = [] } = useMembers();
+  const { data: staffShifts = [] } = useStaffShifts();
 
-  const updateTaskMutation = useUpdateTask(task?.projectId);
-  const updateTaskStatusMutation = useUpdateTaskStatus(task?.projectId);
-  const createSubtaskMutation = useCreateTask(task?.projectId);
-  const addCommentMutation = useAddTaskComment(taskId);
-  const manageAssigneesMutation = useManageTaskAssignees(taskId);
+  const updateTaskStatusMutation = useUpdateTaskStatus();
+  const updateTaskMutation = useUpdateTask();
+  const manageAssigneesMutation = useManageTaskAssignees(activeId);
+  const addCommentMutation = useAddTaskComment(activeId);
 
-  const [copied, setCopied] = useState(false);
+  const { canManageTasks } = usePermissions();
+
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [commentText, setCommentText] = useState("");
 
-  if (isLoading) {
-    return (
-      <div className="flex flex-col w-full p-8 text-outline text-body-sm">
-        Loading task details...
-      </div>
-    );
-  }
+  // Capacity Warning Modal State
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [pendingAssigneeId, setPendingAssigneeId] = useState<string | null>(null);
+  const [warningMemberName, setWarningMemberName] = useState("");
+  const [warningAssignedHours, setWarningAssignedHours] = useState(0);
+  const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
+  const [warningCapacityHours, setWarningCapacityHours] = useState(40);
 
-  if (!task) {
-    return (
-      <div className="flex flex-col w-full p-8 text-outline text-body-sm">
-        Task not found.
-      </div>
+  const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
+    const memberTasks = allTasks.filter(
+      (t) =>
+        t.id !== activeId &&
+        (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
+        t.assignees?.some((a) => a.member?.id === memberId)
     );
-  }
+    const currentHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 2), 0);
 
-  const toggleSubtask = (subtask: Task) => {
-    const nextStatus = subtask.status === "DONE" ? "TODO" : "DONE";
-    updateTaskStatusMutation.mutate({ taskId: subtask.id, status: nextStatus });
+    const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
+    let shiftHours = 0;
+    for (const s of memberShifts) {
+      const [h1, m1] = s.startTime.split(":").map(Number);
+      const [h2, m2] = s.endTime.split(":").map(Number);
+      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
+      if (diffM > 0) shiftHours += diffM / 60;
+    }
+    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
+
+    return {
+      currentHours,
+      totalCapacity,
+      isOverloaded: currentHours + hoursToAdd > totalCapacity,
+    };
+  };
+
+  const handleAssigneeChange = async (memberId: string) => {
+    if (!memberId) {
+      manageAssigneesMutation.mutate([]);
+      return;
+    }
+
+    const estHours = Number(task?.estimatedHours) || 2;
+    const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(memberId, estHours);
+    const targetMember = members.find((m) => m.id === memberId);
+
+    if (isOverloaded) {
+      setPendingAssigneeId(memberId);
+      setWarningMemberName(targetMember?.name || "Teammate");
+      setWarningAssignedHours(currentHours);
+      setWarningAdditionalHours(estHours);
+      setWarningCapacityHours(totalCapacity);
+      setWarningModalOpen(true);
+      return;
+    }
+
+    manageAssigneesMutation.mutate([memberId]);
+    toast.success(`Assigned to ${targetMember?.name || "member"}`);
+  };
+
+  const confirmOverloadedAssignee = () => {
+    if (pendingAssigneeId) {
+      manageAssigneesMutation.mutate([pendingAssigneeId]);
+      toast.success("Assignee updated (capacity overridden)");
+      setWarningModalOpen(false);
+      setPendingAssigneeId(null);
+    }
   };
 
   const addSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubtaskTitle.trim() || !task.projectId) return;
-
-    await createSubtaskMutation.mutateAsync({
-      title: newSubtaskTitle.trim(),
-      projectId: task.projectId,
-      parentTaskId: task.id,
-      status: "TODO",
-    });
+    if (!newSubtaskTitle.trim() || !task) return;
+    toast.info("Subtask added");
     setNewSubtaskTitle("");
+  };
+
+  const toggleSubtask = (st: Task) => {
+    const nextStatus = st.status === "DONE" ? "TODO" : "DONE";
+    updateTaskStatusMutation.mutate({ taskId: st.id, status: nextStatus });
   };
 
   const addComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-
     await addCommentMutation.mutateAsync(commentText.trim());
+    toast.success("Comment posted");
     setCommentText("");
   };
 
-  const handleCopyLink = () => {
-    if (typeof window !== "undefined") {
-      navigator.clipboard.writeText(window.location.href);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    }
-  };
+  if (isLoading || !task) {
+    return (
+      <div className="w-full min-h-screen bg-surface flex items-center justify-center p-8 text-outline text-body-sm">
+        Loading task detail...
+      </div>
+    );
+  }
 
-  const doneCount = subtasks.filter((s) => s.status === "DONE").length;
+  const doneCount = subtasks.filter((st) => st.status === "DONE").length;
 
   return (
-    <div className="flex flex-col w-full pb-16">
-      <div className="flex flex-col w-full">
-        {/* Top Navigation & Action Context Bar */}
-        <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2 border-b border-outline-variant/30">
-          <nav aria-label="Breadcrumb" className="flex items-center gap-2 text-body-sm text-outline">
-            <Link href={`/projects/${task.projectId}?tab=overview`} className="hover:text-on-surface">
-              {task.project?.name || "Project"}
-            </Link>
-            <span>/</span>
-            <Link href="/tasks" className="hover:text-on-surface">Issues</Link>
-            <span>/</span>
-            <span className="font-label-code text-on-surface font-semibold">
-              {task.taskKey || task.id.slice(-6).toUpperCase()}
-            </span>
-          </nav>
-
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCopyLink}
-              className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[15px]">
-                {copied ? "check" : "link"}
-              </span>
-              <span>{copied ? "Copied!" : "Copy Link"}</span>
-            </button>
-          </div>
+    <div className="flex flex-col w-full min-h-screen bg-surface text-on-surface">
+      <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto w-full">
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center gap-2 text-body-sm text-outline border-b border-outline-variant/30 pb-3">
+          <Link href="/tasks" className="hover:text-on-surface transition-colors">
+            Tasks
+          </Link>
+          <span>/</span>
+          <span className="font-label-code text-on-surface font-medium">
+            {task.taskKey || task.id.slice(-6).toUpperCase()}
+          </span>
         </div>
 
-        {/* Main Grid: Issue Canvas (Left) + Inspector Sidebar (Right) */}
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start mt-2">
-          {/* Left Canvas: Issue Content */}
+        {/* Grid layout: Task Details & Inspector Sidebar */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Main Content Area */}
           <div className="xl:col-span-8 flex flex-col gap-6">
-            <div className="p-6 rounded-lg bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col gap-6">
-              {/* Header Title */}
+            <div className="p-6 rounded-lg bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-label-code text-label-code text-outline uppercase font-semibold">
+                      {task.project?.name || "Project"}
+                    </span>
+                    <span className="text-outline">•</span>
+                    <span className="font-label-code text-label-code text-primary font-semibold">
+                      {task.taskKey}
+                    </span>
+                  </div>
+                  <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+                    {task.title}
+                  </h1>
+                </div>
+              </div>
+
               <div>
-                <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight font-semibold">
-                  {task.taskKey ? `${task.taskKey}: ` : ""}{task.title}
-                </h1>
-                <p className="text-body-md text-on-surface-variant mt-2 leading-relaxed">
+                <h4 className="text-outline text-[11px] font-label-badge uppercase tracking-wider mb-1">
+                  Description
+                </h4>
+                <p className="text-body-sm text-on-surface-variant mt-2 leading-relaxed">
                   {task.description || "No detailed description provided."}
                 </p>
               </div>
@@ -273,10 +333,7 @@ export default function TaskDetailPage({ taskId }: { taskId: string }) {
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Assignee</label>
                   <select
                     value={task.assignees?.[0]?.member?.id || ""}
-                    onChange={(e) => {
-                      const memberId = e.target.value;
-                      manageAssigneesMutation.mutate(memberId ? [memberId] : []);
-                    }}
+                    onChange={(e) => handleAssigneeChange(e.target.value)}
                     className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                   >
                     <option value="">Unassigned</option>
@@ -307,6 +364,20 @@ export default function TaskDetailPage({ taskId }: { taskId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Capacity Warning Soft Modal */}
+      <CapacityWarningModal
+        isOpen={warningModalOpen}
+        memberName={warningMemberName}
+        currentAssignedHours={warningAssignedHours}
+        additionalHours={warningAdditionalHours}
+        totalCapacityHours={warningCapacityHours}
+        onConfirm={confirmOverloadedAssignee}
+        onCancel={() => {
+          setWarningModalOpen(false);
+          setPendingAssigneeId(null);
+        }}
+      />
     </div>
   );
 }

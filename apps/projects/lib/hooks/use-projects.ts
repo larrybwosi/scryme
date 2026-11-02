@@ -12,6 +12,10 @@ import {
   UnifiedCalendarEvent,
   UnifiedCalendarResponse,
   UnifiedCalendarFilter,
+  MemberPerformance,
+  WeeklyTimesheetRecord,
+  StaffShiftItem,
+  ShiftTradeItem,
 } from "../api";
 
 export const QUERY_KEYS = {
@@ -513,6 +517,124 @@ export function useUpdateUnifiedEvent() {
       queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+    },
+  });
+}
+
+export type { MemberPerformance, WeeklyTimesheetRecord, StaffShiftItem, ShiftTradeItem };
+
+export function useMemberPerformance(memberId?: string, from?: string, to?: string) {
+  return useQuery<MemberPerformance>({
+    queryKey: ["member-performance", memberId, from, to],
+    queryFn: () => ProjectsAPI.getMemberPerformance(memberId!, from, to),
+    enabled: !!memberId,
+  });
+}
+
+export function useWeeklyTimesheets(memberId?: string, weekStartDate?: string) {
+  return useQuery<WeeklyTimesheetRecord[]>({
+    queryKey: ["weekly-timesheets", memberId, weekStartDate],
+    queryFn: () => ProjectsAPI.getWeeklyTimesheets(memberId, weekStartDate),
+  });
+}
+
+export function useSubmitWeeklyTimesheet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { weekStartDate: string; notes?: string }) =>
+      ProjectsAPI.submitWeeklyTimesheet(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weekly-timesheets"] });
+    },
+  });
+}
+
+export function useProcessWeeklyTimesheet() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ timesheetId, action, notes }: { timesheetId: string; action: 'APPROVE' | 'REJECT'; notes?: string }) =>
+      ProjectsAPI.processWeeklyTimesheet(timesheetId, { action, notes }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["weekly-timesheets"] });
+    },
+  });
+}
+
+export function useStaffShifts(memberId?: string) {
+  return useQuery<StaffShiftItem[]>({
+    queryKey: ["staff-shifts", memberId],
+    queryFn: () => ProjectsAPI.getStaffShifts(memberId),
+  });
+}
+
+export function useCreateStaffShift() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: Partial<StaffShiftItem>) => ProjectsAPI.createStaffShift(data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
+    },
+  });
+}
+
+export function useUpdateStaffShift() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ shiftId, data }: { shiftId: string; data: Partial<StaffShiftItem> }) =>
+      ProjectsAPI.updateStaffShift(shiftId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
+    },
+  });
+}
+
+export function useDeleteStaffShift() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (shiftId: string) => ProjectsAPI.deleteStaffShift(shiftId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["staff-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
+    },
+  });
+}
+
+export function useShiftTrades(status?: string) {
+  return useQuery<ShiftTradeItem[]>({
+    queryKey: ["shift-trades", status],
+    queryFn: () => ProjectsAPI.getShiftTrades(status),
+  });
+}
+
+export function useRequestShiftTrade() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (payload: { shiftId: string; targetMemberId?: string; offeredShiftId?: string; type?: string; reason?: string }) =>
+      ProjectsAPI.requestShiftTrade(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-trades"] });
+    },
+  });
+}
+
+export function useProcessShiftTrade() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ tradeId, action }: { tradeId: string; action: 'APPROVE' | 'REJECT' | 'CANCEL' }) =>
+      ProjectsAPI.processShiftTrade(tradeId, action),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["shift-trades"] });
+      queryClient.invalidateQueries({ queryKey: ["staff-shifts"] });
+      queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
     },
   });
 }

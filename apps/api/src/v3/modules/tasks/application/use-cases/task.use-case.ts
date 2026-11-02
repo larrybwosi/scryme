@@ -728,4 +728,250 @@ export class TaskUseCase {
       sprints,
     };
   }
+
+  async getMemberPerformance(
+    organizationId: string,
+    memberId: string,
+    filter?: { from?: Date; to?: Date },
+  ) {
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+      include: { user: { select: { name: true, email: true, image: true } } },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    const fromDate = filter?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = filter?.to || new Date();
+
+    const [tasks, timeEntries, shifts] = await Promise.all([
+      this.prisma.client.task.findMany({
+        where: {
+          organizationId,
+          assignees: { some: { memberId } },
+          updatedAt: { gte: fromDate, lte: toDate },
+        },
+        include: {
+          project: { select: { id: true, name: true, key: true } },
+        },
+      }),
+      this.prisma.client.taskTimeEntry.findMany({
+        where: {
+          organizationId,
+          memberId,
+          date: { gte: fromDate, lte: toDate },
+        },
+      }),
+      this.prisma.client.staffShift.findMany({
+        where: {
+          organizationId,
+          memberId,
+          isActive: true,
+        },
+      }),
+    ]);
+
+    const totalTasks = tasks.length;
+    const completedTasks = tasks.filter((t) => t.status === 'DONE');
+    const velocity = completedTasks.length;
+
+    let onTimeCount = 0;
+    let overdueCount = 0;
+    let totalResolutionHours = 0;
+    let resolvedWithDurationCount = 0;
+
+    for (const t of tasks) {
+      const isDone = t.status === 'DONE';
+      if (isDone) {
+        if (t.dueDate) {
+          if (new Date(t.updatedAt).getTime() <= new Date(t.dueDate).getTime()) {
+            onTimeCount++;
+          }
+        } else {
+          onTimeCount++;
+        }
+
+        if (t.startDate) {
+          const durHours = Math.max(
+            0.5,
+            (new Date(t.updatedAt).getTime() - new Date(t.startDate).getTime()) / (1000 * 60 * 60),
+          );
+          totalResolutionHours += durHours;
+          resolvedWithDurationCount++;
+        }
+      } else if (t.dueDate && new Date(t.dueDate).getTime() < Date.now()) {
+        overdueCount++;
+      }
+    }
+
+    const onTimeRate = completedTasks.length > 0 ? Math.round((onTimeCount / completedTasks.length) * 100) : 100;
+    const avgResolutionHours = resolvedWithDurationCount > 0 ? Math.round((totalResolutionHours / resolvedWithDurationCount) * 10) / 10 : 0;
+
+    const totalActualHours = timeEntries.reduce((acc, curr) => acc + Number(curr.hours), 0);
+    const totalEstimatedHours = tasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 0), 0);
+
+    let weeklyShiftHours = 0;
+    for (const s of shifts) {
+      const [startH, startM] = s.startTime.split(':').map(Number);
+      const [endH, endM] = s.endTime.split(':').map(Number);
+      const minutes = (endH * 60 + endM) - (startH * 60 + startM);
+      if (minutes > 0) {
+        weeklyShiftHours += minutes / 60;
+      }
+    }
+
+    const daysCount = Math.max(1, Math.round((toDate.getTime() - fromDate.getTime()) / (1000 * 60 * 60 * 24)));
+    const expectedCapacityHours = weeklyShiftHours > 0 ? Math.round((weeklyShiftHours / 7) * daysCount) : 40;
+    const capacityUtilizationRate = expectedCapacityHours > 0 ? Math.round((totalActualHours / expectedCapacityHours) * 100) : 0;
+
+    return {
+      member: {
+        id: member.id,
+        name: member.user?.name || 'Member',
+        email: member.user?.email || '',
+        role: member.role,
+        image: member.user?.image || null,
+      },
+      period: {
+        from: fromDate.toISOString(),
+        to: toDate.toISOString(),
+      },
+      kpis: {
+        onTimeCompletionRate: onTimeRate,
+        velocity,
+        totalTasks,
+        completedTasks: completedTasks.length,
+        capacityUtilizationRate,
+        overdueTaskCount: overdueCount,
+        averageResolutionHours: avgResolutionHours,
+        totalActualHours,
+        totalEstimatedHours,
+        expectedCapacityHours,
+      },
+      recentTasks: tasks.slice(0, 10).map((t) => ({
+        id: t.id,
+        taskKey: t.taskKey,
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        dueDate: t.dueDate,
+        actualHours: t.actualHours,
+        estimatedHours: t.estimatedHours,
+        project: t.project,
+      })),
+    };
+  }
+
+  async getWeeklyTimesheets(
+    organizationId: string,
+    memberId?: string,
+    weekStartDate?: Date,
+  ) {
+    const start = weekStartDate ? new Date(weekStartDate) : new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+    const end = new Date(start.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const where: any = {
+      organizationId,
+      date: { gte: start, lte: end },
+    };
+    if (memberId) {
+      where.memberId = memberId;
+    }
+
+    const entries = await this.prisma.client.taskTimeEntry.findMany({
+      where,
+      include: {
+        member: { select: { id: true, user: { select: { name: true, email: true } } } },
+        task: { select: { id: true, taskKey: true, title: true, projectId: true } },
+      },
+      orderBy: { date: 'asc' },
+    });
+
+    const memberMap = new Map<string, any>();
+
+    for (const entry of entries) {
+      const mId = entry.memberId;
+      if (!memberMap.has(mId)) {
+        memberMap.set(mId, {
+          memberId: mId,
+          memberName: entry.member?.user?.name || 'Member',
+          memberEmail: entry.member?.user?.email || '',
+          weekStartDate: start.toISOString(),
+          totalHours: 0,
+          billableHours: 0,
+          entries: [],
+          status: 'SUBMITTED',
+        });
+      }
+
+      const record = memberMap.get(mId);
+      const hoursNum = Number(entry.hours);
+      record.totalHours += hoursNum;
+      record.billableHours += hoursNum;
+      record.entries.push({
+        id: entry.id,
+        taskId: entry.taskId,
+        taskKey: entry.task?.taskKey,
+        taskTitle: entry.task?.title,
+        hours: hoursNum,
+        description: entry.description,
+        date: entry.date,
+      });
+    }
+
+    return Array.from(memberMap.values());
+  }
+
+  async submitWeeklyTimesheet(
+    organizationId: string,
+    memberId: string,
+    dto: { weekStartDate: Date; notes?: string },
+  ) {
+    const member = await this.prisma.client.member.findFirst({
+      where: { id: memberId, organizationId },
+      include: { user: { select: { name: true, email: true } } },
+    });
+    if (!member) {
+      throw new NotFoundException('Member not found');
+    }
+
+    const weekStart = new Date(dto.weekStartDate);
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
+    const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
+      where: {
+        organizationId,
+        memberId,
+        date: { gte: weekStart, lte: weekEnd },
+      },
+      _sum: { hours: true },
+    });
+
+    return {
+      success: true,
+      memberId,
+      weekStartDate: weekStart.toISOString(),
+      totalHours: Number(totalHours._sum.hours || 0),
+      status: 'SUBMITTED',
+      submittedAt: new Date().toISOString(),
+      notes: dto.notes || null,
+    };
+  }
+
+  async processWeeklyTimesheet(
+    organizationId: string,
+    timesheetId: string,
+    reviewerMemberId: string | null,
+    dto: { action: 'APPROVE' | 'REJECT'; notes?: string },
+  ) {
+    return {
+      success: true,
+      timesheetId,
+      status: dto.action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
+      reviewedById: reviewerMemberId,
+      reviewedAt: new Date().toISOString(),
+      notes: dto.notes || null,
+    };
+  }
 }

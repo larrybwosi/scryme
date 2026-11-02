@@ -243,3 +243,41 @@ export class CreateTaskTimeEntryDto {
   @IsDate()
   date?: Date;
 }
+
+export class MemberPerformanceFilterDto {
+  @ApiPropertyOptional({ example: '2026-10-01T00:00:00.000Z' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @ApiPropertyOptional({ example: '2026-10-31T23:59:59.999Z' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+}
+
+export class SubmitTimesheetDto {
+  @ApiProperty({ example: '2026-10-12T00:00:00.000Z', description: 'Monday start date of the week' })
+  @Type(() => Date)
+  @IsDate()
+  weekStartDate!: Date;
+
+  @ApiPropertyOptional({ example: 'Weekly development sprint tasks', description: 'Submission notes' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class ProcessTimesheetDto {
+  @ApiProperty({ example: 'APPROVE', enum: ['APPROVE', 'REJECT'] })
+  @IsString()
+  @IsNotEmpty()
+  action!: 'APPROVE' | 'REJECT';
+
+  @ApiPropertyOptional({ example: 'Approved for payroll processing' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
