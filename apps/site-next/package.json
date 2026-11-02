@@ -1,6 +1,6 @@
 {
   "name": "site-next",
-  "version": "10.2.33",
+  "version": "10.2.34",
   "private": true,
   "type": "module",
   "scripts": {

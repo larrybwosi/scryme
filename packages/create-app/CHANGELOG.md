@@ -1,5 +1,11 @@
 # create-scryme-app
 
+## 10.2.34
+
+### Patch Changes
+
+- db807e8: Prepare release v10.2.8
+
 ## 10.2.33
 
 ### Patch Changes
