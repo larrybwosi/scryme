@@ -1,7 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from "@nestjs/common";
 import { initializeApp, getApps, cert, App } from "firebase-admin/app";
 import { getMessaging, Messaging, MulticastMessage } from "firebase-admin/messaging";
-import { PrismaService } from "@/prisma/prisma.service";
+import { PrismaService } from "../../prisma/prisma.service";
 
 export interface FcmNotificationPayload {
   title: string;

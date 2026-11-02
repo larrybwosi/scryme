@@ -474,3 +474,12 @@ export function useMembers() {
     queryFn: () => ProjectsAPI.getMembers(),
   });
 }
+
+export function useAllMilestonesAndSprints() {
+  const { data: projects = [] } = useProjects();
+  return {
+    projects,
+    milestones: projects.flatMap((p) => p.milestones || []),
+    sprints: projects.flatMap((p) => p.sprints || []),
+  };
+}

@@ -5,7 +5,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { PrismaService } from '../../../../../prisma/prisma.service';
-import { FirebaseMessagingService } from '@/common/firebase/firebase-messaging.service';
+import { FirebaseMessagingService } from '../../../../../common/firebase/firebase-messaging.service';
 import {
   AddTaskCommentDto,
   AddTaskDependencyDto,
