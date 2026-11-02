@@ -17,16 +17,10 @@ interface CategoryDistributionProps {
 
 export function CategoryDistributionChart({
   data,
-  totalSales = 125000,
+  totalSales = 0,
   currency = "USD",
 }: CategoryDistributionProps) {
-  const chartData = data && data.length > 0 ? data : [
-    { name: "Electronics", value: 85000, percentage: 68, color: "#3B82F6" },
-    { name: "Fashion", value: 25000, percentage: 20, color: "#A855F7" },
-    { name: "Health & Wellness", value: 10000, percentage: 8, color: "#EAB308" },
-    { name: "Home & Living", value: 5000, percentage: 4, color: "#EC4899" },
-  ];
-
+  const chartData = data || [];
   const displayTotal = totalSales || chartData.reduce((acc, curr) => acc + curr.value, 0);
 
   const formatCurrency = (val: number) =>
@@ -53,68 +47,76 @@ export function CategoryDistributionChart({
           </Button>
         </div>
 
-        <div className="relative h-[180px] w-full flex items-center justify-center my-2">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                innerRadius={55}
-                outerRadius={75}
-                paddingAngle={4}
-                dataKey="value"
-                stroke="none"
-              >
-                {chartData.map((entry, index) => (
-                  <Cell key={`cell-${index}`} fill={entry.color} />
-                ))}
-              </Pie>
-              <Tooltip
-                content={({ active, payload }) => {
-                  if (active && payload && payload.length) {
-                    const dataPoint = payload[0].payload;
-                    return (
-                      <div className="bg-popover text-popover-foreground border border-border/80 px-3 py-1.5 rounded-xl shadow-md text-xs font-semibold">
-                        {dataPoint.name}: {formatCurrency(dataPoint.value)} ({dataPoint.percentage}%)
-                      </div>
-                    );
-                  }
-                  return null;
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
-
-          <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
-            <span className="text-[11px] font-medium text-muted-foreground">Total Sales</span>
-            <span className="text-base font-bold text-foreground mt-0.5">
-              {formatCurrency(displayTotal)}
-            </span>
+        {chartData.length === 0 ? (
+          <div className="h-[240px] w-full flex flex-col items-center justify-center text-center text-muted-foreground text-xs">
+            No category sales recorded for this period.
           </div>
-        </div>
+        ) : (
+          <>
+            <div className="relative h-[180px] w-full flex items-center justify-center my-2">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={55}
+                    outerRadius={75}
+                    paddingAngle={4}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    {chartData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.color} />
+                    ))}
+                  </Pie>
+                  <Tooltip
+                    content={({ active, payload }) => {
+                      if (active && payload && payload.length) {
+                        const dataPoint = payload[0].payload;
+                        return (
+                          <div className="bg-popover text-popover-foreground border border-border/80 px-3 py-1.5 rounded-xl shadow-md text-xs font-semibold">
+                            {dataPoint.name}: {formatCurrency(dataPoint.value)} ({dataPoint.percentage}%)
+                          </div>
+                        );
+                      }
+                      return null;
+                    }}
+                  />
+                </PieChart>
+              </ResponsiveContainer>
 
-        <div className="space-y-3 mt-4 pt-2 border-t border-border/40">
-          {chartData.map((item) => (
-            <div key={item.name} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2">
-                <span
-                  className="w-2.5 h-2.5 rounded-full"
-                  style={{ backgroundColor: item.color }}
-                />
-                <span className="font-medium text-foreground">{item.name}</span>
-              </div>
-              <div className="flex items-center gap-3">
-                <span className="font-semibold text-foreground">
-                  {formatCurrency(item.value)}
-                </span>
-                <span className="font-bold text-muted-foreground w-8 text-right font-mono text-[11px]">
-                  {item.percentage}%
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-center pointer-events-none">
+                <span className="text-[11px] font-medium text-muted-foreground">Total Sales</span>
+                <span className="text-base font-bold text-foreground mt-0.5">
+                  {formatCurrency(displayTotal)}
                 </span>
               </div>
             </div>
-          ))}
-        </div>
+
+            <div className="space-y-3 mt-4 pt-2 border-t border-border/40">
+              {chartData.map((item) => (
+                <div key={item.name} className="flex items-center justify-between text-xs">
+                  <div className="flex items-center gap-2">
+                    <span
+                      className="w-2.5 h-2.5 rounded-full"
+                      style={{ backgroundColor: item.color }}
+                    />
+                    <span className="font-medium text-foreground">{item.name}</span>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <span className="font-semibold text-foreground">
+                      {formatCurrency(item.value)}
+                    </span>
+                    <span className="font-bold text-muted-foreground w-8 text-right font-mono text-[11px]">
+                      {item.percentage}%
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </Card>
   );
