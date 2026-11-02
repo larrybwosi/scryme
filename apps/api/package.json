@@ -22,7 +22,7 @@
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage",
     "test:debug": "vitest --inspect-brk --no-file-parallelism",
-    "type-check": "tsc --noEmit"
+    "type-check": "NODE_OPTIONS=\"--max-old-space-size=8192\" tsc --noEmit"
   },
   "dependencies": {
     "@apollo/subgraph": "^2.14.1",
