@@ -3,16 +3,15 @@
 import React, { useState, useMemo } from "react";
 import {
   useMembers,
-  useTasks,
   useProjects,
   useCreateTask,
+  useUnifiedCalendarEvents,
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 
 export default function SchedulePage() {
   const [weekOffset, setWeekOffset] = useState(0);
   const { data: members = [], isLoading: isMembersLoading } = useMembers();
-  const { data: tasks = [] } = useTasks();
   const { data: projects = [] } = useProjects();
   const createTaskMutation = useCreateTask();
   const { canManageTasks } = usePermissions();
@@ -41,6 +40,12 @@ export default function SchedulePage() {
     return { weekStart: monday, weekEnd: sunday, weekLabel: label };
   }, [weekOffset]);
 
+  // Query unified events for the active week window
+  const { data: unifiedData } = useUnifiedCalendarEvents({
+    from: weekStart.toISOString(),
+    to: weekEnd.toISOString(),
+  });
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectId = bookingProjectId || (projects[0]?.id || "");
@@ -61,85 +66,116 @@ export default function SchedulePage() {
     setBookingTask("");
   };
 
-  // Aggregate member allocations within the selected week
+  // Aggregate workload, shifts, and assigned operations per member
   const memberAllocations = useMemo(() => {
+    const events = unifiedData?.events || [];
+
     return members.map((member) => {
-      const memberTasks = tasks.filter((t) => {
-        const isAssigned = t.assignees?.some((a) => a.member?.id === member.id);
-        if (!isAssigned) return false;
-
-        // Check if task falls into current week
-        if (t.dueDate) {
-          const due = new Date(t.dueDate);
-          return due >= weekStart && due <= weekEnd;
-        }
-        // If no due date, include if weekOffset === 0 (current week)
-        return weekOffset === 0;
-      });
-
-      const assignedHours = memberTasks.reduce(
-        (acc, t) => acc + (Number(t.estimatedHours) || Number(t.actualHours) || 2),
-        0
+      // Find all events assigned to this member within the week
+      const memberEvents = events.filter((ev) =>
+        (ev.assignees || []).some((a) => a.id === member.id || a.email === member.email)
       );
-      const totalCapacity = 40;
+
+      // Extract shifts vs tasks
+      const shifts = memberEvents.filter((ev) => ev.category === "shift");
+      const assignedTasks = memberEvents.filter((ev) => ev.category !== "shift");
+
+      // Shift hours: sum scheduled shift durations (default 8h per shift)
+      const shiftHours = shifts.reduce((acc, s) => {
+        const start = new Date(s.startAt).getTime();
+        const end = new Date(s.endAt).getTime();
+        const hrs = !isNaN(start) && !isNaN(end) && end > start ? (end - start) / 3600000 : 8;
+        return acc + hrs;
+      }, 0);
+
+      // Baseline member capacity (if shifts exist, use scheduled shifts; otherwise default 40h workweek)
+      const baseCapacity = shiftHours > 0 ? shiftHours : 40;
+
+      // Calculate committed workload hours
+      let assignedHours = 0;
+      for (const t of assignedTasks) {
+        if (t.details?.estimatedHours) {
+          assignedHours += Number(t.details.estimatedHours);
+        } else if (t.category === "production") {
+          assignedHours += 3; // Estimated batch duration
+        } else if (t.category === "delivery") {
+          assignedHours += 1.5; // Estimated dispatch window
+        } else if (t.category === "crm") {
+          assignedHours += 0.5; // Estimated follow-up call
+        } else {
+          assignedHours += 2;
+        }
+      }
 
       return {
         member,
-        assignedHours,
-        totalCapacity,
-        tasks: memberTasks,
+        assignedHours: Math.round(assignedHours),
+        totalCapacity: Math.round(baseCapacity),
+        shiftHours: Math.round(shiftHours),
+        shiftCount: shifts.length,
+        events: memberEvents,
+        assignedTasks,
       };
     });
-  }, [members, tasks, weekStart, weekEnd, weekOffset]);
+  }, [members, unifiedData]);
 
-  const totalAssigned = memberAllocations.reduce((acc, m) => acc + m.assignedHours, 0);
-  const totalCapacity = memberAllocations.length * 40 || 40;
-  const clusterPercentage = Math.round((totalAssigned / totalCapacity) * 100);
+  const { totalAssigned, totalCapacity } = useMemo(() => {
+    let assigned = 0;
+    let capacity = 0;
+    memberAllocations.forEach((m) => {
+      assigned += m.assignedHours;
+      capacity += m.totalCapacity;
+    });
+    return { totalAssigned: assigned, totalCapacity: capacity };
+  }, [memberAllocations]);
+
+  const clusterPercentage = totalCapacity > 0 ? Math.round((totalAssigned / totalCapacity) * 100) : 0;
 
   return (
     <div className="flex flex-col w-full pb-16">
       <div className="flex flex-col w-full">
-        {/* Top Action & Capacity Overview Bar */}
+        {/* Top Header Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2">
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30">
+          <div className="flex flex-wrap items-center gap-3">
+            <h1 className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">
+              Squad & Operational Capacity
+            </h1>
+
+            {/* Week Navigator */}
+            <div className="flex items-center gap-1 bg-surface-container-high border border-outline-variant/30 rounded-lg p-1">
               <button
                 type="button"
-                onClick={() => setWeekOffset(weekOffset - 1)}
-                className="w-6 h-6 flex items-center justify-center text-outline hover:text-on-surface"
+                onClick={() => setWeekOffset((prev) => prev - 1)}
+                className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Previous Week"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
-              <div className="flex items-center gap-1.5 px-2">
-                <span className="material-symbols-outlined text-[15px] text-primary">calendar_month</span>
-                <span className="font-headline-sm text-body-md text-on-surface font-medium">
-                  {weekLabel} {weekOffset === 0 ? "(Current)" : ""}
-                </span>
-              </div>
               <button
                 type="button"
-                onClick={() => setWeekOffset(weekOffset + 1)}
-                className="w-6 h-6 flex items-center justify-center text-outline hover:text-on-surface"
+                onClick={() => setWeekOffset(0)}
+                className="px-2.5 py-0.5 text-body-sm text-on-surface hover:bg-surface-container-highest rounded transition-colors font-medium"
+              >
+                Current Week
+              </button>
+              <button
+                type="button"
+                onClick={() => setWeekOffset((prev) => prev + 1)}
+                className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Next Week"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
-              {weekOffset !== 0 && (
-                <button
-                  type="button"
-                  onClick={() => setWeekOffset(0)}
-                  className="px-2 py-0.5 ml-1 text-label-badge font-label-badge bg-surface-container-high text-on-surface rounded"
-                >
-                  Current
-                </button>
-              )}
             </div>
+
+            <span className="text-body-sm font-label-code text-outline font-medium">
+              {weekLabel}
+            </span>
           </div>
 
-          {/* Right: Capacity Metric & Booking Action */}
-          <div className="flex items-center gap-space-md">
-            <div className="flex items-center gap-space-sm bg-surface-container-low px-3 py-1.5 rounded-lg border border-outline-variant/30">
+          <div className="flex items-center gap-3">
+            {/* Cluster Workload Summary Widget */}
+            <div className="flex items-center gap-2.5 px-3 py-1 rounded-lg bg-surface-container-high border border-outline-variant/30">
               <div className="flex flex-col text-right">
                 <span className="font-headline-sm text-body-sm text-on-surface font-semibold tracking-tight">
                   {totalAssigned}h / {totalCapacity}h
@@ -230,7 +266,7 @@ export default function SchedulePage() {
                   <input
                     type="text"
                     required
-                    placeholder="e.g. Memory profiling session"
+                    placeholder="e.g. Production staging or code review"
                     value={bookingTask}
                     onChange={(e) => setBookingTask(e.target.value)}
                     className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
@@ -271,7 +307,7 @@ export default function SchedulePage() {
         )}
 
         <div className="flex flex-col gap-3">
-          {memberAllocations.map(({ member, assignedHours, totalCapacity, tasks: mTasks }) => {
+          {memberAllocations.map(({ member, assignedHours, totalCapacity, shiftCount, assignedTasks }) => {
             const usagePercent = Math.round((assignedHours / totalCapacity) * 100);
             return (
               <div
@@ -285,7 +321,9 @@ export default function SchedulePage() {
                     </div>
                     <div>
                       <div className="font-headline-sm text-body-md text-on-surface font-semibold">{member.name}</div>
-                      <div className="text-[11px] text-outline">{member.role} • {member.email}</div>
+                      <div className="text-[11px] text-outline">
+                        {member.role} • {member.email} {shiftCount > 0 ? `• ${shiftCount} rostered shift(s)` : ""}
+                      </div>
                     </div>
                   </div>
 
@@ -318,19 +356,18 @@ export default function SchedulePage() {
 
                 {/* Allocation Chips */}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {mTasks.slice(0, 8).map((t) => (
+                  {assignedTasks.slice(0, 8).map((t) => (
                     <div
                       key={t.id}
                       className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-[11px] text-on-surface-variant border border-outline-variant/20"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                      <span className="text-outline font-label-code">{t.taskKey || t.id.slice(-6)}:</span>
+                      <span className="text-outline font-label-code capitalize">{t.category}:</span>
                       <span className="truncate max-w-[140px]">{t.title}</span>
-                      <span className="font-label-code text-outline">({t.estimatedHours || 2}h)</span>
                     </div>
                   ))}
-                  {mTasks.length === 0 && (
-                    <span className="text-[11px] text-outline italic">Available for sprint allocations this week</span>
+                  {assignedTasks.length === 0 && (
+                    <span className="text-[11px] text-outline italic">Available for squad and operational allocations this week</span>
                   )}
                 </div>
               </div>

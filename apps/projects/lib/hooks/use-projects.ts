@@ -9,6 +9,9 @@ import {
   TimeEntry,
   OrganizationMember,
   WorkspaceContext,
+  UnifiedCalendarEvent,
+  UnifiedCalendarResponse,
+  UnifiedCalendarFilter,
 } from "../api";
 
 export const QUERY_KEYS = {
@@ -480,5 +483,36 @@ export function useCalendarEvents(projectId?: string) {
   return useQuery<{ tasks: Task[]; milestones: Milestone[]; sprints: Sprint[] }>({
     queryKey: QUERY_KEYS.calendarEvents(projectId),
     queryFn: () => ProjectsAPI.getCalendarEvents(projectId),
+  });
+}
+
+export function useUnifiedCalendarEvents(filter?: UnifiedCalendarFilter) {
+  return useQuery<UnifiedCalendarResponse>({
+    queryKey: ["unified-calendar", filter],
+    queryFn: () => ProjectsAPI.getUnifiedCalendar(filter),
+  });
+}
+
+export function useUpdateUnifiedEvent() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      eventId,
+      payload,
+    }: {
+      eventId: string;
+      payload: {
+        category: "task" | "production" | "delivery" | "crm" | "shift";
+        status: string;
+        scheduledDate?: string;
+        notes?: string;
+      };
+    }) => ProjectsAPI.updateUnifiedEventStatus(eventId, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
+      queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["calendar-events"] });
+    },
   });
 }

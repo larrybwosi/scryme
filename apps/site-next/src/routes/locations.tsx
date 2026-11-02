@@ -26,7 +26,7 @@ import {
   Watch,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/warehouses')({
+export const Route = createFileRoute('/locations')({
   component: WarehousesComponent,
 })
 

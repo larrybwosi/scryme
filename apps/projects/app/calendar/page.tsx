@@ -2,25 +2,13 @@
 
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
-import { useCalendarEvents, useProjects, useUpdateTask } from "@/lib/hooks/use-projects";
+import {
+  useUnifiedCalendarEvents,
+  useUpdateUnifiedEvent,
+  useProjects,
+} from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
-
-interface CalendarItem {
-  id: string;
-  title: string;
-  type: "task" | "milestone" | "sprint";
-  date: Date;
-  dueDateStr?: string;
-  startDateStr?: string;
-  status: string;
-  priority?: string;
-  projectId?: string;
-  projectName?: string;
-  projectKey?: string;
-  taskKey?: string;
-  assignees?: { id: string; member: { id: string; user: { name: string; email: string } } }[];
-  color: string;
-}
+import { UnifiedCalendarEvent } from "@/lib/api";
 
 const MONTH_NAMES = [
   "January", "February", "March", "April", "May", "June",
@@ -29,186 +17,210 @@ const MONTH_NAMES = [
 
 const WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
+const CATEGORIES = [
+  { id: "all", label: "All Activities", icon: "dashboard" },
+  { id: "tasks", label: "User Tasks", icon: "check_circle" },
+  { id: "production", label: "Production", icon: "bakery_dining" },
+  { id: "deliveries", label: "Deliveries", icon: "local_shipping" },
+  { id: "crm", label: "Customer Follow-ups", icon: "support_agent" },
+  { id: "shifts", label: "Staff Shifts", icon: "badge" },
+];
+
 export default function CalendarPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { data: projects = [] } = useProjects();
-  const { data: calendarData, isLoading } = useCalendarEvents(selectedProjectId || undefined);
   const { canManageTasks } = usePermissions();
-  const updateTaskMutation = useUpdateTask(selectedProjectId || undefined);
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
-  const [filterType, setFilterType] = useState<string>("all");
-  const [selectedItem, setSelectedItem] = useState<CalendarItem | null>(null);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedEvent, setSelectedEvent] = useState<UnifiedCalendarEvent | null>(null);
+
+  // Compute date range for fetching unified calendar events
+  const { rangeFrom, rangeTo } = useMemo(() => {
+    const from = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+    const to = new Date(currentDate.getFullYear(), currentDate.getMonth() + 2, 0);
+    return { rangeFrom: from.toISOString(), rangeTo: to.toISOString() };
+  }, [currentDate]);
+
+  const { data: unifiedData, isLoading } = useUnifiedCalendarEvents({
+    from: rangeFrom,
+    to: rangeTo,
+    categories: selectedCategory === "all" ? undefined : selectedCategory,
+    projectId: selectedProjectId || undefined,
+  });
+
+  const updateUnifiedEventMutation = useUpdateUnifiedEvent();
 
   const currentYear = currentDate.getFullYear();
   const currentMonthIdx = currentDate.getMonth();
   const currentMonthName = MONTH_NAMES[currentMonthIdx];
 
-  // Derive normalized calendar items from tasks, milestones, and sprints
-  const allEvents = useMemo<CalendarItem[]>(() => {
-    const list: CalendarItem[] = [];
+  // Normalized events mapped to dates
+  const events = useMemo(() => {
+    return unifiedData?.events || [];
+  }, [unifiedData]);
 
-    if (!calendarData) return list;
-
-    // Tasks with due dates
-    for (const t of calendarData.tasks || []) {
-      const d = t.dueDate ? new Date(t.dueDate) : t.startDate ? new Date(t.startDate) : null;
-      if (d && !isNaN(d.getTime())) {
-        list.push({
-          id: t.id,
-          title: t.title,
-          type: "task",
-          date: d,
-          dueDateStr: t.dueDate,
-          startDateStr: t.startDate,
-          status: t.status,
-          priority: t.priority,
-          projectId: t.projectId,
-          projectName: t.project?.name,
-          projectKey: t.project?.key,
-          taskKey: t.taskKey,
-          assignees: t.assignees,
-          color:
-            t.status === "DONE"
-              ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/30"
-              : t.priority === "URGENT"
-              ? "bg-red-500/20 text-red-300 border border-red-500/30"
-              : "bg-surface-container-high text-primary border border-primary/30",
-        });
-      }
+  // Color mapper based on domain category and priority/status
+  const getEventBadgeClass = (e: UnifiedCalendarEvent) => {
+    switch (e.category) {
+      case "production":
+        return e.status === "COMPLETED"
+          ? "bg-emerald-950/70 text-emerald-300 border-emerald-500/30"
+          : "bg-amber-950/70 text-amber-300 border-amber-500/40";
+      case "delivery":
+        return e.status === "DELIVERED"
+          ? "bg-emerald-950/70 text-emerald-300 border-emerald-500/30"
+          : e.status === "FAILED"
+          ? "bg-rose-950/70 text-rose-300 border-rose-500/50"
+          : "bg-cyan-950/70 text-cyan-300 border-cyan-500/40";
+      case "crm":
+        return e.status === "COMPLETED"
+          ? "bg-slate-800/80 text-slate-300 border-slate-600/30"
+          : "bg-indigo-950/80 text-indigo-300 border-indigo-500/40";
+      case "shift":
+        return "bg-teal-950/70 text-teal-300 border-teal-500/30";
+      case "milestone":
+        return "bg-purple-950/70 text-purple-300 border-purple-500/40";
+      case "task":
+      default:
+        return e.status === "DONE"
+          ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+          : e.priority === "URGENT"
+          ? "bg-rose-950/70 text-rose-300 border-rose-500/50"
+          : "bg-surface-container-high text-primary border-primary/30";
     }
+  };
 
-    // Milestones with due dates
-    for (const m of calendarData.milestones || []) {
-      if (m.dueDate) {
-        const d = new Date(m.dueDate);
-        if (!isNaN(d.getTime())) {
-          list.push({
-            id: m.id,
-            title: m.title,
-            type: "milestone",
-            date: d,
-            dueDateStr: m.dueDate,
-            status: m.status,
-            projectId: m.projectId,
-            projectName: m.project?.name,
-            projectKey: m.project?.key,
-            color: "bg-secondary-container text-on-secondary-container font-semibold border border-secondary/40",
-          });
-        }
-      }
+  const getCategoryIcon = (category: string) => {
+    switch (category) {
+      case "production": return "bakery_dining";
+      case "delivery": return "local_shipping";
+      case "crm": return "support_agent";
+      case "shift": return "badge";
+      case "milestone": return "flag";
+      case "task": default: return "check_circle";
     }
+  };
 
-    // Sprints with start or end dates
-    for (const s of calendarData.sprints || []) {
-      const d = s.endDate ? new Date(s.endDate) : s.startDate ? new Date(s.startDate) : null;
-      if (d && !isNaN(d.getTime())) {
-        list.push({
-          id: s.id,
-          title: s.name,
-          type: "sprint",
-          date: d,
-          dueDateStr: s.endDate,
-          startDateStr: s.startDate,
-          status: s.status,
-          projectId: s.projectId,
-          projectName: s.project?.name,
-          projectKey: s.project?.key,
-          color: "bg-primary-container text-on-primary-container font-medium border border-primary/40",
-        });
-      }
-    }
-
-    return list;
-  }, [calendarData]);
-
-  const filteredEvents = useMemo(() => {
-    return allEvents.filter((ev) => {
-      if (filterType !== "all" && ev.type !== filterType) return false;
-      return true;
+  // Status transition handler for selected event
+  const handleStatusTransition = async (newStatus: string) => {
+    if (!selectedEvent || !canManageTasks) return;
+    await updateUnifiedEventMutation.mutateAsync({
+      eventId: selectedEvent.id,
+      payload: {
+        category: selectedEvent.category as any,
+        status: newStatus,
+      },
     });
-  }, [allEvents, filterType]);
+    setSelectedEvent((prev) => (prev ? { ...prev, status: newStatus } : null));
+  };
 
-  // Calendar calculations for Month View
-  const daysInMonth = new Date(currentYear, currentMonthIdx + 1, 0).getDate();
-  const firstDayOfWeek = (new Date(currentYear, currentMonthIdx, 1).getDay() + 6) % 7; // Monday = 0
-  const prevMonthDays = new Date(currentYear, currentMonthIdx, 0).getDate();
+  // Month calendar grid calculation
+  const calendarDays = useMemo(() => {
+    const firstDay = new Date(currentYear, currentMonthIdx, 1);
+    const lastDay = new Date(currentYear, currentMonthIdx + 1, 0);
 
-  // Navigation handlers
-  const handlePrev = () => {
+    const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
+    const totalDays = lastDay.getDate();
+
+    const prevMonthLastDay = new Date(currentYear, currentMonthIdx, 0).getDate();
+
+    const days: { date: Date; isCurrentMonth: boolean; events: UnifiedCalendarEvent[] }[] = [];
+
+    // Prev month padding
+    for (let i = startDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonthIdx - 1, prevMonthLastDay - i);
+      days.push({ date: d, isCurrentMonth: false, events: [] });
+    }
+
+    // Current month days
+    for (let i = 1; i <= totalDays; i++) {
+      const d = new Date(currentYear, currentMonthIdx, i);
+      const dayEvents = events.filter((ev) => {
+        const evDate = new Date(ev.startAt);
+        return (
+          evDate.getFullYear() === d.getFullYear() &&
+          evDate.getMonth() === d.getMonth() &&
+          evDate.getDate() === d.getDate()
+        );
+      });
+      days.push({ date: d, isCurrentMonth: true, events: dayEvents });
+    }
+
+    // Next month padding to fill complete weeks (multiples of 7)
+    const remaining = 7 - (days.length % 7);
+    if (remaining < 7) {
+      for (let i = 1; i <= remaining; i++) {
+        const d = new Date(currentYear, currentMonthIdx + 1, i);
+        days.push({ date: d, isCurrentMonth: false, events: [] });
+      }
+    }
+
+    return days;
+  }, [currentYear, currentMonthIdx, events]);
+
+  const goToPrev = () => {
     if (viewMode === "month") {
       setCurrentDate(new Date(currentYear, currentMonthIdx - 1, 1));
     } else if (viewMode === "week") {
-      const next = new Date(currentDate);
-      next.setDate(next.getDate() - 7);
-      setCurrentDate(next);
+      setCurrentDate(new Date(currentDate.getTime() - 7 * 86400000));
     } else {
-      const next = new Date(currentDate);
-      next.setDate(next.getDate() - 1);
-      setCurrentDate(next);
+      setCurrentDate(new Date(currentDate.getTime() - 86400000));
     }
   };
 
-  const handleNext = () => {
+  const goToNext = () => {
     if (viewMode === "month") {
       setCurrentDate(new Date(currentYear, currentMonthIdx + 1, 1));
     } else if (viewMode === "week") {
-      const next = new Date(currentDate);
-      next.setDate(next.getDate() + 7);
-      setCurrentDate(next);
+      setCurrentDate(new Date(currentDate.getTime() + 7 * 86400000));
     } else {
-      const next = new Date(currentDate);
-      next.setDate(next.getDate() + 1);
-      setCurrentDate(next);
+      setCurrentDate(new Date(currentDate.getTime() + 86400000));
     }
   };
 
-  const handleToday = () => {
+  const goToToday = () => {
     setCurrentDate(new Date());
-  };
-
-  // Week View Calculations
-  const weekDays = useMemo(() => {
-    const curr = new Date(currentDate);
-    const dayOfWeek = (curr.getDay() + 6) % 7; // Monday = 0
-    const monday = new Date(curr);
-    monday.setDate(curr.getDate() - dayOfWeek);
-
-    const days: Date[] = [];
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(monday);
-      d.setDate(monday.getDate() + i);
-      days.push(d);
-    }
-    return days;
-  }, [currentDate]);
-
-  const isToday = (year: number, month: number, day: number) => {
-    const today = new Date();
-    return (
-      today.getFullYear() === year &&
-      today.getMonth() === month &&
-      today.getDate() === day
-    );
   };
 
   return (
     <div className="flex flex-col w-full pb-16">
       <div className="flex flex-col w-full">
-        {/* Top Command & Filter Bar */}
+        {/* Top Control Header */}
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2">
           <div className="flex flex-wrap items-center gap-3">
-            {/* View Mode Switcher */}
-            <div className="flex items-center bg-surface-container-lowest p-0.5 rounded-lg border border-outline-variant/30 shadow-sm">
+            <h1 className="font-headline-sm text-headline-sm text-on-surface tracking-tight font-semibold">
+              Cross-System Calendar & Schedules
+            </h1>
+
+            {projects.length > 0 && (
+              <select
+                value={selectedProjectId}
+                onChange={(e) => setSelectedProjectId(e.target.value)}
+                className="bg-surface-container-high border border-outline-variant/30 text-on-surface text-body-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary"
+              >
+                <option value="">All Projects & Workspaces</option>
+                {projects.map((p) => (
+                  <option key={p.id} value={p.id}>
+                    {p.name} ({p.key})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          <div className="flex items-center gap-3">
+            {/* View Mode Buttons */}
+            <div className="flex items-center bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/20">
               {(["month", "week", "day"] as const).map((mode) => (
                 <button
                   key={mode}
                   type="button"
                   onClick={() => setViewMode(mode)}
-                  className={`px-3 py-1 rounded-lg text-body-sm capitalize transition-all ${
+                  className={`px-3 py-1 rounded-md text-body-sm font-label-badge capitalize transition-colors ${
                     viewMode === mode
-                      ? "bg-surface-container-high text-on-surface font-medium shadow-sm"
+                      ? "bg-surface-container-high text-primary font-medium shadow-sm"
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
@@ -218,238 +230,163 @@ export default function CalendarPage() {
             </div>
 
             {/* Date Navigator */}
-            <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1 bg-surface-container-high border border-outline-variant/30 rounded-lg p-1">
               <button
                 type="button"
-                onClick={handlePrev}
-                className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface transition-colors"
+                onClick={goToPrev}
+                className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Previous"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_left</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
               </button>
               <button
                 type="button"
-                onClick={handleToday}
-                className="px-2.5 py-1 rounded-lg bg-surface-container-low hover:bg-surface-container text-on-surface font-body-sm text-body-sm transition-colors"
+                onClick={goToToday}
+                className="px-2.5 py-0.5 text-body-sm text-on-surface hover:bg-surface-container-highest rounded transition-colors font-medium"
               >
                 Today
               </button>
               <button
                 type="button"
-                onClick={handleNext}
-                className="w-7 h-7 flex items-center justify-center rounded-lg bg-surface-container-low hover:bg-surface-container text-outline hover:text-on-surface transition-colors"
+                onClick={goToNext}
+                className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Next"
               >
-                <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
               </button>
             </div>
-
-            <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight pl-2">
-              {currentMonthName} <span className="text-outline font-normal">{currentYear}</span>
-            </h1>
-          </div>
-
-          {/* Right Controls: Project scope, Types filter, and Navigation */}
-          <div className="flex flex-wrap items-center gap-2">
-            {projects.length > 0 && (
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-body-sm focus:outline-none"
-              >
-                <option value="">All Projects</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name}
-                  </option>
-                ))}
-              </select>
-            )}
-
-            <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
-              <span className="text-outline text-[11px] px-1 font-label-badge">Show:</span>
-              {["all", "task", "milestone", "sprint"].map((type) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setFilterType(type)}
-                  className={`px-2 py-0.5 rounded text-[11px] font-label-code capitalize transition-colors ${
-                    filterType === type
-                      ? "bg-surface-container-high text-on-surface font-medium"
-                      : "text-outline hover:text-on-surface"
-                  }`}
-                >
-                  {type}
-                </button>
-              ))}
-            </div>
-
-            <Link
-              href="/schedule"
-              className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30 transition-colors"
-            >
-              <span className="material-symbols-outlined text-[15px]">date_range</span>
-              <span>Schedule</span>
-            </Link>
           </div>
         </div>
 
-        {/* Loading indicator */}
-        {isLoading && (
-          <div className="p-4 mb-2 text-center text-outline text-body-sm bg-surface-container-lowest rounded-lg border border-outline-variant/20 animate-pulse">
-            Syncing calendar events from workspace API...
-          </div>
-        )}
+        {/* Operational Category Layer Filters */}
+        <div className="flex flex-wrap items-center gap-2 mb-4">
+          {CATEGORIES.map((cat) => {
+            const count =
+              cat.id === "all"
+                ? unifiedData?.counts.total ?? 0
+                : (unifiedData?.counts as any)?.[cat.id] ?? 0;
+            const isSelected = selectedCategory === cat.id;
 
-        {/* --- MONTH VIEW --- */}
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => setSelectedCategory(cat.id)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-body-sm transition-all ${
+                  isSelected
+                    ? "bg-primary-container text-on-primary-container border-primary/40 font-medium shadow-sm"
+                    : "bg-surface-container-high text-outline hover:text-on-surface border-outline-variant/30"
+                }`}
+              >
+                <span className="material-symbols-outlined text-[16px]">{cat.icon}</span>
+                <span>{cat.label}</span>
+                {count > 0 && (
+                  <span
+                    className={`ml-1 text-[11px] px-1.5 py-0.2 rounded-full ${
+                      isSelected
+                        ? "bg-primary text-on-primary"
+                        : "bg-surface-container-highest text-outline"
+                    }`}
+                  >
+                    {count}
+                  </span>
+                )}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Current Active Date Display */}
+        <div className="flex items-center justify-between py-2 border-b border-outline-variant/20 mb-3">
+          <span className="text-title-md font-semibold text-on-surface">
+            {currentMonthName} {currentYear}
+          </span>
+          {isLoading && (
+            <span className="text-outline text-body-sm flex items-center gap-1.5">
+              <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+              Syncing operational schedules...
+            </span>
+          )}
+        </div>
+
+        {/* Month View Grid */}
         {viewMode === "month" && (
-          <div className="rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm overflow-hidden flex flex-col">
-            {/* Weekdays Header */}
-            <div className="grid grid-cols-7 border-b border-outline-variant/30 bg-surface-container-high/40 text-center font-label-badge text-outline text-[11px] py-2 uppercase tracking-wider">
-              {WEEKDAY_NAMES.map((d) => (
-                <div key={d}>{d}</div>
+          <div className="flex flex-col border border-outline-variant/30 rounded-xl overflow-hidden bg-surface-container-lowest">
+            {/* Weekday Header */}
+            <div className="grid grid-cols-7 border-b border-outline-variant/20 bg-surface-container">
+              {WEEKDAY_NAMES.map((name) => (
+                <div
+                  key={name}
+                  className="py-2.5 text-center text-outline text-label-sm font-label-badge"
+                >
+                  {name}
+                </div>
               ))}
             </div>
 
-            {/* Month Calendar Grid */}
-            <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-outline-variant/20 min-h-[640px]">
-              {/* Previous month trailing days */}
-              {Array.from({ length: firstDayOfWeek }).map((_, i) => {
-                const prevDay = prevMonthDays - firstDayOfWeek + i + 1;
-                return (
-                  <div key={`offset-prev-${i}`} className="p-2 bg-surface-container-lowest/40 opacity-40">
-                    <span className="text-outline font-label-code text-[11px]">{prevDay}</span>
-                  </div>
-                );
-              })}
-
-              {/* Current month days */}
-              {Array.from({ length: daysInMonth }).map((_, idx) => {
-                const day = idx + 1;
-                const todayActive = isToday(currentYear, currentMonthIdx, day);
-
-                const dayEvents = filteredEvents.filter((e) => {
-                  return (
-                    e.date.getFullYear() === currentYear &&
-                    e.date.getMonth() === currentMonthIdx &&
-                    e.date.getDate() === day
-                  );
-                });
+            {/* Days Grid */}
+            <div className="grid grid-cols-7 auto-rows-fr divide-x divide-y divide-outline-variant/15">
+              {calendarDays.map((day, idx) => {
+                const isToday =
+                  day.date.toDateString() === new Date().toDateString();
 
                 return (
                   <div
-                    key={`day-${day}`}
-                    className={`p-2 transition-colors flex flex-col min-h-[110px] ${
-                      todayActive ? "bg-primary-container/10 border border-primary-container/40" : "hover:bg-surface-container/60"
+                    key={idx}
+                    className={`min-h-[110px] p-2 flex flex-col justify-between transition-colors ${
+                      day.isCurrentMonth
+                        ? "bg-surface-container-lowest hover:bg-surface-container-low/40"
+                        : "bg-surface-container/30 text-outline-variant opacity-60"
                     }`}
                   >
                     <div className="flex items-center justify-between mb-1">
                       <span
-                        className={`w-6 h-6 rounded-full flex items-center justify-center font-label-code text-[12px] ${
-                          todayActive
-                            ? "bg-primary-container text-on-primary-container font-bold"
-                            : "text-on-surface"
+                        className={`text-body-sm font-medium w-6 h-6 flex items-center justify-center rounded-full ${
+                          isToday
+                            ? "bg-primary text-on-primary font-bold shadow-sm"
+                            : day.isCurrentMonth
+                            ? "text-on-surface"
+                            : "text-outline"
                         }`}
                       >
-                        {day}
+                        {day.date.getDate()}
                       </span>
-                      {dayEvents.length > 0 && (
-                        <span className="text-[10px] font-label-code text-outline">
-                          {dayEvents.length}
+                      {day.events.length > 0 && (
+                        <span className="text-[10px] text-outline font-label-code">
+                          {day.events.length} item{day.events.length > 1 ? "s" : ""}
                         </span>
                       )}
                     </div>
 
-                    {/* Day Events Pills */}
-                    <div className="flex flex-col gap-1 overflow-y-auto max-h-[90px]">
-                      {dayEvents.map((ev) => (
+                    {/* Day Events Stack */}
+                    <div className="flex flex-col gap-1 overflow-y-auto max-h-[85px] scrollbar-none">
+                      {day.events.slice(0, 3).map((ev) => (
                         <button
-                          key={`${ev.type}-${ev.id}`}
+                          key={ev.id}
                           type="button"
-                          onClick={() => setSelectedItem(ev)}
-                          className={`px-1.5 py-0.5 rounded text-[10px] font-label-badge truncate text-left transition-all hover:scale-[1.02] cursor-pointer ${ev.color}`}
-                          title={`${ev.title} (${ev.type})`}
+                          onClick={() => setSelectedEvent(ev)}
+                          className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] truncate border text-left transition-all hover:scale-[1.01] ${getEventBadgeClass(
+                            ev
+                          )}`}
+                          title={`${ev.title} (${ev.status})`}
                         >
-                          <span className="font-semibold uppercase mr-1 text-[9px] opacity-75">
-                            {ev.type.slice(0, 3)}:
+                          <span className="material-symbols-outlined text-[13px] shrink-0">
+                            {getCategoryIcon(ev.category)}
                           </span>
-                          {ev.taskKey ? `${ev.taskKey} ` : ""}
-                          {ev.title}
+                          <span className="truncate">{ev.title}</span>
                         </button>
                       ))}
+
+                      {day.events.length > 3 && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedEvent(day.events[3])}
+                          className="text-[10px] text-outline hover:text-primary text-left px-1 font-medium"
+                        >
+                          +{day.events.length - 3} more
+                        </button>
+                      )}
                     </div>
-                  </div>
-                );
-              })}
-
-              {/* Next month leading days to complete grid */}
-              {(() => {
-                const totalCells = firstDayOfWeek + daysInMonth;
-                const remainder = totalCells % 7 === 0 ? 0 : 7 - (totalCells % 7);
-                return Array.from({ length: remainder }).map((_, i) => (
-                  <div key={`offset-next-${i}`} className="p-2 bg-surface-container-lowest/40 opacity-40">
-                    <span className="text-outline font-label-code text-[11px]">{i + 1}</span>
-                  </div>
-                ));
-              })()}
-            </div>
-          </div>
-        )}
-
-        {/* --- WEEK VIEW --- */}
-        {viewMode === "week" && (
-          <div className="rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm overflow-hidden flex flex-col">
-            <div className="grid grid-cols-7 border-b border-outline-variant/30 bg-surface-container-high/40 text-center font-label-badge text-outline text-[11px] py-2 uppercase tracking-wider">
-              {weekDays.map((d, i) => {
-                const active = isToday(d.getFullYear(), d.getMonth(), d.getDate());
-                return (
-                  <div key={i} className={`flex flex-col items-center gap-0.5 ${active ? "text-primary font-bold" : ""}`}>
-                    <span>{WEEKDAY_NAMES[i]}</span>
-                    <span className="font-label-code text-[12px]">{d.getDate()}</span>
-                  </div>
-                );
-              })}
-            </div>
-
-            <div className="grid grid-cols-7 auto-rows-fr divide-x divide-outline-variant/20 min-h-[500px]">
-              {weekDays.map((d, i) => {
-                const active = isToday(d.getFullYear(), d.getMonth(), d.getDate());
-                const dayEvents = filteredEvents.filter(
-                  (e) =>
-                    e.date.getFullYear() === d.getFullYear() &&
-                    e.date.getMonth() === d.getMonth() &&
-                    e.date.getDate() === d.getDate()
-                );
-
-                return (
-                  <div
-                    key={i}
-                    className={`p-2 flex flex-col gap-1.5 min-h-[450px] ${
-                      active ? "bg-primary-container/5" : ""
-                    }`}
-                  >
-                    <div className="text-[11px] text-outline font-label-code border-b border-outline-variant/20 pb-1 mb-1">
-                      {dayEvents.length} items
-                    </div>
-                    {dayEvents.map((ev) => (
-                      <div
-                        key={`${ev.type}-${ev.id}`}
-                        onClick={() => setSelectedItem(ev)}
-                        className={`p-2 rounded-lg cursor-pointer flex flex-col gap-1 shadow-xs hover:border-primary transition-all ${ev.color}`}
-                      >
-                        <div className="flex items-center justify-between text-[10px] font-label-code">
-                          <span className="uppercase font-bold">{ev.type}</span>
-                          <span>{ev.status}</span>
-                        </div>
-                        <span className="font-medium text-body-sm line-clamp-2">{ev.title}</span>
-                        {ev.projectName && (
-                          <span className="text-[10px] text-outline truncate">{ev.projectName}</span>
-                        )}
-                      </div>
-                    ))}
-                    {dayEvents.length === 0 && (
-                      <div className="text-outline text-[11px] text-center pt-8 italic">No events</div>
-                    )}
                   </div>
                 );
               })}
@@ -457,160 +394,282 @@ export default function CalendarPage() {
           </div>
         )}
 
-        {/* --- DAY VIEW --- */}
-        {viewMode === "day" && (
-          <div className="p-6 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-4 shadow-sm">
-            <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
-              <h2 className="font-headline-sm text-headline-sm text-on-surface">
-                Agenda for {MONTH_NAMES[currentDate.getMonth()]} {currentDate.getDate()}, {currentDate.getFullYear()}
-              </h2>
-              <span className="font-label-code text-body-sm text-primary">
-                {
-                  filteredEvents.filter(
-                    (e) =>
-                      e.date.getFullYear() === currentDate.getFullYear() &&
-                      e.date.getMonth() === currentDate.getMonth() &&
-                      e.date.getDate() === currentDate.getDate()
-                  ).length
-                }{" "}
-                Scheduled Events
-              </span>
-            </div>
+        {/* Week & Day Timeline Perspectives */}
+        {viewMode !== "month" && (
+          <div className="flex flex-col gap-3 p-4 border border-outline-variant/30 rounded-xl bg-surface-container-lowest">
+            <h2 className="text-title-sm font-semibold text-on-surface">
+              {viewMode === "week" ? "Weekly Schedule Breakdown" : "Day Agenda"}
+            </h2>
 
-            <div className="flex flex-col gap-3">
-              {filteredEvents
-                .filter(
-                  (e) =>
-                    e.date.getFullYear() === currentDate.getFullYear() &&
-                    e.date.getMonth() === currentDate.getMonth() &&
-                    e.date.getDate() === currentDate.getDate()
-                )
-                .map((ev) => (
+            {events.length === 0 ? (
+              <div className="py-12 text-center text-outline text-body-sm">
+                No scheduled activities found for this time period.
+              </div>
+            ) : (
+              <div className="flex flex-col divide-y divide-outline-variant/15">
+                {events.map((ev) => (
                   <div
-                    key={`${ev.type}-${ev.id}`}
-                    onClick={() => setSelectedItem(ev)}
-                    className="p-4 rounded-lg bg-surface-container border border-outline-variant/30 hover:border-primary transition-all flex items-center justify-between cursor-pointer"
+                    key={ev.id}
+                    onClick={() => setSelectedEvent(ev)}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3 hover:bg-surface-container-low/40 px-2 rounded-lg cursor-pointer transition-colors"
                   >
                     <div className="flex items-center gap-3">
-                      <span className={`px-2 py-1 rounded text-[11px] font-label-badge uppercase ${ev.color}`}>
-                        {ev.type}
-                      </span>
-                      <div>
-                        <div className="font-headline-sm text-body-md text-on-surface font-medium">
-                          {ev.taskKey ? `${ev.taskKey}: ` : ""}
+                      <div
+                        className={`w-9 h-9 rounded-lg flex items-center justify-center border ${getEventBadgeClass(
+                          ev
+                        )}`}
+                      >
+                        <span className="material-symbols-outlined text-[20px]">
+                          {getCategoryIcon(ev.category)}
+                        </span>
+                      </div>
+
+                      <div className="flex flex-col">
+                        <span className="text-body-sm font-medium text-on-surface">
                           {ev.title}
-                        </div>
-                        <div className="text-[11px] text-outline">
-                          Project: {ev.projectName || "General"} • Status: {ev.status}
+                        </span>
+                        <div className="flex items-center gap-2 text-[12px] text-outline">
+                          <span className="capitalize">{ev.category}</span>
+                          <span>•</span>
+                          <span>
+                            {new Date(ev.startAt).toLocaleString("en-US", {
+                              month: "short",
+                              day: "numeric",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </span>
+                          {ev.projectName && (
+                            <>
+                              <span>•</span>
+                              <span>{ev.projectName}</span>
+                            </>
+                          )}
                         </div>
                       </div>
                     </div>
 
-                    {ev.type === "task" ? (
-                      <Link
-                        href={`/tasks/${ev.id}`}
-                        className="px-3 py-1 rounded bg-surface-container-high hover:bg-primary-container text-body-sm text-on-surface hover:text-on-primary-container transition-colors"
-                      >
-                        Inspect Task
-                      </Link>
-                    ) : (
-                      <span className="text-outline font-label-code text-[11px]">View Details</span>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <span className="px-2 py-0.5 rounded text-[11px] font-label-code bg-surface-container-high text-outline border border-outline-variant/20">
+                        {ev.status}
+                      </span>
+                      {ev.priority && (
+                        <span className="px-2 py-0.5 rounded text-[11px] font-label-code bg-surface-container-highest text-on-surface">
+                          {ev.priority}
+                        </span>
+                      )}
+                    </div>
                   </div>
                 ))}
-
-              {filteredEvents.filter(
-                (e) =>
-                  e.date.getFullYear() === currentDate.getFullYear() &&
-                  e.date.getMonth() === currentDate.getMonth() &&
-                  e.date.getDate() === currentDate.getDate()
-              ).length === 0 && (
-                <div className="p-12 text-center text-outline text-body-sm italic">
-                  No deliverables, tasks, or sprints scheduled for this specific date.
-                </div>
-              )}
-            </div>
+              </div>
+            )}
           </div>
         )}
 
-        {/* Selected Event Details Modal / Inspector */}
-        {selectedItem && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-3 border-b border-outline-variant/30">
+        {/* Detailed Event Inspection & Status Action Dialog */}
+        {selectedEvent && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
+            <div className="w-full max-w-lg bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-4 animate-in fade-in-50">
+              <div className="flex items-start justify-between border-b border-outline-variant/20 pb-3">
                 <div className="flex items-center gap-2">
-                  <span className={`px-2 py-0.5 rounded text-[10px] font-label-badge uppercase ${selectedItem.color}`}>
-                    {selectedItem.type}
-                  </span>
-                  <span className="font-headline-sm text-headline-sm text-on-surface font-semibold truncate max-w-[240px]">
-                    {selectedItem.taskKey || selectedItem.title}
-                  </span>
+                  <div
+                    className={`w-8 h-8 rounded-lg flex items-center justify-center border ${getEventBadgeClass(
+                      selectedEvent
+                    )}`}
+                  >
+                    <span className="material-symbols-outlined text-[18px]">
+                      {getCategoryIcon(selectedEvent.category)}
+                    </span>
+                  </div>
+                  <div>
+                    <span className="text-[11px] font-label-code uppercase text-outline">
+                      {selectedEvent.category} • {selectedEvent.code || selectedEvent.id}
+                    </span>
+                    <h2 className="text-title-sm font-semibold text-on-surface">
+                      {selectedEvent.title}
+                    </h2>
+                  </div>
                 </div>
+
                 <button
                   type="button"
-                  onClick={() => setSelectedItem(null)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
+                  onClick={() => setSelectedEvent(null)}
+                  className="p-1 hover:bg-surface-container-highest rounded text-outline hover:text-on-surface"
                 >
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
 
-              <div className="flex flex-col gap-3 py-4 text-body-sm">
+              {/* Event Metadata Grid */}
+              <div className="grid grid-cols-2 gap-3 text-body-sm py-2">
                 <div>
-                  <label className="text-outline text-[11px] font-label-badge block">Title</label>
-                  <span className="text-on-surface font-medium">{selectedItem.title}</span>
+                  <label className="text-[11px] text-outline font-label-badge block">Status</label>
+                  <span className="text-on-surface font-medium">{selectedEvent.status}</span>
+                </div>
+                <div>
+                  <label className="text-[11px] text-outline font-label-badge block">Schedule Window</label>
+                  <span className="text-on-surface">
+                    {new Date(selectedEvent.startAt).toLocaleString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                {selectedEvent.projectName && (
                   <div>
-                    <label className="text-outline text-[11px] font-label-badge block">Project</label>
-                    <span className="text-on-surface">{selectedItem.projectName || "--"}</span>
+                    <label className="text-[11px] text-outline font-label-badge block">Project</label>
+                    <span className="text-on-surface">{selectedEvent.projectName}</span>
                   </div>
-                  <div>
-                    <label className="text-outline text-[11px] font-label-badge block">Status</label>
-                    <span className="text-on-surface font-label-code">{selectedItem.status}</span>
-                  </div>
-                </div>
+                )}
 
-                <div className="grid grid-cols-2 gap-3">
+                {selectedEvent.assignees && selectedEvent.assignees.length > 0 && (
                   <div>
-                    <label className="text-outline text-[11px] font-label-badge block">Scheduled Date</label>
-                    <span className="text-on-surface font-label-code">
-                      {selectedItem.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}
-                    </span>
-                  </div>
-                  {selectedItem.priority && (
-                    <div>
-                      <label className="text-outline text-[11px] font-label-badge block">Priority</label>
-                      <span className="text-on-surface font-label-code">{selectedItem.priority}</span>
-                    </div>
-                  )}
-                </div>
-
-                {selectedItem.assignees && selectedItem.assignees.length > 0 && (
-                  <div>
-                    <label className="text-outline text-[11px] font-label-badge block">Assignees</label>
+                    <label className="text-[11px] text-outline font-label-badge block">Responsible</label>
                     <span className="text-on-surface">
-                      {selectedItem.assignees.map((a) => a.member?.user?.name).filter(Boolean).join(", ")}
+                      {selectedEvent.assignees.map((a) => a.name).join(", ")}
                     </span>
                   </div>
                 )}
               </div>
 
+              {/* Domain Specific Detail Display */}
+              {selectedEvent.details && Object.keys(selectedEvent.details).length > 0 && (
+                <div className="p-3 bg-surface-container-low rounded-lg border border-outline-variant/20 flex flex-col gap-1.5 text-[12px]">
+                  <span className="font-semibold text-on-surface uppercase text-[10px] tracking-wider text-outline">
+                    Domain Details
+                  </span>
+                  {selectedEvent.category === "production" && (
+                    <>
+                      <div>Recipe: <span className="text-on-surface font-medium">{selectedEvent.details.recipeName}</span></div>
+                      <div>Planned Quantity: <span className="text-on-surface font-medium">{selectedEvent.details.plannedQuantity}</span></div>
+                      {selectedEvent.details.orderReference && (
+                        <div>Order Ref: <span className="text-on-surface font-medium">{selectedEvent.details.orderReference}</span></div>
+                      )}
+                    </>
+                  )}
+
+                  {selectedEvent.category === "delivery" && (
+                    <>
+                      <div>Customer: <span className="text-on-surface font-medium">{selectedEvent.details.customerName || "--"}</span></div>
+                      <div>Phone: <span className="text-on-surface font-medium">{selectedEvent.details.customerPhone || "--"}</span></div>
+                      <div>Reconciled: <span className="text-on-surface font-medium">{selectedEvent.details.isReconciled ? "Yes" : "No"}</span></div>
+                    </>
+                  )}
+
+                  {selectedEvent.category === "crm" && (
+                    <>
+                      <div>Type: <span className="text-on-surface font-medium">{selectedEvent.details.followUpType}</span></div>
+                      <div>Entity: <span className="text-on-surface font-medium">{selectedEvent.details.recordObject || "CRM Contact"}</span></div>
+                      {selectedEvent.details.description && (
+                        <div>Notes: <span className="text-on-surface">{selectedEvent.details.description}</span></div>
+                      )}
+                    </>
+                  )}
+
+                  {selectedEvent.category === "shift" && (
+                    <>
+                      <div>Hours: <span className="text-on-surface font-medium">{selectedEvent.details.startTime} - {selectedEvent.details.endTime}</span></div>
+                      {selectedEvent.details.locationName && (
+                        <div>Location: <span className="text-on-surface font-medium">{selectedEvent.details.locationName}</span></div>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Status Action Buttons */}
+              {canManageTasks && (
+                <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/20">
+                  <span className="text-[11px] text-outline font-label-badge">Quick Status Transition</span>
+                  <div className="flex flex-wrap items-center gap-2">
+                    {selectedEvent.category === "production" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("IN_PROGRESS")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+                        >
+                          Start Batch
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("COMPLETED")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                        >
+                          Complete Batch
+                        </button>
+                      </>
+                    )}
+
+                    {selectedEvent.category === "delivery" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("IN_TRANSIT")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                        >
+                          Mark In-Transit
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("DELIVERED")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                        >
+                          Mark Delivered
+                        </button>
+                      </>
+                    )}
+
+                    {selectedEvent.category === "crm" && (
+                      <button
+                        type="button"
+                        onClick={() => handleStatusTransition("COMPLETED")}
+                        className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                      >
+                        Complete Follow-up
+                      </button>
+                    )}
+
+                    {selectedEvent.category === "task" && (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("IN_PROGRESS")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-primary-container text-on-primary-container"
+                        >
+                          In Progress
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleStatusTransition("DONE")}
+                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                        >
+                          Mark Done
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Footer navigation */}
               <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
-                {selectedItem.type === "task" ? (
+                {selectedEvent.category === "task" ? (
                   <Link
-                    href={`/tasks/${selectedItem.id}`}
+                    href={`/tasks/${selectedEvent.rawId}`}
                     className="px-3 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm hover:opacity-90 transition-opacity"
                   >
                     Open Task Inspector
                   </Link>
-                ) : selectedItem.projectId ? (
+                ) : selectedEvent.projectId ? (
                   <Link
-                    href={`/projects/${selectedItem.projectId}?tab=${selectedItem.type === "sprint" ? "cycles" : "milestones"}`}
+                    href={`/projects/${selectedEvent.projectId}`}
                     className="px-3 py-1.5 rounded-lg bg-surface-container-high text-on-surface font-headline-sm text-body-sm hover:bg-surface-container-highest transition-colors"
                   >
-                    View in Project
+                    View Project
                   </Link>
                 ) : (
                   <div></div>
@@ -618,7 +677,7 @@ export default function CalendarPage() {
 
                 <button
                   type="button"
-                  onClick={() => setSelectedItem(null)}
+                  onClick={() => setSelectedEvent(null)}
                   className="px-3 py-1.5 rounded-lg text-outline hover:text-on-surface text-body-sm"
                 >
                   Close

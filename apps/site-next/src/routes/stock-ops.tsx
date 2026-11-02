@@ -22,7 +22,7 @@ import {
   Wand2,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/stock-operations')({
+export const Route = createFileRoute('/stock-ops')({
   component: StockOperationsComponent,
 })
 
