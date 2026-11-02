@@ -119,4 +119,26 @@ class ScheduleRepositoryTest {
         assertTrue(result.isSuccess)
         assertEquals("COMPLETED", result.getOrNull()?.status)
     }
+
+    @Test
+    fun getStaffTaskById_returnsTaskWithBreakdown() = runBlocking {
+        val taskDto = StaffTaskDto(
+            id = "task_123",
+            title = "Prepare Bakery Orders",
+            status = "TODO",
+            dueDate = "2026-10-25",
+            dueTime = "08:00 AM",
+            category = "UI/UX Design"
+        )
+        coEvery {
+            scheduleApiService.getStaffTasks(null, null)
+        } returns Response.success(V3ApiResponse(success = true, data = listOf(taskDto)))
+
+        val task = repository.getStaffTaskById("scryme-org", "task_123")
+        assertTrue(task.isSuccess)
+        val loaded = task.getOrNull()!!
+        assertEquals("task_123", loaded.id)
+        assertEquals("Prepare Bakery Orders", loaded.title)
+        assertTrue(loaded.subtaskGroups.isNotEmpty())
+    }
 }

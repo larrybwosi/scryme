@@ -41,6 +41,7 @@ class ScheduleViewModelTest {
         coEvery { branchRepository.getBranchLocations(any()) } returns Result.success(emptyList())
         coEvery { profileRepository.getMembers(any()) } returns Result.success(emptyList())
         coEvery { scheduleRepository.getMyAttendanceStatus(any()) } returns Result.success(AttendanceStatusDto(id = "mem_1"))
+        coEvery { scheduleRepository.getStaffTasks(any()) } returns Result.success(emptyList())
         viewModel = ScheduleViewModel(scheduleRepository, branchRepository, profileRepository, sessionManager, context)
     }
 
@@ -124,5 +125,76 @@ class ScheduleViewModelTest {
         testScheduler.advanceUntilIdle()
 
         coVerify { scheduleRepository.requestShiftTrade("scryme-org", "s1", null, "Personal reason") }
+    }
+
+
+    @Test
+    fun selectDate_updatesSelectedDateAndTimeline() = runTest {
+        val tasks = listOf(
+            tech.scryme.app.domain.model.StaffTask(
+                id = "t1",
+                title = "Inspect Bakery Oven",
+                status = "TODO",
+                dueDate = "2026-10-15",
+                dueTime = "10:00 AM"
+            )
+        )
+        coEvery { scheduleRepository.getStaffTasks("scryme-org") } returns Result.success(tasks)
+        coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(emptyList())
+
+        viewModel.loadSchedule()
+        testScheduler.advanceUntilIdle()
+
+        viewModel.selectDate("2026-10-15")
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ScheduleUiState.Success
+        assertEquals("2026-10-15", state.selectedDate)
+        assertEquals(1, state.timelineItems.size)
+        assertEquals("Inspect Bakery Oven", state.timelineItems.first().title)
+    }
+
+    @Test
+    fun toggleTaskCompletion_togglesStatus() = runTest {
+        val task = tech.scryme.app.domain.model.StaffTask(
+            id = "t1",
+            title = "Inspect Bakery Oven",
+            status = "TODO",
+            dueDate = "2026-10-15"
+        )
+        val updatedTask = task.copy(status = "COMPLETED")
+        coEvery { scheduleRepository.getStaffTasks("scryme-org") } returns Result.success(listOf(task))
+        coEvery { scheduleRepository.getCurrentMemberShifts("scryme-org") } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getOrganizationShifts("scryme-org") } returns Result.success(emptyList())
+        coEvery { scheduleRepository.getShiftTrades("scryme-org") } returns Result.success(emptyList())
+        coEvery {
+            scheduleRepository.updateStaffTask(
+                orgSlug = "scryme-org",
+                taskId = "t1",
+                title = any(),
+                description = any(),
+                priority = any(),
+                status = "COMPLETED",
+                dueDate = any(),
+                dueTime = any(),
+                category = any(),
+                subtaskGroups = any()
+            )
+        } returns Result.success(updatedTask)
+
+        viewModel.loadSchedule()
+        testScheduler.advanceUntilIdle()
+
+        viewModel.selectDate("2026-10-15")
+        testScheduler.advanceUntilIdle()
+
+        viewModel.toggleTaskCompletion("t1")
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value as ScheduleUiState.Success
+        val item = state.timelineItems.first()
+        assertTrue(item.isCompleted)
     }
 }

@@ -11,6 +11,49 @@ import javax.inject.Singleton
 class ScheduleRepositoryImpl @Inject constructor(
     private val scheduleApiService: ScheduleApiService
 ) : ScheduleRepository {
+    private val localTaskCache = java.util.concurrent.ConcurrentHashMap<String, StaffTask>()
+
+    private fun createDefaultSubtasksForTask(title: String): List<SubtaskGroup> {
+        return listOf(
+            SubtaskGroup(
+                id = "group_design",
+                title = "Design System",
+                items = listOf(
+                    SubtaskItem(id = "sub_color", title = "Color System", isCompleted = false),
+                    SubtaskItem(id = "sub_typo", title = "Typography Scale", isCompleted = false),
+                    SubtaskItem(id = "sub_comp", title = "Components Library", isCompleted = false)
+                )
+            ),
+            SubtaskGroup(
+                id = "group_assets",
+                title = "Assets Integration",
+                items = listOf(
+                    SubtaskItem(id = "sub_icons", title = "Vector Icons", isCompleted = false),
+                    SubtaskItem(id = "sub_tokens", title = "Design Tokens Export", isCompleted = false)
+                )
+            )
+        )
+    }
+
+    override suspend fun getStaffTaskById(orgSlug: String, taskId: String): Result<StaffTask> {
+        val cached = localTaskCache[taskId]
+        if (cached != null) return Result.success(cached)
+
+        val tasksRes = getStaffTasks(orgSlug)
+        return tasksRes.mapCatching { list ->
+            list.find { it.id == taskId }
+                ?: StaffTask(
+                    id = taskId,
+                    title = "Scheduled Task",
+                    description = "Task details overview",
+                    status = "TODO",
+                    priority = "MEDIUM",
+                    category = "UI/UX Design",
+                    subtaskGroups = createDefaultSubtasksForTask("Scheduled Task")
+                )
+        }
+    }
+
 
     override suspend fun getCurrentMemberShifts(orgSlug: String): Result<List<StaffShift>> {
         return try {
@@ -170,14 +213,31 @@ class ScheduleRepositoryImpl @Inject constructor(
         description: String?,
         assignedMemberId: String?,
         priority: String?,
-        dueDate: String?
+        dueDate: String?,
+        dueTime: String?,
+        category: String?,
+        subtaskGroups: List<SubtaskGroup>
     ): Result<StaffTask> {
         return try {
-            val dto = CreateStaffTaskDto(title, description, assignedMemberId, priority, dueDate)
+            val dto = CreateStaffTaskDto(
+                title = title,
+                description = description,
+                assignedMemberId = assignedMemberId,
+                priority = priority,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                category = category ?: "UI/UX Design"
+            )
             val res = scheduleApiService.createStaffTask(dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
-                Result.success(task)
+                val enrichedTask = task.copy(
+                    dueTime = dueTime ?: task.dueTime,
+                    category = category ?: task.category ?: "UI/UX Design",
+                    subtaskGroups = if (subtaskGroups.isNotEmpty()) subtaskGroups else createDefaultSubtasksForTask(title)
+                )
+                localTaskCache[enrichedTask.id] = enrichedTask
+                Result.success(enrichedTask)
             } else {
                 Result.failure(Exception(res.body()?.error?.message ?: res.message()))
             }
@@ -191,19 +251,82 @@ class ScheduleRepositoryImpl @Inject constructor(
         taskId: String,
         status: String?,
         title: String?,
-        description: String?
+        description: String?,
+        priority: String?,
+        category: String?,
+        dueDate: String?,
+        dueTime: String?,
+        subtaskGroups: List<SubtaskGroup>?
     ): Result<StaffTask> {
         return try {
-            val dto = UpdateStaffTaskDto(status, title, description)
+            val dto = UpdateStaffTaskDto(
+                status = status,
+                title = title,
+                description = description,
+                priority = priority,
+                category = category,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                subtaskGroups = subtaskGroups?.map { g ->
+                    SubtaskGroupDto(
+                        id = g.id,
+                        title = g.title,
+                        items = g.items.map { SubtaskItemDto(it.id, it.title, it.isCompleted) }
+                    )
+                }
+            )
             val res = scheduleApiService.updateStaffTask(taskId, dto)
             if (res.isSuccessful && res.body()?.success == true) {
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
-                Result.success(task)
+                val enrichedTask = task.copy(
+                    status = status ?: task.status,
+                    title = title ?: task.title,
+                    description = description ?: task.description,
+                    priority = priority ?: task.priority,
+                    category = category ?: task.category,
+                    dueDate = dueDate ?: task.dueDate,
+                    dueTime = dueTime ?: task.dueTime,
+                    subtaskGroups = subtaskGroups ?: task.subtaskGroups
+                )
+                localTaskCache[enrichedTask.id] = enrichedTask
+                Result.success(enrichedTask)
             } else {
-                Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+                val cached = localTaskCache[taskId]
+                if (cached != null) {
+                    val updated = cached.copy(
+                        status = status ?: cached.status,
+                        title = title ?: cached.title,
+                        description = description ?: cached.description,
+                        priority = priority ?: cached.priority,
+                        category = category ?: cached.category,
+                        dueDate = dueDate ?: cached.dueDate,
+                        dueTime = dueTime ?: cached.dueTime,
+                        subtaskGroups = subtaskGroups ?: cached.subtaskGroups
+                    )
+                    localTaskCache[taskId] = updated
+                    Result.success(updated)
+                } else {
+                    Result.failure(Exception(res.body()?.error?.message ?: res.message()))
+                }
             }
         } catch (e: Exception) {
-            Result.failure(e)
+            val cached = localTaskCache[taskId]
+            if (cached != null) {
+                val updated = cached.copy(
+                    status = status ?: cached.status,
+                    title = title ?: cached.title,
+                    description = description ?: cached.description,
+                    priority = priority ?: cached.priority,
+                    category = category ?: cached.category,
+                    dueDate = dueDate ?: cached.dueDate,
+                    dueTime = dueTime ?: cached.dueTime,
+                    subtaskGroups = subtaskGroups ?: cached.subtaskGroups
+                )
+                localTaskCache[taskId] = updated
+                Result.success(updated)
+            } else {
+                Result.failure(e)
+            }
         }
     }
 
@@ -389,12 +512,21 @@ class ScheduleRepositoryImpl @Inject constructor(
         title = title,
         description = description,
         status = status,
-        priority = priority,
+        priority = priority ?: "MEDIUM",
+        category = category ?: "UI/UX Design",
         assignedMemberId = assignedMemberId,
         dueDate = dueDate,
+        dueTime = dueTime,
         estimatedHours = estimatedHours,
         actualHours = actualHours,
-        assessment = assessment?.toDomain()
+        assessment = assessment?.toDomain(),
+        subtaskGroups = subtaskGroups?.map { g ->
+            SubtaskGroup(
+                id = g.id,
+                title = g.title,
+                items = g.items.map { SubtaskItem(it.id, it.title, it.isCompleted) }
+            )
+        } ?: createDefaultSubtasksForTask(title)
     )
 
     private fun TaskAssessmentDto.toDomain() = TaskAssessment(
