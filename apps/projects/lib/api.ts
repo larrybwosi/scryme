@@ -135,7 +135,7 @@ export interface Task {
   milestoneId?: string;
   sprintId?: string;
   parentTaskId?: string;
-  assignees?: { id: string; member: { id: string; role: string; user: { name: string; email: string; image?: string } } }[];
+  assignees?: { id: string; isPrimary?: boolean; allocatedHours?: number; member: { id: string; role: string; user: { name: string; email: string; image?: string } } }[];
   labels?: { label: { id: string; name: string; color: string } }[];
   subtasks?: Task[];
   timeEntries?: TimeEntry[];
@@ -204,12 +204,51 @@ export interface ProjectDocument {
 
 export interface TimeEntry {
   id: string;
-  taskId: string;
+  taskId?: string | null;
   memberId: string;
   hours: number;
   description?: string;
   date: string;
+  category?: string;
+  isBillable?: boolean;
+  isLocked?: boolean;
   member?: { id: string; role: string; user: { name: string; email: string } };
+  task?: { id: string; taskKey: string; title: string; projectId?: string };
+}
+
+export interface TeamPerformanceOverview {
+  period: {
+    from: string;
+    to: string;
+  };
+  squadOverview: {
+    averageOnTimeCompletionRate: number;
+    totalVelocity: number;
+    totalHoursLogged: number;
+    averageCapacityUtilization: number;
+    activeMemberCount: number;
+  };
+  leaderboard: {
+    member: {
+      id: string;
+      name: string;
+      email: string;
+      role: string;
+      image?: string | null;
+    };
+    kpis: {
+      onTimeCompletionRate: number;
+      velocity: number;
+      totalTasks: number;
+      completedTasks: number;
+      capacityUtilizationRate: number;
+      overdueTaskCount: number;
+      averageResolutionHours: number;
+      totalActualHours: number;
+      totalEstimatedHours: number;
+      expectedCapacityHours: number;
+    };
+  }[];
 }
 
 export interface Project {
@@ -369,8 +408,22 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
-  async manageTaskAssignees(taskId: string, memberIds: string[]): Promise<Task> {
-    const res = await apiClient.post(`/v3/tasks/${taskId}/assignees`, { memberIds });
+  async manageTaskAssignees(
+    taskId: string,
+    assignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[] | string[]
+  ): Promise<Task> {
+    const payload = Array.isArray(assignees) && typeof assignees[0] === 'string'
+      ? { memberIds: assignees }
+      : { assignees };
+    const res = await apiClient.post(`/v3/tasks/${taskId}/assignees`, payload);
+    return res.data?.data || res.data;
+  },
+
+  async getTeamPerformance(from?: string, to?: string): Promise<TeamPerformanceOverview> {
+    const params = new URLSearchParams();
+    if (from) params.set("from", from);
+    if (to) params.set("to", to);
+    const res = await apiClient.get(`/v3/tasks/team/performance?${params.toString()}`);
     return res.data?.data || res.data;
   },
 
@@ -385,8 +438,20 @@ export const ProjectsAPI = {
     return Array.isArray(data) ? data : [];
   },
 
-  async logTimeEntry(taskId: string, hours: number, description?: string): Promise<TimeEntry> {
-    const res = await apiClient.post(`/v3/tasks/${taskId}/time-entries`, { hours, description });
+  async logTimeEntry(
+    taskId: string | undefined,
+    hours: number,
+    description?: string,
+    options?: { category?: string; isBillable?: boolean }
+  ): Promise<TimeEntry> {
+    const url = taskId ? `/v3/tasks/${taskId}/time-entries` : `/v3/tasks/time-entries`;
+    const res = await apiClient.post(url, {
+      hours,
+      description,
+      taskId: taskId || undefined,
+      category: options?.category,
+      isBillable: options?.isBillable,
+    });
     return res.data?.data || res.data;
   },
 

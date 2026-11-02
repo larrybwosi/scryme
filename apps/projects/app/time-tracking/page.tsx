@@ -51,6 +51,8 @@ function TimeTrackingContent() {
   const [manualHours, setManualHours] = useState("1.0");
   const [manualNote, setManualNote] = useState("");
   const [isBillable, setIsBillable] = useState(true);
+  const [isOperational, setIsOperational] = useState(false);
+  const [operationalCategory, setOperationalCategory] = useState("OPERATION");
 
   // Timesheet submission modal
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
@@ -104,17 +106,18 @@ function TimeTrackingContent() {
 
   const handleManualLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeTaskId) return;
     const hours = parseFloat(manualHours);
     if (!hours || hours <= 0) return;
 
     try {
       await logTimeMutation.mutateAsync({
-        taskId: activeTaskId,
+        taskId: isOperational ? undefined : activeTaskId,
         hours,
         description: manualNote ? `${manualNote} ${isBillable ? "(Billable)" : "(Non-billable)"}` : isBillable ? "Billable" : "Non-billable",
+        category: isOperational ? operationalCategory : undefined,
+        isBillable,
       });
-      toast.success(`Logged ${hours}h on task`);
+      toast.success(isOperational ? `Logged ${hours}h operational time` : `Logged ${hours}h on task`);
       setManualHours("1.0");
       setManualNote("");
       setIsManualModalOpen(false);
@@ -123,10 +126,14 @@ function TimeTrackingContent() {
     }
   };
 
-  const handleDeleteLog = async (entryId: string) => {
+  const handleDeleteLog = async (entry: any) => {
+    if (entry.isLocked) {
+      toast.error("Cannot delete an approved and locked time entry");
+      return;
+    }
     if (!window.confirm("Delete this time log entry?")) return;
     try {
-      await deleteTimeMutation.mutateAsync(entryId);
+      await deleteTimeMutation.mutateAsync(entry.id);
       toast.success("Time entry deleted");
     } catch (err: any) {
       toast.error("Failed to delete time entry");
@@ -589,6 +596,50 @@ function TimeTrackingContent() {
                     ))}
                   </select>
                 </div>
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Log Type</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setIsOperational(false)}
+                      className={`py-1.5 px-3 rounded-lg text-body-sm font-medium border ${
+                        !isOperational
+                          ? "bg-primary-container text-on-primary-container border-primary-container"
+                          : "bg-surface-container border-outline-variant text-outline"
+                      }`}
+                    >
+                      Project Task
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setIsOperational(true)}
+                      className={`py-1.5 px-3 rounded-lg text-body-sm font-medium border ${
+                        isOperational
+                          ? "bg-primary-container text-on-primary-container border-primary-container"
+                          : "bg-surface-container border-outline-variant text-outline"
+                      }`}
+                    >
+                      General Operation
+                    </button>
+                  </div>
+                </div>
+
+                {isOperational && (
+                  <div>
+                    <label className="block text-body-sm font-medium text-on-surface mb-1">Operation Category</label>
+                    <select
+                      value={operationalCategory}
+                      onChange={(e) => setOperationalCategory(e.target.value)}
+                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    >
+                      <option value="OPERATION">General Operations & Production</option>
+                      <option value="MEETING">Team Sync & Architecture Meeting</option>
+                      <option value="SUPPORT">Customer Issue & SLA Support</option>
+                      <option value="TRAINING">Skill Development & Onboarding</option>
+                    </select>
+                  </div>
+                )}
+
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Hours</label>
                   <input

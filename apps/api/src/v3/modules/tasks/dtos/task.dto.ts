@@ -3,6 +3,7 @@ import { DependencyType, ProjectTaskPriority, ProjectTaskStatus } from '@repo/db
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
@@ -11,6 +12,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateTaskDto {
@@ -134,11 +136,38 @@ export class UpdateTaskDto {
   parentTaskId?: string;
 }
 
+export class TaskAssigneeInput {
+  @ApiProperty({ example: 'cuid_member_1' })
+  @IsString()
+  @IsNotEmpty()
+  memberId!: string;
+
+  @ApiPropertyOptional({ example: true, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
+  @ApiPropertyOptional({ example: 4.5, description: 'Allocated hours out of total estimate' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  allocatedHours?: number;
+}
+
 export class ManageTaskAssigneesDto {
-  @ApiProperty({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
+  @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  memberIds!: string[];
+  memberIds?: string[];
+
+  @ApiPropertyOptional({ type: [TaskAssigneeInput] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskAssigneeInput)
+  assignees?: TaskAssigneeInput[];
 }
 
 export class AddTaskDependencyDto {
@@ -242,6 +271,21 @@ export class CreateTaskTimeEntryDto {
   @Type(() => Date)
   @IsDate()
   date?: Date;
+
+  @ApiPropertyOptional({ example: "cuid_task_id", description: "Optional: leave blank for general operational hours" })
+  @IsOptional()
+  @IsString()
+  taskId?: string;
+
+  @ApiPropertyOptional({ example: "OPERATION", description: "OPERATION, MEETING, SUPPORT, TRAINING" })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ example: true, default: true })
+  @IsOptional()
+  @IsBoolean()
+  isBillable?: boolean;
 }
 
 export class MemberPerformanceFilterDto {

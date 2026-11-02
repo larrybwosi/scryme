@@ -62,6 +62,15 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
       });
 
+      currentSocket.on("task:assigned", (payload: any) => {
+        queryClient.invalidateQueries({ queryKey: ["tasks"] });
+        if (typeof window !== "undefined") {
+          import("sonner").then(({ toast }) => {
+            toast.info(`Task Assignment: [${payload.taskKey || "Task"}] ${payload.title}`);
+          });
+        }
+      });
+
       currentSocket.on("task:updated", () => {
         queryClient.invalidateQueries({ queryKey: ["tasks"] });
       });
