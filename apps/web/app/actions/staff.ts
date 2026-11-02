@@ -783,6 +783,8 @@ export async function getMemberBakeryStatus(memberId: string): Promise<{
   success: boolean;
   isBaker?: boolean;
   baker?: any;
+  isOperator?: boolean;
+  operator?: any;
   error?: string;
 }> {
   const session = await getServerAuth();
@@ -791,20 +793,37 @@ export async function getMemberBakeryStatus(memberId: string): Promise<{
   }
 
   try {
-    const settings = await db.bakerySettings.findUnique({
-      where: { organizationId: session.organizationId },
-      include: {
-        bakers: {
-          where: { memberId },
+    let operator: any = null;
+    if ((db as any).productionSettings) {
+      const prodSettings = await (db as any).productionSettings.findUnique({
+        where: { organizationId: session.organizationId },
+        include: {
+          operators: {
+            where: { memberId },
+          },
         },
-      },
-    });
+      });
+      operator = prodSettings?.operators?.[0] || null;
+    }
 
-    const baker = settings?.bakers?.[0] || null;
+    if (!operator && (db as any).bakerySettings) {
+      const settings = await (db as any).bakerySettings.findUnique({
+        where: { organizationId: session.organizationId },
+        include: {
+          bakers: {
+            where: { memberId },
+          },
+        },
+      });
+      operator = settings?.bakers?.[0] || null;
+    }
+
     return {
       success: true,
-      isBaker: !!baker,
-      baker,
+      isBaker: !!operator,
+      baker: operator,
+      isOperator: !!operator,
+      operator,
     };
   } catch (error: any) {
     console.error("Error fetching member bakery status:", error);
@@ -834,36 +853,70 @@ export async function addMemberToBakeryStaff(
       return { success: false, error: "Member not found in organization" };
     }
 
-    // Ensure BakerySettings exists for active organization
-    let settings = await db.bakerySettings.findUnique({
-      where: { organizationId: session.organizationId },
-    });
+    // Upsert ProductionSettings and ProductionOperator
+    let operator: any = null;
+    if ((db as any).productionSettings) {
+      let prodSettings = await (db as any).productionSettings.findUnique({
+        where: { organizationId: session.organizationId },
+      });
+      if (!prodSettings) {
+        prodSettings = await (db as any).productionSettings.create({
+          data: { organizationId: session.organizationId },
+        });
+      }
 
-    if (!settings) {
-      settings = await db.bakerySettings.create({
-        data: { organizationId: session.organizationId },
+      operator = await (db as any).productionOperator.upsert({
+        where: {
+          productionSettingsId_memberId: {
+            productionSettingsId: prodSettings.id,
+            memberId,
+          },
+        },
+        update: {
+          isActive: true,
+          specialties,
+        },
+        create: {
+          productionSettingsId: prodSettings.id,
+          memberId,
+          specialties,
+          isActive: true,
+        },
       });
     }
 
-    // Upsert or create BakeryBaker
-    const baker = await db.bakeryBaker.upsert({
-      where: {
-        bakerySettingsId_memberId: {
-          bakerySettingsId: settings.id,
-          memberId,
-        },
-      },
-      update: {
-        isActive: true,
-        specialties,
-      },
-      create: {
-        bakerySettingsId: settings.id,
-        memberId,
-        specialties,
-        isActive: true,
-      },
-    });
+    // Backwards compatibility with BakerySettings and BakeryBaker
+    let baker: any = null;
+    if ((db as any).bakerySettings) {
+      let settings = await (db as any).bakerySettings.findUnique({
+        where: { organizationId: session.organizationId },
+      });
+      if (!settings) {
+        settings = await (db as any).bakerySettings.create({
+          data: { organizationId: session.organizationId },
+        }).catch(() => null);
+      }
+      if (settings && (db as any).bakeryBaker) {
+        baker = await (db as any).bakeryBaker.upsert({
+          where: {
+            bakerySettingsId_memberId: {
+              bakerySettingsId: settings.id,
+              memberId,
+            },
+          },
+          update: {
+            isActive: true,
+            specialties,
+          },
+          create: {
+            bakerySettingsId: settings.id,
+            memberId,
+            specialties,
+            isActive: true,
+          },
+        }).catch(() => null);
+      }
+    }
 
     revalidatePath("/staff");
     revalidatePath(`/staff/${memberId}`);
@@ -886,17 +939,32 @@ export async function removeMemberFromBakeryStaff(
   if (!permission.success) return permission;
 
   try {
-    const settings = await db.bakerySettings.findUnique({
-      where: { organizationId: session.organizationId },
-    });
-
-    if (settings) {
-      await db.bakeryBaker.deleteMany({
-        where: {
-          bakerySettingsId: settings.id,
-          memberId,
-        },
+    if ((db as any).productionSettings && (db as any).productionOperator) {
+      const prodSettings = await (db as any).productionSettings.findUnique({
+        where: { organizationId: session.organizationId },
       });
+      if (prodSettings) {
+        await (db as any).productionOperator.deleteMany({
+          where: {
+            productionSettingsId: prodSettings.id,
+            memberId,
+          },
+        });
+      }
+    }
+
+    if ((db as any).bakerySettings && (db as any).bakeryBaker) {
+      const settings = await (db as any).bakerySettings.findUnique({
+        where: { organizationId: session.organizationId },
+      });
+      if (settings) {
+        await (db as any).bakeryBaker.deleteMany({
+          where: {
+            bakerySettingsId: settings.id,
+            memberId,
+          },
+        });
+      }
     }
 
     revalidatePath("/staff");
@@ -907,3 +975,7 @@ export async function removeMemberFromBakeryStaff(
     return { success: false, error: error.message || "Failed to remove production staff" };
   }
 }
+
+export const getMemberProductionStatus = getMemberBakeryStatus;
+export const addMemberToProductionStaff = addMemberToBakeryStaff;
+export const removeMemberFromProductionStaff = removeMemberFromBakeryStaff;

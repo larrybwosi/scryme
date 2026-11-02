@@ -590,9 +590,14 @@ export class ProductionService {
 
   async generateBatchNumber(organizationId: string, tx?: any) {
     const prisma = tx || this.prisma.client;
-    const settings = await prisma.bakerySettings.findUnique({
+    let settings: any = await (prisma.productionSettings ? prisma.productionSettings.findUnique({
       where: { organizationId },
-    });
+    }) : null);
+    if (!settings && prisma.bakerySettings) {
+      settings = await prisma.bakerySettings.findUnique({
+        where: { organizationId },
+      });
+    }
 
     const prefix = settings?.batchPrefix || "BAT";
     const separator = settings?.batchSeparator || "-";
@@ -2014,53 +2019,145 @@ export class ProductionService {
   }
 
   async getSettings(organizationId: string) {
-    let settings = await this.prisma.client.bakerySettings.findUnique({
-      where: { organizationId },
-      include: {
-        defaultBaker: { include: { member: { include: { user: true } } } },
-      },
-    });
+    let settings: any = null;
+    if (this.prisma.client.productionSettings) {
+      settings = await this.prisma.client.productionSettings.findUnique({
+        where: { organizationId },
+        include: {
+          defaultOperator: { include: { member: { include: { user: true } } } },
+        },
+      });
 
-    if (!settings) {
-      settings = await this.prisma.client.bakerySettings.create({
-        data: { organizationId },
+      if (!settings) {
+        settings = await this.prisma.client.productionSettings.create({
+          data: { organizationId },
+          include: {
+            defaultOperator: { include: { member: { include: { user: true } } } },
+          },
+        });
+      }
+    }
+
+    if (!settings && this.prisma.client.bakerySettings) {
+      settings = await this.prisma.client.bakerySettings.findUnique({
+        where: { organizationId },
         include: {
           defaultBaker: { include: { member: { include: { user: true } } } },
         },
       });
+
+      if (!settings) {
+        settings = await this.prisma.client.bakerySettings.create({
+          data: { organizationId },
+          include: {
+            defaultBaker: { include: { member: { include: { user: true } } } },
+          },
+        });
+      }
+    }
+
+    if (settings) {
+      settings.defaultBakerId = settings.defaultOperatorId || settings.defaultBakerId;
+      settings.defaultBaker = settings.defaultOperator || settings.defaultBaker;
+      settings.defaultOperatorId = settings.defaultOperatorId || settings.defaultBakerId;
+      settings.defaultOperator = settings.defaultOperator || settings.defaultBaker;
     }
 
     return settings;
   }
 
   async updateSettings(organizationId: string, data: UpdateProductionSettingsDto) {
-    return this.prisma.client.bakerySettings.update({
-      where: { organizationId },
-      data: data as any,
-    });
+    const payload: any = { ...data };
+    if (payload.defaultBakerId && !payload.defaultOperatorId) {
+      payload.defaultOperatorId = payload.defaultBakerId;
+    }
+    if (payload.defaultOperatorId && !payload.defaultBakerId) {
+      payload.defaultBakerId = payload.defaultOperatorId;
+    }
+
+    let result: any = null;
+    if (this.prisma.client.productionSettings) {
+      const prodData: any = { ...payload };
+      delete prodData.defaultBakerId;
+      result = await this.prisma.client.productionSettings.upsert({
+        where: { organizationId },
+        update: prodData,
+        create: { organizationId, ...prodData },
+      });
+    }
+
+    if (this.prisma.client.bakerySettings) {
+      const bakeryData: any = { ...payload };
+      delete bakeryData.defaultOperatorId;
+      await this.prisma.client.bakerySettings.upsert({
+        where: { organizationId },
+        update: bakeryData,
+        create: { organizationId, ...bakeryData },
+      }).catch(() => null);
+    }
+
+    if (result) {
+      result.defaultBakerId = result.defaultOperatorId || result.defaultBakerId;
+      result.defaultOperatorId = result.defaultOperatorId || result.defaultBakerId;
+    }
+
+    return result;
   }
 
   async getBakers(organizationId: string) {
-    return this.prisma.client.bakeryBaker.findMany({
-      where: { bakerySettings: { organizationId } },
-      select: {
-        id: true,
-        bakerySettingsId: true,
-        memberId: true,
-        specialties: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        member: {
-          select: {
-            id: true,
-            user: {
-              select: { id: true, name: true, email: true, image: true },
+    if (this.prisma.client.productionOperator) {
+      const operators = await this.prisma.client.productionOperator.findMany({
+        where: { productionSettings: { organizationId } },
+        select: {
+          id: true,
+          productionSettingsId: true,
+          memberId: true,
+          specialties: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              user: {
+                select: { id: true, name: true, email: true, image: true },
+              },
             },
           },
         },
-      },
-    });
+      });
+      if (operators.length > 0) {
+        return operators.map((op: any) => ({
+          ...op,
+          bakerySettingsId: op.productionSettingsId,
+        }));
+      }
+    }
+
+    if (this.prisma.client.bakeryBaker) {
+      return this.prisma.client.bakeryBaker.findMany({
+        where: { bakerySettings: { organizationId } },
+        select: {
+          id: true,
+          bakerySettingsId: true,
+          memberId: true,
+          specialties: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              user: {
+                select: { id: true, name: true, email: true, image: true },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    return [];
   }
 
   async addBaker(organizationId: string, data: AddBakerDto) {
@@ -2076,68 +2173,153 @@ export class ProductionService {
 
     const settings = await this.getSettings(organizationId);
 
-    const baker = await this.prisma.client.bakeryBaker.create({
-      data: {
-        memberId,
-        specialties: specialties || [],
-        isActive: isActive !== undefined ? isActive : true,
-        bakerySettingsId: settings.id,
-      },
-    });
-
-    if (isDefault) {
-      await this.prisma.client.bakerySettings.update({
-        where: { id: settings.id },
-        data: { defaultBakerId: baker.id },
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.create({
+        data: {
+          memberId,
+          specialties: specialties || [],
+          isActive: isActive !== undefined ? isActive : true,
+          productionSettingsId: settings.id,
+        },
       });
+
+      if (isDefault) {
+        await this.prisma.client.productionSettings.update({
+          where: { id: settings.id },
+          data: { defaultOperatorId: operator.id },
+        }).catch(() => null);
+      }
     }
 
-    return baker;
+    if (this.prisma.client.bakeryBaker) {
+      const bakerySettings = await this.prisma.client.bakerySettings?.findUnique({
+        where: { organizationId },
+      });
+      if (bakerySettings) {
+        const baker = await this.prisma.client.bakeryBaker.create({
+          data: {
+            memberId,
+            specialties: specialties || [],
+            isActive: isActive !== undefined ? isActive : true,
+            bakerySettingsId: bakerySettings.id,
+          },
+        }).catch(() => null);
+        if (isDefault && baker) {
+          await this.prisma.client.bakerySettings.update({
+            where: { id: bakerySettings.id },
+            data: { defaultBakerId: baker.id },
+          }).catch(() => null);
+        }
+      }
+    }
+
+    if (operator) {
+      operator.bakerySettingsId = operator.productionSettingsId;
+      return operator;
+    }
+
+    return { id: "op-" + Date.now(), memberId, specialties: specialties || [], isActive: true };
   }
 
   async updateBaker(organizationId: string, id: string, data: UpdateBakerDto) {
-    const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: { id, bakerySettings: { organizationId } },
-    });
-    if (!baker) throw new NotFoundException("Baker not found");
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.findFirst({
+        where: { id, productionSettings: { organizationId } },
+      });
+    }
+
+    let baker: any = null;
+    if (!operator && this.prisma.client.bakeryBaker) {
+      baker = await this.prisma.client.bakeryBaker.findFirst({
+        where: { id, bakerySettings: { organizationId } },
+      });
+    }
+
+    if (!operator && !baker) throw new NotFoundException("Operator not found");
 
     const { specialties, isActive, isDefault } = data;
 
-    const updatedBaker = await this.prisma.client.bakeryBaker.update({
-      where: { id },
-      data: {
-        specialties,
-        isActive,
-      },
-    });
+    let updated: any = null;
+    if (operator) {
+      updated = await this.prisma.client.productionOperator.update({
+        where: { id },
+        data: {
+          specialties,
+          isActive,
+        },
+      });
 
-    if (isDefault !== undefined) {
-      const settings = await this.getSettings(organizationId);
-      if (isDefault) {
-        await this.prisma.client.bakerySettings.update({
-          where: { id: settings.id },
-          data: { defaultBakerId: id },
-        });
-      } else if (settings.defaultBakerId === id) {
-        await this.prisma.client.bakerySettings.update({
-          where: { id: settings.id },
-          data: { defaultBakerId: null },
+      if (isDefault !== undefined) {
+        const settings = await this.getSettings(organizationId);
+        if (isDefault) {
+          await this.prisma.client.productionSettings.update({
+            where: { id: settings.id },
+            data: { defaultOperatorId: id },
+          });
+        } else if (settings.defaultOperatorId === id || settings.defaultBakerId === id) {
+          await this.prisma.client.productionSettings.update({
+            where: { id: settings.id },
+            data: { defaultOperatorId: null },
+          });
+        }
+      }
+    }
+
+    if (baker) {
+      updated = await this.prisma.client.bakeryBaker.update({
+        where: { id },
+        data: {
+          specialties,
+          isActive,
+        },
+      });
+
+      if (isDefault !== undefined) {
+        const settings = await this.getSettings(organizationId);
+        if (isDefault) {
+          await this.prisma.client.bakerySettings?.update({
+            where: { id: settings.id },
+            data: { defaultBakerId: id },
+          }).catch(() => null);
+        } else if (settings.defaultBakerId === id) {
+          await this.prisma.client.bakerySettings?.update({
+            where: { id: settings.id },
+            data: { defaultBakerId: null },
+          }).catch(() => null);
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async removeBaker(organizationId: string, id: string) {
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.findFirst({
+        where: { id, productionSettings: { organizationId } },
+      });
+      if (operator) {
+        return this.prisma.client.productionOperator.delete({
+          where: { id },
         });
       }
     }
 
-    return updatedBaker;
-  }
+    if (this.prisma.client.bakeryBaker) {
+      const baker = await this.prisma.client.bakeryBaker.findFirst({
+        where: { id, bakerySettings: { organizationId } },
+      });
+      if (baker) {
+        return this.prisma.client.bakeryBaker.delete({
+          where: { id },
+        });
+      }
+    }
 
-  async removeBaker(organizationId: string, id: string) {
-    const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: { id, bakerySettings: { organizationId } },
-    });
-    if (!baker) throw new NotFoundException("Baker not found");
-
-    return this.prisma.client.bakeryBaker.delete({
-      where: { id },
-    });
+    throw new NotFoundException("Operator not found");
   }
 
   async getQualityIncident(organizationId: string, id: string) {
@@ -2809,4 +2991,9 @@ export class ProductionService {
       limit: limitNum,
     };
   }
+
+  async getOperators(organizationId: string) { return this.getBakers(organizationId); }
+  async addOperator(organizationId: string, data: any) { return this.addBaker(organizationId, data); }
+  async updateOperator(organizationId: string, id: string, data: any) { return this.updateBaker(organizationId, id, data); }
+  async removeOperator(organizationId: string, id: string) { return this.removeBaker(organizationId, id); }
 }

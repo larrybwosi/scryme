@@ -118,6 +118,8 @@ model Organization {
   deliveryPartners DeliveryPartner[]
   templates        Template[]
   recipes          Recipe[]
+  productionCategories ProductionCategory[]
+  productionSettings   ProductionSettings?
   bakeryCategories BakeryCategory[]
   bakerySettings   BakerySettings?
 
@@ -368,6 +370,7 @@ model Member {
   createdMcpApiKeys        McpApiKey[]     @relation("McpApiKeyCreator")
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
+  productionRoles   ProductionOperator[]
   bakeryRoles       BakeryBaker[]
   dispatchedBatches BatchDispatch[] @relation("BatchDispatchedBy")
 
