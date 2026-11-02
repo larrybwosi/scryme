@@ -3,6 +3,7 @@ import { Test, TestingModule } from "@nestjs/testing";
 import { ProductionController } from "../production.controller";
 import { ProductionService } from "../../../application/services/production.service";
 import { ProductionReportService } from "../../../reports/production-report.service";
+import { ProductionProjectionService } from "../../../application/services/production-projection.service";
 import { MemberUseCase } from "../../../../members/application/use-cases/member.use-case";
 import { GetUnitsUseCase } from "../../../../units/application/use-cases/get-units.use-case";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -46,6 +47,13 @@ describe("ProductionController (V3)", () => {
           provide: GetUnitsUseCase,
           useValue: {
             execute: vi.fn(),
+          },
+        },
+        {
+          provide: ProductionProjectionService,
+          useValue: {
+            projectDemand: vi.fn(),
+            getProjections: vi.fn(),
           },
         },
         {
