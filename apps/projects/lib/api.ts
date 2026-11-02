@@ -1,3 +1,87 @@
+
+export interface MemberPerformance {
+  member: {
+    id: string;
+    name: string;
+    email: string;
+    role: string;
+    image?: string | null;
+  };
+  period: {
+    from: string;
+    to: string;
+  };
+  kpis: {
+    onTimeCompletionRate: number;
+    velocity: number;
+    totalTasks: number;
+    completedTasks: number;
+    capacityUtilizationRate: number;
+    overdueTaskCount: number;
+    averageResolutionHours: number;
+    totalActualHours: number;
+    totalEstimatedHours: number;
+    expectedCapacityHours: number;
+  };
+  recentTasks: {
+    id: string;
+    taskKey?: string;
+    title: string;
+    status: string;
+    priority: string;
+    dueDate?: string;
+    actualHours?: number;
+    estimatedHours?: number;
+    project?: { id: string; name: string; key: string };
+  }[];
+}
+
+export interface WeeklyTimesheetRecord {
+  memberId: string;
+  memberName: string;
+  memberEmail: string;
+  weekStartDate: string;
+  totalHours: number;
+  billableHours: number;
+  status: 'DRAFT' | 'SUBMITTED' | 'APPROVED' | 'REJECTED';
+  entries: {
+    id: string;
+    taskId: string;
+    taskKey?: string;
+    taskTitle?: string;
+    hours: number;
+    description?: string;
+    date: string;
+  }[];
+}
+
+export interface StaffShiftItem {
+  id: string;
+  memberId: string;
+  dayOfWeek: number;
+  startTime: string;
+  endTime: string;
+  isActive: boolean;
+  locationId?: string;
+  departmentId?: string;
+  breaks?: { id: string; startTime: string; endTime: string; description?: string }[];
+  member?: { id: string; user?: { name: string; email: string } };
+}
+
+export interface ShiftTradeItem {
+  id: string;
+  requesterMemberId: string;
+  targetMemberId?: string;
+  shiftId: string;
+  offeredShiftId?: string;
+  type: string;
+  reason?: string;
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED';
+  requesterMember?: { id: string; user?: { name: string; email: string; image?: string } };
+  targetMember?: { id: string; user?: { name: string; email: string; image?: string } };
+  shift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
+  offeredShift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
+}
 import axios from "axios";
 import { authClient } from "./auth-client";
 
@@ -432,4 +516,72 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
+
+  async getMemberPerformance(memberId: string, from?: string, to?: string): Promise<MemberPerformance> {
+    const params = new URLSearchParams();
+    if (from) params.set('from', from);
+    if (to) params.set('to', to);
+    const query = params.toString() ? ('?' + params.toString()) : '';
+    const res = await apiClient.get('/v3/tasks/members/' + memberId + '/performance' + query);
+    return res.data?.data || res.data;
+  },
+
+  async getWeeklyTimesheets(memberId?: string, weekStartDate?: string): Promise<WeeklyTimesheetRecord[]> {
+    const params = new URLSearchParams();
+    if (memberId) params.set('memberId', memberId);
+    if (weekStartDate) params.set('weekStartDate', weekStartDate);
+    const query = params.toString() ? ('?' + params.toString()) : '';
+    const res = await apiClient.get('/v3/tasks/timesheets/weekly' + query);
+    const data = res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async submitWeeklyTimesheet(payload: { weekStartDate: string; notes?: string }): Promise<any> {
+    const res = await apiClient.post('/v3/tasks/timesheets/submit', payload);
+    return res.data?.data || res.data;
+  },
+
+  async processWeeklyTimesheet(timesheetId: string, payload: { action: 'APPROVE' | 'REJECT'; notes?: string }): Promise<any> {
+    const res = await apiClient.post('/v3/tasks/timesheets/' + timesheetId + '/process', payload);
+    return res.data?.data || res.data;
+  },
+
+  async getStaffShifts(memberId?: string): Promise<StaffShiftItem[]> {
+    const query = memberId ? ('?memberId=' + memberId) : '';
+    const res = await apiClient.get('/v3/shifts' + query);
+    const data = res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async createStaffShift(data: Partial<StaffShiftItem>): Promise<StaffShiftItem> {
+    const res = await apiClient.post('/v3/shifts', data);
+    return res.data?.data || res.data;
+  },
+
+  async updateStaffShift(shiftId: string, data: Partial<StaffShiftItem>): Promise<StaffShiftItem> {
+    const res = await apiClient.patch('/v3/shifts/' + shiftId, data);
+    return res.data?.data || res.data;
+  },
+
+  async deleteStaffShift(shiftId: string): Promise<{ success: boolean; id: string }> {
+    const res = await apiClient.delete('/v3/shifts/' + shiftId);
+    return res.data?.data || res.data;
+  },
+
+  async getShiftTrades(status?: string): Promise<ShiftTradeItem[]> {
+    const query = status ? ('?status=' + status) : '';
+    const res = await apiClient.get('/v3/shifts/trades' + query);
+    const data = res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async requestShiftTrade(payload: { shiftId: string; targetMemberId?: string; offeredShiftId?: string; type?: string; reason?: string }): Promise<ShiftTradeItem> {
+    const res = await apiClient.post('/v3/shifts/trades', payload);
+    return res.data?.data || res.data;
+  },
+
+  async processShiftTrade(tradeId: string, action: 'APPROVE' | 'REJECT' | 'CANCEL'): Promise<any> {
+    const res = await apiClient.post('/v3/shifts/trades/' + tradeId + '/process', { action });
+    return res.data?.data || res.data;
+  },
 };

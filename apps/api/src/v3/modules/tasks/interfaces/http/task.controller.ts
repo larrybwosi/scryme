@@ -23,6 +23,9 @@ import {
   CreateTaskLabelDto,
   CreateTaskTimeEntryDto,
   ManageTaskAssigneesDto,
+  MemberPerformanceFilterDto,
+  ProcessTimesheetDto,
+  SubmitTimesheetDto,
   TaskFilterDto,
   UpdateTaskDto,
 } from '../../dtos/task.dto';
@@ -219,5 +222,57 @@ export class TaskController {
     @Query("projectId") projectId?: string,
   ) {
     return this.taskUseCase.getCalendarEvents(ctx.organizationId, projectId);
+  }
+
+  @Get('members/:memberId/performance')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get user performance metrics and throughput' })
+  async getMemberPerformance(
+    @v3Context() ctx: V3ApiContext,
+    @Param('memberId') memberId: string,
+    @Query() filter: MemberPerformanceFilterDto,
+  ) {
+    return this.taskUseCase.getMemberPerformance(ctx.organizationId, memberId, filter);
+  }
+
+  @Get('timesheets/weekly')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get aggregated weekly timesheets' })
+  async getWeeklyTimesheets(
+    @v3Context() ctx: V3ApiContext,
+    @Query('memberId') memberId?: string,
+    @Query('weekStartDate') weekStartDate?: string,
+  ) {
+    const date = weekStartDate ? new Date(weekStartDate) : undefined;
+    return this.taskUseCase.getWeeklyTimesheets(ctx.organizationId, memberId, date);
+  }
+
+  @Post('timesheets/submit')
+  @Permissions('tasks:manage')
+  @ApiOperation({ summary: 'Submit weekly timesheet for review' })
+  async submitWeeklyTimesheet(
+    @v3Context() ctx: V3ApiContext,
+    @Body() dto: SubmitTimesheetDto,
+  ) {
+    if (!ctx.memberId) {
+      throw new Error('Member ID required to submit timesheet');
+    }
+    return this.taskUseCase.submitWeeklyTimesheet(ctx.organizationId, ctx.memberId, dto);
+  }
+
+  @Post('timesheets/:id/process')
+  @Permissions('tasks:manage')
+  @ApiOperation({ summary: 'Approve or reject a submitted timesheet' })
+  async processWeeklyTimesheet(
+    @v3Context() ctx: V3ApiContext,
+    @Param('id') timesheetId: string,
+    @Body() dto: ProcessTimesheetDto,
+  ) {
+    return this.taskUseCase.processWeeklyTimesheet(
+      ctx.organizationId,
+      timesheetId,
+      ctx.memberId || null,
+      dto,
+    );
   }
 }

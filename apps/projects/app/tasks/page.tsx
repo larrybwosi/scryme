@@ -2,13 +2,25 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import {
+  useTasks,
+  useProjects,
+  useMembers,
+  useStaffShifts,
+  useCreateTask,
+  useUpdateTaskStatus,
+} from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
+import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { toast } from "sonner";
 
 export default function TasksPage() {
   const { data: tasks = [], isLoading } = useTasks();
   const { data: projects = [] } = useProjects();
+  const { data: members = [] } = useMembers();
+  const { data: staffShifts = [] } = useStaffShifts();
+
   const createTaskMutation = useCreateTask();
   const updateTaskStatusMutation = useUpdateTaskStatus();
   const { canManageTasks } = usePermissions();
@@ -17,17 +29,53 @@ export default function TasksPage() {
   const [priorityFilter, setPriorityFilter] = useState<string>("all");
   const [selectedProjectId, setSelectedProjectId] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Create Task Modal State
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
   const [newTaskTitle, setNewTaskTitle] = useState("");
   const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("MEDIUM");
   const [newTaskProjectId, setNewTaskProjectId] = useState("");
+  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState("");
   const [newTaskDueDate, setNewTaskDueDate] = useState("");
   const [newTaskEstHours, setNewTaskEstHours] = useState("");
+
+  // Capacity Warning Modal State
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [pendingTaskData, setPendingTaskData] = useState<any>(null);
+  const [warningMemberName, setWarningMemberName] = useState("");
+  const [warningAssignedHours, setWarningAssignedHours] = useState(0);
+  const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
+  const [warningCapacityHours, setWarningCapacityHours] = useState(40);
 
   const toggleTaskCompletion = (task: Task) => {
     if (!canManageTasks) return;
     const nextStatus: Task["status"] = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
     updateTaskStatusMutation.mutate({ taskId: task.id, status: nextStatus });
+  };
+
+  const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
+    const memberTasks = tasks.filter(
+      (t) =>
+        (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
+        t.assignees?.some((a) => a.member?.id === memberId)
+    );
+    const currentHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 2), 0);
+
+    const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
+    let shiftHours = 0;
+    for (const s of memberShifts) {
+      const [h1, m1] = s.startTime.split(":").map(Number);
+      const [h2, m2] = s.endTime.split(":").map(Number);
+      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
+      if (diffM > 0) shiftHours += diffM / 60;
+    }
+    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
+
+    return {
+      currentHours,
+      totalCapacity,
+      isOverloaded: currentHours + hoursToAdd > totalCapacity,
+    };
   };
 
   const handleCreateTask = async (e: React.FormEvent) => {
@@ -37,19 +85,50 @@ export default function TasksPage() {
     const projectId = newTaskProjectId || (projects.length > 0 ? projects[0].id : "");
     if (!projectId) return;
 
-    await createTaskMutation.mutateAsync({
+    const estHours = newTaskEstHours ? parseFloat(newTaskEstHours) : 2;
+
+    const payload = {
       title: newTaskTitle.trim(),
       priority: newTaskPriority,
       projectId,
       dueDate: newTaskDueDate || undefined,
-      estimatedHours: newTaskEstHours ? parseFloat(newTaskEstHours) : undefined,
-      status: "TODO",
-    });
+      estimatedHours: estHours,
+      status: "TODO" as const,
+      assigneeIds: newTaskAssigneeId ? [newTaskAssigneeId] : undefined,
+    };
 
-    setNewTaskTitle("");
-    setNewTaskDueDate("");
-    setNewTaskEstHours("");
-    setIsNewTaskOpen(false);
+    if (newTaskAssigneeId) {
+      const targetMember = members.find((m) => m.id === newTaskAssigneeId);
+      const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(newTaskAssigneeId, estHours);
+
+      if (isOverloaded) {
+        setPendingTaskData(payload);
+        setWarningMemberName(targetMember?.name || "Teammate");
+        setWarningAssignedHours(currentHours);
+        setWarningAdditionalHours(estHours);
+        setWarningCapacityHours(totalCapacity);
+        setWarningModalOpen(true);
+        return;
+      }
+    }
+
+    await executeCreateTask(payload);
+  };
+
+  const executeCreateTask = async (payload: any) => {
+    try {
+      await createTaskMutation.mutateAsync(payload);
+      toast.success("Task created successfully");
+      setNewTaskTitle("");
+      setNewTaskDueDate("");
+      setNewTaskEstHours("");
+      setNewTaskAssigneeId("");
+      setIsNewTaskOpen(false);
+      setWarningModalOpen(false);
+      setPendingTaskData(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to create task");
+    }
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -60,183 +139,130 @@ export default function TasksPage() {
     if (priorityFilter !== "all" && task.priority !== priorityFilter) return false;
     if (selectedProjectId !== "all" && task.projectId !== selectedProjectId) return false;
 
-    if (searchQuery) {
+    if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      return (
-        task.title.toLowerCase().includes(q) ||
-        (task.taskKey && task.taskKey.toLowerCase().includes(q)) ||
-        (task.description && task.description.toLowerCase().includes(q))
-      );
+      const matchTitle = task.title.toLowerCase().includes(q);
+      const matchKey = task.taskKey?.toLowerCase().includes(q) || false;
+      return matchTitle || matchKey;
     }
+
     return true;
   });
 
-  const activeCount = tasks.filter((t) => t.status !== "DONE" && t.status !== "BACKLOG" && t.status !== "CANCELED").length;
-  const backlogCount = tasks.filter((t) => t.status === "BACKLOG").length;
-  const completedCount = tasks.filter((t) => t.status === "DONE").length;
-
   return (
-    <div className="flex flex-col w-full pb-16">
-      <div className="flex flex-col gap-space-lg pb-16 pt-2">
-        {/* Top Action & View Toolbar */}
-        <div className="flex flex-col gap-space-md">
-          <div className="flex flex-wrap items-center justify-between gap-space-md">
-            {/* View Scope Tabs */}
-            <div className="flex flex-wrap items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30">
+    <div className="flex flex-col w-full min-h-screen bg-surface text-on-surface">
+      <div className="flex flex-col gap-6 p-6 max-w-7xl mx-auto w-full">
+        {/* Header Strip */}
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
+          <div>
+            <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+              Enterprise Tasks & Issues
+            </h1>
+            <p className="font-body-sm text-body-sm text-outline mt-1">
+              Cross-system work items, workload allocation, and SLA tracking.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3">
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => setIsNewTaskOpen(true)}
+                className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                <span>New Issue</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Filter Controls Strip */}
+        <div className="flex flex-wrap items-center justify-between gap-3 p-3 rounded-lg bg-surface-container-low border border-outline-variant/30">
+          <div className="flex flex-wrap items-center gap-2">
+            <div className="flex rounded-md bg-surface-container p-0.5 border border-outline-variant/30 text-body-sm">
               <button
                 type="button"
                 onClick={() => setScopeFilter("all")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
-                  scopeFilter === "all"
-                    ? "bg-surface-container-high text-on-surface font-headline-sm shadow-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container"
+                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
+                  scopeFilter === "all" ? "bg-surface-container-high text-on-surface" : "text-outline hover:text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px] text-primary">layers</span>
-                <span>All Tasks</span>
-                <span className="font-label-code text-label-code text-outline ml-1">{tasks.length}</span>
+                All
               </button>
               <button
                 type="button"
                 onClick={() => setScopeFilter("active")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
-                  scopeFilter === "active"
-                    ? "bg-surface-container-high text-on-surface font-headline-sm shadow-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container"
+                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
+                  scopeFilter === "active" ? "bg-surface-container-high text-on-surface" : "text-outline hover:text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px] text-secondary">radio_button_checked</span>
-                <span>Active</span>
-                <span className="font-label-code text-label-code text-outline-variant ml-1">{activeCount}</span>
+                Active
               </button>
               <button
                 type="button"
                 onClick={() => setScopeFilter("backlog")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
-                  scopeFilter === "backlog"
-                    ? "bg-surface-container-high text-on-surface font-headline-sm shadow-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container"
+                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
+                  scopeFilter === "backlog" ? "bg-surface-container-high text-on-surface" : "text-outline hover:text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px]">inventory_2</span>
-                <span>Backlog</span>
-                <span className="font-label-code text-label-code text-outline-variant ml-1">{backlogCount}</span>
+                Backlog
               </button>
               <button
                 type="button"
                 onClick={() => setScopeFilter("completed")}
-                className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
-                  scopeFilter === "completed"
-                    ? "bg-surface-container-high text-on-surface font-headline-sm shadow-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container"
+                className={`px-3 py-1 rounded-sm text-body-sm font-medium transition-colors ${
+                  scopeFilter === "completed" ? "bg-surface-container-high text-on-surface" : "text-outline hover:text-on-surface"
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px] text-primary">check_circle</span>
-                <span>Completed</span>
-                <span className="font-label-code text-label-code text-outline-variant ml-1">{completedCount}</span>
+                Done
               </button>
             </div>
 
-            {/* Right Side: View Links & Actions */}
-            <div className="flex items-center gap-space-sm">
-              <div className="flex items-center bg-surface-container-lowest p-0.5 rounded-lg border border-outline-variant/30">
-                <Link
-                  href="/tasks"
-                  className="p-1 rounded bg-surface-container-high text-on-surface hover:text-primary transition-colors"
-                  title="List View"
-                >
-                  <span className="material-symbols-outlined text-[16px]">view_agenda</span>
-                </Link>
-                <Link
-                  href="/board"
-                  className="p-1 rounded text-outline hover:text-on-surface transition-colors"
-                  title="Board View"
-                >
-                  <span className="material-symbols-outlined text-[16px]">view_kanban</span>
-                </Link>
-                <Link
-                  href="/gantt"
-                  className="p-1 rounded text-outline hover:text-on-surface transition-colors"
-                  title="Gantt Timeline"
-                >
-                  <span className="material-symbols-outlined text-[16px]">waterfall_chart</span>
-                </Link>
-              </div>
-              <div className="h-4 w-px bg-surface-variant"></div>
-              {canManageTasks && (
-                <button
-                  type="button"
-                  onClick={() => setIsNewTaskOpen(true)}
-                  className="flex items-center gap-1.5 px-3 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
-                >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
-                  <span>New Issue</span>
-                  <span className="font-label-kbd text-label-kbd bg-on-primary-fixed/20 text-on-primary-container/80 px-1 py-0.2 rounded ml-1">C</span>
-                </button>
-              )}
-            </div>
+            <select
+              value={selectedProjectId}
+              onChange={(e) => setSelectedProjectId(e.target.value)}
+              className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+            >
+              <option value="all">All Projects</option>
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>{p.name}</option>
+              ))}
+            </select>
+
+            <select
+              value={priorityFilter}
+              onChange={(e) => setPriorityFilter(e.target.value)}
+              className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+            >
+              <option value="all">All Priorities</option>
+              <option value="URGENT">Urgent</option>
+              <option value="HIGH">High</option>
+              <option value="MEDIUM">Medium</option>
+              <option value="LOW">Low</option>
+            </select>
           </div>
 
-          {/* Filter Bar */}
-          <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div className="flex flex-wrap items-center gap-2">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30">
-                <span className="material-symbols-outlined text-[14px] text-outline">search</span>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Filter issues..."
-                  className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-40 md:w-56"
-                />
-              </div>
-
-              {/* Project filter */}
-              {projects.length > 0 && (
-                <select
-                  value={selectedProjectId}
-                  onChange={(e) => setSelectedProjectId(e.target.value)}
-                  className="px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-on-surface text-body-sm focus:outline-none"
-                >
-                  <option value="all">All Projects</option>
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>{p.name}</option>
-                  ))}
-                </select>
-              )}
-
-              {/* Priority Filter */}
-              <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
-                <span className="text-outline text-[11px] px-1 font-label-badge">Priority:</span>
-                {(["all", "URGENT", "HIGH", "MEDIUM", "LOW"] as const).map((p) => (
-                  <button
-                    key={p}
-                    type="button"
-                    onClick={() => setPriorityFilter(p)}
-                    className={`px-2 py-0.5 rounded text-[11px] font-label-code capitalize transition-colors ${
-                      priorityFilter === p
-                        ? "bg-surface-container-high text-on-surface font-medium"
-                        : "text-outline hover:text-on-surface"
-                    }`}
-                  >
-                    {p.toLowerCase()}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            <div className="text-outline font-label-code text-[11px]">
-              Showing {filteredTasks.length} of {tasks.length} tasks
-            </div>
+          <div className="relative w-full sm:w-64">
+            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">
+              search
+            </span>
+            <input
+              type="text"
+              placeholder="Search issues..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-8 pl-8 pr-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm placeholder:text-outline focus:outline-none focus:border-primary-container"
+            />
           </div>
         </div>
 
         {/* Modal: New Issue */}
         {isNewTaskOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
+            <div className="w-full max-w-lg rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
               <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Task</h3>
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Issue</h3>
                 <button
                   type="button"
                   onClick={() => setIsNewTaskOpen(false)}
@@ -245,6 +271,7 @@ export default function TasksPage() {
                   <span className="material-symbols-outlined text-[18px]">close</span>
                 </button>
               </div>
+
               <form onSubmit={handleCreateTask} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Issue Title</label>
@@ -257,6 +284,7 @@ export default function TasksPage() {
                     className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
                   />
                 </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
@@ -284,15 +312,20 @@ export default function TasksPage() {
                     </select>
                   </div>
                 </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-body-sm font-medium text-on-surface mb-1">Due Date</label>
-                    <input
-                      type="date"
-                      value={newTaskDueDate}
-                      onChange={(e) => setNewTaskDueDate(e.target.value)}
+                    <label className="block text-body-sm font-medium text-on-surface mb-1">Assignee</label>
+                    <select
+                      value={newTaskAssigneeId}
+                      onChange={(e) => setNewTaskAssigneeId(e.target.value)}
                       className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                    />
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                      ))}
+                    </select>
                   </div>
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Estimated Hours</label>
@@ -307,6 +340,17 @@ export default function TasksPage() {
                     />
                   </div>
                 </div>
+
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Due Date</label>
+                  <input
+                    type="date"
+                    value={newTaskDueDate}
+                    onChange={(e) => setNewTaskDueDate(e.target.value)}
+                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  />
+                </div>
+
                 <div className="flex justify-end gap-2 pt-2">
                   <button
                     type="button"
@@ -327,6 +371,22 @@ export default function TasksPage() {
             </div>
           </div>
         )}
+
+        {/* Capacity Warning Soft Modal */}
+        <CapacityWarningModal
+          isOpen={warningModalOpen}
+          memberName={warningMemberName}
+          currentAssignedHours={warningAssignedHours}
+          additionalHours={warningAdditionalHours}
+          totalCapacityHours={warningCapacityHours}
+          onConfirm={() => {
+            if (pendingTaskData) executeCreateTask(pendingTaskData);
+          }}
+          onCancel={() => {
+            setWarningModalOpen(false);
+            setPendingTaskData(null);
+          }}
+        />
 
         {/* Loading State */}
         {isLoading && (
@@ -357,7 +417,7 @@ export default function TasksPage() {
               <div className="flex items-center gap-8">
                 <span className="w-24 text-center">Status</span>
                 <span className="w-20 text-center">Priority</span>
-                <span className="w-24 text-right">Assignee</span>
+                <span className="w-28 text-right">Assignee</span>
               </div>
             </div>
 
@@ -423,8 +483,8 @@ export default function TasksPage() {
                           {task.priority}
                         </span>
                       </div>
-                      <div className="w-24 flex items-center justify-end gap-1.5">
-                        <span className="text-[11px] text-outline truncate max-w-[70px]">
+                      <div className="w-28 flex items-center justify-end gap-1.5">
+                        <span className="text-[11px] text-outline truncate max-w-[80px]">
                           {task.assignees?.[0]?.member?.user?.name?.split(" ")[0] || "Unassigned"}
                         </span>
                       </div>
