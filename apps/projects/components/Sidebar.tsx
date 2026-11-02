@@ -11,6 +11,7 @@ const navigation = [
   { name: "Timeline", href: "/gantt", icon: "reorder" },
   { name: "Calendar", href: "/calendar", icon: "calendar_today" },
   { name: "Schedule", href: "/schedule", icon: "date_range" },
+  { name: "Performance", href: "/performance", icon: "trending_up" },
   { name: "Task Detail", href: "/task-detail", icon: "assignment" },
   { name: "Notes & Docs", href: "/notes-and-docs", icon: "description" },
   { name: "Time Tracking", href: "/time-tracking", icon: "timer" },

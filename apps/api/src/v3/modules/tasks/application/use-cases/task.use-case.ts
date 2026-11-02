@@ -6,6 +6,7 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../../../../prisma/prisma.service';
 import { FirebaseMessagingService } from '@/common/firebase/firebase-messaging.service';
+import { ApiRealtimeService } from '@/common/services/realtime.service';
 import {
   AddTaskCommentDto,
   AddTaskDependencyDto,
@@ -22,6 +23,7 @@ export class TaskUseCase {
   constructor(
     private readonly prisma: PrismaService,
     private readonly firebaseMessagingService: FirebaseMessagingService,
+    private readonly realtimeService?: ApiRealtimeService,
   ) {}
 
   async createTask(organizationId: string, dto: CreateTaskDto, currentMemberId?: string) {
@@ -359,12 +361,29 @@ export class TaskUseCase {
       throw new NotFoundException('Task not found');
     }
 
-    if (dto.memberIds.length > 0) {
+    let assigneesToSave: { memberId: string; isPrimary: boolean; allocatedHours?: number }[] = [];
+    if (dto.assignees && dto.assignees.length > 0) {
+      assigneesToSave = dto.assignees.map((a, idx) => ({
+        memberId: a.memberId,
+        isPrimary: a.isPrimary ?? (idx === 0),
+        allocatedHours: a.allocatedHours,
+      }));
+    } else if (dto.memberIds && dto.memberIds.length > 0) {
+      assigneesToSave = dto.memberIds.map((mId, idx) => ({
+        memberId: mId,
+        isPrimary: idx === 0,
+        allocatedHours: undefined,
+      }));
+    }
+
+    const uniqueMemberIds = Array.from(new Set(assigneesToSave.map((a) => a.memberId)));
+
+    if (uniqueMemberIds.length > 0) {
       const validMembers = await this.prisma.client.member.findMany({
-        where: { id: { in: dto.memberIds }, organizationId },
+        where: { id: { in: uniqueMemberIds }, organizationId },
         select: { id: true },
       });
-      if (validMembers.length !== dto.memberIds.length) {
+      if (validMembers.length !== uniqueMemberIds.length) {
         throw new BadRequestException('One or more assignees do not belong to this organization');
       }
     }
@@ -373,17 +392,18 @@ export class TaskUseCase {
       where: { taskId },
     });
 
-    if (dto.memberIds.length > 0) {
+    if (assigneesToSave.length > 0) {
       await this.prisma.client.taskAssignee.createMany({
-        data: dto.memberIds.map((memberId) => ({
+        data: assigneesToSave.map((item) => ({
           taskId,
-          memberId,
+          memberId: item.memberId,
+          isPrimary: !!item.isPrimary,
+          allocatedHours: item.allocatedHours !== undefined ? item.allocatedHours : null,
         })),
       });
 
-      // Notify newly assigned members
       this.firebaseMessagingService
-        .sendToMembers(dto.memberIds, {
+        .sendToMembers(uniqueMemberIds, {
           title: `Task Assignment: [${task.taskKey}]`,
           body: `You were assigned to ${task.title}`,
           data: {
@@ -394,6 +414,20 @@ export class TaskUseCase {
           },
         })
         .catch(() => {});
+
+      if (this.realtimeService) {
+        this.realtimeService
+          .publish(`tasks:${organizationId}`, 'task:assigned', {
+            taskId: task.id,
+            taskKey: task.taskKey,
+            title: task.title,
+            memberIds: uniqueMemberIds,
+          })
+          .catch(() => {});
+        this.realtimeService
+          .publish(`tasks:${organizationId}`, 'task:updated', { id: task.id })
+          .catch(() => {});
+      }
     }
 
     await this.prisma.client.taskActivityLog.create({
@@ -401,7 +435,7 @@ export class TaskUseCase {
         taskId,
         actorId: currentMemberId,
         action: 'ASSIGNEES_UPDATED',
-        details: { memberIds: dto.memberIds },
+        details: { assignees: assigneesToSave },
       },
     });
 
@@ -551,12 +585,17 @@ export class TaskUseCase {
 
     return labels;
   }
-  async addTimeEntry(organizationId: string, taskId: string, dto: CreateTaskTimeEntryDto, currentMemberId: string) {
-    const task = await this.prisma.client.task.findFirst({
-      where: { id: taskId, organizationId },
-    });
-    if (!task) {
-      throw new NotFoundException("Task not found");
+  async addTimeEntry(organizationId: string, taskId: string | undefined, dto: CreateTaskTimeEntryDto, currentMemberId: string) {
+    const actualTaskId = dto.taskId || (taskId && taskId !== "general" ? taskId : undefined);
+
+    let task: any = null;
+    if (actualTaskId) {
+      task = await this.prisma.client.task.findFirst({
+        where: { id: actualTaskId, organizationId },
+      });
+      if (!task) {
+        throw new NotFoundException("Task not found");
+      }
     }
 
     const member = await this.prisma.client.member.findFirst({
@@ -569,75 +608,79 @@ export class TaskUseCase {
     const timeEntry = await this.prisma.client.taskTimeEntry.create({
       data: {
         organizationId,
-        taskId,
+        taskId: actualTaskId || null,
         memberId: currentMemberId,
         hours: dto.hours,
         description: dto.description,
         date: dto.date || new Date(),
+        category: dto.category || (actualTaskId ? null : "OPERATION"),
+        isBillable: dto.isBillable !== undefined ? dto.isBillable : true,
+        isLocked: false,
       },
       include: {
         member: { select: { id: true, user: { select: { name: true, email: true } } } },
+        task: { select: { id: true, taskKey: true, title: true } },
       },
     });
 
-    // Recalculate actualHours on task
-    const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
-      where: { taskId },
-      _sum: { hours: true },
-    });
-    await this.prisma.client.task.updateMany({
-      where: { id: taskId, organizationId },
-      data: { actualHours: totalHours._sum.hours || 0 },
-    });
+    if (actualTaskId) {
+      const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
+        where: { taskId: actualTaskId },
+        _sum: { hours: true },
+      });
+      await this.prisma.client.task.updateMany({
+        where: { id: actualTaskId, organizationId },
+        data: { actualHours: totalHours._sum.hours || 0 },
+      });
+    }
 
     return timeEntry;
   }
 
-  async listTimeEntries(organizationId: string, taskId: string) {
-    const task = await this.prisma.client.task.findFirst({
-      where: { id: taskId, organizationId },
-    });
-    if (!task) {
-      throw new NotFoundException("Task not found");
+  async listTimeEntries(organizationId: string, taskId?: string) {
+    const where: any = { organizationId };
+    if (taskId && taskId !== "all") {
+      where.taskId = taskId;
     }
 
     return this.prisma.client.taskTimeEntry.findMany({
-      where: { taskId, organizationId },
+      where,
       orderBy: { date: "desc" },
       include: {
         member: { select: { id: true, user: { select: { name: true, email: true } } } },
+        task: { select: { id: true, taskKey: true, title: true, projectId: true } },
       },
     });
   }
 
-  async deleteTimeEntry(organizationId: string, taskId: string, entryId: string) {
-    const task = await this.prisma.client.task.findFirst({
-      where: { id: taskId, organizationId },
-    });
-    if (!task) {
-      throw new NotFoundException("Task not found");
-    }
-
+  async deleteTimeEntry(organizationId: string, taskId: string | undefined, entryId: string) {
     const entry = await this.prisma.client.taskTimeEntry.findFirst({
-      where: { id: entryId, taskId, organizationId },
+      where: { id: entryId, organizationId },
     });
     if (!entry) {
       throw new NotFoundException("Time entry not found");
     }
 
+    if (entry.isLocked) {
+      throw new BadRequestException("Cannot delete an approved and locked time entry");
+    }
+
+    const linkedTaskId = entry.taskId;
+
     await this.prisma.client.taskTimeEntry.deleteMany({
-      where: { id: entryId, taskId, organizationId },
+      where: { id: entryId, organizationId },
     });
 
-    // Recalculate actualHours on task
-    const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
-      where: { taskId },
-      _sum: { hours: true },
-    });
-    await this.prisma.client.task.updateMany({
-      where: { id: taskId, organizationId },
-      data: { actualHours: totalHours._sum.hours || 0 },
-    });
+    if (linkedTaskId) {
+      const totalHours = await this.prisma.client.taskTimeEntry.aggregate({
+        where: { taskId: linkedTaskId },
+        _sum: { hours: true },
+      });
+      await this.prisma.client.task.updateMany({
+        where: { id: linkedTaskId, organizationId },
+        data: { actualHours: totalHours._sum.hours || 0 },
+      });
+    }
 
     return { success: true, id: entryId };
   }
@@ -965,6 +1008,21 @@ export class TaskUseCase {
     reviewerMemberId: string | null,
     dto: { action: 'APPROVE' | 'REJECT'; notes?: string },
   ) {
+    if (dto.action === 'APPROVE') {
+      await this.prisma.client.taskTimeEntry.updateMany({
+        where: {
+          organizationId,
+          OR: [
+            { id: timesheetId },
+            { memberId: timesheetId },
+          ],
+        },
+        data: {
+          isLocked: true,
+        },
+      });
+    }
+
     return {
       success: true,
       timesheetId,
@@ -972,6 +1030,51 @@ export class TaskUseCase {
       reviewedById: reviewerMemberId,
       reviewedAt: new Date().toISOString(),
       notes: dto.notes || null,
+    };
+  }
+
+  async getTeamPerformance(
+    organizationId: string,
+    filter?: { from?: Date; to?: Date },
+  ) {
+    const fromDate = filter?.from || new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    const toDate = filter?.to || new Date();
+
+    const members = await this.prisma.client.member.findMany({
+      where: { organizationId },
+      include: { user: { select: { name: true, email: true, image: true } } },
+    });
+
+    const memberStats = await Promise.all(
+      members.map((m) => this.getMemberPerformance(organizationId, m.id, { from: fromDate, to: toDate }))
+    );
+
+    const totalMembers = memberStats.length;
+    const avgOnTime = totalMembers > 0
+      ? Math.round(memberStats.reduce((acc, curr) => acc + curr.kpis.onTimeCompletionRate, 0) / totalMembers)
+      : 100;
+    const totalVelocity = memberStats.reduce((acc, curr) => acc + curr.kpis.velocity, 0);
+    const totalHoursLogged = memberStats.reduce((acc, curr) => acc + curr.kpis.totalActualHours, 0);
+    const avgCapacity = totalMembers > 0
+      ? Math.round(memberStats.reduce((acc, curr) => acc + curr.kpis.capacityUtilizationRate, 0) / totalMembers)
+      : 0;
+
+    return {
+      period: {
+        from: fromDate.toISOString(),
+        to: toDate.toISOString(),
+      },
+      squadOverview: {
+        averageOnTimeCompletionRate: avgOnTime,
+        totalVelocity,
+        totalHoursLogged,
+        averageCapacityUtilization: avgCapacity,
+        activeMemberCount: totalMembers,
+      },
+      leaderboard: memberStats.map((ms) => ({
+        member: ms.member,
+        kpis: ms.kpis,
+      })),
     };
   }
 }

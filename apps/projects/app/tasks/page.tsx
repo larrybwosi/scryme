@@ -483,10 +483,31 @@ export default function TasksPage() {
                           {task.priority}
                         </span>
                       </div>
-                      <div className="w-28 flex items-center justify-end gap-1.5">
-                        <span className="text-[11px] text-outline truncate max-w-[80px]">
-                          {task.assignees?.[0]?.member?.user?.name?.split(" ")[0] || "Unassigned"}
-                        </span>
+                      <div className="w-32 flex items-center justify-end gap-1">
+                        {task.assignees && task.assignees.length > 0 ? (
+                          <div className="flex items-center -space-x-1.5">
+                            {task.assignees.slice(0, 3).map((a, idx) => (
+                              <div
+                                key={a.id || idx}
+                                title={`${a.member?.user?.name || "Assignee"} ${a.isPrimary ? "(Lead)" : "(Contributor)"}`}
+                                className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold border border-surface ${
+                                  a.isPrimary
+                                    ? "bg-primary-container text-on-primary-container"
+                                    : "bg-surface-container-highest text-on-surface"
+                                }`}
+                              >
+                                {a.member?.user?.name?.charAt(0) || "U"}
+                              </div>
+                            ))}
+                            {task.assignees.length > 3 && (
+                              <div className="w-5 h-5 rounded-full bg-surface-container-high border border-surface text-[9px] font-medium text-outline flex items-center justify-center">
+                                +{task.assignees.length - 3}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="text-[11px] text-outline">Unassigned</span>
+                        )}
                       </div>
                     </div>
                   </div>

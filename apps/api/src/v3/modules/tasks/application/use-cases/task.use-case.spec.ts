@@ -42,10 +42,71 @@ describe('TaskUseCase', () => {
         taskActivityLog: {
           create: vi.fn(),
         },
+        taskTimeEntry: {
+          findMany: vi.fn(),
+          findFirst: vi.fn(),
+          create: vi.fn(),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
+          aggregate: vi.fn().mockResolvedValue({ _sum: { hours: 0 } }),
+        },
+        staffShift: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
       },
     };
 
-    useCase = new TaskUseCase(mockPrisma);
+    const mockFCM: any = {
+      sendToMembers: vi.fn().mockResolvedValue({ success: true }),
+    };
+    const mockRealtime: any = {
+      publish: vi.fn().mockResolvedValue(true),
+    };
+    useCase = new TaskUseCase(mockPrisma, mockFCM, mockRealtime);
+  });
+
+  
+  describe('manageAssignees', () => {
+    it('should assign multiple members with primary owner and allocated hours', async () => {
+      mockPrisma.client.task.findFirst.mockResolvedValue({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        organizationId: 'org_1',
+      });
+      mockPrisma.client.member.findMany.mockResolvedValue([
+        { id: 'member_1' },
+        { id: 'member_2' },
+      ]);
+      mockPrisma.client.task.findFirst.mockResolvedValueOnce({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        organizationId: 'org_1',
+      }).mockResolvedValueOnce({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        assignees: [
+          { memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+
+      await useCase.manageAssignees('org_1', 'task_1', {
+        assignees: [
+          { memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+
+      expect(mockPrisma.client.taskAssignee.createMany).toHaveBeenCalledWith({
+        data: [
+          { taskId: 'task_1', memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { taskId: 'task_1', memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+    });
   });
 
   describe('createTask', () => {

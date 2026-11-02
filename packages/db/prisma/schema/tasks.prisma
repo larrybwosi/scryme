@@ -165,14 +165,17 @@ model TaskTimeEntry {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  taskId         String
-  task           Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId         String?
+  task           Task?        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member       @relation("MemberTaskTimeEntries", fields: [memberId], references: [id], onDelete: Cascade)
 
-  hours       Decimal  @db.Decimal(10, 2)
-  description String?  @db.Text
-  date        DateTime @default(now())
+  hours          Decimal      @db.Decimal(10, 2)
+  description    String?      @db.Text
+  date           DateTime     @default(now())
+  category       String?
+  isBillable     Boolean      @default(true)
+  isLocked       Boolean      @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -188,8 +191,10 @@ model TaskAssignee {
   taskId     String
   task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   memberId   String
-  member     Member   @relation("TaskAssigneeMember", fields: [memberId], references: [id], onDelete: Cascade)
-  assignedAt DateTime @default(now())
+  member         Member   @relation("TaskAssigneeMember", fields: [memberId], references: [id], onDelete: Cascade)
+  isPrimary      Boolean  @default(false)
+  allocatedHours Decimal? @db.Decimal(10, 2)
+  assignedAt     DateTime @default(now())
 
   @@unique([taskId, memberId])
   @@index([memberId])

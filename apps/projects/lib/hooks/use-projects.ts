@@ -269,8 +269,8 @@ export function useManageTaskAssignees(taskId: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (memberIds: string[]) =>
-      ProjectsAPI.manageTaskAssignees(taskId, memberIds),
+    mutationFn: (assignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[] | string[]) =>
+      ProjectsAPI.manageTaskAssignees(taskId, assignees),
     onSuccess: (updatedTask) => {
       queryClient.setQueryData(QUERY_KEYS.task(taskId), updatedTask);
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
@@ -423,11 +423,15 @@ export function useLogTimeEntry(projectId?: string) {
       taskId,
       hours,
       description,
+      category,
+      isBillable,
     }: {
-      taskId: string;
+      taskId?: string;
       hours: number;
       description?: string;
-    }) => ProjectsAPI.logTimeEntry(taskId, hours, description),
+      category?: string;
+      isBillable?: boolean;
+    }) => ProjectsAPI.logTimeEntry(taskId, hours, description, { category, isBillable }),
     onMutate: async ({ taskId, hours }) => {
       const targetKey = QUERY_KEYS.projectTasks(projectId);
       await queryClient.cancelQueries({ queryKey: targetKey });
@@ -457,8 +461,10 @@ export function useLogTimeEntry(projectId?: string) {
     onSettled: (_data, _err, { taskId }) => {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(projectId) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(undefined) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeEntries(taskId) });
-      queryClient.invalidateQueries({ queryKey: QUERY_KEYS.task(taskId) });
+      if (taskId) {
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.timeEntries(taskId) });
+        queryClient.invalidateQueries({ queryKey: QUERY_KEYS.task(taskId) });
+      }
     },
   });
 }
@@ -636,5 +642,12 @@ export function useProcessShiftTrade() {
       queryClient.invalidateQueries({ queryKey: ["staff-shifts"] });
       queryClient.invalidateQueries({ queryKey: ["unified-calendar"] });
     },
+  });
+}
+
+export function useTeamPerformance(from?: string, to?: string) {
+  return useQuery({
+    queryKey: ["team-performance", from, to],
+    queryFn: () => ProjectsAPI.getTeamPerformance(from, to),
   });
 }

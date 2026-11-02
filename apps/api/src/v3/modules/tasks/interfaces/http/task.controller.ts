@@ -169,6 +169,38 @@ export class TaskController {
       memberId: ctx.memberId || null,
     };
   }
+  @Post("time-entries")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Log operational non-task or task time entry" })
+  async addOperationalTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Body() dto: CreateTaskTimeEntryDto,
+  ) {
+    if (!ctx.memberId) {
+      throw new Error("Member ID required to log time entries");
+    }
+    return this.taskUseCase.addTimeEntry(ctx.organizationId, dto.taskId, dto, ctx.memberId);
+  }
+
+  @Get("time-entries")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List all time entries across tasks & operations" })
+  async listAllTimeEntries(
+    @v3Context() ctx: V3ApiContext,
+    @Query("taskId") taskId?: string,
+  ) {
+    return this.taskUseCase.listTimeEntries(ctx.organizationId, taskId);
+  }
+
+  @Delete("time-entries/:entryId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete any time entry (rejects if locked)" })
+  async deleteAnyTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Param("entryId") entryId: string,
+  ) {
+    return this.taskUseCase.deleteTimeEntry(ctx.organizationId, undefined, entryId);
+  }
   @Post(":id/time-entries")
   @Permissions("tasks:manage")
   @ApiOperation({ summary: "Log time entry / hours on task" })
@@ -222,6 +254,16 @@ export class TaskController {
     @Query("projectId") projectId?: string,
   ) {
     return this.taskUseCase.getCalendarEvents(ctx.organizationId, projectId);
+  }
+
+  @Get('team/performance')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get squad-wide performance metrics and leaderboard' })
+  async getTeamPerformance(
+    @v3Context() ctx: V3ApiContext,
+    @Query() filter: MemberPerformanceFilterDto,
+  ) {
+    return this.taskUseCase.getTeamPerformance(ctx.organizationId, filter);
   }
 
   @Get('members/:memberId/performance')

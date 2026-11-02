@@ -23,7 +23,7 @@ interface TaskDetailPageProps {
   taskId?: string;
 }
 
-export default function TaskDetailPage({ taskId: propTaskId }: TaskDetailPageProps) {
+function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   const searchParams = useSearchParams();
   const rawId = propTaskId || searchParams.get("id");
 
@@ -79,28 +79,32 @@ export default function TaskDetailPage({ taskId: propTaskId }: TaskDetailPagePro
     };
   };
 
-  const handleAssigneeChange = async (memberId: string) => {
-    if (!memberId) {
+  const handleAssigneeChange = async (
+    assignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[]
+  ) => {
+    if (assignees.length === 0) {
       manageAssigneesMutation.mutate([]);
       return;
     }
 
+    const primary = assignees.find((a) => a.isPrimary) || assignees[0];
+    const targetMember = members.find((m) => m.id === primary.memberId);
     const estHours = Number(task?.estimatedHours) || 2;
-    const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(memberId, estHours);
-    const targetMember = members.find((m) => m.id === memberId);
+    const shareHours = primary.allocatedHours || estHours / assignees.length;
+    const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(primary.memberId, shareHours);
 
     if (isOverloaded) {
-      setPendingAssigneeId(memberId);
-      setWarningMemberName(targetMember?.name || "Teammate");
+      setPendingAssigneeId(primary.memberId);
+      setWarningMemberName(targetMember?.name || "Lead Assignee");
       setWarningAssignedHours(currentHours);
-      setWarningAdditionalHours(estHours);
+      setWarningAdditionalHours(shareHours);
       setWarningCapacityHours(totalCapacity);
       setWarningModalOpen(true);
       return;
     }
 
-    manageAssigneesMutation.mutate([memberId]);
-    toast.success(`Assigned to ${targetMember?.name || "member"}`);
+    manageAssigneesMutation.mutate(assignees);
+    toast.success("Assignees updated");
   };
 
   const confirmOverloadedAssignee = () => {
@@ -329,18 +333,84 @@ export default function TaskDetailPage({ taskId: propTaskId }: TaskDetailPagePro
                   </select>
                 </div>
 
-                <div>
-                  <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Assignee</label>
-                  <select
-                    value={task.assignees?.[0]?.member?.id || ""}
-                    onChange={(e) => handleAssigneeChange(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    <option value="">Unassigned</option>
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                    ))}
-                  </select>
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-outline text-[11px] font-label-badge uppercase">Assignees & Squad</label>
+                    <span className="text-[10px] text-primary font-label-code">
+                      {task.assignees?.length || 0} Assigned
+                    </span>
+                  </div>
+
+                  {/* Primary Owner Dropdown */}
+                  <div>
+                    <label className="block text-outline text-[10px] mb-1">Primary Owner (Lead)</label>
+                    <select
+                      value={task.assignees?.find((a) => a.isPrimary)?.member?.id || task.assignees?.[0]?.member?.id || ""}
+                      onChange={(e) => {
+                        const newPrimaryId = e.target.value;
+                        if (!newPrimaryId) {
+                          handleAssigneeChange([]);
+                          return;
+                        }
+                        const existingContributors = (task.assignees || [])
+                          .filter((a) => a.member?.id !== newPrimaryId)
+                          .map((a) => ({ memberId: a.member.id, isPrimary: false, allocatedHours: a.allocatedHours }));
+                        handleAssigneeChange([
+                          { memberId: newPrimaryId, isPrimary: true },
+                          ...existingContributors,
+                        ]);
+                      }}
+                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Contributors Multi-Pill Selector */}
+                  <div className="pt-1">
+                    <label className="block text-outline text-[10px] mb-1">Contributors</label>
+                    <div className="flex flex-wrap gap-1 p-1.5 rounded-lg bg-surface-container border border-outline-variant/30">
+                      {members.map((m) => {
+                        const isPrimary = task.assignees?.some((a) => a.member?.id === m.id && a.isPrimary);
+                        const isContributor = task.assignees?.some((a) => a.member?.id === m.id && !a.isPrimary);
+                        if (isPrimary) return null;
+
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              const currentPrimary = task.assignees?.find((a) => a.isPrimary);
+                              let newAssignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[] = [];
+                              if (currentPrimary) {
+                                newAssignees.push({ memberId: currentPrimary.member.id, isPrimary: true });
+                              }
+                              const otherContribs = (task.assignees || [])
+                                .filter((a) => !a.isPrimary && a.member.id !== m.id)
+                                .map((a) => ({ memberId: a.member.id, isPrimary: false }));
+
+                              if (isContributor) {
+                                newAssignees = [...newAssignees, ...otherContribs];
+                              } else {
+                                newAssignees = [...newAssignees, ...otherContribs, { memberId: m.id, isPrimary: false }];
+                              }
+                              handleAssigneeChange(newAssignees);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors border ${
+                              isContributor
+                                ? "bg-primary-container/30 border-primary text-primary"
+                                : "bg-surface-container-high border-outline-variant/30 text-outline hover:text-on-surface"
+                            }`}
+                          >
+                            {m.name.split(" ")[0]} {isContributor ? "✓" : "+"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2">
@@ -379,5 +449,14 @@ export default function TaskDetailPage({ taskId: propTaskId }: TaskDetailPagePro
         }}
       />
     </div>
+  );
+}
+
+
+export default function TaskDetailPage({ taskId }: TaskDetailPageProps = {}) {
+  return (
+    <React.Suspense fallback={<div className="p-8 text-outline text-body-sm">Loading task details...</div>}>
+      <TaskDetailContent taskId={taskId} />
+    </React.Suspense>
   );
 }
