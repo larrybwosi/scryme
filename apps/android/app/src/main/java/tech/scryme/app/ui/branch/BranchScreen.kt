@@ -1,33 +1,50 @@
 package tech.scryme.app.ui.branch
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ChevronRight
+import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material.icons.filled.KeyboardArrowRight
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Place
+import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import tech.scryme.app.domain.model.BranchLocation
 import tech.scryme.app.ui.theme.Emerald500
+
+private const val DEFAULT_RADIUS_METERS = 100
+private val LOCATION_TYPES = listOf("STORE", "WAREHOUSE", "OFFICE", "OTHER")
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -37,26 +54,35 @@ fun BranchScreen(
 ) {
     val uiState by viewModel.uiState.collectAsState()
     val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
 
     var showCreateDialog by remember { mutableStateOf(false) }
     var locationToEdit by remember { mutableStateOf<BranchLocation?>(null) }
     var locationToEditGeofence by remember { mutableStateOf<BranchLocation?>(null) }
     var locationToDelete by remember { mutableStateOf<BranchLocation?>(null) }
 
-    LaunchedEffect(Unit) {
-        viewModel.loadBranches()
+    LaunchedEffect(Unit) { viewModel.loadBranches() }
+
+    // Surface action feedback as a proper snackbar instead of an inline block.
+    val feedback = (uiState as? BranchUiState.Success)?.let { it.actionSuccessMessage ?: it.message }
+    LaunchedEffect(feedback) {
+        if (!feedback.isNullOrEmpty()) snackbarHostState.showSnackbar(feedback)
     }
 
+    val isAdmin = (uiState as? BranchUiState.Success)?.isAdmin == true
+
     Scaffold(
+        containerColor = MaterialTheme.colorScheme.background,
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         floatingActionButton = {
-            if ((uiState as? BranchUiState.Success)?.isAdmin == true) {
-                FloatingActionButton(
+            if (isAdmin) {
+                ExtendedFloatingActionButton(
                     onClick = { showCreateDialog = true },
+                    icon = { Icon(Icons.Default.Add, contentDescription = null) },
+                    text = { Text("New location") },
                     containerColor = MaterialTheme.colorScheme.primary,
                     contentColor = MaterialTheme.colorScheme.onPrimary
-                ) {
-                    Icon(imageVector = Icons.Default.Add, contentDescription = "Add Location")
-                }
+                )
             }
         }
     ) { innerPadding ->
@@ -64,64 +90,60 @@ fun BranchScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
-                .background(MaterialTheme.colorScheme.background)
-                .padding(16.dp)
         ) {
-            Text(
-                text = "Branch Locations",
-                style = MaterialTheme.typography.headlineMedium.copy(
-                    fontWeight = FontWeight.Bold,
-                    color = MaterialTheme.colorScheme.onBackground
-                )
+            ScreenHeader(
+                count = (uiState as? BranchUiState.Success)?.branches?.size
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
-
             when (val state = uiState) {
-                is BranchUiState.Loading -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                }
-                is BranchUiState.Error -> {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(text = state.message, color = MaterialTheme.colorScheme.error)
-                            Spacer(modifier = Modifier.height(8.dp))
-                            Button(onClick = { viewModel.loadBranches() }) {
-                                Text("Retry")
-                            }
-                        }
-                    }
-                }
-                is BranchUiState.Success -> {
-                    val successMessage = state.actionSuccessMessage ?: state.message
-                    if (!successMessage.isNullOrEmpty()) {
-                        Snackbar(
-                            modifier = Modifier.padding(bottom = 8.dp),
-                            containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onSecondaryContainer
-                        ) {
-                            Text(successMessage)
-                        }
-                    }
+                is BranchUiState.Loading -> CenteredBox { CircularProgressIndicator() }
 
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(12.dp)
+                is BranchUiState.Error -> CenteredBox {
+                    Column(
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                        verticalArrangement = Arrangement.spacedBy(12.dp),
+                        modifier = Modifier.padding(32.dp)
                     ) {
-                        items(state.branches, key = { it.id }) { branch ->
-                            val isActive = branch.id == state.activeLocationId
-                            BranchItemCard(
-                                branch = branch,
-                                isActive = isActive,
-                                isAdmin = state.isAdmin,
-                                onCardClick = { onNavigateToBranchDetails?.invoke(branch.id) },
-                                onSelect = { viewModel.switchBranch(branch.id) },
-                                onEdit = { locationToEdit = branch },
-                                onEditGeofence = { locationToEditGeofence = branch },
-                                onDelete = { locationToDelete = branch },
-                                onPinCurrentLocation = { viewModel.pinCurrentLocation(context, branch.id) }
-                            )
+                        Icon(
+                            Icons.Default.Warning,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.size(40.dp)
+                        )
+                        Text(
+                            text = state.message,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                        FilledTonalButton(onClick = { viewModel.loadBranches() }) {
+                            Icon(Icons.Default.Refresh, contentDescription = null, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(8.dp))
+                            Text("Try again")
+                        }
+                    }
+                }
+
+                is BranchUiState.Success -> {
+                    if (state.branches.isEmpty()) {
+                        EmptyState(isAdmin = state.isAdmin)
+                    } else {
+                        LazyColumn(
+                            contentPadding = PaddingValues(start = 16.dp, end = 16.dp, top = 4.dp, bottom = 96.dp),
+                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            items(state.branches, key = { it.id }) { branch ->
+                                BranchItemCard(
+                                    branch = branch,
+                                    isActive = branch.id == state.activeLocationId,
+                                    isAdmin = state.isAdmin,
+                                    onCardClick = { onNavigateToBranchDetails?.invoke(branch.id) },
+                                    onSelect = { viewModel.switchBranch(branch.id) },
+                                    onEdit = { locationToEdit = branch },
+                                    onEditGeofence = { locationToEditGeofence = branch },
+                                    onDelete = { locationToDelete = branch },
+                                    onPinCurrentLocation = { viewModel.pinCurrentLocation(context, branch.id) }
+                                )
+                            }
                         }
                     }
                 }
@@ -129,10 +151,10 @@ fun BranchScreen(
         }
     }
 
-    // Create Location Dialog
+    // Create
     if (showCreateDialog) {
         LocationFormDialog(
-            title = "Create New Location",
+            title = "New location",
             onDismiss = { showCreateDialog = false },
             onSubmit = { name, code, address, phone, type, lat, lng, radius ->
                 viewModel.createBranch(
@@ -150,10 +172,10 @@ fun BranchScreen(
         )
     }
 
-    // Edit Location Dialog
+    // Edit
     locationToEdit?.let { branch ->
         LocationFormDialog(
-            title = "Edit Location",
+            title = "Edit location",
             initialBranch = branch,
             onDismiss = { locationToEdit = null },
             onSubmit = { name, code, address, phone, type, lat, lng, radius ->
@@ -173,7 +195,7 @@ fun BranchScreen(
         )
     }
 
-    // Edit Geofence / Coordinates Dialog
+    // Geofence
     locationToEditGeofence?.let { branch ->
         GeofenceFormDialog(
             branch = branch,
@@ -190,31 +212,109 @@ fun BranchScreen(
         )
     }
 
-    // Delete / Deactivate Confirmation Dialog
+    // Delete
     locationToDelete?.let { branch ->
         AlertDialog(
             onDismissRequest = { locationToDelete = null },
-            title = { Text("Delete Location") },
-            text = { Text("Are you sure you want to delete location '${branch.name}'? This action cannot be undone.") },
+            icon = {
+                Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error)
+            },
+            title = { Text("Delete ${branch.name}?") },
+            text = {
+                Text(
+                    "This location will be removed permanently. This can't be undone.",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+            },
             confirmButton = {
-                TextButton(
+                Button(
                     onClick = {
                         viewModel.deleteBranch(branch.id)
                         locationToDelete = null
                     },
-                    colors = ButtonDefaults.textButtonColors(contentColor = MaterialTheme.colorScheme.error)
-                ) {
-                    Text("Delete")
-                }
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.error,
+                        contentColor = MaterialTheme.colorScheme.onError
+                    )
+                ) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { locationToDelete = null }) {
-                    Text("Cancel")
-                }
+                TextButton(onClick = { locationToDelete = null }) { Text("Cancel") }
             }
         )
     }
 }
+
+// ---------------------------------------------------------------------------
+// Screen-level pieces
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun ScreenHeader(count: Int?) {
+    Column(modifier = Modifier.padding(start = 20.dp, end = 20.dp, top = 20.dp, bottom = 16.dp)) {
+        Text(
+            text = "Locations",
+            style = MaterialTheme.typography.headlineMedium.copy(fontWeight = FontWeight.SemiBold),
+            color = MaterialTheme.colorScheme.onBackground
+        )
+        if (count != null) {
+            Spacer(Modifier.height(2.dp))
+            Text(
+                text = if (count == 1) "1 branch" else "$count branches",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+        }
+    }
+}
+
+@Composable
+private fun CenteredBox(content: @Composable BoxScope.() -> Unit) {
+    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center, content = content)
+}
+
+@Composable
+private fun EmptyState(isAdmin: Boolean) {
+    CenteredBox {
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(horizontal = 40.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceVariant),
+                contentAlignment = Alignment.Center
+            ) {
+                Icon(
+                    Icons.Default.Place,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(28.dp)
+                )
+            }
+            Spacer(Modifier.height(4.dp))
+            Text(
+                "No locations yet",
+                style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)
+            )
+            Text(
+                text = if (isAdmin) "Add your first branch to start tracking staff check-ins."
+                else "Ask an administrator to add a branch.",
+                style = MaterialTheme.typography.bodyMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Branch card
+// ---------------------------------------------------------------------------
 
 @Composable
 fun BranchItemCard(
@@ -229,187 +329,234 @@ fun BranchItemCard(
     onPinCurrentLocation: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val colors = MaterialTheme.colorScheme
+    val isPinned = branch.latitude != null && branch.longitude != null
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { onCardClick() },
-        colors = CardDefaults.cardColors(
-            containerColor = if (isActive) MaterialTheme.colorScheme.primaryContainer else MaterialTheme.colorScheme.surface
+        modifier = Modifier.fillMaxWidth(),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(containerColor = colors.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = if (isActive) 2.dp else 0.dp),
+        border = BorderStroke(
+            width = if (isActive) 1.5.dp else 1.dp,
+            color = if (isActive) colors.primary else colors.outlineVariant
         )
     ) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
+
+            // ---- Header: tappable area (name, type, contact, geofence) ----
             Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clickable { onCardClick() }
+                    .padding(start = 16.dp, top = 16.dp, end = 4.dp, bottom = 12.dp),
+                verticalAlignment = Alignment.Top
             ) {
-                Column(modifier = Modifier.weight(1f)) {
+                Column(modifier = Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(8.dp)
                     ) {
                         Text(
                             text = branch.name,
-                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold),
+                            color = colors.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false)
                         )
-                        Surface(
-                            shape = RoundedCornerShape(4.dp),
-                            color = MaterialTheme.colorScheme.surfaceVariant
-                        ) {
-                            Text(
-                                text = branch.locationType,
-                                style = MaterialTheme.typography.labelSmall,
-                                modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
-                            )
+                        Tag(
+                            text = branch.locationType.lowercase().replaceFirstChar { it.uppercase() },
+                            container = colors.surfaceVariant,
+                            content = colors.onSurfaceVariant
+                        )
+                        if (isActive) {
+                            Tag(text = "Active", container = Emerald500.copy(alpha = 0.14f), content = Emerald500)
                         }
                     }
 
                     if (!branch.address.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Place,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = branch.address,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        InfoRow(icon = Icons.Default.Place, text = branch.address)
                     }
-
                     if (!branch.phone.isNullOrEmpty()) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Phone,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                            Text(
-                                text = branch.phone,
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
-                            )
-                        }
+                        InfoRow(icon = Icons.Default.Phone, text = branch.phone)
                     }
 
-                    if (branch.latitude != null && branch.longitude != null) {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(4.dp)
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.LocationOn,
-                                contentDescription = null,
-                                modifier = Modifier.size(14.dp),
-                                tint = Emerald500
-                            )
-                            Text(
-                                text = "📍 GPS: ${"%.4f".format(branch.latitude)}, ${"%.4f".format(branch.longitude)} (${branch.geofenceRadiusMeters?.toInt() ?: 100}m)",
-                                style = MaterialTheme.typography.labelSmall,
-                                color = Emerald500
-                            )
+                    GeofenceStatus(
+                        isPinned = isPinned,
+                        text = if (isPinned) {
+                            "%.5f, %.5f".format(branch.latitude, branch.longitude) +
+                                "  •  ${branch.geofenceRadiusMeters?.toInt() ?: DEFAULT_RADIUS_METERS} m radius"
+                        } else {
+                            "Location not pinned"
                         }
-                    } else {
-                        Spacer(modifier = Modifier.height(2.dp))
-                        Text(
-                            text = "📍 Location not pinned",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
+                    )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Button(
-                        onClick = onSelect,
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = if (isActive) Emerald500 else MaterialTheme.colorScheme.primary
-                        ),
-                        shape = RoundedCornerShape(8.dp)
-                    ) {
-                        Text(if (isActive) "Active ✓" else "Switch")
-                    }
-
-                    if (isAdmin) {
-                        Box {
-                            IconButton(onClick = { showMenu = true }) {
-                                Icon(imageVector = Icons.Default.MoreVert, contentDescription = "Actions")
-                            }
-                            DropdownMenu(
-                                expanded = showMenu,
-                                onDismissRequest = { showMenu = false }
-                            ) {
-                                DropdownMenuItem(
-                                    text = { Text("View Branch Details") },
-                                    leadingIcon = { Icon(Icons.Default.ChevronRight, contentDescription = null) },
-                                    onClick = {
-                                        showMenu = false
-                                        onCardClick()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Edit Details") },
-                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                    onClick = {
-                                        showMenu = false
-                                        onEdit()
-                                    }
-                                )
-                                DropdownMenuItem(
-                                    text = { Text("Update Geofence") },
-                                    leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
-                                    onClick = {
-                                        showMenu = false
-                                        onEditGeofence()
-                                    }
-                                )
-                                HorizontalDivider()
-                                DropdownMenuItem(
-                                    text = { Text("Delete Location", color = MaterialTheme.colorScheme.error) },
-                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = MaterialTheme.colorScheme.error) },
-                                    onClick = {
-                                        showMenu = false
-                                        onDelete()
-                                    }
-                                )
-                            }
+                if (isAdmin) {
+                    Box {
+                        IconButton(onClick = { showMenu = true }) {
+                            Icon(
+                                Icons.Default.MoreVert,
+                                contentDescription = "More actions",
+                                tint = colors.onSurfaceVariant
+                            )
+                        }
+                        DropdownMenu(expanded = showMenu, onDismissRequest = { showMenu = false }) {
+                            DropdownMenuItem(
+                                text = { Text("View details") },
+                                leadingIcon = { Icon(Icons.Default.KeyboardArrowRight, contentDescription = null) },
+                                onClick = { showMenu = false; onCardClick() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Edit details") },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                onClick = { showMenu = false; onEdit() }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Edit geofence") },
+                                leadingIcon = { Icon(Icons.Default.LocationOn, contentDescription = null) },
+                                onClick = { showMenu = false; onEditGeofence() }
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Delete", color = colors.error) },
+                                leadingIcon = {
+                                    Icon(Icons.Default.Delete, contentDescription = null, tint = colors.error)
+                                },
+                                onClick = { showMenu = false; onDelete() }
+                            )
                         }
                     }
                 }
             }
 
-            Spacer(modifier = Modifier.height(8.dp))
+            HorizontalDivider(color = colors.outlineVariant)
 
-            OutlinedButton(
-                onClick = onPinCurrentLocation,
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(8.dp)
+            // ---- Footer actions ----
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween
             ) {
-                Text("📌 Pin Current GPS Location")
+                TextButton(onClick = onPinCurrentLocation) {
+                    Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(if (isPinned) "Re-pin here" else "Pin my location")
+                }
+
+                if (isActive) {
+                    Row(
+                        modifier = Modifier.padding(end = 8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(4.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Check,
+                            contentDescription = null,
+                            tint = Emerald500,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            "Current branch",
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Emerald500
+                        )
+                    }
+                } else {
+                    FilledTonalButton(
+                        onClick = onSelect,
+                        shape = RoundedCornerShape(10.dp),
+                        modifier = Modifier.padding(end = 8.dp)
+                    ) { Text("Switch to this branch") }
+                }
             }
         }
     }
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun Tag(text: String, container: Color, content: Color) {
+    Surface(shape = RoundedCornerShape(6.dp), color = container) {
+        Text(
+            text = text,
+            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Medium),
+            color = content,
+            maxLines = 1,
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+        )
+    }
+}
+
+@Composable
+private fun InfoRow(icon: ImageVector, text: String) {
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(8.dp)
+    ) {
+        Icon(
+            imageVector = icon,
+            contentDescription = null,
+            modifier = Modifier.size(16.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+        Text(
+            text = text,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant
+        )
+    }
+}
+
+@Composable
+private fun GeofenceStatus(isPinned: Boolean, text: String) {
+    val accent = if (isPinned) Emerald500 else MaterialTheme.colorScheme.error
+    Surface(
+        shape = RoundedCornerShape(8.dp),
+        color = accent.copy(alpha = 0.10f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 6.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Icon(
+                imageVector = if (isPinned) Icons.Default.LocationOn else Icons.Default.Warning,
+                contentDescription = null,
+                tint = accent,
+                modifier = Modifier.size(14.dp)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelMedium,
+                color = accent
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Dialogs
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun SectionLabel(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.SemiBold),
+        color = MaterialTheme.colorScheme.primary
+    )
+}
+
+/** Validates a numeric field. Blank is allowed (treated as "not set"). */
+private fun String.isValidNumber(min: Double, max: Double): Boolean {
+    if (isBlank()) return true
+    val v = toDoubleOrNull() ?: return false
+    return v in min..max
+}
+
 @Composable
 fun LocationFormDialog(
     title: String,
@@ -433,30 +580,63 @@ fun LocationFormDialog(
     var locationType by remember { mutableStateOf(initialBranch?.locationType ?: "STORE") }
     var latitudeStr by remember { mutableStateOf(initialBranch?.latitude?.toString() ?: "") }
     var longitudeStr by remember { mutableStateOf(initialBranch?.longitude?.toString() ?: "") }
-    var geofenceRadiusStr by remember { mutableStateOf(initialBranch?.geofenceRadiusMeters?.toString() ?: "100") }
+    var radiusStr by remember {
+        mutableStateOf(initialBranch?.geofenceRadiusMeters?.toInt()?.toString() ?: DEFAULT_RADIUS_METERS.toString())
+    }
+
+    val typeOptions = remember(initialBranch) {
+        (LOCATION_TYPES + listOfNotNull(initialBranch?.locationType)).distinct()
+    }
+    val latValid = latitudeStr.isValidNumber(-90.0, 90.0)
+    val lngValid = longitudeStr.isValidNumber(-180.0, 180.0)
+    val radiusValid = radiusStr.isValidNumber(10.0, 10_000.0)
+    val canSave = name.isNotBlank() && latValid && lngValid && radiusValid
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text(title) },
+        title = { Text(title, fontWeight = FontWeight.SemiBold) },
         text = {
             Column(
                 modifier = Modifier.verticalScroll(rememberScrollState()),
-                verticalArrangement = Arrangement.spacedBy(10.dp)
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
+                SectionLabel("Basic information")
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Location Name *") },
+                    label = { Text("Name") },
+                    supportingText = { Text("Required") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = code,
                     onValueChange = { code = it },
-                    label = { Text("Location Code") },
+                    label = { Text("Code") },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
+
+                Text(
+                    "Type",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Row(
+                    modifier = Modifier.horizontalScroll(rememberScrollState()),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    typeOptions.forEach { option ->
+                        FilterChip(
+                            selected = locationType == option,
+                            onClick = { locationType = option },
+                            label = { Text(option.lowercase().replaceFirstChar { it.uppercase() }) }
+                        )
+                    }
+                }
+
+                Spacer(Modifier.height(4.dp))
+                SectionLabel("Contact")
                 OutlinedTextField(
                     value = address,
                     onValueChange = { address = it },
@@ -466,24 +646,23 @@ fun LocationFormDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { phone = it },
-                    label = { Text("Phone Number") },
+                    label = { Text("Phone number") },
                     keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Phone),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
-                OutlinedTextField(
-                    value = locationType,
-                    onValueChange = { locationType = it },
-                    label = { Text("Location Type (e.g. STORE, WAREHOUSE)") },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth()
-                )
+
+                Spacer(Modifier.height(4.dp))
+                SectionLabel("Geofence")
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     OutlinedTextField(
                         value = latitudeStr,
                         onValueChange = { latitudeStr = it },
                         label = { Text("Latitude") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        isError = !latValid,
+                        supportingText = if (!latValid) {{ Text("-90 to 90") }} else null,
+                        // Decimal (not Number) so the minus sign is available for southern latitudes.
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
@@ -491,16 +670,22 @@ fun LocationFormDialog(
                         value = longitudeStr,
                         onValueChange = { longitudeStr = it },
                         label = { Text("Longitude") },
-                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                        isError = !lngValid,
+                        supportingText = if (!lngValid) {{ Text("-180 to 180") }} else null,
+                        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                         singleLine = true,
                         modifier = Modifier.weight(1f)
                     )
                 }
                 OutlinedTextField(
-                    value = geofenceRadiusStr,
-                    onValueChange = { geofenceRadiusStr = it },
-                    label = { Text("Geofence Radius (meters)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    value = radiusStr,
+                    onValueChange = { radiusStr = it },
+                    label = { Text("Radius (meters)") },
+                    isError = !radiusValid,
+                    supportingText = {
+                        Text(if (radiusValid) "Staff must be within this distance to check in" else "Use 10 to 10,000")
+                    },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -508,7 +693,7 @@ fun LocationFormDialog(
         },
         confirmButton = {
             Button(
-                enabled = name.isNotBlank(),
+                enabled = canSave,
                 onClick = {
                     onSubmit(
                         name.trim(),
@@ -518,18 +703,12 @@ fun LocationFormDialog(
                         locationType.ifBlank { "STORE" },
                         latitudeStr.toDoubleOrNull(),
                         longitudeStr.toDoubleOrNull(),
-                        geofenceRadiusStr.toDoubleOrNull()
+                        radiusStr.toDoubleOrNull()
                     )
                 }
-            ) {
-                Text("Save")
-            }
+            ) { Text("Save changes") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
 
@@ -541,39 +720,54 @@ fun GeofenceFormDialog(
 ) {
     var latitudeStr by remember { mutableStateOf(branch.latitude?.toString() ?: "") }
     var longitudeStr by remember { mutableStateOf(branch.longitude?.toString() ?: "") }
-    var radiusStr by remember { mutableStateOf(branch.geofenceRadiusMeters?.toString() ?: "100") }
+    var radiusStr by remember {
+        mutableStateOf(branch.geofenceRadiusMeters?.toInt()?.toString() ?: DEFAULT_RADIUS_METERS.toString())
+    }
+
+    val latValid = latitudeStr.isValidNumber(-90.0, 90.0)
+    val lngValid = longitudeStr.isValidNumber(-180.0, 180.0)
+    val radiusValid = radiusStr.isValidNumber(10.0, 10_000.0)
 
     AlertDialog(
         onDismissRequest = onDismiss,
-        title = { Text("Update Geofence Coordinates") },
+        icon = { Icon(Icons.Default.LocationOn, contentDescription = null, tint = Emerald500) },
+        title = { Text("Edit geofence", fontWeight = FontWeight.SemiBold) },
         text = {
-            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 Text(
-                    text = "Configure GPS coordinates and radius for staff check-in geofencing.",
+                    text = "Set where ${branch.name} is and how close staff must be to check in.",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
                 OutlinedTextField(
                     value = latitudeStr,
                     onValueChange = { latitudeStr = it },
-                    label = { Text("Latitude (e.g. -1.286389)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("Latitude") },
+                    placeholder = { Text("-1.286389") },
+                    isError = !latValid,
+                    supportingText = if (!latValid) {{ Text("Enter a value from -90 to 90") }} else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = longitudeStr,
                     onValueChange = { longitudeStr = it },
-                    label = { Text("Longitude (e.g. 36.817223)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("Longitude") },
+                    placeholder = { Text("36.817223") },
+                    isError = !lngValid,
+                    supportingText = if (!lngValid) {{ Text("Enter a value from -180 to 180") }} else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
                 OutlinedTextField(
                     value = radiusStr,
                     onValueChange = { radiusStr = it },
-                    label = { Text("Geofence Radius (meters)") },
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+                    label = { Text("Radius (meters)") },
+                    isError = !radiusValid,
+                    supportingText = if (!radiusValid) {{ Text("Use 10 to 10,000") }} else null,
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth()
                 )
@@ -581,6 +775,7 @@ fun GeofenceFormDialog(
         },
         confirmButton = {
             Button(
+                enabled = latValid && lngValid && radiusValid,
                 onClick = {
                     onSubmit(
                         latitudeStr.toDoubleOrNull(),
@@ -588,14 +783,8 @@ fun GeofenceFormDialog(
                         radiusStr.toDoubleOrNull()
                     )
                 }
-            ) {
-                Text("Save Coordinates")
-            }
+            ) { Text("Save geofence") }
         },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Cancel")
-            }
-        }
+        dismissButton = { TextButton(onClick = onDismiss) { Text("Cancel") } }
     )
 }
