@@ -50,6 +50,9 @@ model Attachment {
   @@index([transactionId])
   @@index([purchaseId])
   @@index([organizationId])
+  @@index([stockTransferId])
+  @@index([stockAdjustmentId])
+  @@index([stockReconciliationId])
 }
 
 model GlobalSetting {
