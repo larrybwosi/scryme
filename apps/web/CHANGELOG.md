@@ -1,5 +1,12 @@
 # web
 
+## 10.2.34
+
+### Patch Changes
+
+- Updated dependencies [db807e8]
+  - @scryme/sdk@10.2.34
+
 ## 10.2.33
 
 ### Patch Changes
