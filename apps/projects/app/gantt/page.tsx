@@ -1,10 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { useTasks, useProjects } from "@/lib/hooks/use-projects";
-
-const TOTAL_TIMELINE_DAYS = 28;
 
 export default function GanttPage() {
   const { data: projects = [] } = useProjects();
@@ -14,12 +12,41 @@ export default function GanttPage() {
   const { data: tasks = [], isLoading } = useTasks(currentProjectId || undefined);
   const [zoomLevel, setZoomLevel] = useState<"days" | "weeks" | "months">("days");
 
+  // Determine date bounds
+  const { timelineStart, totalUnits, scaleDays } = useMemo(() => {
+    const now = new Date();
+    let minDate = new Date(now);
+    let maxDate = new Date(now);
+    maxDate.setDate(maxDate.getDate() + 28);
+
+    tasks.forEach((t) => {
+      if (t.startDate) {
+        const s = new Date(t.startDate);
+        if (!isNaN(s.getTime()) && s < minDate) minDate = s;
+      }
+      if (t.dueDate) {
+        const d = new Date(t.dueDate);
+        if (!isNaN(d.getTime()) && d > maxDate) maxDate = d;
+      }
+    });
+
+    // Normalize start to beginning of day
+    const start = new Date(minDate.getFullYear(), minDate.getMonth(), minDate.getDate());
+    const totalDays = Math.max(28, Math.ceil((maxDate.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 7);
+
+    return {
+      timelineStart: start,
+      totalUnits: zoomLevel === "days" ? totalDays : zoomLevel === "weeks" ? Math.ceil(totalDays / 7) : Math.ceil(totalDays / 30),
+      scaleDays: totalDays,
+    };
+  }, [tasks, zoomLevel]);
+
   return (
     <div className="flex flex-col w-full pb-16">
       <div className="flex flex-col w-full">
-        {/* Top Metagame / Control Bar */}
+        {/* Top Control Bar */}
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-3">
             {projects.length > 0 ? (
               <select
                 value={currentProjectId}
@@ -63,6 +90,13 @@ export default function GanttPage() {
               <span className="material-symbols-outlined text-[15px]">view_kanban</span>
               <span>Board</span>
             </Link>
+            <Link
+              href="/tasks"
+              className="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30"
+            >
+              <span className="material-symbols-outlined text-[15px]">view_agenda</span>
+              <span>Tasks</span>
+            </Link>
           </div>
         </div>
 
@@ -84,7 +118,7 @@ export default function GanttPage() {
             <div className="xl:col-span-4 border-r border-outline-variant/30 bg-surface-container-low/60 flex flex-col">
               <div className="p-3 bg-surface-container-high/40 border-b border-outline-variant/30 font-label-badge text-outline text-[11px] uppercase tracking-wider flex items-center justify-between">
                 <span>Task & Assignee</span>
-                <span>Status</span>
+                <span>Due Date</span>
               </div>
               <div className="divide-y divide-outline-variant/20 flex flex-col">
                 {tasks.map((task) => (
@@ -97,7 +131,9 @@ export default function GanttPage() {
                         <div className="text-[12px] text-on-surface truncate">{task.title}</div>
                       </div>
                     </div>
-                    <span className="font-label-code text-[11px] text-outline shrink-0">{task.status}</span>
+                    <span className="font-label-code text-[11px] text-outline shrink-0">
+                      {task.dueDate ? new Date(task.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "--"}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -105,38 +141,78 @@ export default function GanttPage() {
 
             {/* Right Gantt Timeline Canvas */}
             <div className="xl:col-span-8 flex flex-col overflow-x-auto">
+              {/* Timeline Header Track */}
               <div className="flex border-b border-outline-variant/30 bg-surface-container-high/40 font-label-code text-[10px] text-outline py-2.5 min-w-[700px]">
-                {Array.from({ length: TOTAL_TIMELINE_DAYS }).map((_, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 text-center border-r border-outline-variant/10 last:border-0"
-                  >
-                    Day {i + 1}
-                  </div>
-                ))}
+                {Array.from({ length: totalUnits }).map((_, i) => {
+                  let label = `Day ${i + 1}`;
+                  if (zoomLevel === "days") {
+                    const d = new Date(timelineStart);
+                    d.setDate(timelineStart.getDate() + i);
+                    label = `${d.getDate()} ${d.toLocaleString("default", { month: "short" })}`;
+                  } else if (zoomLevel === "weeks") {
+                    label = `Wk ${i + 1}`;
+                  } else {
+                    label = `Mo ${i + 1}`;
+                  }
+
+                  return (
+                    <div
+                      key={i}
+                      className="flex-1 text-center border-r border-outline-variant/10 last:border-0 truncate px-1"
+                    >
+                      {label}
+                    </div>
+                  );
+                })}
               </div>
 
+              {/* Task Timeline Bars */}
               <div className="flex flex-col divide-y divide-outline-variant/15 min-w-[700px] relative">
                 {tasks.map((task, idx) => {
-                  const startOffset = (idx * 3) % 18;
-                  const duration = Math.max(4, Math.min(10, Number(task.estimatedHours) || 6));
-                  const leftPct = (startOffset / TOTAL_TIMELINE_DAYS) * 100;
-                  const widthPct = (duration / TOTAL_TIMELINE_DAYS) * 100;
+                  // Calculate start offset and duration in days relative to timelineStart
+                  const taskStart = task.startDate ? new Date(task.startDate) : null;
+                  const taskEnd = task.dueDate ? new Date(task.dueDate) : null;
+
+                  let startDay = 0;
+                  if (taskStart && !isNaN(taskStart.getTime())) {
+                    startDay = Math.max(0, Math.floor((taskStart.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24)));
+                  } else {
+                    startDay = (idx * 2) % (scaleDays - 5);
+                  }
+
+                  let durationDays = 3;
+                  if (taskEnd && !isNaN(taskEnd.getTime())) {
+                    const endDay = Math.floor((taskEnd.getTime() - timelineStart.getTime()) / (1000 * 60 * 60 * 24));
+                    durationDays = Math.max(1, endDay - startDay);
+                  } else {
+                    durationDays = Math.max(2, Math.min(8, Number(task.estimatedHours) ? Math.ceil(Number(task.estimatedHours) / 8) : 3));
+                  }
+
+                  const leftPct = Math.min(95, (startDay / scaleDays) * 100);
+                  const widthPct = Math.max(3, Math.min(100 - leftPct, (durationDays / scaleDays) * 100));
                   const isDone = task.status === "DONE";
 
                   return (
                     <div key={task.id} className="h-14 flex items-center px-1 relative">
-                      <div
-                        className={`h-7 rounded-md ${isDone ? "bg-emerald-600/80" : "bg-primary-container"} shadow-xs relative flex items-center px-2 group cursor-pointer hover:brightness-110 transition-all`}
+                      <Link
+                        href={`/tasks/${task.id}`}
+                        className={`h-7 rounded-md ${
+                          isDone
+                            ? "bg-emerald-600/80"
+                            : task.priority === "URGENT"
+                            ? "bg-red-500/80"
+                            : "bg-primary-container"
+                        } shadow-xs relative flex items-center px-2 group cursor-pointer hover:brightness-110 transition-all`}
                         style={{
                           marginLeft: `${leftPct}%`,
                           width: `${widthPct}%`,
                         }}
+                        title={`${task.title} (${task.status})`}
                       >
                         <span className="font-label-code text-[11px] text-white truncate z-10 font-medium">
                           {task.title}
                         </span>
-                      </div>
+                      </Link>
                     </div>
                   );
                 })}

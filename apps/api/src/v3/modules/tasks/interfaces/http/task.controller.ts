@@ -210,4 +210,14 @@ export class TaskController {
   ) {
     return this.taskUseCase.getSubtasks(ctx.organizationId, id);
   }
+
+  @Get("calendar/events")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get aggregated calendar events (tasks, milestones, sprints)" })
+  async getCalendarEvents(
+    @v3Context() ctx: V3ApiContext,
+    @Query("projectId") projectId?: string,
+  ) {
+    return this.taskUseCase.getCalendarEvents(ctx.organizationId, projectId);
+  }
 }

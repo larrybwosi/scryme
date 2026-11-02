@@ -3,6 +3,7 @@
 import Link from "next/link";
 import React, { useState } from "react";
 import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
 
 const COLUMNS: { id: Task["status"]; label: string }[] = [
@@ -21,6 +22,7 @@ export default function BoardPage() {
   const { data: tasks = [], isLoading } = useTasks(currentProjectId || undefined);
   const createTaskMutation = useCreateTask(currentProjectId);
   const updateTaskStatusMutation = useUpdateTaskStatus(currentProjectId);
+  const { canManageTasks } = usePermissions();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
@@ -29,7 +31,9 @@ export default function BoardPage() {
   const [newTitle, setNewTitle] = useState("");
   const [newPriority, setNewPriority] = useState<Task["priority"]>("MEDIUM");
 
-  const currentProject = projects.find((p) => p.id === currentProjectId) || projects[0];
+  // Drag and drop state
+  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const [dragOverCol, setDragOverCol] = useState<Task["status"] | null>(null);
 
   const filteredTasks = tasks.filter((t) => {
     if (selectedPriority !== "all" && t.priority !== selectedPriority) return false;
@@ -45,7 +49,7 @@ export default function BoardPage() {
 
   const handleAddTask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newTitle.trim() || !currentProjectId) return;
+    if (!newTitle.trim() || !currentProjectId || !canManageTasks) return;
 
     await createTaskMutation.mutateAsync({
       title: newTitle.trim(),
@@ -59,7 +63,43 @@ export default function BoardPage() {
   };
 
   const moveTaskStatus = (id: string, newStatus: Task["status"]) => {
+    if (!canManageTasks) return;
     updateTaskStatusMutation.mutate({ taskId: id, status: newStatus });
+  };
+
+  const handleDragStart = (e: React.DragEvent, taskId: string) => {
+    if (!canManageTasks) return;
+    setDraggedTaskId(taskId);
+    e.dataTransfer.setData("text/plain", taskId);
+    e.dataTransfer.effectAllowed = "move";
+  };
+
+  const handleDragOver = (e: React.DragEvent, colId: Task["status"]) => {
+    if (!canManageTasks) return;
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+    if (dragOverCol !== colId) {
+      setDragOverCol(colId);
+    }
+  };
+
+  const handleDragLeave = (_e: React.DragEvent, colId: Task["status"]) => {
+    if (dragOverCol === colId) {
+      setDragOverCol(null);
+    }
+  };
+
+  const handleDrop = (e: React.DragEvent, colId: Task["status"]) => {
+    e.preventDefault();
+    setDragOverCol(null);
+    const taskId = e.dataTransfer.getData("text/plain") || draggedTaskId;
+    if (taskId && canManageTasks) {
+      const task = tasks.find((t) => t.id === taskId);
+      if (task && task.status !== colId) {
+        moveTaskStatus(taskId, colId);
+      }
+    }
+    setDraggedTaskId(null);
   };
 
   return (
@@ -108,17 +148,19 @@ export default function BoardPage() {
                 <span>List</span>
               </Link>
             </div>
-            <button
-              type="button"
-              onClick={() => {
-                setTargetColumn("TODO");
-                setIsAddModalOpen(true);
-              }}
-              className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1 shadow-sm transition-all"
-            >
-              <span className="material-symbols-outlined text-[16px]">add</span>
-              <span>New Issue</span>
-            </button>
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => {
+                  setTargetColumn("TODO");
+                  setIsAddModalOpen(true);
+                }}
+                className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">add</span>
+                <span>New Issue</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -154,7 +196,7 @@ export default function BoardPage() {
             </div>
           </div>
           <div className="text-outline text-[11px] font-label-code">
-            {COLUMNS.length} Columns • Live Sync
+            {canManageTasks ? "Drag & Drop Enabled • Live Sync" : "Read-only View"}
           </div>
         </div>
 
@@ -246,10 +288,17 @@ export default function BoardPage() {
           <div className="grid grid-cols-1 md:grid-cols-3 xl:grid-cols-5 gap-3.5 items-start">
             {COLUMNS.map((col) => {
               const columnTasks = filteredTasks.filter((t) => t.status === col.id);
+              const isOver = dragOverCol === col.id;
+
               return (
                 <div
                   key={col.id}
-                  className="flex flex-col rounded-lg bg-surface-container-low border border-outline-variant/30 p-2.5 min-h-[500px]"
+                  onDragOver={(e) => handleDragOver(e, col.id)}
+                  onDragLeave={(e) => handleDragLeave(e, col.id)}
+                  onDrop={(e) => handleDrop(e, col.id)}
+                  className={`flex flex-col rounded-lg bg-surface-container-low border transition-all p-2.5 min-h-[500px] ${
+                    isOver ? "border-primary bg-primary/5 shadow-md" : "border-outline-variant/30"
+                  }`}
                 >
                   {/* Column Header */}
                   <div className="flex items-center justify-between pb-2 mb-2 border-b border-outline-variant/20 px-1">
@@ -259,16 +308,18 @@ export default function BoardPage() {
                         {columnTasks.length}
                       </span>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setTargetColumn(col.id);
-                        setIsAddModalOpen(true);
-                      }}
-                      className="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-                    >
-                      <span className="material-symbols-outlined text-[15px]">add</span>
-                    </button>
+                    {canManageTasks && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setTargetColumn(col.id);
+                          setIsAddModalOpen(true);
+                        }}
+                        className="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">add</span>
+                      </button>
+                    )}
                   </div>
 
                   {/* Card List */}
@@ -276,7 +327,11 @@ export default function BoardPage() {
                     {columnTasks.map((task) => (
                       <div
                         key={task.id}
-                        className="group p-3 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all shadow-xs flex flex-col gap-2"
+                        draggable={canManageTasks}
+                        onDragStart={(e) => handleDragStart(e, task.id)}
+                        className={`group p-3 rounded-lg bg-surface-container hover:bg-surface-container-high border border-outline-variant/20 transition-all shadow-xs flex flex-col gap-2 ${
+                          canManageTasks ? "cursor-grab active:cursor-grabbing" : ""
+                        }`}
                       >
                         <div className="flex items-start justify-between gap-1">
                           <Link
@@ -315,17 +370,21 @@ export default function BoardPage() {
                           </div>
 
                           {/* Move status dropdown */}
-                          <select
-                            value={task.status}
-                            onChange={(e) => moveTaskStatus(task.id, e.target.value as Task["status"])}
-                            className="bg-surface-container-lowest text-outline text-[10px] rounded px-1 py-0.5 border border-outline-variant/20"
-                          >
-                            {COLUMNS.map((c) => (
-                              <option key={c.id} value={c.id}>
-                                {c.label}
-                              </option>
-                            ))}
-                          </select>
+                          {canManageTasks ? (
+                            <select
+                              value={task.status}
+                              onChange={(e) => moveTaskStatus(task.id, e.target.value as Task["status"])}
+                              className="bg-surface-container-lowest text-outline text-[10px] rounded px-1 py-0.5 border border-outline-variant/20 focus:outline-none"
+                            >
+                              {COLUMNS.map((c) => (
+                                <option key={c.id} value={c.id}>
+                                  {c.label}
+                                </option>
+                              ))}
+                            </select>
+                          ) : (
+                            <span className="text-[10px] text-outline font-label-code">{task.status}</span>
+                          )}
                         </div>
                       </div>
                     ))}

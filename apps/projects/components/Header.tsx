@@ -4,12 +4,13 @@ import Link from "next/link";
 import { useState } from "react";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
+import { useTimerStore } from "@/lib/timer-store";
 
 export function Header() {
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const { data: session } = useSession();
   const { data: workspace } = useWorkspaceContext();
+  const { state: timerState, startTimer, pauseTimer } = useTimerStore();
 
   const handleSignOut = async () => {
     try {
@@ -25,6 +26,13 @@ export function Header() {
 
   const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme Workspace";
   const user = session?.user;
+
+  const formatTimer = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   return (
     <header className="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md">
@@ -50,18 +58,32 @@ export function Header() {
       <div className="flex items-center gap-space-md">
         {/* Live Active Timer Pill */}
         <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40">
-          <span
-            className={`w-2 h-2 rounded-full ${isTimerRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
-          ></span>
-          <span className="font-label-code text-label-code text-primary">01:42:15</span>
+          <Link
+            href="/time-tracking"
+            className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
+            title={timerState.activeTaskTitle ? `Working on: ${timerState.activeTaskTitle}` : "Open Time Tracking"}
+          >
+            <span
+              className={`w-2 h-2 rounded-full ${timerState.isRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
+            ></span>
+            <span className="font-label-code text-label-code text-primary">
+              {formatTimer(timerState.elapsedSeconds)}
+            </span>
+          </Link>
           <button
-            className="text-outline hover:text-error transition-colors flex items-center"
+            className="text-outline hover:text-error transition-colors flex items-center cursor-pointer ml-1"
             type="button"
-            onClick={() => setIsTimerRunning(!isTimerRunning)}
-            title={isTimerRunning ? "Stop Timer" : "Start Timer"}
+            onClick={() => {
+              if (timerState.isRunning) {
+                pauseTimer();
+              } else {
+                startTimer();
+              }
+            }}
+            title={timerState.isRunning ? "Pause Timer" : "Resume Timer"}
           >
             <span className="material-symbols-outlined text-[14px]">
-              {isTimerRunning ? "stop_circle" : "play_circle"}
+              {timerState.isRunning ? "pause_circle" : "play_circle"}
             </span>
           </button>
         </div>

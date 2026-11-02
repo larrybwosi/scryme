@@ -9,47 +9,48 @@ import {
   useLogTimeEntry,
   useDeleteTimeEntry,
 } from "@/lib/hooks/use-projects";
+import { useTimerStore } from "@/lib/timer-store";
+import { usePermissions } from "@/lib/permissions";
 
 function TimeTrackingContent() {
   const searchParams = useSearchParams();
   const paramTaskId = searchParams.get("taskId") || "";
 
   const { data: tasks = [] } = useTasks();
-  const [selectedTaskId, setSelectedTaskId] = useState<string>(paramTaskId);
+  const { canManageTasks } = usePermissions();
+  const { state: timerState, startTimer, pauseTimer, resetTimer, setActiveTask, setNote } = useTimerStore();
+
+  const [selectedTaskId, setSelectedTaskId] = useState<string>(paramTaskId || timerState.activeTaskId || "");
 
   useEffect(() => {
     if (paramTaskId) {
       setSelectedTaskId(paramTaskId);
+    } else if (timerState.activeTaskId) {
+      setSelectedTaskId(timerState.activeTaskId);
     } else if (tasks.length > 0 && !selectedTaskId) {
       setSelectedTaskId(tasks[0].id);
     }
-  }, [paramTaskId, tasks, selectedTaskId]);
+  }, [paramTaskId, tasks, selectedTaskId, timerState.activeTaskId]);
 
   const activeTaskId = selectedTaskId || (tasks[0]?.id || "");
   const activeTask = tasks.find((t) => t.id === activeTaskId);
+
+  // Sync selected task into timer store
+  const handleTaskSelect = (taskId: string) => {
+    setSelectedTaskId(taskId);
+    const t = tasks.find((item) => item.id === taskId);
+    if (t) {
+      setActiveTask({ id: t.id, title: t.title, taskKey: t.taskKey });
+    }
+  };
 
   const { data: logs = [], isLoading } = useTimeEntries(activeTaskId);
   const logTimeMutation = useLogTimeEntry(activeTask?.projectId);
   const deleteTimeMutation = useDeleteTimeEntry(activeTaskId);
 
-  const [isRunning, setIsRunning] = useState(false);
-  const [elapsedSeconds, setElapsedSeconds] = useState(0);
-  const [currentNote, setCurrentNote] = useState("");
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
   const [manualHours, setManualHours] = useState("1.0");
   const [manualNote, setManualNote] = useState("");
-
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    if (isRunning) {
-      interval = setInterval(() => {
-        setElapsedSeconds((prev) => prev + 1);
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isRunning]);
 
   const formatTimer = (totalSeconds: number) => {
     const hours = Math.floor(totalSeconds / 3600);
@@ -59,23 +60,21 @@ function TimeTrackingContent() {
   };
 
   const handleStopAndLog = async () => {
-    if (elapsedSeconds < 5 || !activeTaskId) return;
+    if (timerState.elapsedSeconds < 5 || !activeTaskId || !canManageTasks) return;
 
-    const hours = Number((elapsedSeconds / 3600).toFixed(2));
+    const hours = Number((timerState.elapsedSeconds / 3600).toFixed(2));
     await logTimeMutation.mutateAsync({
       taskId: activeTaskId,
       hours,
-      description: currentNote.trim() || "Recorded timer session",
+      description: timerState.note.trim() || "Recorded timer session",
     });
 
-    setElapsedSeconds(0);
-    setIsRunning(false);
-    setCurrentNote("");
+    resetTimer();
   };
 
   const handleManualLog = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!activeTaskId) return;
+    if (!activeTaskId || !canManageTasks) return;
 
     const hours = parseFloat(manualHours) || 1;
     await logTimeMutation.mutateAsync({
@@ -89,6 +88,7 @@ function TimeTrackingContent() {
   };
 
   const handleDeleteLog = (id: string) => {
+    if (!canManageTasks) return;
     deleteTimeMutation.mutate(id);
   };
 
@@ -108,11 +108,11 @@ function TimeTrackingContent() {
             <div className="flex items-center gap-space-lg min-w-0">
               <div className="relative flex items-center justify-center w-12 h-12 rounded-lg bg-surface-container-high shrink-0 shadow-md">
                 <span
-                  className={`material-symbols-outlined text-primary-container text-[28px] ${isRunning ? "animate-pulse" : ""}`}
+                  className={`material-symbols-outlined text-primary-container text-[28px] ${timerState.isRunning ? "animate-pulse" : ""}`}
                 >
                   timer
                 </span>
-                {isRunning && (
+                {timerState.isRunning && (
                   <span className="absolute -top-1 -right-1 w-2.5 h-2.5 bg-primary rounded-full ring-2 ring-surface-container-low"></span>
                 )}
               </div>
@@ -121,7 +121,7 @@ function TimeTrackingContent() {
                   {tasks.length > 0 && (
                     <select
                       value={activeTaskId}
-                      onChange={(e) => setSelectedTaskId(e.target.value)}
+                      onChange={(e) => handleTaskSelect(e.target.value)}
                       className="font-label-badge text-label-badge px-2 py-0.5 rounded bg-surface-container-high text-primary font-medium tracking-wide border-0 focus:outline-none cursor-pointer max-w-[200px] truncate"
                     >
                       {tasks.map((t) => (
@@ -132,13 +132,13 @@ function TimeTrackingContent() {
                     </select>
                   )}
                   <span className="font-label-badge text-label-badge text-primary-container font-medium uppercase tracking-wider flex items-center gap-1">
-                    {isRunning && <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>}
-                    {isRunning ? "Live Recording" : "Timer Paused"}
+                    {timerState.isRunning && <span className="w-1.5 h-1.5 rounded-full bg-primary-container animate-ping"></span>}
+                    {timerState.isRunning ? "Live Recording" : "Timer Paused"}
                   </span>
                 </div>
                 <div className="flex items-baseline gap-space-md mt-0.5">
                   <span className="font-label-code text-[26px] leading-[30px] font-medium tracking-tight text-on-surface">
-                    {formatTimer(elapsedSeconds)}
+                    {formatTimer(timerState.elapsedSeconds)}
                   </span>
                   <span className="font-body-sm text-body-sm text-on-surface-variant truncate max-w-[280px]">
                     {activeTask?.title || "Select a task to record time"}
@@ -153,8 +153,8 @@ function TimeTrackingContent() {
                 <span className="material-symbols-outlined text-outline text-[16px] mr-2">edit_note</span>
                 <input
                   type="text"
-                  value={currentNote}
-                  onChange={(e) => setCurrentNote(e.target.value)}
+                  value={timerState.note}
+                  onChange={(e) => setNote(e.target.value)}
                   placeholder="What are you working on?"
                   className="w-full bg-transparent font-body-md text-body-md text-on-surface placeholder-outline focus:outline-none"
                 />
@@ -162,28 +162,36 @@ function TimeTrackingContent() {
             </div>
 
             {/* Right: Action Buttons */}
-            <div className="flex items-center gap-space-sm w-full lg:w-auto justify-end">
-              <button
-                type="button"
-                onClick={() => setIsRunning(!isRunning)}
-                disabled={!activeTaskId}
-                className="h-8 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined text-[16px]">
-                  {isRunning ? "pause" : "play_arrow"}
-                </span>
-                <span>{isRunning ? "Pause" : "Resume"}</span>
-              </button>
-              <button
-                type="button"
-                onClick={handleStopAndLog}
-                disabled={!activeTaskId || elapsedSeconds < 5}
-                className="h-8 px-space-md rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-md disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined text-[16px]">check_circle</span>
-                <span>Stop & Log</span>
-              </button>
-            </div>
+            {canManageTasks && (
+              <div className="flex items-center gap-space-sm w-full lg:w-auto justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (timerState.isRunning) {
+                      pauseTimer();
+                    } else {
+                      startTimer(activeTask ? { id: activeTask.id, title: activeTask.title, taskKey: activeTask.taskKey } : undefined);
+                    }
+                  }}
+                  disabled={!activeTaskId}
+                  className="h-8 px-space-md rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-sm disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-[16px]">
+                    {timerState.isRunning ? "pause" : "play_arrow"}
+                  </span>
+                  <span>{timerState.isRunning ? "Pause" : "Resume"}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={handleStopAndLog}
+                  disabled={!activeTaskId || timerState.elapsedSeconds < 5}
+                  className="h-8 px-space-md rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-md disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-[16px]">check_circle</span>
+                  <span>Stop & Log</span>
+                </button>
+              </div>
+            )}
           </div>
 
           {/* KPI Strip */}
@@ -221,7 +229,7 @@ function TimeTrackingContent() {
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Target Task</label>
                     <select
                       value={activeTaskId}
-                      onChange={(e) => setSelectedTaskId(e.target.value)}
+                      onChange={(e) => handleTaskSelect(e.target.value)}
                       className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                     >
                       {tasks.map((t) => (
@@ -280,15 +288,17 @@ function TimeTrackingContent() {
                   Logged Time on {activeTask?.taskKey || "Task"}
                 </h3>
               </div>
-              <button
-                type="button"
-                onClick={() => setIsManualModalOpen(true)}
-                disabled={!activeTaskId}
-                className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm transition-colors border border-outline-variant/30 disabled:opacity-50"
-              >
-                <span className="material-symbols-outlined text-[15px]">add</span>
-                <span>Manual Entry</span>
-              </button>
+              {canManageTasks && (
+                <button
+                  type="button"
+                  onClick={() => setIsManualModalOpen(true)}
+                  disabled={!activeTaskId}
+                  className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm transition-colors border border-outline-variant/30 disabled:opacity-50"
+                >
+                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <span>Manual Entry</span>
+                </button>
+              )}
             </div>
 
             {isLoading && (
@@ -328,14 +338,16 @@ function TimeTrackingContent() {
                         {new Date(log.date).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteLog(log.id)}
-                          className="text-outline hover:text-red-400 p-1 transition-colors"
-                          title="Delete Entry"
-                        >
-                          <span className="material-symbols-outlined text-[16px]">delete</span>
-                        </button>
+                        {canManageTasks && (
+                          <button
+                            type="button"
+                            onClick={() => handleDeleteLog(log.id)}
+                            className="text-outline hover:text-red-400 p-1 transition-colors"
+                            title="Delete Entry"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">delete</span>
+                          </button>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -348,7 +360,6 @@ function TimeTrackingContent() {
     </div>
   );
 }
-
 
 export default function TimeTrackingPage() {
   return (

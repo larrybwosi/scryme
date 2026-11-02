@@ -2,19 +2,29 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { useProjects, useCreateProject } from "@/lib/hooks/use-projects";
+import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
+import { Project } from "@/lib/api";
 
 export default function ProjectsPage() {
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [activeFilter, setActiveFilter] = useState<"all" | "ACTIVE" | "ON_HOLD" | "COMPLETED">("all");
+  const [activeFilter, setActiveFilter] = useState<"all" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED">("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: projects = [], isLoading, error } = useProjects();
+  const { data: projects = [], isLoading } = useProjects();
   const createProjectMutation = useCreateProject();
+  const updateProjectMutation = useUpdateProject();
+  const deleteProjectMutation = useDeleteProject();
+  const { canManageTasks } = usePermissions();
 
   const [isNewProjectOpen, setIsNewProjectOpen] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
   const [newProjectKey, setNewProjectKey] = useState("");
   const [newProjectDesc, setNewProjectDesc] = useState("");
+
+  const [editingProject, setEditingProject] = useState<Project | null>(null);
+  const [editName, setEditName] = useState("");
+  const [editDesc, setEditDesc] = useState("");
+  const [editStatus, setEditStatus] = useState<Project["status"]>("ACTIVE");
 
   const filteredProjects = projects.filter((project) => {
     const matchesFilter =
@@ -28,7 +38,7 @@ export default function ProjectsPage() {
 
   const handleCreateProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newProjectName.trim()) return;
+    if (!newProjectName.trim() || !canManageTasks) return;
 
     await createProjectMutation.mutateAsync({
       name: newProjectName.trim(),
@@ -43,8 +53,42 @@ export default function ProjectsPage() {
     setIsNewProjectOpen(false);
   };
 
+  const handleEditClick = (e: React.MouseEvent, project: Project) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setEditingProject(project);
+    setEditName(project.name);
+    setEditDesc(project.description || "");
+    setEditStatus(project.status);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingProject || !editName.trim()) return;
+
+    await updateProjectMutation.mutateAsync({
+      id: editingProject.id,
+      data: {
+        name: editName.trim(),
+        description: editDesc.trim() || undefined,
+        status: editStatus,
+      },
+    });
+
+    setEditingProject(null);
+  };
+
+  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!confirm("Are you sure you want to delete this project workspace?")) return;
+    await deleteProjectMutation.mutateAsync(projectId);
+  };
+
   const activeCount = projects.filter((p) => p.status === "ACTIVE").length;
   const completedCount = projects.filter((p) => p.status === "COMPLETED").length;
+  const onHoldCount = projects.filter((p) => p.status === "ON_HOLD").length;
+  const archivedCount = projects.filter((p) => p.status === "ARCHIVED").length;
 
   return (
     <div className="flex flex-col w-full pb-16">
@@ -94,21 +138,25 @@ export default function ProjectsPage() {
               </div>
               <div className="h-4 w-px bg-surface-container-highest"></div>
               {/* New Project Action */}
-              <button
-                type="button"
-                onClick={() => setIsNewProjectOpen(true)}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
-              >
-                <span className="material-symbols-outlined text-[15px]">add</span>
-                <span>New Project</span>
-                <span className="ml-1 text-label-kbd font-label-kbd text-on-primary-container/70 bg-on-primary-fixed/20 px-1 py-0.2 rounded-lg">P</span>
-              </button>
+              {canManageTasks ? (
+                <button
+                  type="button"
+                  onClick={() => setIsNewProjectOpen(true)}
+                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
+                >
+                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <span>New Project</span>
+                  <span className="ml-1 text-label-kbd font-label-kbd text-on-primary-container/70 bg-on-primary-fixed/20 px-1 py-0.2 rounded-lg">P</span>
+                </button>
+              ) : (
+                <span className="text-outline text-body-sm text-[11px] px-2">Read-only Access</span>
+              )}
             </div>
           </div>
 
           {/* Sub-navigation: Scope tabs & quick search */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
-            <div className="flex items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <button
                 type="button"
                 onClick={() => setActiveFilter("all")}
@@ -145,7 +193,7 @@ export default function ProjectsPage() {
               >
                 <span>On Hold</span>
                 <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {projects.filter((p) => p.status === "ON_HOLD").length}
+                  {onHoldCount}
                 </span>
               </button>
               <button
@@ -160,6 +208,20 @@ export default function ProjectsPage() {
                 <span>Completed</span>
                 <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
                   {completedCount}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setActiveFilter("ARCHIVED")}
+                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
+                  activeFilter === "ARCHIVED"
+                    ? "bg-surface-container text-on-surface font-headline-sm"
+                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
+                }`}
+              >
+                <span>Archived</span>
+                <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
+                  {archivedCount}
                 </span>
               </button>
             </div>
@@ -254,6 +316,76 @@ export default function ProjectsPage() {
           </div>
         )}
 
+        {/* Modal: Edit Project */}
+        {editingProject && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
+            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
+              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
+                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
+                  Edit Project: {editingProject.key}
+                </h3>
+                <button
+                  type="button"
+                  onClick={() => setEditingProject(null)}
+                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
+                >
+                  <span className="material-symbols-outlined text-[18px]">close</span>
+                </button>
+              </div>
+              <form onSubmit={handleSaveEdit} className="flex flex-col gap-4 mt-4">
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
+                  <input
+                    type="text"
+                    required
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  />
+                </div>
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
+                  <input
+                    type="text"
+                    value={editDesc}
+                    onChange={(e) => setEditDesc(e.target.value)}
+                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  />
+                </div>
+                <div>
+                  <label className="block text-body-sm font-medium text-on-surface mb-1">Status</label>
+                  <select
+                    value={editStatus}
+                    onChange={(e) => setEditStatus(e.target.value as Project["status"])}
+                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none"
+                  >
+                    <option value="ACTIVE">ACTIVE</option>
+                    <option value="ON_HOLD">ON_HOLD</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="ARCHIVED">ARCHIVED</option>
+                  </select>
+                </div>
+                <div className="flex justify-end gap-2 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingProject(null)}
+                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={updateProjectMutation.isPending}
+                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+                  >
+                    {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        )}
+
         {/* Loading State */}
         {isLoading && (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
@@ -277,13 +409,15 @@ export default function ProjectsPage() {
             <p className="text-outline text-body-sm max-w-sm">
               Get started by creating your first project workspace to collaborate on tasks, cycles, and milestones.
             </p>
-            <button
-              type="button"
-              onClick={() => setIsNewProjectOpen(true)}
-              className="mt-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm"
-            >
-              Create New Project
-            </button>
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => setIsNewProjectOpen(true)}
+                className="mt-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm"
+              >
+                Create New Project
+              </button>
+            )}
           </div>
         )}
 
@@ -318,7 +452,7 @@ export default function ProjectsPage() {
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-highest">
                       <span className={`w-1.5 h-1.5 rounded-full ${
-                        project.status === "ACTIVE" ? "bg-emerald-400" : project.status === "COMPLETED" ? "bg-primary" : "bg-amber-400"
+                        project.status === "ACTIVE" ? "bg-emerald-400" : project.status === "COMPLETED" ? "bg-primary" : project.status === "ARCHIVED" ? "bg-outline" : "bg-amber-400"
                       }`}></span>
                       <span className="font-label-badge text-label-badge text-on-surface">{project.status}</span>
                     </div>
@@ -336,9 +470,22 @@ export default function ProjectsPage() {
                   <span className="font-label-code text-[11px] text-outline">
                     {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
                   </span>
-                  <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[16px]">
-                    arrow_forward
-                  </span>
+
+                  <div className="flex items-center gap-1">
+                    {canManageTasks && (
+                      <button
+                        type="button"
+                        onClick={(e) => handleEditClick(e, project)}
+                        className="p-1 text-outline hover:text-on-surface transition-colors"
+                        title="Edit Project"
+                      >
+                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                      </button>
+                    )}
+                    <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[16px]">
+                      arrow_forward
+                    </span>
+                  </div>
                 </div>
               </Link>
             ))}
@@ -355,6 +502,7 @@ export default function ProjectsPage() {
                   <th className="px-4 py-2.5">Status</th>
                   <th className="px-4 py-2.5">Tasks</th>
                   <th className="px-4 py-2.5">Updated</th>
+                  <th className="px-4 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-outline-variant/20">
@@ -385,6 +533,28 @@ export default function ProjectsPage() {
                     </td>
                     <td className="px-4 py-3 font-label-code text-[11px] text-outline">
                       {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    </td>
+                    <td className="px-4 py-3 text-right">
+                      {canManageTasks && (
+                        <div className="flex items-center justify-end gap-1">
+                          <button
+                            type="button"
+                            onClick={(e) => handleEditClick(e, project)}
+                            className="p-1 text-outline hover:text-on-surface"
+                            title="Edit Project"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">edit</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => handleDelete(e, project.id)}
+                            className="p-1 text-outline hover:text-red-400"
+                            title="Delete Project"
+                          >
+                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                          </button>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 ))}

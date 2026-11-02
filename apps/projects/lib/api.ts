@@ -77,6 +77,7 @@ export interface Milestone {
   title: string;
   description?: string;
   projectId: string;
+  project?: { id: string; name: string; key: string };
   dueDate?: string;
   status: "OPEN" | "IN_PROGRESS" | "COMPLETED" | "CANCELLED";
   tasks?: Task[];
@@ -87,6 +88,7 @@ export interface Milestone {
 export interface Sprint {
   id: string;
   projectId: string;
+  project?: { id: string; name: string; key: string };
   name: string;
   goal?: string;
   status: "PLANNED" | "ACTIVE" | "COMPLETED" | "CANCELLED";
@@ -330,6 +332,17 @@ export const ProjectsAPI = {
   async deleteProjectDocument(documentId: string): Promise<{ success: boolean; id: string }> {
     const res = await apiClient.delete(`/v3/projects/documents/${documentId}`);
     return res.data?.data || res.data;
+  },
+
+  async getCalendarEvents(projectId?: string): Promise<{ tasks: Task[]; milestones: Milestone[]; sprints: Sprint[] }> {
+    const url = projectId ? `/v3/tasks/calendar/events?projectId=${projectId}` : "/v3/tasks/calendar/events";
+    const res = await apiClient.get(url);
+    const data = res.data?.data || res.data;
+    return {
+      tasks: Array.isArray(data?.tasks) ? data.tasks : [],
+      milestones: Array.isArray(data?.milestones) ? data.milestones : [],
+      sprints: Array.isArray(data?.sprints) ? data.sprints : [],
+    };
   },
 
   async getMembers(): Promise<OrganizationMember[]> {

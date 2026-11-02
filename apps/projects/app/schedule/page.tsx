@@ -1,12 +1,13 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import {
   useMembers,
   useTasks,
   useProjects,
   useCreateTask,
 } from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
 
 export default function SchedulePage() {
   const [weekOffset, setWeekOffset] = useState(0);
@@ -14,6 +15,7 @@ export default function SchedulePage() {
   const { data: tasks = [] } = useTasks();
   const { data: projects = [] } = useProjects();
   const createTaskMutation = useCreateTask();
+  const { canManageTasks } = usePermissions();
 
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
   const [bookingMemberId, setBookingMemberId] = useState("");
@@ -21,16 +23,35 @@ export default function SchedulePage() {
   const [bookingHours, setBookingHours] = useState("4");
   const [bookingTask, setBookingTask] = useState("");
 
+  // Calculate week window boundaries
+  const { weekStart, weekEnd, weekLabel } = useMemo(() => {
+    const now = new Date();
+    const curr = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+    const dayOfWeek = (curr.getDay() + 6) % 7; // Monday = 0
+
+    const monday = new Date(curr);
+    monday.setDate(curr.getDate() - dayOfWeek + weekOffset * 7);
+
+    const sunday = new Date(monday);
+    sunday.setDate(monday.getDate() + 6);
+    sunday.setHours(23, 59, 59, 999);
+
+    const label = `${monday.toLocaleDateString("en-US", { month: "short", day: "numeric" })} - ${sunday.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })}`;
+
+    return { weekStart: monday, weekEnd: sunday, weekLabel: label };
+  }, [weekOffset]);
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectId = bookingProjectId || (projects[0]?.id || "");
-    if (!projectId || !bookingTask.trim()) return;
+    if (!projectId || !bookingTask.trim() || !canManageTasks) return;
 
     const hours = parseFloat(bookingHours) || 2;
     await createTaskMutation.mutateAsync({
       title: bookingTask.trim(),
       projectId,
       estimatedHours: hours,
+      dueDate: weekEnd.toISOString(),
       assigneeIds: bookingMemberId ? [bookingMemberId] : undefined,
       status: "IN_PROGRESS",
       priority: "MEDIUM",
@@ -40,23 +61,36 @@ export default function SchedulePage() {
     setBookingTask("");
   };
 
-  const memberAllocations = members.map((member) => {
-    const memberTasks = tasks.filter((t) =>
-      t.assignees?.some((a) => a.member?.id === member.id)
-    );
-    const assignedHours = memberTasks.reduce(
-      (acc, t) => acc + (Number(t.estimatedHours) || Number(t.actualHours) || 2),
-      0
-    );
-    const totalCapacity = 40;
+  // Aggregate member allocations within the selected week
+  const memberAllocations = useMemo(() => {
+    return members.map((member) => {
+      const memberTasks = tasks.filter((t) => {
+        const isAssigned = t.assignees?.some((a) => a.member?.id === member.id);
+        if (!isAssigned) return false;
 
-    return {
-      member,
-      assignedHours,
-      totalCapacity,
-      tasks: memberTasks,
-    };
-  });
+        // Check if task falls into current week
+        if (t.dueDate) {
+          const due = new Date(t.dueDate);
+          return due >= weekStart && due <= weekEnd;
+        }
+        // If no due date, include if weekOffset === 0 (current week)
+        return weekOffset === 0;
+      });
+
+      const assignedHours = memberTasks.reduce(
+        (acc, t) => acc + (Number(t.estimatedHours) || Number(t.actualHours) || 2),
+        0
+      );
+      const totalCapacity = 40;
+
+      return {
+        member,
+        assignedHours,
+        totalCapacity,
+        tasks: memberTasks,
+      };
+    });
+  }, [members, tasks, weekStart, weekEnd, weekOffset]);
 
   const totalAssigned = memberAllocations.reduce((acc, m) => acc + m.assignedHours, 0);
   const totalCapacity = memberAllocations.length * 40 || 40;
@@ -73,29 +107,33 @@ export default function SchedulePage() {
                 type="button"
                 onClick={() => setWeekOffset(weekOffset - 1)}
                 className="w-6 h-6 flex items-center justify-center text-outline hover:text-on-surface"
+                title="Previous Week"
               >
                 <span className="material-symbols-outlined text-[16px]">chevron_left</span>
               </button>
               <div className="flex items-center gap-1.5 px-2">
                 <span className="material-symbols-outlined text-[15px] text-primary">calendar_month</span>
                 <span className="font-headline-sm text-body-md text-on-surface font-medium">
-                  {weekOffset === 0 ? "Current Sprint Window" : `Offset: ${weekOffset > 0 ? "+" : ""}${weekOffset} Weeks`}
+                  {weekLabel} {weekOffset === 0 ? "(Current)" : ""}
                 </span>
               </div>
               <button
                 type="button"
                 onClick={() => setWeekOffset(weekOffset + 1)}
                 className="w-6 h-6 flex items-center justify-center text-outline hover:text-on-surface"
+                title="Next Week"
               >
                 <span className="material-symbols-outlined text-[16px]">chevron_right</span>
               </button>
-              <button
-                type="button"
-                onClick={() => setWeekOffset(0)}
-                className="px-2 py-0.5 ml-1 text-label-badge font-label-badge bg-surface-container-high text-on-surface rounded"
-              >
-                Current
-              </button>
+              {weekOffset !== 0 && (
+                <button
+                  type="button"
+                  onClick={() => setWeekOffset(0)}
+                  className="px-2 py-0.5 ml-1 text-label-badge font-label-badge bg-surface-container-high text-on-surface rounded"
+                >
+                  Current
+                </button>
+              )}
             </div>
           </div>
 
@@ -106,7 +144,7 @@ export default function SchedulePage() {
                 <span className="font-headline-sm text-body-sm text-on-surface font-semibold tracking-tight">
                   {totalAssigned}h / {totalCapacity}h
                 </span>
-                <span className="font-body-sm text-[10px] text-outline">Cluster Allocation</span>
+                <span className="font-body-sm text-[10px] text-outline">Squad Allocation</span>
               </div>
               <span
                 className={`font-label-badge text-label-badge px-1.5 py-0.5 rounded ${
@@ -121,14 +159,16 @@ export default function SchedulePage() {
               </span>
             </div>
 
-            <button
-              type="button"
-              onClick={() => setIsBookModalOpen(true)}
-              className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
-            >
-              <span className="material-symbols-outlined text-[16px]">add_circle</span>
-              <span>Book Capacity</span>
-            </button>
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => setIsBookModalOpen(true)}
+                className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                <span>Book Capacity</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -271,17 +311,17 @@ export default function SchedulePage() {
                 {/* Capacity Progress Bar */}
                 <div className="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden flex">
                   <div
-                    className="h-full bg-primary-container rounded-full"
+                    className="h-full bg-primary-container rounded-full transition-all duration-300"
                     style={{ width: `${Math.min(usagePercent, 100)}%` }}
                   ></div>
                 </div>
 
                 {/* Allocation Chips */}
                 <div className="flex flex-wrap gap-2 pt-1">
-                  {mTasks.slice(0, 5).map((t) => (
+                  {mTasks.slice(0, 8).map((t) => (
                     <div
                       key={t.id}
-                      className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-[11px] text-on-surface-variant"
+                      className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-surface-container text-[11px] text-on-surface-variant border border-outline-variant/20"
                     >
                       <span className="w-1.5 h-1.5 rounded-full bg-primary"></span>
                       <span className="text-outline font-label-code">{t.taskKey || t.id.slice(-6)}:</span>
@@ -290,7 +330,7 @@ export default function SchedulePage() {
                     </div>
                   ))}
                   {mTasks.length === 0 && (
-                    <span className="text-[11px] text-outline italic">Available for sprint allocations</span>
+                    <span className="text-[11px] text-outline italic">Available for sprint allocations this week</span>
                   )}
                 </div>
               </div>
