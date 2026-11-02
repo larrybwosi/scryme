@@ -24,6 +24,8 @@ import tech.scryme.app.ui.sales.SalesScreen
 import tech.scryme.app.ui.sales.SalesViewModel
 import tech.scryme.app.ui.schedule.ScheduleScreen
 import tech.scryme.app.ui.schedule.ScheduleViewModel
+import tech.scryme.app.ui.schedule.TaskDetailsScreen
+import tech.scryme.app.ui.schedule.TaskDetailsViewModel
 import tech.scryme.app.ui.settings.SettingsScreen
 import tech.scryme.app.ui.settings.SettingsViewModel
 import tech.scryme.app.ui.splash.SplashScreen
@@ -87,7 +89,22 @@ fun AppNavGraph(
         }
         composable(Screen.Schedule.route) {
             val viewModel: ScheduleViewModel = hiltViewModel()
-            ScheduleScreen(viewModel = viewModel)
+            ScheduleScreen(
+                viewModel = viewModel,
+                onNavigateToTaskDetails = { taskId ->
+                    navController.navigate(Screen.TaskDetails.createRoute(taskId))
+                }
+            )
+        }
+        composable(
+            route = Screen.TaskDetails.route,
+            arguments = listOf(navArgument("taskId") { type = NavType.StringType })
+        ) {
+            val viewModel: TaskDetailsViewModel = hiltViewModel()
+            TaskDetailsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
         }
         composable(Screen.Admin.route) {
             val viewModel: AdminViewModel = hiltViewModel()

@@ -2,12 +2,24 @@ package tech.scryme.app.data.dto
 
 import com.google.gson.annotations.SerializedName
 
+data class SubtaskItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("isCompleted") val isCompleted: Boolean = false
+)
+
+data class SubtaskGroupDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("items") val items: List<SubtaskItemDto> = emptyList()
+)
+
 data class StaffShiftDto(
     @SerializedName("id") val id: String,
     @SerializedName("memberId") val memberId: String,
-    @SerializedName("dayOfWeek") val dayOfWeek: Int, // 0 = Sunday, 6 = Saturday
-    @SerializedName("startTime") val startTime: String, // HH:mm
-    @SerializedName("endTime") val endTime: String, // HH:mm
+    @SerializedName("dayOfWeek") val dayOfWeek: Int,
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String,
     @SerializedName("breaks") val breaks: List<ShiftBreakDto> = emptyList(),
     @SerializedName("locationId") val locationId: String? = null,
     @SerializedName("isActive") val isActive: Boolean = true,
@@ -32,7 +44,7 @@ data class ShiftTradeDto(
     @SerializedName("requestingMemberId") val requestingMemberId: String,
     @SerializedName("targetMemberId") val targetMemberId: String? = null,
     @SerializedName("shiftId") val shiftId: String,
-    @SerializedName("status") val status: String, // PENDING, APPROVED, REJECTED, CANCELLED
+    @SerializedName("status") val status: String,
     @SerializedName("reason") val reason: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null
 )
@@ -44,20 +56,29 @@ data class RequestShiftTradeDto(
 )
 
 data class ProcessShiftTradeDto(
-    @SerializedName("action") val action: String // APPROVE, REJECT, CANCEL
+    @SerializedName("action") val action: String
+)
+
+data class CreateShiftBreakDto(
+    @SerializedName("startTime") val startTime: String,
+    @SerializedName("endTime") val endTime: String,
+    @SerializedName("description") val description: String? = null
 )
 
 data class StaffTaskDto(
     @SerializedName("id") val id: String,
     @SerializedName("title") val title: String,
     @SerializedName("description") val description: String? = null,
-    @SerializedName("status") val status: String, // TODO, IN_PROGRESS, COMPLETED, CANCELLED
+    @SerializedName("status") val status: String,
     @SerializedName("priority") val priority: String? = "MEDIUM",
+    @SerializedName("category") val category: String? = null,
     @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
     @SerializedName("dueDate") val dueDate: String? = null,
+    @SerializedName("dueTime") val dueTime: String? = null,
     @SerializedName("estimatedHours") val estimatedHours: Double? = null,
     @SerializedName("actualHours") val actualHours: Double? = null,
-    @SerializedName("assessment") val assessment: TaskAssessmentDto? = null
+    @SerializedName("assessment") val assessment: TaskAssessmentDto? = null,
+    @SerializedName("subtaskGroups") val subtaskGroups: List<SubtaskGroupDto>? = null
 )
 
 data class CreateStaffTaskDto(
@@ -66,6 +87,8 @@ data class CreateStaffTaskDto(
     @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
     @SerializedName("priority") val priority: String? = "MEDIUM",
     @SerializedName("dueDate") val dueDate: String? = null,
+    @SerializedName("dueTime") val dueTime: String? = null,
+    @SerializedName("category") val category: String? = null,
     @SerializedName("estimatedHours") val estimatedHours: Double? = null
 )
 
@@ -73,9 +96,13 @@ data class UpdateStaffTaskDto(
     @SerializedName("status") val status: String? = null,
     @SerializedName("title") val title: String? = null,
     @SerializedName("description") val description: String? = null,
+    @SerializedName("priority") val priority: String? = null,
+    @SerializedName("category") val category: String? = null,
     @SerializedName("dueDate") val dueDate: String? = null,
+    @SerializedName("dueTime") val dueTime: String? = null,
     @SerializedName("estimatedHours") val estimatedHours: Double? = null,
-    @SerializedName("actualHours") val actualHours: Double? = null
+    @SerializedName("actualHours") val actualHours: Double? = null,
+    @SerializedName("subtaskGroups") val subtaskGroups: List<SubtaskGroupDto>? = null
 )
 
 data class TaskAssessmentDto(
@@ -140,7 +167,7 @@ data class AttendanceLogDto(
     @SerializedName("memberId") val memberId: String,
     @SerializedName("checkInTime") val checkInTime: String,
     @SerializedName("checkOutTime") val checkOutTime: String? = null,
-    @SerializedName("checkInLocationId") val checkInLocationId: String,
+    @SerializedName("checkInLocationId") val checkInLocationId: String? = null,
     @SerializedName("shiftStatus") val shiftStatus: String? = null,
     @SerializedName("verificationMethod") val verificationMethod: String? = null,
     @SerializedName("isLocationVerified") val isLocationVerified: Boolean = false,

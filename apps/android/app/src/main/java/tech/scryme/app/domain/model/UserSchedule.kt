@@ -1,5 +1,17 @@
 package tech.scryme.app.domain.model
 
+data class SubtaskItem(
+    val id: String,
+    val title: String,
+    val isCompleted: Boolean = false
+)
+
+data class SubtaskGroup(
+    val id: String,
+    val title: String,
+    val items: List<SubtaskItem> = emptyList()
+)
+
 data class StaffShift(
     val id: String,
     val memberId: String,
@@ -35,11 +47,14 @@ data class StaffTask(
     val description: String? = null,
     val status: String,
     val priority: String? = "MEDIUM",
+    val category: String? = "UI/UX Design",
     val assignedMemberId: String? = null,
     val dueDate: String? = null,
+    val dueTime: String? = null,
     val estimatedHours: Double? = null,
     val actualHours: Double? = null,
-    val assessment: TaskAssessment? = null
+    val assessment: TaskAssessment? = null,
+    val subtaskGroups: List<SubtaskGroup> = emptyList()
 )
 
 data class TaskAssessment(

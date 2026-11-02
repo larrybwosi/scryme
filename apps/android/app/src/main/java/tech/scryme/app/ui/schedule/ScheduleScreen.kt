@@ -119,12 +119,14 @@ private fun CenteredMessage(text: String) {
 
 @Composable
 fun ScheduleScreen(
-    viewModel: ScheduleViewModel
+    viewModel: ScheduleViewModel,
+    onNavigateToTaskDetails: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showTradeDialog by remember { mutableStateOf<StaffShift?>(null) }
     var showBreakDialog by remember { mutableStateOf<StaffShift?>(null) }
     var showCreateShiftDialog by remember { mutableStateOf(false) }
+    var showCreateTaskDialog by remember { mutableStateOf(false) }
     var shiftToAssess by remember { mutableStateOf<StaffShift?>(null) }
 
     LaunchedEffect(Unit) {
@@ -247,12 +249,29 @@ fun ScheduleScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 when (state.selectedTab) {
-                    0 -> MyShiftsList(
-                        shifts = state.myShifts,
-                        onRequestTrade = { showTradeDialog = it },
-                        onAddBreak = { showBreakDialog = it },
-                        onAssessShift = { shiftToAssess = it }
-                    )
+                    0 -> {
+                        ScheduleCalendarHeader(
+                            monthTitle = state.currentMonthTitle,
+                            onMonthClick = { viewModel.openMonthPicker() },
+                            onTodayClick = { viewModel.selectDate(tech.scryme.app.util.DateUtils.getTodayString()) },
+                            onAddClick = { showCreateTaskDialog = true }
+                        )
+
+                        WeekStrip(
+                            days = state.weekDays,
+                            onDaySelected = { dateStr -> viewModel.selectDate(dateStr) }
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        ScheduleTimeline(
+                            items = state.timelineItems,
+                            members = state.members,
+                            onToggleTaskCompletion = { taskId -> viewModel.toggleTaskCompletion(taskId) },
+                            onTaskClick = { taskId -> onNavigateToTaskDetails(taskId) },
+                            onShiftClick = { shift -> showBreakDialog = shift }
+                        )
+                    }
                     1 -> TeamRosterList(
                         shifts = state.teamShifts,
                         members = state.members,
@@ -291,6 +310,39 @@ fun ScheduleScreen(
                 viewModel.addShiftBreak(shift.id, startTime, endTime, description)
                 showBreakDialog = null
             }
+        )
+    }
+
+    if (showCreateTaskDialog) {
+        val currentState = uiState as? ScheduleUiState.Success
+        CreateScheduleTaskDialog(
+            initialDate = currentState?.selectedDate ?: tech.scryme.app.util.DateUtils.getTodayString(),
+            members = currentState?.members ?: emptyList(),
+            onDismiss = { showCreateTaskDialog = false },
+            onSubmit = { title, description, priority, assignedMemberId, dueDate, dueTime, category ->
+                viewModel.createStaffTask(
+                    title = title,
+                    description = description,
+                    priority = priority,
+                    assignedMemberId = assignedMemberId,
+                    dueDate = dueDate,
+                    dueTime = dueTime,
+                    category = category
+                )
+                showCreateTaskDialog = false
+            }
+        )
+    }
+
+    val curState = uiState as? ScheduleUiState.Success
+    if (curState?.isMonthPickerVisible == true) {
+        MonthGridModal(
+            monthCalendar = curState.monthPickerCalendar,
+            days = curState.monthGridDays,
+            onDaySelected = { dateStr -> viewModel.selectDate(dateStr) },
+            onPreviousMonth = { viewModel.previousMonth() },
+            onNextMonth = { viewModel.nextMonth() },
+            onDismiss = { viewModel.closeMonthPicker() }
         )
     }
 
