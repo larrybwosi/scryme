@@ -164,6 +164,53 @@ export interface WorkspaceContext {
   memberId: string | null;
 }
 
+
+export interface UnifiedCalendarEvent {
+  id: string;
+  rawId: string;
+  category: "task" | "milestone" | "production" | "delivery" | "crm" | "shift";
+  title: string;
+  status: string;
+  priority?: "LOW" | "MEDIUM" | "HIGH" | "URGENT" | string;
+  startAt: string;
+  endAt: string;
+  code?: string;
+  projectId?: string;
+  projectName?: string;
+  projectKey?: string;
+  assignees?: {
+    id: string;
+    name: string;
+    email?: string;
+    image?: string;
+    phone?: string;
+  }[];
+  details?: Record<string, any>;
+}
+
+export interface UnifiedCalendarResponse {
+  range: {
+    from: string;
+    to: string;
+  };
+  counts: {
+    total: number;
+    tasks: number;
+    production: number;
+    deliveries: number;
+    crm: number;
+    shifts: number;
+  };
+  events: UnifiedCalendarEvent[];
+}
+
+export interface UnifiedCalendarFilter {
+  from?: string;
+  to?: string;
+  categories?: string;
+  projectId?: string;
+}
+
 export const ProjectsAPI = {
   async getWorkspaceContext(): Promise<WorkspaceContext> {
     const res = await apiClient.get("/v3/tasks/workspace");
@@ -359,4 +406,30 @@ export const ProjectsAPI = {
     }
     return [];
   },
+
+  async getUnifiedCalendar(filter?: UnifiedCalendarFilter): Promise<UnifiedCalendarResponse> {
+    const params = new URLSearchParams();
+    if (filter?.from) params.set("from", filter.from);
+    if (filter?.to) params.set("to", filter.to);
+    if (filter?.categories) params.set("categories", filter.categories);
+    if (filter?.projectId) params.set("projectId", filter.projectId);
+
+    const queryStr = params.toString() ? `?${params.toString()}` : "";
+    const res = await apiClient.get(`/v3/scheduling/unified-calendar${queryStr}`);
+    const data = res.data?.data || res.data;
+    return {
+      range: data?.range || { from: "", to: "" },
+      counts: data?.counts || { total: 0, tasks: 0, production: 0, deliveries: 0, crm: 0, shifts: 0 },
+      events: Array.isArray(data?.events) ? data.events : [],
+    };
+  },
+
+  async updateUnifiedEventStatus(
+    eventId: string,
+    payload: { category: "task" | "production" | "delivery" | "crm" | "shift"; status: string; scheduledDate?: string; notes?: string }
+  ): Promise<{ success: boolean; id: string; status: string }> {
+    const res = await apiClient.patch(`/v3/scheduling/unified-calendar/events/${eventId}/status`, payload);
+    return res.data?.data || res.data;
+  },
+
 };
