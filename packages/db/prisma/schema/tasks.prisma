@@ -157,6 +157,7 @@ model Task {
   @@index([status])
   @@index([parentTaskId])
   @@index([milestoneId])
+  @@index([sprintId])
   @@map("task")
 }
 
