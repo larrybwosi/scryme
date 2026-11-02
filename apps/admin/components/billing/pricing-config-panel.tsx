@@ -132,6 +132,10 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
         symbol: "£",
         name: "GBP (£)",
         badge: "UK & Global",
+        free: {
+          monthly: { amount: "£0", period: "/ month" },
+          annual: { amount: "£0", period: "/ month" },
+        },
         growth: {
           monthly: { amount: "£480", period: "/ month" },
           annual: {
@@ -341,6 +345,57 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
 
                   {/* Plans Breakdown for this currency */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Free Tier */}
+                    <div className="p-4 rounded-lg border border-border bg-card space-y-3">
+                      <span className="text-xs font-mono font-bold uppercase text-blue-400">
+                        Free Forever Tier
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-xs">Monthly Amount</Label>
+                          <Input
+                            value={c.free?.monthly?.amount || ""}
+                            placeholder="e.g. $0"
+                            onChange={(e) =>
+                              updateCurrency(
+                                index,
+                                "free.monthly.amount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-xs">Annual Monthly Rate</Label>
+                          <Input
+                            value={c.free?.annual?.amount || ""}
+                            placeholder="e.g. $0"
+                            onChange={(e) =>
+                              updateCurrency(
+                                index,
+                                "free.annual.amount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label className="text-xs">Annual Note</Label>
+                        <Input
+                          value={c.free?.annual?.billedNote || ""}
+                          placeholder="e.g. Free testing environment"
+                          onChange={(e) =>
+                            updateCurrency(
+                              index,
+                              "free.annual.billedNote",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+
                     {/* Growth Tier */}
                     <div className="p-4 rounded-lg border border-border bg-card space-y-3">
                       <span className="text-xs font-mono font-bold uppercase text-slate-400">
@@ -351,6 +406,7 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                           <Label className="text-xs">Monthly Amount</Label>
                           <Input
                             value={c.growth?.monthly?.amount || ""}
+                            placeholder="e.g. $599"
                             onChange={(e) =>
                               updateCurrency(
                                 index,
@@ -364,6 +420,7 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                           <Label className="text-xs">Annual Monthly Rate</Label>
                           <Input
                             value={c.growth?.annual?.amount || ""}
+                            placeholder="e.g. $499"
                             onChange={(e) =>
                               updateCurrency(
                                 index,
@@ -378,6 +435,7 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                         <Label className="text-xs">Annual Note</Label>
                         <Input
                           value={c.growth?.annual?.billedNote || ""}
+                          placeholder="e.g. Billed annually ($5,988/yr)"
                           onChange={(e) =>
                             updateCurrency(
                               index,
@@ -399,6 +457,7 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                           <Label className="text-xs">Monthly Amount</Label>
                           <Input
                             value={c.scale?.monthly?.amount || ""}
+                            placeholder="e.g. $1,799"
                             onChange={(e) =>
                               updateCurrency(
                                 index,
@@ -412,6 +471,7 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                           <Label className="text-xs">Annual Monthly Rate</Label>
                           <Input
                             value={c.scale?.annual?.amount || ""}
+                            placeholder="e.g. $1,499"
                             onChange={(e) =>
                               updateCurrency(
                                 index,
@@ -426,10 +486,62 @@ export function PricingConfigPanel({ initialConfig }: PricingConfigPanelProps) {
                         <Label className="text-xs">Annual Note</Label>
                         <Input
                           value={c.scale?.annual?.billedNote || ""}
+                          placeholder="e.g. Billed annually ($17,988/yr)"
                           onChange={(e) =>
                             updateCurrency(
                               index,
                               "scale.annual.billedNote",
+                              e.target.value,
+                            )
+                          }
+                        />
+                      </div>
+                    </div>
+
+                    {/* Enterprise Tier */}
+                    <div className="p-4 rounded-lg border border-purple-500/30 bg-purple-500/5 space-y-3">
+                      <span className="text-xs font-mono font-bold uppercase text-purple-400">
+                        Enterprise Tier
+                      </span>
+                      <div className="grid grid-cols-2 gap-2">
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-xs">Monthly Amount</Label>
+                          <Input
+                            value={c.enterprise?.monthly?.amount || ""}
+                            placeholder="e.g. Custom"
+                            onChange={(e) =>
+                              updateCurrency(
+                                index,
+                                "enterprise.monthly.amount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <Label className="text-xs">Annual Monthly Rate</Label>
+                          <Input
+                            value={c.enterprise?.annual?.amount || ""}
+                            placeholder="e.g. Custom"
+                            onChange={(e) =>
+                              updateCurrency(
+                                index,
+                                "enterprise.annual.amount",
+                                e.target.value,
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      <div className="flex flex-col gap-1">
+                        <Label className="text-xs">Annual Note</Label>
+                        <Input
+                          value={c.enterprise?.annual?.billedNote || ""}
+                          placeholder="e.g. Tailored deployment & SLA"
+                          onChange={(e) =>
+                            updateCurrency(
+                              index,
+                              "enterprise.annual.billedNote",
                               e.target.value,
                             )
                           }
