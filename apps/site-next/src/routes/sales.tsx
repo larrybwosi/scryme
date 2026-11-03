@@ -19,7 +19,7 @@ function SalesComponent() {
             <DollarSign className="w-3.5 h-3.5" />
             <span>Sales Automation & RevOps Engine • Sub-12ms Reconciled Pipeline</span>
           </div>
-          <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif dark:text-white light:text-[#090a0b] tracking-tight leading-[1.08] mb-6">
+          <h1 className="text-4xl sm:text-6xl md:text-7xl font-serif text-[var(--text-main)] tracking-tight leading-[1.08] mb-6">
             Accelerate Quote-to-Cash Velocity With Automated Ledger Reconciliation
           </h1>
           <p className="text-base md:text-xl text-[var(--text-muted)] max-w-2xl mx-auto leading-relaxed mb-10">
@@ -28,7 +28,7 @@ function SalesComponent() {
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
             <a
               href="https://app.scryme.tech/signup"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition"
+              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-md"
             >
               <span>Automate Deal Pipeline</span>
               <ArrowRight className="w-4 h-4" />
@@ -38,43 +38,43 @@ function SalesComponent() {
       </section>
 
       {/* Feature Grid */}
-      <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto border-t border-white/10">
+      <section className="py-16 px-4 md:px-8 max-w-7xl mx-auto border-t border-[var(--border-subtle)]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
           <div className="glass-panel p-6 rounded-2xl">
             <div className="w-10 h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center text-[#10b981] mb-4">
               <Zap className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold dark:text-white light:text-[#090a0b] mb-2">Instant Invoicing</h3>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Instant Invoicing</h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Transform accepted quotes into compliant tax invoices in under 12 milliseconds.
             </p>
           </div>
 
           <div className="glass-panel p-6 rounded-2xl">
-            <div className="w-10 h-10 rounded-lg bg-[#d2ff3a]/10 flex items-center justify-center text-[#d2ff3a] mb-4">
+            <div className="w-10 h-10 rounded-lg bg-[#d2ff3a]/10 flex items-center justify-center text-[#4d6700] dark:text-[#d2ff3a] mb-4">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold dark:text-white light:text-[#090a0b] mb-2">Predictive Margin Guardrails</h3>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Predictive Margin Guardrails</h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Hermes AI prevents sales reps from discounting below required corporate gross margins.
             </p>
           </div>
 
           <div className="glass-panel p-6 rounded-2xl">
-            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-400 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 dark:text-blue-400 mb-4">
               <BarChart2 className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold dark:text-white light:text-[#090a0b] mb-2">Stock Reservation</h3>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Stock Reservation</h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Automatically hold physical inventory across regional hubs the instant a quote is signed.
             </p>
           </div>
 
           <div className="glass-panel p-6 rounded-2xl">
-            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400 mb-4">
+            <div className="w-10 h-10 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-500 dark:text-purple-400 mb-4">
               <RefreshCw className="w-5 h-5" />
             </div>
-            <h3 className="text-lg font-bold dark:text-white light:text-[#090a0b] mb-2">Bank Ingestion</h3>
+            <h3 className="text-lg font-bold text-[var(--text-main)] mb-2">Bank Ingestion</h3>
             <p className="text-xs text-[var(--text-muted)] leading-relaxed">
               Reconcile wire transfers and card payments directly against account invoices.
             </p>
@@ -86,8 +86,8 @@ function SalesComponent() {
       <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto">
         <div className="glass-panel-elevated p-8 md:p-12 rounded-3xl grid grid-cols-1 lg:grid-cols-2 gap-8 items-center">
           <div>
-            <span className="text-xs font-mono uppercase tracking-widest text-[#d2ff3a] mb-2 block">12ms Velocity</span>
-            <h2 className="text-3xl md:text-5xl font-serif dark:text-white light:text-[#090a0b] mb-4">
+            <span className="text-xs font-mono uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a] mb-2 block">12ms Velocity</span>
+            <h2 className="text-3xl md:text-5xl font-serif text-[var(--text-main)] mb-4">
               How Quotes Translate to Reconciled Balance Sheets
             </h2>
             <p className="text-sm text-[var(--text-muted)] leading-relaxed mb-6">
@@ -128,7 +128,7 @@ function SalesComponent() {
       {/* CTA */}
       <section className="py-20 px-4 md:px-8 max-w-7xl mx-auto text-center">
         <div className="glass-panel p-10 md:p-14 rounded-3xl">
-          <h2 className="text-3xl md:text-5xl font-serif dark:text-white light:text-[#090a0b] mb-4">
+          <h2 className="text-3xl md:text-5xl font-serif text-[var(--text-main)] mb-4">
             Eliminate Quote-to-Cash Bottlenecks Permanently
           </h2>
           <p className="text-sm md:text-base text-[var(--text-muted)] max-w-xl mx-auto mb-8">
@@ -136,7 +136,7 @@ function SalesComponent() {
           </p>
           <a
             href="https://app.scryme.tech/signup"
-            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition"
+            className="inline-flex items-center gap-2 px-8 py-4 text-sm font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] rounded-full hover:bg-[#c7f32c] transition shadow-md"
           >
             <span>Start RevOps Automation</span>
             <ArrowRight className="w-4 h-4" />

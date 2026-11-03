@@ -35,7 +35,7 @@ function PingDot() {
 
 function Eyebrow({ children }: { children: React.ReactNode }) {
   return (
-    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+    <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
       {children}
     </span>
   )
@@ -48,26 +48,26 @@ function Hero() {
     <section className="relative w-full overflow-hidden px-4 pb-20 pt-12 md:px-8 md:pt-16">
       <div className="mx-auto flex max-w-7xl flex-col gap-10">
         <div className="flex flex-wrap items-center gap-3">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#e9e8e5] px-3 py-1.5 shadow-sm">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-3 py-1.5 shadow-sm">
             <PingDot />
-            <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[#002116]">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-[var(--text-main)]">
               Scryme ERP OS v3.2 • Unified Operational Kernel
             </span>
           </div>
-          <div className="hidden items-center gap-2 rounded-full bg-[#f4f3f0] px-2.5 py-1 font-mono text-[11px] text-[#414844] sm:inline-flex">
-            <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700]" />
+          <div className="hidden items-center gap-2 rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] px-2.5 py-1 font-mono text-[11px] text-[var(--text-muted)] sm:inline-flex">
+            <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700] dark:bg-[#d2ff3a]" />
             <span>180+ NODES SYNCHRONIZED</span>
           </div>
         </div>
 
         <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-8">
-            <h1 className="font-serif max-w-4xl text-4xl font-normal leading-[1.08] tracking-tight text-[#002116] sm:text-6xl md:text-7xl">
+            <h1 className="font-serif max-w-4xl text-4xl font-normal leading-[1.08] tracking-tight text-[var(--text-main)] sm:text-6xl md:text-7xl">
               Can one smarter engine scale your entire enterprise?
             </h1>
           </div>
           <div className="flex flex-col gap-6 lg:col-span-4">
-            <p className="font-sans text-base leading-relaxed text-[#414844]">
+            <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
               Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship
               intelligence, and decoupled catalog engines across an immutable sub-millisecond mesh. Zero fragmented
               connectors.
@@ -75,14 +75,14 @@ function Hero() {
             <div className="flex flex-wrap items-center gap-3">
               <a
                 href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
-                className="group inline-flex items-center justify-center rounded-lg bg-[#002116] px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-[#12372a] hover:shadow-lg"
+                className="group inline-flex items-center justify-center rounded-lg bg-[#002116] dark:bg-[#d2ff3a] px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white dark:text-[#090a0b] shadow-md transition-all hover:bg-[#12372a] dark:hover:bg-[#c7f32c] hover:shadow-lg"
               >
-                <span className="mr-2.5 h-2 w-2 rounded-full bg-[#bef529] transition-transform group-hover:scale-125" />
+                <span className="mr-2.5 h-2 w-2 rounded-full bg-[#bef529] dark:bg-[#002116] transition-transform group-hover:scale-125" />
                 <span>Start 14-Day Enterprise Trial</span>
               </a>
               <Link
                 to="/pricing"
-                className="inline-flex items-center justify-center rounded-lg bg-[#e9e8e5] px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[#002116] transition-colors hover:bg-[#e3e2e0]"
+                className="inline-flex items-center justify-center rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-main)] transition-colors hover:bg-[var(--bg-secondary)]"
               >
                 Schedule Enterprise Demo
               </Link>
@@ -90,14 +90,14 @@ function Hero() {
           </div>
         </div>
 
-        <div className="group relative mt-4 w-full overflow-hidden rounded-2xl bg-[#e3e2e0] shadow-xl">
+        <div className="group relative mt-4 w-full overflow-hidden rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] shadow-xl">
           <div className="relative aspect-[16/9] w-full overflow-hidden md:aspect-[21/9]">
             <img
               alt="Autonomous Global Operations Command Headquarters"
               src={HERO_IMG}
               className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
             />
-            <div className="absolute inset-0 bg-gradient-to-t from-[#002116]/90 via-[#002116]/20 to-transparent" />
+            <div className="absolute inset-0 bg-gradient-to-t from-[#002116]/90 via-[#002116]/30 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col justify-between gap-4 p-6 sm:flex-row sm:items-end md:p-8">
               <div className="flex max-w-xl flex-col gap-1">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#bef529]">
@@ -107,13 +107,13 @@ function Hero() {
                   Autonomous Global Operations Command • Sub-12ms Telemetry Fabric across 180+ Enterprise Nodes
                 </p>
               </div>
-              <div className="flex items-center gap-3 self-start rounded-xl bg-white/80 px-4 py-2 text-[#1a1c1a] shadow-sm backdrop-blur-md sm:self-auto">
-                <Gauge className="h-4 w-4 text-[#4d6700]" />
+              <div className="flex items-center gap-3 self-start rounded-xl bg-white/90 dark:bg-black/80 px-4 py-2 text-[var(--text-main)] shadow-sm backdrop-blur-md sm:self-auto border border-white/20">
+                <Gauge className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] uppercase tracking-wider text-[#414844]">
+                  <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                     Sync State
                   </span>
-                  <span className="font-mono text-xs font-bold text-[#002116]">
+                  <span className="font-mono text-xs font-bold text-[var(--text-main)]">
                     0.008s Consensus
                   </span>
                 </div>
@@ -169,19 +169,19 @@ const PILLARS = [
 
 function Pillars() {
   return (
-    <section className="w-full bg-[#f4f3f0] px-4 py-20 md:px-8">
+    <section className="w-full bg-[var(--bg-secondary)] px-4 py-20 md:px-8 border-y border-[var(--border-subtle)]">
       <div className="mx-auto flex max-w-7xl flex-col gap-12">
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="flex max-w-2xl flex-col gap-2">
             <div className="flex items-center gap-2">
               <Eyebrow>01 // Architectural Pillars</Eyebrow>
-              <span className="h-px w-8 bg-[#c1c8c3]" />
+              <span className="h-px w-8 bg-[var(--border-prominent)]" />
             </div>
-            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[#002116] sm:text-4xl md:text-5xl">
+            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
               Four specialized engines. Zero operational friction.
             </h2>
           </div>
-          <p className="font-sans max-w-md text-sm leading-relaxed text-[#414844]">
+          <p className="font-sans max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
             Explore the modular, single-state systems powering multinational enterprises. Every action updates the
             kernel in sub-millisecond real time.
           </p>
@@ -191,34 +191,34 @@ function Pillars() {
           {PILLARS.map((p) => (
             <div
               key={p.title}
-              className="group relative flex flex-col justify-between rounded-2xl bg-white p-8 shadow-sm transition-all duration-300 hover:shadow-xl"
+              className="group relative flex flex-col justify-between rounded-2xl glass-panel p-8 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-[#d2ff3a]/40"
             >
               <div className="flex flex-col gap-6">
                 <div className="flex items-center justify-between gap-2">
-                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#414844]">
+                  <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                     {p.label}
                   </span>
-                  <span className="font-mono inline-flex items-center gap-1.5 rounded-full bg-[#efeeeb] px-3 py-1 text-xs font-medium text-[#002116]">
-                    <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700]" />
+                  <span className="font-mono inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] px-3 py-1 text-xs font-medium text-[var(--text-main)]">
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700] dark:bg-[#d2ff3a]" />
                     {p.badge}
                   </span>
                 </div>
                 <div className="flex flex-col gap-2">
-                  <span className="font-serif text-3xl text-[#002116] md:text-4xl font-normal">
+                  <span className="font-serif text-3xl text-[var(--text-main)] md:text-4xl font-normal">
                     {p.stat}
                   </span>
-                  <h3 className="font-serif text-2xl font-medium text-[#002116]">
+                  <h3 className="font-serif text-2xl font-medium text-[var(--text-main)]">
                     {p.title}
                   </h3>
                 </div>
-                <p className="font-sans text-sm leading-relaxed text-[#414844]">
+                <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                   {p.body}
                 </p>
               </div>
               <div className="mt-6 pt-8">
                 <Link
                   to={p.href}
-                  className="font-sans inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[#002116] transition-colors group-hover:text-[#4d6700]"
+                  className="font-sans inline-flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:group-hover:text-[#d2ff3a]"
                 >
                   <span>{p.cta}</span>
                   <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1.5" />
@@ -229,16 +229,16 @@ function Pillars() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex items-center justify-between gap-4 rounded-xl bg-[#efeeeb] p-6">
+          <div className="flex items-center justify-between gap-4 rounded-xl glass-panel p-6">
             <div className="flex items-center gap-4">
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#002116] text-white">
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#002116] dark:bg-[#d2ff3a] text-white dark:text-[#090a0b]">
                 <Terminal className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#002116]">
+                <span className="text-sm font-bold text-[var(--text-main)]">
                   Model Context Protocol (MCP) &amp; APIs
                 </span>
-                <span className="text-xs text-[#414844]">
+                <span className="text-xs text-[var(--text-muted)]">
                   Stream programmatic ERP state to Claude, GPT-4, and custom AI agents.
                 </span>
               </div>
@@ -246,22 +246,22 @@ function Pillars() {
             <Link
               to="/developers/apps"
               aria-label="Developer Console"
-              className="shrink-0 rounded-lg bg-white p-2.5 text-[#002116] transition-colors hover:bg-[#002116] hover:text-white"
+              className="shrink-0 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] p-2.5 text-[var(--text-main)] transition-colors hover:bg-[#002116] hover:text-white dark:hover:bg-[#d2ff3a] dark:hover:text-[#090a0b]"
             >
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>
 
-          <div className="flex items-center justify-between gap-4 rounded-xl bg-[#efeeeb] p-6">
+          <div className="flex items-center justify-between gap-4 rounded-xl glass-panel p-6">
             <div className="flex items-center gap-4">
               <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-[#bef529] text-[#151f00]">
                 <MonitorSmartphone className="h-6 w-6" />
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#002116]">
+                <span className="text-sm font-bold text-[var(--text-main)]">
                   Native Mobile Operations Hub
                 </span>
-                <span className="text-xs text-[#414844]">
+                <span className="text-xs text-[var(--text-muted)]">
                   Real-time floor scans, inventory audit adjustments, and pipeline approvals on iOS &amp; Android.
                 </span>
               </div>
@@ -269,7 +269,7 @@ function Pillars() {
             <Link
               to="/payments"
               aria-label="Payments Architecture"
-              className="shrink-0 rounded-lg bg-white p-2.5 text-[#002116] transition-colors hover:bg-[#002116] hover:text-white"
+              className="shrink-0 rounded-lg bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] p-2.5 text-[var(--text-main)] transition-colors hover:bg-[#002116] hover:text-white dark:hover:bg-[#d2ff3a] dark:hover:text-[#090a0b]"
             >
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -300,21 +300,21 @@ function Paradigm() {
         <div className="grid grid-cols-1 items-center gap-8 lg:grid-cols-12">
           <div className="flex flex-col gap-6 lg:col-span-5">
             <Eyebrow>02 // Paradigm Shift</Eyebrow>
-            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[#002116] sm:text-4xl md:text-5xl">
+            <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
               Stop paying the middleware tax on broken operational data.
             </h2>
-            <p className="font-sans text-base leading-relaxed text-[#414844]">
+            <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
               Enterprise systems failed because they bolted isolated SaaS point solutions together with duct-tape
               webhooks. When data is replicated across 9 different vendors, truth becomes obsolete within 15 minutes.
             </p>
-            <div className="flex flex-col gap-3 rounded-xl bg-[#f4f3f0] p-5">
+            <div className="flex flex-col gap-3 rounded-xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-5">
               <div className="flex items-center gap-2">
                 <RefreshCw className="h-[18px] w-[18px] text-[#ba1a1a]" />
-                <span className="font-sans text-sm font-semibold text-[#002116]">
+                <span className="font-sans text-sm font-semibold text-[var(--text-main)]">
                   The True Cost of Legacy SaaS Sprawl
                 </span>
               </div>
-              <p className="font-sans text-xs text-[#414844] leading-relaxed">
+              <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">
                 The average $100M+ enterprise spends $184,000 annually maintaining API sync scripts, reconciling
                 ledger mismatches, and investigating phantom inventory orders.
               </p>
@@ -322,7 +322,7 @@ function Paradigm() {
           </div>
 
           <div className="lg:col-span-7">
-            <div className="relative overflow-hidden rounded-2xl bg-[#e9e8e5] shadow-xl">
+            <div className="relative overflow-hidden rounded-2xl bg-[var(--bg-tertiary)] border border-[var(--border-subtle)] shadow-xl">
               <div className="aspect-[16/10] w-full overflow-hidden">
                 <img
                   alt="Senior enterprise leadership reviewing real-time global supply chain telemetry"
@@ -330,16 +330,16 @@ function Paradigm() {
                   className="h-full w-full object-cover object-center"
                 />
               </div>
-              <div className="flex flex-col items-start justify-between gap-4 bg-white p-6 sm:flex-row sm:items-center">
+              <div className="flex flex-col items-start justify-between gap-4 glass-panel p-6 sm:flex-row sm:items-center">
                 <div className="flex flex-col">
-                  <span className="text-sm font-bold text-[#002116]">
+                  <span className="text-sm font-bold text-[var(--text-main)]">
                     Executive Visibility Room
                   </span>
-                  <span className="text-xs text-[#414844]">
+                  <span className="text-xs text-[var(--text-muted)]">
                     Cross-node revenue &amp; logistics consensus active
                   </span>
                 </div>
-                <div className="font-mono flex items-center gap-2 text-xs font-semibold text-[#4d6700]">
+                <div className="font-mono flex items-center gap-2 text-xs font-semibold text-[#4d6700] dark:text-[#d2ff3a]">
                   <span className="h-2 w-2 rounded-full bg-[#bef529]" />
                   ZERO SYNCHRONIZATION DELAY
                 </div>
@@ -349,12 +349,12 @@ function Paradigm() {
         </div>
 
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <div className="flex flex-col gap-6 rounded-2xl bg-[#e9e8e5] p-8">
+          <div className="flex flex-col gap-6 rounded-2xl glass-panel p-8">
             <div className="flex items-center justify-between">
-              <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-[#414844]">
+              <span className="font-sans text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                 The Conventional Pattern
               </span>
-              <span className="font-mono rounded bg-[#ffdad6] px-2.5 py-1 text-xs font-semibold text-[#93000a]">
+              <span className="font-mono rounded bg-[#ffdad6] dark:bg-[#93000a]/30 px-2.5 py-1 text-xs font-semibold text-[#93000a] dark:text-[#ffb4ab]">
                 Legacy Sprawl
               </span>
             </div>
@@ -363,8 +363,8 @@ function Paradigm() {
                 <div key={t} className="flex items-start gap-3">
                   <X className="mt-0.5 h-5 w-5 shrink-0 text-[#ba1a1a]" />
                   <div className="flex flex-col">
-                    <span className="text-sm font-bold text-[#002116]">{t}</span>
-                    <span className="text-xs text-[#414844] leading-relaxed">{d}</span>
+                    <span className="text-sm font-bold text-[var(--text-main)]">{t}</span>
+                    <span className="text-xs text-[var(--text-muted)] leading-relaxed">{d}</span>
                   </div>
                 </div>
               ))}
@@ -414,65 +414,65 @@ function MetricsAndCase() {
   ]
 
   return (
-    <section className="w-full bg-[#f4f3f0] px-4 py-20 md:px-8">
+    <section className="w-full bg-[var(--bg-secondary)] px-4 py-20 md:px-8 border-y border-[var(--border-subtle)]">
       <div className="mx-auto flex max-w-7xl flex-col gap-16">
         <div className="grid grid-cols-2 gap-6 md:grid-cols-4">
           {metrics.map(([k, v, d]) => (
-            <div key={k} className="flex flex-col gap-2 rounded-2xl bg-white p-6 shadow-sm">
-              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#414844]">
+            <div key={k} className="flex flex-col gap-2 rounded-2xl glass-panel p-6 shadow-sm">
+              <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
                 {k}
               </span>
-              <span className="font-serif text-3xl font-normal text-[#002116] md:text-4xl">
+              <span className="font-serif text-3xl font-normal text-[var(--text-main)] md:text-4xl">
                 {v}
               </span>
-              <span className="font-sans text-xs text-[#414844]">{d}</span>
+              <span className="font-sans text-xs text-[var(--text-muted)]">{d}</span>
             </div>
           ))}
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-10 rounded-3xl bg-white p-8 shadow-md lg:flex-row md:p-12">
+        <div className="flex flex-col items-center justify-between gap-10 rounded-3xl glass-panel p-8 shadow-md lg:flex-row md:p-12">
           <div className="flex max-w-2xl flex-col gap-6">
             <div className="flex items-center gap-3">
               <span className="font-mono rounded-full bg-[#bef529] px-3 py-1 text-xs font-bold uppercase tracking-wider text-[#151f00]">
                 Customer Spotlight
               </span>
-              <span className="font-sans text-sm font-semibold text-[#002116]">
+              <span className="font-sans text-sm font-semibold text-[var(--text-main)]">
                 Veloce Global Logistics AG
               </span>
             </div>
-            <blockquote className="font-serif text-xl font-medium leading-snug text-[#002116] sm:text-2xl md:text-3xl">
+            <blockquote className="font-serif text-xl font-medium leading-snug text-[var(--text-main)] sm:text-2xl md:text-3xl">
               "Migrating to Scryme’s single-kernel architecture collapsed our reconciliation cycle from 3 days to
               literally 4 seconds. Our ops teams in Zurich and Singapore are finally looking at the exact same ledger
               numbers without questioning data freshness."
             </blockquote>
             <div className="flex items-center gap-4">
-              <div className="font-sans flex h-12 w-12 items-center justify-center rounded-full bg-[#002116] text-sm font-bold text-white">
+              <div className="font-sans flex h-12 w-12 items-center justify-center rounded-full bg-[#002116] dark:bg-[#d2ff3a] text-sm font-bold text-white dark:text-[#090a0b]">
                 ER
               </div>
               <div className="flex flex-col">
-                <span className="text-sm font-bold text-[#002116]">Elena Rostova</span>
-                <span className="text-xs text-[#414844]">
+                <span className="text-sm font-bold text-[var(--text-main)]">Elena Rostova</span>
+                <span className="text-xs text-[var(--text-muted)]">
                   Chief Operating Officer, Veloce Global Logistics
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex w-full shrink-0 flex-col gap-4 rounded-2xl bg-[#f4f3f0] p-6 lg:w-80">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#414844]">
+          <div className="flex w-full shrink-0 flex-col gap-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-6 lg:w-80">
+            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
               Deployment Summary
             </span>
             <div className="flex flex-col gap-3">
               {deploy.map(([k, v]) => (
                 <div key={k} className="flex items-center justify-between text-sm">
-                  <span className="text-[#414844]">{k}</span>
-                  <span className="font-mono font-semibold text-[#002116]">{v}</span>
+                  <span className="text-[var(--text-muted)]">{k}</span>
+                  <span className="font-mono font-semibold text-[var(--text-main)]">{v}</span>
                 </div>
               ))}
             </div>
             <Link
               to="/crm"
-              className="mt-2 rounded-lg bg-[#002116] py-2.5 text-center text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#12372a]"
+              className="mt-2 rounded-lg bg-[#002116] dark:bg-[#d2ff3a] py-2.5 text-center text-xs font-bold uppercase tracking-wider text-white dark:text-[#090a0b] transition-colors hover:bg-[#12372a] dark:hover:bg-[#c7f32c]"
             >
               Read Full Case Study
             </Link>
@@ -512,7 +512,7 @@ function Faq() {
       <div className="flex flex-col gap-12">
         <div className="flex flex-col items-center gap-3 text-center">
           <Eyebrow>03 // Architectural Inquiries</Eyebrow>
-          <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[#002116] sm:text-4xl md:text-5xl">
+          <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
             Frequently asked questions by enterprise engineering &amp; leadership
           </h2>
         </div>
@@ -523,23 +523,23 @@ function Faq() {
             return (
               <div
                 key={q}
-                className="overflow-hidden rounded-xl bg-[#f4f3f0] transition-all duration-200"
+                className="overflow-hidden rounded-xl glass-panel transition-all duration-200"
               >
                 <button
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left text-base font-bold text-[#002116]"
+                  className="flex w-full cursor-pointer items-center justify-between gap-4 px-6 py-5 text-left text-base font-bold text-[var(--text-main)]"
                 >
                   <span>{q}</span>
                   <ChevronDown
                     className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-[#4d6700]' : 'text-[#717974]'
+                      isOpen ? 'rotate-180 text-[#4d6700] dark:text-[#d2ff3a]' : 'text-[var(--text-muted)]'
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="px-6 pb-5 font-sans text-sm leading-relaxed text-[#414844]">
+                  <div className="px-6 pb-5 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                     {a}
                   </div>
                 )}
@@ -600,9 +600,9 @@ function FinalCta() {
 
 function HomeComponent() {
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1c1a] font-sans selection:bg-[#bef529] selection:text-[#151f00]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#bef529] selection:text-[#151f00] transition-colors">
       <Header />
-      <main className="w-full pt-20">
+      <main className="w-full">
         <Hero />
         <Pillars />
         <Paradigm />

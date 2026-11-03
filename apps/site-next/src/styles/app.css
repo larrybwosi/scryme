@@ -4,18 +4,39 @@
   :root {
     --color-electric-lime: #d2ff3a;
     --color-precision-emerald: #10b981;
-    --color-chalk-cream: #f5f3ed;
+    --color-chalk-cream: #faf9f6;
     --color-obsidian-void: #090a0b;
     --color-obsidian-bg: #121314;
     --color-surface-container: #1f2021;
     --color-surface-low: #1b1c1d;
     --color-surface-high: #292a2b;
     --color-border-subtle: rgba(255, 255, 255, 0.08);
+
+    /* Light Theme Default / Variables */
+    --bg-main: #faf9f6;
+    --bg-secondary: #f4f3f0;
+    --bg-tertiary: #efeeeb;
+    --bg-elevated: #ffffff;
+    --text-main: #002116;
+    --text-muted: #414844;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(0, 33, 22, 0.08);
+    --header-bg: rgba(250, 249, 246, 0.85);
+    --nav-text: #414844;
+    --nav-hover: #002116;
+    --border-subtle: rgba(0, 33, 22, 0.08);
+    --border-prominent: rgba(0, 33, 22, 0.15);
+    --accent: #4d6700;
+    --accent-lime: #d2ff3a;
+    --accent-emerald: #10b981;
   }
 
-  /* Dark Theme Default */
-  html.dark, :root:not(.light) {
+  /* Dark Theme Overrides */
+  html.dark {
     --bg-main: #121314;
+    --bg-secondary: #18191b;
+    --bg-tertiary: #1f2023;
+    --bg-elevated: #24282e;
     --text-main: #e3e2e3;
     --text-muted: #c5c9ae;
     --card-bg: rgba(26, 29, 33, 0.7);
@@ -23,18 +44,31 @@
     --header-bg: rgba(18, 19, 20, 0.85);
     --nav-text: #c5c9ae;
     --nav-hover: #ffffff;
+    --border-subtle: rgba(255, 255, 255, 0.08);
+    --border-prominent: rgba(255, 255, 255, 0.15);
+    --accent: #d2ff3a;
+    --accent-lime: #d2ff3a;
+    --accent-emerald: #10b981;
   }
 
-  /* Light Theme Overrides */
+  /* Explicit Light Theme Overrides (matches :root) */
   html.light {
-    --bg-main: #f8f9fa;
-    --text-main: #121314;
-    --text-muted: #525866;
-    --card-bg: #ffffff;
-    --card-border: rgba(0, 0, 0, 0.08);
-    --header-bg: rgba(248, 249, 250, 0.85);
-    --nav-text: #525866;
-    --nav-hover: #090a0b;
+    --bg-main: #faf9f6;
+    --bg-secondary: #f4f3f0;
+    --bg-tertiary: #efeeeb;
+    --bg-elevated: #ffffff;
+    --text-main: #002116;
+    --text-muted: #414844;
+    --card-bg: rgba(255, 255, 255, 0.85);
+    --card-border: rgba(0, 33, 22, 0.08);
+    --header-bg: rgba(250, 249, 246, 0.85);
+    --nav-text: #414844;
+    --nav-hover: #002116;
+    --border-subtle: rgba(0, 33, 22, 0.08);
+    --border-prominent: rgba(0, 33, 22, 0.15);
+    --accent: #4d6700;
+    --accent-lime: #d2ff3a;
+    --accent-emerald: #10b981;
   }
 
   body {
@@ -74,7 +108,8 @@
   box-shadow: 0 24px 48px -8px rgba(0, 0, 0, 0.7), 0 0 1px 1px rgba(210, 255, 58, 0.2);
 }
 
-html.light .glass-panel-elevated {
+html.light .glass-panel-elevated,
+:root:not(.dark) .glass-panel-elevated {
   background: #ffffff;
   border: 1px solid rgba(16, 185, 129, 0.3);
   box-shadow: 0 20px 40px -10px rgba(0, 0, 0, 0.08);

@@ -17,6 +17,7 @@ import {
 } from 'lucide-react'
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useRef, useCallback, useId } from 'react'
+import { trackOpenPanelEvent } from '../lib/openpanel'
 
 export interface FeatureItem {
   to: string
@@ -81,7 +82,7 @@ const focusRing =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#d2ff3a]'
 
 const hoverSurface =
-  'hover:bg-white/5 dark:hover:bg-white/5 light:hover:bg-black/5'
+  'hover:bg-black/5 dark:hover:bg-white/5'
 
 // Desktop link with an animated underline that scales in when active
 const navLink = [
@@ -96,7 +97,7 @@ const navLink = [
 
 const mobileLink = [
   'flex items-center justify-between py-3.5 text-base font-medium text-[var(--nav-text)]',
-  'border-b border-white/5 dark:border-white/5 light:border-black/5',
+  'border-b border-[var(--border-subtle)]',
   'transition-colors hover:text-[var(--nav-hover)]',
   focusRing,
   '[&.active]:text-[#d2ff3a] [&.active]:font-bold',
@@ -104,9 +105,9 @@ const mobileLink = [
 
 const ghostButton = [
   'inline-flex items-center justify-center px-4 py-2 text-xs font-semibold uppercase tracking-wider',
-  'dark:text-[#e3e2e3] light:text-[#121314]',
-  'border border-white/15 light:border-black/15 rounded-full',
-  'hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-black/5 transition',
+  'text-[var(--text-main)]',
+  'border border-[var(--border-prominent)] rounded-full',
+  'hover:bg-black/5 dark:hover:bg-white/10 transition',
   focusRing,
 ].join(' ')
 
@@ -154,6 +155,13 @@ export function Header() {
     setMobileMenuOpen(false)
     setFeaturesOpen(false)
   }, [pathname])
+
+  /* Toggle theme and track OpenPanel event */
+  const toggleTheme = () => {
+    const nextTheme = isDark ? 'light' : 'dark'
+    setTheme(nextTheme)
+    trackOpenPanelEvent('theme_changed', { theme: nextTheme, source: 'header_toggle' })
+  }
 
   /* Hover-intent helpers: a short close delay stops the menu flickering
      when the pointer crosses the gap between trigger and panel. */
@@ -246,8 +254,8 @@ export function Header() {
     <header
       className={`sticky top-0 z-50 backdrop-blur-xl bg-[var(--header-bg)] border-b px-4 md:px-8 transition-all duration-300 ${
         scrolled
-          ? 'py-2.5 border-white/15 dark:border-white/15 light:border-black/15 shadow-lg shadow-black/10'
-          : 'py-3.5 border-white/10 dark:border-white/10 light:border-black/10'
+          ? 'py-2.5 border-[var(--border-prominent)] shadow-lg shadow-black/5 dark:shadow-black/20'
+          : 'py-3.5 border-[var(--border-subtle)]'
       }`}
     >
       <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
@@ -260,7 +268,7 @@ export function Header() {
           <div className="w-9 h-9 rounded-lg bg-[#d2ff3a] flex items-center justify-center text-[#090a0b] shadow-sm transition-all duration-200 group-hover:scale-105 group-hover:-rotate-3 group-hover:shadow-[0_0_18px_rgba(210,255,58,0.45)]">
             <Layers className="w-5 h-5 stroke-[2.5]" />
           </div>
-          <span className="text-xl font-bold tracking-tight font-sans dark:text-white light:text-[#090a0b]">
+          <span className="text-xl font-bold tracking-tight font-sans text-[var(--text-main)]">
             SCRYME<span className="text-[#d2ff3a]">.</span>
           </span>
         </Link>
@@ -308,7 +316,7 @@ export function Header() {
                   role="menu"
                   aria-label="Features"
                   onKeyDown={onMenuKeyDown}
-                  className="rounded-2xl border border-white/15 dark:border-white/15 light:border-black/15 bg-[var(--header-bg)] backdrop-blur-2xl shadow-2xl shadow-black/30 overflow-hidden animate-in fade-in-50 zoom-in-95 slide-in-from-top-1 duration-150 motion-reduce:animate-none"
+                  className="rounded-2xl border border-[var(--border-prominent)] bg-[var(--header-bg)] backdrop-blur-2xl shadow-2xl shadow-black/10 dark:shadow-black/40 overflow-hidden animate-in fade-in-50 zoom-in-95 slide-in-from-top-1 duration-150 motion-reduce:animate-none"
                 >
                   <div className="grid grid-cols-2 gap-1 p-2.5">
                     {FEATURE_ITEMS.map((item, i) => {
@@ -324,15 +332,15 @@ export function Header() {
                           role="menuitem"
                           className={`group flex items-start gap-3 p-3 rounded-xl transition-all ${focusRing} ${
                             active
-                              ? 'bg-white/10 dark:bg-white/10 light:bg-black/10'
-                              : `${hoverSurface} focus-visible:bg-white/5`
+                              ? 'bg-black/5 dark:bg-white/10'
+                              : `${hoverSurface} focus-visible:bg-black/5 dark:focus-visible:bg-white/5`
                           }`}
                         >
                           <div
                             className={`mt-0.5 p-2 rounded-lg transition-all duration-200 ${
                               active
                                 ? 'bg-[#d2ff3a] text-[#090a0b]'
-                                : 'bg-white/5 dark:bg-white/5 light:bg-black/5 text-[var(--text-muted)] group-hover:bg-[#d2ff3a] group-hover:text-[#090a0b] group-hover:scale-105'
+                                : 'bg-black/5 dark:bg-white/5 text-[var(--text-muted)] group-hover:bg-[#d2ff3a] group-hover:text-[#090a0b] group-hover:scale-105'
                             }`}
                           >
                             <Icon className="w-4 h-4" />
@@ -389,9 +397,9 @@ export function Header() {
         <div className="flex items-center gap-2.5">
           {mounted ? (
             <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              onClick={toggleTheme}
               aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
-              className={`relative p-2 rounded-full border border-white/10 dark:border-white/15 light:border-black/15 text-[var(--text-main)] hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-black/5 transition ${focusRing}`}
+              className={`relative p-2 rounded-full border border-[var(--border-prominent)] text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 transition cursor-pointer ${focusRing}`}
             >
               <span className="relative block w-4 h-4">
                 <Sun
@@ -400,7 +408,7 @@ export function Header() {
                   }`}
                 />
                 <Moon
-                  className={`absolute inset-0 w-4 h-4 text-slate-700 transition-all duration-300 motion-reduce:transition-none ${
+                  className={`absolute inset-0 w-4 h-4 text-[#002116] dark:text-slate-300 transition-all duration-300 motion-reduce:transition-none ${
                     isDark ? 'rotate-90 scale-50 opacity-0' : 'rotate-0 scale-100 opacity-100'
                   }`}
                 />
@@ -424,7 +432,7 @@ export function Header() {
             aria-label={mobileMenuOpen ? 'Close navigation menu' : 'Open navigation menu'}
             aria-expanded={mobileMenuOpen}
             aria-controls="mobile-nav"
-            className={`lg:hidden p-2 rounded-lg text-[var(--text-main)] hover:bg-white/10 transition ${focusRing}`}
+            className={`lg:hidden p-2 rounded-lg text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 transition ${focusRing}`}
           >
             {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
           </button>
@@ -441,7 +449,7 @@ export function Header() {
           />
           <div
             id="mobile-nav"
-            className="lg:hidden absolute inset-x-0 top-full bg-[var(--bg-main)] border-b border-white/10 dark:border-white/10 light:border-black/10 px-6 pt-2 pb-6 shadow-2xl flex flex-col gap-5 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain animate-in slide-in-from-top duration-200 motion-reduce:animate-none z-50"
+            className="lg:hidden absolute inset-x-0 top-full bg-[var(--bg-main)] border-b border-[var(--border-subtle)] px-6 pt-2 pb-6 shadow-2xl flex flex-col gap-5 max-h-[calc(100vh-4rem)] overflow-y-auto overscroll-contain animate-in slide-in-from-top duration-200 motion-reduce:animate-none z-50"
           >
             <nav aria-label="Mobile" className="flex flex-col">
               <Link to="/" activeOptions={{ exact: true }} className={mobileLink}>
@@ -449,7 +457,7 @@ export function Header() {
               </Link>
 
               {/* Features group */}
-              <div className="border-b border-white/5 dark:border-white/5 light:border-black/5">
+              <div className="border-b border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setMobileFeaturesExpanded((p) => !p)}
@@ -480,7 +488,7 @@ export function Header() {
                           to={item.to as any}
                           className={`flex items-center gap-3 p-2.5 rounded-xl transition-all ${focusRing} ${
                             active
-                              ? 'bg-white/10 dark:bg-white/10 light:bg-black/10'
+                              ? 'bg-black/5 dark:bg-white/10'
                               : hoverSurface
                           }`}
                         >
@@ -488,7 +496,7 @@ export function Header() {
                             className={`p-2 rounded-lg shrink-0 ${
                               active
                                 ? 'bg-[#d2ff3a] text-[#090a0b]'
-                                : 'bg-white/5 dark:bg-white/5 light:bg-black/5 text-[var(--text-muted)]'
+                                : 'bg-black/5 dark:bg-white/5 text-[var(--text-muted)]'
                             }`}
                           >
                             <Icon className="w-4 h-4" />
