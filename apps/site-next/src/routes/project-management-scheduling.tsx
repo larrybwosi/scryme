@@ -3,7 +3,7 @@ import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import {
-  AltRoute,
+  GitFork,
   ArrowDown,
   ArrowRight,
   Briefcase,
@@ -24,7 +24,7 @@ import {
   Wallet,
 } from 'lucide-react'
 
-export const Route = createFileRoute('/project-management')({
+export const Route = createFileRoute('/project-management-scheduling')({
   component: ProjectManagementComponent,
 })
 
@@ -773,7 +773,7 @@ function ArchitecturalPillars() {
 
               <div className="mt-2 flex items-center justify-between rounded-lg bg-[#f4f3f0] p-3 font-sans text-xs">
                 <span className="flex items-center gap-2 font-medium text-[#1a1c1a]">
-                  <AltRoute className="h-4.5 w-4.5 text-[#4d6700]" />
+                  <GitFork className="h-4.5 w-4.5 text-[#4d6700]" />
                   Dynamic Buffer Preservation
                 </span>
                 <span className="font-mono text-[10px] font-bold text-[#002116]">

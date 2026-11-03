@@ -863,13 +863,13 @@ function ArchitectureSection() {
               </div>
             </div>
             <div className="pt-2">
-              <Link
-                to="/enterprise"
+              <a
+                href="#"
                 className="inline-flex items-center gap-2 font-sans text-xs font-semibold text-[#002116] transition-colors hover:text-[#4d6700]"
               >
                 Read CRDT Enterprise Whitepaper
                 <ArrowRight className="h-4 w-4" />
-              </Link>
+              </a>
             </div>
           </div>
 

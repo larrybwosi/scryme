@@ -15,8 +15,13 @@ import { Route as CrmRouteImport } from './routes/crm'
 import { Route as InventoryRouteImport } from './routes/inventory'
 import { Route as LightRouteImport } from './routes/light'
 import { Route as LocationsRouteImport } from './routes/locations'
+import { Route as McpAgentApisRouteImport } from './routes/mcp-agent-apis'
+import { Route as MobileFieldOpsRouteImport } from './routes/mobile-field-ops'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as PointOfSaleRouteImport } from './routes/point-of-sale'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ProcurementSupplyChainRouteImport } from './routes/procurement-supply-chain'
+import { Route as ProjectManagementSchedulingRouteImport } from './routes/project-management-scheduling'
 import { Route as SalesRouteImport } from './routes/sales'
 import { Route as StockOpsRouteImport } from './routes/stock-ops'
 import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
@@ -55,9 +60,24 @@ const LocationsRoute = LocationsRouteImport.update({
   path: '/locations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const McpAgentApisRoute = McpAgentApisRouteImport.update({
+  id: '/mcp-agent-apis',
+  path: '/mcp-agent-apis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MobileFieldOpsRoute = MobileFieldOpsRouteImport.update({
+  id: '/mobile-field-ops',
+  path: '/mobile-field-ops',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PaymentsRoute = PaymentsRouteImport.update({
   id: '/payments',
   path: '/payments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PointOfSaleRoute = PointOfSaleRouteImport.update({
+  id: '/point-of-sale',
+  path: '/point-of-sale',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -65,6 +85,17 @@ const PricingRoute = PricingRouteImport.update({
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProcurementSupplyChainRoute = ProcurementSupplyChainRouteImport.update({
+  id: '/procurement-supply-chain',
+  path: '/procurement-supply-chain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectManagementSchedulingRoute =
+  ProjectManagementSchedulingRouteImport.update({
+    id: '/project-management-scheduling',
+    path: '/project-management-scheduling',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
@@ -108,8 +139,13 @@ export interface FileRoutesByFullPath {
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -125,8 +161,13 @@ export interface FileRoutesByTo {
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -143,8 +184,13 @@ export interface FileRoutesById {
   '/inventory': typeof InventoryRoute
   '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
@@ -162,8 +208,13 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/light'
     | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
     | '/stock-ops'
     | '/compare/$slug'
@@ -179,8 +230,13 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/light'
     | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
     | '/stock-ops'
     | '/compare/$slug'
@@ -196,8 +252,13 @@ export interface FileRouteTypes {
     | '/inventory'
     | '/light'
     | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
     | '/stock-ops'
     | '/compare/$slug'
@@ -214,8 +275,13 @@ export interface RootRouteChildren {
   InventoryRoute: typeof InventoryRoute
   LightRoute: typeof LightRoute
   LocationsRoute: typeof LocationsRoute
+  McpAgentApisRoute: typeof McpAgentApisRoute
+  MobileFieldOpsRoute: typeof MobileFieldOpsRoute
   PaymentsRoute: typeof PaymentsRoute
+  PointOfSaleRoute: typeof PointOfSaleRoute
   PricingRoute: typeof PricingRoute
+  ProcurementSupplyChainRoute: typeof ProcurementSupplyChainRoute
+  ProjectManagementSchedulingRoute: typeof ProjectManagementSchedulingRoute
   SalesRoute: typeof SalesRoute
   StockOpsRoute: typeof StockOpsRoute
   CompareSlugRoute: typeof CompareSlugRoute
@@ -269,6 +335,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LocationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mcp-agent-apis': {
+      id: '/mcp-agent-apis'
+      path: '/mcp-agent-apis'
+      fullPath: '/mcp-agent-apis'
+      preLoaderRoute: typeof McpAgentApisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mobile-field-ops': {
+      id: '/mobile-field-ops'
+      path: '/mobile-field-ops'
+      fullPath: '/mobile-field-ops'
+      preLoaderRoute: typeof MobileFieldOpsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/payments': {
       id: '/payments'
       path: '/payments'
@@ -276,11 +356,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/point-of-sale': {
+      id: '/point-of-sale'
+      path: '/point-of-sale'
+      fullPath: '/point-of-sale'
+      preLoaderRoute: typeof PointOfSaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
       fullPath: '/pricing'
       preLoaderRoute: typeof PricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/procurement-supply-chain': {
+      id: '/procurement-supply-chain'
+      path: '/procurement-supply-chain'
+      fullPath: '/procurement-supply-chain'
+      preLoaderRoute: typeof ProcurementSupplyChainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project-management-scheduling': {
+      id: '/project-management-scheduling'
+      path: '/project-management-scheduling'
+      fullPath: '/project-management-scheduling'
+      preLoaderRoute: typeof ProjectManagementSchedulingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sales': {
@@ -342,8 +443,13 @@ const rootRouteChildren: RootRouteChildren = {
   InventoryRoute: InventoryRoute,
   LightRoute: LightRoute,
   LocationsRoute: LocationsRoute,
+  McpAgentApisRoute: McpAgentApisRoute,
+  MobileFieldOpsRoute: MobileFieldOpsRoute,
   PaymentsRoute: PaymentsRoute,
+  PointOfSaleRoute: PointOfSaleRoute,
   PricingRoute: PricingRoute,
+  ProcurementSupplyChainRoute: ProcurementSupplyChainRoute,
+  ProjectManagementSchedulingRoute: ProjectManagementSchedulingRoute,
   SalesRoute: SalesRoute,
   StockOpsRoute: StockOpsRoute,
   CompareSlugRoute: CompareSlugRoute,

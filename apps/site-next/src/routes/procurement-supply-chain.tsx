@@ -119,20 +119,20 @@ function Hero() {
               </button>
 
               <Link
-                to="/book-demo"
+                to="/pricing"
                 className="inline-flex items-center gap-2 rounded-lg bg-[#f4f3f0] px-5 py-3 font-sans text-xs font-semibold text-[#002116] shadow-sm transition-colors hover:bg-[#e9e8e5]"
               >
                 <span>Schedule Supply Chain Audit</span>
                 <Calendar className="h-4.5 w-4.5" />
               </Link>
 
-              <Link
-                to="/resources-hub"
+              <a
+                href="#"
                 className="inline-flex items-center gap-1.5 px-3 py-2 font-sans text-xs text-[#414844] transition-colors hover:text-[#002116]"
               >
                 <FileText className="h-4 w-4" />
                 <span>Whitepaper (PDF)</span>
-              </Link>
+              </a>
             </div>
 
             {/* Telemetry Highlights Grid */}
@@ -951,17 +951,17 @@ function ExecutiveCtaBanner() {
 
         <div className="flex w-full shrink-0 flex-col gap-3 sm:w-auto sm:flex-row md:w-auto">
           <Link
-            to="/book-demo"
+            to="/pricing"
             className="rounded-xl bg-[#bef529] px-6 py-3.5 text-center font-sans text-xs font-semibold text-[#151f00] shadow-lg transition-all hover:bg-[#a4d700]"
           >
             Book Architecture Session
           </Link>
-          <Link
-            to="/start-trial"
+          <a
+            href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
             className="rounded-xl bg-white/10 px-6 py-3.5 text-center font-sans text-xs font-semibold text-white transition-all hover:bg-white/20"
           >
             Explore Staging Sandbox
-          </Link>
+          </a>
         </div>
       </div>
     </section>
