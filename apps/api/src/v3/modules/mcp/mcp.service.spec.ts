@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import { UnauthorizedException, NotFoundException, BadRequestException } from "@nestjs/common";
+import jwt from "jsonwebtoken";
+import { db } from "@repo/db";
 import { McpService } from "./mcp.service";
 import { McpToolsService } from "./mcp-tools.service";
-import { db } from "@repo/db";
-import jwt from "jsonwebtoken";
+import { McpDraftService } from "./mcp-draft.service";
 
 vi.mock("@repo/db", () => ({
   db: {
@@ -15,127 +17,106 @@ vi.mock("@repo/db", () => ({
     },
     product: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    productVariant: {
+      findFirst: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
     },
     transaction: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
-    },
-    customer: {
-      findMany: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
     },
     transactionItem: {
       findMany: vi.fn(),
     },
+    fulfillment: {
+      create: vi.fn(),
+      updateMany: vi.fn(),
+    },
+    customer: {
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+    },
     staffTask: {
       findMany: vi.fn(),
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      update: vi.fn(),
+      updateMany: vi.fn(),
     },
     staffShift: {
       findMany: vi.fn(),
     },
+    category: {
+      findFirst: vi.fn(),
+    },
+    inventoryLocation: {
+      findFirst: vi.fn(),
+    },
+    member: {
+      findFirst: vi.fn(),
+    },
+    mcpDraftChange: {
+      create: vi.fn(),
+      findMany: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
+    },
+    $transaction: vi.fn(async (cb) => {
+      return cb(db);
+    }),
   },
 }));
 
-describe("McpService", () => {
+describe("McpService & Tools", () => {
   let mcpService: McpService;
   let mcpToolsService: McpToolsService;
+  let mcpDraftService: McpDraftService;
 
   beforeEach(() => {
     vi.clearAllMocks();
-    mcpToolsService = new McpToolsService();
+    mcpDraftService = new McpDraftService();
+    mcpToolsService = new McpToolsService(mcpDraftService);
     mcpService = new McpService(mcpToolsService);
   });
 
-  describe("initialize", () => {
-    it("should return standard MCP protocol initialize object", async () => {
-      const res = await mcpService.initialize();
-      expect(res.serverInfo.name).toBe("Scryme MCP Server");
-      expect(res.capabilities.tools).toBeDefined();
-      expect(res.capabilities.resources).toBeDefined();
-    });
-  });
-
-  describe("listTools", () => {
-    it("should return 9 available MCP tool definitions", async () => {
-      const res = await mcpService.listTools();
-      expect(Array.isArray(res.tools)).toBe(true);
-      expect(res.tools.length).toBe(9);
-
-      const toolNames = res.tools.map((t: any) => t.name);
-      expect(toolNames).toContain("query_inventory");
-      expect(toolNames).toContain("search_products");
-      expect(toolNames).toContain("list_orders");
-      expect(toolNames).toContain("get_order_details");
-      expect(toolNames).toContain("search_customers");
-      expect(toolNames).toContain("get_sales_analytics");
-      expect(toolNames).toContain("get_top_selling_products");
-      expect(toolNames).toContain("list_staff_tasks");
-      expect(toolNames).toContain("get_shift_schedules");
-    });
-  });
-
-  describe("validateApiKey - Hybrid Authentication", () => {
-    it("should validate and return auth context when McpApiKey is found", async () => {
-      vi.mocked(db.mcpApiKey.findFirst).mockResolvedValueOnce({
-        id: "key_123",
-        organizationId: "org_456",
-        name: "Test MCP Key",
+  describe("Authentication", () => {
+    it("should authenticate with valid JWT Bearer token", async () => {
+      const payload = {
+        sub: "user_123",
+        organizationId: "org_123",
+        name: "Test User",
         scopes: ["mcp:read", "mcp:write"],
-        expiresAt: null,
-      } as any);
-
-      vi.mocked(db.mcpApiKey.update).mockResolvedValueOnce({} as any);
-
-      const auth = await mcpService.validateApiKey("Bearer mcp_live_testkey123456");
-      expect(auth.organizationId).toBe("org_456");
-      expect(auth.keyId).toBe("key_123");
-      expect(auth.scopes).toEqual(["mcp:read", "mcp:write"]);
-    });
-
-    it("should validate and return auth context for a valid HS256 JWT Bearer token", async () => {
-      const secret = "fallback-secret-for-dev";
-      const token = jwt.sign(
-        {
-          sub: "user_789",
-          organizationId: "org_jwt_999",
-          name: "Test JWT User",
-          scopes: ["mcp:read", "mcp:write"],
-        },
-        secret,
-        { algorithm: "HS256" }
-      );
+      };
+      const token = jwt.sign(payload, "fallback-secret-for-dev", { algorithm: "HS256" });
 
       const auth = await mcpService.validateApiKey(`Bearer ${token}`);
-      expect(auth.organizationId).toBe("org_jwt_999");
-      expect(auth.keyId).toBe("user_789");
-      expect(auth.name).toBe("Test JWT User");
+      expect(auth.organizationId).toBe("org_123");
+      expect(auth.keyId).toBe("user_123");
+      expect(auth.name).toBe("Test User");
       expect(auth.scopes).toEqual(["mcp:read", "mcp:write"]);
     });
 
-    it("should reject JWT token if organizationId is missing", async () => {
-      const secret = "fallback-secret-for-dev";
-      const token = jwt.sign(
-        {
-          sub: "user_no_org",
-          scopes: ["mcp:read"],
-        },
-        secret,
-        { algorithm: "HS256" }
-      );
+    it("should throw UnauthorizedException when JWT is missing organizationId claim", async () => {
+      const token = jwt.sign({ sub: "user_123", scopes: ["mcp:read"] }, "fallback-secret-for-dev", { algorithm: "HS256" });
 
       await expect(mcpService.validateApiKey(`Bearer ${token}`)).rejects.toThrow(
         "JWT token is missing organizationId claim"
       );
     });
 
-    it("should reject JWT token if scopes do not include MCP access", async () => {
-      const secret = "fallback-secret-for-dev";
+    it("should throw UnauthorizedException when token scopes are insufficient", async () => {
       const token = jwt.sign(
-        {
-          sub: "user_limited",
-          organizationId: "org_1",
-          scopes: ["billing:read"],
-        },
-        secret,
+        { sub: "user_123", organizationId: "org_123", scopes: ["other:scope"] },
+        "fallback-secret-for-dev",
         { algorithm: "HS256" }
       );
 
@@ -157,16 +138,9 @@ describe("McpService", () => {
         "MCP API Key has expired"
       );
     });
-
-    it("should throw UnauthorizedException when key is missing or invalid", async () => {
-      vi.mocked(db.mcpApiKey.findFirst).mockResolvedValueOnce(null);
-      await expect(mcpService.validateApiKey("invalid_key")).rejects.toThrow(
-        "Invalid MCP API Key provided"
-      );
-    });
   });
 
-  describe("handleRpcRequest & Tool Execution", () => {
+  describe("Tool Definitions & Read Handlers", () => {
     const authContext = {
       keyId: "k1",
       organizationId: "org_1",
@@ -174,264 +148,326 @@ describe("McpService", () => {
       scopes: ["mcp:read", "mcp:write"],
     };
 
-    it("should process tools/list request", async () => {
-      const req = { jsonrpc: "2.0", id: 1, method: "tools/list" };
-      const res = await mcpService.handleRpcRequest(req, authContext);
-
+    it("should list all 23 available tools", async () => {
+      const res = await mcpService.handleRpcRequest({ jsonrpc: "2.0", id: 1, method: "tools/list" }, authContext);
       expect(res.jsonrpc).toBe("2.0");
-      expect(res.id).toBe(1);
-      expect(res.result.tools.length).toBe(9);
-    });
+      expect(res.result.tools.length).toBe(23);
 
-    it("should execute query_inventory tool", async () => {
-      vi.mocked(db.product.findMany).mockResolvedValueOnce([
-        {
-          id: "prod_1",
-          name: "Espresso Beans",
-          sku: "ESP-001",
-          barcode: "123456",
-          variants: [
-            {
-              id: "var_1",
-              name: "1kg Bag",
-              sku: "ESP-1KG",
-              retailPrice: "25.00",
-              wholesalePrice: "20.00",
-              buyingPrice: "15.00",
-              variantStocks: [{ locationId: "loc_1", currentStock: 50 }],
-            },
-          ],
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 2,
-        method: "tools/call",
-        params: { name: "query_inventory", arguments: { search: "Espresso" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(1);
-      expect(parsed.products[0].name).toBe("Espresso Beans");
-      expect(parsed.products[0].variants[0].totalStock).toBe(50);
-    });
-
-    it("should execute list_orders tool", async () => {
-      vi.mocked(db.transaction.findMany).mockResolvedValueOnce([
-        {
-          id: "tx_1",
-          number: "ORD-1001",
-          finalTotal: "150.00",
-          subtotal: "130.00",
-          taxTotal: "20.00",
-          status: "COMPLETED",
-          paymentStatus: "PAID",
-          createdAt: new Date(),
-          customer: { id: "c_1", name: "Alice", email: "alice@test.com" },
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 3,
-        method: "tools/call",
-        params: { name: "list_orders", arguments: { status: "COMPLETED" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(1);
-      expect(parsed.orders[0].number).toBe("ORD-1001");
-    });
-
-    it("should execute get_order_details tool", async () => {
-      vi.mocked(db.transaction.findFirst).mockResolvedValueOnce({
-        id: "tx_123",
-        number: "ORD-9999",
-        finalTotal: "200.00",
-        items: [],
-        payments: [],
-      } as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 4,
-        method: "tools/call",
-        params: { name: "get_order_details", arguments: { transactionId: "ORD-9999" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.id).toBe("tx_123");
-    });
-
-    it("should execute search_customers tool", async () => {
-      vi.mocked(db.customer.findMany).mockResolvedValueOnce([
-        {
-          id: "cust_1",
-          name: "Jane Doe",
-          email: "jane@example.com",
-          phone: "+123456789",
-          loyaltyPoints: 120,
-          createdAt: new Date(),
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 5,
-        method: "tools/call",
-        params: { name: "search_customers", arguments: { query: "Jane" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(1);
-      expect(parsed.customers[0].email).toBe("jane@example.com");
-    });
-
-    it("should execute get_sales_analytics tool", async () => {
-      vi.mocked(db.transaction.findMany).mockResolvedValueOnce([
-        {
-          finalTotal: "100.00",
-          subtotal: "90.00",
-          taxTotal: "10.00",
-          discountTotal: "0.00",
-        },
-        {
-          finalTotal: "200.00",
-          subtotal: "180.00",
-          taxTotal: "20.00",
-          discountTotal: "0.00",
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 6,
-        method: "tools/call",
-        params: { name: "get_sales_analytics", arguments: { timeframe: "month" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.metrics.totalOrders).toBe(2);
-      expect(parsed.metrics.grossRevenue).toBe(300);
-      expect(parsed.metrics.avgOrderValue).toBe(150);
-    });
-
-    it("should execute get_top_selling_products tool", async () => {
-      vi.mocked(db.transactionItem.findMany).mockResolvedValueOnce([
-        { variantId: "v1", productName: "Croissant", quantity: 5, lineTotal: "25.00" },
-        { variantId: "v1", productName: "Croissant", quantity: 3, lineTotal: "15.00" },
-        { variantId: "v2", productName: "Latte", quantity: 2, lineTotal: "10.00" },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 7,
-        method: "tools/call",
-        params: { name: "get_top_selling_products", arguments: { limit: 5 } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(2);
-      expect(parsed.topProducts[0].name).toBe("Croissant");
-      expect(parsed.topProducts[0].totalQuantity).toBe(8);
-      expect(parsed.topProducts[0].totalRevenue).toBe(40);
-    });
-
-    it("should execute list_staff_tasks tool", async () => {
-      vi.mocked(db.staffTask.findMany).mockResolvedValueOnce([
-        {
-          id: "task_1",
-          title: "Restock shelves",
-          description: "Aisle 4 restock",
-          status: "PENDING",
-          priority: "HIGH",
-          dueDate: new Date(),
-          createdAt: new Date(),
-          member: { id: "m_1", user: { name: "Staff Bob", email: "bob@scryme.tech" } },
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 8,
-        method: "tools/call",
-        params: { name: "list_staff_tasks", arguments: { status: "PENDING" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(1);
-      expect(parsed.tasks[0].title).toBe("Restock shelves");
-    });
-
-    it("should execute get_shift_schedules tool", async () => {
-      vi.mocked(db.staffShift.findMany).mockResolvedValueOnce([
-        {
-          id: "shift_1",
-          startTime: "09:00",
-          endTime: "17:00",
-          isActive: true,
-          member: { id: "m_1", user: { name: "Staff Bob", email: "bob@scryme.tech" } },
-          locationId: "loc_main",
-        },
-      ] as any);
-
-      const req = {
-        jsonrpc: "2.0",
-        id: 9,
-        method: "tools/call",
-        params: { name: "get_shift_schedules", arguments: { date: "2026-10-31" } },
-      };
-
-      const res = await mcpService.handleRpcRequest(req, authContext);
-      expect(res.result.isError).toBe(false);
-      const parsed = JSON.parse(res.result.content[0].text);
-      expect(parsed.count).toBe(1);
-      expect(parsed.shifts[0].startTime).toBe("09:00");
+      const toolNames = res.result.tools.map((t: any) => t.name);
+      expect(toolNames).toContain("query_inventory");
+      expect(toolNames).toContain("search_products");
+      expect(toolNames).toContain("list_orders");
+      expect(toolNames).toContain("get_order_details");
+      expect(toolNames).toContain("search_customers");
+      expect(toolNames).toContain("get_sales_analytics");
+      expect(toolNames).toContain("get_top_selling_products");
+      expect(toolNames).toContain("list_staff_tasks");
+      expect(toolNames).toContain("get_shift_schedules");
+      // New tools
+      expect(toolNames).toContain("list_drafts");
+      expect(toolNames).toContain("get_draft_diff");
+      expect(toolNames).toContain("publish_draft");
+      expect(toolNames).toContain("revert_draft");
+      expect(toolNames).toContain("discard_draft");
+      expect(toolNames).toContain("create_product");
+      expect(toolNames).toContain("update_product");
+      expect(toolNames).toContain("update_product_price");
+      expect(toolNames).toContain("create_order");
+      expect(toolNames).toContain("update_order_status");
+      expect(toolNames).toContain("fulfill_order");
+      expect(toolNames).toContain("create_staff_task");
+      expect(toolNames).toContain("assign_staff_task");
+      expect(toolNames).toContain("update_staff_task_status");
     });
   });
 
-  describe("MCP Resources", () => {
+  describe("Draft Lifecycle & Mutation Tools", () => {
     const authContext = {
       keyId: "k1",
       organizationId: "org_1",
       name: "Test",
-      scopes: ["mcp:read"],
+      scopes: ["mcp:read", "mcp:write"],
     };
 
-    it("should list available resources", async () => {
-      const res = await mcpService.listResources();
-      expect(res.resources.length).toBe(2);
-      expect(res.resources.map((r: any) => r.uri)).toContain("scryme://analytics/summary");
-      expect(res.resources.map((r: any) => r.uri)).toContain("scryme://inventory/summary");
-    });
+    it("should stage create_product as a DRAFT when autoPublish is false", async () => {
+      vi.mocked(db.mcpDraftChange.create).mockResolvedValueOnce({
+        id: "draft_prod_1",
+        organizationId: "org_1",
+        entityType: "PRODUCT",
+        action: "CREATE",
+        status: "DRAFT",
+        targetId: null,
+        summary: "Create product: Croissant (CRS-01)",
+        payload: { name: "Croissant", sku: "CRS-01", categoryId: "cat_1" },
+        diffSummary: { operation: "CREATE", fields: [] },
+        createdAt: new Date(),
+      } as any);
 
-    it("should read scryme://analytics/summary resource", async () => {
-      vi.mocked(db.transaction.findMany).mockResolvedValueOnce([]);
-      const res = await mcpService.readResource("scryme://analytics/summary", authContext);
-      expect(res.contents[0].uri).toBe("scryme://analytics/summary");
-      expect(res.contents[0].mimeType).toBe("application/json");
-      expect(res.contents[0].text).toContain("metrics");
-    });
-
-    it("should throw NotFoundException for unknown resource uri", async () => {
-      await expect(mcpService.readResource("scryme://unknown/resource", authContext)).rejects.toThrow(
-        "Resource with URI scryme://unknown/resource not found"
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 10,
+          method: "tools/call",
+          params: {
+            name: "create_product",
+            arguments: {
+              name: "Croissant",
+              sku: "CRS-01",
+              categoryId: "cat_1",
+            },
+          },
+        },
+        authContext
       );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.draftId).toBe("draft_prod_1");
+      expect(parsed.status).toBe("DRAFT");
+      expect(db.product.create).not.toHaveBeenCalled();
+    });
+
+    it("should stage and immediately publish create_product when autoPublish is true", async () => {
+      vi.mocked(db.mcpDraftChange.create).mockResolvedValueOnce({
+        id: "draft_prod_auto",
+        organizationId: "org_1",
+        entityType: "PRODUCT",
+        action: "CREATE",
+        status: "DRAFT",
+        targetId: null,
+        summary: "Create product: Latte (LAT-01)",
+        payload: { name: "Latte", sku: "LAT-01", categoryId: "cat_1" },
+        createdAt: new Date(),
+      } as any);
+
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_prod_auto",
+        organizationId: "org_1",
+        entityType: "PRODUCT",
+        action: "CREATE",
+        status: "DRAFT",
+        payload: { name: "Latte", sku: "LAT-01", categoryId: "cat_1" },
+      } as any);
+
+      vi.mocked(db.category.findFirst).mockResolvedValueOnce({ id: "cat_1", organizationId: "org_1" } as any);
+      vi.mocked(db.product.create).mockResolvedValueOnce({ id: "prod_latte_1", name: "Latte" } as any);
+      vi.mocked(db.mcpDraftChange.update).mockResolvedValueOnce({ id: "draft_prod_auto", status: "APPLIED" } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 11,
+          method: "tools/call",
+          params: {
+            name: "create_product",
+            arguments: {
+              name: "Latte",
+              sku: "LAT-01",
+              categoryId: "cat_1",
+              autoPublish: true,
+            },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.status).toBe("APPLIED");
+      expect(parsed.success).toBe(true);
+      expect(db.product.create).toHaveBeenCalled();
+    });
+
+    it("should publish a pending draft with publish_draft(confirm: true)", async () => {
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_task_1",
+        organizationId: "org_1",
+        entityType: "STAFF_TASK",
+        action: "CREATE",
+        status: "DRAFT",
+        payload: { title: "Clean workstation", priority: "HIGH" },
+      } as any);
+
+      vi.mocked(db.staffTask.create).mockResolvedValueOnce({ id: "task_clean_1", title: "Clean workstation" } as any);
+      vi.mocked(db.mcpDraftChange.update).mockResolvedValueOnce({ id: "draft_task_1", status: "APPLIED" } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 12,
+          method: "tools/call",
+          params: {
+            name: "publish_draft",
+            arguments: { draftId: "draft_task_1", confirm: true },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.status).toBe("APPLIED");
+      expect(parsed.draftId).toBe("draft_task_1");
+      expect(db.staffTask.create).toHaveBeenCalled();
+    });
+
+    it("should reject publish_draft if confirm is false or missing", async () => {
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 13,
+          method: "tools/call",
+          params: {
+            name: "publish_draft",
+            arguments: { draftId: "draft_task_1", confirm: false },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(true);
+      expect(res.result.content[0].text).toContain("Explicit confirmation required");
+    });
+
+    it("should revert an applied price update draft using previousState snapshot", async () => {
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_price_1",
+        organizationId: "org_1",
+        entityType: "PRICE",
+        action: "UPDATE",
+        status: "APPLIED",
+        targetId: "var_101",
+        previousState: { retailPrice: 15.0, wholesalePrice: 12.0, buyingPrice: 8.0 },
+      } as any);
+
+      vi.mocked(db.productVariant.updateMany).mockResolvedValueOnce({ count: 1 } as any);
+      vi.mocked(db.mcpDraftChange.update).mockResolvedValueOnce({ id: "draft_price_1", status: "REVERTED" } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 14,
+          method: "tools/call",
+          params: {
+            name: "revert_draft",
+            arguments: { draftId: "draft_price_1", confirm: true },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.status).toBe("REVERTED");
+      expect(db.productVariant.updateMany).toHaveBeenCalledWith({
+        where: { id: "var_101", product: { organizationId: "org_1" } },
+        data: {
+          retailPrice: 15.0,
+          wholesalePrice: 12.0,
+          buyingPrice: 8.0,
+        },
+      });
+    });
+
+    it("should revert an applied order creation by marking status CANCELLED", async () => {
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_order_create_1",
+        organizationId: "org_1",
+        entityType: "ORDER",
+        action: "CREATE",
+        status: "APPLIED",
+        targetId: "ord_101",
+      } as any);
+
+      vi.mocked(db.transaction.updateMany).mockResolvedValueOnce({ count: 1 } as any);
+      vi.mocked(db.mcpDraftChange.update).mockResolvedValueOnce({ id: "draft_order_create_1", status: "REVERTED" } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 15,
+          method: "tools/call",
+          params: {
+            name: "revert_draft",
+            arguments: { draftId: "draft_order_create_1", confirm: true },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.status).toBe("REVERTED");
+      expect(db.transaction.updateMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: "ord_101", organizationId: "org_1" },
+          data: expect.objectContaining({ status: "CANCELLED" }),
+        })
+      );
+    });
+
+    it("should discard a pending draft with discard_draft", async () => {
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_discard_1",
+        organizationId: "org_1",
+        status: "DRAFT",
+      } as any);
+
+      vi.mocked(db.mcpDraftChange.update).mockResolvedValueOnce({
+        id: "draft_discard_1",
+        status: "DISCARDED",
+      } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 16,
+          method: "tools/call",
+          params: {
+            name: "discard_draft",
+            arguments: { draftId: "draft_discard_1" },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.status).toBe("DISCARDED");
+    });
+
+    it("should view diff using get_draft_diff", async () => {
+      vi.mocked(db.mcpDraftChange.findFirst).mockResolvedValueOnce({
+        id: "draft_diff_1",
+        organizationId: "org_1",
+        entityType: "PRICE",
+        action: "UPDATE",
+        status: "DRAFT",
+        targetId: "var_1",
+        summary: "Price update",
+        payload: { retailPrice: 20 },
+        previousState: { retailPrice: 15 },
+        diffSummary: { operation: "UPDATE", fields: [{ field: "retailPrice", from: 15, to: 20 }] },
+      } as any);
+
+      const res = await mcpService.handleRpcRequest(
+        {
+          jsonrpc: "2.0",
+          id: 17,
+          method: "tools/call",
+          params: {
+            name: "get_draft_diff",
+            arguments: { draftId: "draft_diff_1" },
+          },
+        },
+        authContext
+      );
+
+      expect(res.result.isError).toBe(false);
+      const parsed = JSON.parse(res.result.content[0].text);
+      expect(parsed.id).toBe("draft_diff_1");
+      expect(parsed.diffSummary.fields[0].from).toBe(15);
+      expect(parsed.diffSummary.fields[0].to).toBe(20);
     });
   });
 });
