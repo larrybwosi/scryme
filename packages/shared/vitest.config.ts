@@ -6,8 +6,9 @@ export default defineConfig({
     environment: "node",
   },
   resolve: {
-    alias: {
-      "@repo/db": path.resolve(__dirname, "../db/src/client.ts"),
-    },
+    alias: [
+      { find: '@repo/db/client', replacement: path.resolve(__dirname, '../db/src/browser.ts') },
+      { find: '@repo/db', replacement: path.resolve(__dirname, '../db/src/client.ts') },
+    ],
   },
 });

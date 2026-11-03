@@ -166,6 +166,7 @@ model Organization {
   invoiceConfig     InvoiceConfig?
   receiptConfig     ReceiptConfig?
   waybillConfig     WaybillConfig?
+  deliveryNoteConfig DeliveryNoteConfig?
   invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
   templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
 

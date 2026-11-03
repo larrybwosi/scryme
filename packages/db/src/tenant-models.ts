@@ -158,6 +158,7 @@ export const TENANT_MODELS = new Set<string>([
   "V3ApiClient",
   "Vehicle",
   "WaybillConfig",
+  "DeliveryNoteConfig",
   "WebhookSubscription",
   "WorkflowEngineAuditLog",
   "WorkflowEngineDefinition",
