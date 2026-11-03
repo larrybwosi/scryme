@@ -66,6 +66,7 @@ export const TENANT_MODELS = new Set<string>([
   "InvoiceTemplate",
   "JournalEntry",
   "KRAComplianceLog",
+  "KRAConfig",
   "LedgerAccount",
   "LoyaltyProgram",
   "LoyaltyTransaction",

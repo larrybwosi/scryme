@@ -1,3 +1,9 @@
+vi.mock("@repo/shared/kra", () => ({
+  kraService: {
+    getConfiguration: vi.fn().mockResolvedValue(null),
+    processInvoiceCompliance: vi.fn().mockResolvedValue({ success: true }),
+  },
+}));
 import { Test, TestingModule } from "@nestjs/testing";
 import { InvoiceUseCase } from "../invoice.use-case";
 import { PrismaService } from "@/prisma/prisma.service";

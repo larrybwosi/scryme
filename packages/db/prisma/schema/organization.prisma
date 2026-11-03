@@ -162,10 +162,10 @@ model Organization {
 
   invoices          Invoice[]
   kraComplianceLogs KRAComplianceLog[]
+  kraConfig         KRAConfig?
   invoiceConfig     InvoiceConfig?
   receiptConfig     ReceiptConfig?
   waybillConfig     WaybillConfig?
-  deliveryNoteConfig DeliveryNoteConfig?
   invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
   templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
 
@@ -673,7 +673,6 @@ model OrganizationSettings {
   defaultInvoiceTemplate  String  @default("default")
   defaultReceiptTemplate  String  @default("default")
   defaultWaybillTemplate  String  @default("default")
-  defaultDeliveryNoteTemplate String @default("delivery-note-v3")
   forcePrivateAttachments Boolean @default(false)
 
   adminsCanManageStaff    Boolean @default(false)

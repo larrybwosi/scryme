@@ -1,24 +1,37 @@
 import { Metadata } from "next";
 import { PageHeader } from "../../../../components/page-header";
 import { Building2 } from "lucide-react";
+import { TaxComplianceClient } from "./tax-compliance-client";
+import {
+  getKRAConfigAction,
+  getKRAVatSummaryAction,
+  getKRALogsAction,
+} from "@/app/actions/kra";
 
 export const metadata: Metadata = {
-  title: "Tax Compliance Report",
-  description: "Prepare sales tax filings, VAT obligations, and tax deduction reports.",
+  title: "Tax Compliance & KRA eTIMS",
+  description: "Manage Kenyan tax filings, fiscal invoice transmissions, and VAT obligations.",
 };
 
+export default async function TaxCompliancePage() {
+  const [config, summary, logsResult] = await Promise.all([
+    getKRAConfigAction().catch(() => null),
+    getKRAVatSummaryAction().catch(() => null),
+    getKRALogsAction({ limit: 50 }).catch(() => ({ data: [] })),
+  ]);
 
-export default function TaxCompliancePage() {
   return (
     <div className="space-y-8">
       <PageHeader
-        title="Tax Compliance"
-        subtitle="Manage Kenyan tax filings and VAT summaries"
-        icon={<Building2 className="w-7 h-7" />}
+        title="Tax Compliance & KRA eTIMS"
+        subtitle="Fiscal device synchronization, VAT summaries, and transmission audit logs"
+        icon={<Building2 className="w-7 h-7 text-indigo-500" />}
       />
-      <div className="flex items-center justify-center h-64 border-2 border-dashed rounded-xl bg-muted/20">
-          <p className="text-muted-foreground italic">Kenyan Tax Compliance Dashboard Coming Soon</p>
-      </div>
+      <TaxComplianceClient
+        initialConfig={config}
+        initialSummary={summary}
+        initialLogs={logsResult.data || []}
+      />
     </div>
   );
 }

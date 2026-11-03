@@ -1,4 +1,3 @@
-import { DocumentsModule } from "./modules/documents/documents.module";
 import { SchedulingModule } from "./modules/scheduling/scheduling.module";
 import { McpModule } from "./modules/mcp/mcp.module";
 import { ReportsModule } from "./modules/reports/reports.module";
@@ -24,6 +23,7 @@ import { FavoritesModule } from "./modules/favorites/favorites.module";
 import { StockingModule } from "./modules/stocking/stocking.module";
 import { CrmModule } from "./modules/crm/crm.module";
 import { FinanceModule } from "./modules/finance/finance.module";
+import { KraModule } from "./modules/kra/kra.module";
 import { CrmIntegrationsModule } from "./modules/crm-integrations/crm-integrations.module";
 import { UnitsModule } from "./modules/units/units.module";
 import { ServicesModule } from "./modules/services/services.module";
@@ -51,6 +51,7 @@ export const V3_SUB_MODULES = [
   StockingModule,
   CrmModule,
   FinanceModule,
+  KraModule,
   B2BModule,
   CrmIntegrationsModule,
   UnitsModule,
@@ -64,7 +65,6 @@ export const V3_SUB_MODULES = [
   SalesModule,
   ReportsModule,
   McpModule,
-  DocumentsModule,
 ];
 
 @Module({
