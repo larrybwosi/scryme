@@ -1,6 +1,6 @@
 {
   "name": "@repo/mcp-server",
-  "version": "10.2.34",
+  "version": "10.2.35",
   "private": true,
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
