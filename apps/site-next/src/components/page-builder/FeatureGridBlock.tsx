@@ -41,7 +41,7 @@ export const FeatureGridBlock: React.FC<FeatureGridBlockProps> = ({
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="text-center max-w-3xl mx-auto mb-16">
           {badge && (
-            <span className="inline-block rounded-full border border-[#d2ff3a]/30 bg-[#d2ff3a]/10 px-3.5 py-1 text-xs font-mono-label text-[#d2ff3a] uppercase tracking-wider mb-4">
+            <span className="inline-block rounded-full border border-[#d2ff3a]/30 bg-[#d2ff3a]/10 px-3.5 py-1 text-xs font-mono-label text-[#4d6700] dark:text-[#d2ff3a] uppercase tracking-wider mb-4">
               {badge}
             </span>
           )}
@@ -64,11 +64,11 @@ export const FeatureGridBlock: React.FC<FeatureGridBlockProps> = ({
                 className="glass-panel group relative rounded-2xl p-6 sm:p-8 transition-all duration-300 hover:border-[#d2ff3a]/40 hover:-translate-y-1"
               >
                 <div className="flex items-center justify-between mb-5">
-                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#d2ff3a]/10 text-[#d2ff3a] border border-[#d2ff3a]/20 group-hover:bg-[#d2ff3a] group-hover:text-[#090a0b] transition-colors">
+                  <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-[#d2ff3a]/10 text-[#4d6700] dark:text-[#d2ff3a] border border-[#d2ff3a]/20 group-hover:bg-[#d2ff3a] group-hover:text-[#090a0b] transition-colors">
                     <Icon className="h-6 w-6" />
                   </div>
                   {item.tag && (
-                    <span className="rounded-full bg-white/5 border border-white/10 px-2.5 py-1 text-[11px] font-mono-label text-[var(--text-muted)]">
+                    <span className="rounded-full bg-[var(--bg-secondary)] border border-[var(--border-subtle)] px-2.5 py-1 text-[11px] font-mono-label text-[var(--text-muted)]">
                       {item.tag}
                     </span>
                   )}

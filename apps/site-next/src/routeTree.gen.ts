@@ -13,7 +13,6 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CmsRouteImport } from './routes/cms'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as InventoryRouteImport } from './routes/inventory'
-import { Route as LightRouteImport } from './routes/light'
 import { Route as LocationsRouteImport } from './routes/locations'
 import { Route as McpAgentApisRouteImport } from './routes/mcp-agent-apis'
 import { Route as MobileFieldOpsRouteImport } from './routes/mobile-field-ops'
@@ -48,11 +47,6 @@ const CrmRoute = CrmRouteImport.update({
 const InventoryRoute = InventoryRouteImport.update({
   id: '/inventory',
   path: '/inventory',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LightRoute = LightRouteImport.update({
-  id: '/light',
-  path: '/light',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LocationsRoute = LocationsRouteImport.update({
@@ -137,7 +131,6 @@ export interface FileRoutesByFullPath {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
   '/mcp-agent-apis': typeof McpAgentApisRoute
   '/mobile-field-ops': typeof MobileFieldOpsRoute
@@ -159,7 +152,6 @@ export interface FileRoutesByTo {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
   '/mcp-agent-apis': typeof McpAgentApisRoute
   '/mobile-field-ops': typeof MobileFieldOpsRoute
@@ -182,7 +174,6 @@ export interface FileRoutesById {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
   '/locations': typeof LocationsRoute
   '/mcp-agent-apis': typeof McpAgentApisRoute
   '/mobile-field-ops': typeof MobileFieldOpsRoute
@@ -206,7 +197,6 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
     | '/locations'
     | '/mcp-agent-apis'
     | '/mobile-field-ops'
@@ -228,7 +218,6 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
     | '/locations'
     | '/mcp-agent-apis'
     | '/mobile-field-ops'
@@ -250,7 +239,6 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
     | '/locations'
     | '/mcp-agent-apis'
     | '/mobile-field-ops'
@@ -273,7 +261,6 @@ export interface RootRouteChildren {
   CmsRoute: typeof CmsRoute
   CrmRoute: typeof CrmRoute
   InventoryRoute: typeof InventoryRoute
-  LightRoute: typeof LightRoute
   LocationsRoute: typeof LocationsRoute
   McpAgentApisRoute: typeof McpAgentApisRoute
   MobileFieldOpsRoute: typeof MobileFieldOpsRoute
@@ -319,13 +306,6 @@ declare module '@tanstack/react-router' {
       path: '/inventory'
       fullPath: '/inventory'
       preLoaderRoute: typeof InventoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/light': {
-      id: '/light'
-      path: '/light'
-      fullPath: '/light'
-      preLoaderRoute: typeof LightRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/locations': {
@@ -441,7 +421,6 @@ const rootRouteChildren: RootRouteChildren = {
   CmsRoute: CmsRoute,
   CrmRoute: CrmRoute,
   InventoryRoute: InventoryRoute,
-  LightRoute: LightRoute,
   LocationsRoute: LocationsRoute,
   McpAgentApisRoute: McpAgentApisRoute,
   MobileFieldOpsRoute: MobileFieldOpsRoute,
