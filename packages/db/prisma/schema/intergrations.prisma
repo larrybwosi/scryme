@@ -154,3 +154,58 @@ model McpApiKey {
   @@index([isActive])
   @@map("mcp_api_key")
 }
+
+// ===================================
+// MCP DRAFT & CHANGE STAGING
+// ===================================
+
+enum McpDraftStatus {
+  DRAFT
+  APPLIED
+  REVERTED
+  DISCARDED
+}
+
+enum McpDraftEntityType {
+  PRODUCT
+  PRICE
+  ORDER
+  FULFILLMENT
+  STAFF_TASK
+}
+
+enum McpDraftAction {
+  CREATE
+  UPDATE
+  STATUS_CHANGE
+}
+
+model McpDraftChange {
+  id             String             @id @default(cuid())
+  organizationId String
+  organization   Organization       @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  entityType     McpDraftEntityType
+  action         McpDraftAction
+  status         McpDraftStatus     @default(DRAFT)
+
+  targetId       String?
+  summary        String
+  payload        Json
+  previousState  Json?
+  diffSummary    Json?
+
+  createdById    String?
+  createdByMember Member?           @relation("McpDraftCreator", fields: [createdById], references: [id], onDelete: SetNull)
+
+  appliedAt      DateTime?
+  revertedAt     DateTime?
+  discardedAt    DateTime?
+
+  createdAt      DateTime           @default(now())
+  updatedAt      DateTime           @updatedAt
+
+  @@index([organizationId, status])
+  @@index([organizationId, entityType])
+  @@map("mcp_draft_change")
+}

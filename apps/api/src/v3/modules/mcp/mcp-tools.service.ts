@@ -1,15 +1,19 @@
 import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
 import { db } from "@repo/db";
+import { McpDraftService } from "./mcp-draft.service";
 
 @Injectable()
 export class McpToolsService {
   private readonly logger = new Logger(McpToolsService.name);
+
+  constructor(private readonly mcpDraftService: McpDraftService) {}
 
   /**
    * Get tool definitions for MCP clients
    */
   getToolDefinitions() {
     return [
+      // 1. Inventory & Catalog Read Tools
       {
         name: "query_inventory",
         description: "Query product inventory levels, variant stock, and location details in Scryme.",
@@ -117,17 +121,238 @@ export class McpToolsService {
           },
         },
       },
+
+      // 2. Draft & Staging Management Tools
+      {
+        name: "list_drafts",
+        description: "List pending or past staged MCP draft changes, diffs, and execution statuses.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            status: { type: "string", enum: ["DRAFT", "APPLIED", "REVERTED", "DISCARDED"], description: "Filter by draft status" },
+            entityType: { type: "string", enum: ["PRODUCT", "PRICE", "ORDER", "FULFILLMENT", "STAFF_TASK"], description: "Filter by entity type" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
+          },
+        },
+      },
+      {
+        name: "get_draft_diff",
+        description: "Inspect the detailed before/after diff summary and proposed payload for a staged draft.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The ID of the staged draft to inspect" },
+          },
+          required: ["draftId"],
+        },
+      },
+      {
+        name: "publish_draft",
+        description: "Publish and execute a staged draft change live in the database within an ACID transaction.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The draft ID to publish" },
+            confirm: { type: "boolean", description: "Must explicitly be set to true to apply live changes" },
+          },
+          required: ["draftId", "confirm"],
+        },
+      },
+      {
+        name: "revert_draft",
+        description: "Revert an already-applied draft change back to its prior recorded state snapshot.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The applied draft ID to revert" },
+            confirm: { type: "boolean", description: "Must explicitly be set to true to revert changes" },
+          },
+          required: ["draftId", "confirm"],
+        },
+      },
+      {
+        name: "discard_draft",
+        description: "Discard an unapplied staged draft without making changes to live tables.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The staged draft ID to discard" },
+          },
+          required: ["draftId"],
+        },
+      },
+
+      // 3. Product Catalog Management Tools
+      {
+        name: "create_product",
+        description: "Stage or create a new product with category, SKU, name, description, and variants in the catalog.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Product name" },
+            sku: { type: "string", description: "Unique product SKU" },
+            categoryId: { type: "string", description: "Category ID the product belongs to" },
+            description: { type: "string", description: "Product description" },
+            barcode: { type: "string", description: "Optional barcode string" },
+            variants: {
+              type: "array",
+              description: "List of variant definitions (name, sku, buyingPrice, retailPrice, wholesalePrice)",
+              items: { type: "object" },
+            },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live without waiting for publish_draft" },
+          },
+          required: ["name", "sku", "categoryId"],
+        },
+      },
+      {
+        name: "update_product",
+        description: "Stage or update product catalog attributes (name, description, status, category).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string", description: "Product ID to update" },
+            name: { type: "string", description: "New product name" },
+            description: { type: "string", description: "New product description" },
+            categoryId: { type: "string", description: "New category ID" },
+            isActive: { type: "boolean", description: "Active status flag" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live" },
+          },
+          required: ["productId"],
+        },
+      },
+      {
+        name: "update_product_price",
+        description: "Stage or update pricing (retail, wholesale, buying price) on a product variant.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            variantId: { type: "string", description: "Product variant ID to update" },
+            retailPrice: { type: "number", description: "New retail sale price" },
+            wholesalePrice: { type: "number", description: "New wholesale price" },
+            buyingPrice: { type: "number", description: "New buying/cost price" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live" },
+          },
+          required: ["variantId"],
+        },
+      },
+
+      // 4. Order Creation & Fulfillment Tools
+      {
+        name: "create_order",
+        description: "Stage or create a sales transaction/order with line items, location, and customer.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            locationId: { type: "string", description: "Inventory location ID for the transaction" },
+            customerId: { type: "string", description: "Optional customer ID" },
+            items: {
+              type: "array",
+              description: "Array of items with variantId, productName, quantity, and unitPrice",
+              items: {
+                type: "object",
+                properties: {
+                  variantId: { type: "string" },
+                  productName: { type: "string" },
+                  quantity: { type: "number" },
+                  unitPrice: { type: "number" },
+                },
+                required: ["quantity", "unitPrice"],
+              },
+            },
+            notes: { type: "string", description: "Order notes or terms" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies order creation live" },
+          },
+          required: ["locationId", "items"],
+        },
+      },
+      {
+        name: "update_order_status",
+        description: "Stage or transition order status (CONFIRMED, PROCESSING, COMPLETED, CANCELLED).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            transactionId: { type: "string", description: "Transaction ID or order number" },
+            status: {
+              type: "string",
+              enum: ["PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "READY", "COMPLETED", "CANCELLED"],
+              description: "New order status",
+            },
+            autoPublish: { type: "boolean", description: "If true, immediately applies status transition live" },
+          },
+          required: ["transactionId", "status"],
+        },
+      },
+      {
+        name: "fulfill_order",
+        description: "Stage or record order fulfillment with tracking number and dispatch status.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            transactionId: { type: "string", description: "Transaction ID or order number to fulfill" },
+            type: { type: "string", enum: ["IMMEDIATE", "PICKUP", "DELIVERY", "SHIPPING"], description: "Fulfillment delivery type" },
+            trackingNumber: { type: "string", description: "Optional courier/tracking number" },
+            notes: { type: "string", description: "Delivery or dispatch notes" },
+            autoPublish: { type: "boolean", description: "If true, immediately records fulfillment live" },
+          },
+          required: ["transactionId"],
+        },
+      },
+
+      // 5. Staff Task Management Tools
+      {
+        name: "create_staff_task",
+        description: "Stage or create a new task assignment for workspace staff members.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Task title" },
+            description: { type: "string", description: "Task instructions and details" },
+            priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "URGENT"], description: "Priority level" },
+            dueDate: { type: "string", description: "Due date in ISO 8601 format" },
+            memberId: { type: "string", description: "Assigned staff member ID" },
+            locationId: { type: "string", description: "Workspace location ID" },
+            autoPublish: { type: "boolean", description: "If true, immediately creates the staff task live" },
+          },
+          required: ["title"],
+        },
+      },
+      {
+        name: "assign_staff_task",
+        description: "Stage or reassign a staff task to a specific staff member.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string", description: "Staff task ID" },
+            memberId: { type: "string", description: "Staff member ID to assign" },
+            autoPublish: { type: "boolean", description: "If true, immediately assigns the member live" },
+          },
+          required: ["taskId", "memberId"],
+        },
+      },
+      {
+        name: "update_staff_task_status",
+        description: "Stage or update progress status on a staff task (TODO, IN_PROGRESS, COMPLETED, CANCELLED).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string", description: "Staff task ID" },
+            status: { type: "string", enum: ["TODO", "IN_PROGRESS", "COMPLETED", "CANCELLED"], description: "New task status" },
+            autoPublish: { type: "boolean", description: "If true, immediately updates the status live" },
+          },
+          required: ["taskId", "status"],
+        },
+      },
     ];
   }
 
+  /**
+   * Execute tool with multi-tenant isolation
+   */
   async executeTool(name: string, args: Record<string, any>, organizationId: string) {
-    if (!organizationId) {
-      throw new BadRequestException("Organization ID context is required for MCP tool execution");
-    }
-
     this.logger.log(`Executing MCP Tool name=${name} orgId=${organizationId}`);
 
     switch (name) {
+      // Read & Analytics Tools
       case "query_inventory":
         return this.queryInventory(args, organizationId);
       case "search_products":
@@ -146,10 +371,140 @@ export class McpToolsService {
         return this.listStaffTasks(args, organizationId);
       case "get_shift_schedules":
         return this.getShiftSchedules(args, organizationId);
+
+      // Draft Management Tools
+      case "list_drafts":
+        return this.mcpDraftService.listDrafts(organizationId, args);
+      case "get_draft_diff":
+        return this.mcpDraftService.getDraftDiff(args?.draftId, organizationId);
+      case "publish_draft":
+        return this.mcpDraftService.publishDraft(args?.draftId, organizationId, Boolean(args?.confirm));
+      case "revert_draft":
+        return this.mcpDraftService.revertDraft(args?.draftId, organizationId, Boolean(args?.confirm));
+      case "discard_draft":
+        return this.mcpDraftService.discardDraft(args?.draftId, organizationId);
+
+      // Catalog Mutation Tools
+      case "create_product":
+        return this.handleStagedMutation(
+          "PRODUCT",
+          "CREATE",
+          `Create product: ${args?.name} (${args?.sku})`,
+          args,
+          organizationId
+        );
+      case "update_product":
+        return this.handleStagedMutation(
+          "PRODUCT",
+          "UPDATE",
+          `Update product ${args?.productId}`,
+          args,
+          organizationId,
+          args?.productId
+        );
+      case "update_product_price":
+        return this.handleStagedMutation(
+          "PRICE",
+          "UPDATE",
+          `Update price on variant ${args?.variantId}`,
+          args,
+          organizationId,
+          args?.variantId
+        );
+
+      // Orders & Fulfillment Mutation Tools
+      case "create_order":
+        return this.handleStagedMutation(
+          "ORDER",
+          "CREATE",
+          `Create sales order with ${Array.isArray(args?.items) ? args.items.length : 0} items`,
+          args,
+          organizationId
+        );
+      case "update_order_status":
+        return this.handleStagedMutation(
+          "ORDER",
+          "STATUS_CHANGE",
+          `Transition order ${args?.transactionId} status to ${args?.status}`,
+          args,
+          organizationId,
+          args?.transactionId
+        );
+      case "fulfill_order":
+        return this.handleStagedMutation(
+          "FULFILLMENT",
+          "STATUS_CHANGE",
+          `Fulfill order ${args?.transactionId}`,
+          args,
+          organizationId,
+          args?.transactionId
+        );
+
+      // Staff Task Mutation Tools
+      case "create_staff_task":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "CREATE",
+          `Create staff task: ${args?.title}`,
+          args,
+          organizationId
+        );
+      case "assign_staff_task":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "UPDATE",
+          `Assign staff task ${args?.taskId} to member ${args?.memberId}`,
+          args,
+          organizationId,
+          args?.taskId
+        );
+      case "update_staff_task_status":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "STATUS_CHANGE",
+          `Update staff task ${args?.taskId} status to ${args?.status}`,
+          args,
+          organizationId,
+          args?.taskId
+        );
+
       default:
-        throw new BadRequestException(`Unknown tool name: ${name}`);
+        throw new BadRequestException(`Unknown MCP Tool: '${name}'`);
     }
   }
+
+  /**
+   * Helper to either stage a draft or automatically publish if autoPublish: true
+   */
+  private async handleStagedMutation(
+    entityType: "PRODUCT" | "PRICE" | "ORDER" | "FULFILLMENT" | "STAFF_TASK",
+    action: "CREATE" | "UPDATE" | "STATUS_CHANGE",
+    summary: string,
+    args: Record<string, any>,
+    organizationId: string,
+    targetId?: string
+  ) {
+    const autoPublish = Boolean(args?.autoPublish);
+    const payload = { ...args };
+    delete payload.autoPublish;
+
+    const staged = await this.mcpDraftService.stageDraft({
+      organizationId,
+      entityType,
+      action,
+      summary,
+      payload,
+      targetId,
+    });
+
+    if (autoPublish) {
+      return this.mcpDraftService.publishDraft(staged.draftId, organizationId, true);
+    }
+
+    return staged;
+  }
+
+  // --- Original Read Tool Implementations ---
 
   private async queryInventory(args: Record<string, any>, organizationId: string) {
     const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);

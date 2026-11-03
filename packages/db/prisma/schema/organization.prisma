@@ -143,6 +143,7 @@ model Organization {
   notificationDispatches     NotificationDispatch[]
   notificationChannelConfigs NotificationChannelConfig[]
   mcpApiKeys                 McpApiKey[]
+  mcpDraftChanges            McpDraftChange[]
   apiKeys                    ApiKey[]
   deviceSetupTokens          DeviceSetupToken[]
   deviceRegistries           DeviceRegistry[]
@@ -368,6 +369,7 @@ model Member {
   stockReceipts            StockReceipt[]
   createdApiKeys           ApiKey[]
   createdMcpApiKeys        McpApiKey[]     @relation("McpApiKeyCreator")
+  createdMcpDraftChanges   McpDraftChange[] @relation("McpDraftCreator")
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
   productionRoles   ProductionOperator[]
