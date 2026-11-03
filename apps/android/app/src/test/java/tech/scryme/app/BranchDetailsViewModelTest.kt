@@ -191,4 +191,20 @@ class BranchDetailsViewModelTest {
 
         coVerify { branchRepository.switchActiveBranch("branch-1") }
     }
+
+    @Test
+    fun updateBranch_successCallsRepository() = runTest {
+        val updatedBranch = mockBranch.copy(name = "Updated Westlands")
+        coEvery {
+            branchRepository.updateBranch("branch-1", any())
+        } returns Result.success(updatedBranch)
+        coEvery {
+            branchRepository.getBranchDetails("my-org", "branch-1")
+        } returns Result.success(updatedBranch)
+
+        viewModel.updateBranch(name = "Updated Westlands")
+        testDispatcher.scheduler.advanceUntilIdle()
+
+        coVerify { branchRepository.updateBranch("branch-1", any()) }
+    }
 }

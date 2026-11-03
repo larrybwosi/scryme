@@ -127,4 +127,68 @@ class BranchRepositoryTest {
         repository.switchActiveBranch("loc-99")
         coVerify { sessionManager.updateLocationId("loc-99") }
     }
+
+    @Test
+    fun updateBranchCoordinates_success() = runTest {
+        val dto = BranchDto(
+            id = "loc-1",
+            name = "Main Branch",
+            latitude = -1.2921,
+            longitude = 36.8219,
+            geofenceRadiusMeters = 100.0
+        )
+        val apiResponse = V3ApiResponse(success = true, data = dto)
+        coEvery {
+            branchApiService.updateBranchCoordinates(
+                "loc-1",
+                UpdateBranchCoordinatesDto(latitude = -1.2921, longitude = 36.8219)
+            )
+        } returns Response.success(apiResponse)
+
+        val result = repository.updateBranchCoordinates("org-slug", "loc-1", -1.2921, 36.8219)
+        assertTrue(result.isSuccess)
+        val branch = result.getOrNull()
+        assertEquals(-1.2921, branch?.latitude ?: 0.0, 0.0001)
+        assertEquals(36.8219, branch?.longitude ?: 0.0, 0.0001)
+    }
+
+    @Test
+    fun updateBranch_success() = runTest {
+        val updateReq = UpdateBranchRequestDto(name = "Updated Branch Name", address = "New St")
+        val dto = BranchDto(
+            id = "loc-1",
+            name = "Updated Branch Name",
+            address = "New St"
+        )
+        val apiResponse = V3ApiResponse(success = true, data = dto)
+        coEvery { branchApiService.updateBranch("loc-1", updateReq) } returns Response.success(apiResponse)
+
+        val result = repository.updateBranch("loc-1", updateReq)
+        assertTrue(result.isSuccess)
+        val branch = result.getOrNull()
+        assertEquals("Updated Branch Name", branch?.name)
+        assertEquals("New St", branch?.address)
+    }
+
+    @Test
+    fun createBranch_success() = runTest {
+        val createReq = CreateBranchRequestDto(name = "New Branch", locationType = "STORE")
+        val dto = BranchDto(id = "loc-new", name = "New Branch", locationType = "STORE")
+        val apiResponse = V3ApiResponse(success = true, data = dto)
+        coEvery { branchApiService.createBranch(createReq) } returns Response.success(apiResponse)
+
+        val result = repository.createBranch(createReq)
+        assertTrue(result.isSuccess)
+        val branch = result.getOrNull()
+        assertEquals("New Branch", branch?.name)
+    }
+
+    @Test
+    fun deleteBranch_success() = runTest {
+        val apiResponse = V3ApiResponse<Unit>(success = true, data = Unit)
+        coEvery { branchApiService.deleteBranch("loc-1") } returns Response.success(apiResponse)
+
+        val result = repository.deleteBranch("loc-1")
+        assertTrue(result.isSuccess)
+    }
 }

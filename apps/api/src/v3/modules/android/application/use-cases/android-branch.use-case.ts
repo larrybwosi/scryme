@@ -1,9 +1,35 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
+import {
+  AndroidCreateBranchDto,
+  AndroidUpdateBranchDto,
+  AndroidUpdateBranchCoordinatesDto,
+} from "../dto/android-auth.dto";
 
 @Injectable()
 export class AndroidBranchUseCase {
   constructor(private readonly prisma: PrismaService) {}
+
+  private mapLocationToDto(loc: any) {
+    const contactObj = (loc.contact as Record<string, any>) || {};
+    const addressObj = (loc.address as Record<string, any>) || {};
+    const addressStr = typeof loc.address === "string" ? loc.address : addressObj.street || addressObj.address || "";
+    const phoneStr = contactObj.phone || contactObj.telephone || "";
+
+    return {
+      id: loc.id,
+      name: loc.name,
+      code: loc.code || loc.id.slice(0, 6),
+      address: addressStr,
+      phone: phoneStr,
+      locationType: loc.locationType || "STORE",
+      latitude: loc.latitude ? Number(loc.latitude) : null,
+      longitude: loc.longitude ? Number(loc.longitude) : null,
+      geofenceRadiusMeters: loc.radiusMeters ? Number(loc.radiusMeters) : 100,
+      isDefault: loc.isDefault || false,
+      isActive: loc.isActive ?? true,
+    };
+  }
 
   async getBranchLocations(v3Context: any) {
     const { organizationId } = v3Context;
@@ -14,26 +40,7 @@ export class AndroidBranchUseCase {
     });
 
     return {
-      locations: locations.map((loc) => {
-        const contactObj = (loc.contact as Record<string, any>) || {};
-        const addressObj = (loc.address as Record<string, any>) || {};
-        const addressStr = typeof loc.address === "string" ? loc.address : addressObj.street || addressObj.address || "";
-        const phoneStr = contactObj.phone || contactObj.telephone || "";
-
-        return {
-          id: loc.id,
-          name: loc.name,
-          code: loc.code || loc.id.slice(0, 6),
-          address: addressStr,
-          phone: phoneStr,
-          locationType: loc.locationType || "STORE",
-          latitude: loc.latitude ? Number(loc.latitude) : null,
-          longitude: loc.longitude ? Number(loc.longitude) : null,
-          geofenceRadiusMeters: loc.radiusMeters ? Number(loc.radiusMeters) : 100,
-          isDefault: loc.isDefault || false,
-          isActive: loc.isActive ?? true,
-        };
-      }),
+      locations: locations.map((loc) => this.mapLocationToDto(loc)),
     };
   }
 
@@ -48,24 +55,105 @@ export class AndroidBranchUseCase {
       throw new NotFoundException(`Branch location '${id}' not found`);
     }
 
-    const contactObj = (location.contact as Record<string, any>) || {};
-    const addressObj = (location.address as Record<string, any>) || {};
-    const addressStr = typeof location.address === "string" ? location.address : addressObj.street || addressObj.address || "";
-    const phoneStr = contactObj.phone || contactObj.telephone || "";
+    return this.mapLocationToDto(location);
+  }
 
-    return {
-      id: location.id,
-      name: location.name,
-      code: location.code || location.id.slice(0, 6),
-      address: addressStr,
-      phone: phoneStr,
-      locationType: location.locationType || "STORE",
-      latitude: location.latitude ? Number(location.latitude) : null,
-      longitude: location.longitude ? Number(location.longitude) : null,
-      geofenceRadiusMeters: location.radiusMeters ? Number(location.radiusMeters) : 100,
-      isDefault: location.isDefault || false,
-      isActive: location.isActive ?? true,
-    };
+  async createBranch(v3Context: any, dto: AndroidCreateBranchDto) {
+    const { organizationId } = v3Context;
+
+    const created = await this.prisma.client.inventoryLocation.create({
+      data: {
+        organizationId,
+        name: dto.name,
+        code: dto.code || undefined,
+        address: dto.address ? { street: dto.address } : undefined,
+        contact: dto.phone ? { phone: dto.phone } : undefined,
+        locationType: (dto.locationType as any) || "RETAIL_SHOP",
+        latitude: dto.latitude !== undefined && dto.latitude !== null ? dto.latitude : undefined,
+        longitude: dto.longitude !== undefined && dto.longitude !== null ? dto.longitude : undefined,
+        radiusMeters: dto.geofenceRadiusMeters !== undefined && dto.geofenceRadiusMeters !== null ? dto.geofenceRadiusMeters : 100,
+      },
+    });
+
+    return this.mapLocationToDto(created);
+  }
+
+  async updateBranch(v3Context: any, id: string, dto: AndroidUpdateBranchDto) {
+    const { organizationId } = v3Context;
+
+    const existing = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Branch location '${id}' not found`);
+    }
+
+    const data: any = {};
+    if (dto.name !== undefined) data.name = dto.name;
+    if (dto.code !== undefined) data.code = dto.code;
+    if (dto.address !== undefined) data.address = { street: dto.address };
+    if (dto.phone !== undefined) data.contact = { phone: dto.phone };
+    if (dto.locationType !== undefined) data.locationType = dto.locationType as any;
+    if (dto.latitude !== undefined) data.latitude = dto.latitude;
+    if (dto.longitude !== undefined) data.longitude = dto.longitude;
+    if (dto.geofenceRadiusMeters !== undefined) data.radiusMeters = dto.geofenceRadiusMeters;
+    if (dto.isActive !== undefined) data.isActive = dto.isActive;
+
+    await this.prisma.client.inventoryLocation.updateMany({
+      where: { id, organizationId },
+      data,
+    });
+
+    const updated = await this.prisma.client.inventoryLocation.findFirstOrThrow({
+      where: { id, organizationId },
+    });
+
+    return this.mapLocationToDto(updated);
+  }
+
+  async updateBranchCoordinates(
+    v3Context: any,
+    id: string,
+    dto: AndroidUpdateBranchCoordinatesDto
+  ) {
+    const { organizationId } = v3Context;
+
+    const updated = await this.prisma.client.inventoryLocation.updateMany({
+      where: { id, organizationId },
+      data: {
+        latitude: dto.latitude,
+        longitude: dto.longitude,
+      },
+    });
+
+    if (updated.count === 0) {
+      throw new NotFoundException(`Branch location '${id}' not found`);
+    }
+
+    const location = await this.prisma.client.inventoryLocation.findFirstOrThrow({
+      where: { id, organizationId },
+    });
+
+    return this.mapLocationToDto(location);
+  }
+
+  async deleteBranch(v3Context: any, id: string) {
+    const { organizationId } = v3Context;
+
+    const existing = await this.prisma.client.inventoryLocation.findFirst({
+      where: { id, organizationId },
+    });
+
+    if (!existing) {
+      throw new NotFoundException(`Branch location '${id}' not found`);
+    }
+
+    await this.prisma.client.inventoryLocation.deleteMany({
+      where: { id, organizationId },
+    });
+
+    return { success: true };
   }
 
   async getBranchActivity(v3Context: any, id: string, limit = 20) {

@@ -1,5 +1,13 @@
 package tech.scryme.app.ui.branch
 
+import kotlinx.coroutines.launch
+
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -163,6 +171,44 @@ fun BranchDetailsScreen(
 
     var showEditDialog by remember { mutableStateOf(false) }
 
+    val coroutineScope = rememberCoroutineScope()
+
+    val locationPermissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestMultiplePermissions()
+    ) { permissions ->
+        val fineGranted = permissions[Manifest.permission.ACCESS_FINE_LOCATION] == true
+        val coarseGranted = permissions[Manifest.permission.ACCESS_COARSE_LOCATION] == true
+        if (fineGranted || coarseGranted) {
+            viewModel.pinCurrentLocation(context)
+        } else {
+            coroutineScope.launch {
+                snackbarHostState.showSnackbar("Location permission is required to pin GPS coordinates.")
+            }
+        }
+    }
+
+    val requestLocationPinning = {
+        val fineGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+        val coarseGranted = ContextCompat.checkSelfPermission(
+            context,
+            Manifest.permission.ACCESS_COARSE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (fineGranted || coarseGranted) {
+            viewModel.pinCurrentLocation(context)
+        } else {
+            locationPermissionLauncher.launch(
+                arrayOf(
+                    Manifest.permission.ACCESS_FINE_LOCATION,
+                    Manifest.permission.ACCESS_COARSE_LOCATION
+                )
+            )
+        }
+    }
+
     LaunchedEffect(Unit) { viewModel.loadBranchDetails() }
 
     val feedback = (uiState as? BranchDetailsUiState.Success)?.actionSuccessMessage
@@ -258,7 +304,7 @@ fun BranchDetailsScreen(
                                 isAdmin = state.isAdmin,
                                 onSetActive = { viewModel.switchActiveBranch() },
                                 onEdit = { showEditDialog = true },
-                                onPinLocation = { viewModel.pinCurrentLocation(context) }
+                                onPinLocation = requestLocationPinning
                             )
                             BranchDetailsTab.ACTIVITY -> BranchActivityTab(
                                 activityLogs = state.activityLogs,

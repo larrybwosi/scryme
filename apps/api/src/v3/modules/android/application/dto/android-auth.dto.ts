@@ -337,3 +337,102 @@ export class AndroidOAuthCodeExchangeDto {
   @IsOptional()
   clientId?: string;
 }
+
+export class AndroidCreateBranchDto {
+  @ApiProperty({ description: "Branch location name" })
+  @IsString()
+  @IsNotEmpty()
+  name: string;
+
+  @ApiPropertyOptional({ description: "Branch code identifier" })
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @ApiPropertyOptional({ description: "Physical street address" })
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @ApiPropertyOptional({ description: "Contact phone number" })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: "Location type: STORE, WAREHOUSE, OFFICE, OTHER", default: "STORE" })
+  @IsString()
+  @IsOptional()
+  locationType?: string;
+
+  @ApiPropertyOptional({ description: "GPS Latitude" })
+  @IsNumber()
+  @IsOptional()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: "GPS Longitude" })
+  @IsNumber()
+  @IsOptional()
+  longitude?: number;
+
+  @ApiPropertyOptional({ description: "Geofence radius in meters", default: 100.0 })
+  @IsNumber()
+  @IsOptional()
+  geofenceRadiusMeters?: number;
+}
+
+export class AndroidUpdateBranchDto {
+  @ApiPropertyOptional({ description: "Branch location name" })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ description: "Branch code identifier" })
+  @IsString()
+  @IsOptional()
+  code?: string;
+
+  @ApiPropertyOptional({ description: "Physical street address" })
+  @IsString()
+  @IsOptional()
+  address?: string;
+
+  @ApiPropertyOptional({ description: "Contact phone number" })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: "Location type: STORE, WAREHOUSE, OFFICE, OTHER" })
+  @IsString()
+  @IsOptional()
+  locationType?: string;
+
+  @ApiPropertyOptional({ description: "GPS Latitude" })
+  @IsNumber()
+  @IsOptional()
+  latitude?: number;
+
+  @ApiPropertyOptional({ description: "GPS Longitude" })
+  @IsNumber()
+  @IsOptional()
+  longitude?: number;
+
+  @ApiPropertyOptional({ description: "Geofence radius in meters" })
+  @IsNumber()
+  @IsOptional()
+  geofenceRadiusMeters?: number;
+
+  @ApiPropertyOptional({ description: "Is branch active" })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
+
+export class AndroidUpdateBranchCoordinatesDto {
+  @ApiProperty({ description: "GPS Latitude" })
+  @IsNumber()
+  latitude: number;
+
+  @ApiProperty({ description: "GPS Longitude" })
+  @IsNumber()
+  longitude: number;
+}
