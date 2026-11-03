@@ -18,14 +18,16 @@ function getValidAuthUrl(
   return defaultUrl;
 }
 
-const isDev = process.env.NODE_ENV === "development";
+import { env } from "@repo/env";
+
+const isDev = env.NODE_ENV === "development";
 const defaultAppUrl = isDev
   ? "http://localhost:3002"
   : "https://projects.scryme.tech";
 
 export const authClient: any = createAuthClient({
   baseURL: getValidAuthUrl(
-    [process.env.NEXT_PUBLIC_APP_URL, process.env.NEXT_PUBLIC_PROJECTS_URL],
+    [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_PROJECTS_URL],
     defaultAppUrl,
   ),
   plugins: [passkeyClient() as any],

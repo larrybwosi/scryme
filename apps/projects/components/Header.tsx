@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import { env } from "@repo/env";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 import { useTimerStore } from "@/lib/timer-store";
@@ -18,9 +19,9 @@ export function Header() {
     } catch {
       // Fallback
     }
-    const isDev = process.env.NODE_ENV === "development";
+    const isDev = env.NODE_ENV === "development";
     const defaultAuthUrl = isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
-    const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
+    const authUrl = env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
     window.location.href = `${authUrl}/sign-in`;
   };
 

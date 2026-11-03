@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
+import { env } from "@repo/env";
 
 const publicRoutes = ["/health", "/api/health", "/_next", "/favicon.ico"];
 
@@ -20,9 +21,9 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     headers: request.headers,
   });
 
-  const isDev = process.env.NODE_ENV === "development";
+  const isDev = env.NODE_ENV === "development";
   const defaultAuthUrl = isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
-  const authUrl = process.env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
+  const authUrl = env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
 
   if (!session) {
     const loginUrl = new URL("/sign-in", authUrl);
