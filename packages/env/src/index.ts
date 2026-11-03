@@ -99,6 +99,7 @@ const serverSchema = z.object({
   PUBLIC_WEB_URL: z.preprocess(sanitizeUrl, z.url().optional()),
   PUBLIC_APP_URL: z.preprocess(sanitizeUrl, z.url().optional()),
   PUBLIC_CRM_URL: z.preprocess(sanitizeUrl, z.url().optional()),
+  PUBLIC_PROJECTS_URL: z.preprocess(sanitizeUrl, z.url().optional()),
 
   // GitHub
   GITHUB_OWNER: z.string().default("larrybwosi"),
@@ -189,6 +190,10 @@ const clientSchema = z.object({
     sanitizeUrl,
     z.url().default("http://localhost:3001"),
   ),
+  NEXT_PUBLIC_PROJECTS_URL: z.preprocess(
+    sanitizeUrl,
+    z.url().default("http://localhost:3002"),
+  ),
   NEXT_PUBLIC_ADMIN_URL: z.preprocess(
     sanitizeUrl,
     z.url().default("http://localhost:3007"),
@@ -204,6 +209,10 @@ const clientSchema = z.object({
   NEXT_PUBLIC_SOCKET_URL: z.preprocess(
     sanitizeUrl,
     z.url().default("http://localhost:3002"),
+  ),
+  NEXT_PUBLIC_WS_URL: z.preprocess(
+    sanitizeUrl,
+    z.url().optional(),
   ),
 
   // PostHog Config
@@ -315,6 +324,7 @@ function getRawEnv() {
   const rawAppUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.NEXT_PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL;
   const rawWebUrl = process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL;
   const rawCrmUrl = process.env.NEXT_PUBLIC_CRM_URL || process.env.PUBLIC_CRM_URL;
+  const rawProjectsUrl = process.env.NEXT_PUBLIC_PROJECTS_URL || process.env.PUBLIC_PROJECTS_URL;
 
   return {
     // Server
@@ -346,6 +356,7 @@ function getRawEnv() {
     PUBLIC_WEB_URL: rawWebUrl,
     PUBLIC_APP_URL: rawAppUrl,
     PUBLIC_CRM_URL: rawCrmUrl,
+    PUBLIC_PROJECTS_URL: rawProjectsUrl,
     GITHUB_OWNER: process.env.GITHUB_OWNER,
     GITHUB_REPO: process.env.GITHUB_REPO,
     GITHUB_TOKEN: process.env.GITHUB_TOKEN,
@@ -423,11 +434,13 @@ function getRawEnv() {
     NEXT_PUBLIC_API_URL: rawApiUrl,
     NEXT_PUBLIC_WEB_URL: rawWebUrl,
     NEXT_PUBLIC_CRM_URL: rawCrmUrl,
+    NEXT_PUBLIC_PROJECTS_URL: rawProjectsUrl,
     NEXT_PUBLIC_ADMIN_URL: process.env.NEXT_PUBLIC_ADMIN_URL,
     NEXT_PUBLIC_AUTH_URL: process.env.NEXT_PUBLIC_AUTH_URL,
     NEXT_PUBLIC_COOKIE_DOMAIN: process.env.NEXT_PUBLIC_COOKIE_DOMAIN,
     NEXT_PUBLIC_REALTIME_PROVIDER: process.env.NEXT_PUBLIC_REALTIME_PROVIDER,
     NEXT_PUBLIC_SOCKET_URL: process.env.NEXT_PUBLIC_SOCKET_URL || rawApiUrl,
+    NEXT_PUBLIC_WS_URL: process.env.NEXT_PUBLIC_WS_URL || process.env.NEXT_PUBLIC_SOCKET_URL || rawApiUrl,
     NEXT_PUBLIC_POSTHOG_KEY: process.env.NEXT_PUBLIC_POSTHOG_KEY,
     NEXT_PUBLIC_POSTHOG_HOST: process.env.NEXT_PUBLIC_POSTHOG_HOST,
     NEXT_PUBLIC_POSTHOG_EMBED_URL: process.env.NEXT_PUBLIC_POSTHOG_EMBED_URL,

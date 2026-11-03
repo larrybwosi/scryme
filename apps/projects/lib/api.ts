@@ -83,10 +83,11 @@ export interface ShiftTradeItem {
   offeredShift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
 }
 import axios from "axios";
+import { env } from "@repo/env";
 import { authClient } from "./auth-client";
 
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+  env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

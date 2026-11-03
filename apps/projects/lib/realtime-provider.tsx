@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { io, Socket } from "socket.io-client";
 import { useQueryClient } from "@tanstack/react-query";
+import { env } from "@repo/env";
 import { useWorkspaceContext, QUERY_KEYS } from "./hooks/use-projects";
 import { authClient } from "./auth-client";
 
@@ -26,8 +27,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     let currentSocket: Socket | null = null;
 
     async function initSocket() {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
-      const wsUrl = process.env.NEXT_PUBLIC_WS_URL || apiUrl;
+      const apiUrl = env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+      const wsUrl = env.NEXT_PUBLIC_WS_URL || env.NEXT_PUBLIC_SOCKET_URL || apiUrl;
 
       let token = "socket-io-realtime";
       try {
