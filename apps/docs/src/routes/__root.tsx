@@ -18,7 +18,8 @@ import {
   X,
   Play,
   Layers,
-  Package
+  Package,
+  Boxes
 } from 'lucide-react'
 import '../styles/app.css'
 
@@ -57,6 +58,7 @@ function RootComponent() {
         { label: 'Components', to: '/docs/components', icon: Layers, hasSub: true },
         { label: 'API Reference', to: '/api-reference', icon: Code2, hasSub: true },
         { label: 'Guides', to: '/docs/core-concepts', icon: BookOpen, hasSub: true },
+        { label: 'Inventory & Variants', to: '/docs/inventory-lifecycle', icon: Boxes },
         { label: 'Webhooks', to: '/docs/webhooks', icon: Bell },
         { label: 'Third-Party Integrations', to: '/docs/integrations', icon: Plug },
         { label: 'Rate Limits', to: '/docs/rate-limits', icon: Gauge },
@@ -73,6 +75,8 @@ function RootComponent() {
     { title: 'Getting Started', category: 'Guide', to: '/docs/getting-started' },
     { title: 'Installation and SDK Setup', category: 'Guide', to: '/docs/installation' },
     { title: 'Core Platform Concepts', category: 'Guide', to: '/docs/core-concepts' },
+    { title: 'Inventory & Variant Lifecycle', category: 'Operator Guide', to: '/docs/inventory-lifecycle' },
+    { title: 'Product Creation & Archiving', category: 'Operator Guide', to: '/docs/inventory-lifecycle' },
     { title: 'POS & Sales API', category: 'API Reference', to: '/api-reference/pos' },
     { title: 'Inventory & Stocking API', category: 'API Reference', to: '/api-reference/stocking' },
     { title: 'Security Best Practices', category: 'Guide', to: '/docs/security' }

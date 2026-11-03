@@ -21,6 +21,7 @@ import { Route as DocsFaqRouteImport } from './routes/docs.faq'
 import { Route as DocsGettingStartedRouteImport } from './routes/docs.getting-started'
 import { Route as DocsInstallationRouteImport } from './routes/docs.installation'
 import { Route as DocsIntegrationsRouteImport } from './routes/docs.integrations'
+import { Route as DocsInventoryLifecycleRouteImport } from './routes/docs.inventory-lifecycle'
 import { Route as DocsRateLimitsRouteImport } from './routes/docs.rate-limits'
 import { Route as DocsSecurityRouteImport } from './routes/docs.security'
 import { Route as DocsSupportRouteImport } from './routes/docs.support'
@@ -86,6 +87,11 @@ const DocsIntegrationsRoute = DocsIntegrationsRouteImport.update({
   path: '/docs/integrations',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsInventoryLifecycleRoute = DocsInventoryLifecycleRouteImport.update({
+  id: '/docs/inventory-lifecycle',
+  path: '/docs/inventory-lifecycle',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DocsRateLimitsRoute = DocsRateLimitsRouteImport.update({
   id: '/docs/rate-limits',
   path: '/docs/rate-limits',
@@ -119,6 +125,7 @@ export interface FileRoutesByFullPath {
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
+  '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -137,6 +144,7 @@ export interface FileRoutesByTo {
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
+  '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
+  '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started'
     | '/docs/installation'
     | '/docs/integrations'
+    | '/docs/inventory-lifecycle'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started'
     | '/docs/installation'
     | '/docs/integrations'
+    | '/docs/inventory-lifecycle'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -212,6 +223,7 @@ export interface FileRouteTypes {
     | '/docs/getting-started'
     | '/docs/installation'
     | '/docs/integrations'
+    | '/docs/inventory-lifecycle'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -231,6 +243,7 @@ export interface RootRouteChildren {
   DocsGettingStartedRoute: typeof DocsGettingStartedRoute
   DocsInstallationRoute: typeof DocsInstallationRoute
   DocsIntegrationsRoute: typeof DocsIntegrationsRoute
+  DocsInventoryLifecycleRoute: typeof DocsInventoryLifecycleRoute
   DocsRateLimitsRoute: typeof DocsRateLimitsRoute
   DocsSecurityRoute: typeof DocsSecurityRoute
   DocsSupportRoute: typeof DocsSupportRoute
@@ -324,6 +337,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsIntegrationsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/inventory-lifecycle': {
+      id: '/docs/inventory-lifecycle'
+      path: '/docs/inventory-lifecycle'
+      fullPath: '/docs/inventory-lifecycle'
+      preLoaderRoute: typeof DocsInventoryLifecycleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs/rate-limits': {
       id: '/docs/rate-limits'
       path: '/docs/rate-limits'
@@ -367,6 +387,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsGettingStartedRoute: DocsGettingStartedRoute,
   DocsInstallationRoute: DocsInstallationRoute,
   DocsIntegrationsRoute: DocsIntegrationsRoute,
+  DocsInventoryLifecycleRoute: DocsInventoryLifecycleRoute,
   DocsRateLimitsRoute: DocsRateLimitsRoute,
   DocsSecurityRoute: DocsSecurityRoute,
   DocsSupportRoute: DocsSupportRoute,
