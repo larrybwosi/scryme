@@ -671,3 +671,7 @@ export {
 } from './templates/v1/invoice-templates';
 export { ReceiptTemplate as ReceiptTemplateV2 } from './templates/v2/ReceiptTemplate';
 export { DocumentGenerator } from './index';
+
+export { WaybillV3Document } from './templates/v3/stock/WaybillV3';
+export { DeliveryNoteV3Document } from './templates/v3/stock/DeliveryNoteV3';
+export { PackingListDocument } from './templates/v1/PackingList';

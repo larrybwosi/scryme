@@ -17,8 +17,6 @@ import {
   ApiTags,
   ApiOperation,
   ApiBearerAuth,
-  ApiParam,
-  ApiQuery,
 } from "@nestjs/swagger";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { MultiTenancyGuard } from "@/v3/common/guards/multi-tenancy.guard";
@@ -27,10 +25,11 @@ import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { AllowPublic } from "@/v3/common/auth";
 import {
   DocumentsUseCase,
-  PrimaryDocumentType,
+  type PrimaryDocumentType,
 } from "../../application/documents.use-case";
 import { verifyDocumentToken } from "@repo/shared/api/v3";
-import * as Fastify from "fastify";
+import type * as Fastify from "fastify";
+import { Readable } from "stream";
 
 @ApiTags("V3 Documents")
 @ApiBearerAuth()
@@ -47,14 +46,14 @@ export class DocumentsController {
   @Permissions("transaction:view")
   async getDocument(
     @Req() req: any,
-    @Param("type") type: PrimaryDocumentType,
+    @Param("type") type: string,
     @Param("id") id: string,
     @Query("template") template: string,
     @Query("format") format: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
     const result = await this.documentsUseCase.getDocumentStream(
-      type,
+      type as PrimaryDocumentType,
       id,
       req.organization.id,
       { template, format },
@@ -65,7 +64,7 @@ export class DocumentsController {
       "Content-Disposition",
       `attachment; filename="${result.filename}"`,
     );
-    return new StreamableFile(result.stream);
+    return new StreamableFile(result.stream as unknown as Readable);
   }
 
   @Get("preview/:type/:id")
@@ -76,14 +75,14 @@ export class DocumentsController {
   @Permissions("transaction:view")
   async previewDocument(
     @Req() req: any,
-    @Param("type") type: PrimaryDocumentType,
+    @Param("type") type: string,
     @Param("id") id: string,
     @Query("template") template: string,
     @Query("format") format: string,
     @Res({ passthrough: true }) res: Fastify.FastifyReply,
   ) {
     const result = await this.documentsUseCase.getDocumentStream(
-      type,
+      type as PrimaryDocumentType,
       id,
       req.organization.id,
       { template, format, skipCache: true },
@@ -91,7 +90,7 @@ export class DocumentsController {
 
     res.header("Content-Type", result.contentType);
     res.header("Content-Disposition", `inline; filename="${result.filename}"`);
-    return new StreamableFile(result.stream);
+    return new StreamableFile(result.stream as unknown as Readable);
   }
 
   @Get("config/:type")
@@ -100,9 +99,12 @@ export class DocumentsController {
   @Permissions("organization:view")
   async getConfig(
     @Req() req: any,
-    @Param("type") type: "invoice" | "receipt" | "waybill" | "delivery-note",
+    @Param("type") type: string,
   ) {
-    return this.documentsUseCase.getDocumentConfig(type, req.organization.id);
+    return this.documentsUseCase.getDocumentConfig(
+      type as "invoice" | "receipt" | "waybill" | "delivery-note",
+      req.organization.id,
+    );
   }
 
   @Put("config/:type")
@@ -111,11 +113,11 @@ export class DocumentsController {
   @Permissions("organization:manage")
   async updateConfig(
     @Req() req: any,
-    @Param("type") type: "invoice" | "receipt" | "waybill" | "delivery-note",
+    @Param("type") type: string,
     @Body() body: any,
   ) {
     return this.documentsUseCase.updateDocumentConfig(
-      type,
+      type as "invoice" | "receipt" | "waybill" | "delivery-note",
       req.organization.id,
       body,
     );
@@ -131,7 +133,7 @@ export class PublicDocumentsController {
   @Get(":type/:id")
   @ApiOperation({ summary: "Public authenticated download or stream for documents" })
   async getPublicDocument(
-    @Param("type") type: PrimaryDocumentType,
+    @Param("type") type: string,
     @Param("id") id: string,
     @Query("token") token: string,
     @Query("template") template: string,
@@ -141,7 +143,6 @@ export class PublicDocumentsController {
   ) {
     if (!token) throw new UnauthorizedException("Token required");
 
-    // Support both v3 and v2 token verification seamlessly
     let payload = verifyDocumentToken(token);
     if (!payload) {
       try {
@@ -159,7 +160,7 @@ export class PublicDocumentsController {
     }
 
     const result = await this.documentsUseCase.getDocumentStream(
-      type,
+      type as PrimaryDocumentType,
       id,
       payload.orgId,
       { template, format },
@@ -171,6 +172,6 @@ export class PublicDocumentsController {
       "Content-Disposition",
       `${disposition}; filename="${result.filename}"`,
     );
-    return new StreamableFile(result.stream);
+    return new StreamableFile(result.stream as unknown as Readable);
   }
 }
