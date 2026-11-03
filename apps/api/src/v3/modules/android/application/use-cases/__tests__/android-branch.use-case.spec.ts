@@ -12,6 +12,10 @@ describe("AndroidBranchUseCase", () => {
         inventoryLocation: {
           findMany: vi.fn(),
           findFirst: vi.fn(),
+          findFirstOrThrow: vi.fn(),
+          create: vi.fn(),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
         },
         attendanceLog: {
           findMany: vi.fn(),
@@ -144,5 +148,88 @@ describe("AndroidBranchUseCase", () => {
     expect(result.movements[0].variantName).toBe("Croissant Box");
     expect(result.movements[0].direction).toBe("IN");
     expect(result.movements[0].quantity).toBe(50);
+  });
+
+  it("should create branch location successfully", async () => {
+    mockPrisma.client.inventoryLocation.create.mockResolvedValue({
+      id: "loc-created",
+      name: "New Branch",
+      code: "NB01",
+      address: { street: "456 Avenue" },
+      contact: { phone: "+987654321" },
+      locationType: "RETAIL_SHOP",
+      latitude: -1.30,
+      longitude: 36.85,
+      radiusMeters: 100,
+      isDefault: false,
+      isActive: true,
+    });
+
+    const result = await useCase.createBranch(mockContext, {
+      name: "New Branch",
+      code: "NB01",
+      address: "456 Avenue",
+      phone: "+987654321",
+    });
+
+    expect(result.id).toBe("loc-created");
+    expect(result.name).toBe("New Branch");
+    expect(result.address).toBe("456 Avenue");
+  });
+
+  it("should update branch coordinates successfully", async () => {
+    mockPrisma.client.inventoryLocation.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.inventoryLocation.findFirstOrThrow.mockResolvedValue({
+      id: "loc-1",
+      name: "Main Store",
+      code: "LOC001",
+      latitude: -1.295,
+      longitude: 36.825,
+      radiusMeters: 100,
+      isDefault: true,
+      isActive: true,
+    });
+
+    const result = await useCase.updateBranchCoordinates(mockContext, "loc-1", {
+      latitude: -1.295,
+      longitude: 36.825,
+    });
+
+    expect(mockPrisma.client.inventoryLocation.updateMany).toHaveBeenCalledWith({
+      where: { id: "loc-1", organizationId: "org-1" },
+      data: { latitude: -1.295, longitude: 36.825 },
+    });
+    expect(result.latitude).toBe(-1.295);
+    expect(result.longitude).toBe(36.825);
+  });
+
+  it("should update branch details successfully", async () => {
+    mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "loc-1", organizationId: "org-1" });
+    mockPrisma.client.inventoryLocation.updateMany.mockResolvedValue({ count: 1 });
+    mockPrisma.client.inventoryLocation.findFirstOrThrow.mockResolvedValue({
+      id: "loc-1",
+      name: "Renamed Branch",
+      address: { street: "New St" },
+      radiusMeters: 150,
+      isActive: true,
+    });
+
+    const result = await useCase.updateBranch(mockContext, "loc-1", {
+      name: "Renamed Branch",
+      address: "New St",
+      geofenceRadiusMeters: 150,
+    });
+
+    expect(result.name).toBe("Renamed Branch");
+    expect(result.address).toBe("New St");
+    expect(result.geofenceRadiusMeters).toBe(150);
+  });
+
+  it("should delete branch successfully", async () => {
+    mockPrisma.client.inventoryLocation.findFirst.mockResolvedValue({ id: "loc-1", organizationId: "org-1" });
+    mockPrisma.client.inventoryLocation.deleteMany.mockResolvedValue({ count: 1 });
+
+    const result = await useCase.deleteBranch(mockContext, "loc-1");
+    expect(result.success).toBe(true);
   });
 });

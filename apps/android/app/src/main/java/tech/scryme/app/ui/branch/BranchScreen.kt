@@ -53,7 +53,6 @@ fun BranchScreen(
     onNavigateToBranchDetails: ((branchId: String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
-    val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
 
     var showCreateDialog by remember { mutableStateOf(false) }
@@ -140,8 +139,7 @@ fun BranchScreen(
                                     onSelect = { viewModel.switchBranch(branch.id) },
                                     onEdit = { locationToEdit = branch },
                                     onEditGeofence = { locationToEditGeofence = branch },
-                                    onDelete = { locationToDelete = branch },
-                                    onPinCurrentLocation = { viewModel.pinCurrentLocation(context, branch.id) }
+                                    onDelete = { locationToDelete = branch }
                                 )
                             }
                         }
@@ -325,8 +323,7 @@ fun BranchItemCard(
     onSelect: () -> Unit,
     onEdit: () -> Unit,
     onEditGeofence: () -> Unit,
-    onDelete: () -> Unit,
-    onPinCurrentLocation: () -> Unit
+    onDelete: () -> Unit
 ) {
     var showMenu by remember { mutableStateOf(false) }
     val colors = MaterialTheme.colorScheme
@@ -437,19 +434,12 @@ fun BranchItemCard(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(horizontal = 8.dp, vertical = 4.dp),
+                    .padding(horizontal = 16.dp, vertical = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.End
             ) {
-                TextButton(onClick = onPinCurrentLocation) {
-                    Icon(Icons.Default.LocationOn, contentDescription = null, modifier = Modifier.size(18.dp))
-                    Spacer(Modifier.width(6.dp))
-                    Text(if (isPinned) "Re-pin here" else "Pin my location")
-                }
-
                 if (isActive) {
                     Row(
-                        modifier = Modifier.padding(end = 8.dp),
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
@@ -468,8 +458,7 @@ fun BranchItemCard(
                 } else {
                     FilledTonalButton(
                         onClick = onSelect,
-                        shape = RoundedCornerShape(10.dp),
-                        modifier = Modifier.padding(end = 8.dp)
+                        shape = RoundedCornerShape(10.dp)
                     ) { Text("Switch to this branch") }
                 }
             }
