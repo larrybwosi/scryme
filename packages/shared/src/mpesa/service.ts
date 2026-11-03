@@ -12,6 +12,7 @@ export function safeDecryptCredential(encryptedText?: string | null): string {
 }
 import { MpesaClient } from './client';
 import { MpesaTriggerInput, MpesaCallbackPayload, MpesaC2BPayload, MpesaCredentials } from './types';
+import { findOrCreateCustomerFromMpesa } from './customer';
 import {
   mpesaTriggerSchema,
   mpesaCallbackSchema,
@@ -137,7 +138,15 @@ export class MpesaService {
           });
 
           if (isSuccess && request.reference) {
-            await this.updateTransactionOnPayment(tx, request.reference, Number(request.amount));
+            let customerId: string | undefined;
+            if (request.phoneNumber) {
+              const customer = await findOrCreateCustomerFromMpesa(tx, {
+                organizationId,
+                phone: request.phoneNumber,
+              });
+              if (customer) customerId = customer.id;
+            }
+            await this.updateTransactionOnPayment(tx, request.reference, Number(request.amount), { customerId });
           }
         }
       });
@@ -272,7 +281,25 @@ export class MpesaService {
         });
 
         if (paymentStatus === 'PAID') {
-          await this.updateTransactionOnPayment(tx, updatedPayment.transactionId, amountPaid);
+          let customerId: string | undefined;
+          const phone = updatedPayment.payerPhone || CallbackMetadata?.Item?.find((item) => item.Name === 'PhoneNumber')?.Value?.toString();
+          if (phone) {
+            const customer = await findOrCreateCustomerFromMpesa(tx, {
+              organizationId,
+              phone: String(phone),
+            });
+            if (customer) {
+              customerId = customer.id;
+              await tx.payment.update({
+                where: { id: paymentId },
+                data: {
+                  customerId: customer.id,
+                  ...(updatedPayment.payerPhone ? {} : { payerPhone: String(phone) }),
+                },
+              });
+            }
+          }
+          await this.updateTransactionOnPayment(tx, updatedPayment.transactionId, amountPaid, { customerId });
         }
       });
 
@@ -293,11 +320,24 @@ export class MpesaService {
     }
   }
 
-  private async updateTransactionOnPayment(tx: any, transactionId: string, amount: number) {
+  private async updateTransactionOnPayment(
+    tx: any,
+    transactionId: string,
+    amount: number,
+    options?: { customerId?: string }
+  ) {
+    const existingTx = await tx.transaction.findUnique({
+      where: { id: transactionId },
+      select: { id: true, customerId: true, totalPaid: true, finalTotal: true, status: true },
+    });
+
+    const shouldAttachCustomer = !existingTx?.customerId && options?.customerId;
+
     const updatedTransaction = await tx.transaction.update({
       where: { id: transactionId },
       data: {
         totalPaid: { increment: amount },
+        ...(shouldAttachCustomer ? { customerId: options.customerId } : {}),
       },
     });
 
@@ -396,10 +436,20 @@ export class MpesaService {
 
           if (existingPayment) return;
 
+          const payerFullName = [FirstName, MiddleName, LastName].filter(Boolean).join(' ') || null;
+          let customerId: string | undefined;
+          const customer = await findOrCreateCustomerFromMpesa(tx, {
+            organizationId: transaction.organizationId,
+            phone: MSISDN,
+            name: payerFullName,
+          });
+          if (customer) customerId = customer.id;
+
           const payment = await tx.payment.create({
             data: {
               transactionId: transaction.id,
               organizationId: transaction.organizationId,
+              customerId: customerId || null,
               method: 'MPESA',
               status: 'PAID',
               amount: amount,
@@ -407,13 +457,13 @@ export class MpesaService {
               gatewayTxnId: TransID,
               gatewayResponse: payload as any,
               payerPhone: MSISDN,
-              payerName: [FirstName, MiddleName, LastName].filter(Boolean).join(' '),
+              payerName: payerFullName,
               processedAt: new Date(),
               referenceNumber: BillRefNumber,
             },
           });
 
-          await this.updateTransactionOnPayment(tx, transaction.id, amount);
+          await this.updateTransactionOnPayment(tx, transaction.id, amount, { customerId });
 
           await realtimeService.publish(`organization:${transaction.organizationId}:payments`, 'payment-update', {
             transactionId: transaction.id,
@@ -655,11 +705,21 @@ export class MpesaService {
     if (!transaction) throw new Error('Transaction not found');
 
     return db.$transaction(async (tx: any) => {
+      const payerFullName = [unclaimed.firstName, unclaimed.middleName, unclaimed.lastName].filter(Boolean).join(' ') || null;
+      let customerId: string | undefined;
+      const customer = await findOrCreateCustomerFromMpesa(tx, {
+        organizationId,
+        phone: unclaimed.msisdn,
+        name: payerFullName,
+      });
+      if (customer) customerId = customer.id;
+
       // Create a payment record
       const payment = await tx.payment.create({
         data: {
           transactionId: transaction.id,
           organizationId,
+          customerId: customerId || null,
           method: 'MPESA',
           status: 'PAID',
           amount: unclaimed.amount,
@@ -667,7 +727,7 @@ export class MpesaService {
           gatewayTxnId: unclaimed.transId,
           gatewayResponse: unclaimed.rawResponse as any,
           payerPhone: unclaimed.msisdn,
-          payerName: [unclaimed.firstName, unclaimed.middleName, unclaimed.lastName].filter(Boolean).join(' '),
+          payerName: payerFullName,
           processedAt: new Date(),
           referenceNumber: unclaimed.billRefNumber,
           notes: `Manually claimed by member ${memberId}`,
@@ -686,7 +746,7 @@ export class MpesaService {
       });
 
       // Update transaction status
-      await this.updateTransactionOnPayment(tx, transaction.id, Number(unclaimed.amount));
+      await this.updateTransactionOnPayment(tx, transaction.id, Number(unclaimed.amount), { customerId });
 
       // Realtime notification
       await realtimeService.publish(`organization:${organizationId}:payments`, 'payment-update', {
