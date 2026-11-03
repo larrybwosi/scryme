@@ -121,7 +121,7 @@ describe('M-Pesa Customer Helpers', () => {
 
     it('should fallback to Customer {phone} when name is missing', async () => {
       mockTx.customer.findFirst.mockResolvedValue(null);
-      mockTx.customer.create.mockImplementation(({ data }) => Promise.resolve({ id: 'cust_789', ...data }));
+      mockTx.customer.create.mockImplementation(({ data }: { data: any }) => Promise.resolve({ id: 'cust_789', ...data }));
 
       const result = await findOrCreateCustomerFromMpesa(mockTx, {
         organizationId: 'org_123',
