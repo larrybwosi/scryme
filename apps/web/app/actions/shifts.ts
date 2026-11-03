@@ -189,13 +189,42 @@ export async function createStaffShift(data: {
   if (!permission.success) return permission;
 
   try {
-    // Validate that member belongs to organization
-    const member = await db.member.findFirst({
-      where: { id: data.memberId, organizationId: session!.organizationId },
-    });
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational entity validation lookups (member, location, and department).
+     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+     * projections reduces validation latency from up to 3 sequential DB roundtrips to 1 concurrent roundtrip
+     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+     */
+    const [member, loc, dept] = await Promise.all([
+      db.member.findFirst({
+        where: { id: data.memberId, organizationId: session!.organizationId },
+        select: { id: true },
+      }),
+      data.locationId
+        ? db.inventoryLocation.findFirst({
+            where: { id: data.locationId, organizationId: session!.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      data.departmentId
+        ? db.department.findFirst({
+            where: { id: data.departmentId, organizationId: session!.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
 
     if (!member) {
       return { success: false, error: "Member not found in organization" };
+    }
+
+    if (data.locationId && !loc) {
+      return { success: false, error: "Location not found or belongs to another organization" };
+    }
+
+    if (data.departmentId && !dept) {
+      return { success: false, error: "Department not found or belongs to another organization" };
     }
 
     if (data.isActive !== false) {
@@ -206,24 +235,6 @@ export async function createStaffShift(data: {
         data.endTime,
       );
       if (!overlap.success) return overlap;
-    }
-
-    if (data.locationId) {
-      const loc = await db.inventoryLocation.findFirst({
-        where: { id: data.locationId, organizationId: session!.organizationId },
-      });
-      if (!loc) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
-    }
-
-    if (data.departmentId) {
-      const dept = await db.department.findFirst({
-        where: { id: data.departmentId, organizationId: session!.organizationId },
-      });
-      if (!dept) {
-        return { success: false, error: "Department not found or belongs to another organization" };
-      }
     }
 
     const shift = await db.staffShift.create({
@@ -280,22 +291,34 @@ export async function updateStaffShift(
     const mergedEndTime = data.endTime !== undefined ? data.endTime : shift.endTime;
     const mergedIsActive = data.isActive !== undefined ? data.isActive : shift.isActive;
 
-    if (data.locationId) {
-      const loc = await db.inventoryLocation.findFirst({
-        where: { id: data.locationId, organizationId: session!.organizationId },
-      });
-      if (!loc) {
-        return { success: false, error: "Location not found or belongs to another organization" };
-      }
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational entity validation lookups (location and department).
+     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+     * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
+     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+     */
+    const [loc, dept] = await Promise.all([
+      data.locationId
+        ? db.inventoryLocation.findFirst({
+            where: { id: data.locationId, organizationId: session!.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      data.departmentId
+        ? db.department.findFirst({
+            where: { id: data.departmentId, organizationId: session!.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (data.locationId && !loc) {
+      return { success: false, error: "Location not found or belongs to another organization" };
     }
 
-    if (data.departmentId) {
-      const dept = await db.department.findFirst({
-        where: { id: data.departmentId, organizationId: session!.organizationId },
-      });
-      if (!dept) {
-        return { success: false, error: "Department not found or belongs to another organization" };
-      }
+    if (data.departmentId && !dept) {
+      return { success: false, error: "Department not found or belongs to another organization" };
     }
 
     if (mergedIsActive) {
