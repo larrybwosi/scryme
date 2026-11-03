@@ -145,3 +145,7 @@
 ## 2026-10-30 - Parent Ledger Account BOLA Isolation in COA Creation
 **Learning:** In `createLedgerAccount` (`apps/web/app/actions/accounting.ts`), client-supplied `parentId` was accepted without checking whether the parent ledger account belonged to `auth.organizationId`. An attacker could supply a foreign organization's `parentId` to bind sub-accounts across tenant boundaries and expose/corrupt chart of account hierarchies.
 **Action:** Always validate `parentId` using `db.ledgerAccount.findFirst` scoped by `organizationId: auth.organizationId` before creating child ledger accounts.
+
+## 2026-11-03 - ProductSupplier Relational Tenant Scoping & BOLA Isolation in Inventory Server Actions
+**Learning:** In inventory server actions (`apps/web/app/actions/inventory.ts`), `ProductSupplier` links lacked direct `organizationId` foreign keys and composite unique constraints on `[id, organizationId]`. Functions `linkProductSupplier`, `updateProductSupplierLink`, and `unlinkProductSupplier` previously accepted client IDs and performed Prisma `findUnique`, `update`, and `delete` directly by primary key `id`, allowing cross-tenant BOLA resource linking, price tampering, and deletion.
+**Action:** Always validate `productId` (and `variantId`) and `supplierId` against `organizationId` before creating `ProductSupplier` links, and scope lookups, `updateMany`, and `deleteMany` using `{ product: { organizationId } }` to enforce database-level multi-tenant isolation.
