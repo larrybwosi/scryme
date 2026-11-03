@@ -31,7 +31,7 @@ export async function GET(
     const token = generateDocumentToken("packing-list", id, auth.organizationId);
 
     const apiUrl = getResolvedApiUrl();
-    const fetchUrl = `${apiUrl}/api/v2/public/documents/packing-list/${id}?token=${token}`;
+    const fetchUrl = `${apiUrl}/api/v3/public-documents/packing-list/${id}?token=${token}`;
 
     const response = await fetch(fetchUrl);
     if (!response.ok) {

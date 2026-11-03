@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useTransition, useEffect } from "react";
 import { useForm, useFieldArray } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -79,13 +79,14 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface InvoiceConfigFormProps {
-  initialConfig: any;
+export interface InvoiceConfigFormProps {
+  initialConfig?: any;
+  onValuesChange?: (values: any) => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
-export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
+export function InvoiceConfigForm({ initialConfig, onValuesChange }: InvoiceConfigFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = React.useState(false);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -127,6 +128,13 @@ export function InvoiceConfigForm({ initialConfig }: InvoiceConfigFormProps) {
     control: form.control,
     name: "customFields",
   });
+
+    const watchedValues = form.watch();
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange(watchedValues);
+    }
+  }, [watchedValues, onValuesChange]);
 
   async function onSubmit(values: FormValues) {
     startTransition(async () => {
