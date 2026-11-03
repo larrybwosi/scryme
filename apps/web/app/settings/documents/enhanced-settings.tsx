@@ -8,6 +8,7 @@ import {
   getMockInvoiceData,
   getMockReceiptData,
   getMockWaybillData,
+  getMockDeliveryNoteData,
   isV3Template,
   getMockV3Data,
 } from "@repo/documents";
@@ -49,6 +50,7 @@ interface EnhancedDocumentSettingsProps {
   invoiceConfig?: any;
   receiptConfig?: any;
   waybillConfig?: any;
+  deliveryNoteConfig?: any;
   systemDocumentSettings?: {
     enabledCategories: string[];
     enabledTemplates: string[];
@@ -143,6 +145,7 @@ export function EnhancedDocumentSettings({
   invoiceConfig,
   receiptConfig,
   waybillConfig,
+  deliveryNoteConfig,
   systemDocumentSettings,
 }: EnhancedDocumentSettingsProps) {
   // Filter visible categories based on super admin system settings
@@ -162,6 +165,16 @@ export function EnhancedDocumentSettings({
   }, [visibleDocTypes, selectedType]);
 
   const [activePanel, setActivePanel] = useState<SidebarPanel>("templates");
+  const [unsavedConfig, setUnsavedConfig] = useState<Record<string, any>>({});
+  const [livePreviewOpen, setLivePreviewOpen] = useState(false);
+
+  const handleFormValuesChange = (type: string, values: any) => {
+    setUnsavedConfig((prev) => ({
+      ...prev,
+      [type]: values,
+    }));
+  };
+
   const [previewTemplate, setPreviewTemplate] = useState<any | null>(null);
   const [isUpdating, setIsUpdating] = useState<string | null>(null);
   const [downloadingLevel, setDownloadingLevel] = useState<
@@ -201,15 +214,17 @@ export function EnhancedDocumentSettings({
     if (isV3 && (type === "INVOICE" || type === "RECEIPT")) {
       return getMockV3Data(type === "INVOICE" ? "invoice" : "receipt", {
         ...organization,
-        invoiceConfig,
-        receiptConfig,
+        invoiceConfig: { ...invoiceConfig, ...(unsavedConfig["INVOICE"] || {}) },
+        receiptConfig: { ...receiptConfig, ...(unsavedConfig["RECEIPT"] || {}) },
       });
     }
 
+    // Merge active saved config with in-flight unsaved customizations
     let config: any;
-    if (type === "INVOICE") config = invoiceConfig;
-    else if (type === "RECEIPT") config = receiptConfig;
-    else config = waybillConfig;
+    if (type === "INVOICE") config = { ...invoiceConfig, ...(unsavedConfig["INVOICE"] || {}) };
+    else if (type === "RECEIPT") config = { ...receiptConfig, ...(unsavedConfig["RECEIPT"] || {}) };
+    else if (type === "DELIVERY_NOTE") config = { ...deliveryNoteConfig, ...(unsavedConfig["DELIVERY_NOTE"] || {}) };
+    else config = { ...waybillConfig, ...(unsavedConfig["WAYBILL"] || {}) };
 
     const baseDetails = {
       name: config?.companyName || organization?.name,
@@ -225,6 +240,7 @@ export function EnhancedDocumentSettings({
     let mockData: any;
     if (type === "INVOICE") mockData = getMockInvoiceData(baseDetails);
     else if (type === "RECEIPT") mockData = getMockReceiptData(baseDetails);
+    else if (type === "DELIVERY_NOTE") mockData = getMockDeliveryNoteData(baseDetails);
     else mockData = getMockWaybillData(baseDetails);
 
     if (mockData.branding) {
@@ -672,20 +688,51 @@ export function EnhancedDocumentSettings({
                 ))}
               </div>
 
+              <div className="flex items-center justify-between mb-4 p-3 bg-card border border-border rounded-xl">
+                <div>
+                  <h4 className="text-sm font-semibold text-foreground">Live Customization Preview</h4>
+                  <p className="text-xs text-muted-foreground">Test how unsaved branding, color, and logo changes look on this document.</p>
+                </div>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  className="gap-1.5 border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10"
+                  onClick={() => {
+                    const activeTmpl = templates.find((t) => t.id === activeTemplateId) || templates[0];
+                    if (activeTmpl) setPreviewTemplate(activeTmpl);
+                  }}
+                >
+                  <Eye size={13} />
+                  Live Preview Document
+                </Button>
+              </div>
+
               {selectedType === "INVOICE" && (
-                <InvoiceConfigForm initialConfig={invoiceConfig} />
+                <InvoiceConfigForm
+                  initialConfig={invoiceConfig}
+                  onValuesChange={(vals) => handleFormValuesChange("INVOICE", vals)}
+                />
               )}
               {selectedType === "RECEIPT" && (
                 <DocumentConfigForm
                   type="RECEIPT"
                   initialConfig={receiptConfig}
+                  onValuesChange={(vals) => handleFormValuesChange("RECEIPT", vals)}
                 />
               )}
-              {(selectedType === "WAYBILL" ||
-                selectedType === "DELIVERY_NOTE") && (
+              {selectedType === "WAYBILL" && (
                 <DocumentConfigForm
                   type="WAYBILL"
                   initialConfig={waybillConfig}
+                  onValuesChange={(vals) => handleFormValuesChange("WAYBILL", vals)}
+                />
+              )}
+              {selectedType === "DELIVERY_NOTE" && (
+                <DocumentConfigForm
+                  type="DELIVERY_NOTE"
+                  initialConfig={deliveryNoteConfig || waybillConfig}
+                  onValuesChange={(vals) => handleFormValuesChange("DELIVERY_NOTE", vals)}
                 />
               )}
             </div>

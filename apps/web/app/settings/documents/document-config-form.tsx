@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useTransition } from "react";
+import { useRef, useState, useTransition, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import z from "zod";
@@ -28,6 +28,7 @@ import { Loader2, Save, Palette, Upload, X } from "lucide-react";
 import {
   updateReceiptConfig,
   updateWaybillConfig,
+  updateDeliveryNoteConfig,
 } from "../../actions/document-config";
 import { uploadFileAction } from "../../actions/sales";
 import Image from "next/image";
@@ -45,9 +46,10 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface DocumentConfigFormProps {
-  type: "RECEIPT" | "WAYBILL";
-  initialConfig: any;
+export interface DocumentConfigFormProps {
+  type: "RECEIPT" | "WAYBILL" | "DELIVERY_NOTE";
+  initialConfig?: any;
+  onValuesChange?: (values: any) => void;
 }
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
@@ -55,6 +57,7 @@ const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export function DocumentConfigForm({
   type,
   initialConfig,
+  onValuesChange,
 }: DocumentConfigFormProps) {
   const [isPending, startTransition] = useTransition();
   const [isUploading, setIsUploading] = useState(false);
@@ -74,11 +77,20 @@ export function DocumentConfigForm({
     },
   });
 
+    const watchedValues = form.watch();
+  useEffect(() => {
+    if (onValuesChange) {
+      onValuesChange(watchedValues);
+    }
+  }, [watchedValues, onValuesChange]);
+
   async function onSubmit(values: FormValues) {
     startTransition(async () => {
       try {
         if (type === "RECEIPT") {
           await updateReceiptConfig(values);
+        } else if (type === "DELIVERY_NOTE") {
+          await updateDeliveryNoteConfig(values);
         } else {
           await updateWaybillConfig(values);
         }

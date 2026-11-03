@@ -141,3 +141,13 @@ export function getMockV3Data(type: 'invoice' | 'receipt', orgDetails?: any) {
 
   return Mappers.toV3DocumentData(transaction as any, type);
 }
+
+
+export function getMockDeliveryNoteData(orgDetails?: any) {
+  const transaction = getMockInvoiceTransaction(orgDetails);
+  const dnConfig = orgDetails?.deliveryNoteConfig || orgDetails?.waybillConfig;
+  if (dnConfig) {
+    (transaction as any).organization.deliveryNoteConfig = dnConfig;
+  }
+  return Mappers.toDeliveryNoteData(transaction as any);
+}

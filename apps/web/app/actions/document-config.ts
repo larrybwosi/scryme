@@ -55,3 +55,30 @@ export async function updateWaybillConfig(data: {
   revalidatePath("/settings/documents");
   return config as any;
 }
+
+
+export async function updateDeliveryNoteConfig(data: {
+  showLogo?: boolean;
+  logoUrl?: string;
+  companyName?: string;
+  companyAddress?: string;
+  companyPhone?: string;
+  companyEmail?: string;
+  primaryColor?: string;
+  secondaryColor?: string;
+}) {
+  const auth = await getServerAuth();
+  if (!auth || !auth.organizationId) throw new Error("Unauthorized");
+
+  const config = await db.deliveryNoteConfig.upsert({
+    where: { organizationId: auth.organizationId },
+    update: data,
+    create: {
+      ...data,
+      organizationId: auth.organizationId,
+    },
+  });
+
+  revalidatePath("/settings/documents");
+  return config as any;
+}

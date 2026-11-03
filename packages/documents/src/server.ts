@@ -28,7 +28,8 @@ import {
   InvoiceTemplate,
   ReceiptConfig,
   InvoiceConfig,
-  WaybillConfig
+  WaybillConfig,
+  DeliveryNoteConfig
 } from '@repo/db';
 
 import {
@@ -54,6 +55,7 @@ export {
 
 export {
   getMockV3Data,
+  getMockDeliveryNoteData,
 } from "./mock-data";
 
 /**
@@ -92,6 +94,7 @@ type TransactionWithDetails = Transaction & {
     invoiceConfig?: InvoiceConfig | null;
     receiptConfig?: ReceiptConfig | null;
     waybillConfig?: WaybillConfig | null;
+    deliveryNoteConfig?: DeliveryNoteConfig | null;
     address?: any;
   }) | null;
   customer?: (Customer & { addresses?: Address[] }) | null;
@@ -119,7 +122,7 @@ export const Mappers = {
     const recipientName = (shippingAddressObj as any)?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = (shippingAddressObj as any)?.phone || transaction.customer?.phone || undefined;
 
-    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+    const branding = resolveBranding(transaction.organization, (transaction.organization as any)?.deliveryNoteConfig || transaction.organization?.waybillConfig);
 
     return {
       id: fulfillment?.id || transaction.id,
@@ -605,7 +608,7 @@ export const Mappers = {
     const recipientName = (shippingAddressObj as any)?.name || transaction.customer?.name || 'Guest Customer';
     const recipientPhone = (shippingAddressObj as any)?.phone || transaction.customer?.phone || undefined;
 
-    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+    const branding = resolveBranding(transaction.organization, (transaction.organization as any)?.deliveryNoteConfig || transaction.organization?.waybillConfig);
 
     return {
       id: fulfillment?.id || transaction.id,
@@ -633,7 +636,7 @@ export const Mappers = {
     const shippingAddressObj = fulfillment?.shippingAddress || transaction.customer?.addresses?.find((a: any) => a.isDefault) || transaction.customer?.addresses?.[0] || {};
     const recipientAddress = formatAddress(shippingAddressObj);
 
-    const branding = resolveBranding(transaction.organization, transaction.organization?.waybillConfig);
+    const branding = resolveBranding(transaction.organization, (transaction.organization as any)?.deliveryNoteConfig || transaction.organization?.waybillConfig);
 
     return {
       id: fulfillment?.id || transaction.id,
