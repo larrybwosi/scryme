@@ -613,7 +613,7 @@ function BentoGridPillars() {
             </div>
             <div className="pt-4 flex items-center gap-2">
               <span className="font-mono text-xs text-[#414844]">
-                Schema: <code class="font-semibold text-[#002116]">mcp-server-scryme@3.2.0</code>
+                Schema: <code className="font-semibold text-[#002116]">mcp-server-scryme@3.2.0</code>
               </span>
             </div>
           </div>
