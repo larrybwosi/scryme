@@ -1,9 +1,11 @@
+vi.mock('server-only', () => ({}));
 import { describe, it, expect, beforeEach, vi, Mock } from 'vitest';
 import { MpesaService, safeDecryptCredential } from '../service';
 import { db } from '@repo/db';
 import { realtimeService } from '../../realtime';
 
 vi.mock('@repo/db', () => ({
+  CustomerCreationType: { API_CREATED: 'API_CREATED', MEMBER_CREATED: 'MEMBER_CREATED' },
   db: {
     paymentCredentials: {
       findUnique: vi.fn(),
@@ -32,6 +34,10 @@ vi.mock('@repo/db', () => ({
     },
     invoice: {
       updateMany: vi.fn(),
+    },
+    customer: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
     },
     auditLog: {
       create: vi.fn(),
@@ -356,3 +362,271 @@ describe('MpesaService', () => {
     });
   });
 });
+
+  describe('Customer Tracking & Auto-Saving across M-Pesa Flows', () => {
+    let service: MpesaService;
+    beforeEach(() => {
+      service = new MpesaService();
+      vi.clearAllMocks();
+    });
+
+    it('handleC2BConfirmation creates customer and links to transaction when customerId is unset', async () => {
+      const mockTransaction = {
+        id: 'tx_c2b_1',
+        number: 'ORD-C2B-1',
+        organizationId: 'org_123',
+        customerId: null,
+        totalPaid: 0,
+        finalTotal: 1000,
+        status: 'DRAFT',
+      };
+
+      (db.paymentCredentials.findFirst as Mock).mockResolvedValue({ organizationId: 'org_123' });
+      (db.transaction.findFirst as Mock).mockResolvedValue(mockTransaction);
+      (db.transaction.findUnique as Mock).mockResolvedValue(mockTransaction);
+      (db.customer.findFirst as Mock).mockResolvedValue(null);
+      (db.customer.create as Mock).mockResolvedValue({
+        id: 'cust_auto_1',
+        name: 'Alice Wambui',
+        phone: '254712345678',
+        organizationId: 'org_123',
+      });
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.payment.create as Mock).mockResolvedValue({ id: 'pay_c2b_1' });
+      (db.transaction.update as Mock).mockResolvedValue({
+        ...mockTransaction,
+        customerId: 'cust_auto_1',
+        totalPaid: 500,
+      });
+
+      const payload = {
+        TransactionType: 'Pay Bill',
+        TransID: 'MPESA_C2B_REC_1',
+        TransTime: '20230525141521',
+        TransAmount: '500.00',
+        BusinessShortCode: '174379',
+        BillRefNumber: 'ORD-C2B-1',
+        MSISDN: '254712345678',
+        FirstName: 'Alice',
+        LastName: 'Wambui',
+      };
+
+      await service.handleC2BConfirmation(payload);
+
+      expect(db.customer.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: 'org_123',
+          name: 'Alice Wambui',
+          phone: '254712345678',
+          creationType: 'API_CREATED',
+        }),
+      });
+
+      expect(db.payment.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          customerId: 'cust_auto_1',
+          payerPhone: '254712345678',
+          payerName: 'Alice Wambui',
+        }),
+      });
+
+      expect(db.transaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'tx_c2b_1' },
+          data: expect.objectContaining({
+            customerId: 'cust_auto_1',
+            totalPaid: { increment: 500 },
+          }),
+        })
+      );
+    });
+
+    it('handleC2BConfirmation preserves existing transaction customerId', async () => {
+      const mockTransaction = {
+        id: 'tx_c2b_2',
+        number: 'ORD-C2B-2',
+        organizationId: 'org_123',
+        customerId: 'existing_cust_preserve',
+        totalPaid: 0,
+        finalTotal: 1000,
+        status: 'DRAFT',
+      };
+
+      (db.paymentCredentials.findFirst as Mock).mockResolvedValue({ organizationId: 'org_123' });
+      (db.transaction.findFirst as Mock).mockResolvedValue(mockTransaction);
+      (db.transaction.findUnique as Mock).mockResolvedValue(mockTransaction);
+      (db.customer.findFirst as Mock).mockResolvedValue({
+        id: 'cust_payer_diff',
+        name: 'Bob Payer',
+        phone: '254799999999',
+        organizationId: 'org_123',
+      });
+      (db.payment.findFirst as Mock).mockResolvedValue(null);
+      (db.payment.create as Mock).mockResolvedValue({ id: 'pay_c2b_2' });
+      (db.transaction.update as Mock).mockResolvedValue({
+        ...mockTransaction,
+        totalPaid: 300,
+      });
+
+      const payload = {
+        TransactionType: 'Pay Bill',
+        TransID: 'MPESA_C2B_REC_2',
+        TransTime: '20230525141521',
+        TransAmount: '300.00',
+        BusinessShortCode: '174379',
+        BillRefNumber: 'ORD-C2B-2',
+        MSISDN: '254799999999',
+        FirstName: 'Bob',
+      };
+
+      await service.handleC2BConfirmation(payload);
+
+      // Customer on transaction was not overwritten
+      expect(db.transaction.update).toHaveBeenCalledWith({
+        where: { id: 'tx_c2b_2' },
+        data: {
+          totalPaid: { increment: 300 },
+        },
+      });
+    });
+
+    it('handleStkCallback resolves customer and links to transaction when paid', async () => {
+      const mockPayment = {
+        id: 'pay_stk_1',
+        transactionId: 'tx_stk_1',
+        organizationId: 'org_123',
+        payerPhone: '254711223344',
+      };
+      const mockTransaction = {
+        id: 'tx_stk_1',
+        customerId: null,
+        totalPaid: 0,
+        finalTotal: 500,
+        status: 'PENDING',
+      };
+
+      (db.payment.update as Mock).mockResolvedValue(mockPayment);
+      (db.transaction.findUnique as Mock).mockResolvedValue(mockTransaction);
+      (db.customer.findFirst as Mock).mockResolvedValue(null);
+      (db.customer.create as Mock).mockResolvedValue({
+        id: 'cust_stk_1',
+        name: 'Customer 254711223344',
+        phone: '254711223344',
+        organizationId: 'org_123',
+      });
+      (db.transaction.update as Mock).mockResolvedValue({
+        ...mockTransaction,
+        customerId: 'cust_stk_1',
+        totalPaid: 500,
+      });
+
+      const stkPayload = {
+        Body: {
+          stkCallback: {
+            MerchantRequestID: 'm_123',
+            CheckoutRequestID: 'ws_co_123',
+            ResultCode: 0,
+            ResultDesc: 'The service request is processed successfully.',
+            CallbackMetadata: {
+              Item: [
+                { Name: 'Amount', Value: 500 },
+                { Name: 'MpesaReceiptNumber', Value: 'QWE123RTY' },
+                { Name: 'PhoneNumber', Value: 254711223344 },
+              ],
+            },
+          },
+        },
+      };
+
+      await service.handleStkCallback('org_123', 'pay_stk_1', stkPayload);
+
+      expect(db.customer.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: 'org_123',
+          name: 'Customer 254711223344',
+          phone: '254711223344',
+          creationType: 'API_CREATED',
+        }),
+      });
+
+      expect(db.transaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'tx_stk_1' },
+          data: expect.objectContaining({
+            customerId: 'cust_stk_1',
+            totalPaid: { increment: 500 },
+          }),
+        })
+      );
+    });
+
+    it('claimPayment resolves customer from unclaimed record and links to transaction', async () => {
+      const mockUnclaimed = {
+        id: 'unclaimed_99',
+        organizationId: 'org_123',
+        amount: 250,
+        transId: 'REC_UNCLAIMED_99',
+        msisdn: '254700112233',
+        firstName: 'Carol',
+        lastName: 'Danvers',
+        billRefNumber: 'BILL_REF_99',
+        claimed: false,
+      };
+
+      const mockTransaction = {
+        id: 'tx_claim_1',
+        organizationId: 'org_123',
+        customerId: null,
+        totalPaid: 0,
+        finalTotal: 500,
+        status: 'PENDING',
+      };
+
+      (db.unclaimedPayment.findFirst as Mock).mockResolvedValue(mockUnclaimed);
+      (db.transaction.findFirst as Mock).mockResolvedValue(mockTransaction);
+      (db.transaction.findUnique as Mock).mockResolvedValue(mockTransaction);
+      (db.customer.findFirst as Mock).mockResolvedValue(null);
+      (db.customer.create as Mock).mockResolvedValue({
+        id: 'cust_claim_1',
+        name: 'Carol Danvers',
+        phone: '254700112233',
+        organizationId: 'org_123',
+      });
+      (db.payment.create as Mock).mockResolvedValue({ id: 'pay_claim_1' });
+      (db.unclaimedPayment.update as Mock).mockResolvedValue({});
+      (db.transaction.update as Mock).mockResolvedValue({
+        ...mockTransaction,
+        customerId: 'cust_claim_1',
+        totalPaid: 250,
+      });
+
+      await service.claimPayment('org_123', 'unclaimed_99', 'tx_claim_1', 'user_123');
+
+      expect(db.customer.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: 'org_123',
+          name: 'Carol Danvers',
+          phone: '254700112233',
+          creationType: 'API_CREATED',
+        }),
+      });
+
+      expect(db.payment.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          customerId: 'cust_claim_1',
+          payerPhone: '254700112233',
+          payerName: 'Carol Danvers',
+        }),
+      });
+
+      expect(db.transaction.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: { id: 'tx_claim_1' },
+          data: expect.objectContaining({
+            customerId: 'cust_claim_1',
+            totalPaid: { increment: 250 },
+          }),
+        })
+      );
+    });
+  });
