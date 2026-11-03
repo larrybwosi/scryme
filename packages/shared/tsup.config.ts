@@ -76,6 +76,7 @@ export default defineConfig([
       "services/notification/index": "src/services/notification/index.ts",
       "services/notification/system": "src/services/notification/system.ts",
       "services/email/index": "src/services/email/index.ts",
+      "kra/index": "src/kra/index.ts",
     },
   },
   {

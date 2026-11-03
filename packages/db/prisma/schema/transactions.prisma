@@ -136,6 +136,9 @@ model Transaction {
   notes      String?
   tags       String[]
   receiptUrl String?
+  kraControlCode String?
+  kraReceiptNumber String?
+  kraQrCode String?
   metadata   Json?
 
   @@unique([organizationId, number])
@@ -671,28 +674,4 @@ enum ReturnReason {
   DUPLICATE_ORDER
   DAMAGED_IN_TRANSIT
   OTHER
-}
-
-
-model DeliveryNoteConfig {
-  id             String       @id @default(cuid())
-  organizationId String       @unique
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  showLogo Boolean @default(true)
-  logoUrl  String?
-
-  // Branding Overrides
-  primaryColor   String?
-  secondaryColor String?
-  companyName    String?
-  companyAddress String?
-  companyEmail   String?
-  companyPhone   String?
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  @@index([organizationId])
-  @@map("delivery_note_config")
 }
