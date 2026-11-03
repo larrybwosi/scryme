@@ -135,8 +135,77 @@ describe("Staff Shifts Server Actions - Security Hardening", () => {
       });
       expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
         where: { id: "foreign-loc", organizationId: "org-1" },
+        select: { id: true },
       });
       expect(db.staffShift.create).not.toHaveBeenCalled();
+    });
+
+    it("should reject creation if department belongs to another organization", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        role: "ADMIN",
+      });
+      (db.member.findFirst as any).mockResolvedValue({ id: "mem-1" });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue({ id: "loc-1" });
+      (db.department.findFirst as any).mockResolvedValue(null);
+
+      const result = await createStaffShift({
+        memberId: "mem-1",
+        dayOfWeek: 1,
+        startTime: "09:00",
+        endTime: "17:00",
+        locationId: "loc-1",
+        departmentId: "foreign-dept",
+      });
+
+      expect(result).toEqual({
+        success: false,
+        error: "Department not found or belongs to another organization",
+      });
+      expect(db.department.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-dept", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.staffShift.create).not.toHaveBeenCalled();
+    });
+
+    it("should create shift successfully with parallel relational validations", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        role: "ADMIN",
+      });
+      (db.member.findFirst as any).mockResolvedValue({ id: "mem-1" });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue({ id: "loc-1" });
+      (db.department.findFirst as any).mockResolvedValue({ id: "dept-1" });
+      (db.staffShift.findMany as any).mockResolvedValue([]);
+      (db.staffShift.create as any).mockResolvedValue({ id: "new-shift-1" });
+
+      const result = await createStaffShift({
+        memberId: "mem-1",
+        dayOfWeek: 1,
+        startTime: "09:00",
+        endTime: "17:00",
+        locationId: "loc-1",
+        departmentId: "dept-1",
+      });
+
+      expect(result).toEqual({
+        success: true,
+        data: { id: "new-shift-1" },
+      });
+      expect(db.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "mem-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.department.findFirst).toHaveBeenCalledWith({
+        where: { id: "dept-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.staffShift.create).toHaveBeenCalled();
     });
   });
 
@@ -172,6 +241,38 @@ describe("Staff Shifts Server Actions - Security Hardening", () => {
       expect(result).toEqual({
         success: false,
         error: "Location not found or belongs to another organization",
+      });
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-loc", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.staffShift.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("should reject update if relational department belongs to another org", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        role: "ADMIN",
+      });
+      (db.staffShift.findFirst as any).mockResolvedValue({
+        id: "shift-1",
+        organizationId: "org-1",
+        memberId: "mem-1",
+        dayOfWeek: 1,
+        startTime: "09:00",
+        endTime: "17:00",
+        isActive: true,
+      });
+      (db.department.findFirst as any).mockResolvedValue(null);
+
+      const result = await updateStaffShift("shift-1", { departmentId: "foreign-dept" });
+      expect(result).toEqual({
+        success: false,
+        error: "Department not found or belongs to another organization",
+      });
+      expect(db.department.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-dept", organizationId: "org-1" },
+        select: { id: true },
       });
       expect(db.staffShift.updateMany).not.toHaveBeenCalled();
     });
