@@ -315,11 +315,20 @@ export async function getCompanies() {
 
 export async function getCompany(id: string): Promise<any> {
   try {
-    let company = await db.businessAccount.findUnique({
+    let company: any = await db.businessAccount.findUnique({
       where: { id },
       include: {
         contacts: true,
         addresses: true,
+        parentAccount: true,
+        subsidiaries: true,
+        b2bConnections: true,
+        priceLists: true,
+        accountManager: {
+          include: {
+            user: true,
+          },
+        },
         invoices: {
           include: { items: true },
           orderBy: { createdAt: "desc" },
