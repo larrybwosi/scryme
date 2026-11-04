@@ -1,6 +1,7 @@
 import {
   Controller,
   Get,
+  Param,
   Query,
   UseGuards,
   UseInterceptors,
@@ -64,5 +65,24 @@ export class SalesController {
     @Query("query") query?: string,
   ) {
     return this.salesService.getOrders(ctx.organizationId, query);
+  }
+
+  @Get("orders/:id")
+  @Permissions("sales:read")
+  @ApiOperation({
+    summary: "Get single sales order details",
+    operationId: "Sales_GetOrderDetails",
+  })
+  @ApiParam({ name: "id", required: true, type: String })
+  @ApiResponse({
+    status: 200,
+    type: OrderItemDto,
+    description: "Order details",
+  })
+  async getOrderDetails(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.salesService.getOrderDetails(ctx.organizationId, id);
   }
 }

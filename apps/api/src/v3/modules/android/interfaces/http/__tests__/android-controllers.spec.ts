@@ -117,6 +117,7 @@ describe("Android Controller Suite", () => {
         getStaffTasks: vi.fn(),
         createStaffTask: vi.fn(),
         updateStaffTask: vi.fn(),
+        deleteStaffTask: vi.fn(),
       };
       controller = new AndroidShiftsController(mockUseCase);
     });
@@ -140,6 +141,16 @@ describe("Android Controller Suite", () => {
 
       expect(mockUseCase.createStaffTask).toHaveBeenCalledWith(req.v3Context, dto);
       expect(res.title).toBe("Clean registers");
+    });
+
+    it("deleteStaffTask should delegate task deletion", async () => {
+      const req = { v3Context: { organizationId: "org-1" } };
+      mockUseCase.deleteStaffTask.mockResolvedValue({ id: "task-1", deleted: true });
+
+      const res = await controller.deleteStaffTask(req, "task-1");
+
+      expect(mockUseCase.deleteStaffTask).toHaveBeenCalledWith(req.v3Context, "task-1");
+      expect(res.deleted).toBe(true);
     });
   });
 

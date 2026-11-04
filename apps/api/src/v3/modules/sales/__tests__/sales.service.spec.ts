@@ -17,6 +17,7 @@ describe("SalesService", () => {
           }),
           count: vi.fn(),
           findMany: vi.fn(),
+          findFirst: vi.fn(),
         },
         customer: {
           count: vi.fn().mockResolvedValue(24139),
@@ -80,5 +81,30 @@ describe("SalesService", () => {
     expect(orders[0].status).toBe("CONFIRMED");
     expect(orders[0].orderCode).toBe("#TXN_10018");
     expect(orders[0].groupDate).toBe("Today");
+  });
+
+  it("should retrieve single order details", async () => {
+    mockPrisma.client.transaction.findFirst.mockResolvedValue({
+      id: "ord_101",
+      number: "TXN_10018",
+      status: "COMPLETED",
+      createdAt: new Date(),
+      customer: { name: "Alice Wonderland", email: "alice@example.com", phone: "+12345678" },
+      items: [
+        { id: "item_1", productName: "TimeSync Smart Watch", quantity: 2, unitPrice: 45, total: 90 },
+      ],
+      payments: [
+        { provider: "M-Pesa STK Push" },
+      ],
+      finalTotal: 90,
+      subtotal: 90,
+    });
+
+    const order = await service.getOrderDetails("org_1", "ord_101");
+    expect(order.id).toBe("ord_101");
+    expect(order.customerName).toBe("Alice Wonderland");
+    expect(order.lineItems).toHaveLength(1);
+    expect(order.lineItems?.[0].name).toBe("TimeSync Smart Watch");
+    expect(order.paymentMethod).toBe("M-Pesa STK Push");
   });
 });

@@ -1,8 +1,9 @@
-import { Injectable } from "@nestjs/common";
+import { Injectable, NotFoundException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import {
   SalesAnalyticsDto,
   OrderItemDto,
+  OrderLineItemDto,
   TransactionSummaryDto,
   MetricItemDto,
 } from "../../dto/sales.dto";
@@ -154,39 +155,92 @@ export class SalesService {
       orderBy: { createdAt: "desc" },
       take: 50,
       include: {
-        customer: { select: { name: true } },
-        items: { select: { productName: true, quantity: true } },
+        customer: { select: { name: true, email: true, phone: true } },
+        items: true,
+        payments: true,
       },
     });
 
-    return transactions.map((txn) => {
-      const primaryItem = txn.items[0];
-      const title =
-        primaryItem?.productName ||
-        txn.customer?.name ||
-        `Order ${txn.number}`;
-      const totalQty = txn.items.reduce((sum, item) => sum + item.quantity, 0);
-      const itemCountText = `${totalQty} Item${totalQty === 1 ? "" : "s"}`;
-      const timeText = this.formatTime(txn.createdAt);
-      const status = this.mapStatus(txn.status);
-      const orderCode = `#${txn.number}`;
-      const groupDate = this.getGroupDate(txn.createdAt);
+    return transactions.map((txn) => this.mapTransactionToOrderItem(txn));
+  }
 
-      return {
-        id: txn.id,
-        title,
-        itemCountText,
-        timeText,
-        status,
-        orderCode,
-        groupDate,
-      };
+  async getOrderDetails(
+    organizationId: string,
+    orderId: string,
+  ): Promise<OrderItemDto> {
+    const txn = await this.prisma.client.transaction.findFirst({
+      where: {
+        id: orderId,
+        organizationId,
+      },
+      include: {
+        customer: { select: { name: true, email: true, phone: true } },
+        items: true,
+        payments: true,
+      },
     });
+
+    if (!txn) {
+      throw new NotFoundException(`Order '${orderId}' not found`);
+    }
+
+    return this.mapTransactionToOrderItem(txn);
+  }
+
+  private mapTransactionToOrderItem(txn: any): OrderItemDto {
+    const primaryItem = txn.items[0];
+    const title =
+      primaryItem?.productName ||
+      txn.customer?.name ||
+      `Order ${txn.number}`;
+    const totalQty = txn.items.reduce((sum: number, item: any) => sum + item.quantity, 0);
+    const itemCountText = `${totalQty} Item${totalQty === 1 ? "" : "s"}`;
+    const timeText = this.formatTime(txn.createdAt);
+    const status = this.mapStatus(txn.status);
+    const orderCode = `#${txn.number}`;
+    const groupDate = this.getGroupDate(txn.createdAt);
+
+    const lineItems: OrderLineItemDto[] = txn.items.map((item: any) => ({
+      id: item.id,
+      name: item.productName || "Product Item",
+      quantity: item.quantity,
+      unitPrice: `$${Number(item.unitPrice || 0).toFixed(2)}`,
+      totalPrice: `$${Number(item.total || 0).toFixed(2)}`,
+      sku: item.sku || undefined,
+      notes: item.notes || undefined,
+    }));
+
+    const payment = txn.payments?.[0];
+    const paymentMethod = payment?.provider ? `${payment.provider}` : "Standard Payment";
+    const paymentStatus = txn.status === "COMPLETED" ? "PAID" : txn.status;
+
+    return {
+      id: txn.id,
+      title,
+      itemCountText,
+      timeText,
+      status,
+      orderCode,
+      groupDate,
+      lineItems,
+      customOrderNotes: txn.notes || undefined,
+      customerName: txn.customer?.name || "Direct Customer",
+      customerPhone: txn.customer?.phone || undefined,
+      customerEmail: txn.customer?.email || undefined,
+      fulfillmentStatus: status === "FULFILLED" ? "Delivered" : status === "SHIPPED" ? "In Transit" : "Pending Fulfillment",
+      paymentMethod,
+      paymentStatus,
+      subtotal: `$${Number(txn.subtotal || txn.finalTotal || 0).toFixed(2)}`,
+      tax: `$${Number(txn.taxTotal || 0).toFixed(2)}`,
+      discount: `$${Number(txn.discountTotal || 0).toFixed(2)}`,
+      totalAmount: `$${Number(txn.finalTotal || 0).toFixed(2)}`,
+      deliveryAddress: txn.shippingAddress || undefined,
+    };
   }
 
   private mapStatus(status: string): string {
     const s = (status || "").toUpperCase();
-    if (["COMPLETED", "DELIVERED"].includes(s)) return "FULFILLED";
+    if (["COMPLETED", "DELIVERED", "PAID"].includes(s)) return "FULFILLED";
     if (["DISPATCHED", "IN_TRANSIT", "SHIPPED"].includes(s)) return "SHIPPED";
     return "CONFIRMED";
   }

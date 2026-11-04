@@ -11,6 +11,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.domain.model.SubtaskGroup
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
@@ -73,6 +74,10 @@ class TasksViewModel @Inject constructor(
         assignedMemberId: String?,
         priority: String?,
         dueDate: String?,
+        dueTime: String? = null,
+        category: String? = null,
+        estimatedHours: Double? = null,
+        subtaskGroups: List<SubtaskGroup> = emptyList(),
         onSuccess: (StaffTask) -> Unit = {},
         onError: (String) -> Unit = {}
     ) {
@@ -91,7 +96,10 @@ class TasksViewModel @Inject constructor(
                 description = description,
                 assignedMemberId = targetMemberId,
                 priority = priority,
-                dueDate = dueDate
+                dueDate = dueDate,
+                dueTime = dueTime,
+                category = category,
+                subtaskGroups = subtaskGroups
             )
             result.fold(
                 onSuccess = { newTask ->
@@ -107,6 +115,61 @@ class TasksViewModel @Inject constructor(
                 onFailure = { error ->
                     val msg = error.message ?: "Failed to create task"
                     onError(msg)
+                }
+            )
+        }
+    }
+
+    fun updateTask(
+        taskId: String,
+        title: String?,
+        description: String?,
+        status: String?,
+        priority: String?,
+        category: String?,
+        dueDate: String?,
+        dueTime: String?,
+        estimatedHours: Double? = null,
+        actualHours: Double? = null,
+        subtaskGroups: List<SubtaskGroup>? = null,
+        onSuccess: (StaffTask) -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug()
+            if (orgSlug.isNullOrEmpty()) {
+                onError("Session missing organization context")
+                return@launch
+            }
+            val result = scheduleRepository.updateStaffTask(
+                orgSlug = orgSlug,
+                taskId = taskId,
+                title = title,
+                description = description,
+                status = status,
+                priority = priority,
+                category = category,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                subtaskGroups = subtaskGroups
+            )
+            result.fold(
+                onSuccess = { updatedTask ->
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Updated",
+                        "Task '${updatedTask.title}' has been updated."
+                    )
+                    onSuccess(updatedTask)
+                    val current = _uiState.value
+                    if (current is TasksUiState.Success) {
+                        loadTasks(current.selectedFilter)
+                    } else {
+                        loadTasks()
+                    }
+                },
+                onFailure = { error ->
+                    onError(error.message ?: "Failed to update task")
                 }
             )
         }
@@ -136,6 +199,36 @@ class TasksViewModel @Inject constructor(
                 },
                 onFailure = { error ->
                     _uiState.value = TasksUiState.Error(error.message ?: "Failed to update task")
+                }
+            )
+        }
+    }
+
+    fun deleteTask(
+        taskId: String,
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val orgSlug = sessionManager.getOrgSlug()
+            if (orgSlug.isNullOrEmpty()) {
+                onError("Session missing organization context")
+                return@launch
+            }
+            val result = scheduleRepository.deleteStaffTask(orgSlug, taskId)
+            result.fold(
+                onSuccess = {
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Deleted",
+                        "Task has been removed successfully."
+                    )
+                    onSuccess()
+                    val currentFilter = (_uiState.value as? TasksUiState.Success)?.selectedFilter ?: "ALL"
+                    loadTasks(currentFilter)
+                },
+                onFailure = { error ->
+                    onError(error.message ?: "Failed to delete task")
                 }
             )
         }

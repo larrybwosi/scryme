@@ -14,6 +14,7 @@ import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.SubtaskGroup
 import tech.scryme.app.domain.model.SubtaskItem
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
 import tech.scryme.app.ui.schedule.TaskDetailsUiState
 import tech.scryme.app.ui.schedule.TaskDetailsViewModel
@@ -23,6 +24,7 @@ class TaskDetailsViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val scheduleRepository = mockk<ScheduleRepository>()
+    private val profileRepository = mockk<ProfileRepository>()
     private val sessionManager = mockk<SessionManager>()
     private val context = mockk<Context>(relaxed = true)
     private val savedStateHandle = SavedStateHandle(mapOf("taskId" to "task_123"))
@@ -53,8 +55,9 @@ class TaskDetailsViewModelTest {
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { profileRepository.getMembers(any()) } returns Result.success(emptyList())
         coEvery { scheduleRepository.getStaffTaskById("scryme-org", "task_123") } returns Result.success(sampleTask)
-        viewModel = TaskDetailsViewModel(scheduleRepository, sessionManager, savedStateHandle, context)
+        viewModel = TaskDetailsViewModel(scheduleRepository, profileRepository, sessionManager, savedStateHandle, context)
     }
 
     @After
@@ -139,5 +142,55 @@ class TaskDetailsViewModelTest {
         val state = viewModel.uiState.value as TaskDetailsUiState.Success
         val firstItem = state.task.subtaskGroups.first().items.first()
         assertTrue(firstItem.isCompleted)
+    }
+
+    @Test
+    fun updateTaskDetails_success_updatesTask() = runTest {
+        val updatedTask = sampleTask.copy(title = "New Title", priority = "LOW")
+        coEvery {
+            scheduleRepository.updateStaffTask(
+                orgSlug = "scryme-org",
+                taskId = "task_123",
+                title = "New Title",
+                description = any(),
+                priority = "LOW",
+                status = any(),
+                dueDate = any(),
+                dueTime = any(),
+                category = any(),
+                subtaskGroups = any()
+            )
+        } returns Result.success(updatedTask)
+
+        testScheduler.advanceUntilIdle()
+        var successCalled = false
+        viewModel.updateTaskDetails(
+            title = "New Title",
+            description = "Desc",
+            priority = "LOW",
+            category = "General",
+            dueDate = "2026-11-01",
+            dueTime = "10:00 AM",
+            onSuccess = { successCalled = true }
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(successCalled)
+        val state = viewModel.uiState.value as TaskDetailsUiState.Success
+        assertEquals("New Title", state.task.title)
+    }
+
+    @Test
+    fun deleteTask_success_setsDeletedState() = runTest {
+        coEvery { scheduleRepository.deleteStaffTask("scryme-org", "task_123") } returns Result.success(true)
+
+        testScheduler.advanceUntilIdle()
+        var successCalled = false
+        viewModel.deleteTask(onSuccess = { successCalled = true })
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(successCalled)
+        val state = viewModel.uiState.value as TaskDetailsUiState.Success
+        assertTrue(state.isDeleted)
     }
 }

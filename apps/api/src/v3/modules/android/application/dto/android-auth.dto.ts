@@ -197,6 +197,20 @@ export class AndroidCreateTaskDto {
   @IsOptional()
   dueDate?: string;
 
+  @ApiPropertyOptional({ description: "Due time string (e.g. 10:00 AM)" })
+  @IsString()
+  @IsOptional()
+  dueTime?: string;
+
+  @ApiPropertyOptional({ description: "Category name" })
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @ApiPropertyOptional({ description: "Estimated hours" })
+  @IsOptional()
+  estimatedHours?: number;
+
   @ApiPropertyOptional({ description: "Assigned member ID" })
   @IsString()
   @IsOptional()
@@ -206,6 +220,10 @@ export class AndroidCreateTaskDto {
   @IsString()
   @IsOptional()
   priority?: string;
+
+  @ApiPropertyOptional({ description: "Breakdown subtask groups" })
+  @IsOptional()
+  subtaskGroups?: any[];
 }
 
 export class AndroidUpdateTaskDto {
@@ -228,6 +246,38 @@ export class AndroidUpdateTaskDto {
   @IsString()
   @IsOptional()
   priority?: string;
+
+  @ApiPropertyOptional({ description: "Category name" })
+  @IsString()
+  @IsOptional()
+  category?: string;
+
+  @ApiPropertyOptional({ description: "Due date ISO string" })
+  @IsString()
+  @IsOptional()
+  dueDate?: string;
+
+  @ApiPropertyOptional({ description: "Due time string" })
+  @IsString()
+  @IsOptional()
+  dueTime?: string;
+
+  @ApiPropertyOptional({ description: "Estimated hours" })
+  @IsOptional()
+  estimatedHours?: number;
+
+  @ApiPropertyOptional({ description: "Actual hours" })
+  @IsOptional()
+  actualHours?: number;
+
+  @ApiPropertyOptional({ description: "Assigned member ID" })
+  @IsString()
+  @IsOptional()
+  assignedMemberId?: string;
+
+  @ApiPropertyOptional({ description: "Breakdown subtask groups" })
+  @IsOptional()
+  subtaskGroups?: any[];
 }
 
 export class AndroidTaskAssessmentDto {
