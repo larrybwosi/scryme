@@ -1,17 +1,27 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { Suspense, useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useCreateProject, useCreateTask } from "@/lib/hooks/use-projects";
 import { Folder, CheckSquare, ArrowLeft, Plus, Flame, Clock } from "lucide-react";
 
-export default function NewProjectOrTaskPage() {
+function NewProjectOrTaskForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const initialType = searchParams.get("type")?.toUpperCase() === "PROJECT" ? "PROJECT" : "TASK";
+
   const createProject = useCreateProject();
   const createTask = useCreateTask();
 
-  const [type, setType] = useState<"PROJECT" | "TASK">("TASK");
+  const [type, setType] = useState<"PROJECT" | "TASK">(initialType);
+
+  useEffect(() => {
+    const paramType = searchParams.get("type")?.toUpperCase();
+    if (paramType === "PROJECT" || paramType === "TASK") {
+      setType(paramType);
+    }
+  }, [searchParams]);
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [priority, setPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "URGENT">("HIGH");
@@ -169,5 +179,13 @@ export default function NewProjectOrTaskPage() {
         </div>
       </form>
     </div>
+  );
+}
+
+export default function NewProjectOrTaskPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto pt-8 text-center text-xs text-slate-400">Loading form...</div>}>
+      <NewProjectOrTaskForm />
+    </Suspense>
   );
 }
