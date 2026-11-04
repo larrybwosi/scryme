@@ -148,6 +148,7 @@ const sidebarConfig: SidebarSection[] = [
         tourId: "org-setup",
         items: [
           { title: "Organization", href: "/settings" },
+          { title: "Reports", href: "/settings/reports" },
           { title: "Documents", href: "/settings/documents" },
           { title: "Authorized Devices", href: "/settings/devices" },
         ],

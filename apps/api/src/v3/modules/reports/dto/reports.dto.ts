@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString, IsArray, IsInt, Min, Max } from "class-validator";
+import { IsBoolean, IsOptional, IsString, IsArray, IsInt, IsNumber, Min, Max } from "class-validator";
 
 export class UpdateReportSettingsDto {
   @IsOptional()
@@ -59,6 +59,43 @@ export class UpdateReportSettingsDto {
   @IsOptional()
   @IsBoolean()
   includeAiInsights?: boolean;
+
+  // Customization & Scopes
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  formats?: string[];
+
+  @IsOptional()
+  @IsString()
+  defaultLocationId?: string;
+
+  @IsOptional()
+  @IsString()
+  defaultDepartmentId?: string;
+
+  @IsOptional()
+  @IsNumber()
+  minRevenueThreshold?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Max(365)
+  summaryPeriodDays?: number;
+
+  // Automation & Workflows
+  @IsOptional()
+  @IsBoolean()
+  workflowEnabled?: boolean;
+
+  @IsOptional()
+  @IsString()
+  workflowKey?: string;
+
+  @IsOptional()
+  @IsString()
+  webhookUrl?: string;
 }
 
 export class GenerateReportDto {
@@ -75,4 +112,17 @@ export class GenerateReportDto {
   @IsOptional()
   @IsBoolean()
   sendScryme?: boolean = true;
+
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
+  @IsOptional()
+  @IsString()
+  departmentId?: string;
+
+  @IsOptional()
+  @IsArray()
+  @IsString({ each: true })
+  formats?: string[];
 }
