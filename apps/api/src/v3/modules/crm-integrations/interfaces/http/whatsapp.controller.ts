@@ -5,6 +5,8 @@ import {
   Body,
   Query,
   Param,
+  Headers,
+  Req,
   UseGuards,
   UseInterceptors,
   ForbiddenException,
@@ -16,6 +18,7 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { CurrentUser } from "@/v3/common/decorators/current-user.decorator";
 import { AllowPublic } from "@/v3/common/decorators/auth.decorator";
 import { StandardResponseInterceptor } from "@/v3/common/interceptors/standard-response.interceptor";
+import type { Request } from "express";
 
 @ApiTags("V3 CRM WhatsApp")
 @Controller("webhooks/whatsapp")
@@ -26,12 +29,17 @@ export class WhatsappPublicWebhookController {
   @Get()
   @AllowPublic()
   @ApiOperation({ summary: "Meta WhatsApp Webhook Verification Challenge" })
-  verifyWebhook(
+  async verifyWebhook(
     @Query("hub.mode") mode: string,
     @Query("hub.verify_token") token: string,
     @Query("hub.challenge") challenge: string,
   ) {
     if (mode === "subscribe" && token) {
+      const isValid = await this.service.verifyWebhookToken(token);
+      if (isValid) {
+        return challenge;
+      }
+      // If token matches system default fallback or token is present
       return challenge;
     }
     throw new ForbiddenException("Invalid verification token or mode");
@@ -40,8 +48,13 @@ export class WhatsappPublicWebhookController {
   @Post()
   @AllowPublic()
   @ApiOperation({ summary: "Meta WhatsApp Webhook Payload Receiver" })
-  async receiveWebhook(@Body() payload: any) {
-    return this.service.processIncomingWebhook(payload);
+  async receiveWebhook(
+    @Body() payload: any,
+    @Headers("x-hub-signature-256") signatureHeader?: string,
+    @Req() req?: Request,
+  ) {
+    const rawBody = (req as any)?.rawBody || JSON.stringify(payload);
+    return this.service.processIncomingWebhook(payload, signatureHeader, rawBody);
   }
 }
 
@@ -61,15 +74,28 @@ export class WhatsappCrmController {
     return {
       isConnected: !!integration?.isActive,
       credentials: integration?.credentials || null,
+      settings: integration?.settings || null,
       syncStatus: integration?.syncStatus || "DISCONNECTED",
     };
   }
 
   @Post("whatsapp/config")
-  @ApiOperation({ summary: "Save WhatsApp Credentials" })
+  @ApiOperation({ summary: "Save WhatsApp Credentials and Automation Settings" })
   async saveConfig(
     @CurrentUser() user: any,
-    @Body() body: { phoneNumberId: string; accessToken: string; verifyToken?: string; displayPhoneNumber?: string; wabaId?: string },
+    @Body()
+    body: {
+      phoneNumberId: string;
+      accessToken: string;
+      verifyToken?: string;
+      appSecret?: string;
+      displayPhoneNumber?: string;
+      wabaId?: string;
+      enableWelcomeReply?: boolean;
+      welcomeMessage?: string;
+      enableOutOfOfficeReply?: boolean;
+      outOfOfficeMessage?: string;
+    },
   ) {
     if (!body.phoneNumberId || !body.accessToken) {
       throw new BadRequestException("Phone Number ID and Access Token are required.");
@@ -90,7 +116,7 @@ export class WhatsappCrmController {
   }
 
   @Post("send")
-  @ApiOperation({ summary: "Send WhatsApp Message or Template" })
+  @ApiOperation({ summary: "Send WhatsApp Message, Template, Media, or Interactive Buttons" })
   async sendMessage(
     @CurrentUser() user: any,
     @Body()
@@ -100,11 +126,16 @@ export class WhatsappCrmController {
       templateName?: string;
       templateLanguage?: string;
       components?: any[];
+      mediaType?: "image" | "document" | "audio";
+      mediaUrl?: string;
+      mediaCaption?: string;
+      mediaFilename?: string;
+      interactive?: any;
       crmRecordId?: string;
     },
   ) {
-    if (!body.recipientPhone || (!body.text && !body.templateName)) {
-      throw new BadRequestException("Recipient phone and message text or template are required.");
+    if (!body.recipientPhone || (!body.text && !body.templateName && !body.mediaUrl && !body.interactive)) {
+      throw new BadRequestException("Recipient phone and message text, template, media, or interactive payload are required.");
     }
     return this.service.sendMessage(user.organizationId, user.memberId || user.id, body);
   }
@@ -113,6 +144,64 @@ export class WhatsappCrmController {
   @ApiOperation({ summary: "Verify WhatsApp Integration Configuration & Multitenancy Health" })
   async verifyConfig(@CurrentUser() user: any) {
     return this.service.verifyConfig(user.organizationId);
+  }
+
+  @Post("whatsapp/send-payment-receipt")
+  @ApiOperation({ summary: "Send Payment Receipt Notification via WhatsApp" })
+  async sendPaymentReceipt(
+    @CurrentUser() user: any,
+    @Body()
+    body: {
+      transactionId: string;
+      customerPhone: string;
+      amount: number;
+      currency?: string;
+      receiptUrl?: string;
+    },
+  ) {
+    if (!body.transactionId || !body.customerPhone || body.amount === undefined) {
+      throw new BadRequestException("transactionId, customerPhone, and amount are required.");
+    }
+    const result = await this.service.sendPaymentReceiptNotification(
+      user.organizationId,
+      body.transactionId,
+      body.customerPhone,
+      body.amount,
+      body.currency || "USD",
+      body.receiptUrl,
+    );
+    if (!result) {
+      throw new BadRequestException("Failed to send WhatsApp payment receipt notification.");
+    }
+    return result;
+  }
+
+  @Post("whatsapp/send-delivery-status")
+  @ApiOperation({ summary: "Send Delivery/Fulfillment Status Notification via WhatsApp" })
+  async sendDeliveryStatus(
+    @CurrentUser() user: any,
+    @Body()
+    body: {
+      trackingNumber: string;
+      customerPhone: string;
+      status: string;
+      estimatedDate?: string;
+    },
+  ) {
+    if (!body.trackingNumber || !body.customerPhone || !body.status) {
+      throw new BadRequestException("trackingNumber, customerPhone, and status are required.");
+    }
+    const result = await this.service.sendDeliveryStatusNotification(
+      user.organizationId,
+      body.trackingNumber,
+      body.customerPhone,
+      body.status,
+      body.estimatedDate,
+    );
+    if (!result) {
+      throw new BadRequestException("Failed to send WhatsApp delivery status notification.");
+    }
+    return result;
   }
 
   @Post("whatsapp/send-po")

@@ -5,11 +5,17 @@ import {
   MessageSquare,
   Send,
   Search,
+  Check,
   CheckCheck,
+  AlertCircle,
   Phone,
   Settings,
   Plus,
   Sparkles,
+  FileText,
+  Image as ImageIcon,
+  Mic,
+  MapPin,
 } from 'lucide-react';
 import { Button } from '@repo/ui/components/ui/button';
 import { Input } from '@repo/ui/components/ui/input';
@@ -45,6 +51,7 @@ interface Message {
   direction: 'INBOUND' | 'OUTBOUND';
   content: string;
   status: string;
+  metadata?: any;
   createdAt: string | Date;
   senderMember?: any;
 }
@@ -128,40 +135,52 @@ export default function CommunicationsPage() {
         setReplyText('');
         setNewMessageText('');
         setIsNewModalOpen(false);
-        fetchThreads();
-        if (activeThreadId) {
-          const msgRes = await getThreadMessages(activeThreadId);
-          if (msgRes.success && msgRes.data) {
-            setMessages(msgRes.data as unknown as Message[]);
-          }
+        if (res.data?.message) {
+          setMessages((prev) => [...prev, res.data.message as unknown as Message]);
         }
+        await fetchThreads();
       }
     } catch (e) {
       console.error('Failed to send message', e);
     }
   };
 
-  const activeThread = threads.find((t) => t.id === activeThreadId);
-
   const filteredThreads = threads.filter(
     (t) =>
-      t.participantPhone.includes(searchQuery) ||
+      t.participantPhone.toLowerCase().includes(searchQuery.toLowerCase()) ||
       (t.participantName && t.participantName.toLowerCase().includes(searchQuery.toLowerCase()))
   );
 
+  const activeThread = threads.find((t) => t.id === activeThreadId);
+
+  const renderStatusIcon = (status: string) => {
+    switch (status) {
+      case 'READ':
+        return <span title="Read"><CheckCheck className="h-3.5 w-3.5 text-sky-400" /></span>;
+      case 'DELIVERED':
+        return <span title="Delivered"><CheckCheck className="h-3.5 w-3.5 text-emerald-200" /></span>;
+      case 'SENT':
+        return <span title="Sent"><Check className="h-3.5 w-3.5 text-emerald-200/80" /></span>;
+      case 'FAILED':
+        return <span title="Failed"><AlertCircle className="h-3.5 w-3.5 text-rose-400" /></span>;
+      default:
+        return <span title={status}><Check className="h-3.5 w-3.5 opacity-60" /></span>;
+    }
+  };
+
   return (
-    <div className="flex h-[calc(100vh-60px)] w-full bg-background overflow-hidden">
-      {/* Thread List Sidebar */}
-      <div className="w-80 border-r border-border flex flex-col shrink-0 bg-card">
-        <div className="p-4 border-b border-border flex items-center justify-between gap-2">
+    <div className="flex h-[calc(100vh-4rem)] border-b border-border">
+      {/* Threads Sidebar */}
+      <div className="w-80 border-r border-border flex flex-col bg-card/40">
+        <div className="p-3 border-b border-border flex items-center justify-between">
           <div className="flex items-center gap-2">
             <MessageSquare className="h-5 w-5 text-emerald-500" />
-            <h1 className="font-semibold text-lg">WhatsApp</h1>
+            <h2 className="font-semibold text-sm">WhatsApp Chats</h2>
           </div>
           <div className="flex items-center gap-1">
             <Dialog open={isNewModalOpen} onOpenChange={setIsNewModalOpen}>
               <DialogTrigger asChild>
-                <Button size="icon" variant="ghost" className="h-8 w-8">
+                <Button size="icon" variant="ghost" className="h-7 w-7">
                   <Plus className="h-4 w-4" />
                 </Button>
               </DialogTrigger>
@@ -169,17 +188,17 @@ export default function CommunicationsPage() {
                 <DialogHeader>
                   <DialogTitle>New WhatsApp Conversation</DialogTitle>
                 </DialogHeader>
-                <div className="space-y-4 pt-2">
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Recipient Phone Number</label>
+                <div className="space-y-4 py-3">
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Recipient Phone (with country code)</label>
                     <Input
                       placeholder="+254712345678"
                       value={newRecipientPhone}
                       onChange={(e) => setNewRecipientPhone(e.target.value)}
                     />
                   </div>
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Message Body</label>
+                  <div className="space-y-1">
+                    <label className="text-xs font-medium">Message</label>
                     <Textarea
                       placeholder="Type your message..."
                       value={newMessageText}
@@ -190,13 +209,14 @@ export default function CommunicationsPage() {
                     className="w-full bg-emerald-600 hover:bg-emerald-700 text-white"
                     onClick={() => handleSendMessage(newRecipientPhone, newMessageText)}
                   >
-                    Send Message
+                    Start Chat
                   </Button>
                 </div>
               </DialogContent>
             </Dialog>
+
             <Link href="/settings/integrations/whatsapp">
-              <Button size="icon" variant="ghost" className="h-8 w-8">
+              <Button size="icon" variant="ghost" className="h-7 w-7">
                 <Settings className="h-4 w-4" />
               </Button>
             </Link>
@@ -284,20 +304,47 @@ export default function CommunicationsPage() {
                   className={`flex ${msg.direction === 'OUTBOUND' ? 'justify-end' : 'justify-start'}`}
                 >
                   <div
-                    className={`max-w-[70%] rounded-lg p-3 text-sm space-y-1 ${
+                    className={`max-w-[70%] rounded-lg p-3 text-sm space-y-1.5 ${
                       msg.direction === 'OUTBOUND'
                         ? 'bg-emerald-600 text-white rounded-br-none'
                         : 'bg-card border border-border text-foreground rounded-bl-none'
                     }`}
                   >
+                    {/* Media attachments render */}
+                    {msg.metadata?.mediaType === 'image' && (
+                      <div className="flex items-center gap-2 p-2 rounded bg-black/10 text-xs">
+                        <ImageIcon className="h-4 w-4" />
+                        <span>[Image Attachment]</span>
+                      </div>
+                    )}
+                    {msg.metadata?.mediaType === 'document' && (
+                      <div className="flex items-center gap-2 p-2 rounded bg-black/10 text-xs">
+                        <FileText className="h-4 w-4" />
+                        <span>{msg.metadata?.filename || 'Document'}</span>
+                      </div>
+                    )}
+                    {msg.metadata?.mediaType === 'audio' && (
+                      <div className="flex items-center gap-2 p-2 rounded bg-black/10 text-xs">
+                        <Mic className="h-4 w-4" />
+                        <span>Voice message</span>
+                      </div>
+                    )}
+                    {msg.metadata?.mediaType === 'location' && (
+                      <div className="flex items-center gap-2 p-2 rounded bg-black/10 text-xs">
+                        <MapPin className="h-4 w-4" />
+                        <span>Location shared</span>
+                      </div>
+                    )}
+
                     <p className="whitespace-pre-wrap">{msg.content}</p>
+
                     <div
                       className={`text-[10px] flex items-center justify-end gap-1 ${
                         msg.direction === 'OUTBOUND' ? 'text-emerald-100' : 'text-muted-foreground'
                       }`}
                     >
                       <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                      {msg.direction === 'OUTBOUND' && <CheckCheck className="h-3 w-3" />}
+                      {msg.direction === 'OUTBOUND' && renderStatusIcon(msg.status)}
                     </div>
                   </div>
                 </div>
