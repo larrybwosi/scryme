@@ -1,6 +1,6 @@
 # 0016. Site App Dark and Light Mode Support and OpenPanel Integration
 
-**Date**: 2026-03-31
+**Date**: 2026-11-03
 **Status**: Proposed
 
 ## Summary

@@ -1,6 +1,6 @@
 # 0016. Product and Variant Lifecycle Documentation
 
-**Date**: 2025-05-18
+**Date**: 2026-11-03
 **Status**: Accepted
 
 ## Summary
