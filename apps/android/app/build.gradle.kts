@@ -7,6 +7,31 @@ plugins {
     id("dagger.hilt.android.plugin")
 }
 
+val envProperties = Properties()
+val envFile = rootProject.file(".env")
+if (envFile.exists()) {
+    envFile.inputStream().use { stream ->
+        envProperties.load(stream)
+    }
+}
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { stream ->
+        envProperties.load(stream)
+    }
+}
+
+val openpanelClientId: String = System.getenv("OPENPANEL_CLIENT_ID")
+    ?: System.getenv("NEXT_PUBLIC_OPENPANEL_CLIENT_ID")
+    ?: System.getenv("VITE_OPENPANEL_CLIENT_ID")
+    ?: envProperties.getProperty("OPENPANEL_CLIENT_ID", "")
+val openpanelClientSecret: String = System.getenv("OPENPANEL_CLIENT_SECRET")
+    ?: envProperties.getProperty("OPENPANEL_CLIENT_SECRET", "")
+val openpanelHost: String = System.getenv("OPENPANEL_HOST")
+    ?: System.getenv("NEXT_PUBLIC_OPENPANEL_HOST")
+    ?: System.getenv("VITE_OPENPANEL_HOST")
+    ?: envProperties.getProperty("OPENPANEL_HOST", "https://api.openpanel.dev")
+
 android {
     namespace = "tech.scryme.app"
     compileSdk = 34
@@ -24,6 +49,9 @@ android {
         }
 
         buildConfigField("String", "BASE_URL", "\"https://api.scryme.tech/api/v3/\"")
+        buildConfigField("String", "OPENPANEL_CLIENT_ID", "\"${openpanelClientId}\"")
+        buildConfigField("String", "OPENPANEL_CLIENT_SECRET", "\"${openpanelClientSecret}\"")
+        buildConfigField("String", "OPENPANEL_HOST", "\"${openpanelHost}\"")
 
         ndk {
             abiFilters.addAll(setOf("armeabi-v7a", "arm64-v8a", "x86", "x86_64"))
@@ -163,6 +191,7 @@ dependencies {
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.mockk:mockk:1.13.8")
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
+    testImplementation("com.squareup.okhttp3:mockwebserver:4.12.0")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
     androidTestImplementation("androidx.test.espresso:espresso-core:3.5.1")
     androidTestImplementation(platform("androidx.compose:compose-bom:2024.02.00"))

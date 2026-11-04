@@ -25,6 +25,7 @@ class SettingsViewModelTest {
     private val profileRepository = mockk<ProfileRepository>()
     private val authRepository = mockk<AuthRepository>()
     private val branchRepository = mockk<BranchRepository>()
+    private val openPanelTracker = mockk<tech.scryme.app.analytics.OpenPanelTracker>(relaxed = true)
     private lateinit var viewModel: SettingsViewModel
 
     @Before
@@ -73,7 +74,7 @@ class SettingsViewModelTest {
         )
         coEvery { branchRepository.getBranchLocations("test-org") } returns Result.success(sampleBranches)
 
-        viewModel = SettingsViewModel(sessionManager, profileRepository, authRepository, branchRepository)
+        viewModel = SettingsViewModel(sessionManager, profileRepository, authRepository, branchRepository, openPanelTracker)
     }
 
     @After

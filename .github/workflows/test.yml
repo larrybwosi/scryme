@@ -135,10 +135,18 @@ jobs:
         working-directory: apps/android
 
       - name: Run Android Lint & Unit Tests
+        env:
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
+          OPENPANEL_HOST: ${{ secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
         run: ./gradlew lintDebug testDebugUnitTest
         working-directory: apps/android
 
       - name: Build Debug APK
+        env:
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
+          OPENPANEL_HOST: ${{ secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
         run: ./gradlew assembleDebug
         working-directory: apps/android
 

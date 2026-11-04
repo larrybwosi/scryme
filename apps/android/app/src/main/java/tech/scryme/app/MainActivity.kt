@@ -42,11 +42,13 @@ import androidx.compose.ui.unit.sp
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.launch
+import tech.scryme.app.analytics.OpenPanelTracker
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.notifications.ScrymeFirebaseMessagingService
 import tech.scryme.app.ui.auth.AuthViewModel
@@ -60,6 +62,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var sessionManager: SessionManager
+
+    @Inject
+    lateinit var openPanelTracker: OpenPanelTracker
 
     private val authViewModel: AuthViewModel by viewModels()
 
@@ -81,7 +86,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             val themeMode by sessionManager.themeModeFlow.collectAsState(initial = "SYSTEM")
             ScrymeTheme(themeMode = themeMode) {
-                MainAppScreen(authViewModel = authViewModel)
+                MainAppScreen(
+                    authViewModel = authViewModel,
+                    openPanelTracker = openPanelTracker
+                )
             }
         }
     }
@@ -103,7 +111,8 @@ class MainActivity : ComponentActivity() {
 
 @Composable
 fun MainAppScreen(
-    authViewModel: AuthViewModel = hiltViewModel()
+    authViewModel: AuthViewModel = hiltViewModel(),
+    openPanelTracker: OpenPanelTracker
 ) {
     val navController = rememberNavController()
     val isLoggedIn by authViewModel.isLoggedIn.collectAsState()
@@ -112,6 +121,17 @@ fun MainAppScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
+
+    DisposableEffect(navController) {
+        val listener = NavController.OnDestinationChangedListener { _, destination, _ ->
+            val route = destination.route ?: "unknown"
+            openPanelTracker.screenView(route)
+        }
+        navController.addOnDestinationChangedListener(listener)
+        onDispose {
+            navController.removeOnDestinationChangedListener(listener)
+        }
+    }
 
     DisposableEffect(context) {
         val receiver = object : BroadcastReceiver() {
