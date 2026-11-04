@@ -1,7 +1,7 @@
 # 0008. Projects App API Connection and Better Auth Integration
 
 **Date**: 2026-11-01
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

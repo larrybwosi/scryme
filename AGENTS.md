@@ -51,6 +51,7 @@ Stored in `docs/specs/`. Format: `docs/specs/NNNN-title.md`.
 - [apps/crm/AGENTS.md](apps/crm/AGENTS.md): App workspace for crm.
 - [apps/docs/AGENTS.md](apps/docs/AGENTS.md): App workspace for docs.
 - [apps/pos/AGENTS.md](apps/pos/AGENTS.md): App workspace for pos.
+- [apps/projects/AGENTS.md](apps/projects/AGENTS.md): App workspace for projects.
 - [apps/site-next/AGENTS.md](apps/site-next/AGENTS.md): App workspace for site-next.
 - [apps/web/AGENTS.md](apps/web/AGENTS.md): App workspace for web.
 - [packages/auth/AGENTS.md](packages/auth/AGENTS.md): Package workspace for auth.

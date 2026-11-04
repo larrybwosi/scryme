@@ -1,6 +1,6 @@
 # Projects App TanStack Query Local First Integration
 
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

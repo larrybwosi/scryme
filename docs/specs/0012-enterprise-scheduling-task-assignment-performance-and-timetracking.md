@@ -1,6 +1,6 @@
 # 0011: Enterprise Scheduling, Task Assignment, Performance Tracking & Time Tracking
 
-**Status**: Ratified
+**Status**: Accepted
 **Authors**: Jules & Senior Systems Architect
 **Deciders**: Engineering Lead & Product Team
 **Date**: 2026-11-02
