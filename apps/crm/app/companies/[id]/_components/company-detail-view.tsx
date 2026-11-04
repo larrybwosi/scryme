@@ -11,6 +11,12 @@ import { FollowUpsTab } from '@/components/crm/followups-tab';
 import { getDisplayTime } from '@/lib/utils';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
 import { CompanyInvoicesTab } from './tabs/invoices-tab';
+import { CompanyFinancialsTab } from './tabs/financials-tab';
+import { CompanyHierarchyTab } from './tabs/hierarchy-tab';
+import { CompanyContractsTab } from './tabs/contracts-tab';
+import { CompanyIntegrationsTab } from './tabs/integrations-tab';
+import { updateCompanyLifecycleStage, assignCompanyAccountManager } from '@/app/actions/company-enterprise';
+import { UserCheck, Shield, ChevronDown } from 'lucide-react';
 import { cn } from '@repo/ui/lib/utils';
 import { toast } from 'sonner';
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from '@repo/ui/components/ui/sheet';
@@ -57,6 +63,14 @@ function TabContent({ company, tab, currency = "USD" }: { company: any; tab: Tab
       return <OrdersTab company={company} currency={currency} />;
     case 'invoices':
       return <CompanyInvoicesTab company={company} currency={currency} />;
+    case 'financials':
+      return <CompanyFinancialsTab company={company} currency={currency} />;
+    case 'hierarchy':
+      return <CompanyHierarchyTab company={company} />;
+    case 'contracts':
+      return <CompanyContractsTab company={company} />;
+    case 'integrations':
+      return <CompanyIntegrationsTab company={company} />;
     default:
       return <NotesTab customer={adaptedCompany as any} />;
   }
@@ -245,7 +259,7 @@ function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) 
     invoices: company.invoices?.length || 0,
   };
 
-  const availableTabs: TabId[] = ['notes', 'activities', 'contacts', 'orders', 'followups', 'invoices'];
+  const availableTabs: TabId[] = ['notes', 'financials', 'hierarchy', 'contracts', 'integrations', 'contacts', 'invoices', 'orders', 'activities', 'followups'];
 
   const [isAddContactOpen, setIsAddContactOpen] = useState(false);
   const [isNewInvoiceOpen, setIsNewInvoiceOpen] = useState(false);
@@ -345,9 +359,24 @@ function DetailViewInner({ company, currency = "USD" }: CompanyDetailViewProps) 
                        </span>
                     )}
                  </div>
+
+                 {/* Enterprise Lifecycle Stage Badge */}
+                 <div className="mt-3">
+                    <span className="px-2.5 py-1 text-[11px] font-bold rounded-full border bg-primary/10 text-primary border-primary/20 uppercase tracking-wider">
+                       {company.lifecycleStage || 'ACTIVE'}
+                    </span>
+                 </div>
               </div>
 
               <div className="space-y-4">
+                 <div className="text-sm">
+                    <div className="text-muted-foreground font-medium mb-1">Account Manager</div>
+                    <div className="font-medium text-foreground flex items-center gap-1.5">
+                       <UserCheck size={14} className="text-primary" />
+                       {company.accountManager?.user?.name || company.accountManager?.user?.email || 'Unassigned'}
+                    </div>
+                 </div>
+
                  <div className="text-sm">
                     <div className="text-muted-foreground font-medium mb-1">Tax ID / KRA PIN</div>
                     <div className="font-medium">{company.taxId || 'Not provided'}</div>

@@ -16,6 +16,9 @@ import {
   Tag,
   Clock,
   ExternalLink,
+  UserCheck,
+  Activity,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { CustomerWithRelations } from "@/lib/types";
@@ -32,6 +35,8 @@ import { CustomerForm } from "../../_components/customer-form";
 import useSWR from "swr";
 import { getLocations } from "../../../actions/customers";
 import { useRouter } from "next/navigation";
+import { updateCustomerLifecycleStage } from "../../../actions/customer-enterprise";
+import { toast } from "sonner";
 
 interface CustomerProfilePanelProps {
   customer: CustomerWithRelations;
@@ -317,7 +322,41 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
         )}
       </div>
 
-      {/* Quick Stats */}
+      {/* Enterprise Account Governance */}
+      <div className="bg-card rounded-xl border border-border p-5 space-y-3">
+        <div className="flex items-center justify-between">
+          <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider">
+            Lifecycle Stage
+          </span>
+          <span className="px-2 py-0.5 text-[10px] font-bold bg-primary/10 text-primary rounded-full border border-primary/20 uppercase">
+            {customer.lifecycleStage || 'ACTIVE'}
+          </span>
+        </div>
+
+        <div className="pt-2 border-t border-border/60 space-y-2">
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground flex items-center gap-1.5">
+              <UserCheck size={13} className="text-primary" />
+              Account Manager
+            </span>
+            <span className="font-semibold text-foreground">
+              {(customer as any).accountManager?.user?.name || (customer as any).accountManager?.user?.email || 'Unassigned'}
+            </span>
+          </div>
+
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground flex items-center gap-1.5">
+              <TrendingUp size={13} className="text-emerald-500" />
+              Lifetime Value
+            </span>
+            <span className="font-bold text-emerald-500">
+              {formatCurrency(Number((customer as any).lifetimeValue) || totalRevenue, currency)}
+            </span>
+          </div>
+        </div>
+      </div>
+
+            {/* Quick Stats */}
       <div className="bg-card rounded-xl border border-border p-5">
         <h3 className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider mb-4">
           Quick Stats

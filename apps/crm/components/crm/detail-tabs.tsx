@@ -12,9 +12,13 @@ import {
   CalendarClock,
   Activity,
   Users,
+  CreditCard,
+  Network,
+  FileCheck,
+  KeyRound,
 } from 'lucide-react';
 
-export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities' | 'contacts';
+export type TabId = 'notes' | 'deliveries' | 'invoices' | 'orders' | 'conversations' | 'followups' | 'activities' | 'contacts' | 'financials' | 'hierarchy' | 'contracts' | 'integrations';
 
 interface Tab {
   id: TabId;
@@ -31,6 +35,10 @@ const TABS: Tab[] = [
   { id: 'conversations', label: 'Conversations', icon: MessageSquare },
   { id: 'followups', label: 'Follow-ups', icon: CalendarClock },
   { id: 'contacts', label: 'Contacts', icon: Users },
+  { id: 'financials', label: 'Credit & Financials', icon: CreditCard },
+  { id: 'hierarchy', label: 'Hierarchy & Branches', icon: Network },
+  { id: 'contracts', label: 'Contracts & Pricing', icon: FileCheck },
+  { id: 'integrations', label: 'B2B & API Keys', icon: KeyRound },
 ];
 
 interface DetailTabsProps {

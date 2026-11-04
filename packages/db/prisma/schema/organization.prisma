@@ -234,7 +234,7 @@ model Organization {
   reportAutomations ReportAutomation[]
   reportChannels    ReportChannel[]
 
-  // CRM Relations
+    // CRM Relations
   crmObjectDefinitions       CrmObjectDefinition[]       @relation("OrgCrmObjects")
   crmRecords                 CrmRecord[]                 @relation("OrgCrmRecords")
   crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
@@ -419,6 +419,8 @@ model Member {
   crmActivities             CrmActivity[]          @relation("CrmActivityMember")
   crmNotes                  CrmNote[]              @relation("CrmNoteCreator")
   crmFollowUps              CrmFollowUp[]          @relation("CrmFollowUpAssignedTo")
+  managedCustomers          Customer[]             @relation("CustomerAccountManager")
+  managedBusinessAccounts   BusinessAccount[]      @relation("BusinessAccountManager")
   sentCommunicationMessages CommunicationMessage[] @relation("SentCommunicationMessages")
 
   createdCampaigns  Campaign[] @relation("CampaignCreator")

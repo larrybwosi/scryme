@@ -409,6 +409,11 @@ export async function getCustomer(id: string): Promise<any> {
       where: { id },
       include: {
         addresses: true,
+        accountManager: {
+          include: {
+            user: true,
+          },
+        },
         invoices: {
           include: {
             items: true,
@@ -507,6 +512,11 @@ export async function getCustomer(id: string): Promise<any> {
         data: { crmRecordId: record.id },
         include: {
           addresses: true,
+        accountManager: {
+          include: {
+            user: true,
+          },
+        },
           invoices: {
             include: {
               items: true,
