@@ -28,9 +28,15 @@ vi.mock("@repo/db", () => ({
       create: vi.fn(),
       deleteMany: vi.fn(),
     },
+    shiftTradeRequest: {
+      findFirst: vi.fn(),
+      create: vi.fn(),
+      updateMany: vi.fn(),
+    },
     organizationSettings: {
       findUnique: vi.fn(),
     },
+    $transaction: vi.fn((promises) => Promise.all(promises)),
   },
 }));
 
@@ -54,6 +60,8 @@ import {
   addStaffBreak,
   deleteStaffBreak,
   updateBranchLocationCoordinates,
+  requestShiftTrade,
+  processShiftTrade,
 } from "../shifts";
 
 describe("Staff Shifts Server Actions - Security Hardening", () => {
@@ -390,6 +398,215 @@ describe("Staff Shifts Server Actions - Security Hardening", () => {
       expect(db.inventoryLocation.updateMany).toHaveBeenCalledWith({
         where: { id: "loc-1", organizationId: "org-1" },
         data: expect.objectContaining({ latitude: -1.286389 }),
+      });
+    });
+  });
+
+  describe("requestShiftTrade - Security Hardening", () => {
+    it("should reject shift trade if caller is not the shift owner", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "mem-1",
+      });
+      (db.staffShift.findFirst as any).mockImplementation(({ where }: any) => {
+        if (where.id === "shift-1") return Promise.resolve({ id: "shift-1", memberId: "other-mem" });
+        return Promise.resolve(null);
+      });
+
+      const result = await requestShiftTrade({ shiftId: "shift-1" });
+      expect(result).toEqual({ success: false, error: "You can only trade or swap your own shifts" });
+    });
+
+    it("should reject shift trade if offeredShift belongs to another organization", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "mem-1",
+      });
+      (db.staffShift.findFirst as any).mockImplementation(({ where }: any) => {
+        if (where.id === "shift-1" && where.organizationId === "org-1") {
+          return Promise.resolve({ id: "shift-1", memberId: "mem-1" });
+        }
+        return Promise.resolve(null);
+      });
+
+      const result = await requestShiftTrade({
+        shiftId: "shift-1",
+        offeredShiftId: "foreign-shift",
+      });
+      expect(result).toEqual({
+        success: false,
+        error: "Offered shift not found or belongs to another organization",
+      });
+    });
+
+    it("should reject shift trade if targetMember belongs to another organization", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "mem-1",
+      });
+      (db.staffShift.findFirst as any).mockImplementation(({ where }: any) => {
+        if (where.id === "shift-1" && where.organizationId === "org-1") {
+          return Promise.resolve({ id: "shift-1", memberId: "mem-1" });
+        }
+        return Promise.resolve(null);
+      });
+      (db.member.findFirst as any).mockResolvedValue(null);
+
+      const result = await requestShiftTrade({
+        shiftId: "shift-1",
+        targetMemberId: "foreign-member",
+      });
+      expect(result).toEqual({
+        success: false,
+        error: "Target member not found or belongs to another organization",
+      });
+      expect(db.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-member", organizationId: "org-1" },
+        select: { id: true },
+      });
+    });
+
+    it("should create shift trade request when all foreign references are valid and tenant-isolated", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "mem-1",
+      });
+      (db.staffShift.findFirst as any).mockImplementation(({ where }: any) => {
+        if (where.id === "shift-1" && where.organizationId === "org-1") {
+          return Promise.resolve({ id: "shift-1", memberId: "mem-1" });
+        }
+        if (where.id === "offered-1" && where.organizationId === "org-1") {
+          return Promise.resolve({ id: "offered-1", memberId: "mem-2" });
+        }
+        return Promise.resolve(null);
+      });
+      (db.member.findFirst as any).mockResolvedValue({ id: "mem-2" });
+      (db.shiftTradeRequest.create as any).mockResolvedValue({ id: "trade-1", status: "PENDING" });
+
+      const result = await requestShiftTrade({
+        shiftId: "shift-1",
+        offeredShiftId: "offered-1",
+        targetMemberId: "mem-2",
+        type: "SWAP",
+      });
+
+      expect(result).toEqual({ success: true, data: { id: "trade-1", status: "PENDING" } });
+      expect(db.shiftTradeRequest.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          organizationId: "org-1",
+          requesterMemberId: "mem-1",
+          targetMemberId: "mem-2",
+          shiftId: "shift-1",
+          offeredShiftId: "offered-1",
+          type: "SWAP",
+          status: "PENDING",
+        }),
+        include: expect.any(Object),
+      });
+    });
+  });
+
+  describe("processShiftTrade - Security Hardening", () => {
+    it("should cancel trade request using updateMany scoped by organizationId", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "mem-1",
+        role: "MEMBER",
+      });
+      (db.shiftTradeRequest.findFirst as any).mockResolvedValue({
+        id: "trade-1",
+        organizationId: "org-1",
+        requesterMemberId: "mem-1",
+      });
+      (db.shiftTradeRequest.updateMany as any).mockResolvedValue({ count: 1 });
+
+      const result = await processShiftTrade("trade-1", "CANCEL");
+      expect(result).toEqual({ success: true });
+      expect(db.shiftTradeRequest.updateMany).toHaveBeenCalledWith({
+        where: { id: "trade-1", organizationId: "org-1" },
+        data: { status: "CANCELLED" },
+      });
+    });
+
+    it("should reject trade request using updateMany scoped by organizationId", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "admin-1",
+        role: "ADMIN",
+      });
+      (db.shiftTradeRequest.findFirst as any).mockResolvedValue({
+        id: "trade-1",
+        organizationId: "org-1",
+        requesterMemberId: "mem-1",
+      });
+      (db.shiftTradeRequest.updateMany as any).mockResolvedValue({ count: 1 });
+
+      const result = await processShiftTrade("trade-1", "REJECT");
+      expect(result).toEqual({ success: true });
+      expect(db.shiftTradeRequest.updateMany).toHaveBeenCalledWith({
+        where: { id: "trade-1", organizationId: "org-1" },
+        data: { status: "REJECTED", approvedById: "admin-1" },
+      });
+    });
+
+    it("should reject approval if targetMember belongs to another organization", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "admin-1",
+        role: "ADMIN",
+      });
+      (db.shiftTradeRequest.findFirst as any).mockResolvedValue({
+        id: "trade-1",
+        organizationId: "org-1",
+        shiftId: "shift-1",
+        offeredShiftId: "offered-1",
+        targetMemberId: "foreign-mem",
+        requesterMemberId: "mem-1",
+        type: "SWAP",
+        shift: { id: "shift-1" },
+        offeredShift: { id: "offered-1" },
+      });
+      (db.member.findFirst as any).mockResolvedValue(null);
+
+      const result = await processShiftTrade("trade-1", "APPROVE");
+      expect(result).toEqual({ success: false, error: "Target member not found in organization" });
+      expect(db.staffShift.updateMany).not.toHaveBeenCalled();
+    });
+
+    it("should approve swap trade request using updateMany scoped by organizationId", async () => {
+      (getServerAuth as any).mockResolvedValue({
+        organizationId: "org-1",
+        memberId: "admin-1",
+        role: "ADMIN",
+      });
+      (db.shiftTradeRequest.findFirst as any).mockResolvedValue({
+        id: "trade-1",
+        organizationId: "org-1",
+        shiftId: "shift-1",
+        offeredShiftId: "offered-1",
+        targetMemberId: "mem-2",
+        requesterMemberId: "mem-1",
+        type: "SWAP",
+        shift: { id: "shift-1" },
+        offeredShift: { id: "offered-1" },
+      });
+      (db.member.findFirst as any).mockResolvedValue({ id: "mem-2" });
+      (db.staffShift.updateMany as any).mockResolvedValue({ count: 1 });
+      (db.shiftTradeRequest.updateMany as any).mockResolvedValue({ count: 1 });
+
+      const result = await processShiftTrade("trade-1", "APPROVE");
+      expect(result).toEqual({ success: true });
+      expect(db.staffShift.updateMany).toHaveBeenCalledWith({
+        where: { id: "shift-1", organizationId: "org-1" },
+        data: { memberId: "mem-2" },
+      });
+      expect(db.staffShift.updateMany).toHaveBeenCalledWith({
+        where: { id: "offered-1", organizationId: "org-1" },
+        data: { memberId: "mem-1" },
+      });
+      expect(db.shiftTradeRequest.updateMany).toHaveBeenCalledWith({
+        where: { id: "trade-1", organizationId: "org-1" },
+        data: { status: "APPROVED", approvedById: "admin-1" },
       });
     });
   });

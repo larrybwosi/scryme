@@ -788,9 +788,31 @@ export async function requestShiftTrade(data: {
   }
 
   try {
-    const shift = await db.staffShift.findFirst({
-      where: { id: data.shiftId, organizationId: session.organizationId },
-    });
+    /**
+     * 🛡️ Sentinel: BOLA/IDOR Prevention & Parallel Validation:
+     * Foreign relational inputs (`shiftId`, `offeredShiftId`, `targetMemberId`) must be validated
+     * against `session.organizationId` to prevent cross-tenant shift trade requests or assigning
+     * shift trade obligations to members of unauthorized organizations.
+     */
+    const [shift, offered, targetMember] = await Promise.all([
+      db.staffShift.findFirst({
+        where: { id: data.shiftId, organizationId: session.organizationId },
+        select: { id: true, memberId: true },
+      }),
+      data.offeredShiftId
+        ? db.staffShift.findFirst({
+            where: { id: data.offeredShiftId, organizationId: session.organizationId },
+            select: { id: true, memberId: true },
+          })
+        : Promise.resolve(null),
+      data.targetMemberId
+        ? db.member.findFirst({
+            where: { id: data.targetMemberId, organizationId: session.organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
     if (!shift) {
       return { success: false, error: "Shift not found" };
     }
@@ -799,13 +821,12 @@ export async function requestShiftTrade(data: {
       return { success: false, error: "You can only trade or swap your own shifts" };
     }
 
-    if (data.offeredShiftId) {
-      const offered = await db.staffShift.findFirst({
-        where: { id: data.offeredShiftId, organizationId: session.organizationId },
-      });
-      if (!offered) {
-        return { success: false, error: "Offered shift not found" };
-      }
+    if (data.offeredShiftId && !offered) {
+      return { success: false, error: "Offered shift not found or belongs to another organization" };
+    }
+
+    if (data.targetMemberId && !targetMember) {
+      return { success: false, error: "Target member not found or belongs to another organization" };
     }
 
     const trade = await db.shiftTradeRequest.create({
@@ -859,13 +880,20 @@ export async function processShiftTrade(
       return { success: false, error: "Shift trade request not found" };
     }
 
+    /**
+     * 🛡️ Sentinel: BOLA/IDOR Hardening:
+     * ShiftTradeRequest and StaffShift models lack composite unique constraints on [id, organizationId].
+     * Standard Prisma `update({ where: { id } })` ignores non-unique organizationId filters at database level.
+     * We use `updateMany` scoped strictly by `{ id, organizationId: session.organizationId }` to guarantee
+     * multi-tenant isolation at execution time.
+     */
     if (action === "CANCEL") {
       if (trade.requesterMemberId !== session.memberId && !isManagerOrAdmin) {
         return { success: false, error: "Forbidden: Only requester or admin can cancel" };
       }
 
-      await db.shiftTradeRequest.update({
-        where: { id: tradeId },
+      await db.shiftTradeRequest.updateMany({
+        where: { id: tradeId, organizationId: session.organizationId },
         data: { status: "CANCELLED" },
       });
 
@@ -878,8 +906,8 @@ export async function processShiftTrade(
     }
 
     if (action === "REJECT") {
-      await db.shiftTradeRequest.update({
-        where: { id: tradeId },
+      await db.shiftTradeRequest.updateMany({
+        where: { id: tradeId, organizationId: session.organizationId },
         data: { status: "REJECTED", approvedById: session.memberId || null },
       });
 
@@ -888,37 +916,48 @@ export async function processShiftTrade(
     }
 
     if (action === "APPROVE") {
+      // Validate that targetMemberId belongs to current organization before reassigning shifts
+      if (trade.targetMemberId) {
+        const targetMember = await db.member.findFirst({
+          where: { id: trade.targetMemberId, organizationId: session.organizationId },
+          select: { id: true },
+        });
+        if (!targetMember) {
+          return { success: false, error: "Target member not found in organization" };
+        }
+      }
+
       if (trade.type === "SWAP" && trade.offeredShift && trade.targetMemberId) {
-        // Swap shift assignments between requester and target member
+        // Swap shift assignments between requester and target member with tenant isolation
         await db.$transaction([
-          db.staffShift.update({
-            where: { id: trade.shiftId },
+          db.staffShift.updateMany({
+            where: { id: trade.shiftId, organizationId: session.organizationId },
             data: { memberId: trade.targetMemberId },
           }),
-          db.staffShift.update({
-            where: { id: trade.offeredShiftId! },
+          db.staffShift.updateMany({
+            where: { id: trade.offeredShiftId!, organizationId: session.organizationId },
             data: { memberId: trade.requesterMemberId },
           }),
-          db.shiftTradeRequest.update({
-            where: { id: tradeId },
+          db.shiftTradeRequest.updateMany({
+            where: { id: tradeId, organizationId: session.organizationId },
             data: { status: "APPROVED", approvedById: session.memberId || null },
           }),
         ]);
       } else if (trade.targetMemberId) {
-        // Assign requester's shift directly to target member
+        // Assign requester's shift directly to target member with tenant isolation
         await db.$transaction([
-          db.staffShift.update({
-            where: { id: trade.shiftId },
+          db.staffShift.updateMany({
+            where: { id: trade.shiftId, organizationId: session.organizationId },
             data: { memberId: trade.targetMemberId },
           }),
-          db.shiftTradeRequest.update({
-            where: { id: tradeId },
+          db.shiftTradeRequest.updateMany({
+            where: { id: tradeId, organizationId: session.organizationId },
             data: { status: "APPROVED", approvedById: session.memberId || null },
           }),
         ]);
       } else {
-        await db.shiftTradeRequest.update({
-          where: { id: tradeId },
+        await db.shiftTradeRequest.updateMany({
+          where: { id: tradeId, organizationId: session.organizationId },
           data: { status: "APPROVED", approvedById: session.memberId || null },
         });
       }
