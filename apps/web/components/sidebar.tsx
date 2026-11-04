@@ -150,6 +150,7 @@ const sidebarConfig: SidebarSection[] = [
           { title: "Organization", href: "/settings" },
           { title: "Documents", href: "/settings/documents" },
           { title: "Authorized Devices", href: "/settings/devices" },
+          { title: "Loyalty Program", href: "/settings/loyalty", moduleKey: "loyalty" },
         ],
       },
     ],
