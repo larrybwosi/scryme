@@ -1,7 +1,7 @@
 # 0005. Model Context Protocol (MCP) Functionality and Authentication
 
 **Date**: 2026-10-31
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

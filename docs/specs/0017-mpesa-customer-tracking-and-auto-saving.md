@@ -1,6 +1,6 @@
 # 0015 · M-Pesa Customer Tracking and Auto-Saving
 
-**Status**: Proposed
+**Status**: Accepted
 **Date**: 2026-11-03
 **Mode**: FEATURE
 **Build Approach**: End-to-end slice

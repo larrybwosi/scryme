@@ -1,7 +1,7 @@
 # 0004. Enterprise Expense Management and Financial Reporting
 
 **Date**: 2025-02-23
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 
