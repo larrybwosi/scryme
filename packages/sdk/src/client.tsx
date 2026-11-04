@@ -1,5 +1,8 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import axios, { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
+import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
+import { HttpClient } from "./http";
+import { createAxiosCompatibleInstance } from "./fetch-adapter";
+import { autoPaging, autoPagingToArray } from "./pagination";
 import { getScrymeV3API } from "./proxy";
 import type {
   CartControllerGetCartParams,
@@ -680,9 +683,17 @@ export class ScrymeClientSDK<
       finalBaseURL = finalBaseURL.replace(/\/$/, "") + "/api";
     }
 
-    this.axiosInstance = axios.create({
-      baseURL: finalBaseURL,
+    const clientHttp = new HttpClient({
+      baseUrl: finalBaseURL,
+      timeout: (config as any).timeout,
+      retry: (config as any).retry,
+      logger: (config as any).logger,
+      fetch: (config as any).fetch,
+      onRequest: (config as any).onRequest,
+      onResponse: (config as any).onResponse,
+      onError: (config as any).onError,
     });
+    this.axiosInstance = createAxiosCompatibleInstance(clientHttp) as any;
 
     // Determine storage provider
     let storage: StorageProvider;

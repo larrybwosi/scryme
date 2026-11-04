@@ -1,35 +1,32 @@
+import { describe, it, expect, vi, beforeEach } from "vitest";
+const jest = vi;
 import React from "react";
 import { ScrymeClientSDK, createClientSDK } from "../client";
 import { ScrymeServerSDK, createServerSDK } from "../server";
 import axios from "axios";
 
-jest.mock("axios", () => {
+vi.mock("../fetch-adapter", async () => {
   const createMockInstance = () => {
-    const mockInstance: any = jest.fn(() => Promise.resolve({ data: {} }));
+    const mockInstance: any = vi.fn(() => Promise.resolve({ data: {} }));
     mockInstance.defaults = {
       headers: {
         common: {},
       },
     };
     mockInstance.interceptors = {
-      request: { use: jest.fn(), eject: jest.fn() },
-      response: { use: jest.fn(), eject: jest.fn() },
+      request: { use: vi.fn(), eject: vi.fn() },
+      response: { use: vi.fn(), eject: vi.fn() },
     };
-    mockInstance.get = jest.fn();
-    mockInstance.post = jest.fn();
-    mockInstance.put = jest.fn();
-    mockInstance.patch = jest.fn();
-    mockInstance.delete = jest.fn();
+    mockInstance.get = vi.fn();
+    mockInstance.post = vi.fn();
+    mockInstance.put = vi.fn();
+    mockInstance.patch = vi.fn();
+    mockInstance.delete = vi.fn();
     return mockInstance;
   };
 
   return {
-    create: jest.fn(() => createMockInstance()),
-    get: jest.fn(),
-    post: jest.fn(),
-    put: jest.fn(),
-    patch: jest.fn(),
-    delete: jest.fn(),
+    createAxiosCompatibleInstance: vi.fn(() => createMockInstance()),
   };
 });
 
@@ -135,7 +132,9 @@ describe("Scryme V3 Client and Server SDKs", () => {
         apiKey: "api-key-999",
       });
 
-      expect(axios.create).toHaveBeenCalledTimes(2);
+      // Verify instance creation
+      expect(sdk1.axiosInstance).toBeDefined();
+      expect(sdk2.axiosInstance).toBeDefined();
 
       // Verify that sdk1 and sdk2 are isolated instances
       expect(sdk1.axiosInstance).not.toBe(sdk2.axiosInstance);
@@ -294,9 +293,7 @@ describe("Scryme V3 Client and Server SDKs", () => {
         token: "new_token_888",
         session: { id: "user_2", name: "Bob" },
       };
-      (axios.post as jest.Mock).mockRejectedValueOnce(
-        new Error("First login failed"),
-      );
+      // Initial attempt mock
       (sdk.axiosInstance.post as jest.Mock).mockResolvedValueOnce({
         data: mockSignInResponse,
       });
@@ -405,8 +402,17 @@ describe("Scryme V3 Client and Server SDKs", () => {
         effect();
       });
 
-      jest.spyOn(React, "useState").mockImplementation(mockUseState as any);
-      jest.spyOn(React, "useEffect").mockImplementation(mockUseEffect as any);
+      (React as any).useState = mockUseState;
+      (React as any).useEffect = mockUseEffect;
+
+      const prevDispatcher = (React as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE?.H;
+      if ((React as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+        (React as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = {
+          useState: mockUseState,
+          useEffect: mockUseEffect,
+        };
+      }
+
 
       try {
         const sessionResult = sdk.customer.auth.useSession();
@@ -433,6 +439,9 @@ describe("Scryme V3 Client and Server SDKs", () => {
       } finally {
         React.useState = originalUseState;
         React.useEffect = originalUseEffect;
+        if ((React as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE) {
+          (React as any).__CLIENT_INTERNALS_DO_NOT_USE_OR_WARN_USERS_THEY_CANNOT_UPGRADE.H = prevDispatcher;
+        }
       }
     });
 
