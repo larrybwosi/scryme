@@ -113,4 +113,59 @@ class TasksViewModelTest {
 
         coVerify { scheduleRepository.updateStaffTask("scryme-org", "t1", "COMPLETED") }
     }
+
+    @Test
+    fun deleteTask_success_reloadsTasks() = runTest {
+        val task = StaffTask(id = "t1", title = "Inventory Audit", status = "TODO")
+        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { sessionManager.getMemberId() } returns "mem-123"
+        coEvery { scheduleRepository.deleteStaffTask("scryme-org", "t1") } returns Result.success(true)
+        coEvery { scheduleRepository.getStaffTasks("scryme-org", "mem-123", null) } returns Result.success(emptyList())
+
+        var successCalled = false
+        viewModel.deleteTask("t1", onSuccess = { successCalled = true })
+        testScheduler.advanceUntilIdle()
+
+        assertTrue(successCalled)
+        coVerify { scheduleRepository.deleteStaffTask("scryme-org", "t1") }
+    }
+
+    @Test
+    fun updateTask_success_reloadsTasks() = runTest {
+        val updatedTask = StaffTask(id = "t1", title = "Updated Title", status = "IN_PROGRESS", priority = "HIGH")
+        coEvery { sessionManager.getOrgSlug() } returns "scryme-org"
+        coEvery { sessionManager.getMemberId() } returns "mem-123"
+        coEvery {
+            scheduleRepository.updateStaffTask(
+                orgSlug = "scryme-org",
+                taskId = "t1",
+                title = "Updated Title",
+                description = any(),
+                status = "IN_PROGRESS",
+                priority = "HIGH",
+                category = any(),
+                dueDate = any(),
+                dueTime = any(),
+                subtaskGroups = any()
+            )
+        } returns Result.success(updatedTask)
+        coEvery { scheduleRepository.getStaffTasks("scryme-org", "mem-123", null) } returns Result.success(listOf(updatedTask))
+
+        var returnedTask: StaffTask? = null
+        viewModel.updateTask(
+            taskId = "t1",
+            title = "Updated Title",
+            description = null,
+            status = "IN_PROGRESS",
+            priority = "HIGH",
+            category = null,
+            dueDate = null,
+            dueTime = null,
+            onSuccess = { returnedTask = it }
+        )
+        testScheduler.advanceUntilIdle()
+
+        assertNotNull(returnedTask)
+        assertEquals("Updated Title", returnedTask?.title)
+    }
 }

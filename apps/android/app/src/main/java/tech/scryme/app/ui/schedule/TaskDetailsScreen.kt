@@ -12,8 +12,11 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.KeyboardArrowDown
 import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material.icons.filled.MoreVert
@@ -31,9 +34,12 @@ import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.SubtaskGroup
 import tech.scryme.app.domain.model.SubtaskItem
+import tech.scryme.app.ui.components.DatePickerTextField
 import tech.scryme.app.ui.components.ErrorMessageCard
 import tech.scryme.app.ui.components.ListSkeleton
+import tech.scryme.app.ui.components.StyledFormDialog
 import tech.scryme.app.ui.theme.Emerald500
+import tech.scryme.app.ui.theme.Rose500
 
 private val PrimaryPurple = Color(0xFF8B5CF6)
 private val PrimaryIndigo = Color(0xFF6366F1)
@@ -46,6 +52,11 @@ fun TaskDetailsScreen(
     onNavigateBack: () -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsState()
+    var showOptionsMenu by remember { mutableStateOf(false) }
+    var showEditDialog by remember { mutableStateOf(false) }
+    var showDeleteConfirmDialog by remember { mutableStateOf(false) }
+    var showAddGroupDialog by remember { mutableStateOf(false) }
+    var groupToAddItemTo by remember { mutableStateOf<String?>(null) }
 
     Scaffold(
         topBar = {
@@ -60,11 +71,43 @@ fun TaskDetailsScreen(
                     }
                 },
                 actions = {
-                    IconButton(onClick = { }) {
-                        Icon(
-                            imageVector = Icons.Default.MoreVert,
-                            contentDescription = "Options"
-                        )
+                    Box {
+                        IconButton(onClick = { showOptionsMenu = true }) {
+                            Icon(
+                                imageVector = Icons.Default.MoreVert,
+                                contentDescription = "Options"
+                            )
+                        }
+                        DropdownMenu(
+                            expanded = showOptionsMenu,
+                            onDismissRequest = { showOptionsMenu = false }
+                        ) {
+                            DropdownMenuItem(
+                                text = { Text("Edit Task") },
+                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    showEditDialog = true
+                                }
+                            )
+                            DropdownMenuItem(
+                                text = { Text("Add Subtask Group") },
+                                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    showAddGroupDialog = true
+                                }
+                            )
+                            HorizontalDivider()
+                            DropdownMenuItem(
+                                text = { Text("Delete Task", color = Rose500) },
+                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Rose500) },
+                                onClick = {
+                                    showOptionsMenu = false
+                                    showDeleteConfirmDialog = true
+                                }
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -109,11 +152,105 @@ fun TaskDetailsScreen(
                     errorMessage = state.errorMessage,
                     onStatusChange = { newStatus -> viewModel.updateStatus(newStatus) },
                     onToggleSubtask = { groupId, itemId -> viewModel.toggleSubtask(groupId, itemId) },
+                    onAddItem = { groupId -> groupToAddItemTo = groupId },
+                    onAddGroup = { showAddGroupDialog = true },
                     onClearError = { viewModel.clearError() },
                     modifier = Modifier
                         .fillMaxSize()
                         .padding(paddingValues)
                 )
+
+                if (showEditDialog) {
+                    EditTaskDialog(
+                        task = state.task,
+                        onDismiss = { showEditDialog = false },
+                        onSubmit = { title, desc, priority, category, dueDate, dueTime ->
+                            viewModel.updateTaskDetails(
+                                title = title,
+                                description = desc,
+                                priority = priority,
+                                category = category,
+                                dueDate = dueDate,
+                                dueTime = dueTime,
+                                onSuccess = { showEditDialog = false }
+                            )
+                        }
+                    )
+                }
+
+                if (showDeleteConfirmDialog) {
+                    AlertDialog(
+                        onDismissRequest = { showDeleteConfirmDialog = false },
+                        title = { Text("Delete Task") },
+                        text = { Text("Are you sure you want to permanently delete '${state.task.title}'? This action cannot be undone.") },
+                        confirmButton = {
+                            Button(
+                                onClick = {
+                                    showDeleteConfirmDialog = false
+                                    viewModel.deleteTask(onSuccess = onNavigateBack)
+                                },
+                                colors = ButtonDefaults.buttonColors(containerColor = Rose500)
+                            ) {
+                                Text("Delete", color = Color.White)
+                            }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showDeleteConfirmDialog = false }) {
+                                Text("Cancel")
+                            }
+                        }
+                    )
+                }
+
+                if (showAddGroupDialog) {
+                    var groupTitle by remember { mutableStateOf("") }
+                    StyledFormDialog(
+                        title = "Add Subtask Group",
+                        onDismissRequest = { showAddGroupDialog = false },
+                        confirmButtonText = "Add Group",
+                        onConfirm = {
+                            if (groupTitle.isNotBlank()) {
+                                viewModel.addSubtaskGroup(groupTitle.trim())
+                                showAddGroupDialog = false
+                            }
+                        },
+                        confirmEnabled = groupTitle.isNotBlank()
+                    ) {
+                        OutlinedTextField(
+                            value = groupTitle,
+                            onValueChange = { groupTitle = it },
+                            label = { Text("Group Title") },
+                            placeholder = { Text("e.g. Design System, Quality Checks") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
+
+                groupToAddItemTo?.let { groupId ->
+                    var itemTitle by remember { mutableStateOf("") }
+                    StyledFormDialog(
+                        title = "Add Checklist Item",
+                        onDismissRequest = { groupToAddItemTo = null },
+                        confirmButtonText = "Add Item",
+                        onConfirm = {
+                            if (itemTitle.isNotBlank()) {
+                                viewModel.addSubtaskItem(groupId, itemTitle.trim())
+                                groupToAddItemTo = null
+                            }
+                        },
+                        confirmEnabled = itemTitle.isNotBlank()
+                    ) {
+                        OutlinedTextField(
+                            value = itemTitle,
+                            onValueChange = { itemTitle = it },
+                            label = { Text("Item Title") },
+                            placeholder = { Text("e.g. Check temperature, Update logs") },
+                            singleLine = true,
+                            modifier = Modifier.fillMaxWidth()
+                        )
+                    }
+                }
             }
         }
     }
@@ -126,6 +263,8 @@ fun TaskDetailsContent(
     errorMessage: String?,
     onStatusChange: (String) -> Unit,
     onToggleSubtask: (String, String) -> Unit,
+    onAddItem: (String) -> Unit,
+    onAddGroup: () -> Unit,
     onClearError: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -321,14 +460,25 @@ fun TaskDetailsContent(
                 color = TextMutedColor
             )
 
-            val totalSubtasks = task.subtaskGroups.sumOf { it.items.size }
-            val completedSubtasks = task.subtaskGroups.sumOf { g -> g.items.count { it.isCompleted } }
-            if (totalSubtasks > 0) {
-                Text(
-                    text = "$completedSubtasks of $totalSubtasks completed",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = PrimaryIndigo
-                )
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                val totalSubtasks = task.subtaskGroups.sumOf { it.items.size }
+                val completedSubtasks = task.subtaskGroups.sumOf { g -> g.items.count { it.isCompleted } }
+                if (totalSubtasks > 0) {
+                    Text(
+                        text = "$completedSubtasks of $totalSubtasks completed",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
+                        color = PrimaryIndigo
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                }
+                TextButton(
+                    onClick = onAddGroup,
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text("Add Group", style = MaterialTheme.typography.labelSmall)
+                }
             }
         }
 
@@ -341,25 +491,117 @@ fun TaskDetailsContent(
                 border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
                 modifier = Modifier.fillMaxWidth()
             ) {
-                Text(
-                    text = "No breakdown subtasks created.",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = TextMutedColor,
-                    modifier = Modifier.padding(14.dp)
-                )
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "No breakdown subtasks created.",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = TextMutedColor
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    OutlinedButton(onClick = onAddGroup) {
+                        Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(6.dp))
+                        Text("Add Subtask Group")
+                    }
+                }
             }
         } else {
             Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 task.subtaskGroups.forEach { group ->
                     SubtaskGroupCard(
                         group = group,
-                        onToggleItem = { itemId -> onToggleSubtask(group.id, itemId) }
+                        onToggleItem = { itemId -> onToggleSubtask(group.id, itemId) },
+                        onAddItem = { onAddItem(group.id) }
                     )
                 }
             }
         }
 
         Spacer(modifier = Modifier.height(40.dp))
+    }
+}
+
+@Composable
+fun EditTaskDialog(
+    task: StaffTask,
+    onDismiss: () -> Unit,
+    onSubmit: (title: String, description: String, priority: String, category: String, dueDate: String, dueTime: String) -> Unit
+) {
+    var title by remember { mutableStateOf(task.title) }
+    var description by remember { mutableStateOf(task.description ?: "") }
+    var priority by remember { mutableStateOf(task.priority ?: "MEDIUM") }
+    var category by remember { mutableStateOf(task.category ?: "UI/UX Design") }
+    var dueDate by remember { mutableStateOf(task.dueDate ?: "") }
+    var dueTime by remember { mutableStateOf(task.dueTime ?: "") }
+
+    StyledFormDialog(
+        title = "Edit Task Details",
+        onDismissRequest = onDismiss,
+        confirmButtonText = "Save Changes",
+        onConfirm = {
+            if (title.isNotBlank()) {
+                onSubmit(title.trim(), description.trim(), priority, category.trim(), dueDate, dueTime.trim())
+            }
+        },
+        confirmEnabled = title.isNotBlank()
+    ) {
+        OutlinedTextField(
+            value = title,
+            onValueChange = { title = it },
+            label = { Text("Task Title *") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = description,
+            onValueChange = { description = it },
+            label = { Text("Description") },
+            minLines = 3,
+            maxLines = 5,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = category,
+            onValueChange = { category = it },
+            label = { Text("Category") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp)
+        ) {
+            listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
+                val selected = priority.equals(p, ignoreCase = true)
+                FilterChip(
+                    selected = selected,
+                    onClick = { priority = p },
+                    label = { Text(p) },
+                    modifier = Modifier.weight(1f)
+                )
+            }
+        }
+
+        DatePickerTextField(
+            value = dueDate,
+            onValueChange = { dueDate = it },
+            label = "Due Date",
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        OutlinedTextField(
+            value = dueTime,
+            onValueChange = { dueTime = it },
+            label = { Text("Due Time (e.g. 10:00 AM)") },
+            singleLine = true,
+            modifier = Modifier.fillMaxWidth()
+        )
     }
 }
 
@@ -419,7 +661,8 @@ fun StatusSegmentedControl(
 @Composable
 fun SubtaskGroupCard(
     group: SubtaskGroup,
-    onToggleItem: (String) -> Unit
+    onToggleItem: (String) -> Unit,
+    onAddItem: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
 
@@ -447,12 +690,25 @@ fun SubtaskGroupCard(
                     color = MaterialTheme.colorScheme.onSurface
                 )
 
-                Icon(
-                    imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                    contentDescription = null,
-                    tint = TextMutedColor,
-                    modifier = Modifier.size(18.dp)
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    IconButton(
+                        onClick = onAddItem,
+                        modifier = Modifier.size(28.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = "Add Item",
+                            tint = PrimaryIndigo,
+                            modifier = Modifier.size(18.dp)
+                        )
+                    }
+                    Icon(
+                        imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
+                        contentDescription = null,
+                        tint = TextMutedColor,
+                        modifier = Modifier.size(18.dp)
+                    )
+                }
             }
 
             AnimatedVisibility(visible = isExpanded) {
@@ -465,11 +721,20 @@ fun SubtaskGroupCard(
                     HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
                     Spacer(modifier = Modifier.height(2.dp))
 
-                    group.items.forEach { item ->
-                        SubtaskChecklistItem(
-                            item = item,
-                            onToggle = { onToggleItem(item.id) }
+                    if (group.items.isEmpty()) {
+                        Text(
+                            text = "No items in this group. Tap + to add one.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = TextMutedColor,
+                            modifier = Modifier.padding(vertical = 4.dp)
                         )
+                    } else {
+                        group.items.forEach { item ->
+                            SubtaskChecklistItem(
+                                item = item,
+                                onToggle = { onToggleItem(item.id) }
+                            )
+                        }
                     }
                 }
             }

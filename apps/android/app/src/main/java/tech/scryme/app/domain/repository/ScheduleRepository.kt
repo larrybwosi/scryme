@@ -26,6 +26,11 @@ interface ScheduleRepository {
         category: String? = null,
         subtaskGroups: List<SubtaskGroup> = emptyList()
     ): Result<StaffTask>
+    suspend fun deleteStaffTask(
+        orgSlug: String,
+        taskId: String
+    ): Result<Boolean>
+
     suspend fun updateStaffTask(
         orgSlug: String,
         taskId: String,

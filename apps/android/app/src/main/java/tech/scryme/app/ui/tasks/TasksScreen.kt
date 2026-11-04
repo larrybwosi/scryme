@@ -16,6 +16,8 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material.icons.outlined.Star
@@ -140,7 +142,8 @@ private fun levelColor(level: String?): Color = when (level?.uppercase()) {
 
 @Composable
 fun TasksScreen(
-    viewModel: TasksViewModel
+    viewModel: TasksViewModel,
+    onNavigateToTaskDetails: ((String) -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -149,6 +152,7 @@ fun TasksScreen(
     }
 
     var showCreateTaskDialog by remember { mutableStateOf(false) }
+    var taskToDelete by remember { mutableStateOf<StaffTask?>(null) }
     var taskToAssess by remember { mutableStateOf<StaffTask?>(null) }
     var searchQuery by remember { mutableStateOf("") }
 
@@ -295,11 +299,17 @@ fun TasksScreen(
                             items(visibleTasks, key = { it.id }) { task ->
                                 TaskItemCard(
                                     task = task,
+                                    onClick = {
+                                        onNavigateToTaskDetails?.invoke(task.id)
+                                    },
                                     onToggleStatus = { newStatus ->
                                         viewModel.updateTaskStatus(task, newStatus)
                                     },
                                     onAssessTask = {
                                         taskToAssess = task
+                                    },
+                                    onDeleteTask = {
+                                        taskToDelete = task
                                     }
                                 )
                             }
@@ -324,6 +334,33 @@ fun TasksScreen(
                             showCreateTaskDialog = false
                         }
                     )
+                }
+            )
+        }
+
+
+        taskToDelete?.let { task ->
+            AlertDialog(
+                onDismissRequest = { taskToDelete = null },
+                title = { Text("Delete Task") },
+                text = { Text("Are you sure you want to delete '${task.title}'?") },
+                confirmButton = {
+                    Button(
+                        onClick = {
+                            viewModel.deleteTask(
+                                taskId = task.id,
+                                onSuccess = { taskToDelete = null }
+                            )
+                        },
+                        colors = ButtonDefaults.buttonColors(containerColor = Rose500)
+                    ) {
+                        Text("Delete", color = Color.White)
+                    }
+                },
+                dismissButton = {
+                    TextButton(onClick = { taskToDelete = null }) {
+                        Text("Cancel")
+                    }
                 }
             )
         }
@@ -358,8 +395,10 @@ fun TasksScreen(
 @Composable
 fun TaskItemCard(
     task: StaffTask,
+    onClick: (() -> Unit)? = null,
     onToggleStatus: (String) -> Unit,
-    onAssessTask: () -> Unit
+    onAssessTask: () -> Unit,
+    onDeleteTask: (() -> Unit)? = null
 ) {
     val isCompleted = task.status == "COMPLETED"
     val priorityColor = levelColor(task.priority)
@@ -377,7 +416,9 @@ fun TaskItemCard(
     val priority = task.priority
     val dueDate = task.dueDate
 
-    OutlinedSurface {
+    OutlinedSurface(
+        modifier = if (onClick != null) Modifier.clickable { onClick() } else Modifier
+    ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
@@ -552,15 +593,31 @@ fun TaskItemCard(
 
                     Spacer(modifier = Modifier.width(8.dp))
 
-                    OutlinedButton(
-                        onClick = onAssessTask,
-                        shape = ControlShape,
-                        contentPadding = CompactButtonPadding
-                    ) {
-                        Text(
-                            text = if (assessment != null) "Edit Assessment" else "Assess",
-                            style = MaterialTheme.typography.labelMedium
-                        )
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        if (onDeleteTask != null) {
+                            IconButton(
+                                onClick = onDeleteTask,
+                                modifier = Modifier.size(32.dp)
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Delete,
+                                    contentDescription = "Delete task",
+                                    tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
+                                    modifier = Modifier.size(16.dp)
+                                )
+                            }
+                            Spacer(modifier = Modifier.width(4.dp))
+                        }
+                        OutlinedButton(
+                            onClick = onAssessTask,
+                            shape = ControlShape,
+                            contentPadding = CompactButtonPadding
+                        ) {
+                            Text(
+                                text = if (assessment != null) "Edit Assessment" else "Assess",
+                                style = MaterialTheme.typography.labelMedium
+                            )
+                        }
                     }
                 }
             }

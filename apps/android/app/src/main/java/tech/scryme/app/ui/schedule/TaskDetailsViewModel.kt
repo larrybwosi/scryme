@@ -14,14 +14,19 @@ import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.SubtaskGroup
 import tech.scryme.app.domain.model.SubtaskItem
+import tech.scryme.app.domain.model.UserProfile
+import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
+import tech.scryme.app.notifications.NotificationHelper
 import javax.inject.Inject
 
 sealed interface TaskDetailsUiState {
     object Loading : TaskDetailsUiState
     data class Success(
         val task: StaffTask,
+        val members: List<UserProfile> = emptyList(),
         val isSaving: Boolean = false,
+        val isDeleted: Boolean = false,
         val errorMessage: String? = null
     ) : TaskDetailsUiState
     data class Error(val message: String) : TaskDetailsUiState
@@ -30,6 +35,7 @@ sealed interface TaskDetailsUiState {
 @HiltViewModel
 class TaskDetailsViewModel @Inject constructor(
     private val scheduleRepository: ScheduleRepository,
+    private val profileRepository: ProfileRepository,
     private val sessionManager: SessionManager,
     savedStateHandle: SavedStateHandle,
     @ApplicationContext private val context: Context
@@ -54,9 +60,12 @@ class TaskDetailsViewModel @Inject constructor(
             }
 
             val result = scheduleRepository.getStaffTaskById(orgSlug, taskId)
+            val membersRes = profileRepository.getMembers(orgSlug)
+            val members = membersRes.getOrDefault(emptyList())
+
             result.fold(
                 onSuccess = { task ->
-                    _uiState.value = TaskDetailsUiState.Success(task = task)
+                    _uiState.value = TaskDetailsUiState.Success(task = task, members = members)
                 },
                 onFailure = { error ->
                     _uiState.value = TaskDetailsUiState.Error(error.message ?: "Failed to load task details")
@@ -88,7 +97,12 @@ class TaskDetailsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { updatedTask ->
-                    _uiState.value = TaskDetailsUiState.Success(
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Status Updated",
+                        "Task '${updatedTask.title}' set to $newStatus."
+                    )
+                    _uiState.value = currentState.copy(
                         task = updatedTask,
                         isSaving = false
                     )
@@ -97,6 +111,58 @@ class TaskDetailsViewModel @Inject constructor(
                     _uiState.value = currentState.copy(
                         isSaving = false,
                         errorMessage = error.message ?: "Failed to update status"
+                    )
+                }
+            )
+        }
+    }
+
+    fun updateTaskDetails(
+        title: String,
+        description: String?,
+        priority: String?,
+        category: String?,
+        dueDate: String?,
+        dueTime: String?,
+        onSuccess: () -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? TaskDetailsUiState.Success ?: return@launch
+            val task = currentState.task
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            _uiState.value = currentState.copy(isSaving = true)
+
+            val result = scheduleRepository.updateStaffTask(
+                orgSlug = orgSlug,
+                taskId = task.id,
+                title = title,
+                description = description,
+                priority = priority,
+                status = task.status,
+                dueDate = dueDate,
+                dueTime = dueTime,
+                category = category,
+                subtaskGroups = task.subtaskGroups
+            )
+
+            result.fold(
+                onSuccess = { updatedTask ->
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Details Updated",
+                        "Task '${updatedTask.title}' has been modified."
+                    )
+                    _uiState.value = currentState.copy(
+                        task = updatedTask,
+                        isSaving = false
+                    )
+                    onSuccess()
+                },
+                onFailure = { error ->
+                    _uiState.value = currentState.copy(
+                        isSaving = false,
+                        errorMessage = error.message ?: "Failed to update task details"
                     )
                 }
             )
@@ -142,11 +208,109 @@ class TaskDetailsViewModel @Inject constructor(
 
             result.fold(
                 onSuccess = { savedTask ->
-                    _uiState.value = TaskDetailsUiState.Success(task = savedTask)
+                    _uiState.value = currentState.copy(task = savedTask)
                 },
                 onFailure = { error ->
                     _uiState.value = currentState.copy(
                         errorMessage = error.message ?: "Failed to update subtask"
+                    )
+                }
+            )
+        }
+    }
+
+    fun addSubtaskGroup(title: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? TaskDetailsUiState.Success ?: return@launch
+            val task = currentState.task
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            val newGroup = SubtaskGroup(
+                id = "grp_${System.currentTimeMillis()}",
+                title = title.ifBlank { "New Breakdown Group" },
+                items = emptyList()
+            )
+            val updatedGroups = task.subtaskGroups + newGroup
+            _uiState.value = currentState.copy(task = task.copy(subtaskGroups = updatedGroups))
+
+            val result = scheduleRepository.updateStaffTask(
+                orgSlug = orgSlug,
+                taskId = task.id,
+                title = task.title,
+                description = task.description,
+                priority = task.priority,
+                status = task.status,
+                dueDate = task.dueDate,
+                dueTime = task.dueTime,
+                category = task.category,
+                subtaskGroups = updatedGroups
+            )
+            result.onSuccess {
+                _uiState.value = currentState.copy(task = it)
+            }
+        }
+    }
+
+    fun addSubtaskItem(groupId: String, title: String) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? TaskDetailsUiState.Success ?: return@launch
+            val task = currentState.task
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            val newItem = SubtaskItem(
+                id = "item_${System.currentTimeMillis()}",
+                title = title.ifBlank { "Checklist item" },
+                isCompleted = false
+            )
+            val updatedGroups = task.subtaskGroups.map { g ->
+                if (g.id == groupId) {
+                    g.copy(items = g.items + newItem)
+                } else {
+                    g
+                }
+            }
+            _uiState.value = currentState.copy(task = task.copy(subtaskGroups = updatedGroups))
+
+            val result = scheduleRepository.updateStaffTask(
+                orgSlug = orgSlug,
+                taskId = task.id,
+                title = task.title,
+                description = task.description,
+                priority = task.priority,
+                status = task.status,
+                dueDate = task.dueDate,
+                dueTime = task.dueTime,
+                category = task.category,
+                subtaskGroups = updatedGroups
+            )
+            result.onSuccess {
+                _uiState.value = currentState.copy(task = it)
+            }
+        }
+    }
+
+    fun deleteTask(onSuccess: () -> Unit = {}) {
+        viewModelScope.launch {
+            val currentState = _uiState.value as? TaskDetailsUiState.Success ?: return@launch
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            _uiState.value = currentState.copy(isSaving = true)
+
+            val result = scheduleRepository.deleteStaffTask(orgSlug, taskId)
+            result.fold(
+                onSuccess = {
+                    NotificationHelper.showTaskNotification(
+                        context,
+                        "Task Deleted",
+                        "Task has been removed successfully."
+                    )
+                    _uiState.value = currentState.copy(isSaving = false, isDeleted = true)
+                    onSuccess()
+                },
+                onFailure = { error ->
+                    _uiState.value = currentState.copy(
+                        isSaving = false,
+                        errorMessage = error.message ?: "Failed to delete task"
                     )
                 }
             )

@@ -61,6 +61,11 @@ interface ScheduleApiService {
         @Body dto: UpdateStaffTaskDto
     ): Response<V3ApiResponse<StaffTaskDto>>
 
+    @DELETE("android/shifts/tasks/{id}")
+    suspend fun deleteStaffTask(
+        @Path("id") id: String
+    ): Response<V3ApiResponse<Map<String, Any>>>
+
     @POST("android/shifts/tasks/{taskId}/assessment")
     suspend fun saveTaskAssessment(
         @Path("taskId") taskId: String,

@@ -85,7 +85,12 @@ fun AppNavGraph(
         }
         composable(Screen.Tasks.route) {
             val viewModel: TasksViewModel = hiltViewModel()
-            TasksScreen(viewModel = viewModel)
+            TasksScreen(
+                viewModel = viewModel,
+                onNavigateToTaskDetails = { taskId ->
+                    navController.navigate(Screen.TaskDetails.createRoute(taskId))
+                }
+            )
         }
         composable(Screen.Schedule.route) {
             val viewModel: ScheduleViewModel = hiltViewModel()

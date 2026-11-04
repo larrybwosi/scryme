@@ -3,6 +3,7 @@ import {
   Get,
   Post,
   Patch,
+  Delete,
   Body,
   Param,
   Query,
@@ -143,6 +144,13 @@ export class AndroidShiftsController {
     @Body() dto: AndroidUpdateTaskDto,
   ) {
     return this.androidShiftsUseCase.updateStaffTask(req.v3Context, id, dto);
+  }
+
+  @Delete("tasks/:id")
+  @ApiOperation({ summary: "Delete staff task on Android" })
+  @ApiResponse({ status: 200, description: "Staff task deleted" })
+  async deleteStaffTask(@Req() req: any, @Param("id") id: string) {
+    return this.androidShiftsUseCase.deleteStaffTask(req.v3Context, id);
   }
 
   @Post("tasks/:taskId/assessment")

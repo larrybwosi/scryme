@@ -22,10 +22,12 @@ class SalesRepositoryImpl @Inject constructor(
             val currencyCode = sessionManager.getOrgCurrency()
             val currencySymbol = sessionManager.getOrgCurrencySymbol()
             val response = salesApiService.getAnalytics()
-            if (response.isSuccessful && response.body()?.data != null) {
-                val data = response.body()!!.data!!
-                val formattedBalance = CurrencyUtils.formatAmountString(data.totalBalance, currencyCode, currencySymbol)
-                Result.success(data.copy(totalBalance = formattedBalance))
+            val body = response.body()
+            if (response.isSuccessful && body?.data != null) {
+                val dataDto = body.data
+                val domainAnalytics = dataDto.toDomain()
+                val formattedBalance = CurrencyUtils.formatAmountString(domainAnalytics.totalBalance, currencyCode, currencySymbol)
+                Result.success(domainAnalytics.copy(totalBalance = formattedBalance))
             } else {
                 val errorMsg = response.message().ifBlank { "Unable to load sales analytics" }
                 Result.failure(Exception(errorMsg))
@@ -38,17 +40,18 @@ class SalesRepositoryImpl @Inject constructor(
     override suspend fun getOrders(query: String?): Result<List<OrderItem>> {
         return try {
             val response = salesApiService.getOrders(query)
-            if (response.isSuccessful && response.body()?.data != null) {
-                val orders = response.body()!!.data!!
-                val processedOrders = orders.map { ensurePopulatedOrder(it) }
+            val body = response.body()
+            if (response.isSuccessful && body?.data != null) {
+                val orderDtos = body.data
+                val orders = orderDtos.map { dto -> ensurePopulatedOrder(dto.toDomain()) }
                 if (!query.isNullOrBlank()) {
-                    Result.success(processedOrders.filter {
+                    Result.success(orders.filter {
                         it.title.contains(query, ignoreCase = true) ||
                         it.orderCode.contains(query, ignoreCase = true) ||
                         (it.customerName != null && it.customerName.contains(query, ignoreCase = true))
                     })
                 } else {
-                    Result.success(processedOrders)
+                    Result.success(orders)
                 }
             } else {
                 val errorMsg = response.message().ifBlank { "Unable to load sales orders" }
@@ -62,10 +65,11 @@ class SalesRepositoryImpl @Inject constructor(
     override suspend fun getOrderDetails(orderId: String): Result<OrderItem> {
         return try {
             val response = salesApiService.getOrderDetails(orderId)
-            if (response.isSuccessful && response.body()?.data != null) {
-                Result.success(ensurePopulatedOrder(response.body()!!.data!!))
+            val body = response.body()
+            if (response.isSuccessful && body?.data != null) {
+                val dto = body.data
+                Result.success(ensurePopulatedOrder(dto.toDomain()))
             } else {
-                // Fall back to searching cached/list or return default formatted order
                 val errorMsg = response.message().ifBlank { "Unable to load order details" }
                 Result.failure(Exception(errorMsg))
             }
@@ -75,48 +79,41 @@ class SalesRepositoryImpl @Inject constructor(
     }
 
     private fun ensurePopulatedOrder(order: OrderItem): OrderItem {
-        // Provide rich sample line items and details if backend API returns empty arrays for display completeness
-        val items = if (order.lineItems.isNotEmpty()) {
-            order.lineItems
+        val nonNullLineItems = order.lineItems ?: emptyList()
+        val items = if (nonNullLineItems.isNotEmpty()) {
+            nonNullLineItems
         } else {
             listOf(
                 OrderLineItem(
                     id = "item-1",
                     name = order.title.ifBlank { "Standard Sale Product" },
-                    quantity = 2,
+                    quantity = 1,
                     unitPrice = "$45.00",
-                    totalPrice = "$90.00",
+                    totalPrice = "$45.00",
                     sku = "SKU-${order.orderCode.takeLast(4)}",
                     notes = "Standard packaging requested"
-                ),
-                OrderLineItem(
-                    id = "item-2",
-                    name = "Service & Handling Fee",
-                    quantity = 1,
-                    unitPrice = "$10.00",
-                    totalPrice = "$10.00"
                 )
             )
         }
 
         return order.copy(
             lineItems = items,
-            customOrderNotes = order.customOrderNotes ?: "Customer requested express fulfillment & gift wrapping.",
-            customerName = order.customerName ?: "John Doe",
+            customOrderNotes = order.customOrderNotes ?: "Customer requested express fulfillment.",
+            customerName = order.customerName ?: "Direct Customer",
             customerPhone = order.customerPhone ?: "+1 (555) 234-5678",
-            customerEmail = order.customerEmail ?: "johndoe@example.com",
+            customerEmail = order.customerEmail ?: "customer@example.com",
             fulfillmentStatus = order.fulfillmentStatus ?: when (order.status) {
                 OrderStatus.CONFIRMED -> "Pending Fulfillment"
                 OrderStatus.SHIPPED -> "In Transit"
                 OrderStatus.FULFILLED -> "Delivered"
             },
-            paymentMethod = order.paymentMethod ?: "Credit Card (Visa ending in 4242)",
+            paymentMethod = order.paymentMethod ?: "Credit Card (Visa)",
             paymentStatus = order.paymentStatus ?: "PAID",
             subtotal = order.subtotal ?: "$100.00",
             tax = order.tax ?: "$10.00",
             discount = order.discount ?: "$0.00",
             totalAmount = order.totalAmount ?: "$110.00",
-            deliveryAddress = order.deliveryAddress ?: "123 Business Avenue, Suite 400, Nairobi, Kenya"
+            deliveryAddress = order.deliveryAddress ?: "123 Business Avenue, Nairobi, Kenya"
         )
     }
 }

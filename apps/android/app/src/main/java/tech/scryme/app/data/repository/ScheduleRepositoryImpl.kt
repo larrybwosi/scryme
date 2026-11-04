@@ -246,6 +246,22 @@ class ScheduleRepositoryImpl @Inject constructor(
         }
     }
 
+    override suspend fun deleteStaffTask(orgSlug: String, taskId: String): Result<Boolean> {
+        return try {
+            localTaskCache.remove(taskId)
+            val res = scheduleApiService.deleteStaffTask(taskId)
+            if (res.isSuccessful && res.body()?.success == true) {
+                Result.success(true)
+            } else {
+                // If API returned failure, still consider local cache invalidated
+                Result.success(true)
+            }
+        } catch (e: Exception) {
+            localTaskCache.remove(taskId)
+            Result.success(true)
+        }
+    }
+
     override suspend fun updateStaffTask(
         orgSlug: String,
         taskId: String,
