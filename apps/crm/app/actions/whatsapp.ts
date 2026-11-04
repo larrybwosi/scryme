@@ -9,20 +9,46 @@ export interface WhatsappConfigData {
   phoneNumberId: string;
   accessToken: string;
   wabaId?: string;
+  appSecret?: string;
+  verifyToken?: string;
   displayPhoneNumber?: string;
+  enableWelcomeReply?: boolean;
+  welcomeMessage?: string;
+  enableOutOfOfficeReply?: boolean;
+  outOfOfficeMessage?: string;
 }
 
 export interface SendWhatsappMessageInput {
   recipientPhone: string;
-  text: string;
+  text?: string;
   templateName?: string;
   templateLanguage?: string;
   components?: any[];
+  mediaType?: "image" | "document" | "audio";
+  mediaUrl?: string;
+  mediaCaption?: string;
+  mediaFilename?: string;
+  interactive?: any;
   crmRecordId?: string;
 }
 
+export interface SendPaymentReceiptInput {
+  recipientPhone: string;
+  transactionId: string;
+  amount: number;
+  currency?: string;
+  receiptUrl?: string;
+}
+
+export interface SendDeliveryStatusInput {
+  recipientPhone: string;
+  trackingNumber: string;
+  status: string;
+  estimatedDate?: string;
+}
+
 /**
- * Get WhatsApp integration configuration for current organization.
+ * Fetch WhatsApp Integration Configuration & Webhook Setup Details.
  */
 export async function getWhatsappConfig() {
   const auth = await getServerAuth();
@@ -37,30 +63,43 @@ export async function getWhatsappConfig() {
       },
     });
 
+    const credentials = (integration?.credentials as unknown as WhatsappConfigData) || null;
+    const settings = (integration?.settings as any) || {};
+
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || process.env.API_BASE_URL || "https://api.scryme.tech";
+    const webhookCallbackUrl = `${baseUrl.replace(/\/+$/, "")}/webhooks/whatsapp`;
+    const defaultVerifyToken = credentials?.verifyToken || `scryme_wa_${organizationId.slice(-8)}`;
+
     return {
       success: true,
       data: {
         isConnected: !!integration?.isActive,
-        credentials: (integration?.credentials as unknown as WhatsappConfigData) || null,
+        credentials: credentials
+          ? {
+              ...credentials,
+              verifyToken: credentials.verifyToken || defaultVerifyToken,
+            }
+          : null,
+        settings: {
+          enableWelcomeReply: settings.enableWelcomeReply ?? false,
+          welcomeMessage: settings.welcomeMessage ?? "Hello! Thank you for contacting us. We will assist you shortly.",
+          enableOutOfOfficeReply: settings.enableOutOfOfficeReply ?? false,
+          outOfOfficeMessage: settings.outOfOfficeMessage ?? "Thank you for reaching out. We are currently out of the office and will respond soon.",
+        },
+        webhookCallbackUrl,
+        verifyToken: credentials?.verifyToken || defaultVerifyToken,
         syncStatus: integration?.syncStatus || "DISCONNECTED",
+        lastSyncAt: integration?.lastSyncAt || null,
       },
     };
   } catch (error: any) {
     console.error("Error fetching WhatsApp config:", error);
-    return {
-      success: false,
-      error: error?.message || "Failed to fetch WhatsApp configuration",
-      data: {
-        isConnected: false,
-        credentials: null,
-        syncStatus: "DISCONNECTED",
-      },
-    };
+    return { success: false, error: error?.message || "Failed to fetch WhatsApp configuration" };
   }
 }
 
 /**
- * Save Meta WhatsApp Business Cloud API credentials.
+ * Save WhatsApp Cloud API Credentials, Secret, and Autoreply Settings.
  */
 export async function saveWhatsappConfig(data: WhatsappConfigData) {
   const auth = await getServerAuth();
@@ -75,14 +114,31 @@ export async function saveWhatsappConfig(data: WhatsappConfigData) {
     const definition = await db.integrationDefinition.upsert({
       where: { slug: "whatsapp" },
       create: {
-        name: "WhatsApp",
+        name: "WhatsApp Cloud API",
         slug: "whatsapp",
         category: "COMMUNICATION",
+        description: "Official Meta WhatsApp Business Cloud API integration",
         authType: "API_KEY",
-        description: "Meta WhatsApp Business Cloud API Integration",
+        isActive: true,
       },
       update: {},
     });
+
+    const credentials = {
+      phoneNumberId: data.phoneNumberId,
+      accessToken: data.accessToken,
+      wabaId: data.wabaId || undefined,
+      appSecret: data.appSecret || undefined,
+      verifyToken: data.verifyToken || `scryme_wa_${organizationId.slice(-8)}`,
+      displayPhoneNumber: data.displayPhoneNumber || undefined,
+    };
+
+    const settings = {
+      enableWelcomeReply: data.enableWelcomeReply ?? false,
+      welcomeMessage: data.welcomeMessage ?? "Hello! Thank you for contacting us. We will assist you shortly.",
+      enableOutOfOfficeReply: data.enableOutOfOfficeReply ?? false,
+      outOfOfficeMessage: data.outOfOfficeMessage ?? "Thank you for reaching out. We are currently out of the office and will respond soon.",
+    };
 
     await db.organizationIntegration.upsert({
       where: {
@@ -95,13 +151,15 @@ export async function saveWhatsappConfig(data: WhatsappConfigData) {
         organizationId,
         integrationDefinitionId: definition.id,
         isActive: true,
-        credentials: JSON.parse(JSON.stringify(data)),
+        credentials: JSON.parse(JSON.stringify(credentials)),
+        settings: JSON.parse(JSON.stringify(settings)),
         syncStatus: "CONNECTED",
         lastSyncAt: new Date(),
       },
       update: {
         isActive: true,
-        credentials: JSON.parse(JSON.stringify(data)),
+        credentials: JSON.parse(JSON.stringify(credentials)),
+        settings: JSON.parse(JSON.stringify(settings)),
         syncStatus: "CONNECTED",
         lastSyncAt: new Date(),
       },
@@ -178,7 +236,7 @@ export async function getThreadMessages(threadId: string) {
 }
 
 /**
- * Send WhatsApp text or template message via Meta Cloud API and record message in DB.
+ * Send WhatsApp text, template, media, or interactive message via Meta Cloud API and record message in DB.
  */
 export async function sendWhatsappMessage(data: SendWhatsappMessageInput) {
   const auth = await getServerAuth();
@@ -186,8 +244,8 @@ export async function sendWhatsappMessage(data: SendWhatsappMessageInput) {
   const organizationId = auth.organizationId;
   const memberId = auth.memberId;
 
-  if (!data.recipientPhone || (!data.text && !data.templateName)) {
-    return { success: false, error: "Recipient phone and message text or template are required." };
+  if (!data.recipientPhone || (!data.text && !data.templateName && !data.mediaUrl && !data.interactive)) {
+    return { success: false, error: "Recipient phone and message text, template, media, or interactive content are required." };
   }
 
   const cleanPhone = data.recipientPhone.replace(/[^\d]/g, "");
@@ -217,6 +275,16 @@ export async function sendWhatsappMessage(data: SendWhatsappMessageInput) {
             name: data.templateName,
             language: { code: data.templateLanguage || "en_US" },
             ...(data.components ? { components: data.components } : {}),
+          };
+        } else if (data.interactive) {
+          payload.type = "interactive";
+          payload.interactive = data.interactive;
+        } else if (data.mediaType && data.mediaUrl) {
+          payload.type = data.mediaType;
+          payload[data.mediaType] = {
+            link: data.mediaUrl,
+            ...(data.mediaCaption ? { caption: data.mediaCaption } : {}),
+            ...(data.mediaFilename ? { filename: data.mediaFilename } : {}),
           };
         } else {
           payload.type = "text";
@@ -274,18 +342,26 @@ export async function sendWhatsappMessage(data: SendWhatsappMessageInput) {
       },
     });
 
+    const displayContent =
+      data.text ||
+      (data.mediaCaption ? `[${data.mediaType?.toUpperCase()}] ${data.mediaCaption}` : `[${data.mediaType?.toUpperCase() || (data.templateName ? "TEMPLATE" : "MESSAGE")}]`);
+
     const message = await db.communicationMessage.create({
       data: {
         threadId: thread.id,
         organizationId,
         direction: "OUTBOUND",
-        content: data.text,
+        content: displayContent,
         status: "SENT",
         externalId: externalId || undefined,
         senderMemberId: memberId || undefined,
         metadata: {
           templateName: data.templateName,
           components: data.components,
+          mediaType: data.mediaType,
+          mediaUrl: data.mediaUrl,
+          mediaFilename: data.mediaFilename,
+          interactive: data.interactive,
         },
       },
     });
@@ -296,6 +372,58 @@ export async function sendWhatsappMessage(data: SendWhatsappMessageInput) {
     console.error("Error sending WhatsApp message:", error);
     return { success: false, error: error?.message || "Failed to send WhatsApp message" };
   }
+}
+
+/**
+ * Send Payment Receipt Notification via WhatsApp.
+ */
+export async function sendPaymentReceiptNotificationAction(data: SendPaymentReceiptInput) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+
+  const receiptSuffix = data.receiptUrl ? ` View your receipt here: ${data.receiptUrl}` : "";
+  const text = `Payment Confirmed! We received your payment of ${data.currency || "USD"} ${data.amount} (Ref: ${data.transactionId}). Thank you!${receiptSuffix}`;
+
+  return sendWhatsappMessage({
+    recipientPhone: data.recipientPhone,
+    text,
+    templateName: "payment_receipt",
+    components: [
+      {
+        type: "body",
+        parameters: [
+          { type: "text", text: data.transactionId },
+          { type: "text", text: `${data.currency || "USD"} ${data.amount}` },
+        ],
+      },
+    ],
+  });
+}
+
+/**
+ * Send Delivery / Fulfillment Status Notification via WhatsApp.
+ */
+export async function sendDeliveryStatusNotificationAction(data: SendDeliveryStatusInput) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+
+  const dateSuffix = data.estimatedDate ? ` Estimated delivery: ${data.estimatedDate}.` : "";
+  const text = `Delivery Update: Package #${data.trackingNumber} status is now: ${data.status}.${dateSuffix}`;
+
+  return sendWhatsappMessage({
+    recipientPhone: data.recipientPhone,
+    text,
+    templateName: "delivery_status_update",
+    components: [
+      {
+        type: "body",
+        parameters: [
+          { type: "text", text: data.trackingNumber },
+          { type: "text", text: data.status },
+        ],
+      },
+    ],
+  });
 }
 
 /**
@@ -341,11 +469,6 @@ export async function syncWhatsappTemplates() {
     const data = await metaRes.json();
     const templates = data.data || [];
 
-    /**
-     * ⚡ Bolt Optimization: Parallelize WhatsApp template upserts using Promise.all.
-     * Replaces sequential for...of loop with concurrent execution, collapsing database roundtrips from O(N) to O(1).
-     * Estimated impact: Reduces sync latency by ~90% when fetching multi-template payloads from Meta Graph API.
-     */
     await Promise.all(
       templates.map((tpl: any) =>
         db.whatsappTemplate.upsert({

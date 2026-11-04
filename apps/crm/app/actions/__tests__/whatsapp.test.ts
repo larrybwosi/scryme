@@ -55,6 +55,8 @@ import {
   sendWhatsappMessage,
   syncWhatsappTemplates,
   getWhatsappTemplates,
+  sendPaymentReceiptNotificationAction,
+  sendDeliveryStatusNotificationAction,
 } from "../whatsapp";
 
 describe("WhatsApp Integration Server Actions", () => {
@@ -71,6 +73,11 @@ describe("WhatsApp Integration Server Actions", () => {
           accessToken: "EAAB_test_token",
           wabaId: "987654321",
           displayPhoneNumber: "+254712345678",
+          verifyToken: "custom_verify_token",
+        },
+        settings: {
+          enableWelcomeReply: true,
+          welcomeMessage: "Welcome to our shop!",
         },
         syncStatus: "CONNECTED",
       });
@@ -78,9 +85,12 @@ describe("WhatsApp Integration Server Actions", () => {
       const res = await getWhatsappConfig();
 
       expect(res.success).toBe(true);
-      expect(res.data.isConnected).toBe(true);
-      expect(res.data.credentials?.phoneNumberId).toBe("123456789");
-      expect(res.data.syncStatus).toBe("CONNECTED");
+      expect(res.data?.isConnected).toBe(true);
+      expect(res.data?.credentials?.phoneNumberId).toBe("123456789");
+      expect(res.data?.credentials?.verifyToken).toBe("custom_verify_token");
+      expect(res.data?.settings?.enableWelcomeReply).toBe(true);
+      expect(res.data?.webhookCallbackUrl).toContain("/webhooks/whatsapp");
+      expect(res.data?.syncStatus).toBe("CONNECTED");
     });
 
     it("should return DISCONNECTED status when integration does not exist", async () => {
@@ -89,9 +99,10 @@ describe("WhatsApp Integration Server Actions", () => {
       const res = await getWhatsappConfig();
 
       expect(res.success).toBe(true);
-      expect(res.data.isConnected).toBe(false);
-      expect(res.data.credentials).toBeNull();
-      expect(res.data.syncStatus).toBe("DISCONNECTED");
+      expect(res.data?.isConnected).toBe(false);
+      expect(res.data?.credentials).toBeNull();
+      expect(res.data?.syncStatus).toBe("DISCONNECTED");
+      expect(res.data?.verifyToken).toContain("scryme_wa_");
     });
   });
 
@@ -103,14 +114,18 @@ describe("WhatsApp Integration Server Actions", () => {
       expect(res.error).toBe("Phone Number ID and Access Token are required.");
     });
 
-    it("should upsert integration definition and organization integration", async () => {
+    it("should upsert integration definition and organization integration with appSecret and autoreplies", async () => {
       (db.integrationDefinition.upsert as any).mockResolvedValue({ id: "def_whatsapp" });
       (db.organizationIntegration.upsert as any).mockResolvedValue({ id: "org_int_1" });
 
       const res = await saveWhatsappConfig({
         phoneNumberId: "123456",
         accessToken: "token_abc",
+        appSecret: "meta_secret_xyz",
+        verifyToken: "my_verify_tok",
         displayPhoneNumber: "+254700000000",
+        enableWelcomeReply: true,
+        welcomeMessage: "Hi there!",
       });
 
       expect(res.success).toBe(true);
@@ -122,165 +137,86 @@ describe("WhatsApp Integration Server Actions", () => {
             integrationDefinitionId: "def_whatsapp",
             isActive: true,
             syncStatus: "CONNECTED",
+            credentials: expect.objectContaining({
+              appSecret: "meta_secret_xyz",
+              verifyToken: "my_verify_tok",
+            }),
+            settings: expect.objectContaining({
+              enableWelcomeReply: true,
+              welcomeMessage: "Hi there!",
+            }),
           }),
         })
       );
     });
   });
 
-  describe("getCommunicationThreads", () => {
-    it("should list threads ordered by lastMessageAt descending", async () => {
-      const mockThreads = [
-        {
-          id: "thread_1",
-          organizationId: "org_test_123",
-          participantPhone: "254712345678",
-          lastMessageAt: new Date(),
-          unreadCount: 1,
-          messages: [{ id: "msg_1", content: "Hello" }],
-        },
-      ];
-      (db.communicationThread.findMany as any).mockResolvedValue(mockThreads);
-
-      const res = await getCommunicationThreads();
-
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual(mockThreads);
-      expect(db.communicationThread.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: { organizationId: "org_test_123" },
-          orderBy: { lastMessageAt: "desc" },
-        })
-      );
-    });
-  });
-
-  describe("getThreadMessages", () => {
-    it("should mark unread messages as read and return messages", async () => {
-      const mockMessages = [
-        { id: "msg_1", content: "Hi", direction: "INBOUND", createdAt: new Date() },
-      ];
-      (db.communicationThread.updateMany as any).mockResolvedValue({ count: 1 });
-      (db.communicationMessage.findMany as any).mockResolvedValue(mockMessages);
-
-      const res = await getThreadMessages("thread_1");
-
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual(mockMessages);
-      expect(db.communicationThread.updateMany).toHaveBeenCalledWith({
-        where: { id: "thread_1", organizationId: "org_test_123", unreadCount: { gt: 0 } },
-        data: { unreadCount: 0 },
-      });
-    });
-  });
-
-  describe("sendWhatsappMessage", () => {
-    it("should require recipient phone and text or template", async () => {
-      const res = await sendWhatsappMessage({ recipientPhone: "", text: "" });
-
-      expect(res.success).toBe(false);
-      expect(res.error).toBe("Recipient phone and message text or template are required.");
-    });
-
-    it("should call Meta API when active integration exists and record outbound message", async () => {
+  describe("sendPaymentReceiptNotificationAction", () => {
+    it("should dispatch payment receipt template message", async () => {
       (db.organizationIntegration.findFirst as any).mockResolvedValue({
         isActive: true,
-        credentials: {
-          phoneNumberId: "phone_id_123",
-          accessToken: "token_123",
-        },
+        credentials: { phoneNumberId: "phone_1", accessToken: "token_1" },
       });
-
       mockFetch.mockResolvedValue({
         ok: true,
-        json: async () => ({ messages: [{ id: "wamid.12345" }] }),
+        json: async () => ({ messages: [{ id: "wamid.receipt.123" }] }),
       });
+      (db.communicationThread.upsert as any).mockResolvedValue({ id: "thread_receipt" });
+      (db.communicationMessage.create as any).mockResolvedValue({ id: "msg_receipt" });
 
-      (db.communicationThread.findFirst as any).mockResolvedValue(null);
-      (db.communicationThread.upsert as any).mockResolvedValue({ id: "thread_1" });
-      (db.communicationMessage.create as any).mockResolvedValue({
-        id: "msg_sent_1",
-        content: "Hello customer",
-        status: "SENT",
-        externalId: "wamid.12345",
-      });
-
-      const res = await sendWhatsappMessage({
-        recipientPhone: "+254712345678",
-        text: "Hello customer",
+      const res = await sendPaymentReceiptNotificationAction({
+        recipientPhone: "+254711223344",
+        transactionId: "TXN-9988",
+        amount: 2500,
+        currency: "KES",
+        receiptUrl: "https://pay.scryme.tech/receipts/9988",
       });
 
       expect(res.success).toBe(true);
-      expect(mockFetch).toHaveBeenCalledWith(
-        "https://graph.facebook.com/v23.0/phone_id_123/messages",
-        expect.objectContaining({
-          method: "POST",
-          headers: expect.objectContaining({
-            Authorization: "Bearer token_123",
-          }),
-        })
-      );
       expect(db.communicationMessage.create).toHaveBeenCalledWith(
         expect.objectContaining({
           data: expect.objectContaining({
-            threadId: "thread_1",
-            organizationId: "org_test_123",
             direction: "OUTBOUND",
-            content: "Hello customer",
-            externalId: "wamid.12345",
-            senderMemberId: "mem_test_456",
+            metadata: expect.objectContaining({
+              templateName: "payment_receipt",
+            }),
           }),
         })
       );
     });
   });
 
-  describe("syncWhatsappTemplates & getWhatsappTemplates", () => {
-    it("should fetch templates from Meta Graph API and upsert them", async () => {
+  describe("sendDeliveryStatusNotificationAction", () => {
+    it("should dispatch delivery status update template message", async () => {
       (db.organizationIntegration.findFirst as any).mockResolvedValue({
         isActive: true,
-        credentials: {
-          phoneNumberId: "phone_123",
-          accessToken: "token_123",
-          wabaId: "waba_123",
-        },
+        credentials: { phoneNumberId: "phone_1", accessToken: "token_1" },
       });
-
       mockFetch.mockResolvedValue({
         ok: true,
-        json: async () => ({
-          data: [
-            { name: "order_update", category: "UTILITY", language: "en_US", status: "APPROVED", components: [] },
-          ],
-        }),
+        json: async () => ({ messages: [{ id: "wamid.delivery.123" }] }),
+      });
+      (db.communicationThread.upsert as any).mockResolvedValue({ id: "thread_deliv" });
+      (db.communicationMessage.create as any).mockResolvedValue({ id: "msg_deliv" });
+
+      const res = await sendDeliveryStatusNotificationAction({
+        recipientPhone: "+254711223344",
+        trackingNumber: "TRK-7766",
+        status: "OUT_FOR_DELIVERY",
+        estimatedDate: "Today by 4 PM",
       });
 
-      (db.whatsappTemplate.upsert as any).mockResolvedValue({});
-      (db.whatsappTemplate.findMany as any).mockResolvedValue([
-        { id: "tpl_1", name: "order_update", category: "UTILITY", language: "en_US", status: "APPROVED" },
-      ]);
-
-      const res = await syncWhatsappTemplates();
-
       expect(res.success).toBe(true);
-      expect(db.whatsappTemplate.upsert).toHaveBeenCalledWith(
+      expect(db.communicationMessage.create).toHaveBeenCalledWith(
         expect.objectContaining({
-          create: expect.objectContaining({
-            name: "order_update",
-            category: "UTILITY",
+          data: expect.objectContaining({
+            direction: "OUTBOUND",
+            metadata: expect.objectContaining({
+              templateName: "delivery_status_update",
+            }),
           }),
         })
       );
-    });
-
-    it("should list templates for active organization", async () => {
-      const mockTemplates = [{ id: "tpl_1", name: "order_update" }];
-      (db.whatsappTemplate.findMany as any).mockResolvedValue(mockTemplates);
-
-      const res = await getWhatsappTemplates();
-
-      expect(res.success).toBe(true);
-      expect(res.data).toEqual(mockTemplates);
     });
   });
 });

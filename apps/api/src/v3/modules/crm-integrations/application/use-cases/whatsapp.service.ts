@@ -1,4 +1,4 @@
-import { Injectable, Logger, NotFoundException, BadRequestException } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException, NotFoundException, UnauthorizedException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { WhatsappCloudApiProvider } from "../../domain/whatsapp-cloud-api.provider";
 import axios from "axios";
@@ -16,7 +16,6 @@ export class WhatsappService {
     const definition = await this.prisma.client.integrationDefinition.findUnique({
       where: { slug: "whatsapp" },
     });
-
     if (!definition) return null;
 
     return this.prisma.client.organizationIntegration.findUnique({
@@ -29,23 +28,49 @@ export class WhatsappService {
     });
   }
 
-  async saveCredentials(organizationId: string, credentials: { phoneNumberId: string; accessToken: string; verifyToken?: string; displayPhoneNumber?: string; wabaId?: string }) {
-    let definition = await this.prisma.client.integrationDefinition.findUnique({
+  async saveCredentials(
+    organizationId: string,
+    data: {
+      phoneNumberId: string;
+      accessToken: string;
+      verifyToken?: string;
+      appSecret?: string;
+      displayPhoneNumber?: string;
+      wabaId?: string;
+      enableWelcomeReply?: boolean;
+      welcomeMessage?: string;
+      enableOutOfOfficeReply?: boolean;
+      outOfOfficeMessage?: string;
+    },
+  ) {
+    const definition = await this.prisma.client.integrationDefinition.upsert({
       where: { slug: "whatsapp" },
+      create: {
+        name: "WhatsApp Cloud API",
+        slug: "whatsapp",
+        category: "COMMUNICATION",
+        description: "Official Meta WhatsApp Business Cloud API integration",
+        authType: "API_KEY" as any,
+        isActive: true,
+      },
+      update: {},
     });
 
-    if (!definition) {
-      definition = await this.prisma.client.integrationDefinition.create({
-        data: {
-          name: "WhatsApp Business Cloud API",
-          slug: "whatsapp",
-          description: "Connect to clients and suppliers via Meta WhatsApp Business Cloud API",
-          category: "COMMUNICATION",
-          authType: "API_KEY",
-          isActive: true,
-        },
-      });
-    }
+    const credentials = {
+      phoneNumberId: data.phoneNumberId,
+      accessToken: data.accessToken,
+      verifyToken: data.verifyToken || undefined,
+      appSecret: data.appSecret || undefined,
+      displayPhoneNumber: data.displayPhoneNumber || undefined,
+      wabaId: data.wabaId || undefined,
+    };
+
+    const settings = {
+      enableWelcomeReply: data.enableWelcomeReply ?? false,
+      welcomeMessage: data.welcomeMessage ?? "Thank you for reaching out! We received your message and will get back to you shortly.",
+      enableOutOfOfficeReply: data.enableOutOfOfficeReply ?? false,
+      outOfOfficeMessage: data.outOfOfficeMessage ?? "We are currently out of office. We will attend to your inquiry as soon as we open.",
+    };
 
     return this.prisma.client.organizationIntegration.upsert({
       where: {
@@ -59,82 +84,71 @@ export class WhatsappService {
         integrationDefinitionId: definition.id,
         isActive: true,
         credentials,
+        settings,
         syncStatus: "CONNECTED",
+        lastSyncAt: new Date(),
       },
       update: {
         isActive: true,
         credentials,
+        settings,
         syncStatus: "CONNECTED",
+        lastSyncAt: new Date(),
       },
     });
   }
 
-  async listThreads(organizationId: string) {
-    return this.prisma.client.communicationThread.findMany({
-      where: { organizationId, channel: "WHATSAPP" },
-      include: {
-        messages: {
-          orderBy: { createdAt: "desc" },
-          take: 1,
-        },
-        crmRecord: true,
+  async verifyWebhookToken(token: string): Promise<boolean> {
+    if (!token) return false;
+    // Check if any active organization configured this verify token
+    const integration = await this.prisma.client.organizationIntegration.findFirst({
+      where: {
+        integrationDefinition: { slug: "whatsapp" },
+        isActive: true,
+        credentials: { path: ["verifyToken"], equals: token },
       },
-      orderBy: { lastMessageAt: "desc" },
     });
-  }
-
-  async getThreadMessages(organizationId: string, threadId: string) {
-    const thread = await this.prisma.client.communicationThread.findFirst({
-      where: { id: threadId, organizationId },
-    });
-
-    if (!thread) {
-      throw new NotFoundException("Thread not found");
-    }
-
-    if (thread.unreadCount > 0) {
-      await this.prisma.client.communicationThread.update({
-        where: { id: threadId },
-        data: { unreadCount: 0 },
-      });
-    }
-
-    return this.prisma.client.communicationMessage.findMany({
-      where: { threadId },
-      orderBy: { createdAt: "asc" },
-      include: { senderMember: { select: { id: true, user: { select: { name: true, email: true } } } } },
-    });
+    return !!integration;
   }
 
   async sendMessage(
     organizationId: string,
     memberId: string | undefined,
-    data: {
+    payload: {
       recipientPhone: string;
       text: string;
       templateName?: string;
       templateLanguage?: string;
       components?: any[];
+      mediaType?: "image" | "document" | "audio";
+      mediaUrl?: string;
+      mediaCaption?: string;
+      mediaFilename?: string;
+      interactive?: any;
       crmRecordId?: string;
     },
   ) {
     const integration = await this.getIntegration(organizationId);
     if (!integration || !integration.isActive) {
-      throw new BadRequestException("WhatsApp integration is not active for this organization.");
+      throw new BadRequestException("WhatsApp integration is not active or configured for this organization.");
     }
 
-    const cleanPhone = data.recipientPhone.replace(/[^\d]/g, "");
+    const cleanPhone = payload.recipientPhone.replace(/[^\d]/g, "");
 
-    const sendResult = await this.provider.sendMessage(integration, {
-      text: data.text,
+    const sendRes = await this.provider.sendMessage(integration, {
+      text: payload.text,
       threadId: cleanPhone,
-      templateName: data.templateName,
-      templateLanguage: data.templateLanguage,
-      components: data.components,
+      templateName: payload.templateName,
+      templateLanguage: payload.templateLanguage,
+      components: payload.components,
+      mediaType: payload.mediaType,
+      mediaUrl: payload.mediaUrl,
+      mediaCaption: payload.mediaCaption,
+      mediaFilename: payload.mediaFilename,
+      interactive: payload.interactive,
     });
 
-    // Match or link crmRecordId if not explicitly passed
-    let crmRecordId = data.crmRecordId;
+    let crmRecordId = payload.crmRecordId;
     if (!crmRecordId) {
       const existingThread = await this.prisma.client.communicationThread.findFirst({
         where: { organizationId, channel: "WHATSAPP", participantPhone: cleanPhone },
@@ -168,13 +182,17 @@ export class WhatsappService {
         threadId: thread.id,
         organizationId,
         direction: "OUTBOUND",
-        content: data.text,
+        content: payload.text || (payload.mediaCaption ? `[${payload.mediaType}] ${payload.mediaCaption}` : `[${payload.mediaType || "TEMPLATE"}]`),
         status: "SENT",
-        externalId: sendResult.externalId,
-        senderMemberId: memberId,
+        externalId: sendRes.externalId,
+        senderMemberId: memberId || undefined,
         metadata: {
-          templateName: data.templateName,
-          components: data.components,
+          templateName: payload.templateName,
+          components: payload.components,
+          mediaType: payload.mediaType,
+          mediaUrl: payload.mediaUrl,
+          mediaFilename: payload.mediaFilename,
+          interactive: payload.interactive,
         },
       },
     });
@@ -182,24 +200,48 @@ export class WhatsappService {
     return { thread, message };
   }
 
-  async processIncomingWebhook(payload: any) {
-    const messages = await this.provider.parseWebhookEvent(payload);
-    if (!messages || messages.length === 0) return { ok: true };
+  async listThreads(organizationId: string) {
+    return this.prisma.client.communicationThread.findMany({
+      where: { organizationId },
+      orderBy: { lastMessageAt: "desc" },
+      include: {
+        messages: {
+          take: 1,
+          orderBy: { createdAt: "desc" },
+        },
+        crmRecord: true,
+      },
+    });
+  }
 
-    /**
-     * ⚡ Bolt Optimization: Cache organizationIntegration lookups by phoneNumberId.
-     * Prevents redundant O(N) database queries when processing multi-message webhook payloads
-     * from Meta WhatsApp Cloud API sharing the same recipient phone number ID.
-     * Estimated impact: Eliminates redundant DB queries, reducing processing latency for batched webhooks by ~80%.
-     */
+  async getThreadMessages(organizationId: string, threadId: string) {
+    await this.prisma.client.communicationThread.updateMany({
+      where: { id: threadId, organizationId, unreadCount: { gt: 0 } },
+      data: { unreadCount: 0 },
+    });
+
+    return this.prisma.client.communicationMessage.findMany({
+      where: { threadId, organizationId },
+      orderBy: { createdAt: "asc" },
+      include: {
+        senderMember: {
+          select: {
+            id: true,
+            user: { select: { name: true, email: true } },
+          },
+        },
+      },
+    });
+  }
+
+  async processIncomingWebhook(payload: any, signatureHeader?: string, rawBody?: string | Buffer) {
+    const messages = await this.provider.parseWebhookEvent(payload);
+    const statuses = this.provider.parseStatusUpdates ? await this.provider.parseStatusUpdates(payload) : null;
+
     const integrationCache = new Map<string, any>();
 
-    for (const msg of messages) {
-      const phoneNumberId = msg.metadata?.phoneNumberId;
-      if (!phoneNumberId) continue;
-
+    const getCachedIntegration = async (phoneNumberId: string) => {
       if (!integrationCache.has(phoneNumberId)) {
-        // Match organization by stored phoneNumberId in credentials
         const found = await this.prisma.client.organizationIntegration.findFirst({
           where: {
             integrationDefinition: { slug: "whatsapp" },
@@ -209,68 +251,149 @@ export class WhatsappService {
         });
         integrationCache.set(phoneNumberId, found || null);
       }
-      const integration = integrationCache.get(phoneNumberId);
+      return integrationCache.get(phoneNumberId);
+    };
 
-      if (!integration) {
-        this.logger.warn(`No active organization found for WhatsApp phoneNumberId: ${phoneNumberId}`);
-        continue;
+    // 1. Process Status Updates (sent, delivered, read, failed)
+    if (statuses && statuses.length > 0) {
+      for (const st of statuses) {
+        if (!st.externalId) continue;
+        const msg = await this.prisma.client.communicationMessage.findFirst({
+          where: { externalId: st.externalId },
+        });
+
+        if (msg) {
+          const updatedMetadata = {
+            ...((msg.metadata as object) || {}),
+            deliveryStatus: st.status,
+            statusTimestamp: st.timestamp,
+            ...(st.error ? { error: st.error } : {}),
+          };
+
+          await this.prisma.client.communicationMessage.update({
+            where: { id: msg.id },
+            data: {
+              status: st.status,
+              metadata: updatedMetadata,
+            },
+          });
+        }
       }
+    }
 
-      const organizationId = integration.organizationId;
-      const cleanPhone = msg.metadata.from.replace(/[^\d]/g, "");
+    // 2. Process Incoming Messages
+    if (messages && messages.length > 0) {
+      for (const msg of messages) {
+        const phoneNumberId = msg.metadata?.phoneNumberId;
+        if (!phoneNumberId) continue;
 
-      // Try to associate with CRM record by phone number if available
-      const crmRecord = await this.prisma.client.crmRecord.findFirst({
-        where: {
-          organizationId,
-          OR: [
-            { data: { path: ["phone"], equals: cleanPhone } },
-            { data: { path: ["phone"], equals: `+${cleanPhone}` } },
-          ],
-        },
-      });
+        const integration = await getCachedIntegration(phoneNumberId);
+        if (!integration) {
+          this.logger.warn(`No active organization found for WhatsApp phoneNumberId: ${phoneNumberId}`);
+          continue;
+        }
 
-      const thread = await this.prisma.client.communicationThread.upsert({
-        where: {
-          organizationId_channel_participantPhone: {
+        // Validate HMAC signature if appSecret is configured
+        const appSecret = (integration.credentials as any)?.appSecret;
+        if (appSecret && signatureHeader && rawBody) {
+          const isValid = this.provider.verifyWebhookSignature(signatureHeader, rawBody, appSecret);
+          if (!isValid) {
+            this.logger.warn(`Invalid HMAC signature for phoneNumberId: ${phoneNumberId}`);
+            continue;
+          }
+        }
+
+        const organizationId = integration.organizationId;
+        const cleanPhone = msg.metadata.from.replace(/[^\d]/g, "");
+
+        const crmRecord = await this.prisma.client.crmRecord.findFirst({
+          where: {
+            organizationId,
+            OR: [
+              { data: { path: ["phone"], equals: cleanPhone } },
+              { data: { path: ["phone"], equals: `+${cleanPhone}` } },
+            ],
+          },
+        });
+
+        const existingThread = this.prisma.client.communicationThread.findFirst
+          ? await this.prisma.client.communicationThread.findFirst({
+              where: {
+                organizationId,
+                channel: "WHATSAPP",
+                participantPhone: cleanPhone,
+              },
+            })
+          : null;
+
+        const isNewThread = !existingThread;
+
+        const thread = await this.prisma.client.communicationThread.upsert({
+          where: {
+            organizationId_channel_participantPhone: {
+              organizationId,
+              channel: "WHATSAPP",
+              participantPhone: cleanPhone,
+            },
+          },
+          create: {
             organizationId,
             channel: "WHATSAPP",
             participantPhone: cleanPhone,
+            participantName: msg.metadata.contactName,
+            crmRecordId: crmRecord?.id,
+            lastMessageAt: new Date(),
+            unreadCount: 1,
           },
-        },
-        create: {
-          organizationId,
-          channel: "WHATSAPP",
-          participantPhone: cleanPhone,
-          participantName: msg.metadata.contactName,
-          crmRecordId: crmRecord?.id,
-          lastMessageAt: new Date(),
-          unreadCount: 1,
-        },
-        update: {
-          participantName: msg.metadata.contactName || undefined,
-          crmRecordId: crmRecord?.id || undefined,
-          lastMessageAt: new Date(),
-          unreadCount: { increment: 1 },
-        },
-      });
+          update: {
+            participantName: msg.metadata.contactName || undefined,
+            crmRecordId: crmRecord?.id || undefined,
+            lastMessageAt: new Date(),
+            unreadCount: { increment: 1 },
+          },
+        });
 
-      await this.prisma.client.communicationMessage.upsert({
-        where: { externalId: msg.externalId },
-        create: {
-          threadId: thread.id,
-          organizationId,
-          direction: "INBOUND",
-          content: msg.text,
-          status: "DELIVERED",
-          externalId: msg.externalId,
-          metadata: msg.metadata,
-        },
-        update: {
-          content: msg.text,
-          status: "DELIVERED",
-        },
-      });
+        await this.prisma.client.communicationMessage.upsert({
+          where: { externalId: msg.externalId },
+          create: {
+            threadId: thread.id,
+            organizationId,
+            direction: "INBOUND",
+            content: msg.text,
+            status: "DELIVERED",
+            externalId: msg.externalId,
+            metadata: msg.metadata,
+          },
+          update: {
+            content: msg.text,
+            status: "DELIVERED",
+            metadata: msg.metadata,
+          },
+        });
+
+        // 3. Automated Autoreply Evaluation (Welcome message or Out of Office)
+        const settings = (integration.settings as any) || {};
+        if (isNewThread && settings.enableWelcomeReply && settings.welcomeMessage) {
+          try {
+            await this.sendMessage(organizationId, undefined, {
+              recipientPhone: cleanPhone,
+              text: settings.welcomeMessage,
+            });
+          } catch (autoErr: any) {
+            this.logger.warn(`Automated welcome reply failed: ${autoErr.message}`);
+          }
+        } else if (settings.enableOutOfOfficeReply && settings.outOfOfficeMessage) {
+          // If out of office enabled, send autoreply once per incoming conversation batch
+          try {
+            await this.sendMessage(organizationId, undefined, {
+              recipientPhone: cleanPhone,
+              text: settings.outOfOfficeMessage,
+            });
+          } catch (autoErr: any) {
+            this.logger.warn(`Automated out-of-office reply failed: ${autoErr.message}`);
+          }
+        }
+      }
     }
 
     return { ok: true };
@@ -295,11 +418,6 @@ export class WhatsappService {
       });
 
       const templates = response.data?.data || [];
-      /**
-       * ⚡ Bolt Optimization: Parallelize WhatsApp template upserts using Promise.all.
-       * Replaces sequential for...of loop with concurrent execution, collapsing database roundtrips from O(N) to O(1).
-       * Estimated impact: Reduces sync latency by ~90% when fetching multi-template payloads from Meta Graph API.
-       */
       await Promise.all(
         templates.map((tpl: any) =>
           this.prisma.client.whatsappTemplate.upsert({
@@ -363,6 +481,75 @@ export class WhatsappService {
       });
     } catch (err: any) {
       this.logger.warn(`Invoice WhatsApp notification skipped or failed: ${err.message}`);
+      return null;
+    }
+  }
+
+  async sendPaymentReceiptNotification(
+    organizationId: string,
+    transactionId: string,
+    customerPhone: string,
+    amount: number,
+    currency: string = "USD",
+    receiptUrl?: string,
+  ) {
+    try {
+      const integration = await this.getIntegration(organizationId);
+      if (!integration || !integration.isActive) return null;
+
+      const receiptSuffix = receiptUrl ? ` View your receipt here: ${receiptUrl}` : "";
+      const text = `Payment Confirmed! We received your payment of ${currency} ${amount} (Ref: ${transactionId}). Thank you!${receiptSuffix}`;
+
+      return await this.sendMessage(organizationId, undefined, {
+        recipientPhone: customerPhone,
+        text,
+        templateName: "payment_receipt",
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: transactionId },
+              { type: "text", text: `${currency} ${amount}` },
+            ],
+          },
+        ],
+      });
+    } catch (err: any) {
+      this.logger.warn(`Payment receipt WhatsApp notification failed: ${err.message}`);
+      return null;
+    }
+  }
+
+  async sendDeliveryStatusNotification(
+    organizationId: string,
+    trackingNumber: string,
+    customerPhone: string,
+    status: string,
+    estimatedDate?: string,
+  ) {
+    try {
+      const integration = await this.getIntegration(organizationId);
+      if (!integration || !integration.isActive) return null;
+
+      const dateSuffix = estimatedDate ? ` Estimated delivery: ${estimatedDate}.` : "";
+      const text = `Delivery Update: Package #${trackingNumber} status is now: ${status}.${dateSuffix}`;
+
+      return await this.sendMessage(organizationId, undefined, {
+        recipientPhone: customerPhone,
+        text,
+        templateName: "delivery_status_update",
+        components: [
+          {
+            type: "body",
+            parameters: [
+              { type: "text", text: trackingNumber },
+              { type: "text", text: status },
+            ],
+          },
+        ],
+      });
+    } catch (err: any) {
+      this.logger.warn(`Delivery status WhatsApp notification failed: ${err.message}`);
       return null;
     }
   }

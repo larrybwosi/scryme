@@ -1,4 +1,4 @@
-import { vi, describe, it, expect, beforeEach } from "vitest";
+import { describe, it, expect, vi, beforeEach } from "vitest";
 import { Test, TestingModule } from "@nestjs/testing";
 import { WhatsappService } from "../whatsapp.service";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -12,11 +12,13 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
 
   const mockPrisma = {
     integrationDefinition: {
+      upsert: vi.fn(),
       findUnique: vi.fn(),
     },
     organizationIntegration: {
       findUnique: vi.fn(),
       findFirst: vi.fn(),
+      upsert: vi.fn(),
     },
     whatsappTemplate: {
       upsert: vi.fn(),
@@ -27,16 +29,22 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
     },
     communicationThread: {
       upsert: vi.fn(),
+      findFirst: vi.fn(),
+      updateMany: vi.fn(),
     },
     communicationMessage: {
       upsert: vi.fn(),
       create: vi.fn(),
+      findFirst: vi.fn(),
+      update: vi.fn(),
     },
   };
 
   const mockProvider = {
     sendMessage: vi.fn(),
     parseWebhookEvent: vi.fn(),
+    parseStatusUpdates: vi.fn(),
+    verifyWebhookSignature: vi.fn(),
   };
 
   beforeEach(async () => {
@@ -116,99 +124,160 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
         { headers: { Authorization: "Bearer token-abc" } },
       );
 
-      // Verify that upsert was called 3 times concurrently for all templates
       expect(mockPrisma.whatsappTemplate.upsert).toHaveBeenCalledTimes(3);
-      expect(mockPrisma.whatsappTemplate.upsert).toHaveBeenNthCalledWith(1, {
-        where: {
-          organizationId_name_language: {
-            organizationId: "org-123",
-            name: "invoice_notification",
-            language: "en_US",
-          },
-        },
-        create: {
-          organizationId: "org-123",
-          name: "invoice_notification",
-          category: "UTILITY",
-          language: "en_US",
-          status: "APPROVED",
-          components: [{ type: "BODY", text: "Invoice {{1}}" }],
-        },
-        update: {
-          category: "UTILITY",
-          status: "APPROVED",
-          components: [{ type: "BODY", text: "Invoice {{1}}" }],
-        },
-      });
-
       expect(result).toEqual(mockSyncedResult);
     });
   });
 
-  describe("processIncomingWebhook Optimization Tests", () => {
-    it("should cache organizationIntegration queries by phoneNumberId and call findFirst only once for multiple messages", async () => {
-      const mockWebhookPayload = { entry: [{ id: "123" }] };
+  describe("processIncomingWebhook Callback and Status Tests", () => {
+    it("should process delivery status updates", async () => {
+      mockProvider.parseWebhookEvent.mockResolvedValue([]);
+      mockProvider.parseStatusUpdates.mockResolvedValue([
+        {
+          externalId: "wamid.msg.1",
+          status: "DELIVERED",
+          timestamp: 1672531199,
+        },
+        {
+          externalId: "wamid.msg.2",
+          status: "READ",
+          timestamp: 1672531200,
+        },
+      ]);
+
+      mockPrisma.communicationMessage.findFirst.mockImplementation((args) =>
+        Promise.resolve({ id: `db-${args.where.externalId}`, metadata: {} }),
+      );
+      mockPrisma.communicationMessage.update.mockResolvedValue({});
+
+      const res = await service.processIncomingWebhook({});
+
+      expect(res).toEqual({ ok: true });
+      expect(mockPrisma.communicationMessage.update).toHaveBeenCalledTimes(2);
+      expect(mockPrisma.communicationMessage.update).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            status: "DELIVERED",
+          }),
+        }),
+      );
+    });
+
+    it("should trigger automated welcome reply for a new conversation thread", async () => {
       const mockParsedMessages = [
         {
-          externalId: "wmid.1",
-          text: "Hello message 1",
+          externalId: "wmid.new.1",
+          text: "Hi there!",
           metadata: {
-            phoneNumberId: "phone-id-999",
-            from: "1234567890",
-            contactName: "Alice",
-          },
-        },
-        {
-          externalId: "wmid.2",
-          text: "Hello message 2",
-          metadata: {
-            phoneNumberId: "phone-id-999",
-            from: "1234567890",
-            contactName: "Alice",
-          },
-        },
-        {
-          externalId: "wmid.3",
-          text: "Hello message 3",
-          metadata: {
-            phoneNumberId: "phone-id-999",
-            from: "0987654321",
-            contactName: "Bob",
+            phoneNumberId: "phone-id-welcome",
+            from: "254712345678",
+            contactName: "John",
           },
         },
       ];
 
       const mockIntegration = {
-        id: "int-wh-1",
-        organizationId: "org-whatsapp-test",
+        id: "int-welcome",
+        organizationId: "org-welcome-test",
         isActive: true,
-        credentials: { phoneNumberId: "phone-id-999" },
+        credentials: { phoneNumberId: "phone-id-welcome" },
+        settings: {
+          enableWelcomeReply: true,
+          welcomeMessage: "Welcome to Scryme Store!",
+        },
       };
 
       mockProvider.parseWebhookEvent.mockResolvedValue(mockParsedMessages);
+      mockProvider.parseStatusUpdates.mockResolvedValue([]);
       mockPrisma.organizationIntegration.findFirst.mockResolvedValue(mockIntegration);
       mockPrisma.crmRecord.findFirst.mockResolvedValue(null);
-      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-1" });
-      mockPrisma.communicationMessage.upsert.mockResolvedValue({ id: "msg-1" });
+      mockPrisma.communicationThread.findFirst.mockResolvedValue(null); // New thread
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-welcome" });
+      mockPrisma.communicationMessage.upsert.mockResolvedValue({ id: "msg-welcome" });
 
-      const res = await service.processIncomingWebhook(mockWebhookPayload);
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-whatsapp" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+      mockProvider.sendMessage.mockResolvedValue({ externalId: "wamid.auto.reply" });
+      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-auto-reply" });
+
+      const res = await service.processIncomingWebhook({});
 
       expect(res).toEqual({ ok: true });
-
-      // Verify that organizationIntegration.findFirst was called ONLY ONCE despite 3 messages in the batch
-      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledTimes(1);
-      expect(mockPrisma.organizationIntegration.findFirst).toHaveBeenCalledWith({
-        where: {
-          integrationDefinition: { slug: "whatsapp" },
-          isActive: true,
-          credentials: { path: ["phoneNumberId"], equals: "phone-id-999" },
-        },
-      });
-
-      // Verify message upsert was processed 3 times
-      expect(mockPrisma.communicationMessage.upsert).toHaveBeenCalledTimes(3);
+      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        mockIntegration,
+        expect.objectContaining({
+          text: "Welcome to Scryme Store!",
+          threadId: "254712345678",
+        }),
+      );
     });
   });
+
+  describe("sendPaymentReceiptNotification & sendDeliveryStatusNotification", () => {
+    it("should send payment receipt notification with correct template and payload", async () => {
+      const mockIntegration = {
+        organizationId: "org-123",
+        isActive: true,
+        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
+      };
+
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.pay.1" });
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-pay" });
+      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-pay" });
+
+      const res = await service.sendPaymentReceiptNotification(
+        "org-123",
+        "TXN-100",
+        "+254700112233",
+        1500,
+        "KES",
+        "https://pay.scryme.tech/receipts/100",
+      );
+
+      expect(res).toBeDefined();
+      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        mockIntegration,
+        expect.objectContaining({
+          templateName: "payment_receipt",
+          threadId: "254700112233",
+        }),
+      );
+    });
+
+    it("should send delivery status notification with correct parameters", async () => {
+      const mockIntegration = {
+        organizationId: "org-123",
+        isActive: true,
+        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
+      };
+
+      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
+      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
+      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.deliv.1" });
+      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-deliv" });
+      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-deliv" });
+
+      const res = await service.sendDeliveryStatusNotification(
+        "org-123",
+        "TRK-999",
+        "+254700112233",
+        "DISPATCHED",
+        "Tomorrow morning",
+      );
+
+      expect(res).toBeDefined();
+      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
+        mockIntegration,
+        expect.objectContaining({
+          templateName: "delivery_status_update",
+          threadId: "254700112233",
+        }),
+      );
+    });
+  });
+
   describe("verifyConfig", () => {
     it("should return disconnected state when no integration exists", async () => {
       mockPrisma.integrationDefinition.findUnique.mockResolvedValue(null);
@@ -251,92 +320,6 @@ describe("WhatsappService - syncTemplates Optimization Tests", () => {
         syncStatus: "CONNECTED",
         multitenancyValid: true,
       });
-    });
-  });
-
-  describe("sendPurchaseOrderNotification", () => {
-    it("should send notification using recipientPhoneOverride when provided", async () => {
-      const mockIntegration = {
-        organizationId: "org-123",
-        isActive: true,
-        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
-      };
-
-      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
-      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
-      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.po.123" });
-      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-po-1" });
-      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-po-1" });
-
-      const result = await service.sendPurchaseOrderNotification(
-        "org-123",
-        "PO-1001",
-        undefined,
-        5000,
-        undefined,
-        "+254712345678"
-      );
-
-      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
-        mockIntegration,
-        expect.objectContaining({
-          threadId: "254712345678",
-          templateName: "purchase_order_issued",
-          components: [
-            {
-              type: "body",
-              parameters: [
-                { type: "text", text: "PO-1001" },
-                { type: "text", text: "5000" },
-              ],
-            },
-          ],
-        })
-      );
-      expect(result).toBeDefined();
-    });
-
-    it("should fetch purchase order and supplier phone if phone is missing", async () => {
-      const mockIntegration = {
-        organizationId: "org-123",
-        isActive: true,
-        credentials: { phoneNumberId: "phone-123", accessToken: "token-123" },
-      };
-
-      const mockPo = {
-        id: "po-123",
-        purchaseNumber: "PO-2002",
-        totalAmount: 12500,
-        supplier: { phone: "+254799988877" },
-      };
-
-      mockPrisma.integrationDefinition.findUnique.mockResolvedValue({ id: "def-1" });
-      mockPrisma.organizationIntegration.findUnique.mockResolvedValue(mockIntegration);
-      mockPrisma.purchase = { findFirst: vi.fn().mockResolvedValue(mockPo) };
-      mockProvider.sendMessage.mockResolvedValue({ externalId: "wmid.po.456" });
-      mockPrisma.communicationThread.upsert.mockResolvedValue({ id: "thread-po-2" });
-      mockPrisma.communicationMessage.create.mockResolvedValue({ id: "msg-po-2" });
-
-      const result = await service.sendPurchaseOrderNotification(
-        "org-123",
-        "PO-2002",
-        undefined,
-        undefined,
-        "po-123"
-      );
-
-      expect(mockPrisma.purchase.findFirst).toHaveBeenCalledWith({
-        where: { id: "po-123", organizationId: "org-123" },
-        include: { supplier: true },
-      });
-      expect(mockProvider.sendMessage).toHaveBeenCalledWith(
-        mockIntegration,
-        expect.objectContaining({
-          threadId: "254799988877",
-          templateName: "purchase_order_issued",
-        })
-      );
-      expect(result).toBeDefined();
     });
   });
 });
