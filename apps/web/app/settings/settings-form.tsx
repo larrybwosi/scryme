@@ -4,7 +4,6 @@ import Link from "next/link";
 import {} from "lucide-react";
 
 
-import { ReportSettingsPanel } from "./report-settings-panel";
 import { useState, useTransition } from "react";
 import {
   FileText,
@@ -114,8 +113,7 @@ type SectionId =
   | "operations"
   | "tax"
   | "pricing"
-  | "security"
-  | "reports";
+  | "security";
 
 const NAV_SECTIONS: {
   id: SectionId;
@@ -156,11 +154,6 @@ const NAV_SECTIONS: {
     id: "pricing",
     label: "Pricing Strategy",
     icon: <TrendingUp className="w-4 h-4" />,
-  },
-  {
-    id: "reports",
-    label: "Reports & Notifications",
-    icon: <FileText className="w-4 h-4" />,
   },
   {
     id: "security",
@@ -1033,9 +1026,7 @@ export function SettingsForm({ initialData }: { initialData: any }) {
 
 
           {/* ── Reports & Notifications section ── */}
-          {activeSection === "reports" && (
-            <ReportSettingsPanel />
-          )}
+
 
           {/* ── Security section ── */}
           {activeSection === "security" && (

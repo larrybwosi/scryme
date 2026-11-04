@@ -1045,6 +1045,18 @@ model ReportSettings {
   includeTax        Boolean @default(true)
   includeAiInsights Boolean @default(true)
 
+  // Customization & Scopes
+  formats              String[] @default(["HTML", "MARKDOWN"])
+  defaultLocationId    String?
+  defaultDepartmentId  String?
+  minRevenueThreshold  Float?
+  summaryPeriodDays    Int      @default(7)
+
+  // Automation & Workflows
+  workflowEnabled      Boolean  @default(false)
+  workflowKey          String?
+  webhookUrl           String?
+
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 

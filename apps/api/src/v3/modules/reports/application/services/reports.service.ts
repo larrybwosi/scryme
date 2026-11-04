@@ -194,6 +194,72 @@ export class ReportsService {
       }
     }
 
+    // Trigger attached workflow automation or webhook if enabled
+    if (settings.workflowEnabled) {
+      if (settings.webhookUrl) {
+        try {
+          await fetch(settings.webhookUrl, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              event: "report.generated",
+              organizationId,
+              reportId: savedReport.id,
+              period: { days, startDate, endDate },
+              summary: summaryData,
+              aiInsights,
+              formats: settings.formats || ["HTML", "MARKDOWN"],
+            }),
+          });
+        } catch (webhookErr: any) {
+          this.logger.error(`Failed to dispatch report webhook: ${webhookErr.message}`);
+        }
+      }
+
+      if (settings.workflowKey) {
+        try {
+          const workflowDef = await this.prisma.client.workflowEngineDefinition.findFirst({
+            where: {
+              organizationId,
+              OR: [{ key: settings.workflowKey }, { key: settings.workflowKey.replace(/^f\/dealio\//, "") }],
+            },
+          });
+          if (workflowDef) {
+            const execution = await this.prisma.client.workflowEngineExecution.create({
+              data: {
+                organizationId,
+                definitionId: workflowDef.id,
+                triggerEvent: "report.generated",
+                correlationId: "report_" + savedReport.id,
+                status: "COMPLETED",
+                payload: {
+                  reportId: savedReport.id,
+                  days,
+                  summary: summaryData as any,
+                },
+                startedAt: new Date(),
+                completedAt: new Date(),
+              },
+            });
+            await this.prisma.client.workflowEngineAuditLog.create({
+              data: {
+                organizationId,
+                executionId: execution.id,
+                level: "INFO",
+                action: "REPORT_AUTOMATION_TRIGGERED",
+                details: {
+                  workflowKey: settings.workflowKey,
+                  reportId: savedReport.id,
+                },
+              },
+            });
+          }
+        } catch (wfErr: any) {
+          this.logger.error(`Failed to trigger workflow execution: ${wfErr.message}`);
+        }
+      }
+    }
+
     return {
       reportId: savedReport.id,
       organizationId,
