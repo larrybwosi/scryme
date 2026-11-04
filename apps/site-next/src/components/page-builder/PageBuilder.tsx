@@ -2,6 +2,9 @@ import React from 'react'
 import { HeroBlock } from './HeroBlock'
 import { ComparisonMatrixBlock } from './ComparisonMatrixBlock'
 import { FeatureGridBlock } from './FeatureGridBlock'
+import { BentoGridBlock } from './BentoGridBlock'
+import { LogoCloudBlock } from './LogoCloudBlock'
+import { WorkflowStepsBlock } from './WorkflowStepsBlock'
 import { StatsBarBlock } from './StatsBarBlock'
 import { TestimonialsBlock } from './TestimonialsBlock'
 import { FaqAccordionBlock } from './FaqAccordionBlock'
@@ -25,10 +28,16 @@ export const PageBuilder: React.FC<PageBuilderProps> = ({ modules = [] }) => {
         switch (module._type) {
           case 'heroBlock':
             return <HeroBlock key={key} {...module} />
-          case 'comparisonMatrixBlock':
-            return <ComparisonMatrixBlock key={key} {...module} />
+          case 'bentoGridBlock':
+            return <BentoGridBlock key={key} {...module} />
           case 'featureGridBlock':
             return <FeatureGridBlock key={key} {...module} />
+          case 'logoCloudBlock':
+            return <LogoCloudBlock key={key} {...module} />
+          case 'workflowStepsBlock':
+            return <WorkflowStepsBlock key={key} {...module} />
+          case 'comparisonMatrixBlock':
+            return <ComparisonMatrixBlock key={key} {...module} />
           case 'statsBarBlock':
             return <StatsBarBlock key={key} {...module} />
           case 'testimonialsBlock':
