@@ -43,6 +43,13 @@ export const PLATFORM_MODULES: PlatformModuleDefinition[] = [
     defaultEnabled: true,
   },
   {
+    key: "loyalty",
+    name: "Customer Loyalty & Rewards",
+    description: "Multi-tier loyalty ladders, custom earning rules, points expiration, and voucher/direct checkout redemptions.",
+    category: "core",
+    defaultEnabled: true,
+  },
+  {
     key: "pos",
     name: "Point of Sale (POS)",
     description: "Standalone and online POS terminals, cash drawers, and offline sales.",

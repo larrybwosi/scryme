@@ -1,7 +1,7 @@
 # 0015. Enterprise Documents V3, Customization, Live Preview, and Automatic Configuration
 
 **Date**: 2026-11-03
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 
