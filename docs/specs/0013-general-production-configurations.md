@@ -1,7 +1,7 @@
 # 0011. General Production Configurations Architecture
 
 **Date**: 2026-11-03
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

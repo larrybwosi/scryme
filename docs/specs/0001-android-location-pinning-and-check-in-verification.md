@@ -1,7 +1,7 @@
 # 0001. Android location pinning and check in verification
 
 **Date**: 2025-05-20
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 

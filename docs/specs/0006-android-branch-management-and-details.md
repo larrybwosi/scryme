@@ -1,7 +1,7 @@
 # 0006. Android branch management and branch details screen
 
 **Date**: 2026-10-31
-**Status**: Proposed
+**Status**: Accepted
 
 ## Summary
 
