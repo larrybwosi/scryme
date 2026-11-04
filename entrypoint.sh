@@ -67,9 +67,7 @@ inject_env_placeholders() {
   ALL_VARS=$(printf "%s\n%s\n" "$DYNAMIC_VARS" "$KNOWN_VARS" | grep -v '^$' | sort -u)
 
   TARGET_DIR="."
-  if [ -d "/usr/share/nginx/html" ]; then
-    TARGET_DIR="/usr/share/nginx/html"
-  elif [ -d "/app/dist" ]; then
+  if [ -d "/app/dist" ]; then
     TARGET_DIR="/app/dist"
   fi
 
@@ -89,36 +87,7 @@ inject_env_placeholders() {
 inject_env_placeholders
 
 # ---------------------------------------------------------
-# 1. Static Site Environment (e.g., Bakery, Docs)
-# ---------------------------------------------------------
-# Static sites have their HTML/JS files in /usr/share/nginx/html, /app/dist, or ./dist
-STATIC_DIR=""
-if [ -d "/usr/share/nginx/html" ]; then
-  STATIC_DIR="/usr/share/nginx/html"
-elif [ -d "/app/dist" ]; then
-  STATIC_DIR="/app/dist"
-elif [ -d "dist" ]; then
-  STATIC_DIR="dist"
-fi
-
-if [ -n "$STATIC_DIR" ]; then
-  echo "Detected static site environment in $STATIC_DIR..."
-
-  # Replace LISTEN_PORT in nginx config if present
-  if [ -f "/etc/nginx/conf.d/default.conf" ]; then
-    echo "Replacing LISTEN_PORT in nginx config..."
-    sed -i "s/LISTEN_PORT/${PORT:-3003}/g" /etc/nginx/conf.d/default.conf
-  fi
-
-  # Start Nginx only if it is installed
-  if command -v nginx > /dev/null 2>&1; then
-    echo "Starting Nginx..."
-    exec nginx -g "daemon off;"
-  fi
-fi
-
-# ---------------------------------------------------------
-# 2. NestJS API Environment (e.g., api app)
+# 1. NestJS API Environment (e.g., api app)
 # ---------------------------------------------------------
 # NestJS API has dist/main.js and runs migrations & seeding
 if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
@@ -241,7 +210,7 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
 fi
 
 # ---------------------------------------------------------
-# 3. Payload CMS Environment (e.g., cms app)
+# 2. Payload CMS Environment (e.g., cms app)
 # ---------------------------------------------------------
 if [ -f "apps/cms/server.js" ] || [ "$1" = "node" -a "$2" = "apps/cms/server.js" ]; then
   echo "Detected Payload CMS environment..."
@@ -277,7 +246,7 @@ if [ -f "apps/cms/server.js" ] || [ "$1" = "node" -a "$2" = "apps/cms/server.js"
 fi
 
 # ---------------------------------------------------------
-# 4. Running Frontend or API App CMD
+# 3. Running Frontend or API App CMD
 # ---------------------------------------------------------
 echo "Executing: $@"
 exec "$@"

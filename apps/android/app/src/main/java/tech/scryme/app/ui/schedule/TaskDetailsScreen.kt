@@ -38,12 +38,94 @@ import tech.scryme.app.ui.components.DatePickerTextField
 import tech.scryme.app.ui.components.ErrorMessageCard
 import tech.scryme.app.ui.components.ListSkeleton
 import tech.scryme.app.ui.components.StyledFormDialog
+import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
 
-private val PrimaryPurple = Color(0xFF8B5CF6)
-private val PrimaryIndigo = Color(0xFF6366F1)
-private val TextMutedColor = Color(0xFF94A3B8)
+// ---------------------------------------------------------------------------
+// Shared design tokens
+// ---------------------------------------------------------------------------
+
+private val CardShape = RoundedCornerShape(8.dp)
+private val ControlShape = RoundedCornerShape(6.dp)
+private val ChipShape = RoundedCornerShape(4.dp)
+private val CompactButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
+
+@Composable
+private fun fieldColors() = OutlinedTextFieldDefaults.colors(
+    focusedBorderColor = MaterialTheme.colorScheme.primary,
+    unfocusedBorderColor = MaterialTheme.colorScheme.outline
+)
+
+/** Flat, bordered container used across the screen for a consistent enterprise look. */
+@Composable
+private fun OutlinedSurface(
+    modifier: Modifier = Modifier,
+    content: @Composable () -> Unit
+) {
+    Surface(
+        shape = CardShape,
+        color = MaterialTheme.colorScheme.surface,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        tonalElevation = 0.dp,
+        shadowElevation = 0.dp,
+        modifier = modifier.fillMaxWidth(),
+        content = content
+    )
+}
+
+@Composable
+private fun SectionLabel(text: String, modifier: Modifier = Modifier) {
+    Text(
+        text = text.uppercase(),
+        style = MaterialTheme.typography.labelSmall,
+        fontWeight = FontWeight.SemiBold,
+        letterSpacing = 0.8.sp,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = modifier
+    )
+}
+
+@Composable
+private fun StatusChip(text: String, color: Color, showDot: Boolean = false) {
+    Surface(
+        shape = ChipShape,
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            if (showDot) {
+                Box(
+                    modifier = Modifier
+                        .size(6.dp)
+                        .clip(CircleShape)
+                        .background(color)
+                )
+            }
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = color
+            )
+        }
+    }
+}
+
+@Composable
+private fun priorityColor(priority: String): Color = when (priority.uppercase()) {
+    "HIGH" -> Rose500
+    "LOW" -> Emerald500
+    else -> Amber500
+}
+
+// ---------------------------------------------------------------------------
+// Screen
+// ---------------------------------------------------------------------------
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -60,63 +142,72 @@ fun TaskDetailsScreen(
 
     Scaffold(
         topBar = {
-            TopAppBar(
-                title = { Text("Task Details", style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.SemiBold)) },
-                navigationIcon = {
-                    IconButton(onClick = onNavigateBack) {
-                        Icon(
-                            imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Back"
+            Column {
+                TopAppBar(
+                    title = {
+                        Text(
+                            "Task Details",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold
                         )
-                    }
-                },
-                actions = {
-                    Box {
-                        IconButton(onClick = { showOptionsMenu = true }) {
+                    },
+                    navigationIcon = {
+                        IconButton(onClick = onNavigateBack) {
                             Icon(
-                                imageVector = Icons.Default.MoreVert,
-                                contentDescription = "Options"
+                                imageVector = Icons.AutoMirrored.Filled.ArrowBack,
+                                contentDescription = "Back"
                             )
                         }
-                        DropdownMenu(
-                            expanded = showOptionsMenu,
-                            onDismissRequest = { showOptionsMenu = false }
-                        ) {
-                            DropdownMenuItem(
-                                text = { Text("Edit Task") },
-                                leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
-                                onClick = {
-                                    showOptionsMenu = false
-                                    showEditDialog = true
-                                }
-                            )
-                            DropdownMenuItem(
-                                text = { Text("Add Subtask Group") },
-                                leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
-                                onClick = {
-                                    showOptionsMenu = false
-                                    showAddGroupDialog = true
-                                }
-                            )
-                            HorizontalDivider()
-                            DropdownMenuItem(
-                                text = { Text("Delete Task", color = Rose500) },
-                                leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Rose500) },
-                                onClick = {
-                                    showOptionsMenu = false
-                                    showDeleteConfirmDialog = true
-                                }
-                            )
+                    },
+                    actions = {
+                        Box {
+                            IconButton(onClick = { showOptionsMenu = true }) {
+                                Icon(
+                                    imageVector = Icons.Default.MoreVert,
+                                    contentDescription = "Options"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showOptionsMenu,
+                                onDismissRequest = { showOptionsMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("Edit Task") },
+                                    leadingIcon = { Icon(Icons.Default.Edit, contentDescription = null) },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        showEditDialog = true
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("Add Subtask Group") },
+                                    leadingIcon = { Icon(Icons.Default.Add, contentDescription = null) },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        showAddGroupDialog = true
+                                    }
+                                )
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text("Delete Task", color = Rose500) },
+                                    leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null, tint = Rose500) },
+                                    onClick = {
+                                        showOptionsMenu = false
+                                        showDeleteConfirmDialog = true
+                                    }
+                                )
+                            }
                         }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.background,
-                    titleContentColor = MaterialTheme.colorScheme.onBackground,
-                    navigationIconContentColor = MaterialTheme.colorScheme.onBackground,
-                    actionIconContentColor = MaterialTheme.colorScheme.onBackground
+                    },
+                    colors = TopAppBarDefaults.topAppBarColors(
+                        containerColor = MaterialTheme.colorScheme.surface,
+                        titleContentColor = MaterialTheme.colorScheme.onSurface,
+                        navigationIconContentColor = MaterialTheme.colorScheme.onSurface,
+                        actionIconContentColor = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 )
-            )
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+            }
         },
         containerColor = MaterialTheme.colorScheme.background
     ) { paddingValues ->
@@ -189,6 +280,7 @@ fun TaskDetailsScreen(
                                     showDeleteConfirmDialog = false
                                     viewModel.deleteTask(onSuccess = onNavigateBack)
                                 },
+                                shape = ControlShape,
                                 colors = ButtonDefaults.buttonColors(containerColor = Rose500)
                             ) {
                                 Text("Delete", color = Color.White)
@@ -222,6 +314,8 @@ fun TaskDetailsScreen(
                             label = { Text("Group Title") },
                             placeholder = { Text("e.g. Design System, Quality Checks") },
                             singleLine = true,
+                            shape = ControlShape,
+                            colors = fieldColors(),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -247,6 +341,8 @@ fun TaskDetailsScreen(
                             label = { Text("Item Title") },
                             placeholder = { Text("e.g. Check temperature, Update logs") },
                             singleLine = true,
+                            shape = ControlShape,
+                            colors = fieldColors(),
                             modifier = Modifier.fillMaxWidth()
                         )
                     }
@@ -255,6 +351,10 @@ fun TaskDetailsScreen(
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Content
+// ---------------------------------------------------------------------------
 
 @Composable
 fun TaskDetailsContent(
@@ -269,18 +369,19 @@ fun TaskDetailsContent(
     modifier: Modifier = Modifier
 ) {
     val scrollState = rememberScrollState()
+    val priority = task.priority ?: "MEDIUM"
 
     Column(
         modifier = modifier
             .verticalScroll(scrollState)
-            .padding(horizontal = 20.dp, vertical = 12.dp)
+            .padding(horizontal = 16.dp, vertical = 12.dp)
     ) {
         if (isSaving) {
             LinearProgressIndicator(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(bottom = 12.dp),
-                color = PrimaryIndigo
+                color = MaterialTheme.colorScheme.primary
             )
         }
 
@@ -293,125 +394,67 @@ fun TaskDetailsContent(
             Spacer(modifier = Modifier.height(12.dp))
         }
 
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.SpaceBetween,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            val catText = task.category ?: "UI/UX Design"
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = PrimaryPurple.copy(alpha = 0.15f)
+        // Header card: category + priority, title
+        OutlinedSurface {
+            Column(
+                modifier = Modifier.padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Text(
-                    text = catText,
-                    style = MaterialTheme.typography.labelMedium.copy(
-                        fontWeight = FontWeight.Bold,
-                        fontSize = 12.sp
-                    ),
-                    color = PrimaryPurple,
-                    modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp)
-                )
-            }
-
-            Surface(
-                shape = RoundedCornerShape(8.dp),
-                color = MaterialTheme.colorScheme.surfaceVariant
-            ) {
-                Text(
-                    text = "Priority: ${task.priority ?: "MEDIUM"}",
-                    style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
-                )
-            }
-        }
-
-        Spacer(modifier = Modifier.height(12.dp))
-
-        Text(
-            text = task.title,
-            style = MaterialTheme.typography.headlineSmall.copy(
-                fontWeight = FontWeight.Bold,
-                fontSize = 22.sp
-            ),
-            color = MaterialTheme.colorScheme.onBackground
-        )
-
-        Spacer(modifier = Modifier.height(16.dp))
-
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(14.dp),
-                horizontalArrangement = Arrangement.SpaceBetween,
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.CalendarMonth,
-                        contentDescription = null,
-                        tint = PrimaryIndigo,
-                        modifier = Modifier.size(18.dp)
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    StatusChip(
+                        text = (task.category?.takeIf { it.isNotBlank() } ?: "Uncategorized").uppercase(),
+                        color = MaterialTheme.colorScheme.primary
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "Due Date",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMutedColor
-                        )
-                        Text(
-                            text = task.dueDate ?: "No due date",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    StatusChip(
+                        text = "${priority.uppercase()} PRIORITY",
+                        color = priorityColor(priority),
+                        showDot = true
+                    )
                 }
 
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    Icon(
-                        imageVector = Icons.Default.Schedule,
-                        contentDescription = null,
-                        tint = PrimaryIndigo,
-                        modifier = Modifier.size(18.dp)
+                Text(
+                    text = task.title,
+                    style = MaterialTheme.typography.titleLarge,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurface
+                )
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Due date / time
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MetaItem(
+                        icon = Icons.Default.CalendarMonth,
+                        label = "Due Date",
+                        value = task.dueDate ?: "No due date",
+                        modifier = Modifier.weight(1f)
                     )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Column {
-                        Text(
-                            text = "Time",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = TextMutedColor
-                        )
-                        Text(
-                            text = task.dueTime ?: "All Day",
-                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold),
-                            color = MaterialTheme.colorScheme.onSurface
-                        )
-                    }
+                    VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    MetaItem(
+                        icon = Icons.Default.Schedule,
+                        label = "Time",
+                        value = task.dueTime ?: "All Day",
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 16.dp)
+                    )
                 }
             }
         }
 
-        Spacer(modifier = Modifier.height(18.dp))
+        Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "STATUS",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            ),
-            color = TextMutedColor
-        )
-
+        SectionLabel("Status")
         Spacer(modifier = Modifier.height(8.dp))
-
         StatusSegmentedControl(
             currentStatus = task.status,
             onStatusSelected = onStatusChange
@@ -419,97 +462,96 @@ fun TaskDetailsContent(
 
         Spacer(modifier = Modifier.height(20.dp))
 
-        Text(
-            text = "DESCRIPTION",
-            style = MaterialTheme.typography.labelSmall.copy(
-                fontWeight = FontWeight.Bold,
-                letterSpacing = 1.sp
-            ),
-            color = TextMutedColor
-        )
-
+        SectionLabel("Description")
         Spacer(modifier = Modifier.height(8.dp))
-
-        Surface(
-            shape = RoundedCornerShape(12.dp),
-            color = MaterialTheme.colorScheme.surface,
-            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-            modifier = Modifier.fillMaxWidth()
-        ) {
+        OutlinedSurface {
+            val hasDescription = !task.description.isNullOrBlank()
             Text(
-                text = if (!task.description.isNullOrBlank()) task.description else "No description provided for this task.",
+                text = if (hasDescription) task.description!! else "No description provided for this task.",
                 style = MaterialTheme.typography.bodyMedium.copy(lineHeight = 22.sp),
-                color = MaterialTheme.colorScheme.onSurface,
+                color = if (hasDescription) MaterialTheme.colorScheme.onSurface
+                else MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(14.dp)
             )
         }
 
-        Spacer(modifier = Modifier.height(22.dp))
+        Spacer(modifier = Modifier.height(20.dp))
+
+        // Breakdown header with progress
+        val totalSubtasks = task.subtaskGroups.sumOf { it.items.size }
+        val completedSubtasks = task.subtaskGroups.sumOf { g -> g.items.count { it.isCompleted } }
 
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "BREAKDOWN TASK",
-                style = MaterialTheme.typography.labelSmall.copy(
-                    fontWeight = FontWeight.Bold,
-                    letterSpacing = 1.sp
-                ),
-                color = TextMutedColor
-            )
+            SectionLabel("Breakdown")
+            OutlinedButton(
+                onClick = onAddGroup,
+                shape = ControlShape,
+                contentPadding = CompactButtonPadding
+            ) {
+                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
+                Spacer(modifier = Modifier.width(4.dp))
+                Text("Add Group", style = MaterialTheme.typography.labelMedium)
+            }
+        }
 
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                val totalSubtasks = task.subtaskGroups.sumOf { it.items.size }
-                val completedSubtasks = task.subtaskGroups.sumOf { g -> g.items.count { it.isCompleted } }
-                if (totalSubtasks > 0) {
-                    Text(
-                        text = "$completedSubtasks of $totalSubtasks completed",
-                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.SemiBold),
-                        color = PrimaryIndigo
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                }
-                TextButton(
-                    onClick = onAddGroup,
-                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 2.dp)
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(14.dp))
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text("Add Group", style = MaterialTheme.typography.labelSmall)
-                }
+        if (totalSubtasks > 0) {
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(10.dp)
+            ) {
+                LinearProgressIndicator(
+                    progress = { completedSubtasks.toFloat() / totalSubtasks },
+                    modifier = Modifier
+                        .weight(1f)
+                        .height(6.dp)
+                        .clip(ChipShape),
+                    color = Emerald500,
+                    trackColor = MaterialTheme.colorScheme.surfaceVariant
+                )
+                Text(
+                    text = "$completedSubtasks / $totalSubtasks",
+                    style = MaterialTheme.typography.labelMedium,
+                    fontWeight = FontWeight.SemiBold,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
             }
         }
 
         Spacer(modifier = Modifier.height(10.dp))
 
         if (task.subtaskGroups.isEmpty()) {
-            Surface(
-                shape = RoundedCornerShape(12.dp),
-                color = MaterialTheme.colorScheme.surface,
-                border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-                modifier = Modifier.fillMaxWidth()
-            ) {
+            OutlinedSurface {
                 Column(
-                    modifier = Modifier.padding(16.dp),
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(20.dp),
                     horizontalAlignment = Alignment.CenterHorizontally
                 ) {
                     Text(
                         text = "No breakdown subtasks created.",
                         style = MaterialTheme.typography.bodySmall,
-                        color = TextMutedColor
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    OutlinedButton(onClick = onAddGroup) {
+                    Spacer(modifier = Modifier.height(10.dp))
+                    OutlinedButton(
+                        onClick = onAddGroup,
+                        shape = ControlShape,
+                        contentPadding = CompactButtonPadding
+                    ) {
                         Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
                         Spacer(modifier = Modifier.width(6.dp))
-                        Text("Add Subtask Group")
+                        Text("Add Subtask Group", style = MaterialTheme.typography.labelMedium)
                     }
                 }
             }
         } else {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+            Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
                 task.subtaskGroups.forEach { group ->
                     SubtaskGroupCard(
                         group = group,
@@ -520,9 +562,55 @@ fun TaskDetailsContent(
             }
         }
 
-        Spacer(modifier = Modifier.height(40.dp))
+        Spacer(modifier = Modifier.height(32.dp))
     }
 }
+
+@Composable
+private fun MetaItem(
+    icon: androidx.compose.ui.graphics.vector.ImageVector,
+    label: String,
+    value: String,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Box(
+            modifier = Modifier
+                .size(32.dp)
+                .clip(ControlShape)
+                .background(MaterialTheme.colorScheme.primary.copy(alpha = 0.10f)),
+            contentAlignment = Alignment.Center
+        ) {
+            Icon(
+                imageVector = icon,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp)
+            )
+        }
+        Spacer(modifier = Modifier.width(10.dp))
+        Column {
+            Text(
+                text = label,
+                style = MaterialTheme.typography.labelSmall,
+                color = MaterialTheme.colorScheme.onSurfaceVariant
+            )
+            Text(
+                text = value,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.SemiBold,
+                color = MaterialTheme.colorScheme.onSurface
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Dialogs
+// ---------------------------------------------------------------------------
 
 @Composable
 fun EditTaskDialog(
@@ -533,7 +621,7 @@ fun EditTaskDialog(
     var title by remember { mutableStateOf(task.title) }
     var description by remember { mutableStateOf(task.description ?: "") }
     var priority by remember { mutableStateOf(task.priority ?: "MEDIUM") }
-    var category by remember { mutableStateOf(task.category ?: "UI/UX Design") }
+    var category by remember { mutableStateOf(task.category ?: "") }
     var dueDate by remember { mutableStateOf(task.dueDate ?: "") }
     var dueTime by remember { mutableStateOf(task.dueTime ?: "") }
 
@@ -553,6 +641,8 @@ fun EditTaskDialog(
             onValueChange = { title = it },
             label = { Text("Task Title *") },
             singleLine = true,
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -562,6 +652,8 @@ fun EditTaskDialog(
             label = { Text("Description") },
             minLines = 3,
             maxLines = 5,
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
@@ -570,9 +662,12 @@ fun EditTaskDialog(
             onValueChange = { category = it },
             label = { Text("Category") },
             singleLine = true,
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
 
+        SectionLabel("Priority")
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -582,7 +677,8 @@ fun EditTaskDialog(
                 FilterChip(
                     selected = selected,
                     onClick = { priority = p },
-                    label = { Text(p) },
+                    shape = ControlShape,
+                    label = { Text(p, style = MaterialTheme.typography.labelMedium) },
                     modifier = Modifier.weight(1f)
                 )
             }
@@ -600,10 +696,16 @@ fun EditTaskDialog(
             onValueChange = { dueTime = it },
             label = { Text("Due Time (e.g. 10:00 AM)") },
             singleLine = true,
+            shape = ControlShape,
+            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
     }
 }
+
+// ---------------------------------------------------------------------------
+// Status control
+// ---------------------------------------------------------------------------
 
 @Composable
 fun StatusSegmentedControl(
@@ -617,39 +719,38 @@ fun StatusSegmentedControl(
     )
 
     Surface(
-        shape = RoundedCornerShape(10.dp),
+        shape = ControlShape,
         color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f)),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(4.dp),
-            horizontalArrangement = Arrangement.SpaceBetween
+                .padding(3.dp),
+            horizontalArrangement = Arrangement.spacedBy(2.dp)
         ) {
             statuses.forEach { (code, label) ->
                 val isSelected = currentStatus.equals(code, ignoreCase = true) ||
                         (code == "COMPLETED" && currentStatus.equals("DONE", ignoreCase = true))
 
-                val bgColor = if (isSelected) PrimaryIndigo else Color.Transparent
-                val textColor = if (isSelected) Color.White else MaterialTheme.colorScheme.onSurfaceVariant
+                val bgColor = if (isSelected) MaterialTheme.colorScheme.primary else Color.Transparent
+                val textColor = if (isSelected) MaterialTheme.colorScheme.onPrimary
+                else MaterialTheme.colorScheme.onSurfaceVariant
 
                 Box(
                     modifier = Modifier
                         .weight(1f)
-                        .clip(RoundedCornerShape(8.dp))
+                        .clip(RoundedCornerShape(4.dp))
                         .background(bgColor)
                         .clickable { onStatusSelected(code) }
-                        .padding(vertical = 10.dp),
+                        .padding(vertical = 9.dp),
                     contentAlignment = Alignment.Center
                 ) {
                     Text(
                         text = label,
-                        style = MaterialTheme.typography.labelMedium.copy(
-                            fontWeight = if (isSelected) FontWeight.Bold else FontWeight.Medium,
-                            fontSize = 12.sp
-                        ),
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = if (isSelected) FontWeight.SemiBold else FontWeight.Medium,
                         color = textColor
                     )
                 }
@@ -658,6 +759,10 @@ fun StatusSegmentedControl(
     }
 }
 
+// ---------------------------------------------------------------------------
+// Subtasks
+// ---------------------------------------------------------------------------
+
 @Composable
 fun SubtaskGroupCard(
     group: SubtaskGroup,
@@ -665,75 +770,84 @@ fun SubtaskGroupCard(
     onAddItem: () -> Unit
 ) {
     var isExpanded by remember { mutableStateOf(true) }
+    val done = group.items.count { it.isCompleted }
 
-    Surface(
-        shape = RoundedCornerShape(12.dp),
-        color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
-        modifier = Modifier.fillMaxWidth()
-    ) {
+    OutlinedSurface {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .clickable { isExpanded = !isExpanded }
-                    .padding(horizontal = 14.dp, vertical = 12.dp),
+                    .padding(horizontal = 14.dp, vertical = 10.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = group.title,
-                    style = MaterialTheme.typography.titleSmall.copy(
+                Row(
+                    modifier = Modifier.weight(1f),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = group.title,
+                        style = MaterialTheme.typography.titleSmall,
                         fontWeight = FontWeight.SemiBold,
-                        fontSize = 14.sp
-                    ),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                        color = MaterialTheme.colorScheme.onSurface,
+                        maxLines = 1,
+                        modifier = Modifier.weight(1f, fill = false)
+                    )
+                    if (group.items.isNotEmpty()) {
+                        StatusChip(
+                            text = "$done/${group.items.size}",
+                            color = if (done == group.items.size) Emerald500
+                            else MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
 
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     IconButton(
                         onClick = onAddItem,
-                        modifier = Modifier.size(28.dp)
+                        modifier = Modifier.size(32.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Add,
                             contentDescription = "Add Item",
-                            tint = PrimaryIndigo,
+                            tint = MaterialTheme.colorScheme.primary,
                             modifier = Modifier.size(18.dp)
                         )
                     }
                     Icon(
                         imageVector = if (isExpanded) Icons.Default.KeyboardArrowUp else Icons.Default.KeyboardArrowDown,
-                        contentDescription = null,
-                        tint = TextMutedColor,
-                        modifier = Modifier.size(18.dp)
+                        contentDescription = if (isExpanded) "Collapse" else "Expand",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
             }
 
             AnimatedVisibility(visible = isExpanded) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 14.dp, end = 14.dp, bottom = 12.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
-                ) {
-                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.4f))
-                    Spacer(modifier = Modifier.height(2.dp))
+                Column(modifier = Modifier.fillMaxWidth()) {
+                    HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
 
                     if (group.items.isEmpty()) {
                         Text(
                             text = "No items in this group. Tap + to add one.",
                             style = MaterialTheme.typography.bodySmall,
-                            color = TextMutedColor,
-                            modifier = Modifier.padding(vertical = 4.dp)
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(14.dp)
                         )
                     } else {
-                        group.items.forEach { item ->
+                        group.items.forEachIndexed { index, item ->
                             SubtaskChecklistItem(
                                 item = item,
                                 onToggle = { onToggleItem(item.id) }
                             )
+                            if (index < group.items.lastIndex) {
+                                HorizontalDivider(
+                                    modifier = Modifier.padding(start = 44.dp),
+                                    color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.6f)
+                                )
+                            }
                         }
                     }
                 }
@@ -747,24 +861,25 @@ fun SubtaskChecklistItem(
     item: SubtaskItem,
     onToggle: () -> Unit
 ) {
+    val checkShape = RoundedCornerShape(4.dp)
+
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .clip(RoundedCornerShape(6.dp))
             .clickable { onToggle() }
-            .padding(vertical = 4.dp),
+            .padding(horizontal = 14.dp, vertical = 11.dp),
         verticalAlignment = Alignment.CenterVertically
     ) {
         Box(
             modifier = Modifier
                 .size(20.dp)
-                .clip(CircleShape)
+                .clip(checkShape)
+                .background(if (item.isCompleted) Emerald500 else Color.Transparent)
                 .border(
                     width = 1.5.dp,
-                    color = if (item.isCompleted) Emerald500 else TextMutedColor,
-                    shape = CircleShape
-                )
-                .background(if (item.isCompleted) Emerald500 else Color.Transparent),
+                    color = if (item.isCompleted) Emerald500 else MaterialTheme.colorScheme.outline,
+                    shape = checkShape
+                ),
             contentAlignment = Alignment.Center
         ) {
             if (item.isCompleted) {
@@ -772,20 +887,20 @@ fun SubtaskChecklistItem(
                     imageVector = Icons.Default.Check,
                     contentDescription = "Completed",
                     tint = Color.White,
-                    modifier = Modifier.size(12.dp)
+                    modifier = Modifier.size(14.dp)
                 )
             }
         }
 
-        Spacer(modifier = Modifier.width(10.dp))
+        Spacer(modifier = Modifier.width(12.dp))
 
         Text(
             text = item.title,
             style = MaterialTheme.typography.bodyMedium.copy(
-                fontSize = 13.sp,
                 textDecoration = if (item.isCompleted) TextDecoration.LineThrough else TextDecoration.None
             ),
-            color = if (item.isCompleted) TextMutedColor else MaterialTheme.colorScheme.onSurface
+            color = if (item.isCompleted) MaterialTheme.colorScheme.onSurfaceVariant
+            else MaterialTheme.colorScheme.onSurface
         )
     }
 }

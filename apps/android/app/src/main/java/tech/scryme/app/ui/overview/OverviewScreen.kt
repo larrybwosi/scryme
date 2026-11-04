@@ -11,6 +11,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -30,6 +31,8 @@ private val StatusInactive = Color(0xFFDC2626)
 private val AccentSales = Color(0xFF059669)
 private val AccentTasks = Color(0xFF4F46E5)
 
+private val OverviewTabs = listOf("Summary", "Quick Actions")
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OverviewScreen(
@@ -40,6 +43,7 @@ fun OverviewScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
+    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -88,7 +92,7 @@ fun OverviewScreen(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
-            // 1. Shift status
+            // 1. Attendance / check-in
             item {
                 AttendanceStatusOverviewCard(
                     isShiftActive = state.isShiftActive,
@@ -97,78 +101,124 @@ fun OverviewScreen(
                 )
             }
 
-            // 2. Key metrics
-            item { SectionHeader(title = "Key Metrics", modifier = Modifier.padding(top = 8.dp)) }
-
+            // 2. Tabs
             item {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Max),
-                    horizontalArrangement = Arrangement.spacedBy(12.dp)
-                ) {
-                    MetricCard(
-                        title = "Today's Sales",
-                        value = CurrencyUtils.formatAmount(state.todaySalesAmount, state.currencySymbol),
-                        subtitle = "${state.totalOrdersCount} orders",
-                        icon = Icons.Default.PointOfSale,
-                        iconColor = AccentSales,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    )
-
-                    MetricCard(
-                        title = "Tasks",
-                        value = "${state.pendingTasksCount} Pending",
-                        subtitle = "${state.completedTasksCount} completed",
-                        icon = Icons.Default.TaskAlt,
-                        iconColor = AccentTasks,
-                        modifier = Modifier
-                            .weight(1f)
-                            .fillMaxHeight()
-                    )
-                }
+                OverviewTabRow(
+                    selectedTab = selectedTab,
+                    onTabSelected = { selectedTab = it }
+                )
             }
 
-            // 3. Quick actions
-            item { SectionHeader(title = "Quick Actions", modifier = Modifier.padding(top = 8.dp)) }
+            // 3. Tab content
+            when (selectedTab) {
+                0 -> {
+                    item { SectionHeader(title = "Key Metrics") }
+                    item {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Max),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp)
+                        ) {
+                            MetricCard(
+                                title = "Today's Sales",
+                                value = CurrencyUtils.formatAmount(state.todaySalesAmount, state.currencySymbol),
+                                subtitle = "${state.totalOrdersCount} orders",
+                                icon = Icons.Default.PointOfSale,
+                                iconColor = AccentSales,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            )
 
-            item {
-                OutlinedSurface {
-                    Column {
-                        ShortcutCard(
-                            title = "Check-In / Out",
-                            subtitle = "Manage shift attendance",
-                            icon = Icons.Default.Fingerprint,
-                            onClick = onNavigateToSchedule
-                        )
-                        RowDivider()
-                        ShortcutCard(
-                            title = "View Schedule",
-                            subtitle = "Shifts and rosters",
-                            icon = Icons.Default.CalendarMonth,
-                            onClick = onNavigateToSchedule
-                        )
-                        RowDivider()
-                        ShortcutCard(
-                            title = "Staff Tasks",
-                            subtitle = "My operational tasks",
-                            icon = Icons.Default.TaskAlt,
-                            onClick = onNavigateToTasks
-                        )
-                        RowDivider()
-                        ShortcutCard(
-                            title = "Analytics",
-                            subtitle = "Admin sales analytics",
-                            icon = Icons.Default.QueryStats,
-                            onClick = onNavigateToAdminAnalytics
-                        )
+                            MetricCard(
+                                title = "Tasks",
+                                value = "${state.pendingTasksCount} Pending",
+                                subtitle = "${state.completedTasksCount} completed",
+                                icon = Icons.Default.TaskAlt,
+                                iconColor = AccentTasks,
+                                modifier = Modifier
+                                    .weight(1f)
+                                    .fillMaxHeight()
+                            )
+                        }
+                    }
+                }
+
+                else -> {
+                    item { SectionHeader(title = "Shortcuts") }
+                    item {
+                        OutlinedSurface {
+                            Column {
+                                ShortcutCard(
+                                    title = "Check-In / Out",
+                                    subtitle = "Manage shift attendance",
+                                    icon = Icons.Default.Fingerprint,
+                                    onClick = onNavigateToSchedule
+                                )
+                                RowDivider()
+                                ShortcutCard(
+                                    title = "View Schedule",
+                                    subtitle = "Shifts and rosters",
+                                    icon = Icons.Default.CalendarMonth,
+                                    onClick = onNavigateToSchedule
+                                )
+                                RowDivider()
+                                ShortcutCard(
+                                    title = "Staff Tasks",
+                                    subtitle = "My operational tasks",
+                                    icon = Icons.Default.TaskAlt,
+                                    onClick = onNavigateToTasks
+                                )
+                                RowDivider()
+                                ShortcutCard(
+                                    title = "Analytics",
+                                    subtitle = "Admin sales analytics",
+                                    icon = Icons.Default.QueryStats,
+                                    onClick = onNavigateToAdminAnalytics
+                                )
+                            }
+                        }
                     }
                 }
             }
 
             item { Spacer(modifier = Modifier.height(16.dp)) }
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Building blocks
+// ---------------------------------------------------------------------------
+
+@Composable
+private fun OverviewTabRow(
+    selectedTab: Int,
+    onTabSelected: (Int) -> Unit
+) {
+    Column {
+        TabRow(
+            selectedTabIndex = selectedTab,
+            containerColor = Color.Transparent,
+            contentColor = MaterialTheme.colorScheme.primary,
+            divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
+        ) {
+            OverviewTabs.forEachIndexed { index, label ->
+                Tab(
+                    selected = selectedTab == index,
+                    onClick = { onTabSelected(index) },
+                    selectedContentColor = MaterialTheme.colorScheme.primary,
+                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = {
+                        Text(
+                            text = label,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Medium
+                        )
+                    }
+                )
+            }
         }
     }
 }
@@ -211,6 +261,38 @@ private fun OutlinedSurface(
 }
 
 @Composable
+private fun StatusChip(text: String, color: Color) {
+    Surface(
+        shape = ChipShape,
+        color = color.copy(alpha = 0.12f)
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp)
+        ) {
+            Box(
+                modifier = Modifier
+                    .size(6.dp)
+                    .clip(CircleShape)
+                    .background(color)
+            )
+            Text(
+                text = text,
+                style = MaterialTheme.typography.labelSmall,
+                fontWeight = FontWeight.SemiBold,
+                letterSpacing = 0.6.sp,
+                color = color
+            )
+        }
+    }
+}
+
+// ---------------------------------------------------------------------------
+// Attendance card
+// ---------------------------------------------------------------------------
+
+@Composable
 fun AttendanceStatusOverviewCard(
     isShiftActive: Boolean,
     punctuality: String,
@@ -232,39 +314,66 @@ fun AttendanceStatusOverviewCard(
                     .background(statusColor)
             )
 
-            Row(
+            Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(horizontal = 16.dp, vertical = 14.dp),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.SpaceBetween
+                    .padding(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier.weight(1f),
-                    verticalArrangement = Arrangement.spacedBy(6.dp)
+                // Header: label + status chip
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
                 ) {
+                    SectionHeader(title = "Attendance")
+                    StatusChip(
+                        text = if (isShiftActive) "ON DUTY" else "OFF DUTY",
+                        color = statusColor
+                    )
+                }
+
+                // Headline + supporting text
+                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(
-                        text = "SHIFT STATUS",
-                        style = MaterialTheme.typography.labelSmall,
+                        text = if (isShiftActive) "You're checked in" else "You're not checked in",
+                        style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold,
-                        letterSpacing = 0.8.sp,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Text(
+                        text = if (isShiftActive) {
+                            "Your shift is in progress."
+                        } else {
+                            "Check in to start your shift."
+                        },
+                        style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Meta row: punctuality
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.SpaceBetween
+                ) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(8.dp)
+                        horizontalArrangement = Arrangement.spacedBy(6.dp)
                     ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(statusColor)
+                        Icon(
+                            imageVector = Icons.Default.Schedule,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.size(14.dp)
                         )
                         Text(
-                            text = if (isShiftActive) "On Duty" else "Off Duty",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.SemiBold,
-                            color = MaterialTheme.colorScheme.onSurface
+                            text = "Punctuality",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                     Surface(
@@ -274,22 +383,29 @@ fun AttendanceStatusOverviewCard(
                         Text(
                             text = punctuality,
                             style = MaterialTheme.typography.labelSmall,
+                            fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
                         )
                     }
                 }
 
-                Spacer(modifier = Modifier.width(12.dp))
-
+                // Primary action: full width
                 if (isShiftActive) {
                     OutlinedButton(
                         onClick = onManageAttendance,
                         shape = TileShape,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
-                            text = "Manage",
+                            text = "Manage Attendance",
                             style = MaterialTheme.typography.labelLarge,
                             fontWeight = FontWeight.SemiBold
                         )
@@ -298,8 +414,15 @@ fun AttendanceStatusOverviewCard(
                     Button(
                         onClick = onManageAttendance,
                         shape = TileShape,
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp)
+                        modifier = Modifier.fillMaxWidth(),
+                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
                     ) {
+                        Icon(
+                            imageVector = Icons.Default.Fingerprint,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
                         Text(
                             text = "Check In",
                             style = MaterialTheme.typography.labelLarge,
@@ -311,6 +434,10 @@ fun AttendanceStatusOverviewCard(
         }
     }
 }
+
+// ---------------------------------------------------------------------------
+// Cards
+// ---------------------------------------------------------------------------
 
 @Composable
 fun MetricCard(
