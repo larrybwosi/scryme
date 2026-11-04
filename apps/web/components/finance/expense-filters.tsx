@@ -126,10 +126,10 @@ export function ExpenseFilters({ categories, locations, costCenters = [] }: Expe
   };
 
   return (
-    <div className="space-y-4 bg-white p-4 rounded-xl border border-zinc-200 shadow-sm mb-6">
+    <div className="space-y-4 bg-card p-4 rounded-xl border border-border shadow-xs mb-6">
       <div className="flex flex-col gap-4 md:flex-row md:items-center">
         <form onSubmit={handleSearch} className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             placeholder="Search expenses..."
             className="pl-10"
@@ -314,7 +314,7 @@ export function ExpenseFilters({ categories, locations, costCenters = [] }: Expe
             <Button
               variant="ghost"
               onClick={clearFilters}
-              className="text-zinc-500">
+              className="text-muted-foreground">
               <X className="h-4 w-4 mr-2" />
               Clear
             </Button>

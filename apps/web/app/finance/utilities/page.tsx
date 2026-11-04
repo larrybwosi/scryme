@@ -19,7 +19,6 @@ export const metadata: Metadata = {
   description: "Track facility overheads, utility bills, and energy expenditure across locations.",
 };
 
-
 export default async function UtilitiesPage() {
   const accounts = await getUtilityAccounts();
 
@@ -30,14 +29,14 @@ export default async function UtilitiesPage() {
         subtitle="Track electricity, water, and other services"
         icon={<Zap className="w-7 h-7" />}>
         <UtilityDialog>
-          <Button className="bg-[#34A853] hover:bg-[#2d9147]">
+          <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-xs">
             <Plus className="w-4 h-4 mr-2" />
             Add Utility Account
           </Button>
         </UtilityDialog>
       </PageHeader>
 
-      <div className="rounded-md border bg-white">
+      <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
         <Table>
           <TableHeader>
             <TableRow>
@@ -54,16 +53,16 @@ export default async function UtilitiesPage() {
               <TableRow>
                 <TableCell
                   colSpan={6}
-                  className="text-center py-8 text-gray-500">
+                  className="text-center py-8 text-muted-foreground">
                   No utility accounts found
                 </TableCell>
               </TableRow>
             ) : (
               accounts.map(account => (
                 <TableRow key={account.id}>
-                  <TableCell className="font-medium">{account.name}</TableCell>
+                  <TableCell className="font-medium text-foreground">{account.name}</TableCell>
                   <TableCell>{account.provider || "N/A"}</TableCell>
-                  <TableCell>{account.accountNumber}</TableCell>
+                  <TableCell className="text-muted-foreground">{account.accountNumber}</TableCell>
                   <TableCell>
                     <Badge variant="outline">{account.type}</Badge>
                   </TableCell>
@@ -74,11 +73,11 @@ export default async function UtilitiesPage() {
                         mode="BILL"
                         accountId={account.id}
                         accountName={account.name}>
-                        <button className="text-sm text-[#34A853] font-medium">
+                        <button className="text-sm text-emerald-600 dark:text-emerald-400 font-medium hover:underline cursor-pointer">
                           Record Bill
                         </button>
                       </UtilityDialog>
-                      <button className="text-sm text-gray-500 font-medium">
+                      <button className="text-sm text-muted-foreground font-medium hover:text-foreground cursor-pointer">
                         History
                       </button>
                     </div>

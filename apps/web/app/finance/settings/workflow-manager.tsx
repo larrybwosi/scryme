@@ -208,8 +208,8 @@ export function WorkflowManager({
 
   if (editingWorkflow) {
     return (
-      <div className="flex flex-col h-full bg-zinc-50">
-        <div className="p-6 border-b border-zinc-200 bg-white flex items-center justify-between sticky top-0 z-10">
+      <div className="flex flex-col h-full bg-muted/30">
+        <div className="p-6 border-b border-border bg-card flex items-center justify-between sticky top-0 z-10">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"
@@ -217,7 +217,7 @@ export function WorkflowManager({
               onClick={() => setEditingWorkflow(null)}>
               Cancel
             </Button>
-            <div className="h-4 w-px bg-zinc-200" />
+            <div className="h-4 w-px bg-muted/80" />
             <h3 className="text-sm font-bold flex items-center gap-2">
               <Workflow className="w-4 h-4 text-[#34A853]" />
               {editingWorkflow.id ? "Edit Workflow" : "New Workflow"}
@@ -234,8 +234,8 @@ export function WorkflowManager({
 
         <div className="p-8 flex-1 overflow-y-auto space-y-8 max-w-5xl mx-auto w-full">
           {/* Basic Info */}
-          <section className="bg-white p-6 rounded-xl border border-zinc-200 shadow-sm space-y-6">
-            <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+          <section className="bg-card p-6 rounded-xl border border-border shadow-sm space-y-6">
+            <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
               Basic Configuration
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -297,7 +297,7 @@ export function WorkflowManager({
           {/* Steps */}
           <section className="space-y-4">
             <div className="flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-widest text-zinc-400">
+              <h4 className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
                 Approval Steps
               </h4>
               <Button
@@ -330,16 +330,16 @@ export function WorkflowManager({
                 <div key={sIdx} className="relative pl-8">
                   {/* Vertical line connecting steps */}
                   {sIdx < editingWorkflow.steps.length - 1 && (
-                    <div className="absolute left-[15px] top-8 bottom-[-24px] w-0.5 bg-zinc-200" />
+                    <div className="absolute left-[15px] top-8 bottom-[-24px] w-0.5 bg-muted/80" />
                   )}
 
                   {/* Step number indicator */}
-                  <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center text-xs font-bold border-4 border-zinc-50 z-10">
+                  <div className="absolute left-0 top-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-bold border-4 border-background z-10">
                     {step.stepNumber}
                   </div>
 
-                  <div className="bg-white border border-zinc-200 rounded-xl overflow-hidden shadow-sm">
-                    <div className="p-4 border-b border-zinc-100 bg-zinc-50/50 flex items-center justify-between">
+                  <div className="bg-card border border-border rounded-xl overflow-hidden shadow-sm">
+                    <div className="p-4 border-b border-border/60 bg-muted/40 flex items-center justify-between">
                       <Input
                         value={step.name}
                         onChange={e => {
@@ -386,7 +386,7 @@ export function WorkflowManager({
                       {/* Conditions */}
                       <div className="space-y-4">
                         <div className="flex items-center justify-between">
-                          <Label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                             <Filter className="w-3 h-3" /> Conditions
                           </Label>
                           <Button
@@ -409,8 +409,8 @@ export function WorkflowManager({
                         </div>
 
                         {step.conditions.length === 0 ? (
-                          <div className="p-4 rounded-lg border border-dashed border-zinc-200 text-center">
-                            <p className="text-[11px] text-zinc-400 italic">
+                          <div className="p-4 rounded-lg border border-dashed border-border text-center">
+                            <p className="text-[11px] text-muted-foreground italic">
                               No conditions. This step will always trigger.
                             </p>
                           </div>
@@ -419,7 +419,7 @@ export function WorkflowManager({
                             {step.conditions.map((cond: any, cIdx: number) => (
                               <div
                                 key={cIdx}
-                                className="flex gap-2 items-start bg-zinc-50 p-3 rounded-lg border border-zinc-200">
+                                className="flex gap-2 items-start bg-muted/30 p-3 rounded-lg border border-border">
                                 <Select
                                   value={cond.type}
                                   onValueChange={val => {
@@ -546,7 +546,7 @@ export function WorkflowManager({
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 text-zinc-400"
+                                  className="h-8 w-8 p-0 text-muted-foreground"
                                   onClick={() => {
                                     const newSteps = [...editingWorkflow.steps];
                                     newSteps[sIdx].conditions =
@@ -568,7 +568,7 @@ export function WorkflowManager({
 
                       {/* Actions */}
                       <div className="space-y-4">
-                        <Label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center gap-1.5">
+                        <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
                           <Zap className="w-3 h-3" /> Approver Actions
                         </Label>
 
@@ -576,10 +576,10 @@ export function WorkflowManager({
                           {step.actions.map((action: any, aIdx: number) => (
                             <div
                               key={aIdx}
-                              className="space-y-4 p-4 rounded-xl border border-zinc-100 bg-zinc-50/30">
+                              className="space-y-4 p-4 rounded-xl border border-border/60 bg-muted/20">
                               <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                  <Label className="text-[10px] text-zinc-500">
+                                  <Label className="text-[10px] text-muted-foreground">
                                     Approver Type
                                   </Label>
                                   <Select
@@ -616,7 +616,7 @@ export function WorkflowManager({
 
                                 {action.type === "ROLE" && (
                                   <div className="space-y-1.5">
-                                    <Label className="text-[10px] text-zinc-500">
+                                    <Label className="text-[10px] text-muted-foreground">
                                       Select Role
                                     </Label>
                                     <Select
@@ -653,7 +653,7 @@ export function WorkflowManager({
 
                                 {action.type === "WINDMILL_SCRIPT" && (
                                   <div className="space-y-1.5">
-                                    <Label className="text-[10px] text-zinc-500">
+                                    <Label className="text-[10px] text-muted-foreground">
                                       Select Script
                                     </Label>
                                     <Select
@@ -687,10 +687,10 @@ export function WorkflowManager({
                                 )}
                               </div>
 
-                              <div className="flex items-center justify-between pt-2 border-t border-zinc-100">
+                              <div className="flex items-center justify-between pt-2 border-t border-border/60">
                                 <div className="flex items-center gap-4">
                                   <div className="flex items-center gap-2">
-                                    <span className="text-[10px] text-zinc-500">
+                                    <span className="text-[10px] text-muted-foreground">
                                       Mode:
                                     </span>
                                     <Select
@@ -707,7 +707,7 @@ export function WorkflowManager({
                                           steps: newSteps,
                                         });
                                       }}>
-                                      <SelectTrigger className="h-7 text-[10px] w-[90px] border-none bg-transparent hover:bg-zinc-100">
+                                      <SelectTrigger className="h-7 text-[10px] w-[90px] border-none bg-transparent hover:bg-muted">
                                         <SelectValue />
                                       </SelectTrigger>
                                       <SelectContent>
@@ -739,12 +739,12 @@ export function WorkflowManager({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/40">
         <div>
-          <h3 className="text-base font-bold text-zinc-900">
+          <h3 className="text-base font-bold text-foreground">
             Approval Workflows
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage custom multi-step approval sequences
           </p>
         </div>
@@ -758,14 +758,14 @@ export function WorkflowManager({
 
       <div className="p-6 overflow-y-auto flex-1">
         {workflows.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-[400px] text-center border-2 border-dashed border-zinc-200 rounded-2xl">
-            <div className="p-4 rounded-full bg-zinc-100 text-zinc-400 mb-4">
+          <div className="flex flex-col items-center justify-center h-[400px] text-center border-2 border-dashed border-border rounded-2xl">
+            <div className="p-4 rounded-full bg-muted text-muted-foreground mb-4">
               <GitMerge className="w-8 h-8" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-900">
+            <h4 className="text-sm font-bold text-foreground">
               No workflows defined
             </h4>
-            <p className="text-xs text-zinc-500 max-w-xs mt-1">
+            <p className="text-xs text-muted-foreground max-w-xs mt-1">
               Create your first approval workflow to automate multi-step
               validations for expenses and purchases.
             </p>
@@ -782,14 +782,14 @@ export function WorkflowManager({
             {workflows.map(workflow => (
               <div
                 key={workflow.id}
-                className="group p-5 rounded-2xl border border-zinc-200 bg-white hover:shadow-md transition-all flex flex-col h-full">
+                className="group p-5 rounded-2xl border border-border bg-card hover:shadow-md transition-all flex flex-col h-full">
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className="p-2.5 rounded-xl bg-[#34A853]/10 text-[#34A853]">
                       <GitMerge className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-zinc-900">
+                      <h4 className="text-sm font-bold text-foreground">
                         {workflow.name}
                       </h4>
                       <div className="flex items-center gap-2 mt-0.5">
@@ -798,8 +798,8 @@ export function WorkflowManager({
                           className="text-[9px] h-4 uppercase font-bold tracking-wider">
                           {workflow.triggerEvent?.replace("_", " ")}
                         </Badge>
-                        <span className="text-[10px] text-zinc-400">•</span>
-                        <span className="text-[10px] text-zinc-400">
+                        <span className="text-[10px] text-muted-foreground">•</span>
+                        <span className="text-[10px] text-muted-foreground">
                           {workflow.steps?.length || 0} Steps
                         </span>
                       </div>
@@ -848,22 +848,22 @@ export function WorkflowManager({
                   </DropdownMenu>
                 </div>
 
-                <p className="text-xs text-zinc-500 flex-1 leading-relaxed line-clamp-2">
+                <p className="text-xs text-muted-foreground flex-1 leading-relaxed line-clamp-2">
                   {workflow.description || "No description provided."}
                 </p>
 
-                <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between">
+                <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
                   <div className="flex -space-x-2">
                     {workflow.steps?.map((step: any, i: number) => (
                       <div
                         key={i}
-                        className="w-6 h-6 rounded-full bg-zinc-100 border-2 border-white flex items-center justify-center text-[8px] font-bold text-zinc-500">
+                        className="w-6 h-6 rounded-full bg-muted border-2 border-white flex items-center justify-center text-[8px] font-bold text-muted-foreground">
                         {step.stepNumber}
                       </div>
                     ))}
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] font-bold text-zinc-400 uppercase">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase">
                       Status
                     </span>
                     <Switch
@@ -942,14 +942,14 @@ export function WorkflowManager({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
             {/* Simulation Parameters */}
-            <div className="space-y-4 border-r border-zinc-100 pr-0 md:pr-6">
-              <h4 className="text-sm font-bold text-zinc-900 border-b pb-2 mb-4">
+            <div className="space-y-4 border-r border-border/60 pr-0 md:pr-6">
+              <h4 className="text-sm font-bold text-foreground border-b pb-2 mb-4">
                 1. Set Test Parameters
               </h4>
               <div className="space-y-2">
                 <Label htmlFor="trialAmount">Amount</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-zinc-400" />
+                  <DollarSign className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="trialAmount"
                     type="number"
@@ -1032,8 +1032,8 @@ export function WorkflowManager({
               </Button>
 
               {/* Scryme Chat Messaging Block */}
-              <div className="mt-8 pt-6 border-t border-zinc-100 space-y-4">
-                <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+              <div className="mt-8 pt-6 border-t border-border/60 space-y-4">
+                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                   <Send className="w-4 h-4 text-purple-600" />
                   Test Scryme Chat Connection
                 </h4>
@@ -1075,9 +1075,9 @@ export function WorkflowManager({
                 </Button>
 
                 {scrymeResult && (
-                  <div className="p-3.5 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2 text-xs">
+                  <div className="p-3.5 rounded-xl border border-border bg-muted/40 space-y-2 text-xs">
                     <div className="flex items-center justify-between font-semibold">
-                      <span className="text-zinc-500">Status</span>
+                      <span className="text-muted-foreground">Status</span>
                       <Badge
                         variant={scrymeResult.simulated ? "outline" : "default"}
                         className={cn(
@@ -1091,11 +1091,11 @@ export function WorkflowManager({
                       </Badge>
                     </div>
                     {scrymeResult.simulated ? (
-                      <p className="text-[11px] text-zinc-500 italic">
+                      <p className="text-[11px] text-muted-foreground italic">
                         {scrymeResult.message}
                       </p>
                     ) : (
-                      <p className="text-[11px] text-zinc-500 italic">
+                      <p className="text-[11px] text-muted-foreground italic">
                         Successfully dispatched and delivered message to Scryme Chat!
                       </p>
                     )}
@@ -1106,21 +1106,21 @@ export function WorkflowManager({
 
             {/* Simulation Results */}
             <div className="space-y-4">
-              <h4 className="text-sm font-bold text-zinc-900 border-b pb-2 mb-4">
+              <h4 className="text-sm font-bold text-foreground border-b pb-2 mb-4">
                 2. Evaluation Results
               </h4>
 
               {trialResults === null ? (
-                <div className="h-[300px] border border-dashed border-zinc-200 rounded-xl flex flex-col items-center justify-center p-6 text-center">
-                  <Play className="w-8 h-8 text-zinc-300 mb-2" />
-                  <p className="text-xs font-semibold text-zinc-600">No simulation run yet</p>
-                  <p className="text-[11px] text-zinc-400 max-w-xs mt-1">
+                <div className="h-[300px] border border-dashed border-border rounded-xl flex flex-col items-center justify-center p-6 text-center">
+                  <Play className="w-8 h-8 text-muted-foreground/60 mb-2" />
+                  <p className="text-xs font-semibold text-muted-foreground">No simulation run yet</p>
+                  <p className="text-[11px] text-muted-foreground max-w-xs mt-1">
                     Fill in the test parameters on the left and click &quot;Run Workflow Simulation&quot; to see matches and actions.
                   </p>
                 </div>
               ) : Array.isArray(trialResults) && trialResults.length === 0 ? (
-                <div className="p-4 rounded-xl border border-dashed border-zinc-200 bg-zinc-50/30 text-center">
-                  <p className="text-xs text-zinc-500 italic">
+                <div className="p-4 rounded-xl border border-dashed border-border bg-muted/20 text-center">
+                  <p className="text-xs text-muted-foreground italic">
                     No steps defined for this workflow, or no steps were triggered.
                   </p>
                 </div>
@@ -1133,15 +1133,15 @@ export function WorkflowManager({
                         "p-4 rounded-xl border transition-all",
                         stepResult.executed
                           ? "bg-green-50/30 border-green-200"
-                          : "bg-zinc-50/30 border-zinc-200"
+                          : "bg-muted/20 border-border"
                       )}
                     >
                       <div className="flex items-center justify-between mb-2">
                         <div className="flex items-center gap-2">
-                          <span className="w-5 h-5 rounded-full bg-zinc-900 text-white flex items-center justify-center text-[10px] font-bold">
+                          <span className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-bold">
                             {stepResult.stepNumber}
                           </span>
-                          <span className="text-xs font-bold text-zinc-900">
+                          <span className="text-xs font-bold text-foreground">
                             {stepResult.name}
                           </span>
                         </div>
@@ -1151,7 +1151,7 @@ export function WorkflowManager({
                             "text-[9px] font-bold uppercase",
                             stepResult.executed
                               ? "bg-green-50 text-green-700 border-green-200 hover:bg-green-100"
-                              : "bg-zinc-100 text-zinc-400 hover:bg-zinc-100"
+                              : "bg-muted text-muted-foreground hover:bg-muted"
                           )}
                         >
                           {stepResult.executed ? "Executed" : "Skipped"}
@@ -1160,11 +1160,11 @@ export function WorkflowManager({
 
                       {/* Conditions evaluated */}
                       <div className="mt-3 space-y-1.5 pl-7">
-                        <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                        <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                           Conditions Evaluated:
                         </p>
                         {stepResult.conditions.length === 0 ? (
-                          <p className="text-[11px] text-zinc-500 italic">
+                          <p className="text-[11px] text-muted-foreground italic">
                             None (Always triggers)
                           </p>
                         ) : (
@@ -1173,7 +1173,7 @@ export function WorkflowManager({
                               key={cIdx}
                               className="flex items-center justify-between text-[11px]"
                             >
-                              <span className="text-zinc-600">
+                              <span className="text-muted-foreground">
                                 {cond.type === "AMOUNT_RANGE" && "Amount Range"}
                                 {cond.type === "LOCATION" && "Location / Branch"}
                                 {cond.type === "EXPENSE_CATEGORY" && "Expense Category"}
@@ -1181,7 +1181,7 @@ export function WorkflowManager({
                               <span
                                 className={cn(
                                   "font-semibold",
-                                  cond.match ? "text-green-600" : "text-zinc-500"
+                                  cond.match ? "text-green-600" : "text-muted-foreground"
                                 )}
                               >
                                 {cond.match ? "✓ Matched" : "✗ Mismatched"}
@@ -1193,14 +1193,14 @@ export function WorkflowManager({
 
                       {/* Actions */}
                       {stepResult.executed && (
-                        <div className="mt-3.5 pt-2.5 border-t border-dashed border-zinc-100 pl-7 space-y-1.5">
-                          <p className="text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                        <div className="mt-3.5 pt-2.5 border-t border-dashed border-border/60 pl-7 space-y-1.5">
+                          <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                             Triggered Actions:
                           </p>
                           {stepResult.actions.map((act: any, aIdx: number) => (
                             <div
                               key={aIdx}
-                              className="flex items-center gap-1.5 text-[11px] text-zinc-700 font-semibold"
+                              className="flex items-center gap-1.5 text-[11px] text-foreground/90 font-semibold"
                             >
                               <Zap className="w-3.5 h-3.5 text-amber-500 shrink-0" />
                               <span>{act.type === "ROLE" ? "Approver Role" : act.type}</span>
@@ -1212,9 +1212,9 @@ export function WorkflowManager({
                   ))}
                 </div>
               ) : (
-                <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50/50 space-y-2 text-xs">
-                  <p className="font-semibold text-zinc-900">{trialResults.message || "Test Execution Result"}</p>
-                  <pre className="text-[11px] font-mono bg-white p-2.5 rounded border border-zinc-200 overflow-x-auto">
+                <div className="p-4 rounded-xl border border-border bg-muted/40 space-y-2 text-xs">
+                  <p className="font-semibold text-foreground">{trialResults.message || "Test Execution Result"}</p>
+                  <pre className="text-[11px] font-mono bg-card p-2.5 rounded border border-border overflow-x-auto">
                     {JSON.stringify(trialResults, null, 2)}
                   </pre>
                 </div>

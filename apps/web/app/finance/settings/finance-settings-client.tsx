@@ -105,15 +105,15 @@ export function FinanceSettingsClient({ initialData }: { initialData: any }) {
                 className={cn(
                   "flex items-start gap-3 p-4 rounded-xl transition-all text-left group",
                   isActive
-                    ? "bg-white border border-zinc-200 shadow-sm ring-1 ring-zinc-200/50"
-                    : "hover:bg-zinc-100 border border-transparent",
+                    ? "bg-card border border-border shadow-sm ring-1 ring-zinc-200/50"
+                    : "hover:bg-muted border border-transparent",
                 )}>
                 <div
                   className={cn(
                     "p-2 rounded-lg transition-colors",
                     isActive
                       ? "bg-[#34A853] text-white"
-                      : "bg-zinc-100 text-zinc-500 group-hover:bg-zinc-200",
+                      : "bg-muted text-muted-foreground group-hover:bg-muted/80",
                   )}>
                   <Icon className="w-4 h-4" />
                 </div>
@@ -122,30 +122,30 @@ export function FinanceSettingsClient({ initialData }: { initialData: any }) {
                     className={cn(
                       "text-sm font-semibold transition-colors",
                       isActive
-                        ? "text-zinc-900"
-                        : "text-zinc-500 group-hover:text-zinc-700",
+                        ? "text-foreground"
+                        : "text-muted-foreground group-hover:text-foreground/90",
                     )}>
                     {section.label}
                   </p>
-                  <p className="text-[11px] text-zinc-400 mt-0.5 line-clamp-1 leading-tight">
+                  <p className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1 leading-tight">
                     {section.description}
                   </p>
                 </div>
                 {isActive && (
-                  <ChevronRight className="w-4 h-4 text-zinc-300 self-center" />
+                  <ChevronRight className="w-4 h-4 text-muted-foreground/60 self-center" />
                 )}
               </button>
             );
           })}
         </nav>
 
-        <div className="mt-8 p-4 rounded-xl bg-zinc-900 text-white overflow-hidden relative">
+        <div className="mt-8 p-4 rounded-xl bg-muted text-foreground border border-border overflow-hidden relative">
           <div className="relative z-10">
             <h4 className="text-sm font-bold flex items-center gap-2">
               <ShieldCheck className="w-4 h-4 text-[#34A853]" />
               Enterprise Security
             </h4>
-            <p className="text-[11px] text-zinc-400 mt-2 leading-relaxed">
+            <p className="text-[11px] text-muted-foreground mt-2 leading-relaxed">
               All financial changes are audited and logged. Multi-admin approval
               is required for sensitive workflow changes.
             </p>
@@ -156,7 +156,7 @@ export function FinanceSettingsClient({ initialData }: { initialData: any }) {
 
       {/* Main Content Area */}
       <main className="flex-1 min-w-0">
-        <div className="bg-white rounded-2xl border border-zinc-200 overflow-hidden min-h-[600px]">
+        <div className="bg-card rounded-2xl border border-border overflow-hidden min-h-[600px]">
           {renderContent()}
         </div>
       </main>

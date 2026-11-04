@@ -124,7 +124,7 @@ export function ExpenseReportsClient() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <PieChart className="w-5 h-5 text-zinc-500" />
+              <PieChart className="w-5 h-5 text-muted-foreground" />
               Category Breakdown
             </CardTitle>
           </CardHeader>
@@ -153,7 +153,7 @@ export function ExpenseReportsClient() {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-zinc-500" />
+              <Building2 className="w-5 h-5 text-muted-foreground" />
               Cost Center Analytics
             </CardTitle>
           </CardHeader>

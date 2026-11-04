@@ -72,10 +72,10 @@ export function BudgetAlertManager({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/40">
         <div>
-          <h3 className="text-base font-bold text-zinc-900">Budget Alerts</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h3 className="text-base font-bold text-foreground">Budget Alerts</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Automated notifications for budget utilization
           </p>
         </div>
@@ -90,14 +90,14 @@ export function BudgetAlertManager({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-6">
           {alerts.length === 0 && !isAdding ? (
-            <div className="flex flex-col items-center justify-center h-[300px] text-center border-2 border-dashed border-zinc-200 rounded-2xl">
-              <div className="p-4 rounded-full bg-zinc-100 text-zinc-400 mb-4">
+            <div className="flex flex-col items-center justify-center h-[300px] text-center border-2 border-dashed border-border rounded-2xl">
+              <div className="p-4 rounded-full bg-muted text-muted-foreground mb-4">
                 <Bell className="w-8 h-8" />
               </div>
-              <h4 className="text-sm font-bold text-zinc-900">
+              <h4 className="text-sm font-bold text-foreground">
                 No active alerts
               </h4>
-              <p className="text-xs text-zinc-500 max-w-xs mt-1">
+              <p className="text-xs text-muted-foreground max-w-xs mt-1">
                 Stay informed when your departments or projects approach their
                 budget limits.
               </p>
@@ -107,7 +107,7 @@ export function BudgetAlertManager({
               {alerts.map(alert => (
                 <div
                   key={alert.id}
-                  className="p-5 rounded-2xl border border-zinc-200 bg-white hover:shadow-md transition-all flex flex-col">
+                  className="p-5 rounded-2xl border border-border bg-card hover:shadow-md transition-all flex flex-col">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-center gap-3">
                       <div
@@ -120,15 +120,15 @@ export function BudgetAlertManager({
                         <AlertTriangle className="w-5 h-5" />
                       </div>
                       <div>
-                        <h4 className="text-sm font-bold text-zinc-900">
+                        <h4 className="text-sm font-bold text-foreground">
                           {alert.budget?.name || "General Budget"}
                         </h4>
                         <div className="flex items-center gap-2 mt-0.5">
                           <span className="text-[10px] font-bold text-[#34A853]">
                             {alert.threshold}% Threshold
                           </span>
-                          <span className="text-[10px] text-zinc-300">•</span>
-                          <span className="text-[10px] text-zinc-400">
+                          <span className="text-[10px] text-muted-foreground/60">•</span>
+                          <span className="text-[10px] text-muted-foreground">
                             Real-time tracking
                           </span>
                         </div>
@@ -149,7 +149,7 @@ export function BudgetAlertManager({
                   </div>
 
                   <div className="space-y-3 mt-2">
-                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-zinc-400">
+                    <div className="flex items-center justify-between text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
                       <span>Recipients</span>
                       <Mail className="w-3 h-3" />
                     </div>
@@ -158,11 +158,11 @@ export function BudgetAlertManager({
                         <Badge
                           key={i}
                           variant="secondary"
-                          className="text-[9px] font-medium bg-zinc-100 text-zinc-600">
+                          className="text-[9px] font-medium bg-muted text-muted-foreground">
                           {email}
                         </Badge>
                       )) || (
-                        <span className="text-[10px] text-zinc-400 italic">
+                        <span className="text-[10px] text-muted-foreground italic">
                           No recipients defined. Admins will be notified by
                           default.
                         </span>
@@ -170,10 +170,10 @@ export function BudgetAlertManager({
                     </div>
                   </div>
 
-                  <div className="mt-6 pt-4 border-t border-zinc-100 flex items-center justify-between">
+                  <div className="mt-6 pt-4 border-t border-border/60 flex items-center justify-between">
                     <div className="flex items-center gap-1.5">
-                      <User className="w-3 h-3 text-zinc-300" />
-                      <span className="text-[10px] text-zinc-400">
+                      <User className="w-3 h-3 text-muted-foreground/60" />
+                      <span className="text-[10px] text-muted-foreground">
                         Last triggered:{" "}
                         {alert.lastNotifiedAt
                           ? new Date(alert.lastNotifiedAt).toLocaleDateString()
@@ -192,14 +192,14 @@ export function BudgetAlertManager({
             </div>
           )}
 
-          <div className="p-4 rounded-xl border border-zinc-200 bg-zinc-50 flex items-center justify-between">
+          <div className="p-4 rounded-xl border border-border bg-muted/30 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <Settings className="w-4 h-4 text-zinc-400" />
-              <p className="text-xs font-medium text-zinc-600">
+              <Settings className="w-4 h-4 text-muted-foreground" />
+              <p className="text-xs font-medium text-muted-foreground">
                 Default Notification Channel
               </p>
             </div>
-            <Badge className="bg-white text-zinc-900 border-zinc-200">
+            <Badge className="bg-card text-foreground border-border">
               Email & Dashboard
             </Badge>
           </div>
@@ -219,7 +219,7 @@ export function BudgetAlertManager({
               <div className="space-y-2">
                 <Label>Utilization Threshold (%)</Label>
                 <div className="relative">
-                  <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <Activity className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="number"
                     value={formData.threshold}

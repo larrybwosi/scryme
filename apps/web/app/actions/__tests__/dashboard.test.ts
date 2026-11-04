@@ -133,4 +133,50 @@ describe("getDashboardData", () => {
     expect(data.recentActivity.length).toBe(2);
     expect(data.recentActivity[0].title).toBe("Order #ORD-001");
   });
+
+  it("should calculate averageOrderValue, averageSales, and totalSessions accurately", async () => {
+    vi.mocked(getServerAuth).mockResolvedValue({
+      organizationId: "org-123",
+      user: { id: "user-1", name: "Test User" },
+    } as any);
+
+    (db.product.count as any).mockResolvedValue(10);
+    (db.expense.aggregate as any).mockResolvedValue({ _sum: { amount: 100 } });
+    (db.productVariantStock.findMany as any).mockResolvedValue([]);
+
+    const mockTransactions = [
+      {
+        id: "tx-1",
+        number: "ORD-001",
+        finalTotal: 200,
+        createdAt: new Date(),
+        type: "POS_SALE",
+        customer: { name: "Alice" },
+        items: [],
+      },
+      {
+        id: "tx-2",
+        number: "ORD-002",
+        finalTotal: 300,
+        createdAt: new Date(),
+        type: "POS_SALE",
+        customer: { name: "Bob" },
+        items: [],
+      },
+    ];
+
+    (db.transaction.findMany as any).mockImplementation(async (args: any) => {
+      if (args.where?.createdAt?.gte && !args.orderBy) {
+        return [];
+      }
+      return mockTransactions as any;
+    });
+
+    const data = await getDashboardData("week", "previous_period");
+
+    expect(data.averageOrderValue.value).toBe(250); // (200 + 300) / 2
+    expect(data.totalSessions.value).toBe(2);
+    expect(data.averageSales.value).toBeGreaterThan(0);
+    expect(data.averageOrderValue.chartData.length).toBeGreaterThan(0);
+  });
 });

@@ -237,7 +237,7 @@ export function PettyCashClient({
   return (
     <div className="space-y-6">
       <Tabs defaultValue="funds" className="w-full">
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-zinc-200 pb-3 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-3 mb-6">
           <TabsList className="bg-muted p-1 rounded-xl w-fit flex gap-1">
             <TabsTrigger value="funds" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
               Funds Overview ({filteredFunds.length})
@@ -257,10 +257,10 @@ export function PettyCashClient({
 
         {/* TAB 1: FUNDS OVERVIEW */}
         <TabsContent value="funds" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-zinc-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search funds by name or location..."
                   className="pl-9 h-11"
@@ -315,16 +315,16 @@ export function PettyCashClient({
             {filteredFunds.map(fund => (
               <div
                 key={fund.id}
-                className="bg-card p-6 rounded-2xl border border-zinc-200 hover:shadow-md transition-all group"
+                className="bg-card p-6 rounded-2xl border border-border hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between mb-6">
-                  <div className="p-3 rounded-2xl bg-muted text-zinc-600 group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
+                  <div className="p-3 rounded-2xl bg-muted text-muted-foreground group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
                     <Wallet className="w-6 h-6" />
                   </div>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
-                        <MoreVertical className="w-4 h-4 text-zinc-400" />
+                        <MoreVertical className="w-4 h-4 text-muted-foreground" />
                       </Button>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
@@ -339,26 +339,26 @@ export function PettyCashClient({
                 </div>
 
                 <div className="space-y-1 mb-6">
-                  <h3 className="text-lg font-bold text-zinc-900">{fund.name}</h3>
-                  <div className="flex items-center gap-2 text-xs text-zinc-500">
-                    <MapPin className="w-3 h-3 text-zinc-400" />
+                  <h3 className="text-lg font-bold text-foreground">{fund.name}</h3>
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <MapPin className="w-3 h-3 text-muted-foreground" />
                     {fund.location?.name || "Global / Main Office"}
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-background border border-zinc-100 space-y-4 mb-6">
+                <div className="p-4 rounded-xl bg-background border border-border/60 space-y-4 mb-6">
                   <div className="flex justify-between items-end">
                     <div>
-                      <p className="text-[10px] font-bold uppercase text-zinc-400 mb-1">Current Balance</p>
-                      <p className="text-2xl font-bold text-zinc-900">
+                      <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Current Balance</p>
+                      <p className="text-2xl font-bold text-foreground">
                         {fund.currencyCode} {Number(fund.amount || 0).toLocaleString()}
                       </p>
                     </div>
-                    <Badge variant="secondary" className="bg-card border-zinc-200">
+                    <Badge variant="secondary" className="bg-card border-border">
                       Float: {Number(fund.floatAmount || 0).toLocaleString()}
                     </Badge>
                   </div>
-                  <div className="h-1.5 w-full bg-zinc-200 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-muted/80 rounded-full overflow-hidden">
                     <div
                       className={cn(
                         "h-full transition-all",
@@ -369,9 +369,9 @@ export function PettyCashClient({
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between text-xs pt-4 border-t border-zinc-100">
-                  <div className="flex items-center gap-2 text-zinc-500">
-                    <User className="w-3.5 h-3.5 text-zinc-400" />
+                <div className="flex items-center justify-between text-xs pt-4 border-t border-border/60">
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <User className="w-3.5 h-3.5 text-muted-foreground" />
                     <span className="font-medium">{fund.responsibleMember?.user?.name}</span>
                   </div>
                   <Button
@@ -390,10 +390,10 @@ export function PettyCashClient({
 
         {/* TAB 2: ALL TRANSACTIONS (ORGANISATION & BRANCH VIEW) */}
         <TabsContent value="transactions" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-zinc-200">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   placeholder="Search description, staff, fund, location..."
                   className="pl-9 h-11"
@@ -456,9 +456,9 @@ export function PettyCashClient({
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl border border-zinc-200 overflow-hidden shadow-sm">
+          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
             <Table>
-              <TableHeader className="bg-muted/50 border-b border-zinc-200">
+              <TableHeader className="bg-muted/50 border-b border-border">
                 <TableRow>
                   <TableHead className="font-bold py-4 pl-6">Transaction / Description</TableHead>
                   <TableHead className="font-bold">Fund / Branch</TableHead>
@@ -470,7 +470,7 @@ export function PettyCashClient({
               <TableBody>
                 {filteredTransactions.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-12 text-zinc-500 font-medium">
+                    <TableCell colSpan={5} className="text-center py-12 text-muted-foreground font-medium">
                       No matching transactions found.
                     </TableCell>
                   </TableRow>
@@ -478,21 +478,21 @@ export function PettyCashClient({
                   filteredTransactions.map(tx => (
                     <TableRow key={tx.id} className="hover:bg-muted/50">
                       <TableCell className="py-4 pl-6">
-                        <div className="font-bold text-zinc-900">{tx.description || tx.type}</div>
-                        <div className="text-[11px] text-zinc-400 mt-1">
+                        <div className="font-bold text-foreground">{tx.description || tx.type}</div>
+                        <div className="text-[11px] text-muted-foreground mt-1">
                           {new Date(tx.createdAt).toLocaleString()}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="font-semibold text-zinc-800">{tx.fund?.name || "Global Fund"}</div>
-                        <div className="flex items-center gap-1 text-[11px] text-zinc-500 mt-0.5">
-                          <MapPin className="w-3 h-3 text-zinc-400 shrink-0" />
+                        <div className="font-semibold text-foreground">{tx.fund?.name || "Global Fund"}</div>
+                        <div className="flex items-center gap-1 text-[11px] text-muted-foreground mt-0.5">
+                          <MapPin className="w-3 h-3 text-muted-foreground shrink-0" />
                           {tx.fund?.location?.name || "Global / Main Office"}
                         </div>
                       </TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 text-zinc-700">
-                          <User className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                        <div className="flex items-center gap-2 text-foreground/90">
+                          <User className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
                           <span className="font-medium">{tx.member?.user?.name || "System"}</span>
                         </div>
                       </TableCell>
@@ -548,7 +548,7 @@ export function PettyCashClient({
               <div className="space-y-2">
                 <Label>Float Amount</Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="number"
                     className="pl-9"
@@ -635,7 +635,7 @@ export function PettyCashClient({
             <div className="space-y-2">
               <Label>Amount</Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="number"
                   className="pl-9"
@@ -678,13 +678,13 @@ export function PettyCashClient({
                 <Loader2 className="w-8 h-8 animate-spin text-[#34A853]" />
               </div>
             ) : transactions.length === 0 ? (
-              <div className="text-center py-12 text-zinc-500">
+              <div className="text-center py-12 text-muted-foreground">
                 No transactions found for this fund.
               </div>
             ) : (
               <div className="space-y-4 py-4">
                 {transactions.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-muted/30">
+                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/30">
                     <div className="flex items-center gap-4">
                       <div className={cn(
                         "p-2 rounded-lg",
@@ -695,8 +695,8 @@ export function PettyCashClient({
                         {tx.type === "TOP_UP" ? <Plus className="w-4 h-4" /> : <History className="w-4 h-4" />}
                       </div>
                       <div>
-                        <p className="text-sm font-bold text-zinc-900">{tx.description || tx.type}</p>
-                        <p className="text-[11px] text-zinc-400">
+                        <p className="text-sm font-bold text-foreground">{tx.description || tx.type}</p>
+                        <p className="text-[11px] text-muted-foreground">
                           {new Date(tx.createdAt).toLocaleString()} • {tx.member?.user?.name}
                         </p>
                       </div>
