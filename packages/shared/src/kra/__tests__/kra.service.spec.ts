@@ -1,4 +1,5 @@
-import { describe, it, expect } from "vitest";
+import { describe, it, expect, vi } from "vitest";
+import axios from "axios";
 import { KRAService } from "../kra.service";
 import { NavariKRAProvider } from "../navari.provider";
 import { DirectEtimsKRAProvider } from "../direct-etims.provider";
@@ -33,6 +34,9 @@ describe("KRAService & Providers", () => {
   });
 
   it("should submit invoice with Direct eTIMS simulator in sandbox mode", async () => {
+    vi.spyOn(axios, "create").mockReturnValue({
+      post: vi.fn().mockRejectedValue(new Error("Network Error (Simulated Sandbox)")),
+    } as any);
     const directEtims = new DirectEtimsKRAProvider();
     const config = {
       organizationId: "org-1",

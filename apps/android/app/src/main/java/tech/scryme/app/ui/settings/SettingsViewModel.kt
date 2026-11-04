@@ -9,6 +9,8 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
+import tech.scryme.app.analytics.OpenPanelTracker
+import tech.scryme.app.analytics.models.OpenPanelEvents
 import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.BranchLocation
 import tech.scryme.app.domain.repository.AuthRepository
@@ -72,7 +74,8 @@ class SettingsViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     private val profileRepository: ProfileRepository,
     private val authRepository: AuthRepository,
-    private val branchRepository: BranchRepository
+    private val branchRepository: BranchRepository,
+    private val openPanelTracker: OpenPanelTracker
 ) : ViewModel() {
 
     private val _showQrScanner = MutableStateFlow(false)
@@ -190,12 +193,20 @@ class SettingsViewModel @Inject constructor(
 
     fun setThemeMode(mode: String) {
         viewModelScope.launch {
+            openPanelTracker.track(
+                OpenPanelEvents.THEME_CHANGED,
+                mapOf("theme" to mode)
+            )
             sessionManager.updateThemeMode(mode)
         }
     }
 
     fun setDutyStatus(status: String) {
         viewModelScope.launch {
+            openPanelTracker.track(
+                OpenPanelEvents.DUTY_STATUS_CHANGED,
+                mapOf("status" to status)
+            )
             sessionManager.updateDutyStatus(status)
             val orgSlug = sessionManager.getOrgSlug()
             val memberId = sessionManager.getMemberId()
@@ -231,14 +242,27 @@ class SettingsViewModel @Inject constructor(
         viewModelScope.launch {
             _isPairingPos.value = true
             _posPairingMessage.value = "Authenticating POS Device..."
+            openPanelTracker.track(
+                OpenPanelEvents.POS_PAIRING_ATTEMPT,
+                mapOf("location_id" to locationId)
+            )
             val result = authRepository.pairPosDevice(qrContent, locationId)
             _isPairingPos.value = false
             result.fold(
                 onSuccess = { msg ->
+                    openPanelTracker.track(
+                        OpenPanelEvents.POS_PAIRING_SUCCESS,
+                        mapOf("location_id" to locationId)
+                    )
                     _posPairingMessage.value = msg
                 },
                 onFailure = { error ->
-                    _posPairingMessage.value = error.message ?: "Failed to pair POS device"
+                    val errorMsg = error.message ?: "Failed to pair POS device"
+                    openPanelTracker.track(
+                        OpenPanelEvents.POS_PAIRING_FAILED,
+                        mapOf("location_id" to locationId, "error" to errorMsg)
+                    )
+                    _posPairingMessage.value = errorMsg
                 }
             )
         }
@@ -250,6 +274,8 @@ class SettingsViewModel @Inject constructor(
 
     fun logout() {
         viewModelScope.launch {
+            openPanelTracker.track(OpenPanelEvents.LOGOUT)
+            openPanelTracker.clearUser()
             authRepository.logout()
         }
     }
