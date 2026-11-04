@@ -64,12 +64,12 @@ export default function ReportsHubPage() {
           const Icon = r.icon;
           return (
             <Link key={r.href} href={r.href}>
-              <Card className="h-full hover:border-zinc-400 transition-colors cursor-pointer">
+              <Card className="h-full hover:border-foreground/30 transition-colors cursor-pointer">
                 <CardHeader>
                   <div className="flex items-center justify-between">
-                    <Icon className="w-6 h-6 text-zinc-600" />
+                    <Icon className="w-6 h-6 text-muted-foreground" />
                     {r.badge && (
-                      <span className="text-xs bg-zinc-100 text-zinc-700 px-2 py-0.5 rounded font-medium">
+                      <span className="text-xs bg-muted text-foreground/90 px-2 py-0.5 rounded font-medium">
                         {r.badge}
                       </span>
                     )}

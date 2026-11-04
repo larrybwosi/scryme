@@ -95,18 +95,18 @@ export function CostCenterManager({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/40">
         <div>
-          <h3 className="text-base font-bold text-zinc-900">Cost Centers</h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <h3 className="text-base font-bold text-foreground">Cost Centers</h3>
+          <p className="text-xs text-muted-foreground mt-0.5">
             Manage financial dimensions for reporting
           </p>
         </div>
       </div>
 
-      <div className="p-6 border-b border-zinc-100 flex items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-border/60 flex items-center gap-4 bg-card sticky top-0 z-10">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search cost centers..."
             className="pl-9 h-10 text-sm"
@@ -125,14 +125,14 @@ export function CostCenterManager({
       <div className="flex-1 overflow-y-auto p-6">
         <div className="space-y-4">
           {filtered.length === 0 ? (
-            <div className="flex flex-col items-center justify-center h-[300px] text-center border-2 border-dashed border-zinc-200 rounded-2xl">
-              <div className="p-4 rounded-full bg-zinc-100 text-zinc-400 mb-4">
+            <div className="flex flex-col items-center justify-center h-[300px] text-center border-2 border-dashed border-border rounded-2xl">
+              <div className="p-4 rounded-full bg-muted text-muted-foreground mb-4">
                 <Building className="w-8 h-8" />
               </div>
-              <h4 className="text-sm font-bold text-zinc-900">
+              <h4 className="text-sm font-bold text-foreground">
                 No cost centers found
               </h4>
-              <p className="text-xs text-zinc-500 max-w-xs mt-1">
+              <p className="text-xs text-muted-foreground max-w-xs mt-1">
                 Cost centers allow you to track spending across different
                 departments, projects, or branches.
               </p>
@@ -142,14 +142,14 @@ export function CostCenterManager({
               {filtered.map(cc => (
                 <div
                   key={cc.id}
-                  className="p-4 rounded-xl border border-zinc-200 bg-white hover:border-zinc-300 transition-all flex items-center justify-between group"
+                  className="p-4 rounded-xl border border-border bg-card hover:border-border transition-all flex items-center justify-between group"
                 >
                   <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-zinc-200 transition-colors">
+                    <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-muted/80 transition-colors">
                       <Activity className="w-5 h-5" />
                     </div>
                     <div>
-                      <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                      <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                         {cc.name}
                         {!cc.isActive && (
                           <Badge
@@ -165,10 +165,10 @@ export function CostCenterManager({
                         </span>
                         {cc.description && (
                           <>
-                            <span className="text-[10px] text-zinc-300">
+                            <span className="text-[10px] text-muted-foreground/60">
                               •
                             </span>
-                            <span className="text-[10px] text-zinc-400 line-clamp-1">
+                            <span className="text-[10px] text-muted-foreground line-clamp-1">
                               {cc.description}
                             </span>
                           </>

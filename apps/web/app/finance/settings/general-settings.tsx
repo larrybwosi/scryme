@@ -71,12 +71,12 @@ export function GeneralSettings({ organization }: { organization: any }) {
     <form
       onSubmit={form.handleSubmit(onSubmit)}
       className="h-full flex flex-col">
-      <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/40">
         <div>
-          <h3 className="text-base font-bold text-zinc-900">
+          <h3 className="text-base font-bold text-foreground">
             General Finance Settings
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Configure global thresholds and policies
           </p>
         </div>
@@ -101,18 +101,18 @@ export function GeneralSettings({ organization }: { organization: any }) {
             <div className="p-2 rounded-lg bg-blue-50 text-blue-600">
               <CheckCircle2 className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-tight">
+            <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">
               Expense Approvals
             </h4>
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-white">
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">
                   Require Approval
                 </Label>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Enable mandatory approval workflow for all expenses
                 </p>
               </div>
@@ -128,11 +128,11 @@ export function GeneralSettings({ organization }: { organization: any }) {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-zinc-400">
+                <Label className="text-xs font-bold uppercase text-muted-foreground">
                   Approval Threshold
                 </Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="number"
                     {...form.register("expenseApprovalThreshold", {
@@ -142,18 +142,18 @@ export function GeneralSettings({ organization }: { organization: any }) {
                     placeholder="0.00"
                   />
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   Expenses above this amount will trigger the approval workflow
                   even if not explicitly required.
                 </p>
               </div>
 
               <div className="space-y-2">
-                <Label className="text-xs font-bold uppercase text-zinc-400">
+                <Label className="text-xs font-bold uppercase text-muted-foreground">
                   Petty Cash Auto-Approve
                 </Label>
                 <div className="relative">
-                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                  <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
                     type="number"
                     {...form.register("pettyCashAutoApproveThreshold", {
@@ -163,7 +163,7 @@ export function GeneralSettings({ organization }: { organization: any }) {
                     placeholder="0.00"
                   />
                 </div>
-                <p className="text-[11px] text-zinc-400 leading-tight">
+                <p className="text-[11px] text-muted-foreground leading-tight">
                   Petty cash transactions below this amount are automatically
                   approved.
                 </p>
@@ -172,7 +172,7 @@ export function GeneralSettings({ organization }: { organization: any }) {
           </div>
         </section>
 
-        <Separator className="bg-zinc-100" />
+        <Separator className="bg-muted" />
 
         {/* Compliance Section */}
         <section>
@@ -180,18 +180,18 @@ export function GeneralSettings({ organization }: { organization: any }) {
             <div className="p-2 rounded-lg bg-purple-50 text-purple-600">
               <Receipt className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-tight">
+            <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">
               Compliance & Receipts
             </h4>
           </div>
 
           <div className="space-y-6">
-            <div className="flex items-center justify-between p-4 rounded-xl border border-zinc-100 bg-white">
+            <div className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-card">
               <div className="space-y-1">
                 <Label className="text-sm font-semibold">
                   Mandatory Receipts
                 </Label>
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   Require receipt attachment for all expense submissions
                 </p>
               </div>
@@ -206,11 +206,11 @@ export function GeneralSettings({ organization }: { organization: any }) {
             </div>
 
             <div className="space-y-2 max-w-md">
-              <Label className="text-xs font-bold uppercase text-zinc-400">
+              <Label className="text-xs font-bold uppercase text-muted-foreground">
                 Receipt Threshold
               </Label>
               <div className="relative">
-                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+                <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
                   type="number"
                   {...form.register("expenseReceiptThreshold", {
@@ -220,7 +220,7 @@ export function GeneralSettings({ organization }: { organization: any }) {
                   placeholder="0.00"
                 />
               </div>
-              <p className="text-[11px] text-zinc-400 leading-tight">
+              <p className="text-[11px] text-muted-foreground leading-tight">
                 Mandatory receipts will only be enforced for expenses exceeding
                 this value.
               </p>
@@ -228,7 +228,7 @@ export function GeneralSettings({ organization }: { organization: any }) {
           </div>
         </section>
 
-        <Separator className="bg-zinc-100" />
+        <Separator className="bg-muted" />
 
         {/* Reimbursements Section */}
         <section>
@@ -236,17 +236,17 @@ export function GeneralSettings({ organization }: { organization: any }) {
             <div className="p-2 rounded-lg bg-orange-50 text-orange-600">
               <Truck className="w-4 h-4" />
             </div>
-            <h4 className="text-sm font-bold text-zinc-900 uppercase tracking-tight">
+            <h4 className="text-sm font-bold text-foreground uppercase tracking-tight">
               Reimbursements
             </h4>
           </div>
 
           <div className="space-y-2 max-w-md">
-            <Label className="text-xs font-bold uppercase text-zinc-400">
+            <Label className="text-xs font-bold uppercase text-muted-foreground">
               Mileage Rate (per km/mile)
             </Label>
             <div className="relative">
-              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+              <DollarSign className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
               <Input
                 type="number"
                 {...form.register("mileageRate", { valueAsNumber: true })}
@@ -255,7 +255,7 @@ export function GeneralSettings({ organization }: { organization: any }) {
                 step="0.01"
               />
             </div>
-            <p className="text-[11px] text-zinc-400 leading-tight">
+            <p className="text-[11px] text-muted-foreground leading-tight">
               Standard rate used to calculate reimbursement for business travel.
             </p>
           </div>

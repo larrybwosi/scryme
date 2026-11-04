@@ -3,16 +3,21 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
   startOfMonth,
   endOfMonth,
-  subMonths,
+  startOfQuarter,
+  endOfQuarter,
   subDays,
   subWeeks,
+  subMonths,
+  subQuarters,
   subYears,
   eachDayOfInterval,
   format,
-  startOfWeek,
-  endOfWeek,
   startOfYear,
   endOfYear,
 } from "date-fns";
@@ -40,6 +45,12 @@ export type ChartDataPoint = {
   date: string;
   oneTime: number;
   recurring: number;
+  current: number;
+  previous: number;
+};
+
+export type MetricChartPoint = {
+  date: string;
   current: number;
   previous: number;
 };
@@ -92,10 +103,26 @@ export type DashboardData = {
   heatmapData: HeatmapDay[];
   recentActivity: RecentActivityItem[];
   periodLabel: string;
+  averageOrderValue: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
+  averageSales: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
+  totalSessions: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
 };
 
 export async function getDashboardData(
   timeframe: string = "month",
+  compareMode: string = "previous_period",
 ): Promise<DashboardData> {
   const auth = await getServerAuth();
 
@@ -112,14 +139,51 @@ export async function getDashboardData(
   let previousEnd: Date;
   let periodLabel: string;
 
+  const isCompareLastYear = compareMode === "last_year";
+
   switch (timeframe) {
+    case "today":
+      currentStart = startOfDay(now);
+      currentEnd = endOfDay(now);
+      if (isCompareLastYear) {
+        previousStart = startOfDay(subYears(now, 1));
+        previousEnd = endOfDay(subYears(now, 1));
+        periodLabel = "vs same day last year";
+      } else {
+        previousStart = startOfDay(subDays(now, 1));
+        previousEnd = endOfDay(subDays(now, 1));
+        periodLabel = "vs yesterday";
+      }
+      break;
+
     case "week":
       currentStart = startOfWeek(now);
       currentEnd = endOfWeek(now);
-      previousStart = startOfWeek(subWeeks(now, 1));
-      previousEnd = endOfWeek(subWeeks(now, 1));
-      periodLabel = "vs last week";
+      if (isCompareLastYear) {
+        previousStart = startOfWeek(subYears(now, 1));
+        previousEnd = endOfWeek(subYears(now, 1));
+        periodLabel = "vs same week last year";
+      } else {
+        previousStart = startOfWeek(subWeeks(now, 1));
+        previousEnd = endOfWeek(subWeeks(now, 1));
+        periodLabel = "vs last week";
+      }
       break;
+
+    case "quarter":
+      currentStart = startOfQuarter(now);
+      currentEnd = endOfQuarter(now);
+      if (isCompareLastYear) {
+        previousStart = startOfQuarter(subYears(now, 1));
+        previousEnd = endOfQuarter(subYears(now, 1));
+        periodLabel = "vs same quarter last year";
+      } else {
+        previousStart = startOfQuarter(subQuarters(now, 1));
+        previousEnd = endOfQuarter(subQuarters(now, 1));
+        periodLabel = "vs last quarter";
+      }
+      break;
+
     case "year":
       currentStart = startOfYear(now);
       currentEnd = endOfYear(now);
@@ -127,13 +191,28 @@ export async function getDashboardData(
       previousEnd = endOfYear(subYears(now, 1));
       periodLabel = "vs last year";
       break;
+
+    case "all":
+      currentStart = subYears(now, 5);
+      currentEnd = now;
+      previousStart = subYears(currentStart, 5);
+      previousEnd = currentStart;
+      periodLabel = "all time";
+      break;
+
     case "month":
     default:
       currentStart = startOfMonth(now);
       currentEnd = endOfMonth(now);
-      previousStart = startOfMonth(subMonths(now, 1));
-      previousEnd = endOfMonth(subMonths(now, 1));
-      periodLabel = "vs last month";
+      if (isCompareLastYear) {
+        previousStart = startOfMonth(subYears(now, 1));
+        previousEnd = endOfMonth(subYears(now, 1));
+        periodLabel = "vs same month last year";
+      } else {
+        previousStart = startOfMonth(subMonths(now, 1));
+        previousEnd = endOfMonth(subMonths(now, 1));
+        periodLabel = "vs last month";
+      }
       break;
   }
 
@@ -193,13 +272,18 @@ export async function getDashboardData(
       lowStockRes,
     ] = await Promise.all([
       db.product.count({
-        where: { organizationId: orgId, isArchived: false },
+        where: {
+          organizationId: orgId,
+          isArchived: false,
+        },
       }),
       db.product.count({
         where: {
           organizationId: orgId,
           isArchived: false,
-          createdAt: { lte: previousEnd },
+          createdAt: {
+            lte: previousEnd,
+          },
         },
       }),
       db.transaction.findMany({
@@ -378,6 +462,12 @@ export async function getDashboardData(
     return Number((((current - previous) / previous) * 100).toFixed(1));
   };
 
+  // Average Order Value (AOV)
+  const currentAOV =
+    currentSalesCount > 0 ? currentIncome / currentSalesCount : 0;
+  const previousAOV =
+    previousSalesCount > 0 ? previousIncome / previousSalesCount : 0;
+
   // Process Popular Products & Category breakdown
   const productMap = new Map<
     string,
@@ -478,8 +568,16 @@ export async function getDashboardData(
     currentByDay.set(key, list);
   });
 
+  const previousByDay = new Map<string, typeof previousTransactions>();
+  previousTransactions.forEach((t) => {
+    const key = getDayKey(new Date(t.createdAt));
+    const list = previousByDay.get(key) || [];
+    list.push(t);
+    previousByDay.set(key, list);
+  });
+
   const chartData: ChartDataPoint[] = intervalDays.map((day) => {
-    const dayStr = format(day, "MMM");
+    const dayStr = format(day, "MMM d");
     const dayKey = getDayKey(day);
     const dayTransactions = currentByDay.get(dayKey) || [];
 
@@ -499,6 +597,49 @@ export async function getDashboardData(
       oneTime: Math.round(oneTimeRev),
       recurring: Math.round(recurringRev),
       current: totalRev,
+      previous: 0,
+    };
+  });
+
+  // Calculate AOV, Average Sales, and Total Sessions charts per day
+  const aovChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    const count = dayTx.length;
+    const rev = dayTx.reduce((acc, t) => acc + Number(t.finalTotal || 0), 0);
+    const aov = count > 0 ? Math.round(rev / count) : 0;
+
+    return {
+      date: dayStr,
+      current: aov,
+      previous: 0,
+    };
+  });
+
+  const averageSalesChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    const count = dayTx.length;
+
+    return {
+      date: dayStr,
+      current: count,
+      previous: 0,
+    };
+  });
+
+  const totalSessionsChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    // Approximate active customer interactions / transactions
+    const count = dayTx.length;
+
+    return {
+      date: dayStr,
+      current: count,
       previous: 0,
     };
   });
@@ -568,6 +709,12 @@ export async function getDashboardData(
     });
   });
 
+  // Average daily sales volume
+  const totalDays = Math.max(intervalDays.length, 1);
+  const avgDailySales = Number((currentSalesCount / totalDays).toFixed(1));
+  const prevDays = Math.max(intervalDays.length, 1);
+  const prevAvgDailySales = Number((previousSalesCount / prevDays).toFixed(1));
+
   return {
     stats: {
       totalProducts: {
@@ -598,5 +745,20 @@ export async function getDashboardData(
     heatmapData,
     recentActivity,
     periodLabel,
+    averageOrderValue: {
+      value: Math.round(currentAOV),
+      change: calculateChange(currentAOV, previousAOV),
+      chartData: aovChartData,
+    },
+    averageSales: {
+      value: avgDailySales,
+      change: calculateChange(avgDailySales, prevAvgDailySales),
+      chartData: averageSalesChartData,
+    },
+    totalSessions: {
+      value: currentSalesCount,
+      change: calculateChange(currentSalesCount, previousSalesCount),
+      chartData: totalSessionsChartData,
+    },
   };
 }
