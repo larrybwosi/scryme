@@ -3,13 +3,6 @@ import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
 import { OpenPanelProvider } from "../components/openpanel-provider";
-import { Roboto } from "next/font/google";
-
-const roboto = Roboto({
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "700", "900"],
-  variable: "--font-roboto",
-});
 
 export const metadata: Metadata = {
   title: {
@@ -121,8 +114,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }): React.ReactElement {
   return (
-    <html lang="en" className={roboto.variable}>
+    <html lang="en">
       <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700;900&display=swap"
+          rel="stylesheet"
+        />
         <link rel="preconnect" href="https://api.scryme.tech" crossOrigin="anonymous" />
         <link rel="dns-prefetch" href="https://api.scryme.tech" />
         <script
