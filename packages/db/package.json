@@ -1,6 +1,6 @@
 {
   "name": "@repo/db",
-  "version": "10.2.36",
+  "version": "10.2.37",
   "private": true,
   "main": "./dist/client.js",
   "types": "./src/client.ts",
