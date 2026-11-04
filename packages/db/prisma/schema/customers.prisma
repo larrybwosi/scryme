@@ -40,7 +40,15 @@ model Customer {
   expenses          Expense[]                  @relation("CustomerExpenses")
   recurringExpenses RecurringExpense[]         @relation("CustomerRecurringExpenses")
 
-  createdBy Member? @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  // Enterprise Fields
+  accountManagerId  String?
+  accountManager    Member?               @relation("CustomerAccountManager", fields: [accountManagerId], references: [id], onDelete: SetNull)
+  lifecycleStage    String                @default("ACTIVE") // LEAD, PROSPECT, ACTIVE, ENTERPRISE, AT_RISK, CHURNED
+  lifetimeValue     Float?                @default(0)
+  creditLimit       Float?                @default(0)
+  creditHold        Boolean               @default(false)
+
+    createdBy Member? @relation("CustomerCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
   updatedBy Member? @relation("CustomerUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
 
   priceLists PriceList[]
@@ -88,7 +96,33 @@ model BusinessAccount {
   expenses          Expense[]          @relation("BusinessAccountExpenses")
   recurringExpenses RecurringExpense[] @relation("BusinessAccountRecurringExpenses")
 
-  // Added implicit Many-to-Many relation to support multiple contracts/deals
+  // Corporate Hierarchy (Parent / Subsidiary)
+  parentAccountId   String?
+  parentAccount     BusinessAccount?      @relation("CompanyHierarchy", fields: [parentAccountId], references: [id], onDelete: SetNull)
+  subsidiaries      BusinessAccount[]     @relation("CompanyHierarchy")
+
+  // Enterprise Financials & Credit Management
+  creditLimit       Float?                @default(0)
+  creditHold        Boolean               @default(false)
+
+  // Account Ownership & Team
+  accountManagerId  String?
+  accountManager    Member?               @relation("BusinessAccountManager", fields: [accountManagerId], references: [id], onDelete: SetNull)
+
+  // Enterprise Lifecycle & Firmographics
+  lifecycleStage    String                @default("ACTIVE") // LEAD, PROSPECT, ACTIVE, ENTERPRISE, AT_RISK, CHURNED
+  industry          String?
+  website           String?
+  employeeCount     Int?
+  annualRevenue     Float?
+
+  // Enterprise Contracts & SLAs
+  contractStartDate DateTime?
+  contractEndDate   DateTime?
+  contractStatus    String?               @default("ACTIVE") // ACTIVE, EXPIRED, UNDER_REVIEW, TERMINATED
+  slaTier           String?               @default("STANDARD") // STANDARD, PREMIUM, ENTERPRISE_24_7
+
+    // Added implicit Many-to-Many relation to support multiple contracts/deals
   priceLists PriceList[]
 
   // B2B Connections
