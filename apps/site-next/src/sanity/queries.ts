@@ -1,5 +1,9 @@
 import { sanityClient } from './client'
 
+/* =========================================================================
+   1. PRICING CONFIGURATION
+   ========================================================================= */
+
 export const PRICING_CONFIG_QUERY = `
   *[_type == "pricingConfig"][0] {
     _id,
@@ -115,7 +119,10 @@ export const DEFAULT_PRICING_FALLBACK: PricingConfig = {
       },
       enterprise: {
         monthly: { amount: 'Custom', period: '' },
-        annual: { amount: 'Custom', period: '' },
+        annual: {
+          amount: 'Custom',
+          period: '',
+        },
       },
     },
   ],
@@ -161,6 +168,713 @@ export async function fetchPricingConfig(): Promise<PricingConfig> {
 
   return DEFAULT_PRICING_FALLBACK
 }
+
+/* =========================================================================
+   2. GLOBAL SITE SETTINGS & NAVIGATION
+   ========================================================================= */
+
+export const SITE_SETTINGS_QUERY = `
+  *[_type == "siteSettings"][0] {
+    _id,
+    siteTitle,
+    siteDescription,
+    announcementBanner,
+    navItems,
+    headerCtas,
+    footerColumns,
+    socialLinks,
+    copyrightText
+  }
+`
+
+export interface SubmenuItem {
+  label: string
+  description?: string
+  href: string
+  badge?: string
+}
+
+export interface NavItem {
+  label: string
+  href?: string
+  isExternal?: boolean
+  children?: SubmenuItem[]
+}
+
+export interface HeaderCtas {
+  loginLabel?: string
+  loginUrl?: string
+  primaryCtaLabel?: string
+  primaryCtaUrl?: string
+}
+
+export interface FooterLink {
+  label: string
+  href: string
+  badge?: string
+}
+
+export interface FooterColumn {
+  title: string
+  links: FooterLink[]
+}
+
+export interface SocialLink {
+  platform: string
+  url: string
+}
+
+export interface SiteSettings {
+  siteTitle?: string
+  siteDescription?: string
+  announcementBanner?: {
+    enabled?: boolean
+    text?: string
+    linkText?: string
+    linkUrl?: string
+  }
+  navItems?: NavItem[]
+  headerCtas?: HeaderCtas
+  footerColumns?: FooterColumn[]
+  socialLinks?: SocialLink[]
+  copyrightText?: string
+}
+
+export const DEFAULT_SITE_SETTINGS_FALLBACK: SiteSettings = {
+  siteTitle: 'Scryme - Next-Gen ERP Platform',
+  siteDescription: 'Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship intelligence, and decoupled catalog engines.',
+  announcementBanner: {
+    enabled: false,
+    text: 'Scryme ERP v3.2 is now live with native M-Pesa STK push and distributed offline-first sync.',
+    linkText: 'Learn more',
+    linkUrl: '/payments',
+  },
+  navItems: [
+    {
+      label: 'Platform',
+      children: [
+        { label: 'Point of Sale', description: 'Offline-first POS with sub-second M-Pesa checkout', href: '/point-of-sale' },
+        { label: 'Inventory & Warehousing', description: 'Multi-branch stock reconciliation & serial tracking', href: '/inventory' },
+        { label: 'Stock Ops & Transfers', description: 'Internal transfers, approvals & batch reconciliation', href: '/stock-ops' },
+        { label: 'Sales & Invoicing', description: 'Automated invoicing, tax compliance & B2B quotations', href: '/sales' },
+        { label: '360° Relationship CRM', description: 'Unified customer graph & omnichannel pipeline', href: '/crm' },
+        { label: 'Project & Shift Scheduling', description: 'Gantt milestones, staff shifts & time tracking', href: '/project-management-scheduling' },
+        { label: 'Procurement & Suppliers', description: 'PO workflows, 3-way matching & vendor ledgers', href: '/procurement-supply-chain' },
+        { label: 'Multi-Branch Locations', description: 'Geofenced attendance, branch permissions & zones', href: '/locations' },
+        { label: 'Payments & Settlement', description: 'M-Pesa STK Push, card processing & automated recon', href: '/payments' },
+        { label: 'Headless CMS & Catalog', description: 'Centralized product publishing & marketing pages', href: '/cms' },
+        { label: 'MCP & Agent APIs', description: 'Autonomous agent integration via Model Context Protocol', href: '/mcp-agent-apis' },
+        { label: 'Mobile Field Ops', description: 'Android handhelds, barcode scanning & mobile audit', href: '/mobile-field-ops' },
+      ],
+    },
+    { label: 'Pricing', href: '/pricing' },
+    { label: 'Developers', href: '/developers/apps' },
+  ],
+  headerCtas: {
+    loginLabel: 'Log In',
+    loginUrl: 'https://app.scryme.tech/login',
+    primaryCtaLabel: 'Start 14-Day Trial',
+    primaryCtaUrl: 'https://app.scryme.tech/signup?plan=scale&trial=true',
+  },
+  footerColumns: [
+    {
+      title: 'Platform Modules',
+      links: [
+        { label: 'Point of Sale', href: '/point-of-sale' },
+        { label: 'Multi-Node Inventory', href: '/inventory' },
+        { label: 'Stock Operations', href: '/stock-ops' },
+        { label: 'Sales Automation', href: '/sales' },
+        { label: 'Relationship CRM', href: '/crm' },
+        { label: 'Project Scheduling', href: '/project-management-scheduling' },
+      ],
+    },
+    {
+      title: 'Infrastructure',
+      links: [
+        { label: 'Payment Architecture', href: '/payments' },
+        { label: 'MCP AI Endpoints', href: '/mcp-agent-apis' },
+        { label: 'Mobile Field Operations', href: '/mobile-field-ops' },
+        { label: 'Procurement Supply Chain', href: '/procurement-supply-chain' },
+        { label: 'Branch Management', href: '/locations' },
+        { label: 'Headless CMS & Catalog', href: '/cms' },
+      ],
+    },
+    {
+      title: 'Resources & Compare',
+      links: [
+        { label: 'Pricing & Plans', href: '/pricing' },
+        { label: 'Developer Portal', href: '/developers/apps' },
+        { label: 'Scryme vs Square', href: '/compare/scryme-vs-square' },
+        { label: 'Scryme vs Lightspeed', href: '/compare/scryme-vs-lightspeed' },
+        { label: 'Scryme vs Odoo', href: '/compare/scryme-vs-odoo' },
+      ],
+    },
+  ],
+  socialLinks: [
+    { platform: 'GitHub', url: 'https://github.com/scryme' },
+    { platform: 'Twitter', url: 'https://twitter.com/scrymetech' },
+    { platform: 'LinkedIn', url: 'https://linkedin.com/company/scryme' },
+  ],
+  copyrightText: '© 2026 Scryme Systems Inc. All rights reserved. Enterprise Operational Kernel.',
+}
+
+export async function fetchSiteSettings(): Promise<SiteSettings> {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const settings = await sanityClient.fetch(SITE_SETTINGS_QUERY)
+      if (settings && (settings.navItems || settings.siteTitle)) {
+        return {
+          ...DEFAULT_SITE_SETTINGS_FALLBACK,
+          ...settings,
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching site settings from API, falling back to default:', err)
+  }
+
+  return DEFAULT_SITE_SETTINGS_FALLBACK
+}
+
+/* =========================================================================
+   3. HOME PAGE
+   ========================================================================= */
+
+export const HOME_PAGE_QUERY = `
+  *[_type == "homePage"][0] {
+    _id,
+    title,
+    hero,
+    pillarsSection,
+    paradigmSection,
+    metricsSection,
+    faqsSection,
+    bottomCta
+  }
+`
+
+export interface HomeHero {
+  badge?: string
+  nodeCounterText?: string
+  headline?: string
+  subtitle?: string
+  primaryCtaText?: string
+  primaryCtaLink?: string
+  secondaryCtaText?: string
+  secondaryCtaLink?: string
+  heroImage?: any
+  heroImageUrlFallback?: string
+  heroImageCaption?: string
+  syncStateText?: string
+}
+
+export interface PillarItem {
+  label?: string
+  badge?: string
+  stat?: string
+  title?: string
+  body?: string
+  cta?: string
+  href?: string
+}
+
+export interface HomePageData {
+  _id?: string
+  title?: string
+  hero?: HomeHero
+  pillarsSection?: {
+    eyebrow?: string
+    title?: string
+    description?: string
+    pillars?: PillarItem[]
+  }
+  paradigmSection?: {
+    eyebrow?: string
+    title?: string
+    description?: string
+    calloutTitle?: string
+    calloutDescription?: string
+    boardroomImageUrlFallback?: string
+    legacyItems?: { title: string; description: string }[]
+    kernelItems?: { title: string; description: string }[]
+  }
+  metricsSection?: {
+    metrics?: { label: string; value: string; description: string }[]
+    spotlight?: {
+      badge?: string
+      company?: string
+      quote?: string
+      authorName?: string
+      authorRole?: string
+      deploymentStats?: { label: string; value: string }[]
+      caseStudyLink?: string
+    }
+  }
+  faqsSection?: {
+    eyebrow?: string
+    title?: string
+    faqs?: { q: string; a: string }[]
+  }
+  bottomCta?: {
+    badge?: string
+    title?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+    secondaryCtaText?: string
+    secondaryCtaLink?: string
+    guarantees?: string[]
+  }
+}
+
+export const DEFAULT_HOME_PAGE_FALLBACK: HomePageData = {
+  title: 'Home Page',
+  hero: {
+    badge: 'Scryme ERP OS v3.2 • Unified Operational Kernel',
+    nodeCounterText: '180+ NODES SYNCHRONIZED',
+    headline: 'Can one smarter engine scale your entire enterprise?',
+    subtitle: 'Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship intelligence, and decoupled catalog engines across an immutable sub-millisecond mesh. Zero fragmented connectors.',
+    primaryCtaText: 'Start 14-Day Enterprise Trial',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true',
+    secondaryCtaText: 'Schedule Enterprise Demo',
+    secondaryCtaLink: '/pricing',
+    heroImageUrlFallback: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCEcL6RQ6LruIwODktib1Z-LtAxbtJdLE_O7f1exFDsOc7JvSDz-k9MKgGrYPAdoe9EY_QgL8sN7K_t0jZNVXOUz4mAu0gbuNSyQ7SifZwM8g-jrhEVfJP3SymEuoxeNApEO1pZuMzI0agi683zEbZ6Ubvu-LFu8toq30QpFrZEovSpAYDvx-oj5W4auHNRvuYQidD6at9cfhTQ57t0E2OwlhyOFaXV7svyQ3c8M5FVSplYNGb1tg8',
+    heroImageCaption: 'Autonomous Global Operations Command • Sub-12ms Telemetry Fabric across 180+ Enterprise Nodes',
+    syncStateText: '0.008s Consensus',
+  },
+  pillarsSection: {
+    eyebrow: '01 // Architectural Pillars',
+    title: 'Four specialized engines. Zero operational friction.',
+    description: 'Explore the modular, single-state systems powering multinational enterprises. Every action updates the kernel in sub-millisecond real time.',
+    pillars: [
+      {
+        label: 'Pillar 01 / Commercial',
+        badge: '12ms Ledger Settlement',
+        stat: '+42% Win-Rate Velocity',
+        title: 'Sales Automation & RevOps',
+        body: 'Compress enterprise sales cycles from months to days. Automate multi-currency proposals, dynamic discount margin guardrails, and real-time inventory reservation right from the live sales pipeline.',
+        cta: 'Explore Sales Automation & RevOps',
+        href: '/sales',
+      },
+      {
+        label: 'Pillar 02 / Logistics',
+        badge: '184 Global Nodes Synced',
+        stat: '0.02% Incident Rate',
+        title: 'Smart Multi-Location Inventory',
+        body: 'Track millions of physical units across distributed 3PL networks, regional fulfillment hubs, and retail stores with sub-second RFID and barcode ingestion. Never lose inventory to phantom stockouts.',
+        cta: 'Explore Multi-Location Inventory Hub',
+        href: '/inventory',
+      },
+      {
+        label: 'Pillar 03 / Intelligence',
+        badge: 'Unified Account Graph',
+        stat: '89.4% Net Retention',
+        title: '360° Relationship CRM',
+        body: 'Turn fragmented customer conversations, contract proposals, support escalations, and fulfillment statuses into a unified real-time reactive customer graph with sub-minute churn prediction.',
+        cta: 'Explore 360° Relationship CRM',
+        href: '/crm',
+      },
+      {
+        label: 'Pillar 04 / Omnichannel',
+        badge: 'GraphQL v3.4 Ready',
+        stat: '38ms P95 Latency',
+        title: 'Headless CMS & Catalog Cloud',
+        body: 'Synchronize multi-brand marketing pages, regional localized product catalogs, and custom customer portals directly from your ERP core without re-authoring content or managing brittle webhooks.',
+        cta: 'Explore Headless CMS & Catalog Cloud',
+        href: '/cms',
+      },
+    ],
+  },
+  paradigmSection: {
+    eyebrow: '02 // Paradigm Shift',
+    title: 'Stop paying the middleware tax on broken operational data.',
+    description: 'Enterprise systems failed because they bolted isolated SaaS point solutions together with duct-tape webhooks. When data is replicated across 9 different vendors, truth becomes obsolete within 15 minutes.',
+    calloutTitle: 'The True Cost of Legacy SaaS Sprawl',
+    calloutDescription: 'The average $100M+ enterprise spends $184,000 annually maintaining API sync scripts, reconciling ledger mismatches, and investigating phantom inventory orders.',
+    boardroomImageUrlFallback: 'https://lh3.googleusercontent.com/aida-public/AB6AXuB9ZM4bZ8DDOQzSju9oaCfN9nNGo89aQ11vBih0-9nmagA83FfZx-7i-OnYk6ctmvJc7p7o5sRLtJXLPKHNXVmlNdUnwd5S2s7W43zRJmTkkUCT4ZRM8V8J1pSA3Zj8h-4srMdJ50ilYbBV_aHnjFHudRudTggYduNejOFL6R3-BC7-N0T53Y9QSlIYbjeESVKH3_YkNeuLFpOKRamFYPJN4bH3fmpVqwjqBzQIS4ddURFD2FXULIE',
+    legacyItems: [
+      { title: '9 Disconnected Vendor Silos', description: 'Separate CRM, warehouse, ledger, eCommerce, and catalog databases constantly drifting apart.' },
+      { title: '15+ Minute Cron Job Sync Delays', description: 'Orders accepted against already depleted inventories during flash spikes and seasonal promotions.' },
+      { title: '$184k / Year In Brittle Middleware', description: 'Full-time engineers required solely to patch custom webhooks and debug failed Zapier-style flows.' },
+    ],
+    kernelItems: [
+      { title: '1 Single Operational State Engine', description: 'Every department interacts with a unified ledger. When inventory sells, finance and sales instantly reflect it.' },
+      { title: '<12ms Deterministic Telemetry', description: 'Sub-second atomic state consistency across global nodes with zero phantom stockouts.' },
+      { title: 'Zero Middleware Tax', description: 'Native modules communicate through zero-overhead internal bus, eliminating middleware maintenance.' },
+    ],
+  },
+  metricsSection: {
+    metrics: [
+      { label: 'Annual GMV Managed', value: '$1.2B+', description: 'Governed with zero reconciliation drift' },
+      { label: 'Global Sync Latency', value: '12ms', description: 'Across multi-cloud regions' },
+      { label: 'Guaranteed SLA', value: '99.999%', description: 'Mission-critical redundancy standard' },
+      { label: 'Ledger Recon Reduction', value: '88%', description: 'Eliminating manual accounting friction' },
+    ],
+    spotlight: {
+      badge: 'Customer Spotlight',
+      company: 'Veloce Global Logistics AG',
+      quote: 'Migrating to Scryme’s single-kernel architecture collapsed our reconciliation cycle from 3 days to literally 4 seconds. Our ops teams in Zurich and Singapore are finally looking at the exact same ledger numbers without questioning data freshness.',
+      authorName: 'Elena Rostova',
+      authorRole: 'Chief Operating Officer, Veloce Global Logistics',
+      deploymentStats: [
+        { label: 'Fulfillment Nodes:', value: '42 Facilities' },
+        { label: 'SKU Catalog Scale:', value: '4.2M SKUs' },
+        { label: 'Migration Timeframe:', value: '31 Business Days' },
+      ],
+      caseStudyLink: '/crm',
+    },
+  },
+  faqsSection: {
+    eyebrow: '03 // Architectural Inquiries',
+    title: 'Frequently asked questions by enterprise engineering & leadership',
+    faqs: [
+      {
+        q: 'How does Scryme guarantee sub-12ms sync across disparate regions without data conflicts?',
+        a: 'Scryme uses an immutable state mesh powered by multi-raft consensus protocols. Rather than relying on traditional delayed database replications, ledger events are serialized into deterministic operational blocks with CRDT-backed delta resolution, preventing phantom inventory allocations and sales race conditions.',
+      },
+      {
+        q: 'Can we gradually migrate existing data from SAP, NetSuite, or legacy custom ERPs?',
+        a: 'Yes. Scryme features bidirectional Shadow Sync adapters. You can deploy our Sales Automation or Multi-Location Inventory module first, running in parallel with your legacy core while our zero-loss ETL pipelines mirror real-time records until full migration sign-off.',
+      },
+      {
+        q: 'What are the Model Context Protocol (MCP) capabilities for our AI development teams?',
+        a: 'Scryme exposes secure, enterprise-scoped MCP endpoints. Internal AI assistants and autonomous workflows can query customer credit risk, forecast warehouse restock thresholds, or generate draft contracts with full role-based access control and immutable audit trails.',
+      },
+      {
+        q: 'What security certifications and data residency guarantees are provided?',
+        a: 'Scryme is SOC 2 Type II and ISO/IEC 27001 certified. We support dedicated sovereign VPC instances across Frankfurt, Zurich, Northern Virginia, Singapore, and Tokyo with TLS 1.3 in-transit and AES-256 field-level encryption at rest.',
+      },
+    ],
+  },
+  bottomCta: {
+    badge: 'Autonomous Enterprise Orchestration',
+    title: 'Reclaim command of your global operations today.',
+    subtitle: 'Speak directly with a Principal Enterprise Solutions Architect or spin up an isolated staging sandbox loaded with your sample catalog and node taxonomy.',
+    primaryCtaText: 'Start 14-Day Enterprise Trial',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true',
+    secondaryCtaText: 'Schedule Architecture Review',
+    secondaryCtaLink: '/pricing',
+    guarantees: ['NO LEGACY CONNECTORS NEEDED', 'DEDICATED SOVEREIGN HOSTING', '99.999% RUNTIME SLA'],
+  },
+}
+
+export async function fetchHomePage(): Promise<HomePageData> {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const page = await sanityClient.fetch(HOME_PAGE_QUERY)
+      if (page && (page.hero || page.pillarsSection)) {
+        return {
+          ...DEFAULT_HOME_PAGE_FALLBACK,
+          ...page,
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching home page from API, falling back to default:', err)
+  }
+
+  return DEFAULT_HOME_PAGE_FALLBACK
+}
+
+/* =========================================================================
+   4. CMS PAGE
+   ========================================================================= */
+
+export const CMS_PAGE_QUERY = `
+  *[_type == "cmsPage"][0] {
+    _id,
+    title,
+    hero,
+    features,
+    architecturePoints,
+    bottomCta
+  }
+`
+
+export interface CmsPageData {
+  _id?: string
+  title?: string
+  hero?: {
+    badge?: string
+    headline?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+    secondaryCtaText?: string
+    secondaryCtaLink?: string
+  }
+  features?: {
+    icon?: string
+    title: string
+    description?: string
+    badge?: string
+  }[]
+  architecturePoints?: {
+    title: string
+    description?: string
+    codeSnippet?: string
+  }[]
+  bottomCta?: {
+    badge?: string
+    title?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+  }
+}
+
+export const DEFAULT_CMS_PAGE_FALLBACK: CmsPageData = {
+  title: 'Headless CMS & Catalog Cloud',
+  hero: {
+    badge: 'Headless CMS & Catalog Cloud • v3.4',
+    headline: 'Single-Source Content & Dynamic Catalog Mesh',
+    subtitle: 'Synchronize localized merchandising, multi-brand marketing copy, and real-time inventory pricing directly from your ERP core to any frontend framework.',
+    primaryCtaText: 'Deploy Free Workspace',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=free',
+    secondaryCtaText: 'Explore Catalog APIs',
+    secondaryCtaLink: '/developers/apps',
+  },
+  features: [
+    {
+      title: 'Decoupled Multi-Channel Publishing',
+      description: 'Author pages, banners, announcements, and localized promotions once and broadcast instantly via edge GraphQL and REST APIs.',
+      badge: 'Edge-First',
+    },
+    {
+      title: 'Real-Time Inventory Synchronization',
+      description: 'Product availability, stock levels, and multi-currency pricing stay synchronised with your physical warehouses with sub-millisecond precision.',
+      badge: 'Zero Drift',
+    },
+    {
+      title: 'Sanity Studio CMS Embedded',
+      description: 'Empower marketing and copywriters with visual editing, localized preview modes, and schema-driven page builders.',
+      badge: 'Structured Content',
+    },
+  ],
+  bottomCta: {
+    badge: 'Omnichannel Publishing',
+    title: 'Power your storefronts with live ERP content',
+    subtitle: 'Zero headless disconnects. Build fast, scalable commerce experiences with Scryme.',
+    primaryCtaText: 'Get Started with Free Tier',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=free',
+  },
+}
+
+export async function fetchCmsPage(): Promise<CmsPageData> {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const page = await sanityClient.fetch(CMS_PAGE_QUERY)
+      if (page && (page.hero || page.features)) {
+        return {
+          ...DEFAULT_CMS_PAGE_FALLBACK,
+          ...page,
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching CMS page from API, falling back to default:', err)
+  }
+
+  return DEFAULT_CMS_PAGE_FALLBACK
+}
+
+/* =========================================================================
+   5. CRM PAGE
+   ========================================================================= */
+
+export const CRM_PAGE_QUERY = `
+  *[_type == "crmPage"][0] {
+    _id,
+    title,
+    hero,
+    features,
+    testimonials,
+    bottomCta
+  }
+`
+
+export interface CrmPageData {
+  _id?: string
+  title?: string
+  hero?: {
+    badge?: string
+    headline?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+    secondaryCtaText?: string
+    secondaryCtaLink?: string
+  }
+  features?: {
+    icon?: string
+    title: string
+    description?: string
+    metricBadge?: string
+  }[]
+  testimonials?: {
+    quote?: string
+    authorName?: string
+    authorRole?: string
+    company?: string
+  }[]
+  bottomCta?: {
+    badge?: string
+    title?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+  }
+}
+
+export const DEFAULT_CRM_PAGE_FALLBACK: CrmPageData = {
+  title: '360° Relationship CRM',
+  hero: {
+    badge: '360° Relationship CRM • Enterprise Graph',
+    headline: 'Real-Time Customer Graph Driven by Operational Truth',
+    subtitle: 'Bridge commercial pipelines, account health metrics, billing status, and warehouse fulfillments into one unified customer graph. Prevent churn before it happens.',
+    primaryCtaText: 'Start 14-Day Free Trial',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=growth&trial=true',
+    secondaryCtaText: 'Book Enterprise Demo',
+    secondaryCtaLink: '/pricing',
+  },
+  features: [
+    {
+      title: 'Automated Account Graph & Signals',
+      description: 'Aggregate historical checkout frequency, outstanding receivables, open support tickets, and sales velocity.',
+      metricBadge: '+42% Win Velocity',
+    },
+    {
+      title: 'Omnichannel Conversation Timeline',
+      description: 'Unify WhatsApp, email, and live retail order notes into one chronological customer activity feed.',
+      metricBadge: 'Zero Silos',
+    },
+    {
+      title: 'Predictive Margin & Churn Intelligence',
+      description: 'Telemetry models alert sales directors when re-order intervals decay or margin thresholds are compromised.',
+      metricBadge: '89.4% Net Retention',
+    },
+  ],
+  bottomCta: {
+    badge: 'Accelerate Growth',
+    title: 'Turn customer interactions into lasting enterprise relationships',
+    subtitle: 'Experience CRM seamlessly interwoven with inventory, finance, and POS.',
+    primaryCtaText: 'Deploy Growth Workspace',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=growth',
+  },
+}
+
+export async function fetchCrmPage(): Promise<CrmPageData> {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const page = await sanityClient.fetch(CRM_PAGE_QUERY)
+      if (page && (page.hero || page.features)) {
+        return {
+          ...DEFAULT_CRM_PAGE_FALLBACK,
+          ...page,
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching CRM page from API, falling back to default:', err)
+  }
+
+  return DEFAULT_CRM_PAGE_FALLBACK
+}
+
+/* =========================================================================
+   6. PAYMENTS PAGE
+   ========================================================================= */
+
+export const PAYMENTS_PAGE_QUERY = `
+  *[_type == "paymentsPage"][0] {
+    _id,
+    title,
+    hero,
+    channels,
+    settlementPoints
+  }
+`
+
+export interface PaymentsPageData {
+  _id?: string
+  title?: string
+  hero?: {
+    badge?: string
+    headline?: string
+    subtitle?: string
+    primaryCtaText?: string
+    primaryCtaLink?: string
+    secondaryCtaText?: string
+    secondaryCtaLink?: string
+  }
+  channels?: {
+    title: string
+    badge?: string
+    description?: string
+    icon?: string
+    highlights?: string[]
+  }[]
+  settlementPoints?: {
+    title: string
+    description?: string
+    stat?: string
+  }[]
+}
+
+export const DEFAULT_PAYMENTS_PAGE_FALLBACK: PaymentsPageData = {
+  title: 'Payments Infrastructure',
+  hero: {
+    badge: 'Omnichannel Payment Infrastructure • Sub-2s Settlement',
+    headline: 'Unified Payment Processing & Automated Ledger Reconciliation',
+    subtitle: 'Accept localized M-Pesa mobile payments, global credit cards, Apple Pay, and wire transfers directly inside your POS and checkout workflows with zero reconciliation friction.',
+    primaryCtaText: 'Deploy Scale Workspace',
+    primaryCtaLink: 'https://app.scryme.tech/signup?plan=scale&trial=true',
+    secondaryCtaText: 'Start Free Testing ($0/mo)',
+    secondaryCtaLink: 'https://app.scryme.tech/signup?plan=free',
+  },
+  channels: [
+    {
+      title: 'Safaricom M-Pesa STK Push & Paybill',
+      badge: 'Sub-2s Direct Prompt',
+      description: 'Trigger instant M-Pesa PIN prompts directly on customer smartphones with zero manual reference entry.',
+      highlights: ['Direct Safaricom Daraja API integration', 'Automated reconciliation with sales orders', 'Zero chargeback risk'],
+    },
+    {
+      title: 'Credit & Debit Cards (Global & Regional)',
+      badge: 'Visa • Mastercard • Amex',
+      description: 'PCI-DSS Level 1 compliant card processing with localized routing for lower interchange fees.',
+      highlights: ['Apple Pay & Google Pay ready', 'Multi-currency settlement (USD, KSH, EUR)', '3D Secure fraud prevention'],
+    },
+    {
+      title: 'Corporate Invoicing & Wire Transfers',
+      badge: 'ACH • SEPA • RTGS',
+      description: 'Automated invoice settlement tracking with real-time bank ledger reconciliation.',
+      highlights: ['Custom credit terms (Net 30, Net 60)', 'Automated reminder emails and statements', 'Dual-control payment approvals'],
+    },
+  ],
+}
+
+export async function fetchPaymentsPage(): Promise<PaymentsPageData> {
+  try {
+    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+      const page = await sanityClient.fetch(PAYMENTS_PAGE_QUERY)
+      if (page && (page.hero || page.channels)) {
+        return {
+          ...DEFAULT_PAYMENTS_PAGE_FALLBACK,
+          ...page,
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[Sanity] Error fetching payments page from API, falling back to default:', err)
+  }
+
+  return DEFAULT_PAYMENTS_PAGE_FALLBACK
+}
+
+/* =========================================================================
+   7. DYNAMIC PAGES & COMPARISONS
+   ========================================================================= */
 
 export const COMPARISON_PAGE_QUERY = `
   *[_type == "comparisonPage" && slug.current == $slug][0] {
