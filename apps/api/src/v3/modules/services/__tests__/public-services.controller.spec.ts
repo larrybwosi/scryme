@@ -63,6 +63,15 @@ describe("PublicServicesController & getServiceAvailability Algorithm", () => {
                 findFirst: vi.fn(),
                 delete: vi.fn(),
               },
+              transaction: {
+                create: vi.fn().mockResolvedValue({ id: "tx-pub-1", number: "SRV-1", finalTotal: 100 }),
+              },
+              transactionServiceItem: {
+                create: vi.fn().mockResolvedValue({ id: "tsi-1" }),
+              },
+              payment: {
+                create: vi.fn().mockResolvedValue({ id: "pay-pub-1" }),
+              },
             },
           },
         },
@@ -204,7 +213,13 @@ describe("PublicServicesController & getServiceAvailability Algorithm", () => {
           }),
         }),
       );
-      expect(result).toEqual({ id: "booking1" });
+      expect(result).toEqual(
+        expect.objectContaining({
+          id: "booking1",
+          orderId: "tx-pub-1",
+          paymentId: "pay-pub-1",
+        }),
+      );
     });
   });
 

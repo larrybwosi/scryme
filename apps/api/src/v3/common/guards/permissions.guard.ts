@@ -99,6 +99,9 @@ export class PermissionsGuard implements CanActivate {
         "services:read",
         "cart:*",
         "booking:*",
+        "order:create",
+        "order:read",
+        "payment:create",
         "customer:read",
         "customer:update",
       ];
