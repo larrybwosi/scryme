@@ -6,6 +6,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { env } from "@repo/env";
 import { useWorkspaceContext, QUERY_KEYS } from "./hooks/use-projects";
 import { authClient } from "./auth-client";
+import { getResolvedSocketUrl } from "./urls";
 
 interface RealtimeContextType {
   socket: Socket | null;
@@ -27,8 +28,8 @@ export function RealtimeProvider({ children }: { children: React.ReactNode }) {
     let currentSocket: Socket | null = null;
 
     async function initSocket() {
-      const apiUrl = env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
-      const wsUrl = env.NEXT_PUBLIC_WS_URL || env.NEXT_PUBLIC_SOCKET_URL || apiUrl;
+      const rawWsUrl = env.NEXT_PUBLIC_WS_URL || env.NEXT_PUBLIC_SOCKET_URL || env.NEXT_PUBLIC_API_URL;
+      const wsUrl = getResolvedSocketUrl(rawWsUrl, env.NODE_ENV);
 
       let token = "socket-io-realtime";
       try {

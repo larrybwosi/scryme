@@ -598,6 +598,60 @@ services:
       - "traefik.http.services.admin.loadbalancer.server.port=${ADMIN_PORT:-3007}"
       - "logging_job=admin"
 
+  projects:
+    build:
+      context: .
+      dockerfile: apps/projects/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
+        NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.tech}
+        BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    image: scryme-projects:latest
+    restart: always
+    deploy:
+      resources:
+        limits:
+          memory: 512M
+    env_file:
+      - .env
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "wget",
+          "--no-verbose",
+          "--tries=1",
+          "--spider",
+          "http://localhost:${PROJECTS_PORT:-3002}/api/health",
+        ]
+      interval: 60s
+      timeout: 10s
+      retries: 3
+      start_period: 90s
+    environment:
+      DATABASE_URL: ${DATABASE_URL:-postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}}
+      NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
+      NEXT_PUBLIC_REALTIME_PROVIDER: socketio
+      NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.tech}
+      NEXT_PUBLIC_PROJECTS_URL: https://${PROJECTS_DOMAIN:-projects.scryme.tech}
+      PORT: ${PROJECTS_PORT:-3002}
+      NODE_ENV: production
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+    depends_on:
+      api:
+        condition: service_healthy
+    networks:
+      - scryme-prod-network
+      - proxy
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=${PROXY_NETWORK:-dokploy-network}"
+      - "traefik.http.routers.projects.rule=Host(`${PROJECTS_DOMAIN:-projects.scryme.tech}`)"
+      - "traefik.http.routers.projects.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
+      - "traefik.http.routers.projects.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
+      - "traefik.http.services.projects.loadbalancer.server.port=${PROJECTS_PORT:-3002}"
+      - "logging_job=projects"
+
 volumes:
   postgres_prod_data:
   customer_postgres_prod_data:
