@@ -330,11 +330,15 @@ class AuthRepositoryImpl @Inject constructor(
                 deviceType = "ANDROID"
             )
 
-            if (!sessionId.isNullOrEmpty()) {
-                val response = authApiService.authorizePosPairingSession(sessionId, pairReq)
+            val sessionTarget = sessionId ?: pairingCode
+            if (!sessionTarget.isNullOrEmpty()) {
+                val response = authApiService.authorizePosPairingSession(sessionTarget, pairReq)
                 if (response.isSuccessful && response.body()?.success == true) {
                     runCatching { registerDeviceToken() }
-                    return Result.success("POS Pairing authorized for session: $sessionId")
+                    return Result.success("POS Pairing authorized for session: $sessionTarget")
+                } else if (response.code() in 400..499 && response.code() != 404) {
+                    val errorMsg = extractErrorMessage(response.body()?.error?.message, response.message(), "POS Pairing session authorization failed")
+                    return Result.failure(Exception(errorMsg))
                 }
             }
 
