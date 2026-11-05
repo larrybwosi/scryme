@@ -22,7 +22,7 @@ export class FinancialReportingService {
             status: "POSTED" as any,
             entryDate: { gte: startDate, lte: endDate },
           },
-          // ⚡ Bolt Optimization: Filter by ledgerAccount type directly at the database level.
+          // Filter by ledgerAccount type directly at the database level.
           // This avoids aggregating unrelated balance sheet accounts (Assets/Liabilities/Equity),
           // reducing database CPU, network overhead, and response latency.
           ledgerAccount: {
@@ -83,7 +83,7 @@ export class FinancialReportingService {
             status: "POSTED" as any,
             entryDate: { lte: asOfDate },
           },
-          // ⚡ Bolt Optimization: Filter by ledgerAccount type directly at the database level.
+          // Filter by ledgerAccount type directly at the database level.
           // This avoids aggregating unrelated P&L accounts (Revenue/Expenses),
           // reducing database CPU, network overhead, and response latency.
           ledgerAccount: {

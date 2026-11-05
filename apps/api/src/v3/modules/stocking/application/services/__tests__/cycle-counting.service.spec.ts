@@ -116,7 +116,7 @@ describe("CycleCountingService", () => {
 
       await service.generateStockTake(mockConfig);
 
-      // Verify the Bolt Optimization: targeted select block used instead of broad include
+      // Verify the optimization: targeted select block used instead of broad include
       expect(mockProductVariantStock.findMany).toHaveBeenCalledWith({
         where: {
           organizationId: "org-1",

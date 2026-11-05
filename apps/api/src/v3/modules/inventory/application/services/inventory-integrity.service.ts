@@ -12,7 +12,7 @@ export class InventoryIntegrityService {
 
     while (true) {
       /**
-       * OPTIMIZATION (Bolt ⚡): Replaced 'skip' with cursor-based pagination.
+       * Replaced 'skip' with cursor-based pagination.
        * Cursor-based pagination provides stable performance (O(1) seek) regardless of
        * how deep we are in the variant list, avoiding the O(N) cost of 'skip'.
        */
@@ -28,7 +28,7 @@ export class InventoryIntegrityService {
       if (variants.length === 0) break;
 
       /**
-       * OPTIMIZATION (Bolt ⚡): Replaced N+1 query pattern with batched pre-fetching
+       * Replaced N+1 query pattern with batched pre-fetching
        * and targeted 'select' blocks.
        * 1. Fetches stocks and batches for the entire batch in parallel (O(1) roundtrips).
        * 2. Targeted 'select' reduces memory overhead and database I/O.
@@ -36,7 +36,7 @@ export class InventoryIntegrityService {
        */
       const variantIds = variants.map((v) => v.id);
       const [allStocks, allBatches] = await Promise.all([
-        // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
+        // IDOR Prevention - Scope lookup with organizationId
         this.prisma.client.productVariantStock.findMany({
           where: { variantId: { in: variantIds }, organizationId },
           select: {
@@ -60,7 +60,7 @@ export class InventoryIntegrityService {
       ]);
 
       /**
-       * OPTIMIZATION (Bolt ⚡): Replaced O(N*M) '.filter()' with O(N+M) Map lookups.
+       * Replaced O(N*M) '.filter()' with O(N+M) Map lookups.
        * Indexing pre-fetched data by variantId allows constant-time access during
        * the main loop, significantly speeding up processing for dense batches.
        */
@@ -78,7 +78,7 @@ export class InventoryIntegrityService {
       }
 
       /**
-       * OPTIMIZATION (Bolt ⚡): Parallelized variant integrity verification.
+       * Parallelized variant integrity verification.
        * Replaced sequential 'for...of' loop awaiting each variant verification with Promise.all.
        * Since pre-fetched stocks and batches are passed in, each verification runs concurrently,
        * collapsing processing latency per batch from O(N) sequential awaits to O(1) concurrent execution.
@@ -119,7 +119,7 @@ export class InventoryIntegrityService {
     const issues = [];
 
     // 1. Check Stock Summary vs Batches
-    // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
+    // IDOR Prevention - Scope lookup with organizationId
     const stocks =
       preFetchedStocks ||
       (await this.prisma.client.productVariantStock.findMany({
@@ -164,7 +164,7 @@ export class InventoryIntegrityService {
     variantId: string,
     locationId: string,
   ) {
-    // 🛡️ Sentinel: IDOR Prevention - Scope lookup with organizationId
+    // IDOR Prevention - Scope lookup with organizationId
     const batches = await this.prisma.client.stockBatch.findMany({
       where: { variantId, locationId, organizationId, currentQuantity: { gt: 0 } },
     });
@@ -174,7 +174,7 @@ export class InventoryIntegrityService {
       0,
     );
 
-    // 🛡️ Sentinel: IDOR Prevention - Use updateMany with organizationId filter
+    // IDOR Prevention - Use updateMany with organizationId filter
     await this.prisma.client.productVariantStock.updateMany({
       where: { variantId, locationId, organizationId },
       data: {

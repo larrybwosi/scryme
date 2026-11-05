@@ -18,7 +18,7 @@ export class ScanUnpackBatchUseCase {
   async execute(organizationId: string, memberId: string, batchId: string) {
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Find the batch and its related transfer item
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because StockBatch lacks
+      // SECURITY: Using findFirst instead of findUnique because StockBatch lacks
       // a composite unique index on [id, organizationId]. Scoping by organizationId prevents IDOR.
       const batch = await tx.stockBatch.findFirst({
         where: { id: batchId, organizationId },
@@ -35,7 +35,7 @@ export class ScanUnpackBatchUseCase {
             },
             where: {
               stockTransfer: {
-                // SECURITY (Sentinel): BOLA/IDOR protection - filter stockTransfer by tenant organizationId
+                // SECURITY: BOLA/IDOR protection - filter stockTransfer by tenant organizationId
                 // to prevent processing active transfers belonging to foreign organizations.
                 organizationId,
                 status: {

@@ -17,7 +17,7 @@ export class FavoritesService {
     return this.prisma.client.favorite.findMany({
       where: { organizationId, customerId },
       /**
-       * ⚡ Bolt: Performance Optimization
+       * Performance Optimization
        * Replaced broad 'include' with targeted 'select' to reduce over-fetching.
        * Reduces database I/O and network payload size by selecting only essential fields.
        */
@@ -57,7 +57,7 @@ export class FavoritesService {
     const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
+    // Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
     const product = await this.prisma.client.product.findFirst({
       where: { id: productId, organizationId },
       select: { id: true },
@@ -87,7 +87,7 @@ export class FavoritesService {
     const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    // Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
     const favorite = await this.prisma.client.favorite.findFirst({
       where: {
         organizationId,
@@ -115,7 +115,7 @@ export class FavoritesService {
     const { organizationId, customerId } = ctx;
     if (!customerId) return false;
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    // Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
     const favorite = await this.prisma.client.favorite.findFirst({
       where: {
         organizationId,

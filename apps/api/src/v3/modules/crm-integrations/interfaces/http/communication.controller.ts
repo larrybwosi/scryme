@@ -51,7 +51,7 @@ export class CommunicationController {
   ) {
     await this.service.handleOAuthCallback(provider, organizationId, code);
 
-    // SECURITY (Sentinel): Redirect back to configured application URL
+    // SECURITY: Redirect back to configured application URL
     const baseUrl = env.NEXT_PUBLIC_CRM_URL || env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
     res.redirect(
       `${baseUrl}/crm/integrations/${provider}?success=true`,

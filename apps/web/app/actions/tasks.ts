@@ -68,7 +68,7 @@ export async function createStaffTask(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
-    // ⚡ Bolt Optimization: Parallelize foreign entity validation lookups (member, shift, location).
+    // Parallelize foreign entity validation lookups (member, shift, location).
     // Combining independent database read queries into a single Promise.all concurrent block collapses up to 3 sequential database
     // roundtrips into 1 flat concurrent roundtrip, reducing task creation validation latency by up to ~66%.
     const [member, shift, location] = await Promise.all([
@@ -171,7 +171,7 @@ export async function updateStaffTask(
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate updated foreign relational IDs against current organizationId before updating.
-    // ⚡ Bolt Optimization: Parallelize foreign entity validation lookups (member, shift, location).
+    // Parallelize foreign entity validation lookups (member, shift, location).
     // Combining independent database read queries into a single Promise.all concurrent block collapses up to 3 sequential database
     // roundtrips into 1 flat concurrent roundtrip, reducing task update validation latency by up to ~66%.
     const [member, shift, location] = await Promise.all([

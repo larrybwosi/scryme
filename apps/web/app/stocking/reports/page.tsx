@@ -125,7 +125,7 @@ export default async function ReportsPage({
 
     potentialProfit = totalRetailValue - totalCostValue;
   } else if (reportType === "Slow Moving Inventory") {
-    // ⚡ Bolt Optimization: Parallelize fetching of stock levels and movement history to reduce page load time by ~50%
+    // Parallelize fetching of stock levels and movement history to reduce page load time by ~50%
     const [fetchedStockLevels, movementsForTurnover] = await Promise.all([
       getStockLevels({
         locationId: params.locationId,

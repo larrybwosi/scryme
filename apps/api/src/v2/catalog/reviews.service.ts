@@ -51,7 +51,7 @@ export class ReviewsService {
     const { organizationId, customerId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
+    // Enforce multi-tenant isolation by verifying that the product exists and belongs to this organization
     const product = await this.prisma.client.product.findFirst({
       where: { id: productId, organizationId },
       select: { id: true },
@@ -86,7 +86,7 @@ export class ReviewsService {
     const { customerId, organizationId } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
-    // 🛡️ Sentinel: IDOR Prevention - Use findFirst to enforce tenant/organization isolation
+    // IDOR Prevention - Use findFirst to enforce tenant/organization isolation
     const review = await this.prisma.client.productReview.findFirst({
       where: { id: reviewId, organizationId },
     });
@@ -110,7 +110,7 @@ export class ReviewsService {
     const { customerId, organizationId, permissions } = ctx;
     if (!customerId) throw new BadRequestException("Customer ID is required");
 
-    // 🛡️ Sentinel: IDOR Prevention - Use findFirst to enforce tenant/organization isolation
+    // IDOR Prevention - Use findFirst to enforce tenant/organization isolation
     const review = await this.prisma.client.productReview.findFirst({
       where: { id: reviewId, organizationId },
     });

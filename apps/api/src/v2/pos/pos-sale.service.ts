@@ -63,7 +63,7 @@ export class PosSaleService {
       (p: any) => p.method === "MPESA" && p.status === "PENDING",
     );
 
-    // ⚡ Bolt Optimization: Parallelize high-latency external Safaricom M-Pesa STK push API calls
+    // Parallelize high-latency external Safaricom M-Pesa STK push API calls
     // using Promise.all with localized try/catch blocks. This avoids sequential network request
     // blocking and reduces the endpoint's latency profile significantly from O(N) down to O(1).
     await Promise.all(

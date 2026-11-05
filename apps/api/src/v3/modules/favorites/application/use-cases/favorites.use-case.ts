@@ -15,7 +15,7 @@ export class FavoritesUseCase {
     if (!customerId) throw new BadRequestException("customerId is required");
     return this.prisma.client.favorite.findMany({
       where: { organizationId, customerId },
-      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // Use targeted select for list view to reduce database load
       // and network payload size by excluding the large 'description' and other relational fields.
       // Selection expanded to include variants to maintain consistency with V2 and prevent UI regressions.
       select: {
@@ -83,7 +83,7 @@ export class FavoritesUseCase {
   async removeFavorite(organizationId: string, dto: FavoriteDto) {
     if (!dto.customerId) throw new Error("customerId is required");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
+    // Enforce multi-tenant isolation by explicitly scoping favorite lookup to organizationId
     const favorite = await this.prisma.client.favorite.findFirst({
       where: {
         organizationId,

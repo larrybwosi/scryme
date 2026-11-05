@@ -50,7 +50,7 @@ export class CartUseCase {
           });
         } else {
           // Both carts exist and have items. Merge guest cart items into customer cart
-          // ⚡ Bolt Optimization: Pre-index existing customer cart items into an in-memory Map
+          // Pre-index existing customer cart items into an in-memory Map
           // and consolidate guest cart items by key in-memory before database execution.
           // This eliminates O(N * M) nested linear search scans, prevents duplicate database writes/creates
           // for identical items, and allows running all database operations concurrently via Promise.all.
@@ -169,7 +169,7 @@ export class CartUseCase {
   }
 
   async addToCart(organizationId: string, dto: AddToCartDto) {
-    // SECURITY (Sentinel): Validate product, variant, or service exists and belongs to organization to prevent IDOR / BOLA cross-tenant associations.
+    // SECURITY: Validate product, variant, or service exists and belongs to organization to prevent IDOR / BOLA cross-tenant associations.
     if (dto.productId) {
       const product = await this.prisma.client.product.findFirst({
         where: { id: dto.productId, organizationId },
@@ -189,7 +189,7 @@ export class CartUseCase {
       if (!service) throw new NotFoundException("Service not found");
     }
 
-    // ⚡ Bolt Optimization: Skip fetching cart items as we only need the cart ID
+    // Skip fetching cart items as we only need the cart ID
     const cart = await this.getCart(
       organizationId,
       dto.customerId,
@@ -251,7 +251,7 @@ export class CartUseCase {
   }
 
   async removeFromCart(organizationId: string, dto: RemoveFromCartDto) {
-    // ⚡ Bolt Optimization: Skip fetching cart items as we only need the cart ID
+    // Skip fetching cart items as we only need the cart ID
     const cart = await this.getCart(
       organizationId,
       dto.customerId,

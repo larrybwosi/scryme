@@ -20,7 +20,7 @@ export class UpdateCustomerUseCase {
 
     const customer = await this.prisma.client.customer.findFirst({
       where: { id: customerId, organizationId },
-      // ⚡ Bolt Optimization: Use targeted select for verification to reduce database payload.
+      // Use targeted select for verification to reduce database payload.
       select: { id: true },
     });
 
@@ -28,7 +28,7 @@ export class UpdateCustomerUseCase {
       throw new NotFoundException(`Customer with ID ${customerId} not found`);
     }
 
-    // SECURITY (Sentinel): BOLA / Tenant Isolation Mitigation - Customer lacks a composite unique index on [id, organizationId].
+    // SECURITY: BOLA / Tenant Isolation Mitigation - Customer lacks a composite unique index on [id, organizationId].
     // Prisma's update query with { where: { id: customerId } } ignores non-unique organizationId filters in 'where' clause at runtime.
     // Using updateMany scoped strictly by { id: customerId, organizationId } guarantees database-level multi-tenant isolation,
     // preventing potential cross-tenant IDOR customer record modifications or race conditions.
@@ -53,7 +53,7 @@ export class UpdateCustomerUseCase {
 
     const updatedCustomer = await this.prisma.client.customer.findFirstOrThrow({
       where: { id: customerId, organizationId },
-      // ⚡ Bolt Optimization: Use targeted select for the updated record
+      // Use targeted select for the updated record
       // to reduce database payload and serialization overhead.
       select: {
         id: true,

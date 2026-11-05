@@ -47,7 +47,7 @@ export class PaginatedResponse<T> {
 
 /**
  * Paginates Prisma query results.
- * ⚡ Bolt: Added support for 'select' and 'include' to prevent over-fetching.
+ * Added support for 'select' and 'include' to prevent over-fetching.
  */
 export async function paginate<T>(
   repository: any,

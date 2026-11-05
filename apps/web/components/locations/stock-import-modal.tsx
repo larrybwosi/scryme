@@ -265,7 +265,7 @@ export function StockImportModal({
 
   // Perform Fuzzy Matching across all rows
   /**
-   * OPTIMIZATION (Bolt ⚡): Pre-index system variants by SKU and Barcode into Map structures,
+   * Pre-index system variants by SKU and Barcode into Map structures,
    * and pre-compute display name strings prior to row iterations.
    * This replaces linear O(N * V) array .find() scans for SKU/Barcode matching with O(1) constant-time lookups,
    * and eliminates repeated string concatenations during fuzzy name matching.

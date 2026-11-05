@@ -40,7 +40,7 @@ export class ScrymeApprovalService {
       (d) => d.stepNumber === request.currentStep,
     );
 
-    // OPTIMIZATION (Bolt ⚡): Parallelized direct-message notifications sending and logging
+    // Parallelized direct-message notifications sending and logging
     // for all pending approvers in the current step concurrently using Promise.all.
     // This collapses sequential high-latency network and database round-trips from O(N) down to O(1).
     await Promise.all(
@@ -202,7 +202,7 @@ export class ScrymeApprovalService {
             ? "Information Requested"
             : finalDecision.status;
 
-    // OPTIMIZATION (Bolt ⚡): Update step messages concurrently using Promise.all to avoid O(N) sequential high-latency HTTP calls
+    // Update step messages concurrently using Promise.all to avoid O(N) sequential high-latency HTTP calls
     await Promise.all(
       request.decisions.map(async (decision) => {
         if (decision.scrymeMessageId && decision.scrymeChannelId) {
@@ -329,7 +329,7 @@ export class ScrymeApprovalService {
    * Enterprise: Post to a central discussion channel for the approval request.
    */
   private async notifyDiscussionChannel(organizationId: string, requestId: string) {
-    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent cross-tenant IDOR
+    // SECURITY: Use findFirst with organizationId scoping to prevent cross-tenant IDOR
     const request = await this.prisma.client.approvalRequest.findFirst({
       where: { id: requestId, organizationId },
       include: {

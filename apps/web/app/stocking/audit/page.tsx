@@ -34,7 +34,7 @@ export default async function AuditTrailPage({
 }) {
   const params = await searchParams;
 
-  // OPTIMIZATION (Bolt ⚡): Parallelized independent product catalog and stock movement history database queries using Promise.all.
+  // Parallelized independent product catalog and stock movement history database queries using Promise.all.
   const [products, movements] = await Promise.all([
     getInventoryProducts({ stockLevel: "all" }),
     getStockMovementHistory({

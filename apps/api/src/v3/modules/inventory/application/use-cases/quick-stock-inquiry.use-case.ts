@@ -44,7 +44,7 @@ export class QuickStockInquiryUseCase {
     });
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced O(N*M) lookup with O(N+M) Map.
+     * Replaced O(N*M) lookup with O(N+M) Map.
      * Indexing the stocks by variantId allows for constant-time lookups
      * during the mapping phase, which is more efficient for large lists.
      */

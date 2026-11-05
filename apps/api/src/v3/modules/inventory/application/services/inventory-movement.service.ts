@@ -113,7 +113,7 @@ export class InventoryMovementService {
   }
 
   /**
-   * OPTIMIZATION (Bolt ⚡): Optimized integrity check.
+   * Optimized integrity check.
    * 1. Deduplicates location IDs to avoid redundant queries.
    * 2. Uses parallel database-level aggregations (_sum) instead of fetching full batch arrays.
    * 3. Replaces sequential O(N) queries with O(1) parallel batch lookups.

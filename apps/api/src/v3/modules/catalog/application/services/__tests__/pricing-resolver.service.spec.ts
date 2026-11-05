@@ -2,7 +2,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { PricingResolverService } from '../pricing-resolver.service';
 import { PrismaService } from '@/prisma/prisma.service';
 
-describe('PricingResolverService - Bolt early return', () => {
+describe('PricingResolverService - early return', () => {
   let service: PricingResolverService;
   let prisma: PrismaService;
 

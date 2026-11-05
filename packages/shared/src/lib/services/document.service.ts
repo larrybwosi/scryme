@@ -27,7 +27,7 @@ export class DocumentService {
   }) {
     const { transactionId, fulfillmentId, organizationId, memberId } = params;
 
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because Transaction
+    // SECURITY: Using findFirst instead of findUnique because Transaction
     // lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
     // 1. Fetch transaction with full details
     const transaction = await db.transaction.findFirst({
@@ -154,7 +154,7 @@ export class DocumentService {
       throw new Error("No valid member found to associate with the document");
     }
 
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because Transaction
+    // SECURITY: Using findFirst instead of findUnique because Transaction
     // lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
     const transaction = await db.transaction.findFirst({
       where: { id: transactionId, organizationId },
@@ -258,7 +258,7 @@ export class DocumentService {
       throw new Error("No valid member found to associate with the document");
     }
 
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because Transaction
+    // SECURITY: Using findFirst instead of findUnique because Transaction
     // lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
     const transaction = await db.transaction.findFirst({
       where: { id: transactionId, organizationId },

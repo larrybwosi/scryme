@@ -22,7 +22,7 @@ async function getDefaultPieceUnit(organizationId: string): Promise<{
   systemUnitId?: string;
   orgUnitId?: string;
 }> {
-  // ⚡ Bolt Optimization: Execute organization unit and system unit lookups concurrently using Promise.all with explicit select projections.
+  // Execute organization unit and system unit lookups concurrently using Promise.all with explicit select projections.
   // Collapses 2 sequential DB roundtrips down to 1 flat concurrent roundtrip and avoids fetching unnecessary fields.
   const [orgUnit, systemUnit] = await Promise.all([
     db.organizationUnit.findFirst({
@@ -603,7 +603,7 @@ export async function checkProductUniqueness(params: {
 
   const { sku, slug, excludeId } = params;
 
-  // ⚡ Bolt Optimization: Execute SKU and slug uniqueness queries concurrently using Promise.all with explicit select projections.
+  // Execute SKU and slug uniqueness queries concurrently using Promise.all with explicit select projections.
   // Collapses up to 2 sequential database roundtrips down to 1 flat concurrent roundtrip on the debounced user input path,
   // and uses `select: { id: true }` to avoid over-fetching full product records.
   const [existingSku, existingSlug] = await Promise.all([
@@ -1718,7 +1718,7 @@ export async function importProducts(
             .substring(0, 3)
             .toUpperCase()
             .padEnd(3, "X");
-          // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable base SKUs
+          // SECURITY: Use cryptographically secure random integers instead of Math.random() to prevent predictable base SKUs
           const random = crypto.randomInt(10000, 100000);
           baseSku = `${prefix}-${random}`;
         }
@@ -1768,7 +1768,7 @@ export async function importProducts(
         for (const variantData of productData.variants) {
           let variantSku = variantData.sku;
           if (!variantSku || variantSku.trim() === "") {
-            // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable variant SKUs
+            // SECURITY: Use cryptographically secure random integers instead of Math.random() to prevent predictable variant SKUs
             const random = crypto.randomInt(1000, 10000);
             variantSku = `${baseSku}-${variantData.variantName.substring(0, 3).toUpperCase()}-${random}`;
           }
@@ -1983,7 +1983,7 @@ export async function fixMissingUnits(): Promise<{
 
   let updatedCount = 0;
 
-  // ⚡ Bolt Optimization: Process variant unit updates in controlled chunks (CHUNK_SIZE = 10).
+  // Process variant unit updates in controlled chunks (CHUNK_SIZE = 10).
   // Executing database transactions sequentially in a for...of loop creates an O(N) blocking network latency bottleneck.
   // Using Promise.all over chunked slices collapses roundtrips from O(N) to O(N/10) while protecting database connection pool capacity.
   const CHUNK_SIZE = 10;

@@ -21,7 +21,7 @@ export class StockMovementReportService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // ⚡ Bolt Optimization: Use database-level aggregation (groupBy) instead of fetching all movements.
+    // Use database-level aggregation (groupBy) instead of fetching all movements.
     // This reduces network payload and memory usage from O(N) to O(1) for summary stats.
     const summaryAggs = await this.prisma.client.stockMovement.groupBy({
       by: ["movementType"],
@@ -52,7 +52,7 @@ export class StockMovementReportService {
       }
     });
 
-    // ⚡ Bolt Optimization: Use Two-Step Aggregation Pattern for top items.
+    // Use Two-Step Aggregation Pattern for top items.
     // 1) Group by variantId in the database to find top 5 by quantity.
     const topVariantAggs = await this.prisma.client.stockMovement.groupBy({
       by: ["variantId"],
@@ -84,7 +84,7 @@ export class StockMovementReportService {
       },
     });
 
-    // ⚡ Bolt Optimization: Pre-index variants metadata by ID in a Map to replace
+    // Pre-index variants metadata by ID in a Map to replace
     // linear array search (.find()) inside mapping loops with O(1) constant-time map lookups.
     const variantMap = new Map(variantsMetadata.map((v) => [v.id, v]));
 

@@ -49,7 +49,7 @@ export class ManageAddressesUseCase {
     });
 
     if (existingAddress) {
-      // 🛡️ Sentinel: BOLA/IDOR Security Hardening - Address model lacks a composite unique constraint
+      // BOLA/IDOR Security Hardening - Address model lacks a composite unique constraint
       // on [id, customerId]. Using updateMany with explicit customerId filter prevents cross-customer address modification.
       await this.prisma.client.address.updateMany({
         where: { id: existingAddress.id, customerId },

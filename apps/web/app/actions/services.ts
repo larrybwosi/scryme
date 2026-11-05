@@ -45,7 +45,7 @@ export async function updateServiceCategory(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
+  // BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
   // because ServiceCategory model lacks a composite unique constraint on [id, organizationId].
   const result = await db.serviceCategory.updateMany({
     where: {
@@ -72,7 +72,7 @@ export async function deleteServiceCategory(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
+  // BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
   // because ServiceCategory model lacks a composite unique constraint on [id, organizationId].
   const result = await db.serviceCategory.deleteMany({
     where: {
@@ -134,7 +134,7 @@ export async function createService(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure category belongs to the authenticated organization
+  // BOLA/IDOR Protection - Ensure category belongs to the authenticated organization
   const category = await db.serviceCategory.findFirst({
     where: {
       id: data.categoryId,
@@ -187,7 +187,7 @@ export async function updateService(
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   if (data.categoryId) {
-    // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure target category belongs to the authenticated organization
+    // BOLA/IDOR Protection - Ensure target category belongs to the authenticated organization
     const category = await db.serviceCategory.findFirst({
       where: {
         id: data.categoryId,
@@ -197,7 +197,7 @@ export async function updateService(
     if (!category) throw new Error("Invalid service category");
   }
 
-  // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
+  // BOLA/IDOR Protection - Use updateMany scoped by id and organizationId
   // because Service model lacks a composite unique constraint on [id, organizationId].
   const result = await db.service.updateMany({
     where: {
@@ -242,7 +242,7 @@ export async function deleteService(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
+  // BOLA/IDOR Protection - Use deleteMany scoped by id and organizationId
   // because Service model lacks a composite unique constraint on [id, organizationId].
   const result = await db.service.deleteMany({
     where: {

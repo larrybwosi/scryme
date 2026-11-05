@@ -580,7 +580,7 @@ export class ProductController {
       throw new NotFoundException("Product not found");
     }
 
-    // SECURITY (Sentinel): Product lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: Product lacks a composite unique constraint on [id, organizationId].
     // Prisma's `update` ignores non-unique fields in `where` clauses, so we use `updateMany`
     // with `organizationId` filter to strictly enforce multi-tenant isolation at the DB level during mutation.
     const updateCount = await this.prisma.client.product.updateMany({
@@ -668,7 +668,7 @@ export class ProductController {
     }
 
     const result = await this.prisma.client.$transaction(async tx => {
-      // SECURITY (Sentinel): Validate ownership before update to prevent IDOR.
+      // SECURITY: Validate ownership before update to prevent IDOR.
       // ProductSupplier doesn't have organizationId directly, so we check via Product relation.
       const exists = await tx.productSupplier.findFirst({
         where: {
@@ -746,7 +746,7 @@ export class ProductController {
     }
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced deep 'include' with targeted 'select'.
+     * Replaced deep 'include' with targeted 'select'.
      * Fetching only required fields for the listing UI significantly reduces
      * database I/O, network payload, and serialization time.
      * Estimated impact: ~60-70% reduction in response payload size.
@@ -942,7 +942,7 @@ export class ProductController {
       throw new ForbiddenException("Not authorized to update this review");
     }
 
-    // SECURITY (Sentinel): ProductReview lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: ProductReview lacks a composite unique constraint on [id, organizationId].
     // Use `updateMany` scoped by organizationId and customerId to enforce tenant and ownership isolation at the DB level.
     const updateCount = await this.prisma.client.productReview.updateMany({
       where: {

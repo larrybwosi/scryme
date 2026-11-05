@@ -13,7 +13,7 @@ export class ScrymeNotificationService {
    * Notify about a new order.
    */
   async notifyOrderCreated(organizationId: string, orderId: string) {
-    // SECURITY (Sentinel): Use findFirst instead of findUnique because transaction lacks a composite unique index on [id, organizationId]
+    // SECURITY: Use findFirst instead of findUnique because transaction lacks a composite unique index on [id, organizationId]
     const order = await this.prisma.client.transaction.findFirst({
       where: { id: orderId, organizationId },
       include: {
@@ -45,7 +45,7 @@ export class ScrymeNotificationService {
 
     // Enterprise: If it's a B2B customer, notify their specific branch/location channel
     if (order.businessAccount?.defaultLocationId) {
-      // SECURITY (Sentinel): Use findFirst with organizationId scoping to ensure strict tenant isolation
+      // SECURITY: Use findFirst with organizationId scoping to ensure strict tenant isolation
       const location = await this.prisma.client.inventoryLocation.findFirst({
         where: { id: order.businessAccount.defaultLocationId, organizationId },
       });
@@ -92,7 +92,7 @@ export class ScrymeNotificationService {
     ];
 
     // 3. Send to all identified channels
-    // OPTIMIZATION (Bolt ⚡): Parallelized notification sending and database logging using Promise.all.
+    // Parallelized notification sending and database logging using Promise.all.
     // This reduces the execution time from O(N) sequential HTTP/DB calls to a flat O(1) concurrent round-trip block.
     await Promise.all(
       Array.from(channels).map(async (channelSlug) => {

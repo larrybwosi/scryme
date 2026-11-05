@@ -34,7 +34,7 @@ export class InvitationUseCase {
       this.prisma.client.invitation.count({ where }),
       this.prisma.client.invitation.findMany({
         where,
-        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // Use targeted select to prevent over-fetching
         // and keep sensitive fields (like token) from being loaded in lists.
         select: {
           id: true,
@@ -134,7 +134,7 @@ export class InvitationUseCase {
   }
 
   async revokeInvitation(organizationId: string, id: string, actorId: string) {
-    // THREAT MODEL / MITIGATION (Sentinel):
+    // THREAT MODEL / MITIGATION:
     // IDOR/BOLA Protection: Invitation model lacks a composite unique constraint on [id, organizationId].
     // Using standard invitation.update({ where: { id } }) ignores organizationId at runtime in Prisma.
     // updateMany strictly enforces multi-tenant organization ownership and pending status at database execution level.
@@ -168,7 +168,7 @@ export class InvitationUseCase {
   async acceptInvitation(dto: AcceptInvitationDto, userId: string) {
     const invitation = await this.prisma.client.invitation.findUnique({
       where: { token: dto.token },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'.
+      // Replace broad 'include' with targeted 'select'.
       // The 'organization' relation was unused; selecting only required scalar fields
       // reduces database I/O and eliminates an unnecessary join.
       select: {
@@ -216,7 +216,7 @@ export class InvitationUseCase {
     }
 
     if (invitation.expiresAt < new Date()) {
-      // SECURITY (Sentinel): Scoped updateMany to ensure state transition is atomic and scoped
+      // SECURITY: Scoped updateMany to ensure state transition is atomic and scoped
       await this.prisma.client.invitation.updateMany({
         where: { id: invitation.id, status: InvitationStatus.PENDING },
         data: { status: InvitationStatus.EXPIRED },
@@ -257,7 +257,7 @@ export class InvitationUseCase {
         },
       });
 
-      // SECURITY (Sentinel): Scoped updateMany for atomic PENDING -> ACCEPTED state transition
+      // SECURITY: Scoped updateMany for atomic PENDING -> ACCEPTED state transition
       await tx.invitation.updateMany({
         where: { id: invitation.id, status: InvitationStatus.PENDING },
         data: { status: InvitationStatus.ACCEPTED },

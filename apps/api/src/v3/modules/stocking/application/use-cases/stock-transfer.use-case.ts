@@ -32,7 +32,7 @@ export class StockTransferUseCase {
   ) {
     const transferNumber = `TR-${Date.now()}`;
 
-    // SECURITY (Sentinel): Verify that both source and destination locations
+    // SECURITY: Verify that both source and destination locations
     // belong to the authenticated organization.
     const uniqueLocationIds = Array.from(
       new Set([dto.fromLocationId, dto.toLocationId]),
@@ -48,7 +48,7 @@ export class StockTransferUseCase {
       throw new BadRequestException("Invalid source or destination location");
     }
 
-    // SECURITY (Sentinel): Verify that all requested variants belong to the
+    // SECURITY: Verify that all requested variants belong to the
     // authenticated organization (via product relation).
     const variantIds = dto.items.map((i) => i.variantId);
     const validVariantsCount = await this.prisma.client.productVariant.count({
@@ -89,7 +89,7 @@ export class StockTransferUseCase {
       });
     });
 
-    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    // Decouple external event emission from the active database transaction.
     // Emitting Windmill events outside the $transaction block releases database locks immediately.
     emitStockTransferCreated(organizationId, {
       transferId: transfer.id,
@@ -110,7 +110,7 @@ export class StockTransferUseCase {
 
   async approve(organizationId: string, memberId: string, transferId: string) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockTransfer lacks a composite unique index on [id, organizationId].
       const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
@@ -124,7 +124,7 @@ export class StockTransferUseCase {
         );
       }
 
-      // ⚡ Bolt Optimization: Batch fetch stock records to eliminate N+1 queries.
+      // Batch fetch stock records to eliminate N+1 queries.
       const variantIds = transfer.items.map((i) => i.variantId);
       const stocks = await tx.productVariantStock.findMany({
         where: {
@@ -135,7 +135,7 @@ export class StockTransferUseCase {
 
       const stockMap = new Map(stocks.map((s) => [s.variantId, s]));
 
-      // ⚡ Bolt Optimization: Aggregate requested quantities per unique variantId in-memory and execute stock updates concurrently via Promise.all.
+      // Aggregate requested quantities per unique variantId in-memory and execute stock updates concurrently via Promise.all.
       // Doing this concurrently per unique variant ensures exactly one database update per variant, reducing query roundtrips
       // from O(N) sequential blocking roundtrips down to 1 flat parallel roundtrip, while avoiding database row-lock contention and deadlocks.
       const aggregatedRequested = new Map<string, number>();
@@ -175,7 +175,7 @@ export class StockTransferUseCase {
         ),
       );
 
-      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // SECURITY: StockTransfer lacks a composite unique constraint on [id, organizationId].
       // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
       // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
       const updateResult = await tx.stockTransfer.updateMany({
@@ -203,7 +203,7 @@ export class StockTransferUseCase {
     dto: ShipTransferDto,
   ) {
     const updatedTransfer = await this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockTransfer lacks a composite unique index on [id, organizationId].
       const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
@@ -217,9 +217,9 @@ export class StockTransferUseCase {
         );
       }
 
-      // ⚡ Bolt Optimization: Batch fetch all relevant batches to eliminate N+1 queries.
+      // Batch fetch all relevant batches to eliminate N+1 queries.
       const variantIds = transfer.items.map((i) => i.variantId);
-      // SECURITY (Sentinel): Explicitly scope batch lookups to organizationId.
+      // SECURITY: Explicitly scope batch lookups to organizationId.
       const allBatches = await tx.stockBatch.findMany({
         where: {
           organizationId,
@@ -237,10 +237,10 @@ export class StockTransferUseCase {
         batchesByVariant.set(batch.variantId, variantBatches);
       }
 
-      // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
+      // Pre-index transfer items into a Map to avoid O(N*M) nested loop search
       const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
 
-      // ⚡ Bolt Optimization: Consolidate stock updates per unique variantId in-memory.
+      // Consolidate stock updates per unique variantId in-memory.
       // Doing individual `productVariantStock.update` calls inside the loop for each item
       // causes sequential database write roundtrips and row lock contention if multiple items share a variant.
       // Aggregating quantities by unique variantId allows us to perform exactly 1 update per unique variant concurrently via Promise.all.
@@ -352,7 +352,7 @@ export class StockTransferUseCase {
       // Execute stockTransferItem updates concurrently
       await Promise.all(itemUpdatePromises);
 
-      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // SECURITY: StockTransfer lacks a composite unique constraint on [id, organizationId].
       // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
       // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
       const updateResult = await tx.stockTransfer.updateMany({
@@ -375,7 +375,7 @@ export class StockTransferUseCase {
       });
     });
 
-    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    // Decouple external event emission from the active database transaction.
     emitStockTransferShipped(organizationId, {
       transferId: updatedTransfer.id,
       transferNumber: updatedTransfer.transferNumber,
@@ -396,7 +396,7 @@ export class StockTransferUseCase {
     dto: ReceiveTransferDto,
   ) {
     const completedTransfer = await this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockTransfer lacks a composite unique index on [id, organizationId].
       const transfer = await tx.stockTransfer.findFirst({
         where: { id: transferId, organizationId },
@@ -411,10 +411,10 @@ export class StockTransferUseCase {
         throw new BadRequestException("Transfer is not in a shippable state");
       }
 
-      // ⚡ Bolt Optimization: Pre-index transfer items into a Map to avoid O(N*M) nested loop search
+      // Pre-index transfer items into a Map to avoid O(N*M) nested loop search
       const transferItemsMap = new Map(transfer.items.map((i) => [i.id, i]));
 
-      // ⚡ Bolt Optimization: Consolidate ProductVariantStock upserts by unique variantId.
+      // Consolidate ProductVariantStock upserts by unique variantId.
       // Running exactly one upsert query per unique variantId prevents database row lock contention,
       // deadlocks, and reduces transactional roundtrips from O(N) down to O(U) unique keys.
       const variantStockUpdates = new Map<
@@ -470,7 +470,7 @@ export class StockTransferUseCase {
         ),
       );
 
-      // ⚡ Bolt Optimization: Create stock batches and update items concurrently using Promise.all.
+      // Create stock batches and update items concurrently using Promise.all.
       // This collapses individual sequential database roundtrips to concurrent operations.
       const itemFulfillments = await Promise.all(
         dto.items.map(async (itemDto) => {
@@ -502,7 +502,7 @@ export class StockTransferUseCase {
         }),
       );
 
-      // ⚡ Bolt Optimization: Record movements now that productVariantStock and stockBatch are fully synchronized.
+      // Record movements now that productVariantStock and stockBatch are fully synchronized.
       // This ensures that the integrity check in InventoryMovementService passes perfectly.
       for (const fulfillment of itemFulfillments) {
         await this.inventoryMovementService.recordMovement(tx, {
@@ -519,7 +519,7 @@ export class StockTransferUseCase {
         });
       }
 
-      // SECURITY (Sentinel): StockTransfer lacks a composite unique constraint on [id, organizationId].
+      // SECURITY: StockTransfer lacks a composite unique constraint on [id, organizationId].
       // Standard Prisma `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
       // Using `updateMany({ where: { id: transferId, organizationId } })` strictly enforces database-level multi-tenant isolation during status mutations.
       const updateResult = await tx.stockTransfer.updateMany({
@@ -542,7 +542,7 @@ export class StockTransferUseCase {
       });
     });
 
-    // ⚡ Bolt Optimization: Decouple external event emission from the active database transaction.
+    // Decouple external event emission from the active database transaction.
     emitStockTransferReceived(organizationId, {
       transferId: completedTransfer.id,
       transferNumber: completedTransfer.transferNumber,
@@ -582,7 +582,7 @@ export class StockTransferUseCase {
   }
 
   async findOne(organizationId: string, transferId: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // StockTransfer lacks a composite unique index on [id, organizationId].
     const transfer = await this.prisma.client.stockTransfer.findFirst({
       where: { id: transferId, organizationId },

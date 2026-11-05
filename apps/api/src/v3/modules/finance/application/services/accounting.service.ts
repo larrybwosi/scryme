@@ -29,7 +29,7 @@ export class AccountingService {
       { name: "Operating Expenses", code: "6000", type: AccountType.EXPENSE, subType: AccountSubType.OPERATING_EXPENSE },
     ];
 
-    // ⚡ Bolt Optimization: Use Promise.all to perform all upserts in parallel.
+    // Use Promise.all to perform all upserts in parallel.
     // This eliminates 10 sequential database operations (reducing roundtrips from O(N) to O(1))
     // during organization accounting initialization, which reduces latency by ~90% under high concurrency.
     await Promise.all(
@@ -110,14 +110,14 @@ export class AccountingService {
   }
 
   async postSaleToLedger(transactionId: string, organizationId?: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Transaction lacks a composite unique index on [id, organizationId].
     const transaction = await this.prisma.client.transaction.findFirst({
       where: {
         id: transactionId,
         ...(organizationId ? { organizationId } : {}),
       },
-      // ⚡ Bolt Optimization: Use targeted select for transaction data
+      // Use targeted select for transaction data
       // to reduce database payload and memory pressure.
       select: {
         id: true,
@@ -143,7 +143,7 @@ export class AccountingService {
           ],
         },
       },
-      // ⚡ Bolt Optimization: Select only required fields for account resolution.
+      // Select only required fields for account resolution.
       select: {
         id: true,
         subType: true,
@@ -179,14 +179,14 @@ export class AccountingService {
   }
 
   async postPurchaseToLedger(purchaseId: string, organizationId?: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Purchase lacks a composite unique index on [id, organizationId].
     const purchase = await this.prisma.client.purchase.findFirst({
       where: {
         id: purchaseId,
         ...(organizationId ? { organizationId } : {}),
       },
-      // ⚡ Bolt Optimization: Use targeted select for purchase data
+      // Use targeted select for purchase data
       // to reduce database payload and memory pressure.
       select: {
         id: true,
@@ -212,7 +212,7 @@ export class AccountingService {
           ],
         },
       },
-      // ⚡ Bolt Optimization: Select only required fields for account resolution.
+      // Select only required fields for account resolution.
       select: {
         id: true,
         subType: true,
@@ -251,14 +251,14 @@ export class AccountingService {
   }
 
   async postExpenseToLedger(expenseId: string, organizationId?: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Expense lacks a composite unique index on [id, organizationId].
     const expense = await this.prisma.client.expense.findFirst({
       where: {
         id: expenseId,
         ...(organizationId ? { organizationId } : {}),
       },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
+      // Replace broad 'include' with targeted 'select'
       // to reduce database payload and memory pressure.
       select: {
         id: true,
@@ -290,7 +290,7 @@ export class AccountingService {
           ],
         },
       },
-      // ⚡ Bolt Optimization: Select only required fields for account resolution
+      // Select only required fields for account resolution
       // to reduce database payload and memory usage.
       select: {
         id: true,
@@ -331,7 +331,7 @@ export class AccountingService {
   }
 
   async autoMatchBankStatement(statementId: string, organizationId?: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // BankStatement lacks a composite unique index on [id, organizationId].
     const statement = await this.prisma.client.bankStatement.findFirst({
       where: {
@@ -354,7 +354,7 @@ export class AccountingService {
       include: { journalEntry: true },
     });
 
-    // ⚡ Bolt Optimization: Use a Map to index candidates by amount.
+    // Use a Map to index candidates by amount.
     // This reduces the complexity from O(N*M) to O(N+M), which is critical
     // for bank reconciliation with thousands of transactions.
     const candidatesByAmount = new Map<string, any[]>();
@@ -390,7 +390,7 @@ export class AccountingService {
         // Remove from memory pool to prevent double matching in the same run
         possibleMatches.splice(matchIndex, 1);
 
-        // ⚡ Bolt Optimization: Accumulate database update operations in-memory
+        // Accumulate database update operations in-memory
         // to execute them in a single batch $transaction, eliminating N+1 sequential transactions.
         batchUpdates.push(
           this.prisma.client.bankStatementLine.update({

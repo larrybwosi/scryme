@@ -156,18 +156,18 @@ export class ScrymeService {
     entityId: string,
     preFetchedConfig?: any,
   ) {
-    // ⚡ Bolt Optimization: Use optional pre-fetched config to avoid redundant N+1 configuration lookups.
+    // Use optional pre-fetched config to avoid redundant N+1 configuration lookups.
     const config = preFetchedConfig || await this.getConfiguration(organizationId);
     if (!config?.workspaceSlug || !config.isActive) return;
 
     let entity;
     if (entityType === "department") {
-      // SECURITY (Sentinel): Use findFirst with organizationId to prevent cross-tenant IDOR
+      // SECURITY: Use findFirst with organizationId to prevent cross-tenant IDOR
       entity = await this.prisma.client.department.findFirst({
         where: { id: entityId, organizationId },
       });
     } else {
-      // SECURITY (Sentinel): Use findFirst with organizationId to prevent cross-tenant IDOR
+      // SECURITY: Use findFirst with organizationId to prevent cross-tenant IDOR
       entity = await this.prisma.client.inventoryLocation.findFirst({
         where: { id: entityId, organizationId },
       });
@@ -213,11 +213,11 @@ export class ScrymeService {
   }
 
   async syncAllChannels(organizationId: string) {
-    // ⚡ Bolt Optimization: Pre-fetch configuration once to hoist non-changing lookups outside loops
+    // Pre-fetch configuration once to hoist non-changing lookups outside loops
     const config = await this.getConfiguration(organizationId);
     if (!config?.workspaceSlug || !config.isActive) return;
 
-    // ⚡ Bolt Optimization: Replace broad model fetches with targeted select blocks
+    // Replace broad model fetches with targeted select blocks
     // to reduce database payload, memory usage, and Prisma object hydration overhead.
     const departments = await this.prisma.client.department.findMany({
       where: { organizationId, scrymeChannelId: null },
@@ -233,7 +233,7 @@ export class ScrymeService {
       `Syncing channels for ${departments.length} departments and ${locations.length} locations`,
     );
 
-    // ⚡ Bolt Optimization: Process channel synchronization tasks in parallelized batches of 10
+    // Process channel synchronization tasks in parallelized batches of 10
     // to avoid socket/DB starvation or rate-limits while drastically reducing sync duration.
     const BATCH_SIZE = 10;
 
@@ -281,7 +281,7 @@ export class ScrymeService {
       }
     }
 
-    // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select' projection
+    // Replace broad 'include' with targeted 'select' projection
     // to retrieve only required fields (userId, email), reducing payload and memory footprint.
     const members = await this.prisma.client.member.findMany({
       where: { organizationId },
@@ -299,7 +299,7 @@ export class ScrymeService {
       `Syncing ${members.length} users for Scryme workspace ${config.workspaceSlug}`,
     );
 
-    // ⚡ Bolt Optimization: Process user synchronization in parallelized batches of 10
+    // Process user synchronization in parallelized batches of 10
     // to avoid rate limits and socket starvation while reducing the latency profile from O(N) down to O(1).
     const BATCH_SIZE = 10;
     for (let i = 0; i < members.length; i += BATCH_SIZE) {
@@ -481,7 +481,7 @@ export class ScrymeService {
           const roleToGrant = parts[1] as any;
           const targetMemberId = parts[2];
 
-          // SECURITY (Sentinel): Use findFirst scoped to organizationId to prevent cross-tenant IDOR
+          // SECURITY: Use findFirst scoped to organizationId to prevent cross-tenant IDOR
           const targetMember = await this.prisma.client.member.findFirst({
             where: { id: targetMemberId, organizationId: config.organizationId },
           });
@@ -521,7 +521,7 @@ export class ScrymeService {
         } else if (actionType === "decline_perm") {
           const targetMemberId = parts[1];
 
-          // SECURITY (Sentinel): Verify member belongs to org
+          // SECURITY: Verify member belongs to org
           const targetMember = await this.prisma.client.member.findFirst({
             where: { id: targetMemberId, organizationId: config.organizationId },
           });
@@ -552,7 +552,7 @@ export class ScrymeService {
         const decisionId = action.value;
         const [actionType] = action.id.split(":");
 
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because we must scope the lookup
+        // SECURITY: Using findFirst instead of findUnique because we must scope the lookup
         // to the authorized tenant (config.organizationId) to prevent IDOR / cross-tenant approvals.
         const decision = await this.prisma.client.approvalDecision.findFirst({
           where: {

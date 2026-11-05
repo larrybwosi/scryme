@@ -95,7 +95,7 @@ export async function createPettyCashFund(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN"]);
 
-  // ⚡ Bolt Optimization & Threat Mitigation:
+  // Optimization & Threat Mitigation:
   // Parallelize independent relational ID validation queries concurrently via Promise.all
   // to collapse database execution latency from 2 sequential blocking roundtrips to 1 concurrent roundtrip
   // while preserving multi-tenant BOLA isolation checks.
@@ -156,7 +156,7 @@ export async function topUpPettyCashFund(
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
   return await db.$transaction(async tx => {
-    // 🛡️ Sentinel: IDOR/BOLA Prevention - Use findFirst with organizationId filter
+    // IDOR/BOLA Prevention - Use findFirst with organizationId filter
     // because PettyCashFund lacks a composite unique constraint on [id, organizationId].
     const fund = await tx.pettyCashFund.findFirst({
       where: { id: fundId, organizationId: auth.organizationId },
@@ -205,7 +205,7 @@ export async function getPettyCashTransactions(fundId: string) {
     "REPORTER",
   ], true);
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Verify fund belongs to organization before querying transactions
+  // BOLA/IDOR Prevention - Verify fund belongs to organization before querying transactions
   const fund = await db.pettyCashFund.findFirst({
     where: { id: fundId, organizationId: auth.organizationId },
   });

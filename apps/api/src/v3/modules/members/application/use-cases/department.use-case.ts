@@ -41,7 +41,7 @@ export class DepartmentUseCase {
       this.prisma.client.department.count({ where }),
       this.prisma.client.department.findMany({
         where,
-        // ⚡ Bolt Optimization: Targeted select for list view to reduce
+        // Targeted select for list view to reduce
         // data transfer and avoid fetching sensitive head member fields.
         select: {
           id: true,
@@ -73,7 +73,7 @@ export class DepartmentUseCase {
   async getDepartment(organizationId: string, id: string) {
     const department = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
-      // ⚡ Bolt Optimization: Replace deep 'include' with targeted 'select'
+      // Replace deep 'include' with targeted 'select'
       // to avoid over-fetching member details (like pinHash) and reduce payload size.
       select: {
         id: true,
@@ -124,7 +124,7 @@ export class DepartmentUseCase {
     dto: CreateDepartmentDto,
     actorId: string,
   ) {
-    // ⚡ Bolt Optimization: Execute independent IDOR validation queries in parallel using Promise.all.
+    // Execute independent IDOR validation queries in parallel using Promise.all.
     // Reduces sequential DB roundtrips from O(4T) to O(1T) concurrent execution.
     const [parent, head, location, costCenter] = await Promise.all([
       dto.parentId
@@ -233,14 +233,14 @@ export class DepartmentUseCase {
     dto: UpdateDepartmentDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Find-then-update pattern for multi-tenant isolation.
+    // SECURITY: Find-then-update pattern for multi-tenant isolation.
     const currentDepartment = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
     });
 
     if (!currentDepartment) throw new NotFoundException("Department not found");
 
-    // ⚡ Bolt Optimization: Execute independent IDOR validation queries in parallel using Promise.all.
+    // Execute independent IDOR validation queries in parallel using Promise.all.
     // Reduces sequential DB roundtrips from O(4T) to O(1T) concurrent execution.
     const [parent, head, location, costCenter] = await Promise.all([
       dto.parentId
@@ -278,7 +278,7 @@ export class DepartmentUseCase {
       throw new BadRequestException("Cost center not found");
     }
 
-    // SECURITY (Sentinel): Department lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: Department lacks a composite unique constraint on [id, organizationId].
     // Prisma's `update` ignores non-unique fields in `where` clauses at runtime.
     // Use `updateMany` scoped by organizationId followed by `findFirstOrThrow` to strictly enforce multi-tenant DB-level isolation.
     const updateCount = await this.prisma.client.department.updateMany({
@@ -321,14 +321,14 @@ export class DepartmentUseCase {
   }
 
   async deleteDepartment(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Find-then-delete pattern with database-level tenant isolation.
+    // SECURITY: Find-then-delete pattern with database-level tenant isolation.
     const currentDepartment = await this.prisma.client.department.findFirst({
       where: { id, organizationId },
     });
 
     if (!currentDepartment) throw new NotFoundException("Department not found");
 
-    // SECURITY (Sentinel): Department lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: Department lacks a composite unique constraint on [id, organizationId].
     // Use `deleteMany` scoped by organizationId to enforce multi-tenant DB-level isolation.
     const deleteCount = await this.prisma.client.department.deleteMany({
       where: {
@@ -397,7 +397,7 @@ export class DepartmentUseCase {
 
     // Automatic Sync to Integrations
     try {
-      // ⚡ Bolt Optimization: Execute independent department and member integration lookup queries
+      // Execute independent department and member integration lookup queries
       // in parallel using Promise.all, reducing DB roundtrips from O(2T) to O(1T) concurrent execution.
       const [fullDept, fullMember] = await Promise.all([
         this.prisma.client.department.findUnique({
@@ -474,7 +474,7 @@ export class DepartmentUseCase {
     memberId: string,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Verify department belongs to organization before removing member.
+    // SECURITY: Verify department belongs to organization before removing member.
     const dept = await this.prisma.client.department.findFirst({
       where: { id: departmentId, organizationId },
     });

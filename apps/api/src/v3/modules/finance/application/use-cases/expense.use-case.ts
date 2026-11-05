@@ -35,7 +35,7 @@ export class ExpenseUseCase {
         );
     const expenseNumber = await this.generateExpenseNumber(organizationId);
 
-    // ⚡ Bolt Optimization: Validate reference entity existences outside the transactional scope.
+    // Validate reference entity existences outside the transactional scope.
     // Executing these read-only checks beforehand avoids holding the database transaction open,
     // reducing query lock contention and connection pool occupation.
     await this.validateReferencedEntities(organizationId, dto);
@@ -69,7 +69,7 @@ export class ExpenseUseCase {
     organizationId: string,
     dto: CreateExpenseDto,
   ) {
-    // 🛡️ Sentinel: IDOR Prevention - Verify all referenced entities belong to the organization
+    // IDOR Prevention - Verify all referenced entities belong to the organization
     const validations = [
       this.prisma.client.expenseCategory.count({ where: { id: dto.categoryId, organizationId } }),
     ];
@@ -160,7 +160,7 @@ export class ExpenseUseCase {
   ) {
     return await tx.expense.create({
       data: {
-        // 🛡️ Sentinel: Mass Assignment Protection - Explicitly map allowed fields from DTO
+        // Mass Assignment Protection - Explicitly map allowed fields from DTO
         expenseNumber,
         description: dto.description,
         amount: new Prisma.Decimal(dto.amount),
@@ -215,7 +215,7 @@ export class ExpenseUseCase {
       );
     }
     if (dto.budgetId) {
-      // 🛡️ Sentinel: Defense in Depth - Use updateMany with organizationId scoping
+      // Defense in Depth - Use updateMany with organizationId scoping
       await tx.budget.updateMany({
         where: { id: dto.budgetId, organizationId },
         data: { spentAmount: { increment: amount } },
@@ -245,7 +245,7 @@ export class ExpenseUseCase {
     if (fund.amount.lessThan(amount))
       throw new BadRequestException("Insufficient funds in petty cash");
 
-    // SECURITY (Sentinel): PettyCashFund lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: PettyCashFund lacks a composite unique constraint on [id, organizationId].
     // Standard Prisma update ignores non-unique fields in where clauses at runtime.
     // Using updateMany strictly enforces database-level multi-tenant isolation during balance adjustments.
     await tx.pettyCashFund.updateMany({
@@ -337,7 +337,7 @@ export class ExpenseUseCase {
 
     return await this.prisma.client.expense.findMany({
       where,
-      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // Use targeted select for list view to reduce database load
       // and network payload size by fetching only necessary fields.
       select: {
         id: true,
@@ -408,7 +408,7 @@ export class ExpenseUseCase {
     return await this.prisma.client.$transaction(async (tx) => {
       const expense = await tx.expense.findFirst({
         where: { id: expenseId, organizationId },
-        // ⚡ Bolt Optimization: Select only required fields for verification
+        // Select only required fields for verification
         // and post-approval actions to reduce database I/O.
         select: {
           id: true,
@@ -430,7 +430,7 @@ export class ExpenseUseCase {
         );
       }
 
-      // SECURITY (Sentinel): Expense model lacks a composite unique constraint on [id, organizationId].
+      // SECURITY: Expense model lacks a composite unique constraint on [id, organizationId].
       // Standard Prisma update ignores non-unique fields in where clauses at runtime.
       // Using updateMany strictly enforces database-level multi-tenant isolation during status updates.
       await tx.expense.updateMany({

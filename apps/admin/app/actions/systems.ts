@@ -259,7 +259,7 @@ export async function addTagToSystemCustomers(
     select: { id: true, tags: true },
   });
 
-  // ⚡ Bolt: Performance Optimization (Chunked Concurrency for Customer Tag Additions)
+  // Performance Optimization (Chunked Concurrency for Customer Tag Additions)
   // Filters customers needing updates and executes `db.customer.update` in parallel chunks
   // of 10 to balance high execution throughput while protecting Prisma connection pool limits.
   const customersToUpdate = customers.filter(
@@ -291,7 +291,7 @@ export async function removeTagFromSystemCustomers(tag: string) {
     select: { id: true, tags: true },
   });
 
-  // ⚡ Bolt: Performance Optimization (Chunked Concurrency for Customer Tag Removals)
+  // Performance Optimization (Chunked Concurrency for Customer Tag Removals)
   // Executes `db.customer.update` in parallel chunks of 10 to reduce execution latency
   // while guarding against Prisma connection pool exhaustion.
   const CHUNK_SIZE = 10;

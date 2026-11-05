@@ -220,7 +220,7 @@ export class CatalogService {
   async createProduct(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    // Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
     const {
       name,
       description,
@@ -272,7 +272,7 @@ export class CatalogService {
   async updateProduct(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Strip organizationId and id from data to prevent mass assignment
+    // Strip organizationId and id from data to prevent mass assignment
     const { organizationId: _, id: __, ...updateData } = data;
 
     const result = await this.prisma.client.product.update({
@@ -286,7 +286,7 @@ export class CatalogService {
   async deleteProduct(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // Enforce multi-tenant isolation by verifying ownership before deletion,
     // as the Product model lacks a composite unique index on [id, organizationId].
     const product = await this.prisma.client.product.findFirst({
       where: { id, organizationId },
@@ -371,7 +371,7 @@ export class CatalogService {
   async createCategory(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
+    // Use explicit field mapping to prevent mass assignment of sensitive internal fields like organizationId
     const { name, description, parentId, color, code } = data;
 
     const result = await this.prisma.client.category.create({
@@ -391,7 +391,7 @@ export class CatalogService {
   async updateCategory(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Strip organizationId and id from data to prevent mass assignment
+    // Strip organizationId and id from data to prevent mass assignment
     const { organizationId: _, id: __, ...updateData } = data;
 
     const result = await this.prisma.client.category.update({
@@ -405,7 +405,7 @@ export class CatalogService {
   async deleteCategory(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation by verifying ownership before deletion,
+    // Enforce multi-tenant isolation by verifying ownership before deletion,
     // as the Category model lacks a composite unique index on [id, organizationId].
     const category = await this.prisma.client.category.findFirst({
       where: { id, organizationId },
@@ -456,7 +456,7 @@ export class CatalogService {
     return this.prisma.client.productVariant.findMany({
       where,
       /**
-       * ⚡ Bolt: Performance Optimization
+       * Performance Optimization
        * Using targeted select instead of include to fetch only essential scalar fields and relations.
        * This reduces database I/O, network payload size, and memory usage during serialization.
        */

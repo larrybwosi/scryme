@@ -54,7 +54,7 @@ export class InventoryService {
         { updatedAt: "desc" },
         {
           /**
-           * ⚡ Bolt: Performance Optimization
+           * Performance Optimization
            * Use targeted select instead of include to fetch only essential scalar fields and relations.
            * This reduces database payload size and serialization overhead.
            */
@@ -161,7 +161,7 @@ export class InventoryService {
   async updateInventoryItem(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
 
-    // SECURITY (Sentinel): Whitelist allowed fields to prevent mass assignment.
+    // SECURITY: Whitelist allowed fields to prevent mass assignment.
     const {
       currentStock,
       availableStock,
@@ -225,7 +225,7 @@ export class InventoryService {
   ) {
     const { organizationId } = ctx;
 
-    // SECURITY (Sentinel): Validate that the inventory item belongs to the organization
+    // SECURITY: Validate that the inventory item belongs to the organization
     const inventoryItem =
       await this.prisma.client.productVariantStock.findFirst({
         where: { id: inventoryId, organizationId },
@@ -235,7 +235,7 @@ export class InventoryService {
       throw new NotFoundException("Inventory item not found");
     }
 
-    // SECURITY (Sentinel): Explicit field whitelisting and context enforcement.
+    // SECURITY: Explicit field whitelisting and context enforcement.
     const {
       variantId,
       stockBatchId,
@@ -472,7 +472,7 @@ export class InventoryService {
       { requestDate: "desc" },
       {
         /**
-         * ⚡ Bolt: Performance Optimization
+         * Performance Optimization
          * Using 'select' instead of 'include' to prune large JSON fields from locations
          * and unnecessary member data. This reduces database I/O and payload size.
          */
@@ -507,7 +507,7 @@ export class InventoryService {
       { requestedDate: "desc" },
       {
         /**
-         * ⚡ Bolt: Performance Optimization
+         * Performance Optimization
          * Using 'select' instead of 'include' to prune large JSON fields from locations
          * and unnecessary member data. This reduces database I/O and payload size.
          */

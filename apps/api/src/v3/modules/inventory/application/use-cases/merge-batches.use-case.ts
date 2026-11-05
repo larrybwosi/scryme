@@ -28,14 +28,14 @@ export class MergeBatchesUseCase {
       );
     }
 
-    // OPTIMIZATION (Bolt ⚡): Use findByIds to fetch all batches in a single database roundtrip,
+    // Use findByIds to fetch all batches in a single database roundtrip,
     // eliminating the N+1 query pattern where findById was called for each batch ID.
     const rawBatches = await this.stockBatchRepository.findByIds(batchIds);
     const batchesMap = new Map(rawBatches.map((b) => [b.id, b]));
     // Map ensures we preserve input order and handle missing IDs (as nulls) for validation.
     const batches = batchIds.map((id) => batchesMap.get(id) || null);
 
-    // SECURITY (Sentinel): IDOR/BOLA Mitigation - Explicitly validate targetLocationId ownership.
+    // SECURITY: IDOR/BOLA Mitigation - Explicitly validate targetLocationId ownership.
     // Ensure the target inventory location exists and belongs strictly to the caller's organization.
     const targetLocation = await this.prisma.client.inventoryLocation.findFirst({
       where: {
@@ -87,7 +87,7 @@ export class MergeBatchesUseCase {
         },
       });
 
-      // OPTIMIZATION (Bolt ⚡): Use updateMany and createMany to perform bulk database writes,
+      // Use updateMany and createMany to perform bulk database writes,
       // replacing the sequential loop that issued N updates and N creates.
       // This reduces database write roundtrips from 2N to 2.
 

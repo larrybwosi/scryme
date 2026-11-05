@@ -534,7 +534,7 @@ export class ScrymeChatApiClient {
       const workspaces = await chat.workspace.list();
       const workspaceList = workspaces?.data?.workspaces || [];
 
-      // ⚡ Bolt Optimization: Parallelize webhook registration across workspaces concurrently.
+      // Parallelize webhook registration across workspaces concurrently.
       // Replacing sequential for...of iteration with Promise.all collapses HTTP roundtrip delays
       // from O(N) sequential blocking requests down to O(1) concurrent execution.
       await Promise.all(

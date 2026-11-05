@@ -14,7 +14,7 @@ export class PricingResolverService {
   }): Promise<{ unitPrice: number; priceListId?: string }> {
     const { variantId, quantity = 1, ...context } = params;
 
-    // ⚡ Bolt Optimization: Use the batch resolver to ensure consistent logic and eliminate duplication.
+    // Use the batch resolver to ensure consistent logic and eliminate duplication.
     const results = await this.resolveBatchVariantPrices({
       items: [{ variantId, quantity }],
       ...context,
@@ -24,7 +24,7 @@ export class PricingResolverService {
   }
 
   /**
-   * ⚡ Bolt Optimization: Batched pricing resolution to prevent N+1 query patterns.
+   * Batched pricing resolution to prevent N+1 query patterns.
    * Resolves prices for multiple variants in a single set of optimized database queries.
    */
   async resolveBatchVariantPrices(params: {
@@ -35,7 +35,7 @@ export class PricingResolverService {
   }): Promise<Map<string, { unitPrice: number; priceListId?: string }>> {
     const { items, organizationId, customerId, businessAccountId } = params;
 
-    // ⚡ Bolt Optimization: Early return on empty items to save 3 redundant database queries.
+    // Early return on empty items to save 3 redundant database queries.
     if (!items || items.length === 0) {
       return new Map();
     }
@@ -49,7 +49,7 @@ export class PricingResolverService {
     if (businessAccountId)
       orClauses.push({ businessAccounts: { some: { id: businessAccountId } } });
 
-    // ⚡ Bolt Optimization: Parallelize independent read-only database queries
+    // Parallelize independent read-only database queries
     // for variants and applicable price lists using Promise.all.
     // This reduces database wait time from 2 sequential roundtrips to 1 flat parallel roundtrip.
     const [variants, priceLists] = await Promise.all([

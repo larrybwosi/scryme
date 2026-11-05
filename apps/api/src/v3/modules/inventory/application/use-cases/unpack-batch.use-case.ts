@@ -28,7 +28,7 @@ export class UnpackBatchUseCase {
   async execute(organizationId: string, memberId: string, dto: UnpackBatchDto) {
     return this.prisma.client.$transaction(async (tx) => {
       // 1. Find the bulk batch
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because StockBatch lacks
+      // SECURITY: Using findFirst instead of findUnique because StockBatch lacks
       // a composite unique index on [id, organizationId]. Scoping by organizationId prevents IDOR.
       const bulkBatch = await tx.stockBatch.findFirst({
         where: { id: dto.batchId, organizationId },
@@ -42,7 +42,7 @@ export class UnpackBatchUseCase {
         throw new NotFoundException("Bulk stock batch not found.");
       }
 
-      // SECURITY (Sentinel): Validate targetOrgUnitId to prevent cross-tenant IDOR/BOLA unit association.
+      // SECURITY: Validate targetOrgUnitId to prevent cross-tenant IDOR/BOLA unit association.
       if (dto.targetOrgUnitId) {
         const validOrgUnit = await tx.organizationUnit.findFirst({
           where: { id: dto.targetOrgUnitId, organizationId },
@@ -52,7 +52,7 @@ export class UnpackBatchUseCase {
         }
       }
 
-      // SECURITY (Sentinel): Validate targetSystemUnitId existence and active status.
+      // SECURITY: Validate targetSystemUnitId existence and active status.
       if (dto.targetSystemUnitId) {
         const validSystemUnit = await tx.systemUnit.findFirst({
           where: { id: dto.targetSystemUnitId, isActive: true },

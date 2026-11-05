@@ -340,7 +340,7 @@ export async function updateStaffShift(
       }
     }
 
-    // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by organizationId
+    // BOLA/IDOR Protection - Use updateMany scoped by organizationId
     // because StaffShift lacks a composite unique constraint on [id, organizationId]
     const result = await db.staffShift.updateMany({
       where: { id: shiftId, organizationId: session!.organizationId },
@@ -387,7 +387,7 @@ export async function deleteStaffShift(shiftId: string) {
       return { success: false, error: "Shift not found" };
     }
 
-    // 🛡️ Sentinel: BOLA/IDOR Protection - Use deleteMany scoped by organizationId
+    // BOLA/IDOR Protection - Use deleteMany scoped by organizationId
     // because StaffShift lacks a composite unique constraint on [id, organizationId]
     const result = await db.staffShift.deleteMany({
       where: { id: shiftId, organizationId: session!.organizationId },
@@ -775,7 +775,7 @@ export async function requestShiftTrade(data: {
 
   try {
     /**
-     * 🛡️ Sentinel: BOLA/IDOR Prevention & Parallel Validation:
+     * BOLA/IDOR Prevention & Parallel Validation:
      * Foreign relational inputs (`shiftId`, `offeredShiftId`, `targetMemberId`) must be validated
      * against `session.organizationId` to prevent cross-tenant shift trade requests or assigning
      * shift trade obligations to members of unauthorized organizations.
@@ -867,7 +867,7 @@ export async function processShiftTrade(
     }
 
     /**
-     * 🛡️ Sentinel: BOLA/IDOR Hardening:
+     * BOLA/IDOR Hardening:
      * ShiftTradeRequest and StaffShift models lack composite unique constraints on [id, organizationId].
      * Standard Prisma `update({ where: { id } })` ignores non-unique organizationId filters at database level.
      * We use `updateMany` scoped strictly by `{ id, organizationId: session.organizationId }` to guarantee
@@ -966,7 +966,7 @@ export async function deleteStaffBreak(breakId: string) {
   if (!permission.success) return permission;
 
   try {
-    // 🛡️ Sentinel: BOLA/IDOR Protection - Ensure break belongs to shift in session's organizationId
+    // BOLA/IDOR Protection - Ensure break belongs to shift in session's organizationId
     const b = await db.staffBreak.findFirst({
       where: {
         id: breakId,
@@ -1145,7 +1145,7 @@ export async function updateBranchLocationCoordinates(
   if (!permission.success) return permission;
 
   try {
-    // 🛡️ Sentinel: BOLA/IDOR Protection - Use updateMany scoped by organizationId
+    // BOLA/IDOR Protection - Use updateMany scoped by organizationId
     // because InventoryLocation lacks a composite unique constraint on [id, organizationId]
     const updated = await db.inventoryLocation.updateMany({
       where: { id: locationId, organizationId: session.organizationId },

@@ -59,7 +59,7 @@ export async function validateV3ApiSecret(
     .update(rawSecret)
     .digest("hex");
 
-  // SECURITY (Sentinel): Pre-hash both buffers with SHA-256 before constant-time comparison
+  // SECURITY: Pre-hash both buffers with SHA-256 before constant-time comparison
   // to avoid length leakage via early-return length checks and protect against timing side-channels.
   const hashedBuffer = crypto
     .createHash("sha256")

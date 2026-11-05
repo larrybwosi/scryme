@@ -281,7 +281,7 @@ export default function PricingViewPage() {
     return { productMap, customerMap };
   }, [products, customers]);
 
-  // ⚡ Bolt Optimization: Pre-index price lists by ID in an in-memory Map.
+  // Pre-index price lists by ID in an in-memory Map.
   // This replaces an O(N * M) linear array scan (.find()) inside the customer allocations list mapping
   // with an O(1) constant-time Map lookup.
   const priceListMap = useMemo(() => {

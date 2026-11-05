@@ -89,7 +89,7 @@ export class MemberUseCase {
       this.prisma.client.member.count({ where }),
       this.prisma.client.member.findMany({
         where,
-        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // Use targeted select to prevent over-fetching
         // of large or sensitive fields (like pinHash, address, tags, etc.) in lists.
         select: {
           id: true,
@@ -131,7 +131,7 @@ export class MemberUseCase {
   async getMember(organizationId: string, id: string) {
     const member = await this.prisma.client.member.findFirst({
       where: { id, organizationId, deletedAt: null },
-      // ⚡ Bolt Optimization: Use targeted select for scalar fields and relations
+      // Use targeted select for scalar fields and relations
       // to reduce database payload and serialization overhead.
       select: {
         id: true,
@@ -361,7 +361,7 @@ export class MemberUseCase {
     const { pin, departmentIds, customRoleIds, roleGroupIds, ...updateData } =
       dto;
 
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Member lacks a composite unique index on [id, organizationId].
     const currentMember = await this.prisma.client.member.findFirst({
       where: { id, organizationId, deletedAt: null },
@@ -370,7 +370,7 @@ export class MemberUseCase {
 
     if (!currentMember) throw new NotFoundException("Member not found");
 
-    // SECURITY (Sentinel): Role escalation and self-modification protection.
+    // SECURITY: Role escalation and self-modification protection.
     if (dto.role && dto.role !== currentMember.role) {
       if (actorId === id) {
         throw new BadRequestException("You cannot change your own role");
@@ -475,13 +475,13 @@ export class MemberUseCase {
   }
 
   async deleteMember(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Prevent self-deletion to avoid orphaned organizations
+    // SECURITY: Prevent self-deletion to avoid orphaned organizations
     // and accidental loss of administrative access.
     if (id === actorId) {
       throw new BadRequestException("You cannot delete your own membership");
     }
 
-    // THREAT MODEL / MITIGATION (Sentinel):
+    // THREAT MODEL / MITIGATION:
     // IDOR/BOLA Protection: Member model lacks a composite unique index on [id, organizationId].
     // Using standard member.update({ where: { id } }) ignores organizationId at database execution runtime.
     // updateMany strictly enforces multi-tenant organization ownership at the database query level.
@@ -536,7 +536,7 @@ export class MemberUseCase {
           entityId: id,
           entityType: AuditEntityType.MEMBER,
         },
-        // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+        // Use targeted select for list view to reduce database load
         // and network payload size by excluding the large 'details' JSON field.
         select: {
           id: true,
@@ -577,7 +577,7 @@ export class MemberUseCase {
     status: Status,
     actorId: string,
   ) {
-    // THREAT MODEL / MITIGATION (Sentinel):
+    // THREAT MODEL / MITIGATION:
     // IDOR/BOLA Protection: Member model lacks a composite unique index on [id, organizationId].
     // Using standard member.update({ where: { id } }) ignores organizationId at database execution runtime.
     // updateMany strictly enforces multi-tenant organization ownership at the database query level.
@@ -690,7 +690,7 @@ export class MemberUseCase {
       });
     }
 
-    // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
+    // SECURITY: Mitigate timing attacks and cardId/member enumeration side-channels by always
     // performing a cryptographically heavy check on a valid dummy PIN hash if member or pinHash is missing.
     const dummyPinHash =
       "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";

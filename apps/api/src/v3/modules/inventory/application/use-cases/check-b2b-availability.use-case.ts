@@ -12,7 +12,7 @@ export class CheckB2BAvailabilityUseCase {
 
     if (!locationId) {
       if (dto.customerId) {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
+        // SECURITY: Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
         const customer = await this.prisma.client.customer.findFirst({
           where: { id: dto.customerId, organizationId },
           select: { defaultLocationId: true },
@@ -21,7 +21,7 @@ export class CheckB2BAvailabilityUseCase {
       }
 
       if (!locationId && dto.businessAccountId) {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
+        // SECURITY: Using findFirst instead of findUnique to scope by organizationId and prevent IDOR.
         const businessAccount =
           await this.prisma.client.businessAccount.findFirst({
             where: { id: dto.businessAccountId, organizationId },
@@ -60,7 +60,7 @@ export class CheckB2BAvailabilityUseCase {
     });
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced O(N*M) lookup with O(N+M) Map.
+     * Replaced O(N*M) lookup with O(N+M) Map.
      * Indexing the stocks by variantId allows for constant-time lookups
      * during the mapping phase, which is more efficient for large lists.
      */

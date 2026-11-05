@@ -37,7 +37,7 @@ export class CrmNoteService {
     return this.prisma.client.crmNote.findMany({
       where: { recordId, organizationId },
       orderBy: { timelineDate: "desc" },
-      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // Use targeted select for list view to reduce database load
       // and network payload size by fetching only fields defined in CrmNoteResponseDto + selected author.
       select: {
         id: true,

@@ -8,7 +8,7 @@ export class ServiceAnalyticsService {
 
   async getResourceUtilization(orgId: string, startDate: Date, endDate: Date) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Removed the redundant 'service' relation inclusion.
+     * Removed the redundant 'service' relation inclusion.
      * The business logic only computes resource utilization using scheduled times and
      * resources; the full 'Service' entity is never accessed. Removing this saves
      * a completely redundant database JOIN and reduces query overhead and payload size.
@@ -46,7 +46,7 @@ export class ServiceAnalyticsService {
 
   async getStaffPerformance(orgId: string, startDate: Date, endDate: Date) {
       /**
-       * OPTIMIZATION (Bolt ⚡): Removed the redundant 'service' relation inclusion.
+       * Removed the redundant 'service' relation inclusion.
        * Staff performance computes booking count and revenue directly from the snapshots
        * stored on the 'ServiceBooking' entity itself (e.g., booking.price); the 'Service'
        * entity is never accessed. Bypassing this JOIN drastically reduces latency and DB load.
@@ -77,7 +77,7 @@ export class ServiceAnalyticsService {
 
   async getBookingConversionFunnel(orgId: string, startDate: Date, endDate: Date) {
       /**
-       * OPTIMIZATION (Bolt ⚡): Replaced the highly inefficient full findMany fetch with
+       * Replaced the highly inefficient full findMany fetch with
        * database-level 'groupBy' count aggregations. This prevents fetching, transferring,
        * and deserializing heavy serviceBooking objects for potentially thousands of records,
        * reducing both execution time and memory footprint from O(N) to O(1).

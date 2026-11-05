@@ -17,7 +17,7 @@ export class PettyCashUseCase {
 
   async createFund(organizationId: string, dto: CreatePettyCashFundDto) {
     return await this.prisma.client.$transaction(async (tx) => {
-      // 🛡️ Sentinel: IDOR Prevention - Verify the responsible member belongs to the organization
+      // IDOR Prevention - Verify the responsible member belongs to the organization
       const memberCount = await tx.member.count({
         where: { id: dto.responsibleMemberId, organizationId },
       });
@@ -92,7 +92,7 @@ export class PettyCashUseCase {
   async getFunds(organizationId: string) {
     return await this.prisma.client.pettyCashFund.findMany({
       where: { organizationId },
-      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // Use targeted select to prevent over-fetching
       // of large relation trees while ensuring all scalar fields are present.
       select: {
         id: true,
@@ -125,7 +125,7 @@ export class PettyCashUseCase {
   async getFundById(organizationId: string, fundId: string) {
     const fund = await this.prisma.client.pettyCashFund.findFirst({
       where: { id: fundId, organizationId },
-      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // Use targeted select to prevent over-fetching
       // of large relation trees while ensuring all scalar fields are present.
       select: {
         id: true,
@@ -170,11 +170,11 @@ export class PettyCashUseCase {
       throw new NotFoundException("Petty cash fund not found");
     }
 
-    // 🛡️ Sentinel: Defense in Depth / BOLA Prevention - Enforce strict tenant isolation by scoping
+    // Defense in Depth / BOLA Prevention - Enforce strict tenant isolation by scoping
     // transaction list queries directly with relation filter `fund: { organizationId }`
     return await this.prisma.client.pettyCashTransaction.findMany({
       where: { fundId, fund: { organizationId } },
-      // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+      // Use targeted select to prevent over-fetching
       // of large relation trees while ensuring all scalar fields are present.
       select: {
         id: true,

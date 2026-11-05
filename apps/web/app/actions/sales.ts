@@ -309,10 +309,10 @@ export async function createTransaction(data: {
     throw new Error("Either customerId or businessAccountId must be provided");
   }
 
-  // Bolt Optimization: Extract unique variant IDs to batch fetch product variants alongside count and settings
+  // Extract unique variant IDs to batch fetch product variants alongside count and settings
   const variantIds = Array.from(new Set(data.items.map(item => item.variantId)));
 
-  // Bolt Optimization: Parallelize independent database queries (count, orgSettings, productVariants)
+  // Parallelize independent database queries (count, orgSettings, productVariants)
   const [count, orgSettings, variants] = await Promise.all([
     db.transaction.count({
       where: { organizationId: auth.organizationId },
@@ -345,7 +345,7 @@ export async function createTransaction(data: {
   // Index pre-fetched product variants for O(1) snapshot resolution
   const variantMap = new Map(variants.map(v => [v.id, v]));
 
-  // Bolt Optimization: Snapshot product and variant metadata directly in the create payload,
+  // Snapshot product and variant metadata directly in the create payload,
   // reducing database roundtrips from O(1 + 2N) sequential queries down to a single concurrent batch + insert (O(1)).
   const transaction = await db.transaction.create({
     data: {

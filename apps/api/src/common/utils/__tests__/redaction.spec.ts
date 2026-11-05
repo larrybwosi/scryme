@@ -97,7 +97,7 @@ describe("redactSensitiveData", () => {
     expect(redacted.safe).toBe("public");
   });
 
-  it("should redact additional Sentinel-added keys", () => {
+  it("should redact additional sensitive keys", () => {
     const data = {
       accessToken: "access123",
       refreshToken: "refresh456",
@@ -121,7 +121,7 @@ describe("redactSensitiveData", () => {
     expect(redacted.normal).toBe("value");
   });
 
-  it("should redact confirmation and webhook keys added by Sentinel", () => {
+  it("should redact confirmation and webhook keys", () => {
     const data = {
       pinHash: "hash123",
       pin_hash: "hash456",
@@ -231,7 +231,7 @@ describe("redactSensitiveData", () => {
     expect(redacted.Nested.Secret).toBe("[REDACTED]");
   });
 
-  it("should redact Sentinel-expanded list", () => {
+  it("should redact expanded sensitive list", () => {
     const data = {
       "Set-Cookie": "session=abc",
       "Proxy-Authorization": "Basic 123",

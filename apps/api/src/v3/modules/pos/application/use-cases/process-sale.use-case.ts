@@ -279,7 +279,7 @@ export class ProcessSaleUseCase {
     isWholesale?: boolean,
     tx?: any,
   ) {
-    // ⚡ Bolt Optimization: Use a Map for O(1) constant-time variant lookups.
+    // Use a Map for O(1) constant-time variant lookups.
     // This reduces lookup complexity from O(N*M) nested search to O(N+M) mapping.
     const variantMap = new Map(variants.map((v) => [v.id, v]));
 
@@ -519,7 +519,7 @@ export class ProcessSaleUseCase {
     const consumedMaterialsToCreate: any[] = [];
     const materialQtyMap = new Map<string, number>();
 
-    // ⚡ Bolt Optimization: Batch pre-fetch all matching service bookings to eliminate N+1 database queries.
+    // Batch pre-fetch all matching service bookings to eliminate N+1 database queries.
     // This reduces the query overhead from O(N) sequential requests down to a single constant-time O(1) query.
     const bookingIds = serviceItems
       .map((si) => si.bookingId)
@@ -548,7 +548,7 @@ export class ProcessSaleUseCase {
           throw new BadRequestException(`Booking with ID ${si.bookingId} is already completed`);
         }
 
-        // ⚡ Bolt Optimization: Collect booking update promises to parallelize database writes concurrently via Promise.all.
+        // Collect booking update promises to parallelize database writes concurrently via Promise.all.
         // This eliminates sequential N+1 blocking DB roundtrips for multi-service sales, reducing delay from O(N) to O(1).
         bookingUpdates.push(
           tx.serviceBooking.update({
@@ -562,7 +562,7 @@ export class ProcessSaleUseCase {
           }),
         );
 
-        // ⚡ Bolt Optimization: Consolidate material quantity decrements by variantId in-memory
+        // Consolidate material quantity decrements by variantId in-memory
         // to prevent row-lock contention and transactional deadlocks on duplicate variants.
         const materials = booking.service.materials || [];
         for (const mat of materials) {

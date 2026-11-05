@@ -28,7 +28,7 @@ export async function updateDevicePermissions(
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Use findFirst and updateMany with organizationId filter
+  // BOLA/IDOR Prevention - Use findFirst and updateMany with organizationId filter
   // because ApiKey and V3ApiClient updates must be strictly bounded to the active organization at database runtime.
   const apiKey = await db.apiKey.findFirst({
     where: {
@@ -65,7 +65,7 @@ export async function revokeDevice(deviceId: string) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Look up device scoped to auth.organizationId.
+  // BOLA/IDOR Prevention - Look up device scoped to auth.organizationId.
   const device = await db.deviceRegistry.findFirst({
     where: {
       id: deviceId,
@@ -76,7 +76,7 @@ export async function revokeDevice(deviceId: string) {
 
   if (!device) throw new Error("Device not found");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Use updateMany with organizationId on all mutations
+  // BOLA/IDOR Prevention - Use updateMany with organizationId on all mutations
   // to prevent cross-tenant mutations if relational key IDs are manipulated.
   const actions: any[] = [
     db.deviceRegistry.updateMany({
@@ -112,7 +112,7 @@ export async function deleteDevice(deviceId: string) {
   const auth = await getServerAuth();
   if (!auth || !auth.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Look up device scoped to auth.organizationId.
+  // BOLA/IDOR Prevention - Look up device scoped to auth.organizationId.
   const device = await db.deviceRegistry.findFirst({
     where: {
       id: deviceId,
@@ -122,7 +122,7 @@ export async function deleteDevice(deviceId: string) {
 
   if (!device) throw new Error("Device not found");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Use deleteMany scoped by id and organizationId
+  // BOLA/IDOR Prevention - Use deleteMany scoped by id and organizationId
   // because DeviceRegistry model lacks a composite unique constraint on [id, organizationId].
   await db.deviceRegistry.deleteMany({
     where: { id: deviceId, organizationId: auth.organizationId },

@@ -77,7 +77,7 @@ export class ReportsService {
   }
 
   async generateAndDispatchReport(organizationId: string, dto: GenerateReportDto, triggerUserEmail?: string) {
-    // Bolt Optimization: Parallelize independent report settings lookup and organization details query.
+    // Parallelize independent report settings lookup and organization details query.
     // Collapses pre-fetch latency from 2 sequential DB roundtrips down to 1 concurrent roundtrip.
     const [settings, org] = await Promise.all([
       this.getReportSettings(organizationId),
@@ -96,7 +96,7 @@ export class ReportsService {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
-    // Bolt Optimization: Parallelize sales, inventory, production, and tax metric queries.
+    // Parallelize sales, inventory, production, and tax metric queries.
     // Sequentially awaiting each section creates up to 4 consecutive DB query delays.
     // Executing enabled sections concurrently with Promise.all reduces query latency from O(N) to O(1).
     const [sales, inventory, production, tax] = await Promise.all([

@@ -70,7 +70,7 @@ const DEFAULT_SENSITIVE_KEYS = [
   "api-token",
   "password_hash",
   "passwordHash",
-  // SECURITY (Sentinel): Additional common sensitive key patterns and casing variants
+  // SECURITY: Additional common sensitive key patterns and casing variants
   "secretKey",
   "accessKey",
   "passkey",

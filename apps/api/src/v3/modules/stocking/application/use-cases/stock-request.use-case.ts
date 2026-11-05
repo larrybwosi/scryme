@@ -48,7 +48,7 @@ export class StockRequestUseCase {
   }
 
   async findOne(organizationId: string, requestId: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // StockRequest lacks a composite unique index on [id, organizationId].
     const request = await this.prisma.client.stockRequest.findFirst({
       where: { id: requestId, organizationId },
@@ -78,7 +78,7 @@ export class StockRequestUseCase {
 
   async approve(organizationId: string, memberId: string, requestId: string) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockRequest lacks a composite unique index on [id, organizationId].
       const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
@@ -89,7 +89,7 @@ export class StockRequestUseCase {
         throw new BadRequestException("Request is not in pending status");
       }
 
-      // SECURITY (Sentinel): Using updateMany instead of update because
+      // SECURITY: Using updateMany instead of update because
       // StockRequest lacks a composite unique index on [id, organizationId].
       // Prisma's standard update ignores non-unique fields in where clauses at runtime,
       // creating potential BOLA/IDOR mutation risks if pre-checks are bypassed or raced against.
@@ -116,7 +116,7 @@ export class StockRequestUseCase {
     dto: FulfillFromTransferDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockRequest lacks a composite unique index on [id, organizationId].
       const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
@@ -133,7 +133,7 @@ export class StockRequestUseCase {
         );
       }
 
-      // SECURITY (Sentinel): Validate that fromLocationId belongs to the caller's organizationId
+      // SECURITY: Validate that fromLocationId belongs to the caller's organizationId
       // to prevent cross-tenant BOLA/IDOR location association and unauthorized inventory transfer creation.
       const fromLocation = await tx.inventoryLocation.findFirst({
         where: { id: dto.fromLocationId, organizationId },
@@ -144,7 +144,7 @@ export class StockRequestUseCase {
 
       const transferNumber = `TR-REQ-${request.requestNumber}-${Date.now()}`;
 
-      // ⚡ Bolt Optimization: Pre-index request.items by variantId to eliminate O(N * M) nested lookup inside the loop.
+      // Pre-index request.items by variantId to eliminate O(N * M) nested lookup inside the loop.
       const requestItemsMap = new Map(
         request.items.map((ri) => [ri.variantId, ri]),
       );
@@ -179,7 +179,7 @@ export class StockRequestUseCase {
         },
       });
 
-      // ⚡ Bolt Optimization: Aggregate requested quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
+      // Aggregate requested quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
       // This collapses O(N) sequential database updates into a flat O(1) concurrent roundtrip, eliminating transactional bottleneck delay.
       const allocatedQtyMap = new Map<string, number>();
       for (const item of dto.items) {
@@ -211,7 +211,7 @@ export class StockRequestUseCase {
     dto: FulfillFromPurchaseDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockRequest lacks a composite unique index on [id, organizationId].
       const request = await tx.stockRequest.findFirst({
         where: { id: requestId, organizationId },
@@ -228,7 +228,7 @@ export class StockRequestUseCase {
         );
       }
 
-      // SECURITY (Sentinel): Validate that supplierId belongs to the caller's organizationId
+      // SECURITY: Validate that supplierId belongs to the caller's organizationId
       // to prevent cross-tenant IDOR resource association.
       const supplier = await tx.supplier.findFirst({
         where: { id: dto.supplierId, organizationId },
@@ -270,7 +270,7 @@ export class StockRequestUseCase {
         },
       });
 
-      // ⚡ Bolt Optimization: Aggregate ordered quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
+      // Aggregate ordered quantities by variantId in-memory and update allocated quantities concurrently via Promise.all.
       // This collapses O(N) sequential database updates into a flat O(1) concurrent roundtrip, eliminating transactional bottleneck delay.
       const allocatedQtyMap = new Map<string, number>();
       for (const item of dto.items) {

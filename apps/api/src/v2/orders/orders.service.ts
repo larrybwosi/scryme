@@ -182,7 +182,7 @@ export class OrdersService {
     });
 
     /**
-     * ⚡ Bolt Optimization: Index variants into a Map to avoid O(N*M) nested array searches
+     * Index variants into a Map to avoid O(N*M) nested array searches
      * across missing checks, stock verification, and item list mapping.
      * This reduces lookups to O(1) constant-time complexity, ensuring fast performance
      * even for large orders with many items.

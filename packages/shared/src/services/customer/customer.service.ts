@@ -138,7 +138,7 @@ export class CustomerService {
       const crmData = (customer.crmRecord?.data as Record<string, any>) || {};
       const { firstName, lastName } = this.splitName(customer.name);
 
-      // ⚡ Bolt Optimization: Use database-level aggregations instead of in-memory reductions.
+      // Use database-level aggregations instead of in-memory reductions.
       // Fetching and iterating over thousands of invoices in-memory is a major performance anti-pattern.
       // Moving aggregation to the database using Prisma's `aggregate` reduces the runtime complexity from
       // O(N) memory and network overhead to constant-time O(1).

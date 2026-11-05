@@ -87,7 +87,7 @@ export class V3AuthCoreService {
   ) {
     payload.memberId = memberId;
 
-    // ⚡ Bolt Optimization: Parallelize independent member and device registry database lookups with Promise.all.
+    // Parallelize independent member and device registry database lookups with Promise.all.
     // Executing these independent queries concurrently reduces token enrichment latency from 2 sequential database roundtrips O(2)
     // down to 1 concurrent roundtrip O(1).
     const [member, registry] = await Promise.all([
@@ -213,7 +213,7 @@ export class V3AuthCoreService {
         });
       }
 
-      // SECURITY (Sentinel): Mitigate timing attacks and cardId/member enumeration side-channels by always
+      // SECURITY: Mitigate timing attacks and cardId/member enumeration side-channels by always
       // performing a cryptographically heavy check on a valid dummy PIN hash if member or pinHash is missing.
       const dummyPinHash = "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
       const pinHashToCompare = member?.pinHash || dummyPinHash;

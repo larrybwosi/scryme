@@ -381,7 +381,7 @@ export class AdminService {
   async listSystemLogs() {
     // Try ActionAuditLog, fall back to empty array if query fails
     try {
-      // ⚡ Bolt Optimization: Use targeted select block instead of default implicit full model query.
+      // Use targeted select block instead of default implicit full model query.
       // Pruning heavy JSON fields (`changes` and `metadata`) on bulk system log queries
       // significantly reduces database I/O, network bandwidth, and NestJS/Prisma hydration overhead.
       return await this.prisma.client.actionAuditLog.findMany({

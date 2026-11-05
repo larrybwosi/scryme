@@ -49,7 +49,7 @@ export function PricingRuleDialog({
   const symbol = getCurrencySymbol(currency);
   const [loading, setLoading] = useState(false);
 
-  // ⚡ Bolt Optimization: Pre-index and memoize all product variants.
+  // Pre-index and memoize all product variants.
   // Replaces linear O(P * V) array flatMap allocations on every re-render / keystroke with O(1) memoized access.
   const allVariants = useMemo(() => {
     if (!products || products.length === 0) return [];

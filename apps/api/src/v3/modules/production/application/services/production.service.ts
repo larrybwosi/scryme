@@ -746,7 +746,7 @@ export class ProductionService {
       .filter((i) => i.isFlour)
       .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
 
-    // ⚡ Bolt Optimization: Concurrently resolve yield unit and ingredient units with Promise.all,
+    // Concurrently resolve yield unit and ingredient units with Promise.all,
     // collapsing sequential O(N) database unit lookups into a single concurrent roundtrip.
     const [resolvedYieldUnit, resolvedIngredients] = await Promise.all([
       this.resolveUnitId(
@@ -894,7 +894,7 @@ export class ProductionService {
         .filter((i) => i.isFlour)
         .reduce((acc, i) => acc + (Number(i.quantity) || 0), 0);
 
-      // ⚡ Bolt Optimization: Parallelize ingredient unit lookups using Promise.all
+      // Parallelize ingredient unit lookups using Promise.all
       // to avoid sequential O(N) database queries during recipe updates.
       resolvedIngredients = await Promise.all(
         ingredients.map(async (ing) => {
@@ -2658,7 +2658,7 @@ export class ProductionService {
 
       const variantMap = new Map(variants.map(v => [v.id, v]));
 
-      // ⚡ Bolt Optimization: Validate all ingredients first and aggregate stock updates
+      // Validate all ingredients first and aggregate stock updates
       // by unique variantId in-memory to prevent row-lock contention and reduce database roundtrips.
       const variantStockUpdates = new Map<
         string,
@@ -2685,7 +2685,7 @@ export class ProductionService {
         }
       }
 
-      // ⚡ Bolt Optimization: Create stock batches and movements for received ingredient lines.
+      // Create stock batches and movements for received ingredient lines.
       for (let i = 0; i < lines.length; i++) {
         const line = lines[i];
         const batch = await tx.stockBatch.create({
@@ -2720,7 +2720,7 @@ export class ProductionService {
         });
       }
 
-      // ⚡ Bolt Optimization: Update productVariantStock exactly once per unique variantId
+      // Update productVariantStock exactly once per unique variantId
       // to eliminate row lock contention and redundant database updates.
       for (const [variantId, updateInfo] of variantStockUpdates.entries()) {
         await tx.productVariantStock.upsert({

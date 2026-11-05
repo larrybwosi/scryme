@@ -65,7 +65,7 @@ export async function submitForApprovalCore(
   });
 
   // Create initial decisions for the first step if workflow exists
-  // ⚡ Bolt Optimization: Batch initial pending approval decisions using createMany to execute in a single O(1) query.
+  // Batch initial pending approval decisions using createMany to execute in a single O(1) query.
   if (workflow && workflow.steps.length > 0) {
     const firstStep = workflow.steps[0];
     const approverIds = new Set<string>();
@@ -132,7 +132,7 @@ export async function submitForApprovalCore(
     }
   }
 
-  // SECURITY (Sentinel): Validate that the target resource belongs to organizationId and update status with updateMany
+  // SECURITY: Validate that the target resource belongs to organizationId and update status with updateMany
   // to enforce database-level multi-tenant isolation against BOLA / IDOR attacks.
   if (data.type === "EXPENSE") {
     const expense = await client.expense.findFirst({
@@ -187,7 +187,7 @@ export async function makeApprovalDecisionCore(
     comments?: string;
   },
 ) {
-  // SECURITY (Sentinel): Scope lookup with organizationId using findFirst to prevent IDOR / cross-tenant approvals.
+  // SECURITY: Scope lookup with organizationId using findFirst to prevent IDOR / cross-tenant approvals.
   const request = await db.approvalRequest.findFirst({
     where: { id: data.requestId, organizationId },
     include: {
@@ -269,7 +269,7 @@ export async function makeApprovalDecisionCore(
         finalStatus = "PENDING";
 
         // Create decisions for the next step
-        // ⚡ Bolt Optimization: Batch approval decisions creation for subsequent steps using createMany in a single O(1) query.
+        // Batch approval decisions creation for subsequent steps using createMany in a single O(1) query.
         const nextWorkflowStep = request.workflow!.steps[nextStep - 1];
         const nextApproverIds = new Set<string>();
 
@@ -323,7 +323,7 @@ export async function makeApprovalDecisionCore(
     },
   });
 
-  // SECURITY (Sentinel): Use updateMany scoped strictly by organizationId for database-level multi-tenant BOLA isolation
+  // SECURITY: Use updateMany scoped strictly by organizationId for database-level multi-tenant BOLA isolation
   if (finalStatus === "APPROVED") {
     if (request.requestType === "EXPENSE") {
       await db.expense.updateMany({

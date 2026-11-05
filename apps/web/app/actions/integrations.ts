@@ -116,7 +116,7 @@ export async function provisionScryme() {
       { name: "general", slug: "general" },
     ];
 
-    // ⚡ Bolt Optimization: Concurrently create default channels via Promise.all.
+    // Concurrently create default channels via Promise.all.
     // Executing channel creations concurrently reduces provisioning latency from O(N*T) to O(1T).
     await Promise.all(
       channels.map(async (channel) => {
@@ -280,7 +280,7 @@ export async function getScrymeWorkspaceDetails() {
     const { ScrymeChatApiClient } = await import("@repo/chat");
     const scrymeClient = new ScrymeChatApiClient();
 
-    // ⚡ Bolt Optimization: Parallelize independent Scryme API network calls and Prisma DB queries.
+    // Parallelize independent Scryme API network calls and Prisma DB queries.
     // Fetching channels, workspace members, and database members concurrently via Promise.all
     // collapses loading latency on the integrations page from O(3T) sequential roundtrips to O(1T).
     const [channels, apiMembers, dbMembers] = await Promise.all([

@@ -76,7 +76,7 @@ export class CreateOrderUseCase {
       transaction = result.data;
     } else {
       // 2. Pure Service Checkout: Create the base Transaction directly
-      // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+      // SECURITY: Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").slice(0, 3).toUpperCase()}`;
 
       transaction = await this.prisma.client.transaction.create({
