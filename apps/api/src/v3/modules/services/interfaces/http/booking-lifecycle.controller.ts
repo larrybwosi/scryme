@@ -70,7 +70,7 @@ export class BookingLifecycleController {
             },
           },
         },
-        tasks: {
+        bookingTasks: {
           include: {
             checklistItems: {
               include: {

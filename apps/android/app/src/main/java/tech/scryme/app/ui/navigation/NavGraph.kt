@@ -16,6 +16,10 @@ import tech.scryme.app.ui.branch.BranchDetailsScreen
 import tech.scryme.app.ui.branch.BranchDetailsViewModel
 import tech.scryme.app.ui.branch.BranchScreen
 import tech.scryme.app.ui.branch.BranchViewModel
+import tech.scryme.app.ui.customer.CustomerDetailsScreen
+import tech.scryme.app.ui.customer.CustomerDetailsViewModel
+import tech.scryme.app.ui.customer.CustomerScreen
+import tech.scryme.app.ui.customer.CustomerViewModel
 import tech.scryme.app.ui.overview.OverviewScreen
 import tech.scryme.app.ui.overview.OverviewViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
@@ -116,7 +120,8 @@ fun AppNavGraph(
             AdminScreen(
                 viewModel = viewModel,
                 onNavigateToSales = { navController.navigate(Screen.Sales.route) },
-                onNavigateToBranches = { navController.navigate(Screen.Branch.route) }
+                onNavigateToBranches = { navController.navigate(Screen.Branch.route) },
+                onNavigateToCustomers = { navController.navigate(Screen.Customer.route) }
             )
         }
         composable(Screen.Sales.route) {
@@ -141,6 +146,26 @@ fun AppNavGraph(
         ) {
             val viewModel: BranchDetailsViewModel = hiltViewModel()
             BranchDetailsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Customer.route) {
+            val viewModel: CustomerViewModel = hiltViewModel()
+            CustomerScreen(
+                viewModel = viewModel,
+                onNavigateToCustomerDetails = { customerId ->
+                    navController.navigate(Screen.CustomerDetails.createRoute(customerId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.CustomerDetails.route,
+            arguments = listOf(navArgument("customerId") { type = NavType.StringType })
+        ) {
+            val viewModel: CustomerDetailsViewModel = hiltViewModel()
+            CustomerDetailsScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )

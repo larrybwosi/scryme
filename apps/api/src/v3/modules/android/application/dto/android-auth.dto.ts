@@ -486,3 +486,30 @@ export class AndroidUpdateBranchCoordinatesDto {
   @IsNumber()
   longitude: number;
 }
+
+export class AndroidUpdateCustomerDto {
+  @ApiPropertyOptional({ description: "Customer full name" })
+  @IsString()
+  @IsOptional()
+  name?: string;
+
+  @ApiPropertyOptional({ description: "Customer email address" })
+  @IsString()
+  @IsOptional()
+  email?: string;
+
+  @ApiPropertyOptional({ description: "Customer phone number" })
+  @IsString()
+  @IsOptional()
+  phone?: string;
+
+  @ApiPropertyOptional({ description: "Customer company name" })
+  @IsString()
+  @IsOptional()
+  company?: string;
+
+  @ApiPropertyOptional({ description: "Customer active status" })
+  @IsBoolean()
+  @IsOptional()
+  isActive?: boolean;
+}
