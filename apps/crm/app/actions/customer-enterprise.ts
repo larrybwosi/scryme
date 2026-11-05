@@ -214,7 +214,7 @@ export async function bulkUpdateCustomerTier(
       select: { id: true, name: true, email: true, phone: true, tags: true },
     });
 
-    // ⚡ Bolt Optimization: Process updates in controlled chunks (CHUNK_SIZE = 10) to balance
+    // Process updates in controlled chunks (CHUNK_SIZE = 10) to balance
     // high batch concurrency against database connection pool limits (O(N/10) vs O(N)).
     const CHUNK_SIZE = 10;
     for (let i = 0; i < customers.length; i += CHUNK_SIZE) {
@@ -367,7 +367,7 @@ export async function importCustomersCSV(csvContent: string): Promise<{
 
   const dataLines = lines.slice(1);
 
-  // ⚡ Bolt Optimization: Process CSV rows in controlled chunked slices (CHUNK_SIZE = 10) with Promise.all.
+  // Process CSV rows in controlled chunked slices (CHUNK_SIZE = 10) with Promise.all.
   // Converting sequential O(N) row-by-row await iterations to chunked concurrency reduces total import latency
   // by ~10x while protecting the Prisma connection pool from exhaustion.
   const CHUNK_SIZE = 10;

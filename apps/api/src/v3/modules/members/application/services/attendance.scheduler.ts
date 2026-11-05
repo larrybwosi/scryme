@@ -42,7 +42,7 @@ export class AttendanceScheduler {
       },
     });
 
-    // ⚡ Bolt Optimization: Concurrently process organization auto-checkouts with isolated error handlers
+    // Concurrently process organization auto-checkouts with isolated error handlers
     await Promise.all(
       orgs.map(async org => {
         try {
@@ -106,7 +106,7 @@ export class AttendanceScheduler {
       `Auto-checking out ${activeLogs.length} members for org ${organizationId}`,
     );
 
-    // ⚡ Bolt Optimization: Parallelize member checkOut calls concurrently via Promise.all
+    // Parallelize member checkOut calls concurrently via Promise.all
     await Promise.all(
       activeLogs.map(async log => {
         try {

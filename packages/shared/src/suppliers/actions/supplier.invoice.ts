@@ -38,7 +38,7 @@ export type UpdateInvoiceDto = z.infer<typeof updateInvoiceSchema>;
  * Creates a new invoice for a given purchase order.
  */
 export async function createSupplierInvoice(data: CreateInvoiceDto) {
-  // SECURITY (Sentinel): Verify purchase exists and belongs to the specified organization to prevent IDOR
+  // SECURITY: Verify purchase exists and belongs to the specified organization to prevent IDOR
   const purchase = await prisma.purchase.findFirst({
     where: {
       id: data.purchaseId,
@@ -98,7 +98,7 @@ export async function updateSupplierInvoice(
   invoiceId: string,
   data: UpdateInvoiceDto,
 ) {
-  // SECURITY (Sentinel): Scoped lookup using findFirst with organizationId to prevent IDOR
+  // SECURITY: Scoped lookup using findFirst with organizationId to prevent IDOR
   const currentInvoice = await prisma.supplierInvoice.findFirst({
     where: {
       id: invoiceId,
@@ -108,7 +108,7 @@ export async function updateSupplierInvoice(
 
   if (!currentInvoice) throw new Error("Invoice not found");
 
-  // SECURITY (Sentinel): Whitelist input fields instead of object spreading to prevent mass assignment
+  // SECURITY: Whitelist input fields instead of object spreading to prevent mass assignment
   const updatedInvoice = await prisma.supplierInvoice.update({
     where: { id: invoiceId },
     data: {
@@ -134,7 +134,7 @@ export async function deleteSupplierInvoice(
   organizationId: string,
   invoiceId: string,
 ) {
-  // SECURITY (Sentinel): Scoped lookup using findFirst with organizationId to prevent cross-tenant IDOR
+  // SECURITY: Scoped lookup using findFirst with organizationId to prevent cross-tenant IDOR
   const invoice = await prisma.supplierInvoice.findFirst({
     where: {
       id: invoiceId,

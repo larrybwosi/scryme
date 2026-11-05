@@ -34,7 +34,7 @@ export class ServiceManagementService {
     const offset = Number(pagination.offset || 0);
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Shifting pagination from in-memory array slicing to database-level query scoping
+     * Shifting pagination from in-memory array slicing to database-level query scoping
      * prevents over-fetching on catalog lists. Selecting only the base columns and basic category details
      * avoids deep relational joins (like staff and resources), reducing query overhead, network footprints,
      * and JSON serialization latency significantly.
@@ -66,7 +66,7 @@ export class ServiceManagementService {
 
   async getServicesRaw(orgId: string, options?: { isActive?: boolean }) {
     /**
-     * OPTIMIZATION (Bolt ⚡): This optimized raw query fetches only base Service columns without heavy
+     * This optimized raw query fetches only base Service columns without heavy
      * database table joins (category, staff, resources) for cases where relations are not consumed.
      * This drastically reduces database query complexity, network payload, and NestJS serialization overhead.
      * Estimated performance boost: Up to ~80% reduction in response latency and payload size.
@@ -95,7 +95,7 @@ export class ServiceManagementService {
       }
     }
 
-    // 🛡️ Sentinel: ServiceCategory lacks a composite unique constraint on [id, organizationId].
+    // ServiceCategory lacks a composite unique constraint on [id, organizationId].
     // Standard Prisma update({ where: { id } }) ignores non-unique fields in where clauses at runtime.
     // Using updateMany with organizationId guarantees database-level multi-tenant isolation.
     await this.prisma.client.serviceCategory.updateMany({
@@ -115,7 +115,7 @@ export class ServiceManagementService {
 
     if (!category) throw new NotFoundException("Category not found");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    // Enforce multi-tenant isolation at database query execution time.
     await this.prisma.client.serviceCategory.deleteMany({
         where: { id, organizationId: orgId }
     });
@@ -273,7 +273,7 @@ export class ServiceManagementService {
       }
     }
 
-    // 🛡️ Sentinel: Service lacks a composite unique constraint on [id, organizationId].
+    // Service lacks a composite unique constraint on [id, organizationId].
     // Standard Prisma update({ where: { id } }) ignores non-unique organizationId filters in where clauses at runtime.
     // Using updateMany with organizationId strictly enforces multi-tenant BOLA isolation at database execution time.
     await this.prisma.client.service.updateMany({
@@ -331,7 +331,7 @@ export class ServiceManagementService {
 
     if (!service) throw new NotFoundException("Service not found");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    // Enforce multi-tenant isolation at database query execution time.
     await this.prisma.client.service.deleteMany({
         where: { id, organizationId: orgId }
     });
@@ -404,7 +404,7 @@ export class ServiceManagementService {
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    // 🛡️ Sentinel: ServiceResource lacks a composite unique constraint on [id, organizationId].
+    // ServiceResource lacks a composite unique constraint on [id, organizationId].
     // Standard Prisma update({ where: { id } }) ignores non-unique fields in where clauses at runtime.
     // Using updateMany with organizationId guarantees database-level multi-tenant isolation.
     await this.prisma.client.serviceResource.updateMany({
@@ -424,7 +424,7 @@ export class ServiceManagementService {
 
     if (!resource) throw new NotFoundException("Resource not found");
 
-    // 🛡️ Sentinel: Enforce multi-tenant isolation at database query execution time.
+    // Enforce multi-tenant isolation at database query execution time.
     await this.prisma.client.serviceResource.deleteMany({
         where: { id, organizationId: orgId }
     });

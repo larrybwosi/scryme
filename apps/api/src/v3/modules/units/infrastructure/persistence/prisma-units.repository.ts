@@ -13,7 +13,7 @@ export class PrismaUnitsRepository implements IUnitsRepository {
   constructor(private readonly prisma: PrismaService) {}
 
   async findManySystemUnits(lastSync?: Date): Promise<SystemUnit[]> {
-    // ⚡ Bolt: Performance Optimization (In-Memory Cache for System Units)
+    // Performance Optimization (In-Memory Cache for System Units)
     // System units are system-wide, static, and highly frequently accessed.
     // Serving them from in-memory cache eliminates redundant database I/O and query overhead.
     if (!this.cachedSystemUnits) {

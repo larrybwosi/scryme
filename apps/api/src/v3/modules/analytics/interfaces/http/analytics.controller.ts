@@ -34,7 +34,7 @@ export class AnalyticsController {
     const organizationId = req.v3Context.organizationId;
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Parallelized database queries via Promise.all and pre-grouped
+     * Parallelized database queries via Promise.all and pre-grouped
      * completed logs using an in-memory Map. This collapses 4 sequential database queries
      * into a single parallelized roundtrip, and optimizes the loop's nested search
      * complexity from O(N * M) down to O(N + M) constant-time lookups.

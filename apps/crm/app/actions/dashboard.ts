@@ -12,7 +12,7 @@ export async function getDashboardStats() {
   const { organizationId } = context;
 
   try {
-    // ⚡ Bolt: Performance Optimization (Parallelized DB Reads)
+    // Performance Optimization (Parallelized DB Reads)
     // Parallelize independent initial queries (revenue aggregate, leadDef, totalCustomers, dealDef, settings)
     // using Promise.all to collapse 5 sequential roundtrips down to 1 concurrent roundtrip.
     const [revenue, leadDef, totalCustomers, dealDef, settings] = await Promise.all([
@@ -40,7 +40,7 @@ export async function getDashboardStats() {
       }),
     ]);
 
-    // ⚡ Bolt: Parallelize dependent active lead & open deal count queries concurrently.
+    // Parallelize dependent active lead & open deal count queries concurrently.
     const [activeLeadsCount, openDealsCount] = await Promise.all([
       leadDef
         ? db.crmRecord.count({
@@ -113,7 +113,7 @@ export async function getRecentActivity() {
     const { organizationId } = context;
 
     try {
-        // ⚡ Bolt: Performance Optimization (Parallelized DB Reads)
+        // Performance Optimization (Parallelized DB Reads)
         // Parallelize initial queries for recent customers and lead definition using Promise.all.
         const [recentCustomers, leadDef] = await Promise.all([
             db.customer.findMany({
@@ -379,7 +379,7 @@ export async function getCustomerData() {
         const months = 6;
         const queries = [];
 
-        // ⚡ Bolt: Performance Optimization (N+1 Query Elimination / Parallelization)
+        // Performance Optimization (N+1 Query Elimination / Parallelization)
         // Creating monthly date ranges and parallelizing database calls using `Promise.all`
         // instead of sequential, blocking database count roundtrips inside a `for` loop.
         // This cuts down latency from 6x sequential database RTTs to a single parallel RTT.

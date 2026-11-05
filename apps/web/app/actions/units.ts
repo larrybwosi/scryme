@@ -75,7 +75,7 @@ export async function updateOrganizationUnit(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Hardening - OrganizationUnit lacks a composite unique constraint on [id, organizationId].
+  // BOLA/IDOR Hardening - OrganizationUnit lacks a composite unique constraint on [id, organizationId].
   // Standard Prisma update with non-unique where filters ignores non-unique fields at database level.
   // First verify existence/ownership, then update using updateMany scoped by organizationId.
   const existing = await db.organizationUnit.findFirst({
@@ -113,7 +113,7 @@ export async function deleteOrganizationUnit(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
+  // BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
   // because OrganizationUnit lacks a composite unique constraint on [id, organizationId].
   const existing = await db.organizationUnit.findFirst({
     where: { id, organizationId: context.organizationId },
@@ -170,7 +170,7 @@ export async function createOrgUnitConversion(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Prevention - Validate that both fromUnitId and toUnitId
+  // BOLA/IDOR Prevention - Validate that both fromUnitId and toUnitId
   // belong to context.organizationId before creating unit conversion links across tenants.
   const [fromUnit, toUnit] = await Promise.all([
     db.organizationUnit.findFirst({
@@ -211,7 +211,7 @@ export async function updateOrgUnitConversion(
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Hardening - OrgUnitConversion lacks a composite unique constraint on [id, organizationId].
+  // BOLA/IDOR Hardening - OrgUnitConversion lacks a composite unique constraint on [id, organizationId].
   // Use findFirst pre-check followed by updateMany scoped by organizationId.
   const existing = await db.orgUnitConversion.findFirst({
     where: { id, organizationId: context.organizationId },
@@ -240,7 +240,7 @@ export async function deleteOrgUnitConversion(id: string) {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // 🛡️ Sentinel: BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
+  // BOLA/IDOR Hardening - Use deleteMany scoped by id and organizationId
   // because OrgUnitConversion lacks a composite unique constraint on [id, organizationId].
   const existing = await db.orgUnitConversion.findFirst({
     where: { id, organizationId: context.organizationId },

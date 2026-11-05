@@ -36,7 +36,7 @@ export class DeliveryReconciliationUseCase {
           },
         },
       },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted top-level 'select'
+      // Replace broad 'include' with targeted top-level 'select'
       // to avoid fetching heavy JSON fields (like metadata) and text fields (like termsAndConditions) in list views.
       select: {
         id: true,
@@ -104,7 +104,7 @@ export class DeliveryReconciliationUseCase {
         },
         status: FulfillmentStatus.SHIPPED,
       },
-      // ⚡ Bolt Optimization: Replace broad 'include' with targeted top-level 'select'
+      // Replace broad 'include' with targeted top-level 'select'
       // to avoid fetching unneeded columns of Fulfillment in list views.
       select: {
         id: true,
@@ -185,7 +185,7 @@ export class DeliveryReconciliationUseCase {
       const qtyReturned = 0; // Legacy mapping from when DTO had qtyReturned
 
       // Fetch fulfillment along with all required deep relations needed for calculations
-      // SECURITY (Sentinel): Using findFirst with organizationId to prevent IDOR.
+      // SECURITY: Using findFirst with organizationId to prevent IDOR.
       const fulfillment = await tx.fulfillment.findFirst({
         where: { id: fulfillmentId, transaction: { organizationId } },
         include: {
@@ -297,7 +297,7 @@ export class DeliveryReconciliationUseCase {
           .map((i) => i.variantId)
           .filter(Boolean) as string[];
 
-        // ⚡ Bolt Optimization: Batch pre-fetch all matching stock batches to eliminate N+1 queries.
+        // Batch pre-fetch all matching stock batches to eliminate N+1 queries.
         // Indexing latest batches by variantId allows O(1) constant-time lookup.
         const allBatches = await tx.stockBatch.findMany({
           where: {
@@ -315,7 +315,7 @@ export class DeliveryReconciliationUseCase {
           }
         }
 
-        // ⚡ Bolt Optimization: Consolidate return quantities per unique variantId and batchId in-memory first.
+        // Consolidate return quantities per unique variantId and batchId in-memory first.
         // This prevents database row lock contention or deadlocks if multiple transaction items share the same variant.
         const returnItemsToCreate: any[] = [];
         const variantRestockMap = new Map<string, number>();

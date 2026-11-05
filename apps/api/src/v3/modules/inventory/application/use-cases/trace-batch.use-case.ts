@@ -10,7 +10,7 @@ export class TraceBatchUseCase {
 
   async execute(organizationId: string, identifier: string) {
     // identifier could be ID or BatchNumber
-    // ⚡ Bolt Optimization: Most batch lookups pass the actual database ID (which is a CUID starting with 'c', length >= 24).
+    // Most batch lookups pass the actual database ID (which is a CUID starting with 'c', length >= 24).
     // We can directly call getTraceability in a single database query if it is a CUID-like identifier.
     // If it is not found, or not CUID-like, we fall back to the multi-query route (findByBatchNumber, etc.).
     const isCuidLike = identifier.startsWith("c") && identifier.length >= 24;
@@ -18,7 +18,7 @@ export class TraceBatchUseCase {
     if (isCuidLike) {
       const traceBatch = await this.stockBatchRepository.getTraceability(identifier);
       if (traceBatch) {
-        // SECURITY (Sentinel): BOLA/IDOR Prevention & Tenant Isolation.
+        // SECURITY: BOLA/IDOR Prevention & Tenant Isolation.
         // If the CUID exists but belongs to a foreign organization, immediately reject with NotFoundException
         // without attempting fallback repository queries (findById / findByBatchNumber).
         // This prevents timing oracles/side-channel probing and eliminates redundant DB lookups on foreign tenant records.

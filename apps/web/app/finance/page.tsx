@@ -33,7 +33,7 @@ export const metadata: Metadata = {
 
 export default async function FinanceDashboard() {
   const auth = await getServerAuth();
-  // ⚡ Bolt Optimization: Parallelize fetching of stats and organization details using Promise.all
+  // Parallelize fetching of stats and organization details using Promise.all
   // to avoid blocking page rendering on sequential backend/database queries.
   const [stats, organization] = await Promise.all([
     getFinanceOverview(),

@@ -101,7 +101,7 @@ export function EditTransferForm({
   const [itemError, setItemError] = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
-  // ⚡ Bolt Optimization: Memoize transformed variants array to prevent redundant
+  // Memoize transformed variants array to prevent redundant
   // array allocations and iterations on every form state update / re-render.
   const variants = useMemo(
     () =>

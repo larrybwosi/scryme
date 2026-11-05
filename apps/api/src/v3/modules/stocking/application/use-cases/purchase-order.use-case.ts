@@ -224,7 +224,7 @@ async receive(
     dto: ReceivePurchaseDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // Purchase lacks a composite unique index on [id, organizationId].
       const purchase = await tx.purchase.findFirst({
         where: { id: purchaseId, organizationId },
@@ -249,7 +249,7 @@ async receive(
         },
       });
 
-      // ⚡ Bolt Optimization: Pre-index purchase items into a Map to avoid O(N*M) nested loop search
+      // Pre-index purchase items into a Map to avoid O(N*M) nested loop search
       const purchaseItemsMap = new Map(purchase.items.map((i) => [i.id, i]));
 
       // Keep track of total received quantity per variantId to consolidate productVariantStock upserts.
@@ -388,7 +388,7 @@ async receive(
         });
       }
 
-      // ⚡ Bolt Optimization: Consolidate ProductVariantStock upserts.
+      // Consolidate ProductVariantStock upserts.
       // Running exactly one upsert query per unique variantId reduces lock contention,
       // database I/O, and speeds up bulk receipts under high concurrency.
       for (const [variantId, updateInfo] of variantStockUpdates.entries()) {
@@ -432,7 +432,7 @@ async receive(
         });
       }
 
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // Purchase lacks a composite unique index on [id, organizationId],
       // ensuring queries are strictly scoped by tenant to prevent cross-tenant IDOR vulnerabilities.
       const updatedPurchase = await tx.purchase.findFirst({
@@ -459,7 +459,7 @@ async receive(
         },
       });
 
-      // ⚡ Bolt Optimization: Consolidate unique variant cost changes in-memory and execute price recalculations concurrently via Promise.all.
+      // Consolidate unique variant cost changes in-memory and execute price recalculations concurrently via Promise.all.
       // Deduplicating by variantId prevents redundant price recalculation calls, and parallel execution collapses O(N) sequential database roundtrips.
       const uniqueVariantCostChanges = new Map<string, number>();
       for (const itemDto of dto.items) {
@@ -493,7 +493,7 @@ async receive(
   }
 
   async approve(organizationId: string, memberId: string, purchaseId: string) {
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Purchase lacks a composite unique index on [id, organizationId].
     const purchase = await this.prisma.client.purchase.findFirst({
       where: { id: purchaseId, organizationId },
@@ -501,7 +501,7 @@ async receive(
 
     if (!purchase) throw new NotFoundException("Purchase order not found");
 
-    // SECURITY (Sentinel): Purchase model lacks a composite unique constraint on [id, organizationId].
+    // SECURITY: Purchase model lacks a composite unique constraint on [id, organizationId].
     // Prisma's standard `update({ where: { id } })` ignores non-unique fields in `where` clauses at runtime.
     // Using `updateMany({ where: { id: purchaseId, organizationId } })` guarantees database-level multi-tenant isolation during status mutations.
     await this.prisma.client.purchase.updateMany({

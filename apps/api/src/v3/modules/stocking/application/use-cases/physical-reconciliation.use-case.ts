@@ -22,7 +22,7 @@ export class PhysicalReconciliationUseCase {
   ) {}
 
   async generateCountSheet(organizationId: string, locationId: string) {
-    // SECURITY (Sentinel): IDOR/BOLA Prevention - Verify locationId belongs to organizationId
+    // SECURITY: IDOR/BOLA Prevention - Verify locationId belongs to organizationId
     const location = await this.prisma.client.inventoryLocation.findFirst({
       where: { id: locationId, organizationId },
     });
@@ -31,7 +31,7 @@ export class PhysicalReconciliationUseCase {
     }
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad 'include' statements with a highly targeted nested 'select' block.
+     * Replaced broad 'include' statements with a highly targeted nested 'select' block.
      * Fetching only essential scalar fields (sku, name, productName) avoids over-fetching heavy fields
      * like variant/product descriptions, image URLs, barcodes, reorder points, and custom JSON metadata.
      * This significantly reduces database memory, payload size, and NestJS object hydration overhead.
@@ -70,7 +70,7 @@ export class PhysicalReconciliationUseCase {
     dto: SubmitReconciliationDto,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): IDOR/BOLA Prevention - Verify locationId belongs to organizationId
+      // SECURITY: IDOR/BOLA Prevention - Verify locationId belongs to organizationId
       const location = await tx.inventoryLocation.findFirst({
         where: { id: dto.locationId, organizationId },
       });
@@ -78,7 +78,7 @@ export class PhysicalReconciliationUseCase {
         throw new NotFoundException("Location not found");
       }
 
-      // ⚡ Bolt Optimization: Batch fetch all relevant stock records in a single query
+      // Batch fetch all relevant stock records in a single query
       // to eliminate N+1 database round-trips.
       const variantIds = dto.items.map((i) => i.variantId);
       const stocks = await tx.productVariantStock.findMany({
@@ -157,7 +157,7 @@ export class PhysicalReconciliationUseCase {
     reconciliationId: string,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
+      // SECURITY: Using findFirst instead of findUnique because
       // StockReconciliation model lacks composite unique index on [id, organizationId]
       const reconciliation = await tx.stockReconciliation.findFirst({
         where: { id: reconciliationId, organizationId },
@@ -170,7 +170,7 @@ export class PhysicalReconciliationUseCase {
         throw new BadRequestException("Reconciliation is not pending review");
       }
 
-      // OPTIMIZATION (Bolt ⚡): Pre-fetch all active stockBatch records for variants with negative variance
+      // Pre-fetch all active stockBatch records for variants with negative variance
       // in a single query before entering the loop. Indexing them by variantId in an in-memory Map
       // eliminates N+1 database roundtrips during FIFO shrinkage processing.
       const negativeVarianceVariantIds = reconciliation.items
@@ -198,7 +198,7 @@ export class PhysicalReconciliationUseCase {
         batchesByVariantMap.get(batch.variantId)!.push(batch);
       }
 
-      // OPTIMIZATION (Bolt ⚡): Process non-zero variance reconciliation items using controlled chunked concurrency (CHUNK_SIZE = 10).
+      // Process non-zero variance reconciliation items using controlled chunked concurrency (CHUNK_SIZE = 10).
       // Chunking prevents un-throttled pipeline flooding or transaction timeouts on large count sheets in Prisma interactive transactions,
       // while providing an ~10x execution speedup over sequential blocking loops.
       const nonZeroItems = reconciliation.items.filter(
@@ -303,7 +303,7 @@ export class PhysicalReconciliationUseCase {
         );
       }
 
-      // OPTIMIZATION (Bolt ⚡): Consolidate reconciliation item status updates into a single
+      // Consolidate reconciliation item status updates into a single
       // updateMany query to eliminate N sequential update roundtrips inside the loop.
       const itemIds = reconciliation.items.map((item) => item.id);
       if (itemIds.length > 0) {
@@ -313,7 +313,7 @@ export class PhysicalReconciliationUseCase {
         });
       }
 
-      // SECURITY (Sentinel): BOLA/IDOR Defense - StockReconciliation lacks a composite unique constraint on [id, organizationId].
+      // SECURITY: BOLA/IDOR Defense - StockReconciliation lacks a composite unique constraint on [id, organizationId].
       // Standard Prisma update ignores non-unique fields in 'where' clauses at runtime.
       // updateMany strictly enforces database-level multi-tenant isolation during status mutations.
       await tx.stockReconciliation.updateMany({

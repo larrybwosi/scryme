@@ -313,7 +313,7 @@ export async function getStaffMemberDetail(
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
 
   const stats = await db.$transaction(async tx => {
-    // PERFORMANCE OPTIMIZATION (Bolt):
+    // PERFORMANCE OPTIMIZATION:
     // Parallelize independent database queries for totalSales, monthlySales, and attendanceCount
     // using Promise.all inside the transaction block. This reduces database wait time from 3 sequential roundtrips down to 1 parallel roundtrip (~66% reduction in DB query latency).
     const [totalSales, monthlySales, attendanceCount] = await Promise.all([

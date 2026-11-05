@@ -32,7 +32,7 @@ export class RoleManagementUseCase {
       this.prisma.client.customRole.findMany({
         where,
         /**
-         * ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+         * Use targeted select for list view to reduce database load
          * and network payload size by excluding the potentially large 'permissions' array.
          */
         select: {
@@ -62,7 +62,7 @@ export class RoleManagementUseCase {
     dto: CreateCustomRoleDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, description, permissions } = dto;
 
     const role = await this.prisma.client.customRole.create({
@@ -94,10 +94,10 @@ export class RoleManagementUseCase {
     dto: UpdateCustomRoleDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, description, permissions, isActive } = dto;
 
-    // SECURITY (Sentinel): BOLA Defense-in-depth: CustomRole lacks a composite unique index on
+    // SECURITY: BOLA Defense-in-depth: CustomRole lacks a composite unique index on
     // [id, organizationId]. Using updateMany enforces database-level multi-tenant scoping.
     const updateResult = await this.prisma.client.customRole.updateMany({
       where: { id, organizationId },
@@ -132,14 +132,14 @@ export class RoleManagementUseCase {
   }
 
   async deleteCustomRole(organizationId: string, id: string, actorId: string) {
-    // SECURITY (Sentinel): Verify role exists within the tenant before deletion.
+    // SECURITY: Verify role exists within the tenant before deletion.
     const currentRole = await this.prisma.client.customRole.findFirst({
       where: { id, organizationId },
     });
 
     if (!currentRole) throw new NotFoundException("Custom role not found");
 
-    // SECURITY (Sentinel): BOLA Defense-in-depth: CustomRole lacks a composite unique index on
+    // SECURITY: BOLA Defense-in-depth: CustomRole lacks a composite unique index on
     // [id, organizationId]. Using deleteMany enforces database-level multi-tenant scoping.
     const deleteResult = await this.prisma.client.customRole.deleteMany({
       where: { id, organizationId },
@@ -166,7 +166,7 @@ export class RoleManagementUseCase {
   // --- Permission Sets ---
 
   /**
-   * ⚡ Bolt Optimization: Use targeted select for permission sets list.
+   * Use targeted select for permission sets list.
    */
   async getPermissionSets(organizationId: string) {
     return this.prisma.client.permissionSet.findMany({
@@ -187,7 +187,7 @@ export class RoleManagementUseCase {
     dto: CreatePermissionSetDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, description, permissions } = dto;
 
     const set = await this.prisma.client.permissionSet.create({
@@ -226,10 +226,10 @@ export class RoleManagementUseCase {
     dto: CreateRoleGroupDto,
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, description, permissionSetIds } = dto;
 
-    // SECURITY (Sentinel): Validate ownership of permission sets.
+    // SECURITY: Validate ownership of permission sets.
     if (permissionSetIds && permissionSetIds.length > 0) {
       const count = await this.prisma.client.permissionSet.count({
         where: {
@@ -267,14 +267,14 @@ export class RoleManagementUseCase {
     roleIds: string[],
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Verify member belongs to organization.
+    // SECURITY: Verify member belongs to organization.
     const currentMember = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId, deletedAt: null },
     });
 
     if (!currentMember) throw new NotFoundException("Member not found");
 
-    // SECURITY (Sentinel): Validate ownership of custom roles.
+    // SECURITY: Validate ownership of custom roles.
     if (roleIds && roleIds.length > 0) {
       const count = await this.prisma.client.customRole.count({
         where: {
@@ -306,7 +306,7 @@ export class RoleManagementUseCase {
     roleIds: string[],
     actorId: string,
   ) {
-    // SECURITY (Sentinel): Verify member belongs to organization.
+    // SECURITY: Verify member belongs to organization.
     const currentMember = await this.prisma.client.member.findFirst({
       where: { id: memberId, organizationId, deletedAt: null },
     });

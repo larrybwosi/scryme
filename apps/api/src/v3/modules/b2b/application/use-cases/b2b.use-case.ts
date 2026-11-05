@@ -44,7 +44,7 @@ export class B2BUseCase {
       where,
       { createdAt: "desc" },
       {
-        // ⚡ Bolt Optimization: Use targeted select instead of broad include to reduce database I/O
+        // Use targeted select instead of broad include to reduce database I/O
         // and network payload size by only fetching fields required for the catalog view.
         select: {
           id: true,
@@ -104,7 +104,7 @@ export class B2BUseCase {
 
   async getInvoices(organizationId: string, businessAccountId: string) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad findMany query with targeted 'select' block.
+     * Replaced broad findMany query with targeted 'select' block.
      * Excluding the heavy legal text (termsAndConditions), notes, and metadata JSON fields
      * significantly reduces database I/O and network payload size for B2B list views.
      */
@@ -149,7 +149,7 @@ export class B2BUseCase {
 
   async getOrders(organizationId: string, businessAccountId: string) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad include on items with a targeted select block.
+     * Replaced broad include on items with a targeted select block.
      * Selecting only essential scalar fields for transactions and their related items
      * prevents the over-fetching of heavy fields like item.customFields, item.notes,
      * and transaction.metadata/termsAndConditions to optimize DB/network performance.
@@ -247,8 +247,8 @@ export class B2BUseCase {
       );
     }
 
-    // ⚡ Bolt: Optimized order creation by batching variant lookups to avoid N+1 query problem.
-    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
+    // Optimized order creation by batching variant lookups to avoid N+1 query problem.
+    // SECURITY: Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
         id: { in: variantIds },
@@ -292,7 +292,7 @@ export class B2BUseCase {
         type: "SALES_ORDER" as any,
         status: "PENDING" as any,
         locationId: location.id,
-        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+        // SECURITY: Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
         number: `B2B-${crypto.randomBytes(4).toString("hex").slice(0, 7).toUpperCase()}`,
         subtotal,
         finalTotal: subtotal,
@@ -354,9 +354,9 @@ export class B2BUseCase {
       where: { organizationId, isActive: true },
     });
 
-    // ⚡ Bolt: Fetch variant details for quote items
+    // Fetch variant details for quote items
     const variantIds = data.items.map((item: any) => item.variantId);
-    // SECURITY (Sentinel): Enforce multi-tenant isolation by filtering product variants by organizationId.
+    // SECURITY: Enforce multi-tenant isolation by filtering product variants by organizationId.
     const variants = await this.prisma.client.productVariant.findMany({
       where: {
         id: { in: variantIds },
@@ -381,7 +381,7 @@ export class B2BUseCase {
         type: "QUOTE" as any,
         status: "PENDING" as any,
         locationId: location?.id,
-        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable quote numbers
+        // SECURITY: Use cryptographically secure random bytes instead of Math.random() to prevent predictable quote numbers
         number: `QT-${crypto.randomBytes(4).toString("hex").slice(0, 7).toUpperCase()}`,
         subtotal,
         finalTotal: subtotal,

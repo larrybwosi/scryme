@@ -17,10 +17,10 @@ export class ConvertQuoteToOrderUseCase {
 
   async execute(organizationId: string, quoteId: string) {
     // 1. Find the quote
-    // SECURITY (Sentinel): Using findFirst instead of findUnique because
+    // SECURITY: Using findFirst instead of findUnique because
     // Transaction lacks a composite unique index on [id, organizationId].
     /**
-     * OPTIMIZATION (Bolt ⚡): Removed redundant 'include: { items: true }'.
+     * Removed redundant 'include: { items: true }'.
      * Since the use case only uses the quote for validation of type and status,
      * fetching full item lists is an unnecessary database join and payload.
      * Estimated impact: -1 SQL join, ~20-30% reduction in DB-to-API data transfer.
@@ -45,7 +45,7 @@ export class ConvertQuoteToOrderUseCase {
     }
 
     // 2. Update Transaction to Order
-    // SECURITY (Sentinel): BOLA / Tenant Isolation Mitigation - Transaction lacks composite unique index on [id, organizationId].
+    // SECURITY: BOLA / Tenant Isolation Mitigation - Transaction lacks composite unique index on [id, organizationId].
     // Prisma's update query with `{ where: { id: quoteId } }` ignores non-unique organizationId filters in 'where' clause at runtime.
     // Using updateMany scoped strictly by { id: quoteId, organizationId } guarantees database-level multi-tenant isolation,
     // preventing potential cross-tenant IDOR quote modifications or race conditions.

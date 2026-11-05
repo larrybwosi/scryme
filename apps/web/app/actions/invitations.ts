@@ -178,7 +178,7 @@ export async function createOrgInvitation(data: {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
-    // ⚡ Bolt Optimization: Concurrently fetch user existence, pending invitation status,
+    // Concurrently fetch user existence, pending invitation status,
     // and organization metadata in parallel via Promise.all. This collapses 3 sequential blocking
     // roundtrips into 1 concurrent roundtrip, reducing action execution latency.
     const [userWithEmail, existingInvitation, org] = await Promise.all([

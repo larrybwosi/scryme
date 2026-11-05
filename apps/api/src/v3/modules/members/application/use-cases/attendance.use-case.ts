@@ -105,7 +105,7 @@ export class AttendanceUseCase {
       throw new BadRequestException("Either locationId or branchCode must be provided");
     }
 
-    // SECURITY (Sentinel): Verify location ownership & details
+    // SECURITY: Verify location ownership & details
     const locationWhere: any = { organizationId };
     if (dto.locationId) {
       locationWhere.id = dto.locationId;

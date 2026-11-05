@@ -10,7 +10,7 @@ export class SupplierService {
     return this.prisma.client.supplier.findMany({
       where: { organizationId },
       /**
-       * ⚡ Bolt: Performance Optimization
+       * Performance Optimization
        * Pruning documents to only include IDs in the list view to reduce payload size.
        * This preserves the array structure for existing clients while minimizing I/O.
        */
@@ -190,7 +190,7 @@ export class SupplierService {
       take: take ? Number(take) : undefined,
       skip: skip ? Number(skip) : undefined,
       /**
-       * ⚡ Bolt: Performance Optimization
+       * Performance Optimization
        * Using targeted 'select' instead of broad 'include' to prune heavy fields (qcData, notes)
        * and unnecessary user/member data, reducing database I/O and payload size.
        */

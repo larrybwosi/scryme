@@ -25,7 +25,7 @@ export class RequestB2BQuoteUseCase {
 
   async execute(organizationId: string, dto: RequestB2BQuoteDto) {
     /**
-     * ⚡ Bolt Optimization: Parallelize initial read-only entity validation lookups.
+     * Parallelize initial read-only entity validation lookups.
      * Running customer, businessAccount, and location / defaultLocation checks concurrently
      * via Promise.all collapses sequential database roundtrips from up to 3 roundtrips down to 1 flat
      * concurrent roundtrip, reducing initial request latency by up to ~66%.
@@ -101,7 +101,7 @@ export class RequestB2BQuoteUseCase {
         id: { in: variantIds },
         product: { organizationId },
       },
-      // ⚡ Bolt Optimization: Replace broad include with targeted select to reduce database I/O
+      // Replace broad include with targeted select to reduce database I/O
       // and network payload by only fetching fields required for validation and quote generation.
       select: {
         id: true,
@@ -132,7 +132,7 @@ export class RequestB2BQuoteUseCase {
 
     const itemsData = [];
 
-    // ⚡ Bolt Optimization: Use batched pricing resolution to prevent N+1 database queries.
+    // Use batched pricing resolution to prevent N+1 database queries.
     // This resolves all variant prices in a single set of optimized queries.
     const resolvedPrices = await this.pricingResolver.resolveBatchVariantPrices(
       {
@@ -149,7 +149,7 @@ export class RequestB2BQuoteUseCase {
     );
 
     /**
-     * ⚡ Bolt Optimization: Map-Based Indexing in Stocking Workflows.
+     * Map-Based Indexing in Stocking Workflows.
      * Pre-indexing retrieved product variants into a Map (variantMap) before starting checks.
      * This replaces a nested array search (.find()) inside a loop with an O(1) lookup,
      * reducing lookup complexity from O(N * M) to O(N + M).
@@ -191,7 +191,7 @@ export class RequestB2BQuoteUseCase {
     );
 
     // 4. Generate Quote Number
-    // SECURITY (Sentinel): Use cryptographically secure random integers instead of Math.random() to prevent predictable quote numbers
+    // SECURITY: Use cryptographically secure random integers instead of Math.random() to prevent predictable quote numbers
     const quoteNumber = `QT-${Date.now()}-${crypto.randomInt(0, 1000)}`;
 
     // 5. Create Transaction (QUOTE type)
@@ -227,7 +227,7 @@ export class RequestB2BQuoteUseCase {
     });
 
     // 6. Trigger events
-    // ⚡ Bolt Optimization: Parallelize post-creation event emissions (realtime service publish & webhook dispatch).
+    // Parallelize post-creation event emissions (realtime service publish & webhook dispatch).
     // Executing external network event dispatches concurrently via Promise.all collapses 2 sequential network roundtrips
     // into 1 flat concurrent roundtrip, reducing total execute() latency.
     await Promise.all([

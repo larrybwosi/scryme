@@ -59,7 +59,7 @@ export class MembersService {
 
   async createMember(ctx: V2ApiContext, data: any) {
     const { organizationId } = ctx;
-    // 🛡️ Sentinel: Explicit field whitelisting to prevent mass assignment.
+    // Explicit field whitelisting to prevent mass assignment.
     const {
       email,
       name,
@@ -116,7 +116,7 @@ export class MembersService {
 
   async updateMember(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    // 🛡️ Sentinel: Explicit field whitelisting to prevent mass assignment.
+    // Explicit field whitelisting to prevent mass assignment.
     const {
       role,
       pin,
@@ -161,7 +161,7 @@ export class MembersService {
       key => updateData[key] === undefined && delete updateData[key],
     );
 
-    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    // Use updateMany with organizationId for multi-tenant isolation.
     const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: updateData,
@@ -176,7 +176,7 @@ export class MembersService {
 
   async deleteMember(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    // Use updateMany with organizationId for multi-tenant isolation.
     // Soft delete
     const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
@@ -190,7 +190,7 @@ export class MembersService {
 
   async unbanMember(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    // Use updateMany with organizationId for multi-tenant isolation.
     const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: { isActive: true },
@@ -204,7 +204,7 @@ export class MembersService {
   async changeMemberPin(ctx: V2ApiContext, id: string, pin: string) {
     const { organizationId } = ctx;
     const pinHash = await argon2.hash(pin);
-    // 🛡️ Sentinel: Use updateMany with organizationId for multi-tenant isolation.
+    // Use updateMany with organizationId for multi-tenant isolation.
     const result = await this.prisma.client.member.updateMany({
       where: { id, organizationId },
       data: { pinHash },

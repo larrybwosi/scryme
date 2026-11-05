@@ -210,7 +210,7 @@ export async function processSale(
         const variantsMap = new Map(allVariants.map((v) => [v.id, v]));
 
         // --- 2. Pre-resolve Price Calculations for Line Items Concurrently ---
-        // ⚡ Bolt Optimization: Parallelize unitCalculationService.resolvePrice calls across all cart items.
+        // Parallelize unitCalculationService.resolvePrice calls across all cart items.
         // Pre-resolving prices concurrently reduces network/query wait times from O(N) sequential executions to O(1) concurrent roundtrips.
         const resolvedPrices = await Promise.all(
           cartItems.map(async (item) => {
@@ -501,7 +501,7 @@ export async function processSale(
 
           const executeKRACompliance = async (isBlocking: boolean) => {
             try {
-              // SECURITY (Sentinel): Scope customer lookup by organizationId using findFirst
+              // SECURITY: Scope customer lookup by organizationId using findFirst
               const customer = customerId
                 ? await db.customer.findFirst({ where: { id: customerId, organizationId } })
                 : null;
@@ -624,7 +624,7 @@ export async function processSale(
       const capturedTaxTotal = (result as any).taxTotal;
       const postProcessTax = async () => {
         try {
-          // SECURITY (Sentinel): Scope customer lookup by organizationId using findFirst
+          // SECURITY: Scope customer lookup by organizationId using findFirst
           const customer = customerId
             ? await db.customer.findFirst({ where: { id: customerId, organizationId } })
             : null;
@@ -673,7 +673,7 @@ export async function processSale(
       );
     }
 
-    // SECURITY (Sentinel): Use findFirst with organizationId filter to ensure strict tenant isolation
+    // SECURITY: Use findFirst with organizationId filter to ensure strict tenant isolation
     // Re-fetch for clean relations (fulfillments, etc.)
     const completeTransaction = await db.transaction.findFirst({
       where: { id: result.id, organizationId },

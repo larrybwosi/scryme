@@ -40,7 +40,7 @@ export class GetWasteAnalysisUseCase {
     organizationId: string,
     options: { startDate?: Date; endDate?: Date },
   ) {
-    // ⚡ Bolt Optimization: Use database-level aggregation (groupBy) instead of fetching all movements
+    // Use database-level aggregation (groupBy) instead of fetching all movements
     // and reducing them in-memory. This significantly reduces network payload and memory usage,
     // especially for organizations with many adjustments. Complexity: O(G) where G is number of reasons.
     const aggregations = await this.prisma.client.stockAdjustment.groupBy({

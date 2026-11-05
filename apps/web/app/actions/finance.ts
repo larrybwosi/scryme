@@ -165,7 +165,7 @@ export async function createExpense(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  // ⚡ Bolt Optimization: Parallelize independent read queries outside the transaction.
+  // Parallelize independent read queries outside the transaction.
   // Fetching expense count, org approval threshold, and default currency in a single concurrent
   // Promise.all roundtrip reduces database roundtrip latency from O(3T) to O(1T) and minimizes
   // transaction duration and row lock holding time.
@@ -323,7 +323,7 @@ export async function recordUtilityBill(data: {
 }) {
   const { auth } = await checkPermission(["OWNER", "ADMIN", "MANAGER"]);
 
-  // ⚡ Bolt Optimization: Parallelize independent utility account lookup and category resolution.
+  // Parallelize independent utility account lookup and category resolution.
   // Executing both read operations concurrently via Promise.all collapses latency from O(2T) to O(1T).
   const [account, categoryId] = await Promise.all([
     db.utilityAccount.findUnique({
@@ -398,7 +398,7 @@ export async function processRecurringExpenses() {
     orgMap.set(item.organizationId, list);
   }
 
-  // ⚡ Bolt Optimization: Parallelize processing across organizations concurrently while maintaining
+  // Parallelize processing across organizations concurrently while maintaining
   // sequential ordering per organization to guarantee unique, incrementing expense numbers.
   const CHUNK_SIZE = 10;
   const orgEntries = Array.from(orgMap.values());
@@ -409,7 +409,7 @@ export async function processRecurringExpenses() {
       chunk.map(async orgExpenses => {
         for (const recurring of orgExpenses) {
           await db.$transaction(async tx => {
-            // ⚡ Bolt Optimization: Parallelize expense count and organization approval threshold lookups inside transaction.
+            // Parallelize expense count and organization approval threshold lookups inside transaction.
             const [count, org] = await Promise.all([
               tx.expense.count({
                 where: { organizationId: recurring.organizationId },

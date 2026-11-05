@@ -141,7 +141,7 @@ export class AutomationScheduler {
       todayStart.setHours(0, 0, 0, 0);
 
       /**
-       * ⚡ Bolt Optimization: Parallelize DB read queries and organization definitions.
+       * Parallelize DB read queries and organization definitions.
        * Combining order count and aggregate queries using Promise.all collapses 2 sequential DB roundtrips
        * per organization down to 1 flat parallel roundtrip, while processing active definitions concurrently.
        */

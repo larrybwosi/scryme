@@ -45,7 +45,7 @@ export function AddPriceListItemDialog({
   const [search, setSearch] = useState("");
   const [selectedVariants, setSelectedVariants] = useState<Set<string>>(new Set());
 
-  // ⚡ Bolt Optimization: Pre-index variants into an in-memory Map keyed by variant ID.
+  // Pre-index variants into an in-memory Map keyed by variant ID.
   // Replaces linear O(P * V) array flatMap + find scans inside submit loops with O(1) constant-time lookups.
   const variantMap = useMemo(() => {
     const map = new Map<string, any>();
@@ -95,7 +95,7 @@ export function AddPriceListItemDialog({
     setLoading(true);
     try {
       const items = Array.from(selectedVariants).map(vId => {
-        // ⚡ Bolt Optimization: Use O(1) Map lookup instead of O(P * V) flatMap + find scan.
+        // Use O(1) Map lookup instead of O(P * V) flatMap + find scan.
         const variant = variantMap.get(vId);
         return {
           variantId: vId,

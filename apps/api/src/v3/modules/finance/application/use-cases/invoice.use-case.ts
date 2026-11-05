@@ -37,7 +37,7 @@ export class InvoiceUseCase {
         balanceDue: grandTotal,
         items: { create: items },
       },
-      // ⚡ Bolt Optimization: Use targeted select for scalar fields and items
+      // Use targeted select for scalar fields and items
       // to reduce database payload size and serialization overhead.
       select: {
         id: true,
@@ -84,7 +84,7 @@ export class InvoiceUseCase {
 
     const order = await this.prisma.client.transaction.findFirst({
       where: { id: orderId, organizationId },
-      // ⚡ Bolt Optimization: Use targeted select for order data and items
+      // Use targeted select for order data and items
       // to reduce database load and serialization overhead.
       select: {
         id: true,
@@ -151,7 +151,7 @@ export class InvoiceUseCase {
   async getInvoices(organizationId: string) {
     return await this.prisma.client.invoice.findMany({
       where: { organizationId },
-      // ⚡ Bolt Optimization: Use targeted select for list view to reduce database load
+      // Use targeted select for list view to reduce database load
       // and network payload size by excluding large relations like 'items'.
       select: {
         id: true,
@@ -174,7 +174,7 @@ export class InvoiceUseCase {
   }
 
   async getInvoiceById(organizationId: string, invoiceId: string) {
-    // ⚡ Bolt Optimization: Shared select block for detail view and status synchronization.
+    // Shared select block for detail view and status synchronization.
     const invoiceSelect = {
       id: true,
       customerId: true,
@@ -242,7 +242,7 @@ export class InvoiceUseCase {
       }
 
       if (invoice.amountPaid !== totalPaid || invoice.status !== status) {
-        // 🛡️ Sentinel: Tenant Isolation / BOLA Protection - Enforce database-level multi-tenant scoping
+        // Tenant Isolation / BOLA Protection - Enforce database-level multi-tenant scoping
         await this.prisma.client.invoice.updateMany({
           where: { id: invoiceId, organizationId },
           data: {
@@ -273,7 +273,7 @@ export class InvoiceUseCase {
 
     const { netTotal, totalTaxes, grandTotal } = this.calculateTotals(items || []);
 
-    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection & Atomic Transaction Execution
+    // Tenant Isolation / BOLA Protection & Atomic Transaction Execution
     // Enforce database-level organizationId scoping on update mutations within an atomic transaction.
     await this.prisma.client.$transaction(async (tx) => {
       const updateResult = await tx.invoice.updateMany({
@@ -310,7 +310,7 @@ export class InvoiceUseCase {
     if (invoice.status === "PAID")
       throw new BadRequestException("Cannot delete a paid invoice");
 
-    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection
+    // Tenant Isolation / BOLA Protection
     // Enforce database-level organizationId scoping on delete mutations
     const deleteResult = await this.prisma.client.invoice.deleteMany({
       where: { id: invoiceId, organizationId },
@@ -330,7 +330,7 @@ export class InvoiceUseCase {
       invoice,
     );
 
-    // 🛡️ Sentinel: Tenant Isolation / BOLA Protection
+    // Tenant Isolation / BOLA Protection
     // Enforce database-level organizationId scoping on update mutations
     const updateResult = await this.prisma.client.invoice.updateMany({
       where: { id: invoiceId, organizationId },
@@ -395,7 +395,7 @@ export class InvoiceUseCase {
   }
 
   async getDownloadStreamDirect(invoiceId: string, organizationId: string) {
-    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    // SECURITY: Use findFirst with organizationId scoping to prevent IDOR.
     const invoice = await this.prisma.client.invoice.findFirst({
       where: { id: invoiceId, organizationId },
       include: {
@@ -492,7 +492,7 @@ export class InvoiceUseCase {
   }
 
   async getInvoiceDownloadStreamByTransaction(transactionId: string, organizationId: string) {
-    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    // SECURITY: Use findFirst with organizationId scoping to prevent IDOR.
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId },
       include: {
@@ -567,7 +567,7 @@ export class InvoiceUseCase {
   }
 
   async getReceiptDownloadStream(transactionId: string, organizationId: string) {
-    // SECURITY (Sentinel): Use findFirst with organizationId scoping to prevent IDOR.
+    // SECURITY: Use findFirst with organizationId scoping to prevent IDOR.
     const transaction = await this.prisma.client.transaction.findFirst({
       where: { id: transactionId, organizationId },
       include: {
@@ -643,7 +643,7 @@ export class InvoiceUseCase {
 
   async getTemplates(organizationId: string) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad query with targeted 'select'.
+     * Replaced broad query with targeted 'select'.
      * Excluding the heavy 'templateData' JSON field (containing layout and styles)
      * for the list view significantly reduces database I/O and network payload.
      * Estimated impact: ~80-90% reduction in response payload size for organizations
@@ -671,7 +671,7 @@ export class InvoiceUseCase {
   }
 
   async createTemplate(organizationId: string, dto: CreateInvoiceTemplateDto) {
-    // SECURITY (Sentinel): Prevent Mass Assignment by explicitly whitelisting and mapping DTO fields
+    // SECURITY: Prevent Mass Assignment by explicitly whitelisting and mapping DTO fields
     return await this.prisma.client.invoiceTemplate.create({
       data: {
         name: dto.name,

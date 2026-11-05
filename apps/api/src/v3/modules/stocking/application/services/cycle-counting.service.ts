@@ -18,7 +18,7 @@ export class CycleCountingService {
     });
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Parallelized cycle count config execution.
+     * Parallelized cycle count config execution.
      * Replaced sequential 'for...of' loop with Promise.all concurrent execution.
      * This collapses execution time from O(N) sequential database roundtrips down to
      * a flat O(1) concurrent latency profile when multiple cycle counts are due.
@@ -53,7 +53,7 @@ export class CycleCountingService {
       filter.variant.tags = { hasSome: config.includeABC };
     }
 
-    // ⚡ Bolt Optimization: Replace broad 'include' with targeted 'select'
+    // Replace broad 'include' with targeted 'select'
     // since the business logic only accesses variantId and currentStock.
     // This avoids joining with the ProductVariant and Product tables entirely,
     // significantly reducing database CPU, memory, and network payload size.

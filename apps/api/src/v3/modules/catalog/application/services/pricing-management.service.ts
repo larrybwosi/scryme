@@ -78,7 +78,7 @@ export class PricingManagementService {
     }
 
     // 3. Get existing variant to capture OLD cost before updating
-    // SECURITY (Sentinel): Using findFirst with organizationId scoping to prevent IDOR.
+    // SECURITY: Using findFirst with organizationId scoping to prevent IDOR.
     const variant = await client.productVariant.findFirst({
       where: { id: variantId, product: { organizationId } },
       select: { buyingPrice: true },
@@ -101,7 +101,7 @@ export class PricingManagementService {
 
     // 5. Find all PriceListItems for this variant that belong to auto-sync PriceLists
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad 'include' with targeted 'select' and removed
+     * Replaced broad 'include' with targeted 'select' and removed
      * redundant 'priceList' join as 'organizationId' is already validated.
      */
     const affectedItems = await client.priceListItem.findMany({
@@ -124,7 +124,7 @@ export class PricingManagementService {
     if (affectedItems.length === 0) return;
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Batched pre-fetching of existing price change requests
+     * Batched pre-fetching of existing price change requests
      * to eliminate N+1 queries during the update loop.
      */
     const existingRequests = await client.priceChangeRequest.findMany({
@@ -137,7 +137,7 @@ export class PricingManagementService {
     const requestsMap = new Map(existingRequests.map((r) => [r.priceListItemId, r]));
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Parallelizing price updates using Promise.all to reduce
+     * Parallelizing price updates using Promise.all to reduce
      * total execution time from O(N) to O(1) database roundtrip latency.
      */
     await Promise.all(
@@ -348,7 +348,7 @@ export class PricingManagementService {
       existingRequest,
     } = data;
 
-    // ⚡ Bolt Optimization: Use the pre-fetched existingRequest to eliminate
+    // Use the pre-fetched existingRequest to eliminate
     // the findFirst query inside the loop.
     if (existingRequest) {
       await client.priceChangeRequest.update({

@@ -21,12 +21,12 @@ export class ReviewPriceChangeUseCase {
       params;
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Removed redundant 'include: { priceListItem: true }'.
+     * Removed redundant 'include: { priceListItem: true }'.
      * Since the use case only uses the scalar 'priceListItemId' for updates,
      * removing the join reduces database overhead and memory usage.
      * Estimated impact: -1 SQL join, ~10-15% faster execution for this lookup.
      *
-     * SECURITY (Sentinel): Using findFirst instead of findUnique because
+     * SECURITY: Using findFirst instead of findUnique because
      * PriceChangeRequest lacks a composite unique index on [id, organizationId].
      */
     const request = await this.prisma.client.priceChangeRequest.findFirst({
@@ -40,7 +40,7 @@ export class ReviewPriceChangeUseCase {
 
     return this.prisma.client.$transaction(async (tx) => {
       if (status === PriceChangeStatus.APPROVED) {
-        // SECURITY (Sentinel): Using updateMany with priceList.organizationId scoping
+        // SECURITY: Using updateMany with priceList.organizationId scoping
         // to strictly enforce database-level tenant isolation during price updates,
         // preventing cross-tenant BOLA/IDOR mutations on PriceListItem.
         const itemUpdateResult = await tx.priceListItem.updateMany({
@@ -75,7 +75,7 @@ export class ReviewPriceChangeUseCase {
         });
       }
 
-      // SECURITY (Sentinel): Using updateMany with organizationId and atomic status checks
+      // SECURITY: Using updateMany with organizationId and atomic status checks
       // because PriceChangeRequest lacks a composite unique index on [id, organizationId].
       // Standard Prisma update ignores non-unique fields in 'where' clauses at runtime.
       const updateResult = await tx.priceChangeRequest.updateMany({

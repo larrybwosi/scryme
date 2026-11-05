@@ -14,7 +14,7 @@ export const metadata: Metadata = {
 export default async function NewOrderPage() {
   const auth = await getServerAuth();
 
-  // ⚡ Bolt Optimization: Parallelize independent database queries using Promise.all
+  // Parallelize independent database queries using Promise.all
   // Reduces server page render latency from 6 sequential DB roundtrips O(N) to concurrent O(1) execution time.
   const [
     customers,

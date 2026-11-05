@@ -35,7 +35,7 @@ export class CrmActivityService {
     const [notes, activities] = await Promise.all([
       this.prisma.client.crmNote.findMany({
         where: { recordId, organizationId },
-        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // Use targeted select to prevent over-fetching
         // of large text blocks and unused metadata in timeline list queries.
         select: {
           id: true,
@@ -48,7 +48,7 @@ export class CrmActivityService {
       }),
       this.prisma.client.crmActivity.findMany({
         where: { recordId, organizationId },
-        // ⚡ Bolt Optimization: Use targeted select to prevent over-fetching
+        // Use targeted select to prevent over-fetching
         // of unused metadata or relations in timeline list queries.
         select: {
           id: true,

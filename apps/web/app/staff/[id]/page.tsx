@@ -36,7 +36,7 @@ export default async function StaffMemberPage({
 }) {
   const { id } = await params;
   const session = await getServerAuth();
-  // ⚡ Bolt Optimization: Fetch organization settings concurrently in the main Promise.all block
+  // Fetch organization settings concurrently in the main Promise.all block
   // to avoid blocking the page rendering on sequential network roundtrips.
   const [result, membersResult, departmentsResult, organization, shiftsResult, settings] =
     await Promise.all([

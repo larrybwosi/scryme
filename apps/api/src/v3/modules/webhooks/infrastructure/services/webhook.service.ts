@@ -107,7 +107,7 @@ export class WebhookService {
       throw new BadRequestException("Insecure webhook URL blocked");
     }
 
-    // 🛡️ SECURITY (Sentinel): BOLA/IDOR Defense in Depth
+    // SECURITY: BOLA/IDOR Defense in Depth
     // Use updateMany with composite filter { id, organizationId } because WebhookSubscription
     // lacks a composite unique index on [id, organizationId]. Prisma's standard `update` ignores non-unique
     // fields in `where` clauses, which could allow cross-tenant updates if invoked directly.

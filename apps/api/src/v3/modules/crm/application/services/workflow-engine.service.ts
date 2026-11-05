@@ -59,7 +59,7 @@ export class WorkflowExecutionEngine {
       return;
     }
 
-    // ⚡ Bolt Optimization: Pre-index nodes by ID into a Map for O(1) constant-time lookups
+    // Pre-index nodes by ID into a Map for O(1) constant-time lookups
     // instead of performing an O(N) linear array search (.find()) for every outgoing edge.
     const nodeMap = new Map(nodes.map((n) => [n.id, n]));
 

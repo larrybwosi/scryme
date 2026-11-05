@@ -4,7 +4,7 @@ import type { V2ApiContext } from "@repo/shared/api/v2";
 
 @Injectable()
 export class UnitsService {
-  // ⚡ Bolt: Performance Optimization (In-Memory Cache for System Units)
+  // Performance Optimization (In-Memory Cache for System Units)
   // System units are system-wide, static, and highly frequently accessed.
   // Serving them from an in-memory cache eliminates redundant database I/O and query overhead.
   private cachedSystemUnits: any[] | null = null;
@@ -38,7 +38,7 @@ export class UnitsService {
   }
 
   async createOrganizationUnit(ctx: V2ApiContext, data: any) {
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset } = data;
     return this.prisma.client.organizationUnit.create({
       data: { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, organizationId: ctx.organizationId },
@@ -47,11 +47,11 @@ export class UnitsService {
 
   async updateOrganizationUnit(ctx: V2ApiContext, id: string, data: any) {
     const { organizationId } = ctx;
-    // SECURITY (Sentinel): Explicit field whitelisting to prevent mass assignment.
+    // SECURITY: Explicit field whitelisting to prevent mass assignment.
     const { name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, isActive } = data;
     const updateData = Object.fromEntries(Object.entries({ name, symbol, abbreviation, pluralName, type, category, description, baseSystemUnitId, conversionFactor, conversionOffset, isActive }).filter(([_, v]) => v !== undefined));
 
-    // SECURITY (Sentinel): Use updateMany with organizationId for multi-tenant isolation.
+    // SECURITY: Use updateMany with organizationId for multi-tenant isolation.
     const result = await this.prisma.client.organizationUnit.updateMany({
       where: { id, organizationId },
       data: updateData,
@@ -63,7 +63,7 @@ export class UnitsService {
 
   async deleteOrganizationUnit(ctx: V2ApiContext, id: string) {
     const { organizationId } = ctx;
-    // SECURITY (Sentinel): Use updateMany with organizationId for multi-tenant isolation.
+    // SECURITY: Use updateMany with organizationId for multi-tenant isolation.
     const result = await this.prisma.client.organizationUnit.updateMany({
       where: { id, organizationId },
       data: { isActive: false },

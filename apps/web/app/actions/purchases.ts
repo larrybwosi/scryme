@@ -610,7 +610,7 @@ export async function receivePurchaseStockWithBatches(data: {
     if (validItems.length > 0) {
       const variantIds = Array.from(new Set(validItems.map(v => v.pItem.variantId)));
 
-      // ⚡ Bolt Optimization: Batch fetch existing stock records and missing product variants up-front,
+      // Batch fetch existing stock records and missing product variants up-front,
       // converting up to 5N sequential database queries per item into batched read queries,
       // consolidated per-variant stock upserts, and concurrent write operations via Promise.all.
       const existingStocks = await tx.productVariantStock.findMany({

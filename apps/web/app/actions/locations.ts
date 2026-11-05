@@ -326,7 +326,7 @@ export async function updateLocation(
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location exists and belongs to current tenant
+  // SECURITY: BOLA/IDOR Prevention - Validate target location exists and belongs to current tenant
   const existingLocation = await db.inventoryLocation.findFirst({
     where: { id, organizationId: context.organizationId },
   });
@@ -441,7 +441,7 @@ export async function createZone(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location belongs to current tenant
+  // SECURITY: BOLA/IDOR Prevention - Validate target location belongs to current tenant
   const location = await db.inventoryLocation.findFirst({
     where: { id: data.locationId, organizationId: context.organizationId },
   });
@@ -517,14 +517,14 @@ export async function createUnit(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location belongs to current tenant
+  // SECURITY: BOLA/IDOR Prevention - Validate target location belongs to current tenant
   const location = await db.inventoryLocation.findFirst({
     where: { id: data.locationId, organizationId: context.organizationId },
   });
   if (!location) throw new Error("Invalid location ID or unauthorized");
 
   if (data.zoneId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and location
+    // SECURITY: BOLA/IDOR Prevention - Validate zone belongs to current tenant and location
     const zone = await db.storageZone.findFirst({
       where: { id: data.zoneId, locationId: data.locationId, organizationId: context.organizationId },
     });
@@ -555,14 +555,14 @@ export async function updateUnit(
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target unit exists and belongs to current tenant
+  // SECURITY: BOLA/IDOR Prevention - Validate target unit exists and belongs to current tenant
   const existingUnit = await db.storageUnit.findFirst({
     where: { id, organizationId: context.organizationId },
   });
   if (!existingUnit) throw new Error("Unit not found or unauthorized");
 
   if (data.zoneId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and unit location
+    // SECURITY: BOLA/IDOR Prevention - Validate zone belongs to current tenant and unit location
     const zone = await db.storageZone.findFirst({
       where: { id: data.zoneId, locationId: existingUnit.locationId, organizationId: context.organizationId },
     });

@@ -41,7 +41,7 @@ export class BookingService {
     const contact = dto.customerContact?.trim();
     const isEmail = contact?.includes("@");
 
-    // ⚡ Bolt Optimization: Parallelize all initial existence/count lookup validations to avoid O(N) sequential database roundtrips.
+    // Parallelize all initial existence/count lookup validations to avoid O(N) sequential database roundtrips.
     const [service, existingCustomer, customerValid, locationValid, staffCount, resourceCount, defaultLocation] = await Promise.all([
       this.prisma.client.service.findFirst({
         where: { id: dto.serviceId, organizationId: orgId },
@@ -141,7 +141,7 @@ export class BookingService {
     }
 
     if ((!dto.staffIds || dto.staffIds.length === 0) && service.staff?.length) {
-      // ⚡ Bolt Optimization: Parallelize candidate staff availability checks via Promise.all.
+      // Parallelize candidate staff availability checks via Promise.all.
       // Replaces sequential for...of checks with concurrent execution to reduce candidate auto-assignment latency from O(N) to O(1).
       const availabilities = await Promise.all(
         service.staff.map(async (candidate) => {
@@ -165,7 +165,7 @@ export class BookingService {
     }
 
     if ((!dto.resourceIds || dto.resourceIds.length === 0) && service.resources?.length) {
-      // ⚡ Bolt Optimization: Batch fetch overlapping bookings across all candidate resources in a single database query
+      // Batch fetch overlapping bookings across all candidate resources in a single database query
       // instead of executing sequential findFirst calls inside a loop.
       const candidateResourceIds = service.resources.map(r => r.resourceId);
       const busyBookings = await this.prisma.client.serviceBooking.findMany({
@@ -240,7 +240,7 @@ export class BookingService {
       );
     }
 
-    // ⚡ Bolt Optimization: Validate resource booking overlaps using a single batched database query.
+    // Validate resource booking overlaps using a single batched database query.
     // Replaces mapping over dto.resourceIds with individual findFirst queries with one findMany query.
     if (dto.resourceIds && dto.resourceIds.length > 0) {
       const conflictingBooking = await this.prisma.client.serviceBooking.findFirst({
@@ -336,7 +336,7 @@ export class BookingService {
       });
 
       /**
-       * OPTIMIZATION (Bolt ⚡): Parallelize individual database inserts for recurring bookings.
+       * Parallelize individual database inserts for recurring bookings.
        * Instead of executing up to 50 database inserts sequentially (which blocks the request thread
        * and multiplies latency), we run them concurrently via Promise.all.
        * This collapses transactional roundtrips from O(N) down to a flat O(1) concurrent roundtrip block,
@@ -388,7 +388,7 @@ export class BookingService {
     }
 
     if (dto.staffIds && dto.staffIds.length > 0) {
-      // ⚡ Bolt Optimization: Parallelize third-party API booking sync calls.
+      // Parallelize third-party API booking sync calls.
       // Running these requests sequentially inside a loop introduces a critical O(N) external network IO bottleneck.
       // Parallelizing them via Promise.all with localized try/catch handlers reduces latency from O(N) to O(1)
       // and guarantees that an individual Cal.com sync failure does not break other synchronizations or subsequent notifications.
@@ -463,7 +463,7 @@ export class BookingService {
 
     return this.prisma.client.$transaction(async (tx) => {
       if (booking.locationId) {
-        // ⚡ Bolt Optimization: Consolidate materials in-memory to prevent multiple database queries/locks
+        // Consolidate materials in-memory to prevent multiple database queries/locks
         // on the exact same product variant stock rows during the booking completion process.
         const consolidatedMaterials = new Map<string, number>();
         for (const material of materialsUsed) {
@@ -1057,7 +1057,7 @@ export class BookingService {
     });
 
     /**
-     * OPTIMIZATION (Bolt ⚡): Pre-index existing bookings by staff member ID and resource ID
+     * Pre-index existing bookings by staff member ID and resource ID
      * to eliminate expensive array .filter operations inside nested timeslot generation loops.
      * This collapses runtime complexity from O(S * T * B * R) to O(B + R + S * T).
      */

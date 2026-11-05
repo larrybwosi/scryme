@@ -69,7 +69,7 @@ export async function performDeliveryDispatch(prisma: PrismaClient, data: Dispat
     if (!transaction) throw new Error('TRANSACTION_NOT_FOUND');
     if (transaction.status === TransactionStatus.DISPATCHED) throw new Error('ALREADY_DISPATCHED');
 
-    // ⚡ Bolt Optimization: Stock Reduction Logic
+    // Stock Reduction Logic
     // Pre-fetch all active stock batches for all item variantIds in a single batched query
     // instead of issuing sequential findMany queries per item inside the loop.
     // Index batches into an in-memory Map<string, StockBatch[]> keyed by variantId.

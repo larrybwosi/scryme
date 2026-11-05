@@ -89,7 +89,7 @@ export class CrmRelationshipService {
         OR: [{ sourceRecordId: recordId }, { targetRecordId: recordId }],
         relationship: { organizationId },
       },
-      // ⚡ Bolt Optimization: Replacing top-level broad 'include' with targeted nested 'select'.
+      // Replacing top-level broad 'include' with targeted nested 'select'.
       // Selecting only essential crmRecord identity/metadata fields and relationship properties,
       // while completely bypassing the dynamic JSON 'data' field (which can contain massive payloads
       // of custom CRM attributes). This drastically reduces database I/O, network footprint,

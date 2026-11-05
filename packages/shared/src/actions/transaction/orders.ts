@@ -219,7 +219,7 @@ export async function createOrder(
         const variantStockUpdates = new Map<string, number>();
 
         for (const item of items) {
-          // OPTIMIZATION (Bolt ⚡): Use O(1) Map lookup instead of O(N) nested array search for each item
+          // Use O(1) Map lookup instead of O(N) nested array search for each item
           const variant = variantsMap.get(item.variantId) as any;
           if (!variant) {
             throw new Error(
@@ -372,7 +372,7 @@ export async function createOrder(
         else if (totalPaidAmount.gt(0))
           calcPaymentStatus = PaymentStatus.PARTIALLY_PAID;
 
-        // SECURITY (Sentinel): Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
+        // SECURITY: Use cryptographically secure random bytes instead of Math.random() to prevent predictable order numbers
         const orderNumber = `ORD-${Date.now().toString().slice(-6)}-${crypto.randomBytes(2).toString("hex").slice(0, 3).toUpperCase()}`;
 
         // 7. --- Update Stock (Deduct immediately for orders) ---
@@ -723,7 +723,7 @@ export async function confirmOrder(
 
     const confirmedTransaction = await db.$transaction(
       async (tx) => {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // SECURITY: Using findFirst instead of findUnique because
         // Transaction lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
         // 2. Fetch Order with Deep Relations to resolve Units
         const order = await tx.transaction.findFirst({
@@ -827,7 +827,7 @@ export async function confirmOrder(
         });
         const stockPoolMap = new Map(stockPools.map((s) => [s.variantId, s]));
 
-        // OPTIMIZATION (Bolt ⚡): Pre-fetch all available batches for all variants in the order
+        // Pre-fetch all available batches for all variants in the order
         // to eliminate the N+1 query pattern in the loop.
         const batchOrderBy: any[] =
           inventoryPolicy === "LIFO"
@@ -856,7 +856,7 @@ export async function confirmOrder(
         const stockAdjustments: any[] = [];
         const allocationCreations: any[] = [];
 
-        // OPTIMIZATION (Bolt ⚡): Pre-group order.items by variantId to avoid O(M) scans inside nested loops
+        // Pre-group order.items by variantId to avoid O(M) scans inside nested loops
         const itemsByVariantMap = new Map<string, typeof order.items>();
         for (const item of order.items) {
           if (!itemsByVariantMap.has(item.variantId)) {
@@ -923,7 +923,7 @@ export async function confirmOrder(
               new Prisma.Decimal(batch.currentQuantity as any).toNumber(),
             );
 
-            // OPTIMIZATION (Bolt ⚡): Filter from pre-grouped variantItems instead of all order.items, preventing N*M*B complexity
+            // Filter from pre-grouped variantItems instead of all order.items, preventing N*M*B complexity
             const applicableItems = variantItems.filter(
               (i) => (itemBaseNeeds.get(i.id) || 0) > 0,
             );
@@ -1060,7 +1060,7 @@ export async function cancelOrder(
 
     const cancelledTransaction = await prisma.$transaction(
       async (tx) => {
-        // SECURITY (Sentinel): Using findFirst instead of findUnique because
+        // SECURITY: Using findFirst instead of findUnique because
         // Transaction lacks @@unique([id, organizationId]). Using findUnique ignores non-unique filters in Prisma.
         // 1. Fetch Order with Conversions
         const order = await tx.transaction.findFirst({
@@ -1109,7 +1109,7 @@ export async function cancelOrder(
 
         if (stockWasCommitted) {
           // 3. Aggregate Item Quantities (Converted to BASE units)
-          // ⚡ Bolt Optimization: Parallelize unit conversions across order items with Promise.all
+          // Parallelize unit conversions across order items with Promise.all
           // to convert sequential O(N) async conversion roundtrips into a single O(1) concurrent step.
           const variantBaseQuantities = new Map<string, number>();
 
@@ -1163,7 +1163,7 @@ export async function cancelOrder(
             stockAllocations.map((s) => [s.variantId, s]),
           );
 
-          // ⚡ Bolt Optimization: Pre-index order items by variant ID into a Map
+          // Pre-index order items by variant ID into a Map
           // to replace O(N) linear array searches (.find()) with O(1) Map lookups.
           const itemByVariantMap = new Map(
             order.items.map((i) => [i.variantId, i]),

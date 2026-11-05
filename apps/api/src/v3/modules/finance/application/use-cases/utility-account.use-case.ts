@@ -7,7 +7,7 @@ export class UtilityAccountUseCase {
   constructor(private readonly prisma: PrismaService) {}
 
   async createAccount(organizationId: string, dto: CreateUtilityAccountDto) {
-    // 🛡️ Sentinel: Mass Assignment & IDOR Protection - Explicitly whitelist allowed fields
+    // Mass Assignment & IDOR Protection - Explicitly whitelist allowed fields
     // and bind organizationId from request context to prevent property injection.
     return await this.prisma.client.utilityAccount.create({
       data: {
@@ -29,7 +29,7 @@ export class UtilityAccountUseCase {
 
   async getAccount(organizationId: string, id: string) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced broad Prisma 'include' with a targeted 'select' block.
+     * Replaced broad Prisma 'include' with a targeted 'select' block.
      * Including the entire 'expenses' relation with heavy fields (like 'notes', 'tags',
      * or 'receiptUrl') introduces significant database I/O, network payload, and NestJS
      * serialization overhead. Pruning these fields and selecting only essential list-view

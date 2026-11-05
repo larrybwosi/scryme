@@ -34,7 +34,7 @@ export async function bulkUpdateLocationStock(
   }
 
   await db.$transaction(async tx => {
-    // ⚡ Bolt Optimization: Batch pre-fetch current stock records and product variant metadata up-front.
+    // Batch pre-fetch current stock records and product variant metadata up-front.
     // Indexing these into Maps transforms $O(N)$ sequential database lookups into $O(1)$ constant-time memory reads,
     // and eliminates post-creation batch reference update queries.
     const uniqueVariantIds = Array.from(new Set(updates.map(u => u.variantId)));
@@ -57,7 +57,7 @@ export async function bulkUpdateLocationStock(
     const stockMap = new Map(stockRecords.map(s => [s.variantId, s]));
     const variantMap = new Map(variants.map(v => [v.id, v]));
 
-    // ⚡ Bolt Optimization: Process non-zero stock diff updates concurrently via Promise.all.
+    // Process non-zero stock diff updates concurrently via Promise.all.
     // For positive diffs, batch creation occurs before adjustment and movement creation,
     // directly associating stockBatchId during initial insertion and avoiding redundant update queries.
     await Promise.all(
@@ -301,7 +301,7 @@ export async function receiveTransferStockWithBatches(data: {
   if (!transfer) throw new Error("Stock transfer not found");
 
   await db.$transaction(async tx => {
-    // ⚡ Bolt Optimization: Filter valid reception line items and match transfer items up-front.
+    // Filter valid reception line items and match transfer items up-front.
     const validItems = data.items
       .map(itemInput => {
         const tItem = transfer.items.find(i => i.id === itemInput.transferItemId);
@@ -314,7 +314,7 @@ export async function receiveTransferStockWithBatches(data: {
 
     if (validItems.length === 0) return;
 
-    // ⚡ Bolt Optimization: Pre-fetch destination stock records for all target variant IDs up-front,
+    // Pre-fetch destination stock records for all target variant IDs up-front,
     // eliminating N+1 stock lookup queries inside the line item processing loop.
     const uniqueVariantIds = Array.from(new Set(validItems.map(v => v.tItem.variantId)));
     const existingStocks = await tx.productVariantStock.findMany({
@@ -325,7 +325,7 @@ export async function receiveTransferStockWithBatches(data: {
     });
     const stockMap = new Map(existingStocks.map(s => [s.variantId, s]));
 
-    // ⚡ Bolt Optimization: Aggregate received quantities per variant ID in-memory first
+    // Aggregate received quantities per variant ID in-memory first
     // to collapse duplicate updates and avoid Prisma unique constraint (P2002) race conditions on stock creation.
     const qtyByVariant = new Map<string, number>();
     const productIdByVariant = new Map<string, string>();
@@ -335,7 +335,7 @@ export async function receiveTransferStockWithBatches(data: {
       productIdByVariant.set(tItem.variantId, tItem.variant.productId);
     }
 
-    // ⚡ Bolt Optimization: Process line item batch creations, single transfer item updates, stock movements,
+    // Process line item batch creations, single transfer item updates, stock movements,
     // and audit logs concurrently, collapsing 4N sequential operations into 1 parallel execution.
     await Promise.all(
       validItems.map(async ({ itemInput, tItem, receivedQty }) => {
@@ -404,7 +404,7 @@ export async function receiveTransferStockWithBatches(data: {
       })
     );
 
-    // ⚡ Bolt Optimization: Update destination stock records per aggregated variant ID concurrently.
+    // Update destination stock records per aggregated variant ID concurrently.
     await Promise.all(
       Array.from(qtyByVariant.entries()).map(([variantId, totalQty]) => {
         const pvStock = stockMap.get(variantId);
@@ -431,7 +431,7 @@ export async function receiveTransferStockWithBatches(data: {
       })
     );
 
-    // ⚡ Bolt Optimization: Evaluate transfer completion status in-memory using loaded transfer items
+    // Evaluate transfer completion status in-memory using loaded transfer items
     // and updated received quantities, eliminating an extra stockTransfer.findUnique database re-query.
     const receivedQtyMap = new Map<string, number>();
     for (const { tItem, receivedQty } of validItems) {
@@ -544,7 +544,7 @@ export async function updateStockTransfer(
       where: { stockTransferId: id },
     });
 
-    // ⚡ Bolt Optimization: Batch variant buying price lookup to eliminate N+1 queries.
+    // Batch variant buying price lookup to eliminate N+1 queries.
     const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
     const variants = await tx.productVariant.findMany({
       where: { id: { in: variantIds } },
@@ -1040,7 +1040,7 @@ export async function getStockLevels(params: {
     };
   }
 
-  // ⚡ Bolt Optimization: Parallelize independent read database queries for products,
+  // Parallelize independent read database queries for products,
   // incoming transfers, and incoming purchases using Promise.all.
   // This reduces query latency by collapsing 3 sequential roundtrips into 1 flat parallel roundtrip.
   const [products, incomingTransfers, incomingPurchases] = await Promise.all([
@@ -1262,7 +1262,7 @@ export async function createStockRequest(data: {
   const requestNumber = `REQ-${Date.now()}`;
 
   const result = await db.$transaction(async tx => {
-    // ⚡ Bolt Optimization: Batch pre-fetch all product variant buying prices in a single query up-front.
+    // Batch pre-fetch all product variant buying prices in a single query up-front.
     // Indexing buying prices into a Map converts sequential O(N) database roundtrips into an O(1) constant-time
     // lookup, eliminating N+1 database queries when creating multi-item stock requests.
     const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
@@ -1671,7 +1671,7 @@ export async function fulfillStockRequestItems(data: {
     throw new Error("Unauthorized");
 
   const result = await db.$transaction(async tx => {
-    // ⚡ Bolt Optimization: Pre-fetch the product variant once up-front to completely eliminate
+    // Pre-fetch the product variant once up-front to completely eliminate
     // redundant/N+1 database lookups inside the target location loop and nested item mapping.
     const variant = await tx.productVariant.findUnique({
       where: { id: data.variantId },
@@ -1713,7 +1713,7 @@ export async function fulfillStockRequestItems(data: {
             requestedById: context.memberId,
             status: "PENDING_APPROVAL",
             items: {
-              // ⚡ Bolt Optimization: Replaced async mapping with clean, synchronous map.
+              // Replaced async mapping with clean, synchronous map.
               // This completely bypasses the previous inner N+1 query pattern.
               create: itemsForThisLocation.map(item => ({
                 variantId: data.variantId,

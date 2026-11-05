@@ -19,7 +19,7 @@ export class AssemblyUseCase {
       items: { variantId: string; quantity: number; stockBatchId?: string }[];
     },
   ) {
-    // 🛡️ Sentinel: IDOR Prevention - Verify all variants belong to the organization
+    // IDOR Prevention - Verify all variants belong to the organization
     const variantIds = [...new Set([data.variantId, ...data.items.map((i) => i.variantId)])];
     const verifiedVariants = await this.prisma.client.productVariant.count({
       where: {
@@ -32,7 +32,7 @@ export class AssemblyUseCase {
       throw new NotFoundException("One or more product variants not found or unauthorized");
     }
 
-    // 🛡️ Sentinel: IDOR Prevention - Verify all batches belong to the organization
+    // IDOR Prevention - Verify all batches belong to the organization
     const batchIds = [...new Set(data.items.map((i) => i.stockBatchId).filter(Boolean) as string[])];
     if (batchIds.length > 0) {
       const verifiedBatches = await this.prisma.client.stockBatch.count({
@@ -79,13 +79,13 @@ export class AssemblyUseCase {
     locationId: string,
   ) {
     return this.prisma.client.$transaction(async (tx) => {
-      // 🛡️ Sentinel: IDOR Prevention - Verify location belongs to organization
+      // IDOR Prevention - Verify location belongs to organization
       const location = await tx.inventoryLocation.findFirst({
         where: { id: locationId, organizationId },
       });
       if (!location) throw new NotFoundException("Location not found or unauthorized");
 
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because Assembly model lacks composite unique index on [id, organizationId]
+      // SECURITY: Using findFirst instead of findUnique because Assembly model lacks composite unique index on [id, organizationId]
       const assembly = await tx.assembly.findFirst({
         where: { id: assemblyId, organizationId },
         include: { items: true, variant: true },
@@ -105,7 +105,7 @@ export class AssemblyUseCase {
         assembly.items.map(async (item) => {
           // If specific batch was selected, deduct from it
           if (item.stockBatchId) {
-            // 🛡️ Sentinel: Defense in Depth - Use updateMany with organizationId scoping
+            // Defense in Depth - Use updateMany with organizationId scoping
             await tx.stockBatch.updateMany({
               where: { id: item.stockBatchId, organizationId },
               data: { currentQuantity: { decrement: item.quantity } },
@@ -161,7 +161,7 @@ export class AssemblyUseCase {
       });
 
       // Update summary stock for result
-      // ⚡ Bolt Optimization: Avoid sequential productVariant.findUnique query by leveraging
+      // Avoid sequential productVariant.findUnique query by leveraging
       // the pre-fetched variant.productId from the included 'variant' relation on assembly.
       await tx.productVariantStock.upsert({
         where: {

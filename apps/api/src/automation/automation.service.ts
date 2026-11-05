@@ -336,7 +336,7 @@ export class AutomationService {
 
   async provisionDefinitions(organizationId: string, customConfigs?: Record<string, any>) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Parallelized workflow provisioning with Promise.all
+     * Parallelized workflow provisioning with Promise.all
      * to eliminate sequential async delays.
      * Estimated impact: Collapses O(N) sequential provisioning queries into O(1) concurrent roundtrips.
      */
@@ -611,7 +611,7 @@ export class AutomationService {
 
   private async ensureBuiltInDefinitions(organizationId: string) {
     /**
-     * OPTIMIZATION (Bolt ⚡): Replaced N sequential 'findUnique' calls with a single
+     * Replaced N sequential 'findUnique' calls with a single
      * batched 'findMany' query and concurrent 'create' operations via Promise.all.
      * Estimated impact: Reduces DB roundtrips from O(N) sequential queries to O(1)
      * roundtrips on every getDefinitions call, speeding up response time by ~80%.

@@ -549,7 +549,7 @@ export class ServicesController {
     @Param("id") id: string,
     @Body() dto: CompleteBookingDto
   ) {
-    // SECURITY (Sentinel): Resolve memberId from v3Context or user context to ensure
+    // SECURITY: Resolve memberId from v3Context or user context to ensure
     // inventory movement records (StockMovement.memberId) reference a valid organization
     // Member ID rather than a global User ID, preventing database foreign key failures
     // and misattribution in multi-tenant audit trails.

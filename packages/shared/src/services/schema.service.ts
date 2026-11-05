@@ -120,7 +120,7 @@ export class SchemaService {
   }
 
   async seedStandardObjects(organizationId: string) {
-    // ⚡ Bolt Optimization: Concurrently resolve standard object definitions (person, company, lead, deal)
+    // Concurrently resolve standard object definitions (person, company, lead, deal)
     // with Promise.all to eliminate sequential O(N) database roundtrips during CRM schema setup.
     const [person, company, lead, deal] = await Promise.all([
       this.createObject({
@@ -358,7 +358,7 @@ export class SchemaService {
       ...dealFields,
     ];
 
-    // ⚡ Bolt Optimization: Parallelize all 20 field definitions and 3 relationship upserts
+    // Parallelize all 20 field definitions and 3 relationship upserts
     // concurrently via Promise.all, collapsing 23 sequential DB roundtrips into 1 concurrent phase.
     await Promise.all([
       ...allFields.map((field) => this.createField(field, organizationId)),

@@ -21,7 +21,7 @@ export class SplitBatchUseCase {
     memberId: string,
     splits: { quantity: number; notes?: string }[],
   ) {
-    // SECURITY (Sentinel): Input validation - Ensure splits is a non-empty array with positive, non-zero quantities
+    // SECURITY: Input validation - Ensure splits is a non-empty array with positive, non-zero quantities
     // to prevent unauthorized stock inflation via negative deductions or invalid child batch creation.
     if (!Array.isArray(splits) || splits.length === 0) {
       throw new BadRequestException("At least one valid split entry is required");
@@ -61,7 +61,7 @@ export class SplitBatchUseCase {
       });
 
       // 2. Create child batches and their corresponding movement logs concurrently.
-      // OPTIMIZATION (Bolt ⚡): Parallelize the child batch creations and their movement logs using Promise.all.
+      // Parallelize the child batch creations and their movement logs using Promise.all.
       // Instead of sequential blocking queries inside the loop, we map splits to independent concurrent promises.
       // This collapses the database write round-trips from O(N) down to a flat O(1) concurrent block,
       // minimizing transaction open duration and locking contention.

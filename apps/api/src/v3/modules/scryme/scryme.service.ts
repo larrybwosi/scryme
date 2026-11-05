@@ -62,7 +62,7 @@ export class ScrymeService {
         { name: "finance", topic: "Expense approvals and financial updates" },
       ];
 
-      // ⚡ Bolt Optimization: Parallelize default channel creation using Promise.all.
+      // Parallelize default channel creation using Promise.all.
       // This collapses execution time from 5 sequential blocking HTTP roundtrips to 1 flat concurrent roundtrip,
       // reducing provisioning latency by up to ~80%.
       await Promise.all(
@@ -115,7 +115,7 @@ export class ScrymeService {
       include: { user: true },
     });
 
-    // ⚡ Bolt Optimization: Parallelize member provisioning with Promise.all.
+    // Parallelize member provisioning with Promise.all.
     // Instead of awaiting external Scryme API calls and database updates sequentially per member,
     // concurrent execution collapses latency from O(N) sequential blocking roundtrips to O(1) concurrent execution.
     await Promise.all(
@@ -179,7 +179,7 @@ export class ScrymeService {
       }),
     ]);
 
-    // ⚡ Bolt Optimization: Parallelize location and account channel creations with Promise.all.
+    // Parallelize location and account channel creations with Promise.all.
     // Grouping reads and executing channel creations concurrently collapses latency from
     // O(N + M) sequential blocking roundtrips down to O(1) concurrent roundtrips.
     await Promise.all([

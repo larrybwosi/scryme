@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 
 export default async function LocationsPage() {
-  // ⚡ Bolt Optimization: Parallelize independent database queries using Promise.all
+  // Parallelize independent database queries using Promise.all
   // Collapses 2 sequential network roundtrips into 1 concurrent roundtrip (~50% latency reduction)
   const [locations, members] = await Promise.all([
     getLocations(),

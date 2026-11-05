@@ -160,7 +160,7 @@ export async function createDepartment(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate all foreign relational IDs against current organizationId before creation.
-    // ⚡ Bolt Optimization: Parallelize duplicate department name check and foreign relational ID validations with Promise.all.
+    // Parallelize duplicate department name check and foreign relational ID validations with Promise.all.
     // Collapses up to 5 sequential blocking database queries into 1 concurrent roundtrip.
     const [existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
       db.department.findFirst({
@@ -276,7 +276,7 @@ export async function updateDepartment(
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Resource Assignment
     // MITIGATION: Validate modified foreign relational IDs against current organizationId before updating.
-    // ⚡ Bolt Optimization: Parallelize existing department lookup, duplicate name check, and relational ID validations with Promise.all.
+    // Parallelize existing department lookup, duplicate name check, and relational ID validations with Promise.all.
     // Collapses up to 6 sequential blocking database queries into 1 concurrent roundtrip.
     const [oldDept, existing, headMember, parentDepartment, location, costCenter] = await Promise.all([
       db.department.findFirst({
@@ -731,7 +731,7 @@ export async function createDepartmentApprovalChain(data: {
 
     // THREAT: BOLA/IDOR Vulnerability - Cross-Tenant Relational Chain Creation
     // MITIGATION: Verify department and all step approvers belong to current organizationId.
-    // ⚡ Bolt Optimization: Extract unique approver IDs and parallelize department verification and batched approver membership validation via Promise.all.
+    // Extract unique approver IDs and parallelize department verification and batched approver membership validation via Promise.all.
     // Collapses O(1 + N) sequential blocking queries to O(1) concurrent database execution.
     const approverIds = Array.from(new Set(data.steps.map(step => step.approverId)));
 

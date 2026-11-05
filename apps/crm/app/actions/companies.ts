@@ -34,7 +34,7 @@ export async function createCompany(data: BusinessAccountFormValues) {
       },
     });
 
-    // ⚡ Bolt Optimization: Parallelize creation of company contacts and addresses.
+    // Parallelize creation of company contacts and addresses.
     // Executing contact and address creations concurrently via Promise.all collapses
     // sequential database roundtrips from O(N_contacts + N_addresses) down to O(1) concurrent execution.
     await Promise.all([
@@ -175,7 +175,7 @@ export async function updateCompany(
         });
       }
 
-      // ⚡ Bolt Optimization: Parallelize updating and creating contacts.
+      // Parallelize updating and creating contacts.
       // Executing updates and creations concurrently via Promise.all collapses
       // database roundtrips from O(N_contacts) down to O(1) concurrent execution.
       await Promise.all(
@@ -226,7 +226,7 @@ export async function updateCompany(
         });
       }
 
-      // ⚡ Bolt Optimization: Parallelize updating and creating addresses.
+      // Parallelize updating and creating addresses.
       // Executing updates and creations concurrently via Promise.all collapses
       // database roundtrips from O(N_addresses) down to O(1) concurrent execution.
       await Promise.all(
@@ -293,7 +293,7 @@ export async function getCompanies() {
     const auth = await getServerAuth();
     if (!auth?.organizationId) redirect("/login");
 
-    // ⚡ Bolt: Performance Optimization (Pruning Unused Relational Includes)
+    // Performance Optimization (Pruning Unused Relational Includes)
     // Removing `contacts: true` nested join block because only the count is needed,
     // which is already provided by `_count`. This prevents over-fetching all columns
     // of all contacts into memory and serializing them over the network.
