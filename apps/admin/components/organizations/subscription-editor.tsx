@@ -37,6 +37,9 @@ interface SubscriptionEditorProps {
     trialStartedAt?: Date | string | null;
     trialEndsAt?: Date | string | null;
     tierSlug: string;
+    status?: string | null;
+    trialStartedAt?: Date | null;
+    trialEndsAt?: Date | null;
     dodoCustomerId: string | null;
     dodoSubscriptionId: string | null;
     dodoCurrentPeriodEnd: Date | null;
