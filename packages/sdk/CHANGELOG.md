@@ -1,5 +1,11 @@
 # @scryme/sdk
 
+## 10.2.38
+
+### Patch Changes
+
+- f7bed69: Prepare release v10.2.8
+
 ## 10.2.37
 
 ### Patch Changes
