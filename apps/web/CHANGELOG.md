@@ -1,5 +1,12 @@
 # web
 
+## 10.2.39
+
+### Patch Changes
+
+- Updated dependencies [bdc2301]
+  - @scryme/sdk@10.2.39
+
 ## 10.2.38
 
 ### Patch Changes
