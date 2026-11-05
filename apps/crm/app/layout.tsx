@@ -3,6 +3,7 @@ import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
 import { OpenPanelProvider } from "../components/openpanel-provider";
+import { TelemetryProvider } from "@repo/shared/telemetry/client";
 
 export const metadata: Metadata = {
   title: {
@@ -130,15 +131,17 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-[#f8f9fa] font-sans antialiased">
-        <OpenPanelProvider />
-        <Providers>
+        <TelemetryProvider service="crm-app">
+          <OpenPanelProvider />
+          <Providers>
           <div className="flex h-screen overflow-hidden">
             <SidebarWrapper />
             <main className="flex-1 overflow-y-auto custom-scrollbar">
               {children}
             </main>
           </div>
-        </Providers>
+          </Providers>
+        </TelemetryProvider>
       </body>
     </html>
   );

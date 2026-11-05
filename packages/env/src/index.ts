@@ -233,6 +233,9 @@ const clientSchema = z.object({
   VITE_OPENOBSERVE_STREAM: z.string().optional().default("pos-events"),
   VITE_OPENOBSERVE_AUTH_TOKEN: z.string().optional(),
   NEXT_PUBLIC_OPENOBSERVE_URL: z.string().optional(),
+  NEXT_PUBLIC_OPENOBSERVE_ORGANIZATION: z.string().optional().default("default"),
+  NEXT_PUBLIC_OPENOBSERVE_STREAM: z.string().optional().default("client-events"),
+  NEXT_PUBLIC_OPENOBSERVE_AUTH_TOKEN: z.string().optional(),
 
   // OpenPanel Public Configuration
   NEXT_PUBLIC_OPENPANEL_CLIENT_ID: z.string().optional(),
@@ -411,6 +414,9 @@ function getRawEnv() {
     VITE_OPENOBSERVE_STREAM: process.env.VITE_OPENOBSERVE_STREAM,
     VITE_OPENOBSERVE_AUTH_TOKEN: process.env.VITE_OPENOBSERVE_AUTH_TOKEN,
     NEXT_PUBLIC_OPENOBSERVE_URL: process.env.NEXT_PUBLIC_OPENOBSERVE_URL,
+    NEXT_PUBLIC_OPENOBSERVE_ORGANIZATION: process.env.NEXT_PUBLIC_OPENOBSERVE_ORGANIZATION,
+    NEXT_PUBLIC_OPENOBSERVE_STREAM: process.env.NEXT_PUBLIC_OPENOBSERVE_STREAM,
+    NEXT_PUBLIC_OPENOBSERVE_AUTH_TOKEN: process.env.NEXT_PUBLIC_OPENOBSERVE_AUTH_TOKEN,
 
     // OpenPanel
     OPENPANEL_CLIENT_ID: process.env.OPENPANEL_CLIENT_ID,

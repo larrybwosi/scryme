@@ -3,6 +3,7 @@ import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
 import { OpenPanelProvider } from "../components/openpanel-provider";
+import { TelemetryProvider } from "@repo/shared/telemetry/client";
 
 export const metadata: Metadata = {
   metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"),
@@ -78,15 +79,17 @@ export default function RootLayout({
         ` }} />
       </head>
       <body className="bg-background text-foreground font-sans antialiased">
-        <OpenPanelProvider />
-        <Providers>
+        <TelemetryProvider service="web-app">
+          <OpenPanelProvider />
+          <Providers>
           <div className="flex h-screen overflow-hidden">
             <SidebarWrapper />
             <main className="flex-1 overflow-y-auto custom-scrollbar">
               {children}
             </main>
           </div>
-        </Providers>
+          </Providers>
+        </TelemetryProvider>
       </body>
     </html>
   );

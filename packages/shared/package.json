@@ -144,6 +144,16 @@
       "types": "./src/kra/index.ts",
       "import": "./dist/kra/index.js",
       "require": "./dist/kra/index.cjs"
+    },
+    "./telemetry": {
+      "types": "./src/telemetry/index.ts",
+      "import": "./dist/telemetry/index.js",
+      "require": "./dist/telemetry/index.cjs"
+    },
+    "./telemetry/client": {
+      "types": "./src/telemetry/provider.tsx",
+      "import": "./dist/telemetry/client.js",
+      "require": "./dist/telemetry/client.cjs"
     }
   },
   "scripts": {
