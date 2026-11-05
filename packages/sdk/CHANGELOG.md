@@ -1,5 +1,11 @@
 # @scryme/sdk
 
+## 10.2.40
+
+### Patch Changes
+
+- f8912f2: Prepare release v10.2.8
+
 ## 10.2.39
 
 ### Patch Changes
