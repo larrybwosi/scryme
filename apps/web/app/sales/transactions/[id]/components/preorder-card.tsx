@@ -1,10 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import { Card } from "@repo/ui/components/ui/card";
+import { Card, CardHeader, CardTitle, CardContent } from "@repo/ui/components/ui/card";
 import { Button } from "@repo/ui/components/ui/button";
 import { Textarea } from "@repo/ui/components/ui/textarea";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Sparkles,
@@ -15,7 +14,6 @@ import {
   X,
   Notebook,
   DollarSign,
-  Tag,
   Loader2,
 } from "lucide-react";
 import { updateTransactionNotes } from "../../../../actions/sales";
@@ -86,31 +84,31 @@ export function PreorderCard({
       : Math.max(0, total - totalPaid);
 
   return (
-    <Card className="border-amber-500/30 bg-amber-500/5 rounded-none shadow-sm dark:shadow-none overflow-hidden space-y-0">
-      {/* Header */}
-      <div className="flex items-center justify-between px-5 py-4 border-b border-amber-500/20 bg-amber-500/10">
-        <div className="flex items-center gap-2">
-          <Sparkles className="w-4 h-4 text-amber-600 dark:text-amber-400" />
-          <h3 className="text-xs font-black text-amber-900 dark:text-amber-200 uppercase tracking-widest">
+    <Card className="border border-border/80 bg-card rounded-md shadow-xs overflow-hidden">
+      {/* Header matching standard design system */}
+      <CardHeader className="bg-muted/40 px-4 py-2.5 border-b border-border/60">
+        <div className="flex items-center justify-between">
+          <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+            <Sparkles className="w-3.5 h-3.5 text-muted-foreground" />
             {isPreorder ? "Pre-Order & Custom Details" : "Transaction Notes & Customization"}
-          </h3>
+          </CardTitle>
+          {isPreorder && (
+            <Badge variant="secondary" className="text-[10px] font-semibold uppercase tracking-wider rounded-md px-2 py-0.5">
+              Pre-Order
+            </Badge>
+          )}
         </div>
-        {isPreorder && (
-          <Badge className="bg-amber-600 hover:bg-amber-700 text-white text-[10px] font-bold uppercase tracking-wider rounded-none px-2 py-0.5">
-            Pre-Order
-          </Badge>
-        )}
-      </div>
+      </CardHeader>
 
-      <div className="p-5 space-y-5">
+      <CardContent className="p-3.5 space-y-3">
         {/* Scheduled Pickup / Completion */}
         {isPreorder && (dueDate || dueTime) && (
-          <div className="space-y-1.5 bg-background/80 p-3.5 border border-amber-500/20 rounded-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <div className="bg-muted/30 rounded-lg p-2.5 border border-border/40 text-xs space-y-1">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Calendar className="w-3.5 h-3.5 text-muted-foreground" />
               Scheduled Completion & Pickup
             </span>
-            <p className="text-sm font-bold font-mono text-foreground">
+            <p className="font-semibold font-mono text-foreground">
               {dueDate ? new Date(dueDate).toLocaleDateString(undefined, { weekday: "short", year: "numeric", month: "short", day: "numeric" }) : "N/A"}
               {dueTime ? ` at ${dueTime}` : ""}
             </p>
@@ -119,28 +117,28 @@ export function PreorderCard({
 
         {/* Specifications & Customizations */}
         {isPreorder && (itemSpecs || inscription || customizationNotes) && (
-          <div className="space-y-3 bg-background/80 p-3.5 border border-amber-500/20 rounded-none">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground flex items-center gap-1.5">
-              <FileText className="w-3.5 h-3.5 text-amber-600 dark:text-amber-400" />
+          <div className="bg-muted/30 rounded-lg p-2.5 border border-border/40 text-xs space-y-2">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <FileText className="w-3.5 h-3.5 text-muted-foreground" />
               Customization Specifications
             </span>
 
-            <div className="grid grid-cols-1 gap-2 text-xs">
+            <div className="space-y-1.5">
               {itemSpecs && (
                 <div>
-                  <span className="text-muted-foreground font-semibold">Item Specs: </span>
-                  <span className="font-medium text-foreground">{itemSpecs}</span>
+                  <span className="text-muted-foreground font-medium">Item Specs: </span>
+                  <span className="font-semibold text-foreground">{itemSpecs}</span>
                 </div>
               )}
               {inscription && (
                 <div>
-                  <span className="text-muted-foreground font-semibold">Inscription / Marking: </span>
-                  <span className="font-medium text-foreground">{inscription}</span>
+                  <span className="text-muted-foreground font-medium">Inscription / Marking: </span>
+                  <span className="font-semibold text-foreground">{inscription}</span>
                 </div>
               )}
               {customizationNotes && (
                 <div>
-                  <span className="text-muted-foreground font-semibold">Design Notes: </span>
+                  <span className="text-muted-foreground font-medium block">Design Notes: </span>
                   <p className="mt-0.5 text-foreground leading-relaxed italic">
                     "{customizationNotes}"
                   </p>
@@ -152,41 +150,43 @@ export function PreorderCard({
 
         {/* Deposit & Financial Balance */}
         {isPreorder && (
-          <div className="grid grid-cols-2 gap-3 bg-background/80 p-3.5 border border-amber-500/20 rounded-none">
+          <div className="bg-muted/30 rounded-lg p-2.5 border border-border/40 grid grid-cols-2 gap-3 text-xs">
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-0.5">
                 Deposit Paid
               </span>
-              <span className="text-sm font-bold font-mono text-emerald-600 dark:text-emerald-400">
+              <span className="text-xs font-semibold font-mono text-foreground">
                 {fmt(totalPaid)}
               </span>
             </div>
             <div>
-              <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground block mb-0.5">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block mb-0.5">
                 Remaining Balance
               </span>
-              <span className="text-sm font-bold font-mono text-amber-700 dark:text-amber-400">
+              <span className="text-xs font-semibold font-mono text-foreground">
                 {fmt(remainingBalance)}
               </span>
             </div>
           </div>
         )}
 
+        {/* Record Payment Button */}
         {isPreorder && remainingBalance > 0 && onRecordPaymentClick && (
           <Button
             onClick={onRecordPaymentClick}
-            className="w-full h-9 text-xs font-bold uppercase tracking-wider bg-amber-600 hover:bg-amber-700 text-white rounded-none gap-1.5 shadow-sm"
+            size="sm"
+            className="w-full h-8 text-xs font-semibold gap-1.5 rounded-lg shadow-xs"
           >
             <DollarSign className="w-3.5 h-3.5" /> Record Payment / Add Deposit
           </Button>
         )}
 
         {/* General Transaction Notes & Edit Control */}
-        <div className="space-y-2 bg-background/90 p-3.5 border border-amber-500/30 rounded-none">
+        <div className="bg-muted/30 rounded-lg p-2.5 border border-border/40 text-xs space-y-2">
           <div className="flex items-center justify-between">
-            <span className="text-[10px] font-black uppercase tracking-widest text-amber-700 dark:text-amber-400 flex items-center gap-1.5">
-              <Notebook className="w-3.5 h-3.5" />
-              General Transaction Notes
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+              <Notebook className="w-3.5 h-3.5 text-muted-foreground" />
+              General Notes
             </span>
             {!isEditingNotes && (
               <Button
@@ -196,21 +196,22 @@ export function PreorderCard({
                   setNotesText(transaction?.notes || "");
                   setIsEditingNotes(true);
                 }}
-                className="h-6 px-2 text-[10px] font-bold uppercase tracking-wider text-amber-700 dark:text-amber-400 hover:bg-amber-500/10 rounded-none gap-1">
+                className="h-6 px-1.5 text-[11px] font-medium text-muted-foreground hover:text-foreground hover:bg-muted gap-1 rounded-md"
+              >
                 <Pencil className="w-3 h-3" />
-                Edit Notes
+                Edit
               </Button>
             )}
           </div>
 
           {isEditingNotes ? (
-            <div className="space-y-2.5 pt-1">
+            <div className="space-y-2 pt-1">
               <Textarea
                 value={notesText}
                 onChange={(e) => setNotesText(e.target.value)}
                 placeholder="Enter custom transaction or order notes..."
                 rows={3}
-                className="text-xs bg-card border-amber-500/40 focus-visible:ring-amber-500 rounded-none resize-none"
+                className="text-xs bg-background border-border/80 focus-visible:ring-1 focus-visible:ring-ring rounded-md resize-none"
               />
               <div className="flex items-center justify-end gap-2">
                 <Button
@@ -218,7 +219,8 @@ export function PreorderCard({
                   size="sm"
                   onClick={handleCancelNotes}
                   disabled={isSavingNotes}
-                  className="h-7 px-2.5 text-xs rounded-none border-border">
+                  className="h-7 px-2.5 text-xs rounded-md border-border"
+                >
                   <X className="w-3 h-3 mr-1" />
                   Cancel
                 </Button>
@@ -226,7 +228,8 @@ export function PreorderCard({
                   size="sm"
                   onClick={handleSaveNotes}
                   disabled={isSavingNotes}
-                  className="h-7 px-2.5 text-xs rounded-none bg-amber-600 hover:bg-amber-700 text-white font-semibold">
+                  className="h-7 px-2.5 text-xs rounded-md font-semibold"
+                >
                   {isSavingNotes ? (
                     <Loader2 className="w-3 h-3 animate-spin mr-1" />
                   ) : (
@@ -244,13 +247,13 @@ export function PreorderCard({
                 </p>
               ) : (
                 <p className="text-xs text-muted-foreground/60 italic">
-                  No notes recorded for this transaction yet. Click "Edit Notes" to add internal instructions or customer preferences.
+                  No notes recorded for this transaction yet. Click "Edit" to add internal instructions or customer preferences.
                 </p>
               )}
             </div>
           )}
         </div>
-      </div>
+      </CardContent>
     </Card>
   );
 }

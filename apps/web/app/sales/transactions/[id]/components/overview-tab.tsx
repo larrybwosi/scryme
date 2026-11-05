@@ -61,33 +61,6 @@ export function OverviewTab({
           />
         </div>
       </div>
-
-      {/* Quick Items Banner / Call to Action */}
-      <Card className="p-5 border-border bg-muted/40 rounded-none shadow-sm flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-background border border-border flex items-center justify-center text-foreground rounded-none shrink-0">
-            <ShoppingBag className="w-5 h-5 text-muted-foreground" />
-          </div>
-          <div>
-            <h4 className="text-sm font-bold text-foreground">
-              Order Items Breakdown ({itemsCount} {itemsCount === 1 ? "item" : "items"})
-            </h4>
-            <p className="text-xs text-muted-foreground mt-0.5">
-              View line items, quantities, taxes, discounts, and itemized subtotal.
-            </p>
-          </div>
-        </div>
-        {onTabChange && (
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onTabChange("items")}
-            className="h-9 text-xs font-bold uppercase tracking-wider border-border bg-background hover:bg-muted rounded-none gap-2 shrink-0 w-full sm:w-auto justify-center"
-          >
-            View All Items <ArrowRight className="w-3.5 h-3.5" />
-          </Button>
-        )}
-      </Card>
     </div>
   );
 }

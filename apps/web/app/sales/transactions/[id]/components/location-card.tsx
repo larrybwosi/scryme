@@ -2,7 +2,6 @@
 
 import React from "react";
 import { Building2, MapPin, User } from "lucide-react";
-import { Separator } from "@repo/ui/components/ui/separator";
 import { Card, CardHeader, CardTitle, CardContent } from "@repo/ui/components/ui/card";
 
 interface LocationCardProps {
@@ -10,34 +9,49 @@ interface LocationCardProps {
 }
 
 export function LocationCard({ transaction }: LocationCardProps) {
+  const locationName = transaction.location?.name || "Head office";
+  const handler = transaction.member?.user;
+
   return (
-    <Card className="border-border bg-card rounded-none shadow-sm dark:shadow-none overflow-hidden">
-      <CardHeader className="bg-muted px-5 py-4 border-b border-border">
-        <CardTitle className="text-xs font-black uppercase tracking-widest text-foreground flex items-center gap-2">
-          <Building2 className="w-4 h-4 text-muted-foreground" />
-          Location & team
+    <Card className="border border-border/80 bg-card rounded-md shadow-xs overflow-hidden">
+      {/* Tight header matching design system */}
+      <CardHeader className="bg-muted/40 px-4 py-2.5 border-b border-border/60">
+        <CardTitle className="text-xs font-semibold text-muted-foreground uppercase tracking-wide flex items-center gap-1.5">
+          <Building2 className="w-3.5 h-3.5 text-muted-foreground" />
+          Location & Team
         </CardTitle>
       </CardHeader>
-      <CardContent className="p-5 space-y-3">
-        <div className="flex items-center gap-2.5 text-xs text-foreground font-bold">
-          <MapPin className="w-4 h-4 text-muted-foreground shrink-0" />
-          <span>{transaction.location?.name || "Head office"}</span>
+
+      {/* Compact Content */}
+      <CardContent className="p-3.5 space-y-2.5">
+        {/* Location row */}
+        <div className="flex items-center gap-2 text-xs font-medium text-foreground">
+          <MapPin className="w-3.5 h-3.5 text-muted-foreground shrink-0" />
+          <span className="truncate" title={locationName}>
+            {locationName}
+          </span>
         </div>
-        {transaction.member?.user && (
-          <>
-            <Separator className="bg-border my-2" />
-            <div className="space-y-1.5 text-xs text-muted-foreground">
-              <span className="text-[9px] uppercase font-bold tracking-widest text-muted-foreground block">
-                Handled by
-              </span>
-              <p className="font-bold text-foreground">
-                {transaction.member.user.name}
-              </p>
-              <p className="font-mono text-[11px]">
-                {transaction.member.user.email}
-              </p>
+
+        {/* Handled by details container */}
+        {handler && (
+          <div className="bg-muted/30 rounded-lg p-2.5 space-y-1 border border-border/40 text-xs">
+            <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground block">
+              Handled by
+            </span>
+            <div className="flex items-center gap-2">
+              <User className="w-3.5 h-3.5 text-muted-foreground/70 shrink-0" />
+              <div className="min-w-0 flex-1 leading-tight">
+                <p className="font-semibold text-foreground text-xs truncate">
+                  {handler.name}
+                </p>
+                {handler.email && (
+                  <p className="font-mono text-[11px] text-muted-foreground truncate">
+                    {handler.email}
+                  </p>
+                )}
+              </div>
             </div>
-          </>
+          </div>
         )}
       </CardContent>
     </Card>

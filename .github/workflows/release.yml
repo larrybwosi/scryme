@@ -426,9 +426,9 @@ jobs:
 
       - name: Build Release APK and Bundle
         env:
-          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
-          OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
-          OPENPANEL_HOST: ${{ secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
+          ANDROID_OPENPANEL_CLIENT_ID: ${{ secrets.ANDROID_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          ANDROID_OPENPANEL_CLIENT_SECRET: ${{ secrets.ANDROID_OPENPANEL_CLIENT_SECRET || secrets.OPENPANEL_CLIENT_SECRET }}
+          ANDROID_OPENPANEL_HOST: ${{ secrets.ANDROID_OPENPANEL_HOST || secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
         run: ./gradlew assembleRelease bundleRelease
         working-directory: apps/android
 
