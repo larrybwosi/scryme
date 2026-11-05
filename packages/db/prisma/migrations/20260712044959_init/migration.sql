@@ -410,7 +410,7 @@ CREATE TYPE "WebhookDeliveryStatus" AS ENUM ('PENDING', 'SUCCESS', 'FAILED', 'RE
 CREATE TYPE "WindmillExecutionStatus" AS ENUM ('PENDING', 'RUNNING', 'COMPLETED', 'FAILED', 'CANCELLED');
 
 -- CreateTable
-CREATE TABLE "user" (
+CREATE TABLE IF NOT EXISTS "user" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "email" TEXT NOT NULL,
@@ -439,7 +439,7 @@ CREATE TABLE "user" (
 );
 
 -- CreateTable
-CREATE TABLE "account" (
+CREATE TABLE IF NOT EXISTS "account" (
     "id" TEXT NOT NULL,
     "accountId" TEXT NOT NULL,
     "providerId" TEXT NOT NULL,
@@ -458,7 +458,7 @@ CREATE TABLE "account" (
 );
 
 -- CreateTable
-CREATE TABLE "verification" (
+CREATE TABLE IF NOT EXISTS "verification" (
     "id" TEXT NOT NULL,
     "identifier" TEXT NOT NULL,
     "value" TEXT NOT NULL,
@@ -470,7 +470,7 @@ CREATE TABLE "verification" (
 );
 
 -- CreateTable
-CREATE TABLE "session" (
+CREATE TABLE IF NOT EXISTS "session" (
     "id" TEXT NOT NULL,
     "expiresAt" TIMESTAMP(3) NOT NULL,
     "token" TEXT NOT NULL,
@@ -486,7 +486,7 @@ CREATE TABLE "session" (
 );
 
 -- CreateTable
-CREATE TABLE "apikey" (
+CREATE TABLE IF NOT EXISTS "apikey" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "start" TEXT,
@@ -513,7 +513,7 @@ CREATE TABLE "apikey" (
 );
 
 -- CreateTable
-CREATE TABLE "jwks" (
+CREATE TABLE IF NOT EXISTS "jwks" (
     "id" TEXT NOT NULL,
     "publicKey" TEXT NOT NULL,
     "privateKey" TEXT NOT NULL,
@@ -523,7 +523,7 @@ CREATE TABLE "jwks" (
 );
 
 -- CreateTable
-CREATE TABLE "api_key_usage_log" (
+CREATE TABLE IF NOT EXISTS "api_key_usage_log" (
     "id" TEXT NOT NULL,
     "apiKeyId" TEXT NOT NULL,
     "endpoint" TEXT NOT NULL,
@@ -541,7 +541,7 @@ CREATE TABLE "api_key_usage_log" (
 );
 
 -- CreateTable
-CREATE TABLE "oauth_client" (
+CREATE TABLE IF NOT EXISTS "oauth_client" (
     "id" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
     "clientSecret" TEXT,
@@ -574,7 +574,7 @@ CREATE TABLE "oauth_client" (
 );
 
 -- CreateTable
-CREATE TABLE "oauth_refresh_token" (
+CREATE TABLE IF NOT EXISTS "oauth_refresh_token" (
     "id" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
@@ -591,7 +591,7 @@ CREATE TABLE "oauth_refresh_token" (
 );
 
 -- CreateTable
-CREATE TABLE "oauth_access_token" (
+CREATE TABLE IF NOT EXISTS "oauth_access_token" (
     "id" TEXT NOT NULL,
     "token" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
@@ -607,7 +607,7 @@ CREATE TABLE "oauth_access_token" (
 );
 
 -- CreateTable
-CREATE TABLE "oauth_consent" (
+CREATE TABLE IF NOT EXISTS "oauth_consent" (
     "id" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
@@ -620,7 +620,7 @@ CREATE TABLE "oauth_consent" (
 );
 
 -- CreateTable
-CREATE TABLE "bakery_category" (
+CREATE TABLE IF NOT EXISTS "bakery_category" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -632,7 +632,7 @@ CREATE TABLE "bakery_category" (
 );
 
 -- CreateTable
-CREATE TABLE "Recipe" (
+CREATE TABLE IF NOT EXISTS "Recipe" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "categoryId" TEXT NOT NULL,
@@ -659,7 +659,7 @@ CREATE TABLE "Recipe" (
 );
 
 -- CreateTable
-CREATE TABLE "Batch" (
+CREATE TABLE IF NOT EXISTS "Batch" (
     "id" TEXT NOT NULL,
     "batchNumber" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -703,7 +703,7 @@ CREATE TABLE "Batch" (
 );
 
 -- CreateTable
-CREATE TABLE "Template" (
+CREATE TABLE IF NOT EXISTS "Template" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
@@ -724,7 +724,7 @@ CREATE TABLE "Template" (
 );
 
 -- CreateTable
-CREATE TABLE "template_schedule" (
+CREATE TABLE IF NOT EXISTS "template_schedule" (
     "id" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
     "dayOfWeek" INTEGER NOT NULL,
@@ -736,7 +736,7 @@ CREATE TABLE "template_schedule" (
 );
 
 -- CreateTable
-CREATE TABLE "recipe_ingredient" (
+CREATE TABLE IF NOT EXISTS "recipe_ingredient" (
     "id" TEXT NOT NULL,
     "recipeId" TEXT NOT NULL,
     "ingredientVariantId" TEXT NOT NULL,
@@ -749,7 +749,7 @@ CREATE TABLE "recipe_ingredient" (
 );
 
 -- CreateTable
-CREATE TABLE "bakery_settings" (
+CREATE TABLE IF NOT EXISTS "bakery_settings" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "defaultBakerId" TEXT,
@@ -775,7 +775,7 @@ CREATE TABLE "bakery_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "batch_ingredient_consumption" (
+CREATE TABLE IF NOT EXISTS "batch_ingredient_consumption" (
     "id" TEXT NOT NULL,
     "batchId" TEXT NOT NULL,
     "stockBatchId" TEXT NOT NULL,
@@ -787,7 +787,7 @@ CREATE TABLE "batch_ingredient_consumption" (
 );
 
 -- CreateTable
-CREATE TABLE "quality_incident" (
+CREATE TABLE IF NOT EXISTS "quality_incident" (
     "id" TEXT NOT NULL,
     "incidentNumber" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -806,7 +806,7 @@ CREATE TABLE "quality_incident" (
 );
 
 -- CreateTable
-CREATE TABLE "bakery_bakers" (
+CREATE TABLE IF NOT EXISTS "bakery_bakers" (
     "id" TEXT NOT NULL,
     "bakerySettingsId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -819,7 +819,7 @@ CREATE TABLE "bakery_bakers" (
 );
 
 -- CreateTable
-CREATE TABLE "delivery_partner" (
+CREATE TABLE IF NOT EXISTS "delivery_partner" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT,
@@ -839,7 +839,7 @@ CREATE TABLE "delivery_partner" (
 );
 
 -- CreateTable
-CREATE TABLE "partner_wallet_log" (
+CREATE TABLE IF NOT EXISTS "partner_wallet_log" (
     "id" TEXT NOT NULL,
     "partnerId" TEXT NOT NULL,
     "amount" DECIMAL(12,2) NOT NULL,
@@ -854,7 +854,7 @@ CREATE TABLE "partner_wallet_log" (
 );
 
 -- CreateTable
-CREATE TABLE "campaigns" (
+CREATE TABLE IF NOT EXISTS "campaigns" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -881,7 +881,7 @@ CREATE TABLE "campaigns" (
 );
 
 -- CreateTable
-CREATE TABLE "campaign_segments" (
+CREATE TABLE IF NOT EXISTS "campaign_segments" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -894,7 +894,7 @@ CREATE TABLE "campaign_segments" (
 );
 
 -- CreateTable
-CREATE TABLE "campaign_workflows" (
+CREATE TABLE IF NOT EXISTS "campaign_workflows" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -908,7 +908,7 @@ CREATE TABLE "campaign_workflows" (
 );
 
 -- CreateTable
-CREATE TABLE "campaign_workflow_instances" (
+CREATE TABLE IF NOT EXISTS "campaign_workflow_instances" (
     "id" TEXT NOT NULL,
     "workflowId" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
@@ -922,7 +922,7 @@ CREATE TABLE "campaign_workflow_instances" (
 );
 
 -- CreateTable
-CREATE TABLE "campaign_events" (
+CREATE TABLE IF NOT EXISTS "campaign_events" (
     "id" TEXT NOT NULL,
     "campaignId" TEXT NOT NULL,
     "recordId" TEXT,
@@ -935,7 +935,7 @@ CREATE TABLE "campaign_events" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_object_definitions" (
+CREATE TABLE IF NOT EXISTS "crm_object_definitions" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "label" TEXT NOT NULL,
@@ -951,7 +951,7 @@ CREATE TABLE "crm_object_definitions" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_field_definitions" (
+CREATE TABLE IF NOT EXISTS "crm_field_definitions" (
     "id" TEXT NOT NULL,
     "objectId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -970,7 +970,7 @@ CREATE TABLE "crm_field_definitions" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_records" (
+CREATE TABLE IF NOT EXISTS "crm_records" (
     "id" TEXT NOT NULL,
     "objectId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -983,7 +983,7 @@ CREATE TABLE "crm_records" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_relationship_definitions" (
+CREATE TABLE IF NOT EXISTS "crm_relationship_definitions" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -999,7 +999,7 @@ CREATE TABLE "crm_relationship_definitions" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_associations" (
+CREATE TABLE IF NOT EXISTS "crm_associations" (
     "id" TEXT NOT NULL,
     "relationshipId" TEXT NOT NULL,
     "sourceRecordId" TEXT NOT NULL,
@@ -1011,7 +1011,7 @@ CREATE TABLE "crm_associations" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_activities" (
+CREATE TABLE IF NOT EXISTS "crm_activities" (
     "id" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -1025,7 +1025,7 @@ CREATE TABLE "crm_activities" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_notes" (
+CREATE TABLE IF NOT EXISTS "crm_notes" (
     "id" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -1039,7 +1039,7 @@ CREATE TABLE "crm_notes" (
 );
 
 -- CreateTable
-CREATE TABLE "crm_follow_ups" (
+CREATE TABLE IF NOT EXISTS "crm_follow_ups" (
     "id" TEXT NOT NULL,
     "recordId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -1063,7 +1063,7 @@ CREATE TABLE "crm_follow_ups" (
 );
 
 -- CreateTable
-CREATE TABLE "Customer" (
+CREATE TABLE IF NOT EXISTS "Customer" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT,
@@ -1091,7 +1091,7 @@ CREATE TABLE "Customer" (
 );
 
 -- CreateTable
-CREATE TABLE "business_account" (
+CREATE TABLE IF NOT EXISTS "business_account" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "taxId" TEXT,
@@ -1103,7 +1103,7 @@ CREATE TABLE "business_account" (
 );
 
 -- CreateTable
-CREATE TABLE "B2BConnection" (
+CREATE TABLE IF NOT EXISTS "B2BConnection" (
     "id" TEXT NOT NULL,
     "supplierOrgId" TEXT NOT NULL,
     "businessAccountId" TEXT NOT NULL,
@@ -1118,7 +1118,7 @@ CREATE TABLE "B2BConnection" (
 );
 
 -- CreateTable
-CREATE TABLE "referral_program" (
+CREATE TABLE IF NOT EXISTS "referral_program" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -1135,7 +1135,7 @@ CREATE TABLE "referral_program" (
 );
 
 -- CreateTable
-CREATE TABLE "referral" (
+CREATE TABLE IF NOT EXISTS "referral" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "referrerId" TEXT NOT NULL,
@@ -1151,7 +1151,7 @@ CREATE TABLE "referral" (
 );
 
 -- CreateTable
-CREATE TABLE "driver" (
+CREATE TABLE IF NOT EXISTS "driver" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT,
@@ -1169,7 +1169,7 @@ CREATE TABLE "driver" (
 );
 
 -- CreateTable
-CREATE TABLE "vehicle" (
+CREATE TABLE IF NOT EXISTS "vehicle" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "make" TEXT NOT NULL,
@@ -1185,7 +1185,7 @@ CREATE TABLE "vehicle" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_connection" (
+CREATE TABLE IF NOT EXISTS "ecommerce_connection" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -1211,7 +1211,7 @@ CREATE TABLE "ecommerce_connection" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_sync_log" (
+CREATE TABLE IF NOT EXISTS "ecommerce_sync_log" (
     "id" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
     "syncType" "EntitySyncType" NOT NULL,
@@ -1233,7 +1233,7 @@ CREATE TABLE "ecommerce_sync_log" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_product_mapping" (
+CREATE TABLE IF NOT EXISTS "ecommerce_product_mapping" (
     "id" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -1254,7 +1254,7 @@ CREATE TABLE "ecommerce_product_mapping" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_order_mapping" (
+CREATE TABLE IF NOT EXISTS "ecommerce_order_mapping" (
     "id" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
@@ -1272,7 +1272,7 @@ CREATE TABLE "ecommerce_order_mapping" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_customer_mapping" (
+CREATE TABLE IF NOT EXISTS "ecommerce_customer_mapping" (
     "id" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -1288,7 +1288,7 @@ CREATE TABLE "ecommerce_customer_mapping" (
 );
 
 -- CreateTable
-CREATE TABLE "ecommerce_webhook_log" (
+CREATE TABLE IF NOT EXISTS "ecommerce_webhook_log" (
     "id" TEXT NOT NULL,
     "connectionId" TEXT NOT NULL,
     "topic" TEXT NOT NULL,
@@ -1305,7 +1305,7 @@ CREATE TABLE "ecommerce_webhook_log" (
 );
 
 -- CreateTable
-CREATE TABLE "Cart" (
+CREATE TABLE IF NOT EXISTS "Cart" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "customerId" TEXT,
@@ -1318,7 +1318,7 @@ CREATE TABLE "Cart" (
 );
 
 -- CreateTable
-CREATE TABLE "CartItem" (
+CREATE TABLE IF NOT EXISTS "CartItem" (
     "id" TEXT NOT NULL,
     "cartId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -1331,7 +1331,7 @@ CREATE TABLE "CartItem" (
 );
 
 -- CreateTable
-CREATE TABLE "favorites" (
+CREATE TABLE IF NOT EXISTS "favorites" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -1343,7 +1343,7 @@ CREATE TABLE "favorites" (
 );
 
 -- CreateTable
-CREATE TABLE "product_reviews" (
+CREATE TABLE IF NOT EXISTS "product_reviews" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -1358,7 +1358,7 @@ CREATE TABLE "product_reviews" (
 );
 
 -- CreateTable
-CREATE TABLE "Expense" (
+CREATE TABLE IF NOT EXISTS "Expense" (
     "id" TEXT NOT NULL,
     "expenseNumber" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1403,7 +1403,7 @@ CREATE TABLE "Expense" (
 );
 
 -- CreateTable
-CREATE TABLE "ExpenseCategory" (
+CREATE TABLE IF NOT EXISTS "ExpenseCategory" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -1421,7 +1421,7 @@ CREATE TABLE "ExpenseCategory" (
 );
 
 -- CreateTable
-CREATE TABLE "RecurringExpense" (
+CREATE TABLE IF NOT EXISTS "RecurringExpense" (
     "id" TEXT NOT NULL,
     "description" TEXT NOT NULL,
     "amount" DECIMAL(19,4) NOT NULL,
@@ -1446,7 +1446,7 @@ CREATE TABLE "RecurringExpense" (
 );
 
 -- CreateTable
-CREATE TABLE "Budget" (
+CREATE TABLE IF NOT EXISTS "Budget" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -1472,7 +1472,7 @@ CREATE TABLE "Budget" (
 );
 
 -- CreateTable
-CREATE TABLE "BudgetReport" (
+CREATE TABLE IF NOT EXISTS "BudgetReport" (
     "id" TEXT NOT NULL,
     "budgetId" TEXT NOT NULL,
     "reportDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1488,7 +1488,7 @@ CREATE TABLE "BudgetReport" (
 );
 
 -- CreateTable
-CREATE TABLE "BudgetAlert" (
+CREATE TABLE IF NOT EXISTS "BudgetAlert" (
     "id" TEXT NOT NULL,
     "budgetId" TEXT NOT NULL,
     "threshold" DECIMAL(5,2) NOT NULL,
@@ -1503,7 +1503,7 @@ CREATE TABLE "BudgetAlert" (
 );
 
 -- CreateTable
-CREATE TABLE "CostCenter" (
+CREATE TABLE IF NOT EXISTS "CostCenter" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "code" TEXT NOT NULL,
@@ -1517,7 +1517,7 @@ CREATE TABLE "CostCenter" (
 );
 
 -- CreateTable
-CREATE TABLE "PettyCashFund" (
+CREATE TABLE IF NOT EXISTS "PettyCashFund" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "amount" DECIMAL(19,4) NOT NULL,
@@ -1534,7 +1534,7 @@ CREATE TABLE "PettyCashFund" (
 );
 
 -- CreateTable
-CREATE TABLE "PettyCashTransaction" (
+CREATE TABLE IF NOT EXISTS "PettyCashTransaction" (
     "id" TEXT NOT NULL,
     "fundId" TEXT NOT NULL,
     "type" "PettyCashTransactionType" NOT NULL,
@@ -1547,7 +1547,7 @@ CREATE TABLE "PettyCashTransaction" (
 );
 
 -- CreateTable
-CREATE TABLE "UtilityAccount" (
+CREATE TABLE IF NOT EXISTS "UtilityAccount" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "provider" TEXT,
@@ -1562,7 +1562,7 @@ CREATE TABLE "UtilityAccount" (
 );
 
 -- CreateTable
-CREATE TABLE "Purchase" (
+CREATE TABLE IF NOT EXISTS "Purchase" (
     "id" TEXT NOT NULL,
     "purchaseNumber" TEXT NOT NULL,
     "supplierId" TEXT NOT NULL,
@@ -1597,7 +1597,7 @@ CREATE TABLE "Purchase" (
 );
 
 -- CreateTable
-CREATE TABLE "PurchaseItem" (
+CREATE TABLE IF NOT EXISTS "PurchaseItem" (
     "id" TEXT NOT NULL,
     "purchaseId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -1622,7 +1622,7 @@ CREATE TABLE "PurchaseItem" (
 );
 
 -- CreateTable
-CREATE TABLE "PurchasePayment" (
+CREATE TABLE IF NOT EXISTS "PurchasePayment" (
     "id" TEXT NOT NULL,
     "purchaseId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -1639,7 +1639,7 @@ CREATE TABLE "PurchasePayment" (
 );
 
 -- CreateTable
-CREATE TABLE "SupplierInvoice" (
+CREATE TABLE IF NOT EXISTS "SupplierInvoice" (
     "id" TEXT NOT NULL,
     "invoiceNumber" TEXT NOT NULL,
     "purchaseId" TEXT NOT NULL,
@@ -1667,7 +1667,7 @@ CREATE TABLE "SupplierInvoice" (
 );
 
 -- CreateTable
-CREATE TABLE "PurchaseReturn" (
+CREATE TABLE IF NOT EXISTS "PurchaseReturn" (
     "id" TEXT NOT NULL,
     "returnNumber" TEXT NOT NULL,
     "purchaseId" TEXT NOT NULL,
@@ -1686,7 +1686,7 @@ CREATE TABLE "PurchaseReturn" (
 );
 
 -- CreateTable
-CREATE TABLE "PurchaseReturnItem" (
+CREATE TABLE IF NOT EXISTS "PurchaseReturnItem" (
     "id" TEXT NOT NULL,
     "purchaseReturnId" TEXT NOT NULL,
     "purchaseItemId" TEXT NOT NULL,
@@ -1701,7 +1701,7 @@ CREATE TABLE "PurchaseReturnItem" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalRequest" (
+CREATE TABLE IF NOT EXISTS "ApprovalRequest" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "requestType" "ApprovalRequestType" NOT NULL,
@@ -1721,7 +1721,7 @@ CREATE TABLE "ApprovalRequest" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalDecision" (
+CREATE TABLE IF NOT EXISTS "ApprovalDecision" (
     "id" TEXT NOT NULL,
     "approvalRequestId" TEXT NOT NULL,
     "stepNumber" INTEGER NOT NULL,
@@ -1738,7 +1738,7 @@ CREATE TABLE "ApprovalDecision" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalWorkflow" (
+CREATE TABLE IF NOT EXISTS "ApprovalWorkflow" (
     "settings" JSONB,
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -1753,7 +1753,7 @@ CREATE TABLE "ApprovalWorkflow" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalWorkflowStep" (
+CREATE TABLE IF NOT EXISTS "ApprovalWorkflowStep" (
     "id" TEXT NOT NULL,
     "approvalWorkflowId" TEXT NOT NULL,
     "stepNumber" INTEGER NOT NULL,
@@ -1768,7 +1768,7 @@ CREATE TABLE "ApprovalWorkflowStep" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalStepCondition" (
+CREATE TABLE IF NOT EXISTS "ApprovalStepCondition" (
     "id" TEXT NOT NULL,
     "stepId" TEXT NOT NULL,
     "type" "ConditionType" NOT NULL,
@@ -1783,7 +1783,7 @@ CREATE TABLE "ApprovalStepCondition" (
 );
 
 -- CreateTable
-CREATE TABLE "ApprovalStepAction" (
+CREATE TABLE IF NOT EXISTS "ApprovalStepAction" (
     "id" TEXT NOT NULL,
     "stepId" TEXT NOT NULL,
     "type" "ApprovalActionType" NOT NULL,
@@ -1798,7 +1798,7 @@ CREATE TABLE "ApprovalStepAction" (
 );
 
 -- CreateTable
-CREATE TABLE "LedgerAccount" (
+CREATE TABLE IF NOT EXISTS "LedgerAccount" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -1816,7 +1816,7 @@ CREATE TABLE "LedgerAccount" (
 );
 
 -- CreateTable
-CREATE TABLE "JournalEntry" (
+CREATE TABLE IF NOT EXISTS "JournalEntry" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "entryDate" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -1834,7 +1834,7 @@ CREATE TABLE "JournalEntry" (
 );
 
 -- CreateTable
-CREATE TABLE "JournalLine" (
+CREATE TABLE IF NOT EXISTS "JournalLine" (
     "id" TEXT NOT NULL,
     "journalEntryId" TEXT NOT NULL,
     "ledgerAccountId" TEXT NOT NULL,
@@ -1849,7 +1849,7 @@ CREATE TABLE "JournalLine" (
 );
 
 -- CreateTable
-CREATE TABLE "BankStatement" (
+CREATE TABLE IF NOT EXISTS "BankStatement" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "bankAccountId" TEXT,
@@ -1865,7 +1865,7 @@ CREATE TABLE "BankStatement" (
 );
 
 -- CreateTable
-CREATE TABLE "BankStatementLine" (
+CREATE TABLE IF NOT EXISTS "BankStatementLine" (
     "id" TEXT NOT NULL,
     "statementId" TEXT NOT NULL,
     "transactionDate" TIMESTAMP(3) NOT NULL,
@@ -1880,7 +1880,7 @@ CREATE TABLE "BankStatementLine" (
 );
 
 -- CreateTable
-CREATE TABLE "RecurringBill" (
+CREATE TABLE IF NOT EXISTS "RecurringBill" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "description" TEXT NOT NULL,
@@ -1902,7 +1902,7 @@ CREATE TABLE "RecurringBill" (
 );
 
 -- CreateTable
-CREATE TABLE "huly_configuration" (
+CREATE TABLE IF NOT EXISTS "huly_configuration" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "workspaceSlug" TEXT,
@@ -1928,7 +1928,7 @@ CREATE TABLE "huly_configuration" (
 );
 
 -- CreateTable
-CREATE TABLE "huly_notification_rule" (
+CREATE TABLE IF NOT EXISTS "huly_notification_rule" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
@@ -1948,7 +1948,7 @@ CREATE TABLE "huly_notification_rule" (
 );
 
 -- CreateTable
-CREATE TABLE "huly_event_log" (
+CREATE TABLE IF NOT EXISTS "huly_event_log" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
@@ -1966,7 +1966,7 @@ CREATE TABLE "huly_event_log" (
 );
 
 -- CreateTable
-CREATE TABLE "huly_channel_mapping" (
+CREATE TABLE IF NOT EXISTS "huly_channel_mapping" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
@@ -1981,7 +1981,7 @@ CREATE TABLE "huly_channel_mapping" (
 );
 
 -- CreateTable
-CREATE TABLE "integration_definition" (
+CREATE TABLE IF NOT EXISTS "integration_definition" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -1997,7 +1997,7 @@ CREATE TABLE "integration_definition" (
 );
 
 -- CreateTable
-CREATE TABLE "organization_integration" (
+CREATE TABLE IF NOT EXISTS "organization_integration" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "integrationDefinitionId" TEXT NOT NULL,
@@ -2014,7 +2014,7 @@ CREATE TABLE "organization_integration" (
 );
 
 -- CreateTable
-CREATE TABLE "external_mapping" (
+CREATE TABLE IF NOT EXISTS "external_mapping" (
     "id" TEXT NOT NULL,
     "organizationIntegrationId" TEXT,
     "organizationId" TEXT,
@@ -2032,7 +2032,7 @@ CREATE TABLE "external_mapping" (
 );
 
 -- CreateTable
-CREATE TABLE "integration_event" (
+CREATE TABLE IF NOT EXISTS "integration_event" (
     "id" TEXT NOT NULL,
     "organizationIntegrationId" TEXT NOT NULL,
     "eventType" TEXT NOT NULL,
@@ -2046,7 +2046,7 @@ CREATE TABLE "integration_event" (
 );
 
 -- CreateTable
-CREATE TABLE "Category" (
+CREATE TABLE IF NOT EXISTS "Category" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -2061,7 +2061,7 @@ CREATE TABLE "Category" (
 );
 
 -- CreateTable
-CREATE TABLE "Product" (
+CREATE TABLE IF NOT EXISTS "Product" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2090,7 +2090,7 @@ CREATE TABLE "Product" (
 );
 
 -- CreateTable
-CREATE TABLE "product_variant" (
+CREATE TABLE IF NOT EXISTS "product_variant" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -2125,7 +2125,7 @@ CREATE TABLE "product_variant" (
 );
 
 -- CreateTable
-CREATE TABLE "variant_selling_unit" (
+CREATE TABLE IF NOT EXISTS "variant_selling_unit" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -2141,7 +2141,7 @@ CREATE TABLE "variant_selling_unit" (
 );
 
 -- CreateTable
-CREATE TABLE "Recall" (
+CREATE TABLE IF NOT EXISTS "Recall" (
     "id" TEXT NOT NULL,
     "recallNumber" TEXT NOT NULL,
     "title" TEXT NOT NULL,
@@ -2157,7 +2157,7 @@ CREATE TABLE "Recall" (
 );
 
 -- CreateTable
-CREATE TABLE "Supplier" (
+CREATE TABLE IF NOT EXISTS "Supplier" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
@@ -2191,7 +2191,7 @@ CREATE TABLE "Supplier" (
 );
 
 -- CreateTable
-CREATE TABLE "ProductSupplier" (
+CREATE TABLE IF NOT EXISTS "ProductSupplier" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -2211,7 +2211,7 @@ CREATE TABLE "ProductSupplier" (
 );
 
 -- CreateTable
-CREATE TABLE "SupplierDocument" (
+CREATE TABLE IF NOT EXISTS "SupplierDocument" (
     "id" TEXT NOT NULL,
     "supplierId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2227,7 +2227,7 @@ CREATE TABLE "SupplierDocument" (
 );
 
 -- CreateTable
-CREATE TABLE "SupplierPriceHistory" (
+CREATE TABLE IF NOT EXISTS "SupplierPriceHistory" (
     "id" TEXT NOT NULL,
     "supplierId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -2239,7 +2239,7 @@ CREATE TABLE "SupplierPriceHistory" (
 );
 
 -- CreateTable
-CREATE TABLE "InventoryLocation" (
+CREATE TABLE IF NOT EXISTS "InventoryLocation" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "code" TEXT,
@@ -2263,7 +2263,7 @@ CREATE TABLE "InventoryLocation" (
 );
 
 -- CreateTable
-CREATE TABLE "StorageZone" (
+CREATE TABLE IF NOT EXISTS "StorageZone" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2281,7 +2281,7 @@ CREATE TABLE "StorageZone" (
 );
 
 -- CreateTable
-CREATE TABLE "StorageUnit" (
+CREATE TABLE IF NOT EXISTS "StorageUnit" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "reference" TEXT,
@@ -2308,7 +2308,7 @@ CREATE TABLE "StorageUnit" (
 );
 
 -- CreateTable
-CREATE TABLE "QCTemplate" (
+CREATE TABLE IF NOT EXISTS "QCTemplate" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2321,7 +2321,7 @@ CREATE TABLE "QCTemplate" (
 );
 
 -- CreateTable
-CREATE TABLE "QCResult" (
+CREATE TABLE IF NOT EXISTS "QCResult" (
     "id" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -2338,7 +2338,7 @@ CREATE TABLE "QCResult" (
 );
 
 -- CreateTable
-CREATE TABLE "supplier_review" (
+CREATE TABLE IF NOT EXISTS "supplier_review" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -2352,7 +2352,7 @@ CREATE TABLE "supplier_review" (
 );
 
 -- CreateTable
-CREATE TABLE "favorite_supplier" (
+CREATE TABLE IF NOT EXISTS "favorite_supplier" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -2364,7 +2364,7 @@ CREATE TABLE "favorite_supplier" (
 );
 
 -- CreateTable
-CREATE TABLE "StoragePosition" (
+CREATE TABLE IF NOT EXISTS "StoragePosition" (
     "id" TEXT NOT NULL,
     "identifier" TEXT NOT NULL,
     "storageUnitId" TEXT NOT NULL,
@@ -2384,7 +2384,7 @@ CREATE TABLE "StoragePosition" (
 );
 
 -- CreateTable
-CREATE TABLE "Invoice" (
+CREATE TABLE IF NOT EXISTS "Invoice" (
     "id" TEXT NOT NULL,
     "customerId" TEXT,
     "customerName" TEXT,
@@ -2410,7 +2410,7 @@ CREATE TABLE "Invoice" (
 );
 
 -- CreateTable
-CREATE TABLE "InvoiceItem" (
+CREATE TABLE IF NOT EXISTS "InvoiceItem" (
     "id" TEXT NOT NULL,
     "invoiceId" TEXT NOT NULL,
     "itemCode" TEXT NOT NULL,
@@ -2426,7 +2426,7 @@ CREATE TABLE "InvoiceItem" (
 );
 
 -- CreateTable
-CREATE TABLE "KRAComplianceLog" (
+CREATE TABLE IF NOT EXISTS "KRAComplianceLog" (
     "id" TEXT NOT NULL,
     "invoiceId" TEXT NOT NULL,
     "kraPin" TEXT NOT NULL,
@@ -2446,7 +2446,7 @@ CREATE TABLE "KRAComplianceLog" (
 );
 
 -- CreateTable
-CREATE TABLE "InvoiceTemplate" (
+CREATE TABLE IF NOT EXISTS "InvoiceTemplate" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2472,7 +2472,7 @@ CREATE TABLE "InvoiceTemplate" (
 );
 
 -- CreateTable
-CREATE TABLE "InvoiceTemplateVersion" (
+CREATE TABLE IF NOT EXISTS "InvoiceTemplateVersion" (
     "id" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
     "versionNumber" INTEGER NOT NULL,
@@ -2485,7 +2485,7 @@ CREATE TABLE "InvoiceTemplateVersion" (
 );
 
 -- CreateTable
-CREATE TABLE "TemplateUsageLog" (
+CREATE TABLE IF NOT EXISTS "TemplateUsageLog" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
@@ -2498,7 +2498,7 @@ CREATE TABLE "TemplateUsageLog" (
 );
 
 -- CreateTable
-CREATE TABLE "invoice_config" (
+CREATE TABLE IF NOT EXISTS "invoice_config" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "defaultTemplate" TEXT NOT NULL DEFAULT 'default',
@@ -2533,7 +2533,7 @@ CREATE TABLE "invoice_config" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyProgram" (
+CREATE TABLE IF NOT EXISTS "LoyaltyProgram" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2550,7 +2550,7 @@ CREATE TABLE "LoyaltyProgram" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyTier" (
+CREATE TABLE IF NOT EXISTS "LoyaltyTier" (
     "id" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2566,7 +2566,7 @@ CREATE TABLE "LoyaltyTier" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyRule" (
+CREATE TABLE IF NOT EXISTS "LoyaltyRule" (
     "id" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2588,7 +2588,7 @@ CREATE TABLE "LoyaltyRule" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyReward" (
+CREATE TABLE IF NOT EXISTS "LoyaltyReward" (
     "id" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2605,7 +2605,7 @@ CREATE TABLE "LoyaltyReward" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyVoucher" (
+CREATE TABLE IF NOT EXISTS "LoyaltyVoucher" (
     "id" TEXT NOT NULL,
     "code" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
@@ -2623,7 +2623,7 @@ CREATE TABLE "LoyaltyVoucher" (
 );
 
 -- CreateTable
-CREATE TABLE "LoyaltyTransaction" (
+CREATE TABLE IF NOT EXISTS "LoyaltyTransaction" (
     "id" TEXT NOT NULL,
     "programId" TEXT NOT NULL,
     "customerId" TEXT NOT NULL,
@@ -2640,7 +2640,7 @@ CREATE TABLE "LoyaltyTransaction" (
 );
 
 -- CreateTable
-CREATE TABLE "notification_template" (
+CREATE TABLE IF NOT EXISTS "notification_template" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -2655,7 +2655,7 @@ CREATE TABLE "notification_template" (
 );
 
 -- CreateTable
-CREATE TABLE "notification_dispatch" (
+CREATE TABLE IF NOT EXISTS "notification_dispatch" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
@@ -2678,7 +2678,7 @@ CREATE TABLE "notification_dispatch" (
 );
 
 -- CreateTable
-CREATE TABLE "notification_channel_config" (
+CREATE TABLE IF NOT EXISTS "notification_channel_config" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "channel" TEXT NOT NULL,
@@ -2691,7 +2691,7 @@ CREATE TABLE "notification_channel_config" (
 );
 
 -- CreateTable
-CREATE TABLE "organization" (
+CREATE TABLE IF NOT EXISTS "organization" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "slug" TEXT NOT NULL,
@@ -2723,7 +2723,7 @@ CREATE TABLE "organization" (
 );
 
 -- CreateTable
-CREATE TABLE "payment_credentials" (
+CREATE TABLE IF NOT EXISTS "payment_credentials" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "mpesaShortCode" TEXT NOT NULL,
@@ -2740,7 +2740,7 @@ CREATE TABLE "payment_credentials" (
 );
 
 -- CreateTable
-CREATE TABLE "member" (
+CREATE TABLE IF NOT EXISTS "member" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "userId" TEXT NOT NULL,
@@ -2779,7 +2779,7 @@ CREATE TABLE "member" (
 );
 
 -- CreateTable
-CREATE TABLE "attendance_log" (
+CREATE TABLE IF NOT EXISTS "attendance_log" (
     "id" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
@@ -2797,7 +2797,7 @@ CREATE TABLE "attendance_log" (
 );
 
 -- CreateTable
-CREATE TABLE "custom_role" (
+CREATE TABLE IF NOT EXISTS "custom_role" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2812,7 +2812,7 @@ CREATE TABLE "custom_role" (
 );
 
 -- CreateTable
-CREATE TABLE "permission_set" (
+CREATE TABLE IF NOT EXISTS "permission_set" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2825,7 +2825,7 @@ CREATE TABLE "permission_set" (
 );
 
 -- CreateTable
-CREATE TABLE "role_group" (
+CREATE TABLE IF NOT EXISTS "role_group" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -2838,7 +2838,7 @@ CREATE TABLE "role_group" (
 );
 
 -- CreateTable
-CREATE TABLE "invitation" (
+CREATE TABLE IF NOT EXISTS "invitation" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "email" TEXT NOT NULL,
@@ -2858,7 +2858,7 @@ CREATE TABLE "invitation" (
 );
 
 -- CreateTable
-CREATE TABLE "organization_settings" (
+CREATE TABLE IF NOT EXISTS "organization_settings" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "defaultCurrency" TEXT NOT NULL DEFAULT 'USD',
@@ -2902,7 +2902,7 @@ CREATE TABLE "organization_settings" (
 );
 
 -- CreateTable
-CREATE TABLE "department" (
+CREATE TABLE IF NOT EXISTS "department" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "image" TEXT,
@@ -2925,7 +2925,7 @@ CREATE TABLE "department" (
 );
 
 -- CreateTable
-CREATE TABLE "department_member" (
+CREATE TABLE IF NOT EXISTS "department_member" (
     "id" TEXT NOT NULL,
     "departmentId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -2939,7 +2939,7 @@ CREATE TABLE "department_member" (
 );
 
 -- CreateTable
-CREATE TABLE "subscriptions" (
+CREATE TABLE IF NOT EXISTS "subscriptions" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "status" "SubscriptionStatus" NOT NULL DEFAULT 'TRIALING',
@@ -2956,7 +2956,7 @@ CREATE TABLE "subscriptions" (
 );
 
 -- CreateTable
-CREATE TABLE "device_setup_token" (
+CREATE TABLE IF NOT EXISTS "device_setup_token" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "tokenHash" TEXT NOT NULL,
@@ -2978,7 +2978,7 @@ CREATE TABLE "device_setup_token" (
 );
 
 -- CreateTable
-CREATE TABLE "device_registry" (
+CREATE TABLE IF NOT EXISTS "device_registry" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "apiKeyId" TEXT NOT NULL,
@@ -3000,7 +3000,7 @@ CREATE TABLE "device_registry" (
 );
 
 -- CreateTable
-CREATE TABLE "api_key" (
+CREATE TABLE IF NOT EXISTS "api_key" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -3030,7 +3030,7 @@ CREATE TABLE "api_key" (
 );
 
 -- CreateTable
-CREATE TABLE "reports" (
+CREATE TABLE IF NOT EXISTS "reports" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "type" "ReportType" NOT NULL,
@@ -3045,7 +3045,7 @@ CREATE TABLE "reports" (
 );
 
 -- CreateTable
-CREATE TABLE "plane_configuration" (
+CREATE TABLE IF NOT EXISTS "plane_configuration" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "workspaceId" TEXT,
@@ -3061,7 +3061,7 @@ CREATE TABLE "plane_configuration" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceList" (
+CREATE TABLE IF NOT EXISTS "PriceList" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -3091,7 +3091,7 @@ CREATE TABLE "PriceList" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceListItem" (
+CREATE TABLE IF NOT EXISTS "PriceListItem" (
     "id" TEXT NOT NULL,
     "priceListId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3111,7 +3111,7 @@ CREATE TABLE "PriceListItem" (
 );
 
 -- CreateTable
-CREATE TABLE "PricingRule" (
+CREATE TABLE IF NOT EXISTS "PricingRule" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "description" TEXT,
@@ -3137,7 +3137,7 @@ CREATE TABLE "PricingRule" (
 );
 
 -- CreateTable
-CREATE TABLE "PricingBundle" (
+CREATE TABLE IF NOT EXISTS "PricingBundle" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "code" TEXT NOT NULL,
@@ -3162,7 +3162,7 @@ CREATE TABLE "PricingBundle" (
 );
 
 -- CreateTable
-CREATE TABLE "PricingBundleItem" (
+CREATE TABLE IF NOT EXISTS "PricingBundleItem" (
     "id" TEXT NOT NULL,
     "bundleId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3175,7 +3175,7 @@ CREATE TABLE "PricingBundleItem" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceHistory" (
+CREATE TABLE IF NOT EXISTS "PriceHistory" (
     "id" TEXT NOT NULL,
     "priceListItemId" TEXT NOT NULL,
     "previousPrice" DECIMAL(10,2) NOT NULL,
@@ -3192,7 +3192,7 @@ CREATE TABLE "PriceHistory" (
 );
 
 -- CreateTable
-CREATE TABLE "PriceImportJob" (
+CREATE TABLE IF NOT EXISTS "PriceImportJob" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "fileName" TEXT NOT NULL,
@@ -3212,7 +3212,7 @@ CREATE TABLE "PriceImportJob" (
 );
 
 -- CreateTable
-CREATE TABLE "price_change_request" (
+CREATE TABLE IF NOT EXISTS "price_change_request" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "priceListItemId" TEXT NOT NULL,
@@ -3233,7 +3233,7 @@ CREATE TABLE "price_change_request" (
 );
 
 -- CreateTable
-CREATE TABLE "ContactSubmission" (
+CREATE TABLE IF NOT EXISTS "ContactSubmission" (
     "id" TEXT NOT NULL,
     "firstName" TEXT NOT NULL,
     "lastName" TEXT NOT NULL,
@@ -3249,7 +3249,7 @@ CREATE TABLE "ContactSubmission" (
 );
 
 -- CreateTable
-CREATE TABLE "scryme_configuration" (
+CREATE TABLE IF NOT EXISTS "scryme_configuration" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "workspaceId" TEXT,
@@ -3263,7 +3263,7 @@ CREATE TABLE "scryme_configuration" (
 );
 
 -- CreateTable
-CREATE TABLE "scryme_messages" (
+CREATE TABLE IF NOT EXISTS "scryme_messages" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "workspaceSlug" TEXT NOT NULL,
@@ -3283,7 +3283,7 @@ CREATE TABLE "scryme_messages" (
 );
 
 -- CreateTable
-CREATE TABLE "standalone_setup_key" (
+CREATE TABLE IF NOT EXISTS "standalone_setup_key" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "deviceId" TEXT NOT NULL,
@@ -3297,7 +3297,7 @@ CREATE TABLE "standalone_setup_key" (
 );
 
 -- CreateTable
-CREATE TABLE "standalone_device" (
+CREATE TABLE IF NOT EXISTS "standalone_device" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "assignedId" TEXT NOT NULL,
@@ -3313,7 +3313,7 @@ CREATE TABLE "standalone_device" (
 );
 
 -- CreateTable
-CREATE TABLE "standalone_device_key" (
+CREATE TABLE IF NOT EXISTS "standalone_device_key" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "deviceId" TEXT NOT NULL,
@@ -3326,7 +3326,7 @@ CREATE TABLE "standalone_device_key" (
 );
 
 -- CreateTable
-CREATE TABLE "reorder_rule" (
+CREATE TABLE IF NOT EXISTS "reorder_rule" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
@@ -3349,7 +3349,7 @@ CREATE TABLE "reorder_rule" (
 );
 
 -- CreateTable
-CREATE TABLE "reorder_alert" (
+CREATE TABLE IF NOT EXISTS "reorder_alert" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "reorderRuleId" TEXT NOT NULL,
@@ -3367,7 +3367,7 @@ CREATE TABLE "reorder_alert" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_audit_log" (
+CREATE TABLE IF NOT EXISTS "stock_audit_log" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "entityType" TEXT NOT NULL,
@@ -3386,7 +3386,7 @@ CREATE TABLE "stock_audit_log" (
 );
 
 -- CreateTable
-CREATE TABLE "purchase_approval_chain" (
+CREATE TABLE IF NOT EXISTS "purchase_approval_chain" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3403,7 +3403,7 @@ CREATE TABLE "purchase_approval_chain" (
 );
 
 -- CreateTable
-CREATE TABLE "purchase_approval_step" (
+CREATE TABLE IF NOT EXISTS "purchase_approval_step" (
     "id" TEXT NOT NULL,
     "chainId" TEXT NOT NULL,
     "stepOrder" INTEGER NOT NULL,
@@ -3416,7 +3416,7 @@ CREATE TABLE "purchase_approval_step" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_take" (
+CREATE TABLE IF NOT EXISTS "stock_take" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "stockTakeNumber" TEXT NOT NULL,
@@ -3436,7 +3436,7 @@ CREATE TABLE "stock_take" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_take_item" (
+CREATE TABLE IF NOT EXISTS "stock_take_item" (
     "id" TEXT NOT NULL,
     "stockTakeId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3452,7 +3452,7 @@ CREATE TABLE "stock_take_item" (
 );
 
 -- CreateTable
-CREATE TABLE "supplier_performance" (
+CREATE TABLE IF NOT EXISTS "supplier_performance" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "supplierId" TEXT NOT NULL,
@@ -3476,7 +3476,7 @@ CREATE TABLE "supplier_performance" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_valuation" (
+CREATE TABLE IF NOT EXISTS "stock_valuation" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "valuationDate" TIMESTAMP(3) NOT NULL,
@@ -3492,7 +3492,7 @@ CREATE TABLE "stock_valuation" (
 );
 
 -- CreateTable
-CREATE TABLE "CycleCountConfig" (
+CREATE TABLE IF NOT EXISTS "CycleCountConfig" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3512,7 +3512,7 @@ CREATE TABLE "CycleCountConfig" (
 );
 
 -- CreateTable
-CREATE TABLE "StockBatch" (
+CREATE TABLE IF NOT EXISTS "StockBatch" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -3547,7 +3547,7 @@ CREATE TABLE "StockBatch" (
 );
 
 -- CreateTable
-CREATE TABLE "StockReceipt" (
+CREATE TABLE IF NOT EXISTS "StockReceipt" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -3560,7 +3560,7 @@ CREATE TABLE "StockReceipt" (
 );
 
 -- CreateTable
-CREATE TABLE "ProductVariantStock" (
+CREATE TABLE IF NOT EXISTS "ProductVariantStock" (
     "id" TEXT NOT NULL,
     "productId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3577,7 +3577,7 @@ CREATE TABLE "ProductVariantStock" (
 );
 
 -- CreateTable
-CREATE TABLE "SerialNumber" (
+CREATE TABLE IF NOT EXISTS "SerialNumber" (
     "id" TEXT NOT NULL,
     "serialNumber" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3592,7 +3592,7 @@ CREATE TABLE "SerialNumber" (
 );
 
 -- CreateTable
-CREATE TABLE "StockMovement" (
+CREATE TABLE IF NOT EXISTS "StockMovement" (
     "id" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
     "stockBatchId" TEXT,
@@ -3614,7 +3614,7 @@ CREATE TABLE "StockMovement" (
 );
 
 -- CreateTable
-CREATE TABLE "StockAdjustment" (
+CREATE TABLE IF NOT EXISTS "StockAdjustment" (
     "id" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
     "stockBatchId" TEXT,
@@ -3636,7 +3636,7 @@ CREATE TABLE "StockAdjustment" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_assembly" (
+CREATE TABLE IF NOT EXISTS "stock_assembly" (
     "id" TEXT NOT NULL,
     "assemblyNumber" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3655,7 +3655,7 @@ CREATE TABLE "stock_assembly" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_assembly_item" (
+CREATE TABLE IF NOT EXISTS "stock_assembly_item" (
     "id" TEXT NOT NULL,
     "assemblyId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3667,7 +3667,7 @@ CREATE TABLE "stock_assembly_item" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_request" (
+CREATE TABLE IF NOT EXISTS "stock_request" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "requestNumber" TEXT NOT NULL,
@@ -3688,7 +3688,7 @@ CREATE TABLE "stock_request" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_request_item" (
+CREATE TABLE IF NOT EXISTS "stock_request_item" (
     "id" TEXT NOT NULL,
     "stockRequestId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3702,7 +3702,7 @@ CREATE TABLE "stock_request_item" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_transfer_item" (
+CREATE TABLE IF NOT EXISTS "stock_transfer_item" (
     "id" TEXT NOT NULL,
     "stockTransferId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -3716,7 +3716,7 @@ CREATE TABLE "stock_transfer_item" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_transfer" (
+CREATE TABLE IF NOT EXISTS "stock_transfer" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "transferNumber" TEXT NOT NULL,
@@ -3748,7 +3748,7 @@ CREATE TABLE "stock_transfer" (
 );
 
 -- CreateTable
-CREATE TABLE "stock_report_templates" (
+CREATE TABLE IF NOT EXISTS "stock_report_templates" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT,
     "name" TEXT NOT NULL,
@@ -3768,7 +3768,7 @@ CREATE TABLE "stock_report_templates" (
 );
 
 -- CreateTable
-CREATE TABLE "generated_stock_reports" (
+CREATE TABLE IF NOT EXISTS "generated_stock_reports" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "templateId" TEXT NOT NULL,
@@ -3787,7 +3787,7 @@ CREATE TABLE "generated_stock_reports" (
 );
 
 -- CreateTable
-CREATE TABLE "report_automations" (
+CREATE TABLE IF NOT EXISTS "report_automations" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3816,7 +3816,7 @@ CREATE TABLE "report_automations" (
 );
 
 -- CreateTable
-CREATE TABLE "report_automation_executions" (
+CREATE TABLE IF NOT EXISTS "report_automation_executions" (
     "id" TEXT NOT NULL,
     "automationId" TEXT NOT NULL,
     "channelId" TEXT,
@@ -3835,7 +3835,7 @@ CREATE TABLE "report_automation_executions" (
 );
 
 -- CreateTable
-CREATE TABLE "report_channels" (
+CREATE TABLE IF NOT EXISTS "report_channels" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3855,7 +3855,7 @@ CREATE TABLE "report_channels" (
 );
 
 -- CreateTable
-CREATE TABLE "StockReconciliation" (
+CREATE TABLE IF NOT EXISTS "StockReconciliation" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "reconciliationDate" TIMESTAMP(3) NOT NULL,
@@ -3879,7 +3879,7 @@ CREATE TABLE "StockReconciliation" (
 );
 
 -- CreateTable
-CREATE TABLE "ReconciliationItem" (
+CREATE TABLE IF NOT EXISTS "ReconciliationItem" (
     "id" TEXT NOT NULL,
     "reconciliationId" TEXT NOT NULL,
     "productVariantId" TEXT NOT NULL,
@@ -3900,7 +3900,7 @@ CREATE TABLE "ReconciliationItem" (
 );
 
 -- CreateTable
-CREATE TABLE "MovementReconciliationLink" (
+CREATE TABLE IF NOT EXISTS "MovementReconciliationLink" (
     "id" TEXT NOT NULL,
     "reconciliationId" TEXT NOT NULL,
     "movementId" TEXT NOT NULL,
@@ -3912,7 +3912,7 @@ CREATE TABLE "MovementReconciliationLink" (
 );
 
 -- CreateTable
-CREATE TABLE "ActionAuditLog" (
+CREATE TABLE IF NOT EXISTS "ActionAuditLog" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "memberId" TEXT,
@@ -3931,7 +3931,7 @@ CREATE TABLE "ActionAuditLog" (
 );
 
 -- CreateTable
-CREATE TABLE "tax_authority" (
+CREATE TABLE IF NOT EXISTS "tax_authority" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3950,7 +3950,7 @@ CREATE TABLE "tax_authority" (
 );
 
 -- CreateTable
-CREATE TABLE "tax" (
+CREATE TABLE IF NOT EXISTS "tax" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -3967,7 +3967,7 @@ CREATE TABLE "tax" (
 );
 
 -- CreateTable
-CREATE TABLE "tax_filing" (
+CREATE TABLE IF NOT EXISTS "tax_filing" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "filingNumber" TEXT NOT NULL,
@@ -3991,7 +3991,7 @@ CREATE TABLE "tax_filing" (
 );
 
 -- CreateTable
-CREATE TABLE "tax_payment" (
+CREATE TABLE IF NOT EXISTS "tax_payment" (
     "id" TEXT NOT NULL,
     "filingId" TEXT NOT NULL,
     "amount" DECIMAL(12,2) NOT NULL,
@@ -4007,7 +4007,7 @@ CREATE TABLE "tax_payment" (
 );
 
 -- CreateTable
-CREATE TABLE "applied_tax" (
+CREATE TABLE IF NOT EXISTS "applied_tax" (
     "id" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
     "taxRateId" TEXT,
@@ -4020,7 +4020,7 @@ CREATE TABLE "applied_tax" (
 );
 
 -- CreateTable
-CREATE TABLE "applied_expense_tax" (
+CREATE TABLE IF NOT EXISTS "applied_expense_tax" (
     "id" TEXT NOT NULL,
     "expenseId" TEXT NOT NULL,
     "taxId" TEXT NOT NULL,
@@ -4031,7 +4031,7 @@ CREATE TABLE "applied_expense_tax" (
 );
 
 -- CreateTable
-CREATE TABLE "applied_purchase_tax" (
+CREATE TABLE IF NOT EXISTS "applied_purchase_tax" (
     "id" TEXT NOT NULL,
     "purchaseId" TEXT NOT NULL,
     "taxRateId" TEXT,
@@ -4044,7 +4044,7 @@ CREATE TABLE "applied_purchase_tax" (
 );
 
 -- CreateTable
-CREATE TABLE "transaction" (
+CREATE TABLE IF NOT EXISTS "transaction" (
     "id" TEXT NOT NULL,
     "number" TEXT NOT NULL,
     "type" "TransactionType" NOT NULL,
@@ -4083,7 +4083,7 @@ CREATE TABLE "transaction" (
 );
 
 -- CreateTable
-CREATE TABLE "transaction_item" (
+CREATE TABLE IF NOT EXISTS "transaction_item" (
     "id" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
     "variantId" TEXT NOT NULL,
@@ -4109,7 +4109,7 @@ CREATE TABLE "transaction_item" (
 );
 
 -- CreateTable
-CREATE TABLE "inventory_allocation" (
+CREATE TABLE IF NOT EXISTS "inventory_allocation" (
     "id" TEXT NOT NULL,
     "transactionItemId" TEXT NOT NULL,
     "stockBatchId" TEXT NOT NULL,
@@ -4123,7 +4123,7 @@ CREATE TABLE "inventory_allocation" (
 );
 
 -- CreateTable
-CREATE TABLE "payment" (
+CREATE TABLE IF NOT EXISTS "payment" (
     "id" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
     "organizationId" TEXT,
@@ -4153,7 +4153,7 @@ CREATE TABLE "payment" (
 );
 
 -- CreateTable
-CREATE TABLE "unclaimed_payment" (
+CREATE TABLE IF NOT EXISTS "unclaimed_payment" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT,
     "transId" TEXT NOT NULL,
@@ -4178,7 +4178,7 @@ CREATE TABLE "unclaimed_payment" (
 );
 
 -- CreateTable
-CREATE TABLE "receipt_config" (
+CREATE TABLE IF NOT EXISTS "receipt_config" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "showLogo" BOOLEAN NOT NULL DEFAULT true,
@@ -4196,7 +4196,7 @@ CREATE TABLE "receipt_config" (
 );
 
 -- CreateTable
-CREATE TABLE "waybill_config" (
+CREATE TABLE IF NOT EXISTS "waybill_config" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "showLogo" BOOLEAN NOT NULL DEFAULT true,
@@ -4214,7 +4214,7 @@ CREATE TABLE "waybill_config" (
 );
 
 -- CreateTable
-CREATE TABLE "payout" (
+CREATE TABLE IF NOT EXISTS "payout" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "gateway" TEXT NOT NULL,
@@ -4233,7 +4233,7 @@ CREATE TABLE "payout" (
 );
 
 -- CreateTable
-CREATE TABLE "fulfillment" (
+CREATE TABLE IF NOT EXISTS "fulfillment" (
     "id" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
     "type" "FulfillmentType" NOT NULL,
@@ -4266,7 +4266,7 @@ CREATE TABLE "fulfillment" (
 );
 
 -- CreateTable
-CREATE TABLE "fulfillment_item" (
+CREATE TABLE IF NOT EXISTS "fulfillment_item" (
     "id" TEXT NOT NULL,
     "fulfillmentId" TEXT NOT NULL,
     "transactionItemId" TEXT NOT NULL,
@@ -4278,7 +4278,7 @@ CREATE TABLE "fulfillment_item" (
 );
 
 -- CreateTable
-CREATE TABLE "applied_discount" (
+CREATE TABLE IF NOT EXISTS "applied_discount" (
     "id" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
     "transactionItemId" TEXT,
@@ -4292,7 +4292,7 @@ CREATE TABLE "applied_discount" (
 );
 
 -- CreateTable
-CREATE TABLE "return" (
+CREATE TABLE IF NOT EXISTS "return" (
     "id" TEXT NOT NULL,
     "returnNumber" TEXT NOT NULL,
     "transactionId" TEXT NOT NULL,
@@ -4311,7 +4311,7 @@ CREATE TABLE "return" (
 );
 
 -- CreateTable
-CREATE TABLE "return_item" (
+CREATE TABLE IF NOT EXISTS "return_item" (
     "id" TEXT NOT NULL,
     "returnId" TEXT NOT NULL,
     "transactionItemId" TEXT NOT NULL,
@@ -4326,7 +4326,7 @@ CREATE TABLE "return_item" (
 );
 
 -- CreateTable
-CREATE TABLE "Attachment" (
+CREATE TABLE IF NOT EXISTS "Attachment" (
     "id" TEXT NOT NULL,
     "fileName" TEXT,
     "fileUrl" TEXT,
@@ -4352,7 +4352,7 @@ CREATE TABLE "Attachment" (
 );
 
 -- CreateTable
-CREATE TABLE "global_setting" (
+CREATE TABLE IF NOT EXISTS "global_setting" (
     "id" TEXT NOT NULL,
     "key" TEXT NOT NULL,
     "value" TEXT NOT NULL,
@@ -4363,7 +4363,7 @@ CREATE TABLE "global_setting" (
 );
 
 -- CreateTable
-CREATE TABLE "CashDrawer" (
+CREATE TABLE IF NOT EXISTS "CashDrawer" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "locationId" TEXT,
@@ -4385,7 +4385,7 @@ CREATE TABLE "CashDrawer" (
 );
 
 -- CreateTable
-CREATE TABLE "audit_log" (
+CREATE TABLE IF NOT EXISTS "audit_log" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT,
     "memberId" TEXT,
@@ -4406,7 +4406,7 @@ CREATE TABLE "audit_log" (
 );
 
 -- CreateTable
-CREATE TABLE "MpesaPaymentRequest" (
+CREATE TABLE IF NOT EXISTS "MpesaPaymentRequest" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -4430,7 +4430,7 @@ CREATE TABLE "MpesaPaymentRequest" (
 );
 
 -- CreateTable
-CREATE TABLE "system_unit" (
+CREATE TABLE IF NOT EXISTS "system_unit" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -4450,7 +4450,7 @@ CREATE TABLE "system_unit" (
 );
 
 -- CreateTable
-CREATE TABLE "organization_unit" (
+CREATE TABLE IF NOT EXISTS "organization_unit" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -4471,7 +4471,7 @@ CREATE TABLE "organization_unit" (
 );
 
 -- CreateTable
-CREATE TABLE "org_unit_conversion" (
+CREATE TABLE IF NOT EXISTS "org_unit_conversion" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -4488,7 +4488,7 @@ CREATE TABLE "org_unit_conversion" (
 );
 
 -- CreateTable
-CREATE TABLE "unit_conversion" (
+CREATE TABLE IF NOT EXISTS "unit_conversion" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -4504,7 +4504,7 @@ CREATE TABLE "unit_conversion" (
 );
 
 -- CreateTable
-CREATE TABLE "product_unit_conversion" (
+CREATE TABLE IF NOT EXISTS "product_unit_conversion" (
     "id" TEXT NOT NULL,
     "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMP(3) NOT NULL,
@@ -4521,7 +4521,7 @@ CREATE TABLE "product_unit_conversion" (
 );
 
 -- CreateTable
-CREATE TABLE "address" (
+CREATE TABLE IF NOT EXISTS "address" (
     "id" TEXT NOT NULL,
     "customerId" TEXT,
     "businessAccountId" TEXT,
@@ -4543,7 +4543,7 @@ CREATE TABLE "address" (
 );
 
 -- CreateTable
-CREATE TABLE "v3_api_client" (
+CREATE TABLE IF NOT EXISTS "v3_api_client" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "clientId" TEXT NOT NULL,
@@ -4560,7 +4560,7 @@ CREATE TABLE "v3_api_client" (
 );
 
 -- CreateTable
-CREATE TABLE "webhook_subscription" (
+CREATE TABLE IF NOT EXISTS "webhook_subscription" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "url" TEXT NOT NULL,
@@ -4576,7 +4576,7 @@ CREATE TABLE "webhook_subscription" (
 );
 
 -- CreateTable
-CREATE TABLE "webhook_log" (
+CREATE TABLE IF NOT EXISTS "webhook_log" (
     "id" TEXT NOT NULL,
     "subscriptionId" TEXT NOT NULL,
     "event" TEXT NOT NULL,
@@ -4593,7 +4593,7 @@ CREATE TABLE "webhook_log" (
 );
 
 -- CreateTable
-CREATE TABLE "windmill_configuration" (
+CREATE TABLE IF NOT EXISTS "windmill_configuration" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "windmillBaseUrl" TEXT NOT NULL DEFAULT 'http://windmill:8000',
@@ -4609,7 +4609,7 @@ CREATE TABLE "windmill_configuration" (
 );
 
 -- CreateTable
-CREATE TABLE "windmill_workflow" (
+CREATE TABLE IF NOT EXISTS "windmill_workflow" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
@@ -4625,7 +4625,7 @@ CREATE TABLE "windmill_workflow" (
 );
 
 -- CreateTable
-CREATE TABLE "windmill_execution" (
+CREATE TABLE IF NOT EXISTS "windmill_execution" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "configId" TEXT NOT NULL,
@@ -4648,7 +4648,7 @@ CREATE TABLE "windmill_execution" (
 
 
 -- CreateTable
-CREATE TABLE "_AssistantBakerBatches" (
+CREATE TABLE IF NOT EXISTS "_AssistantBakerBatches" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4656,7 +4656,7 @@ CREATE TABLE "_AssistantBakerBatches" (
 );
 
 -- CreateTable
-CREATE TABLE "_TemplateAssistantBakers" (
+CREATE TABLE IF NOT EXISTS "_TemplateAssistantBakers" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4664,7 +4664,7 @@ CREATE TABLE "_TemplateAssistantBakers" (
 );
 
 -- CreateTable
-CREATE TABLE "_CustomerToPriceList" (
+CREATE TABLE IF NOT EXISTS "_CustomerToPriceList" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4672,7 +4672,7 @@ CREATE TABLE "_CustomerToPriceList" (
 );
 
 -- CreateTable
-CREATE TABLE "_BusinessAccountToPriceList" (
+CREATE TABLE IF NOT EXISTS "_BusinessAccountToPriceList" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4680,7 +4680,7 @@ CREATE TABLE "_BusinessAccountToPriceList" (
 );
 
 -- CreateTable
-CREATE TABLE "_ExpenseApprovalWorkflows" (
+CREATE TABLE IF NOT EXISTS "_ExpenseApprovalWorkflows" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4688,7 +4688,7 @@ CREATE TABLE "_ExpenseApprovalWorkflows" (
 );
 
 -- CreateTable
-CREATE TABLE "_VariantQCTemplates" (
+CREATE TABLE IF NOT EXISTS "_VariantQCTemplates" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4696,7 +4696,7 @@ CREATE TABLE "_VariantQCTemplates" (
 );
 
 -- CreateTable
-CREATE TABLE "_MemberRoleGroups" (
+CREATE TABLE IF NOT EXISTS "_MemberRoleGroups" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4704,7 +4704,7 @@ CREATE TABLE "_MemberRoleGroups" (
 );
 
 -- CreateTable
-CREATE TABLE "_MemberCustomRoles" (
+CREATE TABLE IF NOT EXISTS "_MemberCustomRoles" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4712,7 +4712,7 @@ CREATE TABLE "_MemberCustomRoles" (
 );
 
 -- CreateTable
-CREATE TABLE "_RoleGroupPermissionSets" (
+CREATE TABLE IF NOT EXISTS "_RoleGroupPermissionSets" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4720,7 +4720,7 @@ CREATE TABLE "_RoleGroupPermissionSets" (
 );
 
 -- CreateTable
-CREATE TABLE "_MovementSerialNumbers" (
+CREATE TABLE IF NOT EXISTS "_MovementSerialNumbers" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4728,7 +4728,7 @@ CREATE TABLE "_MovementSerialNumbers" (
 );
 
 -- CreateTable
-CREATE TABLE "_AutomationChannels" (
+CREATE TABLE IF NOT EXISTS "_AutomationChannels" (
     "A" TEXT NOT NULL,
     "B" TEXT NOT NULL,
 
@@ -4736,3632 +4736,6481 @@ CREATE TABLE "_AutomationChannels" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_email_key" ON "user"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "user_email_key" ON "user"("email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_referralCode_key" ON "user"("referralCode");
+CREATE UNIQUE INDEX IF NOT EXISTS "user_referralCode_key" ON "user"("referralCode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "user_username_key" ON "user"("username");
+CREATE UNIQUE INDEX IF NOT EXISTS "user_username_key" ON "user"("username");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "session_token_key" ON "session"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "session_token_key" ON "session"("token");
 
 -- CreateIndex
-CREATE INDEX "api_key_usage_log_apiKeyId_idx" ON "api_key_usage_log"("apiKeyId");
+CREATE INDEX IF NOT EXISTS "api_key_usage_log_apiKeyId_idx" ON "api_key_usage_log"("apiKeyId");
 
 -- CreateIndex
-CREATE INDEX "api_key_usage_log_timestamp_idx" ON "api_key_usage_log"("timestamp");
+CREATE INDEX IF NOT EXISTS "api_key_usage_log_timestamp_idx" ON "api_key_usage_log"("timestamp");
 
 -- CreateIndex
-CREATE INDEX "api_key_usage_log_endpoint_idx" ON "api_key_usage_log"("endpoint");
+CREATE INDEX IF NOT EXISTS "api_key_usage_log_endpoint_idx" ON "api_key_usage_log"("endpoint");
 
 -- CreateIndex
-CREATE INDEX "api_key_usage_log_organizationId_idx" ON "api_key_usage_log"("organizationId");
+CREATE INDEX IF NOT EXISTS "api_key_usage_log_organizationId_idx" ON "api_key_usage_log"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_client_clientId_key" ON "oauth_client"("clientId");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_client_clientId_key" ON "oauth_client"("clientId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_refresh_token_token_key" ON "oauth_refresh_token"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_refresh_token_token_key" ON "oauth_refresh_token"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "oauth_access_token_token_key" ON "oauth_access_token"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "oauth_access_token_token_key" ON "oauth_access_token"("token");
 
 -- CreateIndex
-CREATE INDEX "bakery_category_organizationId_idx" ON "bakery_category"("organizationId");
+CREATE INDEX IF NOT EXISTS "bakery_category_organizationId_idx" ON "bakery_category"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "bakery_category_organizationId_name_key" ON "bakery_category"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "bakery_category_organizationId_name_key" ON "bakery_category"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Recipe_producesVariantId_key" ON "Recipe"("producesVariantId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Recipe_producesVariantId_key" ON "Recipe"("producesVariantId");
 
 -- CreateIndex
-CREATE INDEX "Recipe_organizationId_categoryId_idx" ON "Recipe"("organizationId", "categoryId");
+CREATE INDEX IF NOT EXISTS "Recipe_organizationId_categoryId_idx" ON "Recipe"("organizationId", "categoryId");
 
 -- CreateIndex
-CREATE INDEX "Recipe_categoryId_idx" ON "Recipe"("categoryId");
+CREATE INDEX IF NOT EXISTS "Recipe_categoryId_idx" ON "Recipe"("categoryId");
 
 -- CreateIndex
-CREATE INDEX "Recipe_organizationId_difficulty_idx" ON "Recipe"("organizationId", "difficulty");
+CREATE INDEX IF NOT EXISTS "Recipe_organizationId_difficulty_idx" ON "Recipe"("organizationId", "difficulty");
 
 -- CreateIndex
-CREATE INDEX "Recipe_systemUnitId_idx" ON "Recipe"("systemUnitId");
+CREATE INDEX IF NOT EXISTS "Recipe_systemUnitId_idx" ON "Recipe"("systemUnitId");
 
 -- CreateIndex
-CREATE INDEX "Recipe_orgUnitId_idx" ON "Recipe"("orgUnitId");
+CREATE INDEX IF NOT EXISTS "Recipe_orgUnitId_idx" ON "Recipe"("orgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Recipe_organizationId_name_key" ON "Recipe"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "Recipe_organizationId_name_key" ON "Recipe"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Recipe_id_organizationId_key" ON "Recipe"("id", "organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Recipe_id_organizationId_key" ON "Recipe"("id", "organizationId");
 
 -- CreateIndex
-CREATE INDEX "Batch_organizationId_scheduledStartAt_idx" ON "Batch"("organizationId", "scheduledStartAt");
+CREATE INDEX IF NOT EXISTS "Batch_organizationId_scheduledStartAt_idx" ON "Batch"("organizationId", "scheduledStartAt");
 
 -- CreateIndex
-CREATE INDEX "Batch_organizationId_status_scheduledStartAt_idx" ON "Batch"("organizationId", "status", "scheduledStartAt");
+CREATE INDEX IF NOT EXISTS "Batch_organizationId_status_scheduledStartAt_idx" ON "Batch"("organizationId", "status", "scheduledStartAt");
 
 -- CreateIndex
-CREATE INDEX "Batch_organizationId_expirationStatus_expiresAt_idx" ON "Batch"("organizationId", "expirationStatus", "expiresAt");
+CREATE INDEX IF NOT EXISTS "Batch_organizationId_expirationStatus_expiresAt_idx" ON "Batch"("organizationId", "expirationStatus", "expiresAt");
 
 -- CreateIndex
-CREATE INDEX "Batch_recipeId_idx" ON "Batch"("recipeId");
+CREATE INDEX IF NOT EXISTS "Batch_recipeId_idx" ON "Batch"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "Batch_leadBakerId_idx" ON "Batch"("leadBakerId");
+CREATE INDEX IF NOT EXISTS "Batch_leadBakerId_idx" ON "Batch"("leadBakerId");
 
 -- CreateIndex
-CREATE INDEX "Batch_createdFromTemplateId_idx" ON "Batch"("createdFromTemplateId");
+CREATE INDEX IF NOT EXISTS "Batch_createdFromTemplateId_idx" ON "Batch"("createdFromTemplateId");
 
 -- CreateIndex
-CREATE INDEX "Batch_systemUnitId_idx" ON "Batch"("systemUnitId");
+CREATE INDEX IF NOT EXISTS "Batch_systemUnitId_idx" ON "Batch"("systemUnitId");
 
 -- CreateIndex
-CREATE INDEX "Batch_orgUnitId_idx" ON "Batch"("orgUnitId");
+CREATE INDEX IF NOT EXISTS "Batch_orgUnitId_idx" ON "Batch"("orgUnitId");
 
 -- CreateIndex
-CREATE INDEX "Batch_expiresAt_idx" ON "Batch"("expiresAt");
+CREATE INDEX IF NOT EXISTS "Batch_expiresAt_idx" ON "Batch"("expiresAt");
 
 -- CreateIndex
-CREATE INDEX "Batch_outputLocationId_expirationStatus_idx" ON "Batch"("outputLocationId", "expirationStatus");
+CREATE INDEX IF NOT EXISTS "Batch_outputLocationId_expirationStatus_idx" ON "Batch"("outputLocationId", "expirationStatus");
 
 -- CreateIndex
-CREATE INDEX "Batch_status_scheduledStartAt_idx" ON "Batch"("status", "scheduledStartAt");
+CREATE INDEX IF NOT EXISTS "Batch_status_scheduledStartAt_idx" ON "Batch"("status", "scheduledStartAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Batch_id_organizationId_key" ON "Batch"("id", "organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Batch_id_organizationId_key" ON "Batch"("id", "organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Batch_organizationId_batchNumber_key" ON "Batch"("organizationId", "batchNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Batch_organizationId_batchNumber_key" ON "Batch"("organizationId", "batchNumber");
 
 -- CreateIndex
-CREATE INDEX "Template_recipeId_idx" ON "Template"("recipeId");
+CREATE INDEX IF NOT EXISTS "Template_recipeId_idx" ON "Template"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "Template_organizationId_isActive_idx" ON "Template"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "Template_organizationId_isActive_idx" ON "Template"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "Template_systemUnitId_idx" ON "Template"("systemUnitId");
+CREATE INDEX IF NOT EXISTS "Template_systemUnitId_idx" ON "Template"("systemUnitId");
 
 -- CreateIndex
-CREATE INDEX "Template_orgUnitId_idx" ON "Template"("orgUnitId");
+CREATE INDEX IF NOT EXISTS "Template_orgUnitId_idx" ON "Template"("orgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Template_organizationId_name_key" ON "Template"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "Template_organizationId_name_key" ON "Template"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Template_id_organizationId_key" ON "Template"("id", "organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Template_id_organizationId_key" ON "Template"("id", "organizationId");
 
 -- CreateIndex
-CREATE INDEX "template_schedule_templateId_idx" ON "template_schedule"("templateId");
+CREATE INDEX IF NOT EXISTS "template_schedule_templateId_idx" ON "template_schedule"("templateId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "template_schedule_templateId_dayOfWeek_time_key" ON "template_schedule"("templateId", "dayOfWeek", "time");
+CREATE UNIQUE INDEX IF NOT EXISTS "template_schedule_templateId_dayOfWeek_time_key" ON "template_schedule"("templateId", "dayOfWeek", "time");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredient_recipeId_idx" ON "recipe_ingredient"("recipeId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredient_recipeId_idx" ON "recipe_ingredient"("recipeId");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredient_ingredientVariantId_idx" ON "recipe_ingredient"("ingredientVariantId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredient_ingredientVariantId_idx" ON "recipe_ingredient"("ingredientVariantId");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredient_systemUnitId_idx" ON "recipe_ingredient"("systemUnitId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredient_systemUnitId_idx" ON "recipe_ingredient"("systemUnitId");
 
 -- CreateIndex
-CREATE INDEX "recipe_ingredient_orgUnitId_idx" ON "recipe_ingredient"("orgUnitId");
+CREATE INDEX IF NOT EXISTS "recipe_ingredient_orgUnitId_idx" ON "recipe_ingredient"("orgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "recipe_ingredient_recipeId_ingredientVariantId_systemUnitId_key" ON "recipe_ingredient"("recipeId", "ingredientVariantId", "systemUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "recipe_ingredient_recipeId_ingredientVariantId_systemUnitId_key" ON "recipe_ingredient"("recipeId", "ingredientVariantId", "systemUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "bakery_settings_organizationId_key" ON "bakery_settings"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "bakery_settings_organizationId_key" ON "bakery_settings"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "batch_ingredient_consumption_batchId_idx" ON "batch_ingredient_consumption"("batchId");
+CREATE INDEX IF NOT EXISTS "batch_ingredient_consumption_batchId_idx" ON "batch_ingredient_consumption"("batchId");
 
 -- CreateIndex
-CREATE INDEX "batch_ingredient_consumption_stockBatchId_idx" ON "batch_ingredient_consumption"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "batch_ingredient_consumption_stockBatchId_idx" ON "batch_ingredient_consumption"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "batch_ingredient_consumption_organizationId_idx" ON "batch_ingredient_consumption"("organizationId");
+CREATE INDEX IF NOT EXISTS "batch_ingredient_consumption_organizationId_idx" ON "batch_ingredient_consumption"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "quality_incident_incidentNumber_key" ON "quality_incident"("incidentNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "quality_incident_incidentNumber_key" ON "quality_incident"("incidentNumber");
 
 -- CreateIndex
-CREATE INDEX "quality_incident_organizationId_idx" ON "quality_incident"("organizationId");
+CREATE INDEX IF NOT EXISTS "quality_incident_organizationId_idx" ON "quality_incident"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "quality_incident_batchId_idx" ON "quality_incident"("batchId");
+CREATE INDEX IF NOT EXISTS "quality_incident_batchId_idx" ON "quality_incident"("batchId");
 
 -- CreateIndex
-CREATE INDEX "quality_incident_stockBatchId_idx" ON "quality_incident"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "quality_incident_stockBatchId_idx" ON "quality_incident"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "quality_incident_supplierId_idx" ON "quality_incident"("supplierId");
+CREATE INDEX IF NOT EXISTS "quality_incident_supplierId_idx" ON "quality_incident"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "bakery_bakers_bakerySettingsId_idx" ON "bakery_bakers"("bakerySettingsId");
+CREATE INDEX IF NOT EXISTS "bakery_bakers_bakerySettingsId_idx" ON "bakery_bakers"("bakerySettingsId");
 
 -- CreateIndex
-CREATE INDEX "bakery_bakers_memberId_idx" ON "bakery_bakers"("memberId");
+CREATE INDEX IF NOT EXISTS "bakery_bakers_memberId_idx" ON "bakery_bakers"("memberId");
 
 -- CreateIndex
-CREATE INDEX "bakery_bakers_isActive_idx" ON "bakery_bakers"("isActive");
+CREATE INDEX IF NOT EXISTS "bakery_bakers_isActive_idx" ON "bakery_bakers"("isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "bakery_bakers_bakerySettingsId_memberId_key" ON "bakery_bakers"("bakerySettingsId", "memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "bakery_bakers_bakerySettingsId_memberId_key" ON "bakery_bakers"("bakerySettingsId", "memberId");
 
 -- CreateIndex
-CREATE INDEX "delivery_partner_organizationId_idx" ON "delivery_partner"("organizationId");
+CREATE INDEX IF NOT EXISTS "delivery_partner_organizationId_idx" ON "delivery_partner"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "delivery_partner_organizationId_name_key" ON "delivery_partner"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "delivery_partner_organizationId_name_key" ON "delivery_partner"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "partner_wallet_log_partnerId_idx" ON "partner_wallet_log"("partnerId");
+CREATE INDEX IF NOT EXISTS "partner_wallet_log_partnerId_idx" ON "partner_wallet_log"("partnerId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "campaigns_workflowId_key" ON "campaigns"("workflowId");
+CREATE UNIQUE INDEX IF NOT EXISTS "campaigns_workflowId_key" ON "campaigns"("workflowId");
 
 -- CreateIndex
-CREATE INDEX "campaigns_organizationId_idx" ON "campaigns"("organizationId");
+CREATE INDEX IF NOT EXISTS "campaigns_organizationId_idx" ON "campaigns"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "campaigns_status_idx" ON "campaigns"("status");
+CREATE INDEX IF NOT EXISTS "campaigns_status_idx" ON "campaigns"("status");
 
 -- CreateIndex
-CREATE INDEX "campaign_segments_organizationId_idx" ON "campaign_segments"("organizationId");
+CREATE INDEX IF NOT EXISTS "campaign_segments_organizationId_idx" ON "campaign_segments"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "campaign_workflows_organizationId_idx" ON "campaign_workflows"("organizationId");
+CREATE INDEX IF NOT EXISTS "campaign_workflows_organizationId_idx" ON "campaign_workflows"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "campaign_workflow_instances_workflowId_idx" ON "campaign_workflow_instances"("workflowId");
+CREATE INDEX IF NOT EXISTS "campaign_workflow_instances_workflowId_idx" ON "campaign_workflow_instances"("workflowId");
 
 -- CreateIndex
-CREATE INDEX "campaign_workflow_instances_recordId_idx" ON "campaign_workflow_instances"("recordId");
+CREATE INDEX IF NOT EXISTS "campaign_workflow_instances_recordId_idx" ON "campaign_workflow_instances"("recordId");
 
 -- CreateIndex
-CREATE INDEX "campaign_events_campaignId_idx" ON "campaign_events"("campaignId");
+CREATE INDEX IF NOT EXISTS "campaign_events_campaignId_idx" ON "campaign_events"("campaignId");
 
 -- CreateIndex
-CREATE INDEX "campaign_events_recordId_idx" ON "campaign_events"("recordId");
+CREATE INDEX IF NOT EXISTS "campaign_events_recordId_idx" ON "campaign_events"("recordId");
 
 -- CreateIndex
-CREATE INDEX "campaign_events_type_idx" ON "campaign_events"("type");
+CREATE INDEX IF NOT EXISTS "campaign_events_type_idx" ON "campaign_events"("type");
 
 -- CreateIndex
-CREATE INDEX "crm_object_definitions_organizationId_idx" ON "crm_object_definitions"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_object_definitions_organizationId_idx" ON "crm_object_definitions"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "crm_object_definitions_organizationId_name_key" ON "crm_object_definitions"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "crm_object_definitions_organizationId_name_key" ON "crm_object_definitions"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "crm_field_definitions_objectId_idx" ON "crm_field_definitions"("objectId");
+CREATE INDEX IF NOT EXISTS "crm_field_definitions_objectId_idx" ON "crm_field_definitions"("objectId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "crm_field_definitions_objectId_name_key" ON "crm_field_definitions"("objectId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "crm_field_definitions_objectId_name_key" ON "crm_field_definitions"("objectId", "name");
 
 -- CreateIndex
-CREATE INDEX "crm_records_objectId_organizationId_idx" ON "crm_records"("objectId", "organizationId");
+CREATE INDEX IF NOT EXISTS "crm_records_objectId_organizationId_idx" ON "crm_records"("objectId", "organizationId");
 
 -- CreateIndex
-CREATE INDEX "crm_records_organizationId_idx" ON "crm_records"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_records_organizationId_idx" ON "crm_records"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "crm_relationship_definitions_organizationId_idx" ON "crm_relationship_definitions"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_relationship_definitions_organizationId_idx" ON "crm_relationship_definitions"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "crm_relationship_definitions_organizationId_name_key" ON "crm_relationship_definitions"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "crm_relationship_definitions_organizationId_name_key" ON "crm_relationship_definitions"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "crm_associations_sourceRecordId_idx" ON "crm_associations"("sourceRecordId");
+CREATE INDEX IF NOT EXISTS "crm_associations_sourceRecordId_idx" ON "crm_associations"("sourceRecordId");
 
 -- CreateIndex
-CREATE INDEX "crm_associations_targetRecordId_idx" ON "crm_associations"("targetRecordId");
+CREATE INDEX IF NOT EXISTS "crm_associations_targetRecordId_idx" ON "crm_associations"("targetRecordId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "crm_associations_relationshipId_sourceRecordId_targetRecord_key" ON "crm_associations"("relationshipId", "sourceRecordId", "targetRecordId");
+CREATE UNIQUE INDEX IF NOT EXISTS "crm_associations_relationshipId_sourceRecordId_targetRecord_key" ON "crm_associations"("relationshipId", "sourceRecordId", "targetRecordId");
 
 -- CreateIndex
-CREATE INDEX "crm_activities_recordId_idx" ON "crm_activities"("recordId");
+CREATE INDEX IF NOT EXISTS "crm_activities_recordId_idx" ON "crm_activities"("recordId");
 
 -- CreateIndex
-CREATE INDEX "crm_activities_organizationId_idx" ON "crm_activities"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_activities_organizationId_idx" ON "crm_activities"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "crm_notes_recordId_idx" ON "crm_notes"("recordId");
+CREATE INDEX IF NOT EXISTS "crm_notes_recordId_idx" ON "crm_notes"("recordId");
 
 -- CreateIndex
-CREATE INDEX "crm_notes_organizationId_idx" ON "crm_notes"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_notes_organizationId_idx" ON "crm_notes"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "crm_notes_timelineDate_idx" ON "crm_notes"("timelineDate");
+CREATE INDEX IF NOT EXISTS "crm_notes_timelineDate_idx" ON "crm_notes"("timelineDate");
 
 -- CreateIndex
-CREATE INDEX "crm_follow_ups_recordId_idx" ON "crm_follow_ups"("recordId");
+CREATE INDEX IF NOT EXISTS "crm_follow_ups_recordId_idx" ON "crm_follow_ups"("recordId");
 
 -- CreateIndex
-CREATE INDEX "crm_follow_ups_organizationId_idx" ON "crm_follow_ups"("organizationId");
+CREATE INDEX IF NOT EXISTS "crm_follow_ups_organizationId_idx" ON "crm_follow_ups"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "crm_follow_ups_assignedToId_idx" ON "crm_follow_ups"("assignedToId");
+CREATE INDEX IF NOT EXISTS "crm_follow_ups_assignedToId_idx" ON "crm_follow_ups"("assignedToId");
 
 -- CreateIndex
-CREATE INDEX "crm_follow_ups_locationId_idx" ON "crm_follow_ups"("locationId");
+CREATE INDEX IF NOT EXISTS "crm_follow_ups_locationId_idx" ON "crm_follow_ups"("locationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Customer_crmRecordId_key" ON "Customer"("crmRecordId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Customer_crmRecordId_key" ON "Customer"("crmRecordId");
 
 -- CreateIndex
-CREATE INDEX "Customer_email_organizationId_idx" ON "Customer"("email", "organizationId");
+CREATE INDEX IF NOT EXISTS "Customer_email_organizationId_idx" ON "Customer"("email", "organizationId");
 
 -- CreateIndex
-CREATE INDEX "Customer_name_idx" ON "Customer"("name");
+CREATE INDEX IF NOT EXISTS "Customer_name_idx" ON "Customer"("name");
 
 -- CreateIndex
-CREATE INDEX "Customer_email_idx" ON "Customer"("email");
+CREATE INDEX IF NOT EXISTS "Customer_email_idx" ON "Customer"("email");
 
 -- CreateIndex
-CREATE INDEX "Customer_organizationId_idx" ON "Customer"("organizationId");
+CREATE INDEX IF NOT EXISTS "Customer_organizationId_idx" ON "Customer"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Customer_organizationId_email_key" ON "Customer"("organizationId", "email");
+CREATE UNIQUE INDEX IF NOT EXISTS "Customer_organizationId_email_key" ON "Customer"("organizationId", "email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "business_account_crmRecordId_key" ON "business_account"("crmRecordId");
+CREATE UNIQUE INDEX IF NOT EXISTS "business_account_crmRecordId_key" ON "business_account"("crmRecordId");
 
 -- CreateIndex
-CREATE INDEX "business_account_organizationId_idx" ON "business_account"("organizationId");
+CREATE INDEX IF NOT EXISTS "business_account_organizationId_idx" ON "business_account"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "B2BConnection_apiKey_key" ON "B2BConnection"("apiKey");
+CREATE UNIQUE INDEX IF NOT EXISTS "B2BConnection_apiKey_key" ON "B2BConnection"("apiKey");
 
 -- CreateIndex
-CREATE INDEX "B2BConnection_apiKey_idx" ON "B2BConnection"("apiKey");
+CREATE INDEX IF NOT EXISTS "B2BConnection_apiKey_idx" ON "B2BConnection"("apiKey");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "B2BConnection_supplierOrgId_businessAccountId_key" ON "B2BConnection"("supplierOrgId", "businessAccountId");
+CREATE UNIQUE INDEX IF NOT EXISTS "B2BConnection_supplierOrgId_businessAccountId_key" ON "B2BConnection"("supplierOrgId", "businessAccountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "referral_program_organizationId_name_key" ON "referral_program"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "referral_program_organizationId_name_key" ON "referral_program"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "referral_refereeId_key" ON "referral"("refereeId");
+CREATE UNIQUE INDEX IF NOT EXISTS "referral_refereeId_key" ON "referral"("refereeId");
 
 -- CreateIndex
-CREATE INDEX "referral_referrerId_idx" ON "referral"("referrerId");
+CREATE INDEX IF NOT EXISTS "referral_referrerId_idx" ON "referral"("referrerId");
 
 -- CreateIndex
-CREATE INDEX "referral_refereeId_idx" ON "referral"("refereeId");
+CREATE INDEX IF NOT EXISTS "referral_refereeId_idx" ON "referral"("refereeId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "driver_memberId_key" ON "driver"("memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "driver_memberId_key" ON "driver"("memberId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "driver_vehicleId_key" ON "driver"("vehicleId");
+CREATE UNIQUE INDEX IF NOT EXISTS "driver_vehicleId_key" ON "driver"("vehicleId");
 
 -- CreateIndex
-CREATE INDEX "driver_organizationId_idx" ON "driver"("organizationId");
+CREATE INDEX IF NOT EXISTS "driver_organizationId_idx" ON "driver"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "vehicle_licensePlate_key" ON "vehicle"("licensePlate");
+CREATE UNIQUE INDEX IF NOT EXISTS "vehicle_licensePlate_key" ON "vehicle"("licensePlate");
 
 -- CreateIndex
-CREATE INDEX "vehicle_organizationId_idx" ON "vehicle"("organizationId");
+CREATE INDEX IF NOT EXISTS "vehicle_organizationId_idx" ON "vehicle"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_connection_organizationId_idx" ON "ecommerce_connection"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_connection_organizationId_idx" ON "ecommerce_connection"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_connection_platform_idx" ON "ecommerce_connection"("platform");
+CREATE INDEX IF NOT EXISTS "ecommerce_connection_platform_idx" ON "ecommerce_connection"("platform");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_connection_isActive_idx" ON "ecommerce_connection"("isActive");
+CREATE INDEX IF NOT EXISTS "ecommerce_connection_isActive_idx" ON "ecommerce_connection"("isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ecommerce_connection_organizationId_storeUrl_key" ON "ecommerce_connection"("organizationId", "storeUrl");
+CREATE UNIQUE INDEX IF NOT EXISTS "ecommerce_connection_organizationId_storeUrl_key" ON "ecommerce_connection"("organizationId", "storeUrl");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_sync_log_connectionId_idx" ON "ecommerce_sync_log"("connectionId");
+CREATE INDEX IF NOT EXISTS "ecommerce_sync_log_connectionId_idx" ON "ecommerce_sync_log"("connectionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_sync_log_syncType_status_idx" ON "ecommerce_sync_log"("syncType", "status");
+CREATE INDEX IF NOT EXISTS "ecommerce_sync_log_syncType_status_idx" ON "ecommerce_sync_log"("syncType", "status");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_sync_log_startedAt_idx" ON "ecommerce_sync_log"("startedAt");
+CREATE INDEX IF NOT EXISTS "ecommerce_sync_log_startedAt_idx" ON "ecommerce_sync_log"("startedAt");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_sync_log_organizationId_idx" ON "ecommerce_sync_log"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_sync_log_organizationId_idx" ON "ecommerce_sync_log"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_product_mapping_productId_idx" ON "ecommerce_product_mapping"("productId");
+CREATE INDEX IF NOT EXISTS "ecommerce_product_mapping_productId_idx" ON "ecommerce_product_mapping"("productId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_product_mapping_variantId_idx" ON "ecommerce_product_mapping"("variantId");
+CREATE INDEX IF NOT EXISTS "ecommerce_product_mapping_variantId_idx" ON "ecommerce_product_mapping"("variantId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_product_mapping_connectionId_idx" ON "ecommerce_product_mapping"("connectionId");
+CREATE INDEX IF NOT EXISTS "ecommerce_product_mapping_connectionId_idx" ON "ecommerce_product_mapping"("connectionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_product_mapping_organizationId_idx" ON "ecommerce_product_mapping"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_product_mapping_organizationId_idx" ON "ecommerce_product_mapping"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ecommerce_product_mapping_connectionId_externalProductId_ex_key" ON "ecommerce_product_mapping"("connectionId", "externalProductId", "externalVariantId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ecommerce_product_mapping_connectionId_externalProductId_ex_key" ON "ecommerce_product_mapping"("connectionId", "externalProductId", "externalVariantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ecommerce_order_mapping_transactionId_key" ON "ecommerce_order_mapping"("transactionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ecommerce_order_mapping_transactionId_key" ON "ecommerce_order_mapping"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_order_mapping_transactionId_idx" ON "ecommerce_order_mapping"("transactionId");
+CREATE INDEX IF NOT EXISTS "ecommerce_order_mapping_transactionId_idx" ON "ecommerce_order_mapping"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_order_mapping_connectionId_idx" ON "ecommerce_order_mapping"("connectionId");
+CREATE INDEX IF NOT EXISTS "ecommerce_order_mapping_connectionId_idx" ON "ecommerce_order_mapping"("connectionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_order_mapping_organizationId_idx" ON "ecommerce_order_mapping"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_order_mapping_organizationId_idx" ON "ecommerce_order_mapping"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ecommerce_order_mapping_connectionId_externalOrderId_key" ON "ecommerce_order_mapping"("connectionId", "externalOrderId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ecommerce_order_mapping_connectionId_externalOrderId_key" ON "ecommerce_order_mapping"("connectionId", "externalOrderId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_customer_mapping_customerId_idx" ON "ecommerce_customer_mapping"("customerId");
+CREATE INDEX IF NOT EXISTS "ecommerce_customer_mapping_customerId_idx" ON "ecommerce_customer_mapping"("customerId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_customer_mapping_connectionId_idx" ON "ecommerce_customer_mapping"("connectionId");
+CREATE INDEX IF NOT EXISTS "ecommerce_customer_mapping_connectionId_idx" ON "ecommerce_customer_mapping"("connectionId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_customer_mapping_organizationId_idx" ON "ecommerce_customer_mapping"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_customer_mapping_organizationId_idx" ON "ecommerce_customer_mapping"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ecommerce_customer_mapping_connectionId_externalCustomerId_key" ON "ecommerce_customer_mapping"("connectionId", "externalCustomerId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ecommerce_customer_mapping_connectionId_externalCustomerId_key" ON "ecommerce_customer_mapping"("connectionId", "externalCustomerId");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_webhook_log_connectionId_topic_idx" ON "ecommerce_webhook_log"("connectionId", "topic");
+CREATE INDEX IF NOT EXISTS "ecommerce_webhook_log_connectionId_topic_idx" ON "ecommerce_webhook_log"("connectionId", "topic");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_webhook_log_status_idx" ON "ecommerce_webhook_log"("status");
+CREATE INDEX IF NOT EXISTS "ecommerce_webhook_log_status_idx" ON "ecommerce_webhook_log"("status");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_webhook_log_receivedAt_idx" ON "ecommerce_webhook_log"("receivedAt");
+CREATE INDEX IF NOT EXISTS "ecommerce_webhook_log_receivedAt_idx" ON "ecommerce_webhook_log"("receivedAt");
 
 -- CreateIndex
-CREATE INDEX "ecommerce_webhook_log_organizationId_idx" ON "ecommerce_webhook_log"("organizationId");
+CREATE INDEX IF NOT EXISTS "ecommerce_webhook_log_organizationId_idx" ON "ecommerce_webhook_log"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Cart_sessionId_key" ON "Cart"("sessionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Cart_sessionId_key" ON "Cart"("sessionId");
 
 -- CreateIndex
-CREATE INDEX "Cart_organizationId_customerId_idx" ON "Cart"("organizationId", "customerId");
+CREATE INDEX IF NOT EXISTS "Cart_organizationId_customerId_idx" ON "Cart"("organizationId", "customerId");
 
 -- CreateIndex
-CREATE INDEX "Cart_sessionId_idx" ON "Cart"("sessionId");
+CREATE INDEX IF NOT EXISTS "Cart_sessionId_idx" ON "Cart"("sessionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CartItem_cartId_productId_variantId_key" ON "CartItem"("cartId", "productId", "variantId");
+CREATE UNIQUE INDEX IF NOT EXISTS "CartItem_cartId_productId_variantId_key" ON "CartItem"("cartId", "productId", "variantId");
 
 -- CreateIndex
-CREATE INDEX "favorites_organizationId_idx" ON "favorites"("organizationId");
+CREATE INDEX IF NOT EXISTS "favorites_organizationId_idx" ON "favorites"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "favorites_customerId_idx" ON "favorites"("customerId");
+CREATE INDEX IF NOT EXISTS "favorites_customerId_idx" ON "favorites"("customerId");
 
 -- CreateIndex
-CREATE INDEX "favorites_productId_idx" ON "favorites"("productId");
+CREATE INDEX IF NOT EXISTS "favorites_productId_idx" ON "favorites"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "favorites_customerId_productId_key" ON "favorites"("customerId", "productId");
+CREATE UNIQUE INDEX IF NOT EXISTS "favorites_customerId_productId_key" ON "favorites"("customerId", "productId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_organizationId_idx" ON "product_reviews"("organizationId");
+CREATE INDEX IF NOT EXISTS "product_reviews_organizationId_idx" ON "product_reviews"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_customerId_idx" ON "product_reviews"("customerId");
+CREATE INDEX IF NOT EXISTS "product_reviews_customerId_idx" ON "product_reviews"("customerId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_productId_idx" ON "product_reviews"("productId");
+CREATE INDEX IF NOT EXISTS "product_reviews_productId_idx" ON "product_reviews"("productId");
 
 -- CreateIndex
-CREATE INDEX "product_reviews_isVisible_idx" ON "product_reviews"("isVisible");
+CREATE INDEX IF NOT EXISTS "product_reviews_isVisible_idx" ON "product_reviews"("isVisible");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Expense_approvalRequestId_key" ON "Expense"("approvalRequestId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Expense_approvalRequestId_key" ON "Expense"("approvalRequestId");
 
 -- CreateIndex
-CREATE INDEX "Expense_organizationId_status_expenseDate_idx" ON "Expense"("organizationId", "status", "expenseDate");
+CREATE INDEX IF NOT EXISTS "Expense_organizationId_status_expenseDate_idx" ON "Expense"("organizationId", "status", "expenseDate");
 
 -- CreateIndex
-CREATE INDEX "Expense_memberId_status_idx" ON "Expense"("memberId", "status");
+CREATE INDEX IF NOT EXISTS "Expense_memberId_status_idx" ON "Expense"("memberId", "status");
 
 -- CreateIndex
-CREATE INDEX "Expense_categoryId_expenseDate_idx" ON "Expense"("categoryId", "expenseDate");
+CREATE INDEX IF NOT EXISTS "Expense_categoryId_expenseDate_idx" ON "Expense"("categoryId", "expenseDate");
 
 -- CreateIndex
-CREATE INDEX "Expense_deletedAt_idx" ON "Expense"("deletedAt");
+CREATE INDEX IF NOT EXISTS "Expense_deletedAt_idx" ON "Expense"("deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Expense_organizationId_expenseNumber_key" ON "Expense"("organizationId", "expenseNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Expense_organizationId_expenseNumber_key" ON "Expense"("organizationId", "expenseNumber");
 
 -- CreateIndex
-CREATE INDEX "ExpenseCategory_organizationId_idx" ON "ExpenseCategory"("organizationId");
+CREATE INDEX IF NOT EXISTS "ExpenseCategory_organizationId_idx" ON "ExpenseCategory"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "ExpenseCategory_glCode_idx" ON "ExpenseCategory"("glCode");
+CREATE INDEX IF NOT EXISTS "ExpenseCategory_glCode_idx" ON "ExpenseCategory"("glCode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ExpenseCategory_organizationId_name_key" ON "ExpenseCategory"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "ExpenseCategory_organizationId_name_key" ON "ExpenseCategory"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "RecurringExpense_organizationId_idx" ON "RecurringExpense"("organizationId");
+CREATE INDEX IF NOT EXISTS "RecurringExpense_organizationId_idx" ON "RecurringExpense"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "RecurringExpense_nextDueDate_idx" ON "RecurringExpense"("nextDueDate");
+CREATE INDEX IF NOT EXISTS "RecurringExpense_nextDueDate_idx" ON "RecurringExpense"("nextDueDate");
 
 -- CreateIndex
-CREATE INDEX "RecurringExpense_isActive_idx" ON "RecurringExpense"("isActive");
+CREATE INDEX IF NOT EXISTS "RecurringExpense_isActive_idx" ON "RecurringExpense"("isActive");
 
 -- CreateIndex
-CREATE INDEX "Budget_fiscalYear_idx" ON "Budget"("fiscalYear");
+CREATE INDEX IF NOT EXISTS "Budget_fiscalYear_idx" ON "Budget"("fiscalYear");
 
 -- CreateIndex
-CREATE INDEX "Budget_departmentId_idx" ON "Budget"("departmentId");
+CREATE INDEX IF NOT EXISTS "Budget_departmentId_idx" ON "Budget"("departmentId");
 
 -- CreateIndex
-CREATE INDEX "Budget_organizationId_idx" ON "Budget"("organizationId");
+CREATE INDEX IF NOT EXISTS "Budget_organizationId_idx" ON "Budget"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Budget_organizationId_name_periodStart_periodEnd_key" ON "Budget"("organizationId", "name", "periodStart", "periodEnd");
+CREATE UNIQUE INDEX IF NOT EXISTS "Budget_organizationId_name_periodStart_periodEnd_key" ON "Budget"("organizationId", "name", "periodStart", "periodEnd");
 
 -- CreateIndex
-CREATE INDEX "BudgetReport_budgetId_idx" ON "BudgetReport"("budgetId");
+CREATE INDEX IF NOT EXISTS "BudgetReport_budgetId_idx" ON "BudgetReport"("budgetId");
 
 -- CreateIndex
-CREATE INDEX "BudgetReport_reportDate_idx" ON "BudgetReport"("reportDate");
+CREATE INDEX IF NOT EXISTS "BudgetReport_reportDate_idx" ON "BudgetReport"("reportDate");
 
 -- CreateIndex
-CREATE INDEX "BudgetAlert_budgetId_idx" ON "BudgetAlert"("budgetId");
+CREATE INDEX IF NOT EXISTS "BudgetAlert_budgetId_idx" ON "BudgetAlert"("budgetId");
 
 -- CreateIndex
-CREATE INDEX "BudgetAlert_organizationId_idx" ON "BudgetAlert"("organizationId");
+CREATE INDEX IF NOT EXISTS "BudgetAlert_organizationId_idx" ON "BudgetAlert"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "CostCenter_organizationId_idx" ON "CostCenter"("organizationId");
+CREATE INDEX IF NOT EXISTS "CostCenter_organizationId_idx" ON "CostCenter"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CostCenter_organizationId_code_key" ON "CostCenter"("organizationId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "CostCenter_organizationId_code_key" ON "CostCenter"("organizationId", "code");
 
 -- CreateIndex
-CREATE INDEX "PettyCashFund_organizationId_idx" ON "PettyCashFund"("organizationId");
+CREATE INDEX IF NOT EXISTS "PettyCashFund_organizationId_idx" ON "PettyCashFund"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "PettyCashTransaction_fundId_idx" ON "PettyCashTransaction"("fundId");
+CREATE INDEX IF NOT EXISTS "PettyCashTransaction_fundId_idx" ON "PettyCashTransaction"("fundId");
 
 -- CreateIndex
-CREATE INDEX "UtilityAccount_organizationId_idx" ON "UtilityAccount"("organizationId");
+CREATE INDEX IF NOT EXISTS "UtilityAccount_organizationId_idx" ON "UtilityAccount"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Purchase_approvalRequestId_key" ON "Purchase"("approvalRequestId");
+CREATE UNIQUE INDEX IF NOT EXISTS "Purchase_approvalRequestId_key" ON "Purchase"("approvalRequestId");
 
 -- CreateIndex
-CREATE INDEX "Purchase_orderDate_idx" ON "Purchase"("orderDate");
+CREATE INDEX IF NOT EXISTS "Purchase_orderDate_idx" ON "Purchase"("orderDate");
 
 -- CreateIndex
-CREATE INDEX "Purchase_supplierId_idx" ON "Purchase"("supplierId");
+CREATE INDEX IF NOT EXISTS "Purchase_supplierId_idx" ON "Purchase"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "Purchase_status_idx" ON "Purchase"("status");
+CREATE INDEX IF NOT EXISTS "Purchase_status_idx" ON "Purchase"("status");
 
 -- CreateIndex
-CREATE INDEX "Purchase_organizationId_idx" ON "Purchase"("organizationId");
+CREATE INDEX IF NOT EXISTS "Purchase_organizationId_idx" ON "Purchase"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Purchase_organizationId_purchaseNumber_key" ON "Purchase"("organizationId", "purchaseNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Purchase_organizationId_purchaseNumber_key" ON "Purchase"("organizationId", "purchaseNumber");
 
 -- CreateIndex
-CREATE INDEX "PurchaseItem_purchaseId_idx" ON "PurchaseItem"("purchaseId");
+CREATE INDEX IF NOT EXISTS "PurchaseItem_purchaseId_idx" ON "PurchaseItem"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "PurchaseItem_variantId_idx" ON "PurchaseItem"("variantId");
+CREATE INDEX IF NOT EXISTS "PurchaseItem_variantId_idx" ON "PurchaseItem"("variantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PurchaseItem_id_orderedOrgUnitId_orderedUnitId_key" ON "PurchaseItem"("id", "orderedOrgUnitId", "orderedUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "PurchaseItem_id_orderedOrgUnitId_orderedUnitId_key" ON "PurchaseItem"("id", "orderedOrgUnitId", "orderedUnitId");
 
 -- CreateIndex
-CREATE INDEX "PurchasePayment_purchaseId_idx" ON "PurchasePayment"("purchaseId");
+CREATE INDEX IF NOT EXISTS "PurchasePayment_purchaseId_idx" ON "PurchasePayment"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "PurchasePayment_paymentDate_idx" ON "PurchasePayment"("paymentDate");
+CREATE INDEX IF NOT EXISTS "PurchasePayment_paymentDate_idx" ON "PurchasePayment"("paymentDate");
 
 -- CreateIndex
-CREATE INDEX "SupplierInvoice_status_idx" ON "SupplierInvoice"("status");
+CREATE INDEX IF NOT EXISTS "SupplierInvoice_status_idx" ON "SupplierInvoice"("status");
 
 -- CreateIndex
-CREATE INDEX "SupplierInvoice_organizationId_idx" ON "SupplierInvoice"("organizationId");
+CREATE INDEX IF NOT EXISTS "SupplierInvoice_organizationId_idx" ON "SupplierInvoice"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SupplierInvoice_organizationId_supplierId_invoiceNumber_key" ON "SupplierInvoice"("organizationId", "supplierId", "invoiceNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "SupplierInvoice_organizationId_supplierId_invoiceNumber_key" ON "SupplierInvoice"("organizationId", "supplierId", "invoiceNumber");
 
 -- CreateIndex
-CREATE INDEX "PurchaseReturn_purchaseId_idx" ON "PurchaseReturn"("purchaseId");
+CREATE INDEX IF NOT EXISTS "PurchaseReturn_purchaseId_idx" ON "PurchaseReturn"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "PurchaseReturn_supplierId_idx" ON "PurchaseReturn"("supplierId");
+CREATE INDEX IF NOT EXISTS "PurchaseReturn_supplierId_idx" ON "PurchaseReturn"("supplierId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PurchaseReturn_organizationId_returnNumber_key" ON "PurchaseReturn"("organizationId", "returnNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "PurchaseReturn_organizationId_returnNumber_key" ON "PurchaseReturn"("organizationId", "returnNumber");
 
 -- CreateIndex
-CREATE INDEX "PurchaseReturnItem_purchaseReturnId_idx" ON "PurchaseReturnItem"("purchaseReturnId");
+CREATE INDEX IF NOT EXISTS "PurchaseReturnItem_purchaseReturnId_idx" ON "PurchaseReturnItem"("purchaseReturnId");
 
 -- CreateIndex
-CREATE INDEX "PurchaseReturnItem_purchaseItemId_idx" ON "PurchaseReturnItem"("purchaseItemId");
+CREATE INDEX IF NOT EXISTS "PurchaseReturnItem_purchaseItemId_idx" ON "PurchaseReturnItem"("purchaseItemId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalRequest_organizationId_status_idx" ON "ApprovalRequest"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "ApprovalRequest_organizationId_status_idx" ON "ApprovalRequest"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "ApprovalRequest_relatedId_idx" ON "ApprovalRequest"("relatedId");
+CREATE INDEX IF NOT EXISTS "ApprovalRequest_relatedId_idx" ON "ApprovalRequest"("relatedId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalRequest_requesterId_idx" ON "ApprovalRequest"("requesterId");
+CREATE INDEX IF NOT EXISTS "ApprovalRequest_requesterId_idx" ON "ApprovalRequest"("requesterId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalDecision_approvalRequestId_idx" ON "ApprovalDecision"("approvalRequestId");
+CREATE INDEX IF NOT EXISTS "ApprovalDecision_approvalRequestId_idx" ON "ApprovalDecision"("approvalRequestId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalDecision_approverId_status_idx" ON "ApprovalDecision"("approverId", "status");
+CREATE INDEX IF NOT EXISTS "ApprovalDecision_approverId_status_idx" ON "ApprovalDecision"("approverId", "status");
 
 -- CreateIndex
-CREATE INDEX "ApprovalWorkflow_organizationId_isActive_idx" ON "ApprovalWorkflow"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "ApprovalWorkflow_organizationId_isActive_idx" ON "ApprovalWorkflow"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ApprovalWorkflow_organizationId_name_key" ON "ApprovalWorkflow"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "ApprovalWorkflow_organizationId_name_key" ON "ApprovalWorkflow"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "ApprovalWorkflowStep_approvalWorkflowId_stepNumber_idx" ON "ApprovalWorkflowStep"("approvalWorkflowId", "stepNumber");
+CREATE INDEX IF NOT EXISTS "ApprovalWorkflowStep_approvalWorkflowId_stepNumber_idx" ON "ApprovalWorkflowStep"("approvalWorkflowId", "stepNumber");
 
 -- CreateIndex
-CREATE INDEX "ApprovalStepCondition_stepId_idx" ON "ApprovalStepCondition"("stepId");
+CREATE INDEX IF NOT EXISTS "ApprovalStepCondition_stepId_idx" ON "ApprovalStepCondition"("stepId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalStepCondition_expenseCategoryId_idx" ON "ApprovalStepCondition"("expenseCategoryId");
+CREATE INDEX IF NOT EXISTS "ApprovalStepCondition_expenseCategoryId_idx" ON "ApprovalStepCondition"("expenseCategoryId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalStepAction_stepId_idx" ON "ApprovalStepAction"("stepId");
+CREATE INDEX IF NOT EXISTS "ApprovalStepAction_stepId_idx" ON "ApprovalStepAction"("stepId");
 
 -- CreateIndex
-CREATE INDEX "ApprovalStepAction_specificMemberId_idx" ON "ApprovalStepAction"("specificMemberId");
+CREATE INDEX IF NOT EXISTS "ApprovalStepAction_specificMemberId_idx" ON "ApprovalStepAction"("specificMemberId");
 
 -- CreateIndex
-CREATE INDEX "LedgerAccount_organizationId_idx" ON "LedgerAccount"("organizationId");
+CREATE INDEX IF NOT EXISTS "LedgerAccount_organizationId_idx" ON "LedgerAccount"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LedgerAccount_organizationId_code_key" ON "LedgerAccount"("organizationId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "LedgerAccount_organizationId_code_key" ON "LedgerAccount"("organizationId", "code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LedgerAccount_organizationId_name_key" ON "LedgerAccount"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "LedgerAccount_organizationId_name_key" ON "LedgerAccount"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "JournalEntry_organizationId_entryDate_idx" ON "JournalEntry"("organizationId", "entryDate");
+CREATE INDEX IF NOT EXISTS "JournalEntry_organizationId_entryDate_idx" ON "JournalEntry"("organizationId", "entryDate");
 
 -- CreateIndex
-CREATE INDEX "JournalEntry_status_idx" ON "JournalEntry"("status");
+CREATE INDEX IF NOT EXISTS "JournalEntry_status_idx" ON "JournalEntry"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "JournalLine_bankStatementLineId_key" ON "JournalLine"("bankStatementLineId");
+CREATE UNIQUE INDEX IF NOT EXISTS "JournalLine_bankStatementLineId_key" ON "JournalLine"("bankStatementLineId");
 
 -- CreateIndex
-CREATE INDEX "JournalLine_journalEntryId_idx" ON "JournalLine"("journalEntryId");
+CREATE INDEX IF NOT EXISTS "JournalLine_journalEntryId_idx" ON "JournalLine"("journalEntryId");
 
 -- CreateIndex
-CREATE INDEX "JournalLine_ledgerAccountId_idx" ON "JournalLine"("ledgerAccountId");
+CREATE INDEX IF NOT EXISTS "JournalLine_ledgerAccountId_idx" ON "JournalLine"("ledgerAccountId");
 
 -- CreateIndex
-CREATE INDEX "BankStatement_organizationId_idx" ON "BankStatement"("organizationId");
+CREATE INDEX IF NOT EXISTS "BankStatement_organizationId_idx" ON "BankStatement"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "BankStatementLine_statementId_idx" ON "BankStatementLine"("statementId");
+CREATE INDEX IF NOT EXISTS "BankStatementLine_statementId_idx" ON "BankStatementLine"("statementId");
 
 -- CreateIndex
-CREATE INDEX "RecurringBill_organizationId_idx" ON "RecurringBill"("organizationId");
+CREATE INDEX IF NOT EXISTS "RecurringBill_organizationId_idx" ON "RecurringBill"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "RecurringBill_nextDueDate_idx" ON "RecurringBill"("nextDueDate");
+CREATE INDEX IF NOT EXISTS "RecurringBill_nextDueDate_idx" ON "RecurringBill"("nextDueDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "huly_configuration_organizationId_key" ON "huly_configuration"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "huly_configuration_organizationId_key" ON "huly_configuration"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "huly_notification_rule_organizationId_idx" ON "huly_notification_rule"("organizationId");
+CREATE INDEX IF NOT EXISTS "huly_notification_rule_organizationId_idx" ON "huly_notification_rule"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "huly_notification_rule_configId_eventType_key" ON "huly_notification_rule"("configId", "eventType");
+CREATE UNIQUE INDEX IF NOT EXISTS "huly_notification_rule_configId_eventType_key" ON "huly_notification_rule"("configId", "eventType");
 
 -- CreateIndex
-CREATE INDEX "huly_event_log_configId_status_idx" ON "huly_event_log"("configId", "status");
+CREATE INDEX IF NOT EXISTS "huly_event_log_configId_status_idx" ON "huly_event_log"("configId", "status");
 
 -- CreateIndex
-CREATE INDEX "huly_event_log_organizationId_createdAt_idx" ON "huly_event_log"("organizationId", "createdAt");
+CREATE INDEX IF NOT EXISTS "huly_event_log_organizationId_createdAt_idx" ON "huly_event_log"("organizationId", "createdAt");
 
 -- CreateIndex
-CREATE INDEX "huly_channel_mapping_organizationId_idx" ON "huly_channel_mapping"("organizationId");
+CREATE INDEX IF NOT EXISTS "huly_channel_mapping_organizationId_idx" ON "huly_channel_mapping"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "huly_channel_mapping_configId_eventType_key" ON "huly_channel_mapping"("configId", "eventType");
+CREATE UNIQUE INDEX IF NOT EXISTS "huly_channel_mapping_configId_eventType_key" ON "huly_channel_mapping"("configId", "eventType");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "integration_definition_name_key" ON "integration_definition"("name");
+CREATE UNIQUE INDEX IF NOT EXISTS "integration_definition_name_key" ON "integration_definition"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "integration_definition_slug_key" ON "integration_definition"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "integration_definition_slug_key" ON "integration_definition"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "organization_integration_organizationId_integrationDefiniti_key" ON "organization_integration"("organizationId", "integrationDefinitionId");
+CREATE UNIQUE INDEX IF NOT EXISTS "organization_integration_organizationId_integrationDefiniti_key" ON "organization_integration"("organizationId", "integrationDefinitionId");
 
 -- CreateIndex
-CREATE INDEX "external_mapping_organizationIntegrationId_idx" ON "external_mapping"("organizationIntegrationId");
+CREATE INDEX IF NOT EXISTS "external_mapping_organizationIntegrationId_idx" ON "external_mapping"("organizationIntegrationId");
 
 -- CreateIndex
-CREATE INDEX "external_mapping_internalEntityType_internalEntityId_idx" ON "external_mapping"("internalEntityType", "internalEntityId");
+CREATE INDEX IF NOT EXISTS "external_mapping_internalEntityType_internalEntityId_idx" ON "external_mapping"("internalEntityType", "internalEntityId");
 
 -- CreateIndex
-CREATE INDEX "external_mapping_internalId_idx" ON "external_mapping"("internalId");
+CREATE INDEX IF NOT EXISTS "external_mapping_internalId_idx" ON "external_mapping"("internalId");
 
 -- CreateIndex
-CREATE INDEX "external_mapping_externalId_idx" ON "external_mapping"("externalId");
+CREATE INDEX IF NOT EXISTS "external_mapping_externalId_idx" ON "external_mapping"("externalId");
 
 -- CreateIndex
-CREATE INDEX "external_mapping_organizationId_idx" ON "external_mapping"("organizationId");
+CREATE INDEX IF NOT EXISTS "external_mapping_organizationId_idx" ON "external_mapping"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "external_mapping_organizationId_provider_externalId_entityT_key" ON "external_mapping"("organizationId", "provider", "externalId", "entityType");
+CREATE UNIQUE INDEX IF NOT EXISTS "external_mapping_organizationId_provider_externalId_entityT_key" ON "external_mapping"("organizationId", "provider", "externalId", "entityType");
 
 -- CreateIndex
-CREATE INDEX "integration_event_organizationIntegrationId_status_idx" ON "integration_event"("organizationIntegrationId", "status");
+CREATE INDEX IF NOT EXISTS "integration_event_organizationIntegrationId_status_idx" ON "integration_event"("organizationIntegrationId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Category_code_key" ON "Category"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "Category_code_key" ON "Category"("code");
 
 -- CreateIndex
-CREATE INDEX "Category_name_idx" ON "Category"("name");
+CREATE INDEX IF NOT EXISTS "Category_name_idx" ON "Category"("name");
 
 -- CreateIndex
-CREATE INDEX "Category_organizationId_idx" ON "Category"("organizationId");
+CREATE INDEX IF NOT EXISTS "Category_organizationId_idx" ON "Category"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "Category_organizationId_name_idx" ON "Category"("organizationId", "name");
+CREATE INDEX IF NOT EXISTS "Category_organizationId_name_idx" ON "Category"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Category_organizationId_name_key" ON "Category"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "Category_organizationId_name_key" ON "Category"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_sku_key" ON "Product"("sku");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_sku_key" ON "Product"("sku");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_slug_key" ON "Product"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_slug_key" ON "Product"("slug");
 
 -- CreateIndex
-CREATE INDEX "Product_name_idx" ON "Product"("name");
+CREATE INDEX IF NOT EXISTS "Product_name_idx" ON "Product"("name");
 
 -- CreateIndex
-CREATE INDEX "Product_sku_idx" ON "Product"("sku");
+CREATE INDEX IF NOT EXISTS "Product_sku_idx" ON "Product"("sku");
 
 -- CreateIndex
-CREATE INDEX "Product_slug_idx" ON "Product"("slug");
+CREATE INDEX IF NOT EXISTS "Product_slug_idx" ON "Product"("slug");
 
 -- CreateIndex
-CREATE INDEX "Product_organizationId_idx" ON "Product"("organizationId");
+CREATE INDEX IF NOT EXISTS "Product_organizationId_idx" ON "Product"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "Product_organizationId_id_idx" ON "Product"("organizationId", "id");
+CREATE INDEX IF NOT EXISTS "Product_organizationId_id_idx" ON "Product"("organizationId", "id");
 
 -- CreateIndex
-CREATE INDEX "Product_defaultLocationId_idx" ON "Product"("defaultLocationId");
+CREATE INDEX IF NOT EXISTS "Product_defaultLocationId_idx" ON "Product"("defaultLocationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Product_organizationId_barcode_key" ON "Product"("organizationId", "barcode");
+CREATE UNIQUE INDEX IF NOT EXISTS "Product_organizationId_barcode_key" ON "Product"("organizationId", "barcode");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "product_variant_barcode_key" ON "product_variant"("barcode");
+CREATE UNIQUE INDEX IF NOT EXISTS "product_variant_barcode_key" ON "product_variant"("barcode");
 
 -- CreateIndex
-CREATE INDEX "product_variant_sku_idx" ON "product_variant"("sku");
+CREATE INDEX IF NOT EXISTS "product_variant_sku_idx" ON "product_variant"("sku");
 
 -- CreateIndex
-CREATE INDEX "product_variant_baseUnitId_idx" ON "product_variant"("baseUnitId");
+CREATE INDEX IF NOT EXISTS "product_variant_baseUnitId_idx" ON "product_variant"("baseUnitId");
 
 -- CreateIndex
-CREATE INDEX "product_variant_baseOrgUnitId_idx" ON "product_variant"("baseOrgUnitId");
+CREATE INDEX IF NOT EXISTS "product_variant_baseOrgUnitId_idx" ON "product_variant"("baseOrgUnitId");
 
 -- CreateIndex
-CREATE INDEX "product_variant_stockingUnitId_idx" ON "product_variant"("stockingUnitId");
+CREATE INDEX IF NOT EXISTS "product_variant_stockingUnitId_idx" ON "product_variant"("stockingUnitId");
 
 -- CreateIndex
-CREATE INDEX "product_variant_stockingOrgUnitId_idx" ON "product_variant"("stockingOrgUnitId");
+CREATE INDEX IF NOT EXISTS "product_variant_stockingOrgUnitId_idx" ON "product_variant"("stockingOrgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "product_variant_productId_sku_key" ON "product_variant"("productId", "sku");
+CREATE UNIQUE INDEX IF NOT EXISTS "product_variant_productId_sku_key" ON "product_variant"("productId", "sku");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "product_variant_productId_barcode_key" ON "product_variant"("productId", "barcode");
+CREATE UNIQUE INDEX IF NOT EXISTS "product_variant_productId_barcode_key" ON "product_variant"("productId", "barcode");
 
 -- CreateIndex
-CREATE INDEX "variant_selling_unit_variantId_idx" ON "variant_selling_unit"("variantId");
+CREATE INDEX IF NOT EXISTS "variant_selling_unit_variantId_idx" ON "variant_selling_unit"("variantId");
 
 -- CreateIndex
-CREATE INDEX "variant_selling_unit_systemUnitId_idx" ON "variant_selling_unit"("systemUnitId");
+CREATE INDEX IF NOT EXISTS "variant_selling_unit_systemUnitId_idx" ON "variant_selling_unit"("systemUnitId");
 
 -- CreateIndex
-CREATE INDEX "variant_selling_unit_orgUnitId_idx" ON "variant_selling_unit"("orgUnitId");
+CREATE INDEX IF NOT EXISTS "variant_selling_unit_orgUnitId_idx" ON "variant_selling_unit"("orgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "variant_selling_unit_variantId_systemUnitId_orgUnitId_key" ON "variant_selling_unit"("variantId", "systemUnitId", "orgUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "variant_selling_unit_variantId_systemUnitId_orgUnitId_key" ON "variant_selling_unit"("variantId", "systemUnitId", "orgUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Recall_recallNumber_key" ON "Recall"("recallNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "Recall_recallNumber_key" ON "Recall"("recallNumber");
 
 -- CreateIndex
-CREATE INDEX "Recall_organizationId_idx" ON "Recall"("organizationId");
+CREATE INDEX IF NOT EXISTS "Recall_organizationId_idx" ON "Recall"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "Recall_supplierId_idx" ON "Recall"("supplierId");
+CREATE INDEX IF NOT EXISTS "Recall_supplierId_idx" ON "Recall"("supplierId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_code_key" ON "Supplier"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "Supplier_code_key" ON "Supplier"("code");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_email_key" ON "Supplier"("email");
+CREATE UNIQUE INDEX IF NOT EXISTS "Supplier_email_key" ON "Supplier"("email");
 
 -- CreateIndex
-CREATE INDEX "Supplier_organizationId_idx" ON "Supplier"("organizationId");
+CREATE INDEX IF NOT EXISTS "Supplier_organizationId_idx" ON "Supplier"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_organizationId_name_key" ON "Supplier"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "Supplier_organizationId_name_key" ON "Supplier"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_organizationId_email_key" ON "Supplier"("organizationId", "email");
+CREATE UNIQUE INDEX IF NOT EXISTS "Supplier_organizationId_email_key" ON "Supplier"("organizationId", "email");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Supplier_organizationId_id_key" ON "Supplier"("organizationId", "id");
+CREATE UNIQUE INDEX IF NOT EXISTS "Supplier_organizationId_id_key" ON "Supplier"("organizationId", "id");
 
 -- CreateIndex
-CREATE INDEX "ProductSupplier_supplierId_idx" ON "ProductSupplier"("supplierId");
+CREATE INDEX IF NOT EXISTS "ProductSupplier_supplierId_idx" ON "ProductSupplier"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "ProductSupplier_productId_idx" ON "ProductSupplier"("productId");
+CREATE INDEX IF NOT EXISTS "ProductSupplier_productId_idx" ON "ProductSupplier"("productId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProductSupplier_variantId_supplierId_key" ON "ProductSupplier"("variantId", "supplierId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ProductSupplier_variantId_supplierId_key" ON "ProductSupplier"("variantId", "supplierId");
 
 -- CreateIndex
-CREATE INDEX "SupplierDocument_supplierId_idx" ON "SupplierDocument"("supplierId");
+CREATE INDEX IF NOT EXISTS "SupplierDocument_supplierId_idx" ON "SupplierDocument"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "SupplierDocument_organizationId_idx" ON "SupplierDocument"("organizationId");
+CREATE INDEX IF NOT EXISTS "SupplierDocument_organizationId_idx" ON "SupplierDocument"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "SupplierPriceHistory_supplierId_idx" ON "SupplierPriceHistory"("supplierId");
+CREATE INDEX IF NOT EXISTS "SupplierPriceHistory_supplierId_idx" ON "SupplierPriceHistory"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "SupplierPriceHistory_variantId_idx" ON "SupplierPriceHistory"("variantId");
+CREATE INDEX IF NOT EXISTS "SupplierPriceHistory_variantId_idx" ON "SupplierPriceHistory"("variantId");
 
 -- CreateIndex
-CREATE INDEX "SupplierPriceHistory_organizationId_idx" ON "SupplierPriceHistory"("organizationId");
+CREATE INDEX IF NOT EXISTS "SupplierPriceHistory_organizationId_idx" ON "SupplierPriceHistory"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InventoryLocation_code_key" ON "InventoryLocation"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "InventoryLocation_code_key" ON "InventoryLocation"("code");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_name_idx" ON "InventoryLocation"("name");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_name_idx" ON "InventoryLocation"("name");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_organizationId_idx" ON "InventoryLocation"("organizationId");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_organizationId_idx" ON "InventoryLocation"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_managerId_idx" ON "InventoryLocation"("managerId");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_managerId_idx" ON "InventoryLocation"("managerId");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_locationType_idx" ON "InventoryLocation"("locationType");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_locationType_idx" ON "InventoryLocation"("locationType");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_isDefault_idx" ON "InventoryLocation"("isDefault");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_isDefault_idx" ON "InventoryLocation"("isDefault");
 
 -- CreateIndex
-CREATE INDEX "InventoryLocation_parentLocationId_idx" ON "InventoryLocation"("parentLocationId");
+CREATE INDEX IF NOT EXISTS "InventoryLocation_parentLocationId_idx" ON "InventoryLocation"("parentLocationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InventoryLocation_organizationId_name_key" ON "InventoryLocation"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "InventoryLocation_organizationId_name_key" ON "InventoryLocation"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "StorageZone_locationId_idx" ON "StorageZone"("locationId");
+CREATE INDEX IF NOT EXISTS "StorageZone_locationId_idx" ON "StorageZone"("locationId");
 
 -- CreateIndex
-CREATE INDEX "StorageZone_organizationId_idx" ON "StorageZone"("organizationId");
+CREATE INDEX IF NOT EXISTS "StorageZone_organizationId_idx" ON "StorageZone"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StorageZone_locationId_name_key" ON "StorageZone"("locationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "StorageZone_locationId_name_key" ON "StorageZone"("locationId", "name");
 
 -- CreateIndex
-CREATE INDEX "StorageUnit_locationId_idx" ON "StorageUnit"("locationId");
+CREATE INDEX IF NOT EXISTS "StorageUnit_locationId_idx" ON "StorageUnit"("locationId");
 
 -- CreateIndex
-CREATE INDEX "StorageUnit_zoneId_idx" ON "StorageUnit"("zoneId");
+CREATE INDEX IF NOT EXISTS "StorageUnit_zoneId_idx" ON "StorageUnit"("zoneId");
 
 -- CreateIndex
-CREATE INDEX "StorageUnit_unitType_idx" ON "StorageUnit"("unitType");
+CREATE INDEX IF NOT EXISTS "StorageUnit_unitType_idx" ON "StorageUnit"("unitType");
 
 -- CreateIndex
-CREATE INDEX "StorageUnit_organizationId_idx" ON "StorageUnit"("organizationId");
+CREATE INDEX IF NOT EXISTS "StorageUnit_organizationId_idx" ON "StorageUnit"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StorageUnit_locationId_zoneId_name_key" ON "StorageUnit"("locationId", "zoneId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "StorageUnit_locationId_zoneId_name_key" ON "StorageUnit"("locationId", "zoneId", "name");
 
 -- CreateIndex
-CREATE INDEX "QCTemplate_organizationId_idx" ON "QCTemplate"("organizationId");
+CREATE INDEX IF NOT EXISTS "QCTemplate_organizationId_idx" ON "QCTemplate"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "QCTemplate_organizationId_name_key" ON "QCTemplate"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "QCTemplate_organizationId_name_key" ON "QCTemplate"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "QCResult_organizationId_idx" ON "QCResult"("organizationId");
+CREATE INDEX IF NOT EXISTS "QCResult_organizationId_idx" ON "QCResult"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "QCResult_stockBatchId_idx" ON "QCResult"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "QCResult_stockBatchId_idx" ON "QCResult"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "QCResult_purchaseItemId_idx" ON "QCResult"("purchaseItemId");
+CREATE INDEX IF NOT EXISTS "QCResult_purchaseItemId_idx" ON "QCResult"("purchaseItemId");
 
 -- CreateIndex
-CREATE INDEX "supplier_review_organizationId_idx" ON "supplier_review"("organizationId");
+CREATE INDEX IF NOT EXISTS "supplier_review_organizationId_idx" ON "supplier_review"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "supplier_review_memberId_idx" ON "supplier_review"("memberId");
+CREATE INDEX IF NOT EXISTS "supplier_review_memberId_idx" ON "supplier_review"("memberId");
 
 -- CreateIndex
-CREATE INDEX "supplier_review_supplierId_idx" ON "supplier_review"("supplierId");
+CREATE INDEX IF NOT EXISTS "supplier_review_supplierId_idx" ON "supplier_review"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "favorite_supplier_organizationId_idx" ON "favorite_supplier"("organizationId");
+CREATE INDEX IF NOT EXISTS "favorite_supplier_organizationId_idx" ON "favorite_supplier"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "favorite_supplier_memberId_idx" ON "favorite_supplier"("memberId");
+CREATE INDEX IF NOT EXISTS "favorite_supplier_memberId_idx" ON "favorite_supplier"("memberId");
 
 -- CreateIndex
-CREATE INDEX "favorite_supplier_supplierId_idx" ON "favorite_supplier"("supplierId");
+CREATE INDEX IF NOT EXISTS "favorite_supplier_supplierId_idx" ON "favorite_supplier"("supplierId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "favorite_supplier_memberId_supplierId_key" ON "favorite_supplier"("memberId", "supplierId");
+CREATE UNIQUE INDEX IF NOT EXISTS "favorite_supplier_memberId_supplierId_key" ON "favorite_supplier"("memberId", "supplierId");
 
 -- CreateIndex
-CREATE INDEX "StoragePosition_storageUnitId_idx" ON "StoragePosition"("storageUnitId");
+CREATE INDEX IF NOT EXISTS "StoragePosition_storageUnitId_idx" ON "StoragePosition"("storageUnitId");
 
 -- CreateIndex
-CREATE INDEX "StoragePosition_isOccupied_idx" ON "StoragePosition"("isOccupied");
+CREATE INDEX IF NOT EXISTS "StoragePosition_isOccupied_idx" ON "StoragePosition"("isOccupied");
 
 -- CreateIndex
-CREATE INDEX "StoragePosition_organizationId_idx" ON "StoragePosition"("organizationId");
+CREATE INDEX IF NOT EXISTS "StoragePosition_organizationId_idx" ON "StoragePosition"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StoragePosition_storageUnitId_identifier_key" ON "StoragePosition"("storageUnitId", "identifier");
+CREATE UNIQUE INDEX IF NOT EXISTS "StoragePosition_storageUnitId_identifier_key" ON "StoragePosition"("storageUnitId", "identifier");
 
 -- CreateIndex
-CREATE INDEX "Invoice_organizationId_idx" ON "Invoice"("organizationId");
+CREATE INDEX IF NOT EXISTS "Invoice_organizationId_idx" ON "Invoice"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_customerId_idx" ON "Invoice"("customerId");
+CREATE INDEX IF NOT EXISTS "Invoice_customerId_idx" ON "Invoice"("customerId");
 
 -- CreateIndex
-CREATE INDEX "Invoice_postingDate_idx" ON "Invoice"("postingDate");
+CREATE INDEX IF NOT EXISTS "Invoice_postingDate_idx" ON "Invoice"("postingDate");
 
 -- CreateIndex
-CREATE INDEX "Invoice_status_idx" ON "Invoice"("status");
+CREATE INDEX IF NOT EXISTS "Invoice_status_idx" ON "Invoice"("status");
 
 -- CreateIndex
-CREATE INDEX "Invoice_templateId_idx" ON "Invoice"("templateId");
+CREATE INDEX IF NOT EXISTS "Invoice_templateId_idx" ON "Invoice"("templateId");
 
 -- CreateIndex
-CREATE INDEX "InvoiceItem_invoiceId_idx" ON "InvoiceItem"("invoiceId");
+CREATE INDEX IF NOT EXISTS "InvoiceItem_invoiceId_idx" ON "InvoiceItem"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "KRAComplianceLog_organizationId_idx" ON "KRAComplianceLog"("organizationId");
+CREATE INDEX IF NOT EXISTS "KRAComplianceLog_organizationId_idx" ON "KRAComplianceLog"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "KRAComplianceLog_invoiceId_idx" ON "KRAComplianceLog"("invoiceId");
+CREATE INDEX IF NOT EXISTS "KRAComplianceLog_invoiceId_idx" ON "KRAComplianceLog"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "KRAComplianceLog_kraPin_idx" ON "KRAComplianceLog"("kraPin");
+CREATE INDEX IF NOT EXISTS "KRAComplianceLog_kraPin_idx" ON "KRAComplianceLog"("kraPin");
 
 -- CreateIndex
-CREATE INDEX "KRAComplianceLog_submittedAt_idx" ON "KRAComplianceLog"("submittedAt");
+CREATE INDEX IF NOT EXISTS "KRAComplianceLog_submittedAt_idx" ON "KRAComplianceLog"("submittedAt");
 
 -- CreateIndex
-CREATE INDEX "InvoiceTemplate_organizationId_idx" ON "InvoiceTemplate"("organizationId");
+CREATE INDEX IF NOT EXISTS "InvoiceTemplate_organizationId_idx" ON "InvoiceTemplate"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "InvoiceTemplate_isDefault_idx" ON "InvoiceTemplate"("isDefault");
+CREATE INDEX IF NOT EXISTS "InvoiceTemplate_isDefault_idx" ON "InvoiceTemplate"("isDefault");
 
 -- CreateIndex
-CREATE INDEX "InvoiceTemplate_isActive_idx" ON "InvoiceTemplate"("isActive");
+CREATE INDEX IF NOT EXISTS "InvoiceTemplate_isActive_idx" ON "InvoiceTemplate"("isActive");
 
 -- CreateIndex
-CREATE INDEX "InvoiceTemplate_type_idx" ON "InvoiceTemplate"("type");
+CREATE INDEX IF NOT EXISTS "InvoiceTemplate_type_idx" ON "InvoiceTemplate"("type");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InvoiceTemplate_organizationId_name_key" ON "InvoiceTemplate"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "InvoiceTemplate_organizationId_name_key" ON "InvoiceTemplate"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "InvoiceTemplateVersion_templateId_idx" ON "InvoiceTemplateVersion"("templateId");
+CREATE INDEX IF NOT EXISTS "InvoiceTemplateVersion_templateId_idx" ON "InvoiceTemplateVersion"("templateId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InvoiceTemplateVersion_templateId_versionNumber_key" ON "InvoiceTemplateVersion"("templateId", "versionNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "InvoiceTemplateVersion_templateId_versionNumber_key" ON "InvoiceTemplateVersion"("templateId", "versionNumber");
 
 -- CreateIndex
-CREATE INDEX "TemplateUsageLog_organizationId_idx" ON "TemplateUsageLog"("organizationId");
+CREATE INDEX IF NOT EXISTS "TemplateUsageLog_organizationId_idx" ON "TemplateUsageLog"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "TemplateUsageLog_templateId_idx" ON "TemplateUsageLog"("templateId");
+CREATE INDEX IF NOT EXISTS "TemplateUsageLog_templateId_idx" ON "TemplateUsageLog"("templateId");
 
 -- CreateIndex
-CREATE INDEX "TemplateUsageLog_invoiceId_idx" ON "TemplateUsageLog"("invoiceId");
+CREATE INDEX IF NOT EXISTS "TemplateUsageLog_invoiceId_idx" ON "TemplateUsageLog"("invoiceId");
 
 -- CreateIndex
-CREATE INDEX "TemplateUsageLog_createdAt_idx" ON "TemplateUsageLog"("createdAt");
+CREATE INDEX IF NOT EXISTS "TemplateUsageLog_createdAt_idx" ON "TemplateUsageLog"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "invoice_config_organizationId_key" ON "invoice_config"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "invoice_config_organizationId_key" ON "invoice_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "invoice_config_organizationId_idx" ON "invoice_config"("organizationId");
+CREATE INDEX IF NOT EXISTS "invoice_config_organizationId_idx" ON "invoice_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyProgram_organizationId_idx" ON "LoyaltyProgram"("organizationId");
+CREATE INDEX IF NOT EXISTS "LoyaltyProgram_organizationId_idx" ON "LoyaltyProgram"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LoyaltyProgram_organizationId_name_key" ON "LoyaltyProgram"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "LoyaltyProgram_organizationId_name_key" ON "LoyaltyProgram"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LoyaltyTier_programId_minPoints_key" ON "LoyaltyTier"("programId", "minPoints");
+CREATE UNIQUE INDEX IF NOT EXISTS "LoyaltyTier_programId_minPoints_key" ON "LoyaltyTier"("programId", "minPoints");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LoyaltyTier_programId_name_key" ON "LoyaltyTier"("programId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "LoyaltyTier_programId_name_key" ON "LoyaltyTier"("programId", "name");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyRule_programId_idx" ON "LoyaltyRule"("programId");
+CREATE INDEX IF NOT EXISTS "LoyaltyRule_programId_idx" ON "LoyaltyRule"("programId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyReward_programId_idx" ON "LoyaltyReward"("programId");
+CREATE INDEX IF NOT EXISTS "LoyaltyReward_programId_idx" ON "LoyaltyReward"("programId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "LoyaltyVoucher_code_key" ON "LoyaltyVoucher"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "LoyaltyVoucher_code_key" ON "LoyaltyVoucher"("code");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyVoucher_customerId_idx" ON "LoyaltyVoucher"("customerId");
+CREATE INDEX IF NOT EXISTS "LoyaltyVoucher_customerId_idx" ON "LoyaltyVoucher"("customerId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyVoucher_programId_idx" ON "LoyaltyVoucher"("programId");
+CREATE INDEX IF NOT EXISTS "LoyaltyVoucher_programId_idx" ON "LoyaltyVoucher"("programId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyVoucher_code_idx" ON "LoyaltyVoucher"("code");
+CREATE INDEX IF NOT EXISTS "LoyaltyVoucher_code_idx" ON "LoyaltyVoucher"("code");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyTransaction_customerId_idx" ON "LoyaltyTransaction"("customerId");
+CREATE INDEX IF NOT EXISTS "LoyaltyTransaction_customerId_idx" ON "LoyaltyTransaction"("customerId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyTransaction_programId_idx" ON "LoyaltyTransaction"("programId");
+CREATE INDEX IF NOT EXISTS "LoyaltyTransaction_programId_idx" ON "LoyaltyTransaction"("programId");
 
 -- CreateIndex
-CREATE INDEX "LoyaltyTransaction_createdAt_idx" ON "LoyaltyTransaction"("createdAt");
+CREATE INDEX IF NOT EXISTS "LoyaltyTransaction_createdAt_idx" ON "LoyaltyTransaction"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "notification_template_organizationId_name_key" ON "notification_template"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "notification_template_organizationId_name_key" ON "notification_template"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "notification_dispatch_organizationId_status_idx" ON "notification_dispatch"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "notification_dispatch_organizationId_status_idx" ON "notification_dispatch"("organizationId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "notification_channel_config_organizationId_channel_key" ON "notification_channel_config"("organizationId", "channel");
+CREATE UNIQUE INDEX IF NOT EXISTS "notification_channel_config_organizationId_channel_key" ON "notification_channel_config"("organizationId", "channel");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "organization_slug_key" ON "organization"("slug");
+CREATE UNIQUE INDEX IF NOT EXISTS "organization_slug_key" ON "organization"("slug");
 
 -- CreateIndex
-CREATE INDEX "organization_slug_idx" ON "organization"("slug");
+CREATE INDEX IF NOT EXISTS "organization_slug_idx" ON "organization"("slug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "payment_credentials_organizationId_key" ON "payment_credentials"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "payment_credentials_organizationId_key" ON "payment_credentials"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "member_currentAttendanceLogId_key" ON "member"("currentAttendanceLogId");
+CREATE UNIQUE INDEX IF NOT EXISTS "member_currentAttendanceLogId_key" ON "member"("currentAttendanceLogId");
 
 -- CreateIndex
-CREATE INDEX "member_organizationId_userId_idx" ON "member"("organizationId", "userId");
+CREATE INDEX IF NOT EXISTS "member_organizationId_userId_idx" ON "member"("organizationId", "userId");
 
 -- CreateIndex
-CREATE INDEX "member_userId_idx" ON "member"("userId");
+CREATE INDEX IF NOT EXISTS "member_userId_idx" ON "member"("userId");
 
 -- CreateIndex
-CREATE INDEX "member_cardId_idx" ON "member"("cardId");
+CREATE INDEX IF NOT EXISTS "member_cardId_idx" ON "member"("cardId");
 
 -- CreateIndex
-CREATE INDEX "member_userId_cardId_idx" ON "member"("userId", "cardId");
+CREATE INDEX IF NOT EXISTS "member_userId_cardId_idx" ON "member"("userId", "cardId");
 
 -- CreateIndex
-CREATE INDEX "member_organizationId_idx" ON "member"("organizationId");
+CREATE INDEX IF NOT EXISTS "member_organizationId_idx" ON "member"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "member_isCheckedIn_idx" ON "member"("isCheckedIn");
+CREATE INDEX IF NOT EXISTS "member_isCheckedIn_idx" ON "member"("isCheckedIn");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "member_organizationId_userId_key" ON "member"("organizationId", "userId");
+CREATE UNIQUE INDEX IF NOT EXISTS "member_organizationId_userId_key" ON "member"("organizationId", "userId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "member_organizationId_cardId_key" ON "member"("organizationId", "cardId");
+CREATE UNIQUE INDEX IF NOT EXISTS "member_organizationId_cardId_key" ON "member"("organizationId", "cardId");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_memberId_idx" ON "attendance_log"("memberId");
+CREATE INDEX IF NOT EXISTS "attendance_log_memberId_idx" ON "attendance_log"("memberId");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_organizationId_idx" ON "attendance_log"("organizationId");
+CREATE INDEX IF NOT EXISTS "attendance_log_organizationId_idx" ON "attendance_log"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_checkInTime_idx" ON "attendance_log"("checkInTime");
+CREATE INDEX IF NOT EXISTS "attendance_log_checkInTime_idx" ON "attendance_log"("checkInTime");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_checkOutTime_idx" ON "attendance_log"("checkOutTime");
+CREATE INDEX IF NOT EXISTS "attendance_log_checkOutTime_idx" ON "attendance_log"("checkOutTime");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_checkInLocationId_idx" ON "attendance_log"("checkInLocationId");
+CREATE INDEX IF NOT EXISTS "attendance_log_checkInLocationId_idx" ON "attendance_log"("checkInLocationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "custom_role_organizationId_name_key" ON "custom_role"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "custom_role_organizationId_name_key" ON "custom_role"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "permission_set_organizationId_name_key" ON "permission_set"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "permission_set_organizationId_name_key" ON "permission_set"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "role_group_organizationId_name_key" ON "role_group"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "role_group_organizationId_name_key" ON "role_group"("organizationId", "name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "invitation_token_key" ON "invitation"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "invitation_token_key" ON "invitation"("token");
 
 -- CreateIndex
-CREATE INDEX "invitation_email_idx" ON "invitation"("email");
+CREATE INDEX IF NOT EXISTS "invitation_email_idx" ON "invitation"("email");
 
 -- CreateIndex
-CREATE INDEX "invitation_organizationId_idx" ON "invitation"("organizationId");
+CREATE INDEX IF NOT EXISTS "invitation_organizationId_idx" ON "invitation"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "invitation_inviterId_idx" ON "invitation"("inviterId");
+CREATE INDEX IF NOT EXISTS "invitation_inviterId_idx" ON "invitation"("inviterId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "organization_settings_organizationId_key" ON "organization_settings"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "organization_settings_organizationId_key" ON "organization_settings"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "department_activeBudgetId_key" ON "department"("activeBudgetId");
+CREATE UNIQUE INDEX IF NOT EXISTS "department_activeBudgetId_key" ON "department"("activeBudgetId");
 
 -- CreateIndex
-CREATE INDEX "department_organizationId_idx" ON "department"("organizationId");
+CREATE INDEX IF NOT EXISTS "department_organizationId_idx" ON "department"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "department_parentId_idx" ON "department"("parentId");
+CREATE INDEX IF NOT EXISTS "department_parentId_idx" ON "department"("parentId");
 
 -- CreateIndex
-CREATE INDEX "department_locationId_idx" ON "department"("locationId");
+CREATE INDEX IF NOT EXISTS "department_locationId_idx" ON "department"("locationId");
 
 -- CreateIndex
-CREATE INDEX "department_costCenterId_idx" ON "department"("costCenterId");
+CREATE INDEX IF NOT EXISTS "department_costCenterId_idx" ON "department"("costCenterId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "department_organizationId_name_key" ON "department"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "department_organizationId_name_key" ON "department"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "department_member_memberId_idx" ON "department_member"("memberId");
+CREATE INDEX IF NOT EXISTS "department_member_memberId_idx" ON "department_member"("memberId");
 
 -- CreateIndex
-CREATE INDEX "department_member_departmentId_idx" ON "department_member"("departmentId");
+CREATE INDEX IF NOT EXISTS "department_member_departmentId_idx" ON "department_member"("departmentId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "department_member_departmentId_memberId_key" ON "department_member"("departmentId", "memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "department_member_departmentId_memberId_key" ON "department_member"("departmentId", "memberId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "subscriptions_organizationId_key" ON "subscriptions"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_organizationId_key" ON "subscriptions"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "subscriptions_dodo_customer_id_key" ON "subscriptions"("dodo_customer_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_dodo_customer_id_key" ON "subscriptions"("dodo_customer_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "subscriptions_dodo_subscription_id_key" ON "subscriptions"("dodo_subscription_id");
+CREATE UNIQUE INDEX IF NOT EXISTS "subscriptions_dodo_subscription_id_key" ON "subscriptions"("dodo_subscription_id");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "device_setup_token_tokenHash_key" ON "device_setup_token"("tokenHash");
+CREATE UNIQUE INDEX IF NOT EXISTS "device_setup_token_tokenHash_key" ON "device_setup_token"("tokenHash");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "device_setup_token_jti_key" ON "device_setup_token"("jti");
+CREATE UNIQUE INDEX IF NOT EXISTS "device_setup_token_jti_key" ON "device_setup_token"("jti");
 
 -- CreateIndex
-CREATE INDEX "device_setup_token_organizationId_idx" ON "device_setup_token"("organizationId");
+CREATE INDEX IF NOT EXISTS "device_setup_token_organizationId_idx" ON "device_setup_token"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "device_setup_token_jti_idx" ON "device_setup_token"("jti");
+CREATE INDEX IF NOT EXISTS "device_setup_token_jti_idx" ON "device_setup_token"("jti");
 
 -- CreateIndex
-CREATE INDEX "device_setup_token_locationId_idx" ON "device_setup_token"("locationId");
+CREATE INDEX IF NOT EXISTS "device_setup_token_locationId_idx" ON "device_setup_token"("locationId");
 
 -- CreateIndex
-CREATE INDEX "device_setup_token_createdById_idx" ON "device_setup_token"("createdById");
+CREATE INDEX IF NOT EXISTS "device_setup_token_createdById_idx" ON "device_setup_token"("createdById");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "device_registry_apiKeyId_key" ON "device_registry"("apiKeyId");
+CREATE UNIQUE INDEX IF NOT EXISTS "device_registry_apiKeyId_key" ON "device_registry"("apiKeyId");
 
 -- CreateIndex
-CREATE INDEX "device_registry_organizationId_idx" ON "device_registry"("organizationId");
+CREATE INDEX IF NOT EXISTS "device_registry_organizationId_idx" ON "device_registry"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "device_registry_locationId_idx" ON "device_registry"("locationId");
+CREATE INDEX IF NOT EXISTS "device_registry_locationId_idx" ON "device_registry"("locationId");
 
 -- CreateIndex
-CREATE INDEX "device_registry_status_idx" ON "device_registry"("status");
+CREATE INDEX IF NOT EXISTS "device_registry_status_idx" ON "device_registry"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "api_key_keyPrefix_key" ON "api_key"("keyPrefix");
+CREATE UNIQUE INDEX IF NOT EXISTS "api_key_keyPrefix_key" ON "api_key"("keyPrefix");
 
 -- CreateIndex
-CREATE INDEX "api_key_organizationId_idx" ON "api_key"("organizationId");
+CREATE INDEX IF NOT EXISTS "api_key_organizationId_idx" ON "api_key"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "api_key_createdById_idx" ON "api_key"("createdById");
+CREATE INDEX IF NOT EXISTS "api_key_createdById_idx" ON "api_key"("createdById");
 
 -- CreateIndex
-CREATE INDEX "api_key_locationId_idx" ON "api_key"("locationId");
+CREATE INDEX IF NOT EXISTS "api_key_locationId_idx" ON "api_key"("locationId");
 
 -- CreateIndex
-CREATE INDEX "api_key_isActive_idx" ON "api_key"("isActive");
+CREATE INDEX IF NOT EXISTS "api_key_isActive_idx" ON "api_key"("isActive");
 
 -- CreateIndex
-CREATE INDEX "api_key_rateLimitTier_idx" ON "api_key"("rateLimitTier");
+CREATE INDEX IF NOT EXISTS "api_key_rateLimitTier_idx" ON "api_key"("rateLimitTier");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "api_key_id_organizationId_key" ON "api_key"("id", "organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "api_key_id_organizationId_key" ON "api_key"("id", "organizationId");
 
 -- CreateIndex
-CREATE INDEX "reports_organizationId_type_idx" ON "reports"("organizationId", "type");
+CREATE INDEX IF NOT EXISTS "reports_organizationId_type_idx" ON "reports"("organizationId", "type");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "reports_organizationId_type_startDate_endDate_key" ON "reports"("organizationId", "type", "startDate", "endDate");
+CREATE UNIQUE INDEX IF NOT EXISTS "reports_organizationId_type_startDate_endDate_key" ON "reports"("organizationId", "type", "startDate", "endDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plane_configuration_organizationId_key" ON "plane_configuration"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "plane_configuration_organizationId_key" ON "plane_configuration"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plane_configuration_workspaceId_key" ON "plane_configuration"("workspaceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "plane_configuration_workspaceId_key" ON "plane_configuration"("workspaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "plane_configuration_workspaceSlug_key" ON "plane_configuration"("workspaceSlug");
+CREATE UNIQUE INDEX IF NOT EXISTS "plane_configuration_workspaceSlug_key" ON "plane_configuration"("workspaceSlug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PriceList_code_key" ON "PriceList"("code");
+CREATE UNIQUE INDEX IF NOT EXISTS "PriceList_code_key" ON "PriceList"("code");
 
 -- CreateIndex
-CREATE INDEX "PriceList_organizationId_isActive_idx" ON "PriceList"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "PriceList_organizationId_isActive_idx" ON "PriceList"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "PriceList_organizationId_approvalStatus_idx" ON "PriceList"("organizationId", "approvalStatus");
+CREATE INDEX IF NOT EXISTS "PriceList_organizationId_approvalStatus_idx" ON "PriceList"("organizationId", "approvalStatus");
 
 -- CreateIndex
-CREATE INDEX "PriceList_validFrom_validTo_idx" ON "PriceList"("validFrom", "validTo");
+CREATE INDEX IF NOT EXISTS "PriceList_validFrom_validTo_idx" ON "PriceList"("validFrom", "validTo");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PriceList_organizationId_code_key" ON "PriceList"("organizationId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "PriceList_organizationId_code_key" ON "PriceList"("organizationId", "code");
 
 -- CreateIndex
-CREATE INDEX "PriceListItem_variantId_idx" ON "PriceListItem"("variantId");
+CREATE INDEX IF NOT EXISTS "PriceListItem_variantId_idx" ON "PriceListItem"("variantId");
 
 -- CreateIndex
-CREATE INDEX "PriceListItem_sellingUnitId_idx" ON "PriceListItem"("sellingUnitId");
+CREATE INDEX IF NOT EXISTS "PriceListItem_sellingUnitId_idx" ON "PriceListItem"("sellingUnitId");
 
 -- CreateIndex
-CREATE INDEX "PriceListItem_updatedAt_idx" ON "PriceListItem"("updatedAt");
+CREATE INDEX IF NOT EXISTS "PriceListItem_updatedAt_idx" ON "PriceListItem"("updatedAt");
 
 -- CreateIndex
-CREATE INDEX "PriceListItem_deletedAt_idx" ON "PriceListItem"("deletedAt");
+CREATE INDEX IF NOT EXISTS "PriceListItem_deletedAt_idx" ON "PriceListItem"("deletedAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PriceListItem_priceListId_variantId_sellingUnitId_minQuanti_key" ON "PriceListItem"("priceListId", "variantId", "sellingUnitId", "minQuantity");
+CREATE UNIQUE INDEX IF NOT EXISTS "PriceListItem_priceListId_variantId_sellingUnitId_minQuanti_key" ON "PriceListItem"("priceListId", "variantId", "sellingUnitId", "minQuantity");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PriceListItem_priceListId_variantId_minQuantity_key" ON "PriceListItem"("priceListId", "variantId", "minQuantity");
+CREATE UNIQUE INDEX IF NOT EXISTS "PriceListItem_priceListId_variantId_minQuantity_key" ON "PriceListItem"("priceListId", "variantId", "minQuantity");
 
 -- CreateIndex
-CREATE INDEX "PricingRule_priceListId_isActive_idx" ON "PricingRule"("priceListId", "isActive");
+CREATE INDEX IF NOT EXISTS "PricingRule_priceListId_isActive_idx" ON "PricingRule"("priceListId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "PricingRule_organizationId_isActive_idx" ON "PricingRule"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "PricingRule_organizationId_isActive_idx" ON "PricingRule"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "PricingRule_validFrom_validTo_idx" ON "PricingRule"("validFrom", "validTo");
+CREATE INDEX IF NOT EXISTS "PricingRule_validFrom_validTo_idx" ON "PricingRule"("validFrom", "validTo");
 
 -- CreateIndex
-CREATE INDEX "PricingBundle_organizationId_isActive_idx" ON "PricingBundle"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "PricingBundle_organizationId_isActive_idx" ON "PricingBundle"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "PricingBundle_bundleType_idx" ON "PricingBundle"("bundleType");
+CREATE INDEX IF NOT EXISTS "PricingBundle_bundleType_idx" ON "PricingBundle"("bundleType");
 
 -- CreateIndex
-CREATE INDEX "PricingBundle_validFrom_validTo_idx" ON "PricingBundle"("validFrom", "validTo");
+CREATE INDEX IF NOT EXISTS "PricingBundle_validFrom_validTo_idx" ON "PricingBundle"("validFrom", "validTo");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PricingBundle_organizationId_code_key" ON "PricingBundle"("organizationId", "code");
+CREATE UNIQUE INDEX IF NOT EXISTS "PricingBundle_organizationId_code_key" ON "PricingBundle"("organizationId", "code");
 
 -- CreateIndex
-CREATE INDEX "PricingBundleItem_variantId_idx" ON "PricingBundleItem"("variantId");
+CREATE INDEX IF NOT EXISTS "PricingBundleItem_variantId_idx" ON "PricingBundleItem"("variantId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "PricingBundleItem_bundleId_variantId_itemRole_key" ON "PricingBundleItem"("bundleId", "variantId", "itemRole");
+CREATE UNIQUE INDEX IF NOT EXISTS "PricingBundleItem_bundleId_variantId_itemRole_key" ON "PricingBundleItem"("bundleId", "variantId", "itemRole");
 
 -- CreateIndex
-CREATE INDEX "PriceHistory_priceListItemId_idx" ON "PriceHistory"("priceListItemId");
+CREATE INDEX IF NOT EXISTS "PriceHistory_priceListItemId_idx" ON "PriceHistory"("priceListItemId");
 
 -- CreateIndex
-CREATE INDEX "PriceHistory_createdAt_idx" ON "PriceHistory"("createdAt");
+CREATE INDEX IF NOT EXISTS "PriceHistory_createdAt_idx" ON "PriceHistory"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "PriceHistory_changedBy_idx" ON "PriceHistory"("changedBy");
+CREATE INDEX IF NOT EXISTS "PriceHistory_changedBy_idx" ON "PriceHistory"("changedBy");
 
 -- CreateIndex
-CREATE INDEX "PriceImportJob_organizationId_status_idx" ON "PriceImportJob"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "PriceImportJob_organizationId_status_idx" ON "PriceImportJob"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "PriceImportJob_createdAt_idx" ON "PriceImportJob"("createdAt");
+CREATE INDEX IF NOT EXISTS "PriceImportJob_createdAt_idx" ON "PriceImportJob"("createdAt");
 
 -- CreateIndex
-CREATE INDEX "price_change_request_organizationId_status_idx" ON "price_change_request"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "price_change_request_organizationId_status_idx" ON "price_change_request"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "price_change_request_priceListItemId_idx" ON "price_change_request"("priceListItemId");
+CREATE INDEX IF NOT EXISTS "price_change_request_priceListItemId_idx" ON "price_change_request"("priceListItemId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "scryme_configuration_organizationId_key" ON "scryme_configuration"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "scryme_configuration_organizationId_key" ON "scryme_configuration"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "scryme_configuration_workspaceId_key" ON "scryme_configuration"("workspaceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "scryme_configuration_workspaceId_key" ON "scryme_configuration"("workspaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "scryme_configuration_workspaceSlug_key" ON "scryme_configuration"("workspaceSlug");
+CREATE UNIQUE INDEX IF NOT EXISTS "scryme_configuration_workspaceSlug_key" ON "scryme_configuration"("workspaceSlug");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "scryme_messages_messageId_key" ON "scryme_messages"("messageId");
+CREATE UNIQUE INDEX IF NOT EXISTS "scryme_messages_messageId_key" ON "scryme_messages"("messageId");
 
 -- CreateIndex
-CREATE INDEX "scryme_messages_organizationId_idx" ON "scryme_messages"("organizationId");
+CREATE INDEX IF NOT EXISTS "scryme_messages_organizationId_idx" ON "scryme_messages"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "scryme_messages_relatedId_idx" ON "scryme_messages"("relatedId");
+CREATE INDEX IF NOT EXISTS "scryme_messages_relatedId_idx" ON "scryme_messages"("relatedId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "standalone_setup_key_token_key" ON "standalone_setup_key"("token");
+CREATE UNIQUE INDEX IF NOT EXISTS "standalone_setup_key_token_key" ON "standalone_setup_key"("token");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "standalone_device_machineId_key" ON "standalone_device"("machineId");
+CREATE UNIQUE INDEX IF NOT EXISTS "standalone_device_machineId_key" ON "standalone_device"("machineId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "standalone_device_key_key_key" ON "standalone_device_key"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "standalone_device_key_key_key" ON "standalone_device_key"("key");
 
 -- CreateIndex
-CREATE INDEX "reorder_rule_organizationId_isActive_idx" ON "reorder_rule"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "reorder_rule_organizationId_isActive_idx" ON "reorder_rule"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "reorder_rule_locationId_idx" ON "reorder_rule"("locationId");
+CREATE INDEX IF NOT EXISTS "reorder_rule_locationId_idx" ON "reorder_rule"("locationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "reorder_rule_organizationId_productId_variantId_locationId_key" ON "reorder_rule"("organizationId", "productId", "variantId", "locationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "reorder_rule_organizationId_productId_variantId_locationId_key" ON "reorder_rule"("organizationId", "productId", "variantId", "locationId");
 
 -- CreateIndex
-CREATE INDEX "reorder_alert_organizationId_status_idx" ON "reorder_alert"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "reorder_alert_organizationId_status_idx" ON "reorder_alert"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "reorder_alert_alertDate_idx" ON "reorder_alert"("alertDate");
+CREATE INDEX IF NOT EXISTS "reorder_alert_alertDate_idx" ON "reorder_alert"("alertDate");
 
 -- CreateIndex
-CREATE INDEX "stock_audit_log_organizationId_entityType_entityId_idx" ON "stock_audit_log"("organizationId", "entityType", "entityId");
+CREATE INDEX IF NOT EXISTS "stock_audit_log_organizationId_entityType_entityId_idx" ON "stock_audit_log"("organizationId", "entityType", "entityId");
 
 -- CreateIndex
-CREATE INDEX "stock_audit_log_performedBy_idx" ON "stock_audit_log"("performedBy");
+CREATE INDEX IF NOT EXISTS "stock_audit_log_performedBy_idx" ON "stock_audit_log"("performedBy");
 
 -- CreateIndex
-CREATE INDEX "stock_audit_log_timestamp_idx" ON "stock_audit_log"("timestamp");
+CREATE INDEX IF NOT EXISTS "stock_audit_log_timestamp_idx" ON "stock_audit_log"("timestamp");
 
 -- CreateIndex
-CREATE INDEX "purchase_approval_chain_organizationId_isActive_idx" ON "purchase_approval_chain"("organizationId", "isActive");
+CREATE INDEX IF NOT EXISTS "purchase_approval_chain_organizationId_isActive_idx" ON "purchase_approval_chain"("organizationId", "isActive");
 
 -- CreateIndex
-CREATE INDEX "purchase_approval_step_chainId_idx" ON "purchase_approval_step"("chainId");
+CREATE INDEX IF NOT EXISTS "purchase_approval_step_chainId_idx" ON "purchase_approval_step"("chainId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "purchase_approval_step_chainId_stepOrder_key" ON "purchase_approval_step"("chainId", "stepOrder");
+CREATE UNIQUE INDEX IF NOT EXISTS "purchase_approval_step_chainId_stepOrder_key" ON "purchase_approval_step"("chainId", "stepOrder");
 
 -- CreateIndex
-CREATE INDEX "stock_take_organizationId_status_idx" ON "stock_take"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "stock_take_organizationId_status_idx" ON "stock_take"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "stock_take_locationId_idx" ON "stock_take"("locationId");
+CREATE INDEX IF NOT EXISTS "stock_take_locationId_idx" ON "stock_take"("locationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stock_take_organizationId_stockTakeNumber_key" ON "stock_take"("organizationId", "stockTakeNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "stock_take_organizationId_stockTakeNumber_key" ON "stock_take"("organizationId", "stockTakeNumber");
 
 -- CreateIndex
-CREATE INDEX "stock_take_item_stockTakeId_idx" ON "stock_take_item"("stockTakeId");
+CREATE INDEX IF NOT EXISTS "stock_take_item_stockTakeId_idx" ON "stock_take_item"("stockTakeId");
 
 -- CreateIndex
-CREATE INDEX "stock_take_item_variantId_idx" ON "stock_take_item"("variantId");
+CREATE INDEX IF NOT EXISTS "stock_take_item_variantId_idx" ON "stock_take_item"("variantId");
 
 -- CreateIndex
-CREATE INDEX "supplier_performance_supplierId_idx" ON "supplier_performance"("supplierId");
+CREATE INDEX IF NOT EXISTS "supplier_performance_supplierId_idx" ON "supplier_performance"("supplierId");
 
 -- CreateIndex
-CREATE INDEX "supplier_performance_organizationId_idx" ON "supplier_performance"("organizationId");
+CREATE INDEX IF NOT EXISTS "supplier_performance_organizationId_idx" ON "supplier_performance"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "supplier_performance_organizationId_supplierId_periodStart__key" ON "supplier_performance"("organizationId", "supplierId", "periodStart", "periodEnd");
+CREATE UNIQUE INDEX IF NOT EXISTS "supplier_performance_organizationId_supplierId_periodStart__key" ON "supplier_performance"("organizationId", "supplierId", "periodStart", "periodEnd");
 
 -- CreateIndex
-CREATE INDEX "stock_valuation_organizationId_valuationDate_idx" ON "stock_valuation"("organizationId", "valuationDate");
+CREATE INDEX IF NOT EXISTS "stock_valuation_organizationId_valuationDate_idx" ON "stock_valuation"("organizationId", "valuationDate");
 
 -- CreateIndex
-CREATE INDEX "stock_valuation_locationId_idx" ON "stock_valuation"("locationId");
+CREATE INDEX IF NOT EXISTS "stock_valuation_locationId_idx" ON "stock_valuation"("locationId");
 
 -- CreateIndex
-CREATE INDEX "CycleCountConfig_organizationId_idx" ON "CycleCountConfig"("organizationId");
+CREATE INDEX IF NOT EXISTS "CycleCountConfig_organizationId_idx" ON "CycleCountConfig"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_expiryDate_idx" ON "StockBatch"("expiryDate");
+CREATE INDEX IF NOT EXISTS "StockBatch_expiryDate_idx" ON "StockBatch"("expiryDate");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_receivedDate_idx" ON "StockBatch"("receivedDate");
+CREATE INDEX IF NOT EXISTS "StockBatch_receivedDate_idx" ON "StockBatch"("receivedDate");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_currentQuantity_idx" ON "StockBatch"("currentQuantity");
+CREATE INDEX IF NOT EXISTS "StockBatch_currentQuantity_idx" ON "StockBatch"("currentQuantity");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_locationId_idx" ON "StockBatch"("locationId");
+CREATE INDEX IF NOT EXISTS "StockBatch_locationId_idx" ON "StockBatch"("locationId");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_organizationId_idx" ON "StockBatch"("organizationId");
+CREATE INDEX IF NOT EXISTS "StockBatch_organizationId_idx" ON "StockBatch"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_storageUnitId_idx" ON "StockBatch"("storageUnitId");
+CREATE INDEX IF NOT EXISTS "StockBatch_storageUnitId_idx" ON "StockBatch"("storageUnitId");
 
 -- CreateIndex
-CREATE INDEX "StockBatch_positionId_idx" ON "StockBatch"("positionId");
+CREATE INDEX IF NOT EXISTS "StockBatch_positionId_idx" ON "StockBatch"("positionId");
 
 -- CreateIndex
-CREATE INDEX "StockReceipt_organizationId_idx" ON "StockReceipt"("organizationId");
+CREATE INDEX IF NOT EXISTS "StockReceipt_organizationId_idx" ON "StockReceipt"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "StockReceipt_purchaseId_idx" ON "StockReceipt"("purchaseId");
+CREATE INDEX IF NOT EXISTS "StockReceipt_purchaseId_idx" ON "StockReceipt"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "ProductVariantStock_productId_idx" ON "ProductVariantStock"("productId");
+CREATE INDEX IF NOT EXISTS "ProductVariantStock_productId_idx" ON "ProductVariantStock"("productId");
 
 -- CreateIndex
-CREATE INDEX "ProductVariantStock_locationId_idx" ON "ProductVariantStock"("locationId");
+CREATE INDEX IF NOT EXISTS "ProductVariantStock_locationId_idx" ON "ProductVariantStock"("locationId");
 
 -- CreateIndex
-CREATE INDEX "ProductVariantStock_organizationId_idx" ON "ProductVariantStock"("organizationId");
+CREATE INDEX IF NOT EXISTS "ProductVariantStock_organizationId_idx" ON "ProductVariantStock"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "ProductVariantStock_variantId_locationId_key" ON "ProductVariantStock"("variantId", "locationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "ProductVariantStock_variantId_locationId_key" ON "ProductVariantStock"("variantId", "locationId");
 
 -- CreateIndex
-CREATE INDEX "SerialNumber_variantId_idx" ON "SerialNumber"("variantId");
+CREATE INDEX IF NOT EXISTS "SerialNumber_variantId_idx" ON "SerialNumber"("variantId");
 
 -- CreateIndex
-CREATE INDEX "SerialNumber_stockBatchId_idx" ON "SerialNumber"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "SerialNumber_stockBatchId_idx" ON "SerialNumber"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "SerialNumber_organizationId_idx" ON "SerialNumber"("organizationId");
+CREATE INDEX IF NOT EXISTS "SerialNumber_organizationId_idx" ON "SerialNumber"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "SerialNumber_organizationId_serialNumber_key" ON "SerialNumber"("organizationId", "serialNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "SerialNumber_organizationId_serialNumber_key" ON "SerialNumber"("organizationId", "serialNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "StockMovement_adjustmentId_key" ON "StockMovement"("adjustmentId");
+CREATE UNIQUE INDEX IF NOT EXISTS "StockMovement_adjustmentId_key" ON "StockMovement"("adjustmentId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_stockBatchId_idx" ON "StockMovement"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "StockMovement_stockBatchId_idx" ON "StockMovement"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_fromLocationId_idx" ON "StockMovement"("fromLocationId");
+CREATE INDEX IF NOT EXISTS "StockMovement_fromLocationId_idx" ON "StockMovement"("fromLocationId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_toLocationId_idx" ON "StockMovement"("toLocationId");
+CREATE INDEX IF NOT EXISTS "StockMovement_toLocationId_idx" ON "StockMovement"("toLocationId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_movementType_referenceId_idx" ON "StockMovement"("movementType", "referenceId");
+CREATE INDEX IF NOT EXISTS "StockMovement_movementType_referenceId_idx" ON "StockMovement"("movementType", "referenceId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_movementDate_idx" ON "StockMovement"("movementDate");
+CREATE INDEX IF NOT EXISTS "StockMovement_movementDate_idx" ON "StockMovement"("movementDate");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_memberId_idx" ON "StockMovement"("memberId");
+CREATE INDEX IF NOT EXISTS "StockMovement_memberId_idx" ON "StockMovement"("memberId");
 
 -- CreateIndex
-CREATE INDEX "StockMovement_organizationId_idx" ON "StockMovement"("organizationId");
+CREATE INDEX IF NOT EXISTS "StockMovement_organizationId_idx" ON "StockMovement"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "StockAdjustment_stockBatchId_idx" ON "StockAdjustment"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "StockAdjustment_stockBatchId_idx" ON "StockAdjustment"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "StockAdjustment_adjustmentDate_idx" ON "StockAdjustment"("adjustmentDate");
+CREATE INDEX IF NOT EXISTS "StockAdjustment_adjustmentDate_idx" ON "StockAdjustment"("adjustmentDate");
 
 -- CreateIndex
-CREATE INDEX "StockAdjustment_locationId_idx" ON "StockAdjustment"("locationId");
+CREATE INDEX IF NOT EXISTS "StockAdjustment_locationId_idx" ON "StockAdjustment"("locationId");
 
 -- CreateIndex
-CREATE INDEX "StockAdjustment_memberId_idx" ON "StockAdjustment"("memberId");
+CREATE INDEX IF NOT EXISTS "StockAdjustment_memberId_idx" ON "StockAdjustment"("memberId");
 
 -- CreateIndex
-CREATE INDEX "StockAdjustment_organizationId_idx" ON "StockAdjustment"("organizationId");
+CREATE INDEX IF NOT EXISTS "StockAdjustment_organizationId_idx" ON "StockAdjustment"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stock_assembly_assemblyNumber_key" ON "stock_assembly"("assemblyNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "stock_assembly_assemblyNumber_key" ON "stock_assembly"("assemblyNumber");
 
 -- CreateIndex
-CREATE INDEX "stock_assembly_organizationId_idx" ON "stock_assembly"("organizationId");
+CREATE INDEX IF NOT EXISTS "stock_assembly_organizationId_idx" ON "stock_assembly"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "stock_assembly_variantId_idx" ON "stock_assembly"("variantId");
+CREATE INDEX IF NOT EXISTS "stock_assembly_variantId_idx" ON "stock_assembly"("variantId");
 
 -- CreateIndex
-CREATE INDEX "stock_assembly_item_assemblyId_idx" ON "stock_assembly_item"("assemblyId");
+CREATE INDEX IF NOT EXISTS "stock_assembly_item_assemblyId_idx" ON "stock_assembly_item"("assemblyId");
 
 -- CreateIndex
-CREATE INDEX "stock_assembly_item_variantId_idx" ON "stock_assembly_item"("variantId");
+CREATE INDEX IF NOT EXISTS "stock_assembly_item_variantId_idx" ON "stock_assembly_item"("variantId");
 
 -- CreateIndex
-CREATE INDEX "stock_request_organizationId_status_idx" ON "stock_request"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "stock_request_organizationId_status_idx" ON "stock_request"("organizationId", "status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stock_request_organizationId_requestNumber_key" ON "stock_request"("organizationId", "requestNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "stock_request_organizationId_requestNumber_key" ON "stock_request"("organizationId", "requestNumber");
 
 -- CreateIndex
-CREATE INDEX "stock_transfer_organizationId_status_idx" ON "stock_transfer"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "stock_transfer_organizationId_status_idx" ON "stock_transfer"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "stock_transfer_stockRequestId_idx" ON "stock_transfer"("stockRequestId");
+CREATE INDEX IF NOT EXISTS "stock_transfer_stockRequestId_idx" ON "stock_transfer"("stockRequestId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stock_transfer_organizationId_transferNumber_key" ON "stock_transfer"("organizationId", "transferNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "stock_transfer_organizationId_transferNumber_key" ON "stock_transfer"("organizationId", "transferNumber");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "stock_report_templates_organizationId_name_key" ON "stock_report_templates"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "stock_report_templates_organizationId_name_key" ON "stock_report_templates"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "generated_stock_reports_organizationId_templateId_idx" ON "generated_stock_reports"("organizationId", "templateId");
+CREATE INDEX IF NOT EXISTS "generated_stock_reports_organizationId_templateId_idx" ON "generated_stock_reports"("organizationId", "templateId");
 
 -- CreateIndex
-CREATE INDEX "generated_stock_reports_generatedById_idx" ON "generated_stock_reports"("generatedById");
+CREATE INDEX IF NOT EXISTS "generated_stock_reports_generatedById_idx" ON "generated_stock_reports"("generatedById");
 
 -- CreateIndex
-CREATE INDEX "report_automations_organizationId_status_idx" ON "report_automations"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "report_automations_organizationId_status_idx" ON "report_automations"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "report_automations_nextRunAt_idx" ON "report_automations"("nextRunAt");
+CREATE INDEX IF NOT EXISTS "report_automations_nextRunAt_idx" ON "report_automations"("nextRunAt");
 
 -- CreateIndex
-CREATE INDEX "report_automations_templateId_idx" ON "report_automations"("templateId");
+CREATE INDEX IF NOT EXISTS "report_automations_templateId_idx" ON "report_automations"("templateId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "report_automations_organizationId_name_key" ON "report_automations"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "report_automations_organizationId_name_key" ON "report_automations"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "report_automation_executions_createdAt_idx" ON "report_automation_executions"("createdAt");
+CREATE INDEX IF NOT EXISTS "report_automation_executions_createdAt_idx" ON "report_automation_executions"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "report_channels_organizationId_name_key" ON "report_channels"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "report_channels_organizationId_name_key" ON "report_channels"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "StockReconciliation_organizationId_idx" ON "StockReconciliation"("organizationId");
+CREATE INDEX IF NOT EXISTS "StockReconciliation_organizationId_idx" ON "StockReconciliation"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "StockReconciliation_locationId_idx" ON "StockReconciliation"("locationId");
+CREATE INDEX IF NOT EXISTS "StockReconciliation_locationId_idx" ON "StockReconciliation"("locationId");
 
 -- CreateIndex
-CREATE INDEX "StockReconciliation_status_idx" ON "StockReconciliation"("status");
+CREATE INDEX IF NOT EXISTS "StockReconciliation_status_idx" ON "StockReconciliation"("status");
 
 -- CreateIndex
-CREATE INDEX "StockReconciliation_reconciliationDate_idx" ON "StockReconciliation"("reconciliationDate");
+CREATE INDEX IF NOT EXISTS "StockReconciliation_reconciliationDate_idx" ON "StockReconciliation"("reconciliationDate");
 
 -- CreateIndex
-CREATE INDEX "ReconciliationItem_reconciliationId_idx" ON "ReconciliationItem"("reconciliationId");
+CREATE INDEX IF NOT EXISTS "ReconciliationItem_reconciliationId_idx" ON "ReconciliationItem"("reconciliationId");
 
 -- CreateIndex
-CREATE INDEX "ReconciliationItem_productVariantId_idx" ON "ReconciliationItem"("productVariantId");
+CREATE INDEX IF NOT EXISTS "ReconciliationItem_productVariantId_idx" ON "ReconciliationItem"("productVariantId");
 
 -- CreateIndex
-CREATE INDEX "MovementReconciliationLink_reconciliationId_idx" ON "MovementReconciliationLink"("reconciliationId");
+CREATE INDEX IF NOT EXISTS "MovementReconciliationLink_reconciliationId_idx" ON "MovementReconciliationLink"("reconciliationId");
 
 -- CreateIndex
-CREATE INDEX "MovementReconciliationLink_movementId_idx" ON "MovementReconciliationLink"("movementId");
+CREATE INDEX IF NOT EXISTS "MovementReconciliationLink_movementId_idx" ON "MovementReconciliationLink"("movementId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "MovementReconciliationLink_reconciliationId_movementId_key" ON "MovementReconciliationLink"("reconciliationId", "movementId");
+CREATE UNIQUE INDEX IF NOT EXISTS "MovementReconciliationLink_reconciliationId_movementId_key" ON "MovementReconciliationLink"("reconciliationId", "movementId");
 
 -- CreateIndex
-CREATE INDEX "ActionAuditLog_organizationId_idx" ON "ActionAuditLog"("organizationId");
+CREATE INDEX IF NOT EXISTS "ActionAuditLog_organizationId_idx" ON "ActionAuditLog"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "ActionAuditLog_memberId_idx" ON "ActionAuditLog"("memberId");
+CREATE INDEX IF NOT EXISTS "ActionAuditLog_memberId_idx" ON "ActionAuditLog"("memberId");
 
 -- CreateIndex
-CREATE INDEX "ActionAuditLog_action_idx" ON "ActionAuditLog"("action");
+CREATE INDEX IF NOT EXISTS "ActionAuditLog_action_idx" ON "ActionAuditLog"("action");
 
 -- CreateIndex
-CREATE INDEX "ActionAuditLog_resourceType_resourceId_idx" ON "ActionAuditLog"("resourceType", "resourceId");
+CREATE INDEX IF NOT EXISTS "ActionAuditLog_resourceType_resourceId_idx" ON "ActionAuditLog"("resourceType", "resourceId");
 
 -- CreateIndex
-CREATE INDEX "ActionAuditLog_createdAt_idx" ON "ActionAuditLog"("createdAt");
+CREATE INDEX IF NOT EXISTS "ActionAuditLog_createdAt_idx" ON "ActionAuditLog"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tax_authority_organizationId_name_key" ON "tax_authority"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "tax_authority_organizationId_name_key" ON "tax_authority"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "tax_organizationId_idx" ON "tax"("organizationId");
+CREATE INDEX IF NOT EXISTS "tax_organizationId_idx" ON "tax"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tax_organizationId_name_key" ON "tax"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "tax_organizationId_name_key" ON "tax"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "tax_filing_taxAuthorityId_periodEndDate_idx" ON "tax_filing"("taxAuthorityId", "periodEndDate");
+CREATE INDEX IF NOT EXISTS "tax_filing_taxAuthorityId_periodEndDate_idx" ON "tax_filing"("taxAuthorityId", "periodEndDate");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "tax_filing_organizationId_filingNumber_key" ON "tax_filing"("organizationId", "filingNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "tax_filing_organizationId_filingNumber_key" ON "tax_filing"("organizationId", "filingNumber");
 
 -- CreateIndex
-CREATE INDEX "tax_payment_filingId_idx" ON "tax_payment"("filingId");
+CREATE INDEX IF NOT EXISTS "tax_payment_filingId_idx" ON "tax_payment"("filingId");
 
 -- CreateIndex
-CREATE INDEX "applied_tax_transactionId_idx" ON "applied_tax"("transactionId");
+CREATE INDEX IF NOT EXISTS "applied_tax_transactionId_idx" ON "applied_tax"("transactionId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "applied_expense_tax_expenseId_taxId_key" ON "applied_expense_tax"("expenseId", "taxId");
+CREATE UNIQUE INDEX IF NOT EXISTS "applied_expense_tax_expenseId_taxId_key" ON "applied_expense_tax"("expenseId", "taxId");
 
 -- CreateIndex
-CREATE INDEX "applied_purchase_tax_purchaseId_idx" ON "applied_purchase_tax"("purchaseId");
+CREATE INDEX IF NOT EXISTS "applied_purchase_tax_purchaseId_idx" ON "applied_purchase_tax"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "transaction_organizationId_status_idx" ON "transaction"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "transaction_organizationId_status_idx" ON "transaction"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "transaction_organizationId_type_idx" ON "transaction"("organizationId", "type");
+CREATE INDEX IF NOT EXISTS "transaction_organizationId_type_idx" ON "transaction"("organizationId", "type");
 
 -- CreateIndex
-CREATE INDEX "transaction_customerId_idx" ON "transaction"("customerId");
+CREATE INDEX IF NOT EXISTS "transaction_customerId_idx" ON "transaction"("customerId");
 
 -- CreateIndex
-CREATE INDEX "transaction_businessAccountId_idx" ON "transaction"("businessAccountId");
+CREATE INDEX IF NOT EXISTS "transaction_businessAccountId_idx" ON "transaction"("businessAccountId");
 
 -- CreateIndex
-CREATE INDEX "transaction_createdAt_idx" ON "transaction"("createdAt");
+CREATE INDEX IF NOT EXISTS "transaction_createdAt_idx" ON "transaction"("createdAt");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "transaction_organizationId_number_key" ON "transaction"("organizationId", "number");
+CREATE UNIQUE INDEX IF NOT EXISTS "transaction_organizationId_number_key" ON "transaction"("organizationId", "number");
 
 -- CreateIndex
-CREATE INDEX "transaction_item_transactionId_idx" ON "transaction_item"("transactionId");
+CREATE INDEX IF NOT EXISTS "transaction_item_transactionId_idx" ON "transaction_item"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "transaction_item_variantId_idx" ON "transaction_item"("variantId");
+CREATE INDEX IF NOT EXISTS "transaction_item_variantId_idx" ON "transaction_item"("variantId");
 
 -- CreateIndex
-CREATE INDEX "inventory_allocation_transactionItemId_idx" ON "inventory_allocation"("transactionItemId");
+CREATE INDEX IF NOT EXISTS "inventory_allocation_transactionItemId_idx" ON "inventory_allocation"("transactionItemId");
 
 -- CreateIndex
-CREATE INDEX "inventory_allocation_stockBatchId_idx" ON "inventory_allocation"("stockBatchId");
+CREATE INDEX IF NOT EXISTS "inventory_allocation_stockBatchId_idx" ON "inventory_allocation"("stockBatchId");
 
 -- CreateIndex
-CREATE INDEX "payment_transactionId_idx" ON "payment"("transactionId");
+CREATE INDEX IF NOT EXISTS "payment_transactionId_idx" ON "payment"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "payment_status_idx" ON "payment"("status");
+CREATE INDEX IF NOT EXISTS "payment_status_idx" ON "payment"("status");
 
 -- CreateIndex
-CREATE INDEX "payment_payoutId_idx" ON "payment"("payoutId");
+CREATE INDEX IF NOT EXISTS "payment_payoutId_idx" ON "payment"("payoutId");
 
 -- CreateIndex
-CREATE INDEX "payment_gatewayTxnId_idx" ON "payment"("gatewayTxnId");
+CREATE INDEX IF NOT EXISTS "payment_gatewayTxnId_idx" ON "payment"("gatewayTxnId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "unclaimed_payment_transId_key" ON "unclaimed_payment"("transId");
+CREATE UNIQUE INDEX IF NOT EXISTS "unclaimed_payment_transId_key" ON "unclaimed_payment"("transId");
 
 -- CreateIndex
-CREATE INDEX "unclaimed_payment_organizationId_idx" ON "unclaimed_payment"("organizationId");
+CREATE INDEX IF NOT EXISTS "unclaimed_payment_organizationId_idx" ON "unclaimed_payment"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "unclaimed_payment_transId_idx" ON "unclaimed_payment"("transId");
+CREATE INDEX IF NOT EXISTS "unclaimed_payment_transId_idx" ON "unclaimed_payment"("transId");
 
 -- CreateIndex
-CREATE INDEX "unclaimed_payment_msisdn_idx" ON "unclaimed_payment"("msisdn");
+CREATE INDEX IF NOT EXISTS "unclaimed_payment_msisdn_idx" ON "unclaimed_payment"("msisdn");
 
 -- CreateIndex
-CREATE INDEX "unclaimed_payment_claimed_idx" ON "unclaimed_payment"("claimed");
+CREATE INDEX IF NOT EXISTS "unclaimed_payment_claimed_idx" ON "unclaimed_payment"("claimed");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "receipt_config_organizationId_key" ON "receipt_config"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "receipt_config_organizationId_key" ON "receipt_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "receipt_config_organizationId_idx" ON "receipt_config"("organizationId");
+CREATE INDEX IF NOT EXISTS "receipt_config_organizationId_idx" ON "receipt_config"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "waybill_config_organizationId_key" ON "waybill_config"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "waybill_config_organizationId_key" ON "waybill_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "waybill_config_organizationId_idx" ON "waybill_config"("organizationId");
+CREATE INDEX IF NOT EXISTS "waybill_config_organizationId_idx" ON "waybill_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "payout_status_idx" ON "payout"("status");
+CREATE INDEX IF NOT EXISTS "payout_status_idx" ON "payout"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "payout_organizationId_gateway_payoutNumber_key" ON "payout"("organizationId", "gateway", "payoutNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "payout_organizationId_gateway_payoutNumber_key" ON "payout"("organizationId", "gateway", "payoutNumber");
 
 -- CreateIndex
-CREATE INDEX "fulfillment_transactionId_idx" ON "fulfillment"("transactionId");
+CREATE INDEX IF NOT EXISTS "fulfillment_transactionId_idx" ON "fulfillment"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "fulfillment_status_idx" ON "fulfillment"("status");
+CREATE INDEX IF NOT EXISTS "fulfillment_status_idx" ON "fulfillment"("status");
 
 -- CreateIndex
-CREATE INDEX "fulfillment_driverId_idx" ON "fulfillment"("driverId");
+CREATE INDEX IF NOT EXISTS "fulfillment_driverId_idx" ON "fulfillment"("driverId");
 
 -- CreateIndex
-CREATE INDEX "fulfillment_item_fulfillmentId_idx" ON "fulfillment_item"("fulfillmentId");
+CREATE INDEX IF NOT EXISTS "fulfillment_item_fulfillmentId_idx" ON "fulfillment_item"("fulfillmentId");
 
 -- CreateIndex
-CREATE INDEX "fulfillment_item_transactionItemId_idx" ON "fulfillment_item"("transactionItemId");
+CREATE INDEX IF NOT EXISTS "fulfillment_item_transactionItemId_idx" ON "fulfillment_item"("transactionItemId");
 
 -- CreateIndex
-CREATE INDEX "applied_discount_transactionId_idx" ON "applied_discount"("transactionId");
+CREATE INDEX IF NOT EXISTS "applied_discount_transactionId_idx" ON "applied_discount"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "applied_discount_transactionItemId_idx" ON "applied_discount"("transactionItemId");
+CREATE INDEX IF NOT EXISTS "applied_discount_transactionItemId_idx" ON "applied_discount"("transactionItemId");
 
 -- CreateIndex
-CREATE INDEX "return_transactionId_idx" ON "return"("transactionId");
+CREATE INDEX IF NOT EXISTS "return_transactionId_idx" ON "return"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "return_status_idx" ON "return"("status");
+CREATE INDEX IF NOT EXISTS "return_status_idx" ON "return"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "return_organizationId_returnNumber_key" ON "return"("organizationId", "returnNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "return_organizationId_returnNumber_key" ON "return"("organizationId", "returnNumber");
 
 -- CreateIndex
-CREATE INDEX "return_item_returnId_idx" ON "return_item"("returnId");
+CREATE INDEX IF NOT EXISTS "return_item_returnId_idx" ON "return_item"("returnId");
 
 -- CreateIndex
-CREATE INDEX "return_item_transactionItemId_idx" ON "return_item"("transactionItemId");
+CREATE INDEX IF NOT EXISTS "return_item_transactionItemId_idx" ON "return_item"("transactionItemId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "Attachment_shortCode_key" ON "Attachment"("shortCode");
+CREATE UNIQUE INDEX IF NOT EXISTS "Attachment_shortCode_key" ON "Attachment"("shortCode");
 
 -- CreateIndex
-CREATE INDEX "Attachment_memberId_idx" ON "Attachment"("memberId");
+CREATE INDEX IF NOT EXISTS "Attachment_memberId_idx" ON "Attachment"("memberId");
 
 -- CreateIndex
-CREATE INDEX "Attachment_transactionId_idx" ON "Attachment"("transactionId");
+CREATE INDEX IF NOT EXISTS "Attachment_transactionId_idx" ON "Attachment"("transactionId");
 
 -- CreateIndex
-CREATE INDEX "Attachment_purchaseId_idx" ON "Attachment"("purchaseId");
+CREATE INDEX IF NOT EXISTS "Attachment_purchaseId_idx" ON "Attachment"("purchaseId");
 
 -- CreateIndex
-CREATE INDEX "Attachment_organizationId_idx" ON "Attachment"("organizationId");
+CREATE INDEX IF NOT EXISTS "Attachment_organizationId_idx" ON "Attachment"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "global_setting_key_key" ON "global_setting"("key");
+CREATE UNIQUE INDEX IF NOT EXISTS "global_setting_key_key" ON "global_setting"("key");
 
 -- CreateIndex
-CREATE INDEX "CashDrawer_locationId_idx" ON "CashDrawer"("locationId");
+CREATE INDEX IF NOT EXISTS "CashDrawer_locationId_idx" ON "CashDrawer"("locationId");
 
 -- CreateIndex
-CREATE INDEX "CashDrawer_openedAt_idx" ON "CashDrawer"("openedAt");
+CREATE INDEX IF NOT EXISTS "CashDrawer_openedAt_idx" ON "CashDrawer"("openedAt");
 
 -- CreateIndex
-CREATE INDEX "CashDrawer_closedAt_idx" ON "CashDrawer"("closedAt");
+CREATE INDEX IF NOT EXISTS "CashDrawer_closedAt_idx" ON "CashDrawer"("closedAt");
 
 -- CreateIndex
-CREATE INDEX "CashDrawer_memberId_idx" ON "CashDrawer"("memberId");
+CREATE INDEX IF NOT EXISTS "CashDrawer_memberId_idx" ON "CashDrawer"("memberId");
 
 -- CreateIndex
-CREATE INDEX "CashDrawer_organizationId_idx" ON "CashDrawer"("organizationId");
+CREATE INDEX IF NOT EXISTS "CashDrawer_organizationId_idx" ON "CashDrawer"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "CashDrawer_organizationId_name_key" ON "CashDrawer"("organizationId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "CashDrawer_organizationId_name_key" ON "CashDrawer"("organizationId", "name");
 
 -- CreateIndex
-CREATE INDEX "audit_log_entityType_entityId_idx" ON "audit_log"("entityType", "entityId");
+CREATE INDEX IF NOT EXISTS "audit_log_entityType_entityId_idx" ON "audit_log"("entityType", "entityId");
 
 -- CreateIndex
-CREATE INDEX "audit_log_memberId_idx" ON "audit_log"("memberId");
+CREATE INDEX IF NOT EXISTS "audit_log_memberId_idx" ON "audit_log"("memberId");
 
 -- CreateIndex
-CREATE INDEX "audit_log_organizationId_performedAt_idx" ON "audit_log"("organizationId", "performedAt");
+CREATE INDEX IF NOT EXISTS "audit_log_organizationId_performedAt_idx" ON "audit_log"("organizationId", "performedAt");
 
 -- CreateIndex
-CREATE INDEX "MpesaPaymentRequest_organizationId_idx" ON "MpesaPaymentRequest"("organizationId");
+CREATE INDEX IF NOT EXISTS "MpesaPaymentRequest_organizationId_idx" ON "MpesaPaymentRequest"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "MpesaPaymentRequest_memberId_idx" ON "MpesaPaymentRequest"("memberId");
+CREATE INDEX IF NOT EXISTS "MpesaPaymentRequest_memberId_idx" ON "MpesaPaymentRequest"("memberId");
 
 -- CreateIndex
-CREATE INDEX "MpesaPaymentRequest_checkoutRequestId_idx" ON "MpesaPaymentRequest"("checkoutRequestId");
+CREATE INDEX IF NOT EXISTS "MpesaPaymentRequest_checkoutRequestId_idx" ON "MpesaPaymentRequest"("checkoutRequestId");
 
 -- CreateIndex
-CREATE INDEX "MpesaPaymentRequest_merchantRequestId_idx" ON "MpesaPaymentRequest"("merchantRequestId");
+CREATE INDEX IF NOT EXISTS "MpesaPaymentRequest_merchantRequestId_idx" ON "MpesaPaymentRequest"("merchantRequestId");
 
 -- CreateIndex
-CREATE INDEX "MpesaPaymentRequest_reference_idx" ON "MpesaPaymentRequest"("reference");
+CREATE INDEX IF NOT EXISTS "MpesaPaymentRequest_reference_idx" ON "MpesaPaymentRequest"("reference");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "system_unit_name_key" ON "system_unit"("name");
+CREATE UNIQUE INDEX IF NOT EXISTS "system_unit_name_key" ON "system_unit"("name");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "system_unit_symbol_key" ON "system_unit"("symbol");
+CREATE UNIQUE INDEX IF NOT EXISTS "system_unit_symbol_key" ON "system_unit"("symbol");
 
 -- CreateIndex
-CREATE INDEX "system_unit_type_idx" ON "system_unit"("type");
+CREATE INDEX IF NOT EXISTS "system_unit_type_idx" ON "system_unit"("type");
 
 -- CreateIndex
-CREATE INDEX "system_unit_category_idx" ON "system_unit"("category");
+CREATE INDEX IF NOT EXISTS "system_unit_category_idx" ON "system_unit"("category");
 
 -- CreateIndex
-CREATE INDEX "system_unit_isActive_idx" ON "system_unit"("isActive");
+CREATE INDEX IF NOT EXISTS "system_unit_isActive_idx" ON "system_unit"("isActive");
 
 -- CreateIndex
-CREATE INDEX "organization_unit_organizationId_idx" ON "organization_unit"("organizationId");
+CREATE INDEX IF NOT EXISTS "organization_unit_organizationId_idx" ON "organization_unit"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "organization_unit_type_idx" ON "organization_unit"("type");
+CREATE INDEX IF NOT EXISTS "organization_unit_type_idx" ON "organization_unit"("type");
 
 -- CreateIndex
-CREATE INDEX "organization_unit_isActive_idx" ON "organization_unit"("isActive");
+CREATE INDEX IF NOT EXISTS "organization_unit_isActive_idx" ON "organization_unit"("isActive");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "organization_unit_organizationId_symbol_key" ON "organization_unit"("organizationId", "symbol");
+CREATE UNIQUE INDEX IF NOT EXISTS "organization_unit_organizationId_symbol_key" ON "organization_unit"("organizationId", "symbol");
 
 -- CreateIndex
-CREATE INDEX "org_unit_conversion_organizationId_idx" ON "org_unit_conversion"("organizationId");
+CREATE INDEX IF NOT EXISTS "org_unit_conversion_organizationId_idx" ON "org_unit_conversion"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "org_unit_conversion_fromUnitId_idx" ON "org_unit_conversion"("fromUnitId");
+CREATE INDEX IF NOT EXISTS "org_unit_conversion_fromUnitId_idx" ON "org_unit_conversion"("fromUnitId");
 
 -- CreateIndex
-CREATE INDEX "org_unit_conversion_toUnitId_idx" ON "org_unit_conversion"("toUnitId");
+CREATE INDEX IF NOT EXISTS "org_unit_conversion_toUnitId_idx" ON "org_unit_conversion"("toUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "org_unit_conversion_organizationId_fromUnitId_toUnitId_key" ON "org_unit_conversion"("organizationId", "fromUnitId", "toUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "org_unit_conversion_organizationId_fromUnitId_toUnitId_key" ON "org_unit_conversion"("organizationId", "fromUnitId", "toUnitId");
 
 -- CreateIndex
-CREATE INDEX "unit_conversion_fromUnitId_idx" ON "unit_conversion"("fromUnitId");
+CREATE INDEX IF NOT EXISTS "unit_conversion_fromUnitId_idx" ON "unit_conversion"("fromUnitId");
 
 -- CreateIndex
-CREATE INDEX "unit_conversion_toUnitId_idx" ON "unit_conversion"("toUnitId");
+CREATE INDEX IF NOT EXISTS "unit_conversion_toUnitId_idx" ON "unit_conversion"("toUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "unit_conversion_fromUnitId_toUnitId_key" ON "unit_conversion"("fromUnitId", "toUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "unit_conversion_fromUnitId_toUnitId_key" ON "unit_conversion"("fromUnitId", "toUnitId");
 
 -- CreateIndex
-CREATE INDEX "product_unit_conversion_productId_idx" ON "product_unit_conversion"("productId");
+CREATE INDEX IF NOT EXISTS "product_unit_conversion_productId_idx" ON "product_unit_conversion"("productId");
 
 -- CreateIndex
-CREATE INDEX "product_unit_conversion_fromUnitId_idx" ON "product_unit_conversion"("fromUnitId");
+CREATE INDEX IF NOT EXISTS "product_unit_conversion_fromUnitId_idx" ON "product_unit_conversion"("fromUnitId");
 
 -- CreateIndex
-CREATE INDEX "product_unit_conversion_toUnitId_idx" ON "product_unit_conversion"("toUnitId");
+CREATE INDEX IF NOT EXISTS "product_unit_conversion_toUnitId_idx" ON "product_unit_conversion"("toUnitId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "product_unit_conversion_productId_fromUnitId_toUnitId_key" ON "product_unit_conversion"("productId", "fromUnitId", "toUnitId");
+CREATE UNIQUE INDEX IF NOT EXISTS "product_unit_conversion_productId_fromUnitId_toUnitId_key" ON "product_unit_conversion"("productId", "fromUnitId", "toUnitId");
 
 -- CreateIndex
-CREATE INDEX "address_customerId_idx" ON "address"("customerId");
+CREATE INDEX IF NOT EXISTS "address_customerId_idx" ON "address"("customerId");
 
 -- CreateIndex
-CREATE INDEX "address_businessAccountId_idx" ON "address"("businessAccountId");
+CREATE INDEX IF NOT EXISTS "address_businessAccountId_idx" ON "address"("businessAccountId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "v3_api_client_clientId_key" ON "v3_api_client"("clientId");
+CREATE UNIQUE INDEX IF NOT EXISTS "v3_api_client_clientId_key" ON "v3_api_client"("clientId");
 
 -- CreateIndex
-CREATE INDEX "v3_api_client_organizationId_idx" ON "v3_api_client"("organizationId");
+CREATE INDEX IF NOT EXISTS "v3_api_client_organizationId_idx" ON "v3_api_client"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "webhook_subscription_organizationId_idx" ON "webhook_subscription"("organizationId");
+CREATE INDEX IF NOT EXISTS "webhook_subscription_organizationId_idx" ON "webhook_subscription"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "webhook_log_subscriptionId_idx" ON "webhook_log"("subscriptionId");
+CREATE INDEX IF NOT EXISTS "webhook_log_subscriptionId_idx" ON "webhook_log"("subscriptionId");
 
 -- CreateIndex
-CREATE INDEX "webhook_log_status_idx" ON "webhook_log"("status");
+CREATE INDEX IF NOT EXISTS "webhook_log_status_idx" ON "webhook_log"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "windmill_configuration_organizationId_key" ON "windmill_configuration"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "windmill_configuration_organizationId_key" ON "windmill_configuration"("organizationId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "windmill_configuration_workspaceId_key" ON "windmill_configuration"("workspaceId");
+CREATE UNIQUE INDEX IF NOT EXISTS "windmill_configuration_workspaceId_key" ON "windmill_configuration"("workspaceId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "windmill_workflow_organizationId_path_key" ON "windmill_workflow"("organizationId", "path");
+CREATE UNIQUE INDEX IF NOT EXISTS "windmill_workflow_organizationId_path_key" ON "windmill_workflow"("organizationId", "path");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "windmill_execution_jobId_key" ON "windmill_execution"("jobId");
+CREATE UNIQUE INDEX IF NOT EXISTS "windmill_execution_jobId_key" ON "windmill_execution"("jobId");
 
 -- CreateIndex
-CREATE INDEX "windmill_execution_organizationId_scriptPath_idx" ON "windmill_execution"("organizationId", "scriptPath");
+CREATE INDEX IF NOT EXISTS "windmill_execution_organizationId_scriptPath_idx" ON "windmill_execution"("organizationId", "scriptPath");
 
 -- CreateIndex
-CREATE INDEX "windmill_execution_correlationId_idx" ON "windmill_execution"("correlationId");
+CREATE INDEX IF NOT EXISTS "windmill_execution_correlationId_idx" ON "windmill_execution"("correlationId");
 
 
 -- CreateIndex
-CREATE INDEX "_AssistantBakerBatches_B_index" ON "_AssistantBakerBatches"("B");
+CREATE INDEX IF NOT EXISTS "_AssistantBakerBatches_B_index" ON "_AssistantBakerBatches"("B");
 
 -- CreateIndex
-CREATE INDEX "_TemplateAssistantBakers_B_index" ON "_TemplateAssistantBakers"("B");
+CREATE INDEX IF NOT EXISTS "_TemplateAssistantBakers_B_index" ON "_TemplateAssistantBakers"("B");
 
 -- CreateIndex
-CREATE INDEX "_CustomerToPriceList_B_index" ON "_CustomerToPriceList"("B");
+CREATE INDEX IF NOT EXISTS "_CustomerToPriceList_B_index" ON "_CustomerToPriceList"("B");
 
 -- CreateIndex
-CREATE INDEX "_BusinessAccountToPriceList_B_index" ON "_BusinessAccountToPriceList"("B");
+CREATE INDEX IF NOT EXISTS "_BusinessAccountToPriceList_B_index" ON "_BusinessAccountToPriceList"("B");
 
 -- CreateIndex
-CREATE INDEX "_ExpenseApprovalWorkflows_B_index" ON "_ExpenseApprovalWorkflows"("B");
+CREATE INDEX IF NOT EXISTS "_ExpenseApprovalWorkflows_B_index" ON "_ExpenseApprovalWorkflows"("B");
 
 -- CreateIndex
-CREATE INDEX "_VariantQCTemplates_B_index" ON "_VariantQCTemplates"("B");
+CREATE INDEX IF NOT EXISTS "_VariantQCTemplates_B_index" ON "_VariantQCTemplates"("B");
 
 -- CreateIndex
-CREATE INDEX "_MemberRoleGroups_B_index" ON "_MemberRoleGroups"("B");
+CREATE INDEX IF NOT EXISTS "_MemberRoleGroups_B_index" ON "_MemberRoleGroups"("B");
 
 -- CreateIndex
-CREATE INDEX "_MemberCustomRoles_B_index" ON "_MemberCustomRoles"("B");
+CREATE INDEX IF NOT EXISTS "_MemberCustomRoles_B_index" ON "_MemberCustomRoles"("B");
 
 -- CreateIndex
-CREATE INDEX "_RoleGroupPermissionSets_B_index" ON "_RoleGroupPermissionSets"("B");
+CREATE INDEX IF NOT EXISTS "_RoleGroupPermissionSets_B_index" ON "_RoleGroupPermissionSets"("B");
 
 -- CreateIndex
-CREATE INDEX "_MovementSerialNumbers_B_index" ON "_MovementSerialNumbers"("B");
+CREATE INDEX IF NOT EXISTS "_MovementSerialNumbers_B_index" ON "_MovementSerialNumbers"("B");
 
 -- CreateIndex
-CREATE INDEX "_AutomationChannels_B_index" ON "_AutomationChannels"("B");
+CREATE INDEX IF NOT EXISTS "_AutomationChannels_B_index" ON "_AutomationChannels"("B");
 
 -- AddForeignKey
-ALTER TABLE "user" ADD CONSTRAINT "user_referrerId_fkey" FOREIGN KEY ("referrerId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'user_referrerId_fkey') THEN
+        ALTER TABLE "user" ADD CONSTRAINT "user_referrerId_fkey" FOREIGN KEY ("referrerId") REFERENCES "user"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'account_userId_fkey') THEN
+        ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'session_userId_fkey') THEN
+        ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'apikey_userId_fkey') THEN
+        ALTER TABLE "apikey" ADD CONSTRAINT "apikey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'api_key_usage_log_apiKeyId_fkey') THEN
+        ALTER TABLE "api_key_usage_log" ADD CONSTRAINT "api_key_usage_log_apiKeyId_fkey" FOREIGN KEY ("apiKeyId") REFERENCES "api_key"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'api_key_usage_log_organizationId_fkey') THEN
+        ALTER TABLE "api_key_usage_log" ADD CONSTRAINT "api_key_usage_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bakery_category_organizationId_fkey') THEN
+        ALTER TABLE "bakery_category" ADD CONSTRAINT "bakery_category_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recipe_categoryId_fkey') THEN
+        ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "bakery_category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recipe_producesVariantId_fkey') THEN
+        ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_producesVariantId_fkey" FOREIGN KEY ("producesVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recipe_systemUnitId_fkey') THEN
+        ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recipe_orgUnitId_fkey') THEN
+        ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recipe_organizationId_fkey') THEN
+        ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_organizationId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_recipeId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_systemUnitId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_orgUnitId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_leadBakerId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_leadBakerId_fkey" FOREIGN KEY ("leadBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_createdFromTemplateId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_createdFromTemplateId_fkey" FOREIGN KEY ("createdFromTemplateId") REFERENCES "Template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_canceledById_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_canceledById_fkey" FOREIGN KEY ("canceledById") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_outputLocationId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_outputLocationId_fkey" FOREIGN KEY ("outputLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_disposedById_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_disposedById_fkey" FOREIGN KEY ("disposedById") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Batch_recallId_fkey') THEN
+        ALTER TABLE "Batch" ADD CONSTRAINT "Batch_recallId_fkey" FOREIGN KEY ("recallId") REFERENCES "Recall"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Template_recipeId_fkey') THEN
+        ALTER TABLE "Template" ADD CONSTRAINT "Template_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Template_systemUnitId_fkey') THEN
+        ALTER TABLE "Template" ADD CONSTRAINT "Template_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Template_orgUnitId_fkey') THEN
+        ALTER TABLE "Template" ADD CONSTRAINT "Template_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Template_leadBakerId_fkey') THEN
+        ALTER TABLE "Template" ADD CONSTRAINT "Template_leadBakerId_fkey" FOREIGN KEY ("leadBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Template_organizationId_fkey') THEN
+        ALTER TABLE "Template" ADD CONSTRAINT "Template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'template_schedule_templateId_fkey') THEN
+        ALTER TABLE "template_schedule" ADD CONSTRAINT "template_schedule_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "Template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'recipe_ingredient_recipeId_fkey') THEN
+        ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'recipe_ingredient_ingredientVariantId_fkey') THEN
+        ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_ingredientVariantId_fkey" FOREIGN KEY ("ingredientVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'recipe_ingredient_systemUnitId_fkey') THEN
+        ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'recipe_ingredient_orgUnitId_fkey') THEN
+        ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bakery_settings_organizationId_fkey') THEN
+        ALTER TABLE "bakery_settings" ADD CONSTRAINT "bakery_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bakery_settings_defaultBakerId_fkey') THEN
+        ALTER TABLE "bakery_settings" ADD CONSTRAINT "bakery_settings_defaultBakerId_fkey" FOREIGN KEY ("defaultBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_ingredient_consumption_batchId_fkey') THEN
+        ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_ingredient_consumption_stockBatchId_fkey') THEN
+        ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'batch_ingredient_consumption_organizationId_fkey') THEN
+        ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quality_incident_batchId_fkey') THEN
+        ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quality_incident_stockBatchId_fkey') THEN
+        ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quality_incident_supplierId_fkey') THEN
+        ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quality_incident_reportedById_fkey') THEN
+        ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_reportedById_fkey" FOREIGN KEY ("reportedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'quality_incident_organizationId_fkey') THEN
+        ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bakery_bakers_bakerySettingsId_fkey') THEN
+        ALTER TABLE "bakery_bakers" ADD CONSTRAINT "bakery_bakers_bakerySettingsId_fkey" FOREIGN KEY ("bakerySettingsId") REFERENCES "bakery_settings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'bakery_bakers_memberId_fkey') THEN
+        ALTER TABLE "bakery_bakers" ADD CONSTRAINT "bakery_bakers_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'delivery_partner_organizationId_fkey') THEN
+        ALTER TABLE "delivery_partner" ADD CONSTRAINT "delivery_partner_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'partner_wallet_log_partnerId_fkey') THEN
+        ALTER TABLE "partner_wallet_log" ADD CONSTRAINT "partner_wallet_log_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "delivery_partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaigns_organizationId_fkey') THEN
+        ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaigns_segmentId_fkey') THEN
+        ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_segmentId_fkey" FOREIGN KEY ("segmentId") REFERENCES "campaign_segments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaigns_workflowId_fkey') THEN
+        ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "campaign_workflows"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaigns_createdById_fkey') THEN
+        ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaigns_approvedById_fkey') THEN
+        ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_segments_organizationId_fkey') THEN
+        ALTER TABLE "campaign_segments" ADD CONSTRAINT "campaign_segments_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_workflows_organizationId_fkey') THEN
+        ALTER TABLE "campaign_workflows" ADD CONSTRAINT "campaign_workflows_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_workflow_instances_workflowId_fkey') THEN
+        ALTER TABLE "campaign_workflow_instances" ADD CONSTRAINT "campaign_workflow_instances_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "campaign_workflows"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_workflow_instances_recordId_fkey') THEN
+        ALTER TABLE "campaign_workflow_instances" ADD CONSTRAINT "campaign_workflow_instances_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_events_campaignId_fkey') THEN
+        ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "campaigns"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_events_recordId_fkey') THEN
+        ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_events_transactionId_fkey') THEN
+        ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_object_definitions_organizationId_fkey') THEN
+        ALTER TABLE "crm_object_definitions" ADD CONSTRAINT "crm_object_definitions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_field_definitions_objectId_fkey') THEN
+        ALTER TABLE "crm_field_definitions" ADD CONSTRAINT "crm_field_definitions_objectId_fkey" FOREIGN KEY ("objectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_records_objectId_fkey') THEN
+        ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_objectId_fkey" FOREIGN KEY ("objectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_records_organizationId_fkey') THEN
+        ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_records_ownerId_fkey') THEN
+        ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_relationship_definitions_organizationId_fkey') THEN
+        ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_relationship_definitions_sourceObjectId_fkey') THEN
+        ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_sourceObjectId_fkey" FOREIGN KEY ("sourceObjectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_relationship_definitions_targetObjectId_fkey') THEN
+        ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_targetObjectId_fkey" FOREIGN KEY ("targetObjectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_associations_relationshipId_fkey') THEN
+        ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_relationshipId_fkey" FOREIGN KEY ("relationshipId") REFERENCES "crm_relationship_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_associations_sourceRecordId_fkey') THEN
+        ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_sourceRecordId_fkey" FOREIGN KEY ("sourceRecordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_associations_targetRecordId_fkey') THEN
+        ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_targetRecordId_fkey" FOREIGN KEY ("targetRecordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_activities_recordId_fkey') THEN
+        ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_activities_organizationId_fkey') THEN
+        ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_activities_memberId_fkey') THEN
+        ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_notes_recordId_fkey') THEN
+        ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_notes_organizationId_fkey') THEN
+        ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_notes_createdById_fkey') THEN
+        ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_follow_ups_recordId_fkey') THEN
+        ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_follow_ups_organizationId_fkey') THEN
+        ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_follow_ups_assignedToId_fkey') THEN
+        ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_follow_ups_locationId_fkey') THEN
+        ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Customer_organizationId_fkey') THEN
+        ALTER TABLE "Customer" ADD CONSTRAINT "Customer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Customer_businessAccountId_fkey') THEN
+        ALTER TABLE "Customer" ADD CONSTRAINT "Customer_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Customer_createdById_fkey') THEN
+        ALTER TABLE "Customer" ADD CONSTRAINT "Customer_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Customer_updatedById_fkey') THEN
+        ALTER TABLE "Customer" ADD CONSTRAINT "Customer_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Customer_crmRecordId_fkey') THEN
+        ALTER TABLE "Customer" ADD CONSTRAINT "Customer_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'business_account_organizationId_fkey') THEN
+        ALTER TABLE "business_account" ADD CONSTRAINT "business_account_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'business_account_crmRecordId_fkey') THEN
+        ALTER TABLE "business_account" ADD CONSTRAINT "business_account_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'B2BConnection_supplierOrgId_fkey') THEN
+        ALTER TABLE "B2BConnection" ADD CONSTRAINT "B2BConnection_supplierOrgId_fkey" FOREIGN KEY ("supplierOrgId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'B2BConnection_businessAccountId_fkey') THEN
+        ALTER TABLE "B2BConnection" ADD CONSTRAINT "B2BConnection_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'referral_program_organizationId_fkey') THEN
+        ALTER TABLE "referral_program" ADD CONSTRAINT "referral_program_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'referral_organizationId_fkey') THEN
+        ALTER TABLE "referral" ADD CONSTRAINT "referral_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'referral_referrerId_fkey') THEN
+        ALTER TABLE "referral" ADD CONSTRAINT "referral_referrerId_fkey" FOREIGN KEY ("referrerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'referral_refereeId_fkey') THEN
+        ALTER TABLE "referral" ADD CONSTRAINT "referral_refereeId_fkey" FOREIGN KEY ("refereeId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'referral_programId_fkey') THEN
+        ALTER TABLE "referral" ADD CONSTRAINT "referral_programId_fkey" FOREIGN KEY ("programId") REFERENCES "referral_program"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'driver_organizationId_fkey') THEN
+        ALTER TABLE "driver" ADD CONSTRAINT "driver_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'driver_memberId_fkey') THEN
+        ALTER TABLE "driver" ADD CONSTRAINT "driver_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'driver_deliveryPartnerId_fkey') THEN
+        ALTER TABLE "driver" ADD CONSTRAINT "driver_deliveryPartnerId_fkey" FOREIGN KEY ("deliveryPartnerId") REFERENCES "delivery_partner"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'driver_vehicleId_fkey') THEN
+        ALTER TABLE "driver" ADD CONSTRAINT "driver_vehicleId_fkey" FOREIGN KEY ("vehicleId") REFERENCES "vehicle"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'vehicle_organizationId_fkey') THEN
+        ALTER TABLE "vehicle" ADD CONSTRAINT "vehicle_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_connection_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_connection" ADD CONSTRAINT "ecommerce_connection_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_connection_defaultLocationId_fkey') THEN
+        ALTER TABLE "ecommerce_connection" ADD CONSTRAINT "ecommerce_connection_defaultLocationId_fkey" FOREIGN KEY ("defaultLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_sync_log_connectionId_fkey') THEN
+        ALTER TABLE "ecommerce_sync_log" ADD CONSTRAINT "ecommerce_sync_log_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_sync_log_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_sync_log" ADD CONSTRAINT "ecommerce_sync_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_product_mapping_connectionId_fkey') THEN
+        ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_product_mapping_productId_fkey') THEN
+        ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_product_mapping_variantId_fkey') THEN
+        ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_product_mapping_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_order_mapping_connectionId_fkey') THEN
+        ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_order_mapping_transactionId_fkey') THEN
+        ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_order_mapping_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_customer_mapping_connectionId_fkey') THEN
+        ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_customer_mapping_customerId_fkey') THEN
+        ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_customer_mapping_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_webhook_log_connectionId_fkey') THEN
+        ALTER TABLE "ecommerce_webhook_log" ADD CONSTRAINT "ecommerce_webhook_log_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ecommerce_webhook_log_organizationId_fkey') THEN
+        ALTER TABLE "ecommerce_webhook_log" ADD CONSTRAINT "ecommerce_webhook_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CartItem_cartId_fkey') THEN
+        ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "Cart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorites_organizationId_fkey') THEN
+        ALTER TABLE "favorites" ADD CONSTRAINT "favorites_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorites_customerId_fkey') THEN
+        ALTER TABLE "favorites" ADD CONSTRAINT "favorites_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorites_productId_fkey') THEN
+        ALTER TABLE "favorites" ADD CONSTRAINT "favorites_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_reviews_organizationId_fkey') THEN
+        ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_reviews_customerId_fkey') THEN
+        ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_reviews_productId_fkey') THEN
+        ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_categoryId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ExpenseCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_ledgerAccountId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_costCenterId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_purchaseId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_supplierId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_locationId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_budgetId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_customerId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_businessAccountId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_pettyCashFundId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_pettyCashFundId_fkey" FOREIGN KEY ("pettyCashFundId") REFERENCES "PettyCashFund"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_utilityAccountId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_utilityAccountId_fkey" FOREIGN KEY ("utilityAccountId") REFERENCES "UtilityAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_memberId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_approverId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_approvalRequestId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_recurringExpenseId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_recurringExpenseId_fkey" FOREIGN KEY ("recurringExpenseId") REFERENCES "RecurringExpense"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Expense_organizationId_fkey') THEN
+        ALTER TABLE "Expense" ADD CONSTRAINT "Expense_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ExpenseCategory_ledgerAccountId_fkey') THEN
+        ALTER TABLE "ExpenseCategory" ADD CONSTRAINT "ExpenseCategory_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ExpenseCategory_organizationId_fkey') THEN
+        ALTER TABLE "ExpenseCategory" ADD CONSTRAINT "ExpenseCategory_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_categoryId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ExpenseCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_supplierId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_customerId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_businessAccountId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_utilityAccountId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_utilityAccountId_fkey" FOREIGN KEY ("utilityAccountId") REFERENCES "UtilityAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_organizationId_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringExpense_createdById_fkey') THEN
+        ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_locationId_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_departmentId_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_costCenterId_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_expenseCategoryId_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_expenseCategoryId_fkey" FOREIGN KEY ("expenseCategoryId") REFERENCES "ExpenseCategory"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_organizationId_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Budget_createdById_fkey') THEN
+        ALTER TABLE "Budget" ADD CONSTRAINT "Budget_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BudgetReport_budgetId_fkey') THEN
+        ALTER TABLE "BudgetReport" ADD CONSTRAINT "BudgetReport_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BudgetReport_generatedById_fkey') THEN
+        ALTER TABLE "BudgetReport" ADD CONSTRAINT "BudgetReport_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BudgetAlert_budgetId_fkey') THEN
+        ALTER TABLE "BudgetAlert" ADD CONSTRAINT "BudgetAlert_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BudgetAlert_organizationId_fkey') THEN
+        ALTER TABLE "BudgetAlert" ADD CONSTRAINT "BudgetAlert_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CostCenter_organizationId_fkey') THEN
+        ALTER TABLE "CostCenter" ADD CONSTRAINT "CostCenter_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PettyCashFund_organizationId_fkey') THEN
+        ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PettyCashFund_responsibleMemberId_fkey') THEN
+        ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_responsibleMemberId_fkey" FOREIGN KEY ("responsibleMemberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PettyCashFund_locationId_fkey') THEN
+        ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PettyCashTransaction_fundId_fkey') THEN
+        ALTER TABLE "PettyCashTransaction" ADD CONSTRAINT "PettyCashTransaction_fundId_fkey" FOREIGN KEY ("fundId") REFERENCES "PettyCashFund"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PettyCashTransaction_memberId_fkey') THEN
+        ALTER TABLE "PettyCashTransaction" ADD CONSTRAINT "PettyCashTransaction_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'UtilityAccount_organizationId_fkey') THEN
+        ALTER TABLE "UtilityAccount" ADD CONSTRAINT "UtilityAccount_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_supplierId_fkey') THEN
+        ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_organizationId_fkey') THEN
+        ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_memberId_fkey') THEN
+        ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_approvalRequestId_fkey') THEN
+        ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Purchase_stockRequestId_fkey') THEN
+        ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseItem_purchaseId_fkey') THEN
+        ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseItem_variantId_fkey') THEN
+        ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseItem_taxRateId_fkey') THEN
+        ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseItem_orderedUnitId_fkey') THEN
+        ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_orderedUnitId_fkey" FOREIGN KEY ("orderedUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseItem_orderedOrgUnitId_fkey') THEN
+        ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_orderedOrgUnitId_fkey" FOREIGN KEY ("orderedOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchasePayment_purchaseId_fkey') THEN
+        ALTER TABLE "PurchasePayment" ADD CONSTRAINT "PurchasePayment_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchasePayment_memberId_fkey') THEN
+        ALTER TABLE "PurchasePayment" ADD CONSTRAINT "PurchasePayment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierInvoice_purchaseId_fkey') THEN
+        ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierInvoice_supplierId_fkey') THEN
+        ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierInvoice_organizationId_fkey') THEN
+        ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseReturn_purchaseId_fkey') THEN
+        ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseReturn_supplierId_fkey') THEN
+        ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseReturn_organizationId_fkey') THEN
+        ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseReturnItem_purchaseReturnId_fkey') THEN
+        ALTER TABLE "PurchaseReturnItem" ADD CONSTRAINT "PurchaseReturnItem_purchaseReturnId_fkey" FOREIGN KEY ("purchaseReturnId") REFERENCES "PurchaseReturn"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PurchaseReturnItem_purchaseItemId_fkey') THEN
+        ALTER TABLE "PurchaseReturnItem" ADD CONSTRAINT "PurchaseReturnItem_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalRequest_organizationId_fkey') THEN
+        ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalRequest_requesterId_fkey') THEN
+        ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalRequest_workflowId_fkey') THEN
+        ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalDecision_approvalRequestId_fkey') THEN
+        ALTER TABLE "ApprovalDecision" ADD CONSTRAINT "ApprovalDecision_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalDecision_approverId_fkey') THEN
+        ALTER TABLE "ApprovalDecision" ADD CONSTRAINT "ApprovalDecision_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalWorkflow_organizationId_fkey') THEN
+        ALTER TABLE "ApprovalWorkflow" ADD CONSTRAINT "ApprovalWorkflow_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalWorkflowStep_approvalWorkflowId_fkey') THEN
+        ALTER TABLE "ApprovalWorkflowStep" ADD CONSTRAINT "ApprovalWorkflowStep_approvalWorkflowId_fkey" FOREIGN KEY ("approvalWorkflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalStepCondition_stepId_fkey') THEN
+        ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES "ApprovalWorkflowStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalStepCondition_locationId_fkey') THEN
+        ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalStepCondition_expenseCategoryId_fkey') THEN
+        ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_expenseCategoryId_fkey" FOREIGN KEY ("expenseCategoryId") REFERENCES "ExpenseCategory"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalStepAction_stepId_fkey') THEN
+        ALTER TABLE "ApprovalStepAction" ADD CONSTRAINT "ApprovalStepAction_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES "ApprovalWorkflowStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ApprovalStepAction_specificMemberId_fkey') THEN
+        ALTER TABLE "ApprovalStepAction" ADD CONSTRAINT "ApprovalStepAction_specificMemberId_fkey" FOREIGN KEY ("specificMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LedgerAccount_organizationId_fkey') THEN
+        ALTER TABLE "LedgerAccount" ADD CONSTRAINT "LedgerAccount_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LedgerAccount_parentId_fkey') THEN
+        ALTER TABLE "LedgerAccount" ADD CONSTRAINT "LedgerAccount_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "LedgerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'JournalEntry_organizationId_fkey') THEN
+        ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'JournalEntry_memberId_fkey') THEN
+        ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'JournalLine_journalEntryId_fkey') THEN
+        ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_journalEntryId_fkey" FOREIGN KEY ("journalEntryId") REFERENCES "JournalEntry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'JournalLine_ledgerAccountId_fkey') THEN
+        ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'JournalLine_bankStatementLineId_fkey') THEN
+        ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_bankStatementLineId_fkey" FOREIGN KEY ("bankStatementLineId") REFERENCES "BankStatementLine"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BankStatement_organizationId_fkey') THEN
+        ALTER TABLE "BankStatement" ADD CONSTRAINT "BankStatement_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'BankStatementLine_statementId_fkey') THEN
+        ALTER TABLE "BankStatementLine" ADD CONSTRAINT "BankStatementLine_statementId_fkey" FOREIGN KEY ("statementId") REFERENCES "BankStatement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringBill_organizationId_fkey') THEN
+        ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringBill_supplierId_fkey') THEN
+        ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'RecurringBill_createdById_fkey') THEN
+        ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'huly_configuration_organizationId_fkey') THEN
+        ALTER TABLE "huly_configuration" ADD CONSTRAINT "huly_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'huly_notification_rule_configId_fkey') THEN
+        ALTER TABLE "huly_notification_rule" ADD CONSTRAINT "huly_notification_rule_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'huly_event_log_configId_fkey') THEN
+        ALTER TABLE "huly_event_log" ADD CONSTRAINT "huly_event_log_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'huly_channel_mapping_configId_fkey') THEN
+        ALTER TABLE "huly_channel_mapping" ADD CONSTRAINT "huly_channel_mapping_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_integration_organizationId_fkey') THEN
+        ALTER TABLE "organization_integration" ADD CONSTRAINT "organization_integration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_integration_integrationDefinitionId_fkey') THEN
+        ALTER TABLE "organization_integration" ADD CONSTRAINT "organization_integration_integrationDefinitionId_fkey" FOREIGN KEY ("integrationDefinitionId") REFERENCES "integration_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'external_mapping_organizationIntegrationId_fkey') THEN
+        ALTER TABLE "external_mapping" ADD CONSTRAINT "external_mapping_organizationIntegrationId_fkey" FOREIGN KEY ("organizationIntegrationId") REFERENCES "organization_integration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'integration_event_organizationIntegrationId_fkey') THEN
+        ALTER TABLE "integration_event" ADD CONSTRAINT "integration_event_organizationIntegrationId_fkey" FOREIGN KEY ("organizationIntegrationId") REFERENCES "organization_integration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Category_parentId_fkey') THEN
+        ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Category_organizationId_fkey') THEN
+        ALTER TABLE "Category" ADD CONSTRAINT "Category_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Product_categoryId_fkey') THEN
+        ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Product_defaultLocationId_fkey') THEN
+        ALTER TABLE "Product" ADD CONSTRAINT "Product_defaultLocationId_fkey" FOREIGN KEY ("defaultLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Product_organizationId_fkey') THEN
+        ALTER TABLE "Product" ADD CONSTRAINT "Product_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_variant_productId_fkey') THEN
+        ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_variant_baseUnitId_fkey') THEN
+        ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_baseUnitId_fkey" FOREIGN KEY ("baseUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_variant_baseOrgUnitId_fkey') THEN
+        ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_baseOrgUnitId_fkey" FOREIGN KEY ("baseOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_variant_stockingUnitId_fkey') THEN
+        ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_stockingUnitId_fkey" FOREIGN KEY ("stockingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_variant_stockingOrgUnitId_fkey') THEN
+        ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_stockingOrgUnitId_fkey" FOREIGN KEY ("stockingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'variant_selling_unit_variantId_fkey') THEN
+        ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'variant_selling_unit_systemUnitId_fkey') THEN
+        ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'variant_selling_unit_orgUnitId_fkey') THEN
+        ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recall_supplierId_fkey') THEN
+        ALTER TABLE "Recall" ADD CONSTRAINT "Recall_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Recall_organizationId_fkey') THEN
+        ALTER TABLE "Recall" ADD CONSTRAINT "Recall_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Supplier_organizationId_fkey') THEN
+        ALTER TABLE "Supplier" ADD CONSTRAINT "Supplier_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductSupplier_productId_fkey') THEN
+        ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductSupplier_variantId_fkey') THEN
+        ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
 -- AddForeignKey
-ALTER TABLE "account" ADD CONSTRAINT "account_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductSupplier_supplierId_fkey') THEN
+        ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductSupplier_packagingUnitId_fkey') THEN
+        ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_packagingUnitId_fkey" FOREIGN KEY ("packagingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductSupplier_packagingOrgUnitId_fkey') THEN
+        ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_packagingOrgUnitId_fkey" FOREIGN KEY ("packagingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierDocument_supplierId_fkey') THEN
+        ALTER TABLE "SupplierDocument" ADD CONSTRAINT "SupplierDocument_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierDocument_organizationId_fkey') THEN
+        ALTER TABLE "SupplierDocument" ADD CONSTRAINT "SupplierDocument_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierPriceHistory_supplierId_fkey') THEN
+        ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierPriceHistory_variantId_fkey') THEN
+        ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SupplierPriceHistory_organizationId_fkey') THEN
+        ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InventoryLocation_parentLocationId_fkey') THEN
+        ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_parentLocationId_fkey" FOREIGN KEY ("parentLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InventoryLocation_managerId_fkey') THEN
+        ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InventoryLocation_organizationId_fkey') THEN
+        ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StorageZone_locationId_fkey') THEN
+        ALTER TABLE "StorageZone" ADD CONSTRAINT "StorageZone_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StorageZone_organizationId_fkey') THEN
+        ALTER TABLE "StorageZone" ADD CONSTRAINT "StorageZone_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StorageUnit_locationId_fkey') THEN
+        ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StorageUnit_zoneId_fkey') THEN
+        ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_zoneId_fkey" FOREIGN KEY ("zoneId") REFERENCES "StorageZone"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StorageUnit_organizationId_fkey') THEN
+        ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCTemplate_organizationId_fkey') THEN
+        ALTER TABLE "QCTemplate" ADD CONSTRAINT "QCTemplate_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCResult_templateId_fkey') THEN
+        ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "QCTemplate"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCResult_organizationId_fkey') THEN
+        ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCResult_stockBatchId_fkey') THEN
+        ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCResult_purchaseItemId_fkey') THEN
+        ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'QCResult_performedById_fkey') THEN
+        ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_performedById_fkey" FOREIGN KEY ("performedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
 -- AddForeignKey
-ALTER TABLE "session" ADD CONSTRAINT "session_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'supplier_review_organizationId_fkey') THEN
+        ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'supplier_review_memberId_fkey') THEN
+        ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'supplier_review_supplierId_fkey') THEN
+        ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorite_supplier_organizationId_fkey') THEN
+        ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
+-- AddForeignKey
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorite_supplier_memberId_fkey') THEN
+        ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+
 -- AddForeignKey
-ALTER TABLE "apikey" ADD CONSTRAINT "apikey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'favorite_supplier_supplierId_fkey') THEN
+        ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "api_key_usage_log" ADD CONSTRAINT "api_key_usage_log_apiKeyId_fkey" FOREIGN KEY ("apiKeyId") REFERENCES "api_key"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StoragePosition_storageUnitId_fkey') THEN
+        ALTER TABLE "StoragePosition" ADD CONSTRAINT "StoragePosition_storageUnitId_fkey" FOREIGN KEY ("storageUnitId") REFERENCES "StorageUnit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "api_key_usage_log" ADD CONSTRAINT "api_key_usage_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StoragePosition_organizationId_fkey') THEN
+        ALTER TABLE "StoragePosition" ADD CONSTRAINT "StoragePosition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "bakery_category" ADD CONSTRAINT "bakery_category_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Invoice_customerId_fkey') THEN
+        ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "bakery_category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Invoice_organizationId_fkey') THEN
+        ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_producesVariantId_fkey" FOREIGN KEY ("producesVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Invoice_transactionId_fkey') THEN
+        ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Invoice_templateId_fkey') THEN
+        ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InvoiceItem_invoiceId_fkey') THEN
+        ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Recipe" ADD CONSTRAINT "Recipe_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'KRAComplianceLog_organizationId_fkey') THEN
+        ALTER TABLE "KRAComplianceLog" ADD CONSTRAINT "KRAComplianceLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InvoiceTemplate_organizationId_fkey') THEN
+        ALTER TABLE "InvoiceTemplate" ADD CONSTRAINT "InvoiceTemplate_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InvoiceTemplate_createdBy_fkey') THEN
+        ALTER TABLE "InvoiceTemplate" ADD CONSTRAINT "InvoiceTemplate_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InvoiceTemplateVersion_templateId_fkey') THEN
+        ALTER TABLE "InvoiceTemplateVersion" ADD CONSTRAINT "InvoiceTemplateVersion_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'InvoiceTemplateVersion_createdBy_fkey') THEN
+        ALTER TABLE "InvoiceTemplateVersion" ADD CONSTRAINT "InvoiceTemplateVersion_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_leadBakerId_fkey" FOREIGN KEY ("leadBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'TemplateUsageLog_organizationId_fkey') THEN
+        ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_createdFromTemplateId_fkey" FOREIGN KEY ("createdFromTemplateId") REFERENCES "Template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'TemplateUsageLog_templateId_fkey') THEN
+        ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_canceledById_fkey" FOREIGN KEY ("canceledById") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'TemplateUsageLog_invoiceId_fkey') THEN
+        ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_outputLocationId_fkey" FOREIGN KEY ("outputLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'TemplateUsageLog_usedBy_fkey') THEN
+        ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_usedBy_fkey" FOREIGN KEY ("usedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_disposedById_fkey" FOREIGN KEY ("disposedById") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'invoice_config_organizationId_fkey') THEN
+        ALTER TABLE "invoice_config" ADD CONSTRAINT "invoice_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Batch" ADD CONSTRAINT "Batch_recallId_fkey" FOREIGN KEY ("recallId") REFERENCES "Recall"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyProgram_organizationId_fkey') THEN
+        ALTER TABLE "LoyaltyProgram" ADD CONSTRAINT "LoyaltyProgram_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyTier_programId_fkey') THEN
+        ALTER TABLE "LoyaltyTier" ADD CONSTRAINT "LoyaltyTier_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyRule_programId_fkey') THEN
+        ALTER TABLE "LoyaltyRule" ADD CONSTRAINT "LoyaltyRule_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyReward_programId_fkey') THEN
+        ALTER TABLE "LoyaltyReward" ADD CONSTRAINT "LoyaltyReward_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_leadBakerId_fkey" FOREIGN KEY ("leadBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyVoucher_programId_fkey') THEN
+        ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "Template" ADD CONSTRAINT "Template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyVoucher_rewardId_fkey') THEN
+        ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_rewardId_fkey" FOREIGN KEY ("rewardId") REFERENCES "LoyaltyReward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "template_schedule" ADD CONSTRAINT "template_schedule_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "Template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyVoucher_customerId_fkey') THEN
+        ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_recipeId_fkey" FOREIGN KEY ("recipeId") REFERENCES "Recipe"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyVoucher_transactionId_fkey') THEN
+        ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_ingredientVariantId_fkey" FOREIGN KEY ("ingredientVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyTransaction_programId_fkey') THEN
+        ALTER TABLE "LoyaltyTransaction" ADD CONSTRAINT "LoyaltyTransaction_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'LoyaltyTransaction_customerId_fkey') THEN
+        ALTER TABLE "LoyaltyTransaction" ADD CONSTRAINT "LoyaltyTransaction_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "recipe_ingredient" ADD CONSTRAINT "recipe_ingredient_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notification_template_organizationId_fkey') THEN
+        ALTER TABLE "notification_template" ADD CONSTRAINT "notification_template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "bakery_settings" ADD CONSTRAINT "bakery_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notification_dispatch_organizationId_fkey') THEN
+        ALTER TABLE "notification_dispatch" ADD CONSTRAINT "notification_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "bakery_settings" ADD CONSTRAINT "bakery_settings_defaultBakerId_fkey" FOREIGN KEY ("defaultBakerId") REFERENCES "bakery_bakers"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notification_dispatch_templateId_fkey') THEN
+        ALTER TABLE "notification_dispatch" ADD CONSTRAINT "notification_dispatch_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "notification_template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'notification_channel_config_organizationId_fkey') THEN
+        ALTER TABLE "notification_channel_config" ADD CONSTRAINT "notification_channel_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_activeExpenseWorkflowId_fkey') THEN
+        ALTER TABLE "organization" ADD CONSTRAINT "organization_activeExpenseWorkflowId_fkey" FOREIGN KEY ("activeExpenseWorkflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "batch_ingredient_consumption" ADD CONSTRAINT "batch_ingredient_consumption_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payment_credentials_organizationId_fkey') THEN
+        ALTER TABLE "payment_credentials" ADD CONSTRAINT "payment_credentials_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_batchId_fkey" FOREIGN KEY ("batchId") REFERENCES "Batch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'member_organizationId_fkey') THEN
+        ALTER TABLE "member" ADD CONSTRAINT "member_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'member_userId_fkey') THEN
+        ALTER TABLE "member" ADD CONSTRAINT "member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'member_managerId_fkey') THEN
+        ALTER TABLE "member" ADD CONSTRAINT "member_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_reportedById_fkey" FOREIGN KEY ("reportedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'member_currentCheckInLocationId_fkey') THEN
+        ALTER TABLE "member" ADD CONSTRAINT "member_currentCheckInLocationId_fkey" FOREIGN KEY ("currentCheckInLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "quality_incident" ADD CONSTRAINT "quality_incident_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'member_currentAttendanceLogId_fkey') THEN
+        ALTER TABLE "member" ADD CONSTRAINT "member_currentAttendanceLogId_fkey" FOREIGN KEY ("currentAttendanceLogId") REFERENCES "attendance_log"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "bakery_bakers" ADD CONSTRAINT "bakery_bakers_bakerySettingsId_fkey" FOREIGN KEY ("bakerySettingsId") REFERENCES "bakery_settings"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attendance_log_memberId_fkey') THEN
+        ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "bakery_bakers" ADD CONSTRAINT "bakery_bakers_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attendance_log_organizationId_fkey') THEN
+        ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "delivery_partner" ADD CONSTRAINT "delivery_partner_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attendance_log_checkInLocationId_fkey') THEN
+        ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_checkInLocationId_fkey" FOREIGN KEY ("checkInLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "partner_wallet_log" ADD CONSTRAINT "partner_wallet_log_partnerId_fkey" FOREIGN KEY ("partnerId") REFERENCES "delivery_partner"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attendance_log_checkOutLocationId_fkey') THEN
+        ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_checkOutLocationId_fkey" FOREIGN KEY ("checkOutLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'custom_role_organizationId_fkey') THEN
+        ALTER TABLE "custom_role" ADD CONSTRAINT "custom_role_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_segmentId_fkey" FOREIGN KEY ("segmentId") REFERENCES "campaign_segments"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'permission_set_organizationId_fkey') THEN
+        ALTER TABLE "permission_set" ADD CONSTRAINT "permission_set_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "campaign_workflows"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'role_group_organizationId_fkey') THEN
+        ALTER TABLE "role_group" ADD CONSTRAINT "role_group_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'invitation_organizationId_fkey') THEN
+        ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "campaigns" ADD CONSTRAINT "campaigns_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'invitation_inviterId_fkey') THEN
+        ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviterId_fkey" FOREIGN KEY ("inviterId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "campaign_segments" ADD CONSTRAINT "campaign_segments_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_settings_organizationId_fkey') THEN
+        ALTER TABLE "organization_settings" ADD CONSTRAINT "organization_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "campaign_workflows" ADD CONSTRAINT "campaign_workflows_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_organizationId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "campaign_workflow_instances" ADD CONSTRAINT "campaign_workflow_instances_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "campaign_workflows"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_parentId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
+
 -- AddForeignKey
-ALTER TABLE "campaign_workflow_instances" ADD CONSTRAINT "campaign_workflow_instances_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_locationId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_campaignId_fkey" FOREIGN KEY ("campaignId") REFERENCES "campaigns"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_costCenterId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "campaign_events" ADD CONSTRAINT "campaign_events_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_headId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_headId_fkey" FOREIGN KEY ("headId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_object_definitions" ADD CONSTRAINT "crm_object_definitions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_field_definitions" ADD CONSTRAINT "crm_field_definitions_objectId_fkey" FOREIGN KEY ("objectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_activeBudgetId_fkey') THEN
+        ALTER TABLE "department" ADD CONSTRAINT "department_activeBudgetId_fkey" FOREIGN KEY ("activeBudgetId") REFERENCES "Budget"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_objectId_fkey" FOREIGN KEY ("objectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_member_departmentId_fkey') THEN
+        ALTER TABLE "department_member" ADD CONSTRAINT "department_member_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_records" ADD CONSTRAINT "crm_records_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'department_member_memberId_fkey') THEN
+        ALTER TABLE "department_member" ADD CONSTRAINT "department_member_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_sourceObjectId_fkey" FOREIGN KEY ("sourceObjectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_relationship_definitions" ADD CONSTRAINT "crm_relationship_definitions_targetObjectId_fkey" FOREIGN KEY ("targetObjectId") REFERENCES "crm_object_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'subscriptions_organizationId_fkey') THEN
+        ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_relationshipId_fkey" FOREIGN KEY ("relationshipId") REFERENCES "crm_relationship_definitions"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_sourceRecordId_fkey" FOREIGN KEY ("sourceRecordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_setup_token_organizationId_fkey') THEN
+        ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_associations" ADD CONSTRAINT "crm_associations_targetRecordId_fkey" FOREIGN KEY ("targetRecordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_setup_token_locationId_fkey') THEN
+        ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_activities" ADD CONSTRAINT "crm_activities_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_setup_token_createdById_fkey') THEN
+        ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_registry_organizationId_fkey') THEN
+        ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_notes" ADD CONSTRAINT "crm_notes_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_recordId_fkey" FOREIGN KEY ("recordId") REFERENCES "crm_records"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_registry_apiKeyId_fkey') THEN
+        ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_apiKeyId_fkey" FOREIGN KEY ("apiKeyId") REFERENCES "api_key"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_assignedToId_fkey" FOREIGN KEY ("assignedToId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'device_registry_locationId_fkey') THEN
+        ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "crm_follow_ups" ADD CONSTRAINT "crm_follow_ups_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'api_key_organizationId_fkey') THEN
+        ALTER TABLE "api_key" ADD CONSTRAINT "api_key_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'api_key_createdById_fkey') THEN
+        ALTER TABLE "api_key" ADD CONSTRAINT "api_key_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_updatedById_fkey" FOREIGN KEY ("updatedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Customer" ADD CONSTRAINT "Customer_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'api_key_locationId_fkey') THEN
+        ALTER TABLE "api_key" ADD CONSTRAINT "api_key_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "business_account" ADD CONSTRAINT "business_account_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "business_account" ADD CONSTRAINT "business_account_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reports_organizationId_fkey') THEN
+        ALTER TABLE "reports" ADD CONSTRAINT "reports_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "B2BConnection" ADD CONSTRAINT "B2BConnection_supplierOrgId_fkey" FOREIGN KEY ("supplierOrgId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "B2BConnection" ADD CONSTRAINT "B2BConnection_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reports_generatedById_fkey') THEN
+        ALTER TABLE "reports" ADD CONSTRAINT "reports_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "referral_program" ADD CONSTRAINT "referral_program_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "referral" ADD CONSTRAINT "referral_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'plane_configuration_organizationId_fkey') THEN
+        ALTER TABLE "plane_configuration" ADD CONSTRAINT "plane_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "referral" ADD CONSTRAINT "referral_referrerId_fkey" FOREIGN KEY ("referrerId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "referral" ADD CONSTRAINT "referral_refereeId_fkey" FOREIGN KEY ("refereeId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceList_organizationId_fkey') THEN
+        ALTER TABLE "PriceList" ADD CONSTRAINT "PriceList_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "referral" ADD CONSTRAINT "referral_programId_fkey" FOREIGN KEY ("programId") REFERENCES "referral_program"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "driver" ADD CONSTRAINT "driver_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceListItem_priceListId_fkey') THEN
+        ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_priceListId_fkey" FOREIGN KEY ("priceListId") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "driver" ADD CONSTRAINT "driver_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "driver" ADD CONSTRAINT "driver_deliveryPartnerId_fkey" FOREIGN KEY ("deliveryPartnerId") REFERENCES "delivery_partner"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceListItem_variantId_fkey') THEN
+        ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "driver" ADD CONSTRAINT "driver_vehicleId_fkey" FOREIGN KEY ("vehicleId") REFERENCES "vehicle"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "vehicle" ADD CONSTRAINT "vehicle_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceListItem_sellingUnitId_fkey') THEN
+        ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_sellingUnitId_fkey" FOREIGN KEY ("sellingUnitId") REFERENCES "variant_selling_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_connection" ADD CONSTRAINT "ecommerce_connection_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_connection" ADD CONSTRAINT "ecommerce_connection_defaultLocationId_fkey" FOREIGN KEY ("defaultLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingRule_priceListId_fkey') THEN
+        ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_priceListId_fkey" FOREIGN KEY ("priceListId") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_sync_log" ADD CONSTRAINT "ecommerce_sync_log_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_sync_log" ADD CONSTRAINT "ecommerce_sync_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingRule_variantId_fkey') THEN
+        ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingRule_organizationId_fkey') THEN
+        ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_product_mapping" ADD CONSTRAINT "ecommerce_product_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingBundle_organizationId_fkey') THEN
+        ALTER TABLE "PricingBundle" ADD CONSTRAINT "PricingBundle_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingBundleItem_bundleId_fkey') THEN
+        ALTER TABLE "PricingBundleItem" ADD CONSTRAINT "PricingBundleItem_bundleId_fkey" FOREIGN KEY ("bundleId") REFERENCES "PricingBundle"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_order_mapping" ADD CONSTRAINT "ecommerce_order_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PricingBundleItem_variantId_fkey') THEN
+        ALTER TABLE "PricingBundleItem" ADD CONSTRAINT "PricingBundleItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_customer_mapping" ADD CONSTRAINT "ecommerce_customer_mapping_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceHistory_priceListItemId_fkey') THEN
+        ALTER TABLE "PriceHistory" ADD CONSTRAINT "PriceHistory_priceListItemId_fkey" FOREIGN KEY ("priceListItemId") REFERENCES "PriceListItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ecommerce_webhook_log" ADD CONSTRAINT "ecommerce_webhook_log_connectionId_fkey" FOREIGN KEY ("connectionId") REFERENCES "ecommerce_connection"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ecommerce_webhook_log" ADD CONSTRAINT "ecommerce_webhook_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'PriceImportJob_organizationId_fkey') THEN
+        ALTER TABLE "PriceImportJob" ADD CONSTRAINT "PriceImportJob_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "CartItem" ADD CONSTRAINT "CartItem_cartId_fkey" FOREIGN KEY ("cartId") REFERENCES "Cart"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'price_change_request_organizationId_fkey') THEN
+        ALTER TABLE "price_change_request" ADD CONSTRAINT "price_change_request_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorites" ADD CONSTRAINT "favorites_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'price_change_request_priceListItemId_fkey') THEN
+        ALTER TABLE "price_change_request" ADD CONSTRAINT "price_change_request_priceListItemId_fkey" FOREIGN KEY ("priceListItemId") REFERENCES "PriceListItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'scryme_configuration_organizationId_fkey') THEN
+        ALTER TABLE "scryme_configuration" ADD CONSTRAINT "scryme_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_reviews" ADD CONSTRAINT "product_reviews_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ExpenseCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'scryme_messages_organizationId_fkey') THEN
+        ALTER TABLE "scryme_messages" ADD CONSTRAINT "scryme_messages_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'standalone_device_organizationId_fkey') THEN
+        ALTER TABLE "standalone_device" ADD CONSTRAINT "standalone_device_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'standalone_device_key_deviceId_fkey') THEN
+        ALTER TABLE "standalone_device_key" ADD CONSTRAINT "standalone_device_key_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "standalone_device"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_rule_organizationId_fkey') THEN
+        ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_rule_productId_fkey') THEN
+        ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_pettyCashFundId_fkey" FOREIGN KEY ("pettyCashFundId") REFERENCES "PettyCashFund"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_utilityAccountId_fkey" FOREIGN KEY ("utilityAccountId") REFERENCES "UtilityAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_rule_variantId_fkey') THEN
+        ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_rule_locationId_fkey') THEN
+        ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_recurringExpenseId_fkey" FOREIGN KEY ("recurringExpenseId") REFERENCES "RecurringExpense"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_rule_preferredSupplierId_fkey') THEN
+        ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_preferredSupplierId_fkey" FOREIGN KEY ("preferredSupplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Expense" ADD CONSTRAINT "Expense_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ExpenseCategory" ADD CONSTRAINT "ExpenseCategory_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_alert_organizationId_fkey') THEN
+        ALTER TABLE "reorder_alert" ADD CONSTRAINT "reorder_alert_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ExpenseCategory" ADD CONSTRAINT "ExpenseCategory_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "ExpenseCategory"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'reorder_alert_reorderRuleId_fkey') THEN
+        ALTER TABLE "reorder_alert" ADD CONSTRAINT "reorder_alert_reorderRuleId_fkey" FOREIGN KEY ("reorderRuleId") REFERENCES "reorder_rule"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_audit_log_organizationId_fkey') THEN
+        ALTER TABLE "stock_audit_log" ADD CONSTRAINT "stock_audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_utilityAccountId_fkey" FOREIGN KEY ("utilityAccountId") REFERENCES "UtilityAccount"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_audit_log_performedBy_fkey') THEN
+        ALTER TABLE "stock_audit_log" ADD CONSTRAINT "stock_audit_log_performedBy_fkey" FOREIGN KEY ("performedBy") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RecurringExpense" ADD CONSTRAINT "RecurringExpense_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_approval_chain_organizationId_fkey') THEN
+        ALTER TABLE "purchase_approval_chain" ADD CONSTRAINT "purchase_approval_chain_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_approval_chain_departmentId_fkey') THEN
+        ALTER TABLE "purchase_approval_chain" ADD CONSTRAINT "purchase_approval_chain_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_expenseCategoryId_fkey" FOREIGN KEY ("expenseCategoryId") REFERENCES "ExpenseCategory"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_approval_step_chainId_fkey') THEN
+        ALTER TABLE "purchase_approval_step" ADD CONSTRAINT "purchase_approval_step_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "purchase_approval_chain"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Budget" ADD CONSTRAINT "Budget_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'purchase_approval_step_approverId_fkey') THEN
+        ALTER TABLE "purchase_approval_step" ADD CONSTRAINT "purchase_approval_step_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "BudgetReport" ADD CONSTRAINT "BudgetReport_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BudgetReport" ADD CONSTRAINT "BudgetReport_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_organizationId_fkey') THEN
+        ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "BudgetAlert" ADD CONSTRAINT "BudgetAlert_budgetId_fkey" FOREIGN KEY ("budgetId") REFERENCES "Budget"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BudgetAlert" ADD CONSTRAINT "BudgetAlert_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_locationId_fkey') THEN
+        ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "CostCenter" ADD CONSTRAINT "CostCenter_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_assignedTo_fkey') THEN
+        ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_assignedTo_fkey" FOREIGN KEY ("assignedTo") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_responsibleMemberId_fkey" FOREIGN KEY ("responsibleMemberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PettyCashFund" ADD CONSTRAINT "PettyCashFund_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_reviewedBy_fkey') THEN
+        ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PettyCashTransaction" ADD CONSTRAINT "PettyCashTransaction_fundId_fkey" FOREIGN KEY ("fundId") REFERENCES "PettyCashFund"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PettyCashTransaction" ADD CONSTRAINT "PettyCashTransaction_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_item_stockTakeId_fkey') THEN
+        ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_stockTakeId_fkey" FOREIGN KEY ("stockTakeId") REFERENCES "stock_take"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "UtilityAccount" ADD CONSTRAINT "UtilityAccount_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_item_variantId_fkey') THEN
+        ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_take_item_stockBatchId_fkey') THEN
+        ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Purchase" ADD CONSTRAINT "Purchase_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'supplier_performance_organizationId_fkey') THEN
+        ALTER TABLE "supplier_performance" ADD CONSTRAINT "supplier_performance_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'supplier_performance_supplierId_fkey') THEN
+        ALTER TABLE "supplier_performance" ADD CONSTRAINT "supplier_performance_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_orderedUnitId_fkey" FOREIGN KEY ("orderedUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_valuation_organizationId_fkey') THEN
+        ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseItem" ADD CONSTRAINT "PurchaseItem_orderedOrgUnitId_fkey" FOREIGN KEY ("orderedOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchasePayment" ADD CONSTRAINT "PurchasePayment_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_valuation_locationId_fkey') THEN
+        ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchasePayment" ADD CONSTRAINT "PurchasePayment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_valuation_generatedBy_fkey') THEN
+        ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_generatedBy_fkey" FOREIGN KEY ("generatedBy") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SupplierInvoice" ADD CONSTRAINT "SupplierInvoice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CycleCountConfig_organizationId_fkey') THEN
+        ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CycleCountConfig_locationId_fkey') THEN
+        ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseReturn" ADD CONSTRAINT "PurchaseReturn_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PurchaseReturnItem" ADD CONSTRAINT "PurchaseReturnItem_purchaseReturnId_fkey" FOREIGN KEY ("purchaseReturnId") REFERENCES "PurchaseReturn"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CycleCountConfig_categoryId_fkey') THEN
+        ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PurchaseReturnItem" ADD CONSTRAINT "PurchaseReturnItem_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE NO ACTION ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_variantId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_requesterId_fkey" FOREIGN KEY ("requesterId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalRequest" ADD CONSTRAINT "ApprovalRequest_workflowId_fkey" FOREIGN KEY ("workflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_purchaseItemId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalDecision" ADD CONSTRAINT "ApprovalDecision_approvalRequestId_fkey" FOREIGN KEY ("approvalRequestId") REFERENCES "ApprovalRequest"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalDecision" ADD CONSTRAINT "ApprovalDecision_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_locationId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalWorkflow" ADD CONSTRAINT "ApprovalWorkflow_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalWorkflowStep" ADD CONSTRAINT "ApprovalWorkflowStep_approvalWorkflowId_fkey" FOREIGN KEY ("approvalWorkflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_storageUnitId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_storageUnitId_fkey" FOREIGN KEY ("storageUnitId") REFERENCES "StorageUnit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES "ApprovalWorkflowStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_positionId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "StoragePosition"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalStepCondition" ADD CONSTRAINT "ApprovalStepCondition_expenseCategoryId_fkey" FOREIGN KEY ("expenseCategoryId") REFERENCES "ExpenseCategory"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ApprovalStepAction" ADD CONSTRAINT "ApprovalStepAction_stepId_fkey" FOREIGN KEY ("stepId") REFERENCES "ApprovalWorkflowStep"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_systemUnitId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ApprovalStepAction" ADD CONSTRAINT "ApprovalStepAction_specificMemberId_fkey" FOREIGN KEY ("specificMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LedgerAccount" ADD CONSTRAINT "LedgerAccount_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_orgUnitId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LedgerAccount" ADD CONSTRAINT "LedgerAccount_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "LedgerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_organizationId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "JournalEntry" ADD CONSTRAINT "JournalEntry_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_journalEntryId_fkey" FOREIGN KEY ("journalEntryId") REFERENCES "JournalEntry"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_supplierId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_ledgerAccountId_fkey" FOREIGN KEY ("ledgerAccountId") REFERENCES "LedgerAccount"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "JournalLine" ADD CONSTRAINT "JournalLine_bankStatementLineId_fkey" FOREIGN KEY ("bankStatementLineId") REFERENCES "BankStatementLine"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_productionBatchId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_productionBatchId_fkey" FOREIGN KEY ("productionBatchId") REFERENCES "Batch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "BankStatement" ADD CONSTRAINT "BankStatement_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "BankStatementLine" ADD CONSTRAINT "BankStatementLine_statementId_fkey" FOREIGN KEY ("statementId") REFERENCES "BankStatement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_parentId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_assemblyId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_assemblyId_fkey" FOREIGN KEY ("assemblyId") REFERENCES "stock_assembly"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "RecurringBill" ADD CONSTRAINT "RecurringBill_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "huly_configuration" ADD CONSTRAINT "huly_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockBatch_recallId_fkey') THEN
+        ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_recallId_fkey" FOREIGN KEY ("recallId") REFERENCES "Recall"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "huly_notification_rule" ADD CONSTRAINT "huly_notification_rule_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "huly_event_log" ADD CONSTRAINT "huly_event_log_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReceipt_purchaseId_fkey') THEN
+        ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "huly_channel_mapping" ADD CONSTRAINT "huly_channel_mapping_configId_fkey" FOREIGN KEY ("configId") REFERENCES "huly_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "organization_integration" ADD CONSTRAINT "organization_integration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReceipt_organizationId_fkey') THEN
+        ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "organization_integration" ADD CONSTRAINT "organization_integration_integrationDefinitionId_fkey" FOREIGN KEY ("integrationDefinitionId") REFERENCES "integration_definition"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "external_mapping" ADD CONSTRAINT "external_mapping_organizationIntegrationId_fkey" FOREIGN KEY ("organizationIntegrationId") REFERENCES "organization_integration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReceipt_memberId_fkey') THEN
+        ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "integration_event" ADD CONSTRAINT "integration_event_organizationIntegrationId_fkey" FOREIGN KEY ("organizationIntegrationId") REFERENCES "organization_integration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductVariantStock_productId_fkey') THEN
+        ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Category" ADD CONSTRAINT "Category_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductVariantStock_variantId_fkey') THEN
+        ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_defaultLocationId_fkey" FOREIGN KEY ("defaultLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Product" ADD CONSTRAINT "Product_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductVariantStock_locationId_fkey') THEN
+        ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_baseUnitId_fkey" FOREIGN KEY ("baseUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ProductVariantStock_organizationId_fkey') THEN
+        ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_baseOrgUnitId_fkey" FOREIGN KEY ("baseOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_stockingUnitId_fkey" FOREIGN KEY ("stockingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SerialNumber_variantId_fkey') THEN
+        ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_variant" ADD CONSTRAINT "product_variant_stockingOrgUnitId_fkey" FOREIGN KEY ("stockingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SerialNumber_stockBatchId_fkey') THEN
+        ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "variant_selling_unit" ADD CONSTRAINT "variant_selling_unit_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SerialNumber_locationId_fkey') THEN
+        ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Recall" ADD CONSTRAINT "Recall_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Recall" ADD CONSTRAINT "Recall_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'SerialNumber_organizationId_fkey') THEN
+        ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Supplier" ADD CONSTRAINT "Supplier_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_variantId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_stockBatchId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_packagingUnitId_fkey" FOREIGN KEY ("packagingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductSupplier" ADD CONSTRAINT "ProductSupplier_packagingOrgUnitId_fkey" FOREIGN KEY ("packagingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_fromLocationId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SupplierDocument" ADD CONSTRAINT "SupplierDocument_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SupplierDocument" ADD CONSTRAINT "SupplierDocument_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_toLocationId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_adjustmentId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_adjustmentId_fkey" FOREIGN KEY ("adjustmentId") REFERENCES "StockAdjustment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SupplierPriceHistory" ADD CONSTRAINT "SupplierPriceHistory_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_parentLocationId_fkey" FOREIGN KEY ("parentLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_memberId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InventoryLocation" ADD CONSTRAINT "InventoryLocation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_stockReceiptId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_stockReceiptId_fkey" FOREIGN KEY ("stockReceiptId") REFERENCES "StockReceipt"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StorageZone" ADD CONSTRAINT "StorageZone_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StorageZone" ADD CONSTRAINT "StorageZone_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockMovement_organizationId_fkey') THEN
+        ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_zoneId_fkey" FOREIGN KEY ("zoneId") REFERENCES "StorageZone"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_variantId_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StorageUnit" ADD CONSTRAINT "StorageUnit_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "QCTemplate" ADD CONSTRAINT "QCTemplate_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_stockBatchId_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "QCTemplate"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_locationId_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_memberId_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "QCResult" ADD CONSTRAINT "QCResult_performedById_fkey" FOREIGN KEY ("performedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_approvedById_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "supplier_review" ADD CONSTRAINT "supplier_review_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockAdjustment_organizationId_fkey') THEN
+        ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_variantId_fkey') THEN
+        ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "favorite_supplier" ADD CONSTRAINT "favorite_supplier_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StoragePosition" ADD CONSTRAINT "StoragePosition_storageUnitId_fkey" FOREIGN KEY ("storageUnitId") REFERENCES "StorageUnit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_organizationId_fkey') THEN
+        ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StoragePosition" ADD CONSTRAINT "StoragePosition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_memberId_fkey') THEN
+        ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_item_assemblyId_fkey') THEN
+        ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_assemblyId_fkey" FOREIGN KEY ("assemblyId") REFERENCES "stock_assembly"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InvoiceItem" ADD CONSTRAINT "InvoiceItem_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_item_variantId_fkey') THEN
+        ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "KRAComplianceLog" ADD CONSTRAINT "KRAComplianceLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InvoiceTemplate" ADD CONSTRAINT "InvoiceTemplate_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_assembly_item_stockBatchId_fkey') THEN
+        ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "InvoiceTemplate" ADD CONSTRAINT "InvoiceTemplate_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "InvoiceTemplateVersion" ADD CONSTRAINT "InvoiceTemplateVersion_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_organizationId_fkey') THEN
+        ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "InvoiceTemplateVersion" ADD CONSTRAINT "InvoiceTemplateVersion_createdBy_fkey" FOREIGN KEY ("createdBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_fromLocationId_fkey') THEN
+        ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "InvoiceTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_invoiceId_fkey" FOREIGN KEY ("invoiceId") REFERENCES "Invoice"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_toLocationId_fkey') THEN
+        ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "TemplateUsageLog" ADD CONSTRAINT "TemplateUsageLog_usedBy_fkey" FOREIGN KEY ("usedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "invoice_config" ADD CONSTRAINT "invoice_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_requestedById_fkey') THEN
+        ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LoyaltyProgram" ADD CONSTRAINT "LoyaltyProgram_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LoyaltyTier" ADD CONSTRAINT "LoyaltyTier_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_approvedById_fkey') THEN
+        ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LoyaltyRule" ADD CONSTRAINT "LoyaltyRule_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LoyaltyReward" ADD CONSTRAINT "LoyaltyReward_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_item_stockRequestId_fkey') THEN
+        ALTER TABLE "stock_request_item" ADD CONSTRAINT "stock_request_item_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_rewardId_fkey" FOREIGN KEY ("rewardId") REFERENCES "LoyaltyReward"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_request_item_variantId_fkey') THEN
+        ALTER TABLE "stock_request_item" ADD CONSTRAINT "stock_request_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LoyaltyVoucher" ADD CONSTRAINT "LoyaltyVoucher_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_item_stockTransferId_fkey') THEN
+        ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_stockTransferId_fkey" FOREIGN KEY ("stockTransferId") REFERENCES "stock_transfer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "LoyaltyTransaction" ADD CONSTRAINT "LoyaltyTransaction_programId_fkey" FOREIGN KEY ("programId") REFERENCES "LoyaltyProgram"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "LoyaltyTransaction" ADD CONSTRAINT "LoyaltyTransaction_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_item_variantId_fkey') THEN
+        ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "notification_template" ADD CONSTRAINT "notification_template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification_dispatch" ADD CONSTRAINT "notification_dispatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_item_stockBatchId_fkey') THEN
+        ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "notification_dispatch" ADD CONSTRAINT "notification_dispatch_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "notification_template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "notification_channel_config" ADD CONSTRAINT "notification_channel_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_organizationId_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "organization" ADD CONSTRAINT "organization_activeExpenseWorkflowId_fkey" FOREIGN KEY ("activeExpenseWorkflowId") REFERENCES "ApprovalWorkflow"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payment_credentials" ADD CONSTRAINT "payment_credentials_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_fromLocationId_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "member" ADD CONSTRAINT "member_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "member" ADD CONSTRAINT "member_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_toLocationId_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "member" ADD CONSTRAINT "member_managerId_fkey" FOREIGN KEY ("managerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "member" ADD CONSTRAINT "member_currentCheckInLocationId_fkey" FOREIGN KEY ("currentCheckInLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_qualityCheckedById_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_qualityCheckedById_fkey" FOREIGN KEY ("qualityCheckedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "member" ADD CONSTRAINT "member_currentAttendanceLogId_fkey" FOREIGN KEY ("currentAttendanceLogId") REFERENCES "attendance_log"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_requestedById_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_checkInLocationId_fkey" FOREIGN KEY ("checkInLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_approvedById_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_checkOutLocationId_fkey" FOREIGN KEY ("checkOutLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "custom_role" ADD CONSTRAINT "custom_role_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_shippedById_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_shippedById_fkey" FOREIGN KEY ("shippedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "permission_set" ADD CONSTRAINT "permission_set_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "role_group" ADD CONSTRAINT "role_group_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_receivedById_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_receivedById_fkey" FOREIGN KEY ("receivedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "invitation" ADD CONSTRAINT "invitation_inviterId_fkey" FOREIGN KEY ("inviterId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_transfer_stockRequestId_fkey') THEN
+        ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "organization_settings" ADD CONSTRAINT "organization_settings_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_report_templates_organizationId_fkey') THEN
+        ALTER TABLE "stock_report_templates" ADD CONSTRAINT "stock_report_templates_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_report_templates_createdByMemberId_fkey') THEN
+        ALTER TABLE "stock_report_templates" ADD CONSTRAINT "stock_report_templates_createdByMemberId_fkey" FOREIGN KEY ("createdByMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_costCenterId_fkey" FOREIGN KEY ("costCenterId") REFERENCES "CostCenter"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_headId_fkey" FOREIGN KEY ("headId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'generated_stock_reports_organizationId_fkey') THEN
+        ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "department" ADD CONSTRAINT "department_activeBudgetId_fkey" FOREIGN KEY ("activeBudgetId") REFERENCES "Budget"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "department_member" ADD CONSTRAINT "department_member_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'generated_stock_reports_templateId_fkey') THEN
+        ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "department_member" ADD CONSTRAINT "department_member_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "subscriptions" ADD CONSTRAINT "subscriptions_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'generated_stock_reports_generatedById_fkey') THEN
+        ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automations_organizationId_fkey') THEN
+        ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "device_setup_token" ADD CONSTRAINT "device_setup_token_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automations_templateId_fkey') THEN
+        ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_apiKeyId_fkey" FOREIGN KEY ("apiKeyId") REFERENCES "api_key"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "device_registry" ADD CONSTRAINT "device_registry_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automations_createdById_fkey') THEN
+        ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "api_key" ADD CONSTRAINT "api_key_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "api_key" ADD CONSTRAINT "api_key_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automation_executions_automationId_fkey') THEN
+        ALTER TABLE "report_automation_executions" ADD CONSTRAINT "report_automation_executions_automationId_fkey" FOREIGN KEY ("automationId") REFERENCES "report_automations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "api_key" ADD CONSTRAINT "api_key_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "reports" ADD CONSTRAINT "reports_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automation_executions_channelId_fkey') THEN
+        ALTER TABLE "report_automation_executions" ADD CONSTRAINT "report_automation_executions_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "report_channels"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "reports" ADD CONSTRAINT "reports_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "plane_configuration" ADD CONSTRAINT "plane_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_channels_organizationId_fkey') THEN
+        ALTER TABLE "report_channels" ADD CONSTRAINT "report_channels_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PriceList" ADD CONSTRAINT "PriceList_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_priceListId_fkey" FOREIGN KEY ("priceListId") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_channels_createdById_fkey') THEN
+        ALTER TABLE "report_channels" ADD CONSTRAINT "report_channels_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PriceListItem" ADD CONSTRAINT "PriceListItem_sellingUnitId_fkey" FOREIGN KEY ("sellingUnitId") REFERENCES "variant_selling_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReconciliation_organizationId_fkey') THEN
+        ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_priceListId_fkey" FOREIGN KEY ("priceListId") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReconciliation_locationId_fkey') THEN
+        ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PricingRule" ADD CONSTRAINT "PricingRule_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PricingBundle" ADD CONSTRAINT "PricingBundle_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReconciliation_initiatedBy_fkey') THEN
+        ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_initiatedBy_fkey" FOREIGN KEY ("initiatedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PricingBundleItem" ADD CONSTRAINT "PricingBundleItem_bundleId_fkey" FOREIGN KEY ("bundleId") REFERENCES "PricingBundle"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PricingBundleItem" ADD CONSTRAINT "PricingBundleItem_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReconciliation_completedBy_fkey') THEN
+        ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_completedBy_fkey" FOREIGN KEY ("completedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "PriceHistory" ADD CONSTRAINT "PriceHistory_priceListItemId_fkey" FOREIGN KEY ("priceListItemId") REFERENCES "PriceListItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "PriceImportJob" ADD CONSTRAINT "PriceImportJob_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'StockReconciliation_reviewedBy_fkey') THEN
+        ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "price_change_request" ADD CONSTRAINT "price_change_request_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "price_change_request" ADD CONSTRAINT "price_change_request_priceListItemId_fkey" FOREIGN KEY ("priceListItemId") REFERENCES "PriceListItem"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ReconciliationItem_reconciliationId_fkey') THEN
+        ALTER TABLE "ReconciliationItem" ADD CONSTRAINT "ReconciliationItem_reconciliationId_fkey" FOREIGN KEY ("reconciliationId") REFERENCES "StockReconciliation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "scryme_configuration" ADD CONSTRAINT "scryme_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "scryme_messages" ADD CONSTRAINT "scryme_messages_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ReconciliationItem_productVariantId_fkey') THEN
+        ALTER TABLE "ReconciliationItem" ADD CONSTRAINT "ReconciliationItem_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "standalone_device" ADD CONSTRAINT "standalone_device_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "standalone_device_key" ADD CONSTRAINT "standalone_device_key_deviceId_fkey" FOREIGN KEY ("deviceId") REFERENCES "standalone_device"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MovementReconciliationLink_reconciliationId_fkey') THEN
+        ALTER TABLE "MovementReconciliationLink" ADD CONSTRAINT "MovementReconciliationLink_reconciliationId_fkey" FOREIGN KEY ("reconciliationId") REFERENCES "StockReconciliation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MovementReconciliationLink_movementId_fkey') THEN
+        ALTER TABLE "MovementReconciliationLink" ADD CONSTRAINT "MovementReconciliationLink_movementId_fkey" FOREIGN KEY ("movementId") REFERENCES "StockMovement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ActionAuditLog_organizationId_fkey') THEN
+        ALTER TABLE "ActionAuditLog" ADD CONSTRAINT "ActionAuditLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "reorder_rule" ADD CONSTRAINT "reorder_rule_preferredSupplierId_fkey" FOREIGN KEY ("preferredSupplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "reorder_alert" ADD CONSTRAINT "reorder_alert_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'ActionAuditLog_memberId_fkey') THEN
+        ALTER TABLE "ActionAuditLog" ADD CONSTRAINT "ActionAuditLog_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "reorder_alert" ADD CONSTRAINT "reorder_alert_reorderRuleId_fkey" FOREIGN KEY ("reorderRuleId") REFERENCES "reorder_rule"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_audit_log" ADD CONSTRAINT "stock_audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_authority_organizationId_fkey') THEN
+        ALTER TABLE "tax_authority" ADD CONSTRAINT "tax_authority_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_audit_log" ADD CONSTRAINT "stock_audit_log_performedBy_fkey" FOREIGN KEY ("performedBy") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "purchase_approval_chain" ADD CONSTRAINT "purchase_approval_chain_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_organizationId_fkey') THEN
+        ALTER TABLE "tax" ADD CONSTRAINT "tax_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "purchase_approval_chain" ADD CONSTRAINT "purchase_approval_chain_departmentId_fkey" FOREIGN KEY ("departmentId") REFERENCES "department"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "purchase_approval_step" ADD CONSTRAINT "purchase_approval_step_chainId_fkey" FOREIGN KEY ("chainId") REFERENCES "purchase_approval_chain"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_taxAuthorityId_fkey') THEN
+        ALTER TABLE "tax" ADD CONSTRAINT "tax_taxAuthorityId_fkey" FOREIGN KEY ("taxAuthorityId") REFERENCES "tax_authority"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "purchase_approval_step" ADD CONSTRAINT "purchase_approval_step_approverId_fkey" FOREIGN KEY ("approverId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_filing_organizationId_fkey') THEN
+        ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_assignedTo_fkey" FOREIGN KEY ("assignedTo") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_filing_taxAuthorityId_fkey') THEN
+        ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_taxAuthorityId_fkey" FOREIGN KEY ("taxAuthorityId") REFERENCES "tax_authority"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_take" ADD CONSTRAINT "stock_take_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_stockTakeId_fkey" FOREIGN KEY ("stockTakeId") REFERENCES "stock_take"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_filing_createdById_fkey') THEN
+        ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_take_item" ADD CONSTRAINT "stock_take_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_payment_filingId_fkey') THEN
+        ALTER TABLE "tax_payment" ADD CONSTRAINT "tax_payment_filingId_fkey" FOREIGN KEY ("filingId") REFERENCES "tax_filing"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "supplier_performance" ADD CONSTRAINT "supplier_performance_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "supplier_performance" ADD CONSTRAINT "supplier_performance_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'tax_payment_processedById_fkey') THEN
+        ALTER TABLE "tax_payment" ADD CONSTRAINT "tax_payment_processedById_fkey" FOREIGN KEY ("processedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_tax_transactionId_fkey') THEN
+        ALTER TABLE "applied_tax" ADD CONSTRAINT "applied_tax_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_valuation" ADD CONSTRAINT "stock_valuation_generatedBy_fkey" FOREIGN KEY ("generatedBy") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_tax_taxRateId_fkey') THEN
+        ALTER TABLE "applied_tax" ADD CONSTRAINT "applied_tax_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CycleCountConfig" ADD CONSTRAINT "CycleCountConfig_categoryId_fkey" FOREIGN KEY ("categoryId") REFERENCES "Category"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_expense_tax_expenseId_fkey') THEN
+        ALTER TABLE "applied_expense_tax" ADD CONSTRAINT "applied_expense_tax_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_purchaseItemId_fkey" FOREIGN KEY ("purchaseItemId") REFERENCES "PurchaseItem"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_expense_tax_taxId_fkey') THEN
+        ALTER TABLE "applied_expense_tax" ADD CONSTRAINT "applied_expense_tax_taxId_fkey" FOREIGN KEY ("taxId") REFERENCES "tax"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_storageUnitId_fkey" FOREIGN KEY ("storageUnitId") REFERENCES "StorageUnit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_purchase_tax_purchaseId_fkey') THEN
+        ALTER TABLE "applied_purchase_tax" ADD CONSTRAINT "applied_purchase_tax_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_positionId_fkey" FOREIGN KEY ("positionId") REFERENCES "StoragePosition"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_systemUnitId_fkey" FOREIGN KEY ("systemUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_purchase_tax_taxRateId_fkey') THEN
+        ALTER TABLE "applied_purchase_tax" ADD CONSTRAINT "applied_purchase_tax_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_orgUnitId_fkey" FOREIGN KEY ("orgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_organizationId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_supplierId_fkey" FOREIGN KEY ("supplierId") REFERENCES "Supplier"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_productionBatchId_fkey" FOREIGN KEY ("productionBatchId") REFERENCES "Batch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_customerId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_parentId_fkey" FOREIGN KEY ("parentId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_assemblyId_fkey" FOREIGN KEY ("assemblyId") REFERENCES "stock_assembly"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_businessAccountId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockBatch" ADD CONSTRAINT "StockBatch_recallId_fkey" FOREIGN KEY ("recallId") REFERENCES "Recall"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_deliveryPartnerId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_deliveryPartnerId_fkey" FOREIGN KEY ("deliveryPartnerId") REFERENCES "delivery_partner"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockReceipt" ADD CONSTRAINT "StockReceipt_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_memberId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_locationId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ProductVariantStock" ADD CONSTRAINT "ProductVariantStock_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_parentTransactionId_fkey') THEN
+        ALTER TABLE "transaction" ADD CONSTRAINT "transaction_parentTransactionId_fkey" FOREIGN KEY ("parentTransactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_item_transactionId_fkey') THEN
+        ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "SerialNumber" ADD CONSTRAINT "SerialNumber_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_item_variantId_fkey') THEN
+        ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_item_sellingUnitId_fkey') THEN
+        ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_sellingUnitId_fkey" FOREIGN KEY ("sellingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'transaction_item_sellingOrgUnitId_fkey') THEN
+        ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_sellingOrgUnitId_fkey" FOREIGN KEY ("sellingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_adjustmentId_fkey" FOREIGN KEY ("adjustmentId") REFERENCES "StockAdjustment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inventory_allocation_transactionItemId_fkey') THEN
+        ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_stockReceiptId_fkey" FOREIGN KEY ("stockReceiptId") REFERENCES "StockReceipt"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockMovement" ADD CONSTRAINT "StockMovement_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inventory_allocation_stockBatchId_fkey') THEN
+        ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'inventory_allocation_inventoryLocationId_fkey') THEN
+        ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_inventoryLocationId_fkey" FOREIGN KEY ("inventoryLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payment_transactionId_fkey') THEN
+        ALTER TABLE "payment" ADD CONSTRAINT "payment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockAdjustment" ADD CONSTRAINT "StockAdjustment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payment_payoutId_fkey') THEN
+        ALTER TABLE "payment" ADD CONSTRAINT "payment_payoutId_fkey" FOREIGN KEY ("payoutId") REFERENCES "payout"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payment_cashDrawerId_fkey') THEN
+        ALTER TABLE "payment" ADD CONSTRAINT "payment_cashDrawerId_fkey" FOREIGN KEY ("cashDrawerId") REFERENCES "CashDrawer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_assembly" ADD CONSTRAINT "stock_assembly_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_assemblyId_fkey" FOREIGN KEY ("assemblyId") REFERENCES "stock_assembly"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unclaimed_payment_paymentId_fkey') THEN
+        ALTER TABLE "unclaimed_payment" ADD CONSTRAINT "unclaimed_payment_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_assembly_item" ADD CONSTRAINT "stock_assembly_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'receipt_config_organizationId_fkey') THEN
+        ALTER TABLE "receipt_config" ADD CONSTRAINT "receipt_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'waybill_config_organizationId_fkey') THEN
+        ALTER TABLE "waybill_config" ADD CONSTRAINT "waybill_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'payout_organizationId_fkey') THEN
+        ALTER TABLE "payout" ADD CONSTRAINT "payout_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_request" ADD CONSTRAINT "stock_request_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_request_item" ADD CONSTRAINT "stock_request_item_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_transactionId_fkey') THEN
+        ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_request_item" ADD CONSTRAINT "stock_request_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_stockTransferId_fkey" FOREIGN KEY ("stockTransferId") REFERENCES "stock_transfer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_shippingAddressId_fkey') THEN
+        ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_shippingAddressId_fkey" FOREIGN KEY ("shippingAddressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer_item" ADD CONSTRAINT "stock_transfer_item_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_billingAddressId_fkey') THEN
+        ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_billingAddressId_fkey" FOREIGN KEY ("billingAddressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_fromLocationId_fkey" FOREIGN KEY ("fromLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_pickupLocationId_fkey') THEN
+        ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_pickupLocationId_fkey" FOREIGN KEY ("pickupLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_toLocationId_fkey" FOREIGN KEY ("toLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_qualityCheckedById_fkey" FOREIGN KEY ("qualityCheckedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_driverId_fkey') THEN
+        ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_driverId_fkey" FOREIGN KEY ("driverId") REFERENCES "driver"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_requestedById_fkey" FOREIGN KEY ("requestedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_approvedById_fkey" FOREIGN KEY ("approvedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_item_fulfillmentId_fkey') THEN
+        ALTER TABLE "fulfillment_item" ADD CONSTRAINT "fulfillment_item_fulfillmentId_fkey" FOREIGN KEY ("fulfillmentId") REFERENCES "fulfillment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_shippedById_fkey" FOREIGN KEY ("shippedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_receivedById_fkey" FOREIGN KEY ("receivedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'fulfillment_item_transactionItemId_fkey') THEN
+        ALTER TABLE "fulfillment_item" ADD CONSTRAINT "fulfillment_item_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_transfer" ADD CONSTRAINT "stock_transfer_stockRequestId_fkey" FOREIGN KEY ("stockRequestId") REFERENCES "stock_request"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "stock_report_templates" ADD CONSTRAINT "stock_report_templates_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_discount_transactionId_fkey') THEN
+        ALTER TABLE "applied_discount" ADD CONSTRAINT "applied_discount_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "stock_report_templates" ADD CONSTRAINT "stock_report_templates_createdByMemberId_fkey" FOREIGN KEY ("createdByMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'applied_discount_transactionItemId_fkey') THEN
+        ALTER TABLE "applied_discount" ADD CONSTRAINT "applied_discount_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "generated_stock_reports" ADD CONSTRAINT "generated_stock_reports_generatedById_fkey" FOREIGN KEY ("generatedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'return_transactionId_fkey') THEN
+        ALTER TABLE "return" ADD CONSTRAINT "return_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_templates"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'return_organizationId_fkey') THEN
+        ALTER TABLE "return" ADD CONSTRAINT "return_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "report_automations" ADD CONSTRAINT "report_automations_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "report_automation_executions" ADD CONSTRAINT "report_automation_executions_automationId_fkey" FOREIGN KEY ("automationId") REFERENCES "report_automations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'return_memberId_fkey') THEN
+        ALTER TABLE "return" ADD CONSTRAINT "return_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "report_automation_executions" ADD CONSTRAINT "report_automation_executions_channelId_fkey" FOREIGN KEY ("channelId") REFERENCES "report_channels"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "report_channels" ADD CONSTRAINT "report_channels_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'return_item_returnId_fkey') THEN
+        ALTER TABLE "return_item" ADD CONSTRAINT "return_item_returnId_fkey" FOREIGN KEY ("returnId") REFERENCES "return"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "report_channels" ADD CONSTRAINT "report_channels_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'return_item_transactionItemId_fkey') THEN
+        ALTER TABLE "return_item" ADD CONSTRAINT "return_item_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_initiatedBy_fkey" FOREIGN KEY ("initiatedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_memberId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_completedBy_fkey" FOREIGN KEY ("completedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "StockReconciliation" ADD CONSTRAINT "StockReconciliation_reviewedBy_fkey" FOREIGN KEY ("reviewedBy") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_documentMemberId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_documentMemberId_fkey" FOREIGN KEY ("documentMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ReconciliationItem" ADD CONSTRAINT "ReconciliationItem_reconciliationId_fkey" FOREIGN KEY ("reconciliationId") REFERENCES "StockReconciliation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ReconciliationItem" ADD CONSTRAINT "ReconciliationItem_productVariantId_fkey" FOREIGN KEY ("productVariantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_transactionId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "MovementReconciliationLink" ADD CONSTRAINT "MovementReconciliationLink_reconciliationId_fkey" FOREIGN KEY ("reconciliationId") REFERENCES "StockReconciliation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MovementReconciliationLink" ADD CONSTRAINT "MovementReconciliationLink_movementId_fkey" FOREIGN KEY ("movementId") REFERENCES "StockMovement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_paymentId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "ActionAuditLog" ADD CONSTRAINT "ActionAuditLog_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "ActionAuditLog" ADD CONSTRAINT "ActionAuditLog_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_purchaseId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "tax_authority" ADD CONSTRAINT "tax_authority_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tax" ADD CONSTRAINT "tax_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_expenseId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "tax" ADD CONSTRAINT "tax_taxAuthorityId_fkey" FOREIGN KEY ("taxAuthorityId") REFERENCES "tax_authority"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_stockBatchId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_taxAuthorityId_fkey" FOREIGN KEY ("taxAuthorityId") REFERENCES "tax_authority"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tax_filing" ADD CONSTRAINT "tax_filing_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_fulfillmentId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_fulfillmentId_fkey" FOREIGN KEY ("fulfillmentId") REFERENCES "fulfillment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "tax_payment" ADD CONSTRAINT "tax_payment_filingId_fkey" FOREIGN KEY ("filingId") REFERENCES "tax_filing"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "tax_payment" ADD CONSTRAINT "tax_payment_processedById_fkey" FOREIGN KEY ("processedById") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Attachment_organizationId_fkey') THEN
+        ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "applied_tax" ADD CONSTRAINT "applied_tax_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "applied_tax" ADD CONSTRAINT "applied_tax_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CashDrawer_locationId_fkey') THEN
+        ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "applied_expense_tax" ADD CONSTRAINT "applied_expense_tax_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "applied_expense_tax" ADD CONSTRAINT "applied_expense_tax_taxId_fkey" FOREIGN KEY ("taxId") REFERENCES "tax"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CashDrawer_memberId_fkey') THEN
+        ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "applied_purchase_tax" ADD CONSTRAINT "applied_purchase_tax_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "applied_purchase_tax" ADD CONSTRAINT "applied_purchase_tax_taxRateId_fkey" FOREIGN KEY ("taxRateId") REFERENCES "tax"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'CashDrawer_organizationId_fkey') THEN
+        ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'audit_log_organizationId_fkey') THEN
+        ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_deliveryPartnerId_fkey" FOREIGN KEY ("deliveryPartnerId") REFERENCES "delivery_partner"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'audit_log_memberId_fkey') THEN
+        ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MpesaPaymentRequest_organizationId_fkey') THEN
+        ALTER TABLE "MpesaPaymentRequest" ADD CONSTRAINT "MpesaPaymentRequest_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction" ADD CONSTRAINT "transaction_parentTransactionId_fkey" FOREIGN KEY ("parentTransactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'MpesaPaymentRequest_memberId_fkey') THEN
+        ALTER TABLE "MpesaPaymentRequest" ADD CONSTRAINT "MpesaPaymentRequest_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_variantId_fkey" FOREIGN KEY ("variantId") REFERENCES "product_variant"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_sellingUnitId_fkey" FOREIGN KEY ("sellingUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_unit_organizationId_fkey') THEN
+        ALTER TABLE "organization_unit" ADD CONSTRAINT "organization_unit_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "transaction_item" ADD CONSTRAINT "transaction_item_sellingOrgUnitId_fkey" FOREIGN KEY ("sellingOrgUnitId") REFERENCES "organization_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'organization_unit_baseSystemUnitId_fkey') THEN
+        ALTER TABLE "organization_unit" ADD CONSTRAINT "organization_unit_baseSystemUnitId_fkey" FOREIGN KEY ("baseSystemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "inventory_allocation" ADD CONSTRAINT "inventory_allocation_inventoryLocationId_fkey" FOREIGN KEY ("inventoryLocationId") REFERENCES "InventoryLocation"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'org_unit_conversion_organizationId_fkey') THEN
+        ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "payment" ADD CONSTRAINT "payment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "payment" ADD CONSTRAINT "payment_payoutId_fkey" FOREIGN KEY ("payoutId") REFERENCES "payout"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'org_unit_conversion_fromUnitId_fkey') THEN
+        ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "organization_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "payment" ADD CONSTRAINT "payment_cashDrawerId_fkey" FOREIGN KEY ("cashDrawerId") REFERENCES "CashDrawer"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "unclaimed_payment" ADD CONSTRAINT "unclaimed_payment_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'org_unit_conversion_toUnitId_fkey') THEN
+        ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "organization_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "receipt_config" ADD CONSTRAINT "receipt_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "waybill_config" ADD CONSTRAINT "waybill_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unit_conversion_fromUnitId_fkey') THEN
+        ALTER TABLE "unit_conversion" ADD CONSTRAINT "unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "system_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "payout" ADD CONSTRAINT "payout_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'unit_conversion_toUnitId_fkey') THEN
+        ALTER TABLE "unit_conversion" ADD CONSTRAINT "unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "system_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_shippingAddressId_fkey" FOREIGN KEY ("shippingAddressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_billingAddressId_fkey" FOREIGN KEY ("billingAddressId") REFERENCES "address"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_unit_conversion_productId_fkey') THEN
+        ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_pickupLocationId_fkey" FOREIGN KEY ("pickupLocationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "fulfillment" ADD CONSTRAINT "fulfillment_driverId_fkey" FOREIGN KEY ("driverId") REFERENCES "driver"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_unit_conversion_fromUnitId_fkey') THEN
+        ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "fulfillment_item" ADD CONSTRAINT "fulfillment_item_fulfillmentId_fkey" FOREIGN KEY ("fulfillmentId") REFERENCES "fulfillment"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "fulfillment_item" ADD CONSTRAINT "fulfillment_item_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'product_unit_conversion_toUnitId_fkey') THEN
+        ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "applied_discount" ADD CONSTRAINT "applied_discount_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "applied_discount" ADD CONSTRAINT "applied_discount_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'address_customerId_fkey') THEN
+        ALTER TABLE "address" ADD CONSTRAINT "address_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "return" ADD CONSTRAINT "return_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "return" ADD CONSTRAINT "return_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'address_businessAccountId_fkey') THEN
+        ALTER TABLE "address" ADD CONSTRAINT "address_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "return" ADD CONSTRAINT "return_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "return_item" ADD CONSTRAINT "return_item_returnId_fkey" FOREIGN KEY ("returnId") REFERENCES "return"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'v3_api_client_organizationId_fkey') THEN
+        ALTER TABLE "v3_api_client" ADD CONSTRAINT "v3_api_client_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "return_item" ADD CONSTRAINT "return_item_transactionItemId_fkey" FOREIGN KEY ("transactionItemId") REFERENCES "transaction_item"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'v3_api_client_businessAccountId_fkey') THEN
+        ALTER TABLE "v3_api_client" ADD CONSTRAINT "v3_api_client_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_documentMemberId_fkey" FOREIGN KEY ("documentMemberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_transactionId_fkey" FOREIGN KEY ("transactionId") REFERENCES "transaction"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'webhook_subscription_organizationId_fkey') THEN
+        ALTER TABLE "webhook_subscription" ADD CONSTRAINT "webhook_subscription_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_paymentId_fkey" FOREIGN KEY ("paymentId") REFERENCES "payment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_purchaseId_fkey" FOREIGN KEY ("purchaseId") REFERENCES "Purchase"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'webhook_subscription_apiClientId_fkey') THEN
+        ALTER TABLE "webhook_subscription" ADD CONSTRAINT "webhook_subscription_apiClientId_fkey" FOREIGN KEY ("apiClientId") REFERENCES "v3_api_client"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_expenseId_fkey" FOREIGN KEY ("expenseId") REFERENCES "Expense"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_stockBatchId_fkey" FOREIGN KEY ("stockBatchId") REFERENCES "StockBatch"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'webhook_log_subscriptionId_fkey') THEN
+        ALTER TABLE "webhook_log" ADD CONSTRAINT "webhook_log_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "webhook_subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_fulfillmentId_fkey" FOREIGN KEY ("fulfillmentId") REFERENCES "fulfillment"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Attachment" ADD CONSTRAINT "Attachment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'windmill_configuration_organizationId_fkey') THEN
+        ALTER TABLE "windmill_configuration" ADD CONSTRAINT "windmill_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_locationId_fkey" FOREIGN KEY ("locationId") REFERENCES "InventoryLocation"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'windmill_workflow_configId_fkey') THEN
+        ALTER TABLE "windmill_workflow" ADD CONSTRAINT "windmill_workflow_configId_fkey" FOREIGN KEY ("configId") REFERENCES "windmill_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "CashDrawer" ADD CONSTRAINT "CashDrawer_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'windmill_execution_organizationId_fkey') THEN
+        ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "audit_log" ADD CONSTRAINT "audit_log_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "MpesaPaymentRequest" ADD CONSTRAINT "MpesaPaymentRequest_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'windmill_execution_configId_fkey') THEN
+        ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_configId_fkey" FOREIGN KEY ("configId") REFERENCES "windmill_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "MpesaPaymentRequest" ADD CONSTRAINT "MpesaPaymentRequest_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "organization_unit" ADD CONSTRAINT "organization_unit_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_AssistantBakerBatches_A_fkey') THEN
+        ALTER TABLE "_AssistantBakerBatches" ADD CONSTRAINT "_AssistantBakerBatches_A_fkey" FOREIGN KEY ("A") REFERENCES "bakery_bakers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "organization_unit" ADD CONSTRAINT "organization_unit_baseSystemUnitId_fkey" FOREIGN KEY ("baseSystemUnitId") REFERENCES "system_unit"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_AssistantBakerBatches_B_fkey') THEN
+        ALTER TABLE "_AssistantBakerBatches" ADD CONSTRAINT "_AssistantBakerBatches_B_fkey" FOREIGN KEY ("B") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "organization_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "org_unit_conversion" ADD CONSTRAINT "org_unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "organization_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_TemplateAssistantBakers_A_fkey') THEN
+        ALTER TABLE "_TemplateAssistantBakers" ADD CONSTRAINT "_TemplateAssistantBakers_A_fkey" FOREIGN KEY ("A") REFERENCES "bakery_bakers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "unit_conversion" ADD CONSTRAINT "unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "system_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "unit_conversion" ADD CONSTRAINT "unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "system_unit"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_TemplateAssistantBakers_B_fkey') THEN
+        ALTER TABLE "_TemplateAssistantBakers" ADD CONSTRAINT "_TemplateAssistantBakers_B_fkey" FOREIGN KEY ("B") REFERENCES "Template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_productId_fkey" FOREIGN KEY ("productId") REFERENCES "Product"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_fromUnitId_fkey" FOREIGN KEY ("fromUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_CustomerToPriceList_A_fkey') THEN
+        ALTER TABLE "_CustomerToPriceList" ADD CONSTRAINT "_CustomerToPriceList_A_fkey" FOREIGN KEY ("A") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "product_unit_conversion" ADD CONSTRAINT "product_unit_conversion_toUnitId_fkey" FOREIGN KEY ("toUnitId") REFERENCES "system_unit"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "address" ADD CONSTRAINT "address_customerId_fkey" FOREIGN KEY ("customerId") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_CustomerToPriceList_B_fkey') THEN
+        ALTER TABLE "_CustomerToPriceList" ADD CONSTRAINT "_CustomerToPriceList_B_fkey" FOREIGN KEY ("B") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "address" ADD CONSTRAINT "address_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "v3_api_client" ADD CONSTRAINT "v3_api_client_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_BusinessAccountToPriceList_A_fkey') THEN
+        ALTER TABLE "_BusinessAccountToPriceList" ADD CONSTRAINT "_BusinessAccountToPriceList_A_fkey" FOREIGN KEY ("A") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "v3_api_client" ADD CONSTRAINT "v3_api_client_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "webhook_subscription" ADD CONSTRAINT "webhook_subscription_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_BusinessAccountToPriceList_B_fkey') THEN
+        ALTER TABLE "_BusinessAccountToPriceList" ADD CONSTRAINT "_BusinessAccountToPriceList_B_fkey" FOREIGN KEY ("B") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "webhook_subscription" ADD CONSTRAINT "webhook_subscription_apiClientId_fkey" FOREIGN KEY ("apiClientId") REFERENCES "v3_api_client"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "webhook_log" ADD CONSTRAINT "webhook_log_subscriptionId_fkey" FOREIGN KEY ("subscriptionId") REFERENCES "webhook_subscription"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_ExpenseApprovalWorkflows_A_fkey') THEN
+        ALTER TABLE "_ExpenseApprovalWorkflows" ADD CONSTRAINT "_ExpenseApprovalWorkflows_A_fkey" FOREIGN KEY ("A") REFERENCES "ApprovalWorkflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "windmill_configuration" ADD CONSTRAINT "windmill_configuration_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "windmill_workflow" ADD CONSTRAINT "windmill_workflow_configId_fkey" FOREIGN KEY ("configId") REFERENCES "windmill_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_ExpenseApprovalWorkflows_B_fkey') THEN
+        ALTER TABLE "_ExpenseApprovalWorkflows" ADD CONSTRAINT "_ExpenseApprovalWorkflows_B_fkey" FOREIGN KEY ("B") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "windmill_execution" ADD CONSTRAINT "windmill_execution_configId_fkey" FOREIGN KEY ("configId") REFERENCES "windmill_configuration"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_VariantQCTemplates_A_fkey') THEN
+        ALTER TABLE "_VariantQCTemplates" ADD CONSTRAINT "_VariantQCTemplates_A_fkey" FOREIGN KEY ("A") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_AssistantBakerBatches" ADD CONSTRAINT "_AssistantBakerBatches_A_fkey" FOREIGN KEY ("A") REFERENCES "bakery_bakers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_AssistantBakerBatches" ADD CONSTRAINT "_AssistantBakerBatches_B_fkey" FOREIGN KEY ("B") REFERENCES "Batch"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_VariantQCTemplates_B_fkey') THEN
+        ALTER TABLE "_VariantQCTemplates" ADD CONSTRAINT "_VariantQCTemplates_B_fkey" FOREIGN KEY ("B") REFERENCES "QCTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_TemplateAssistantBakers" ADD CONSTRAINT "_TemplateAssistantBakers_A_fkey" FOREIGN KEY ("A") REFERENCES "bakery_bakers"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_TemplateAssistantBakers" ADD CONSTRAINT "_TemplateAssistantBakers_B_fkey" FOREIGN KEY ("B") REFERENCES "Template"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MemberRoleGroups_A_fkey') THEN
+        ALTER TABLE "_MemberRoleGroups" ADD CONSTRAINT "_MemberRoleGroups_A_fkey" FOREIGN KEY ("A") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_CustomerToPriceList" ADD CONSTRAINT "_CustomerToPriceList_A_fkey" FOREIGN KEY ("A") REFERENCES "Customer"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_CustomerToPriceList" ADD CONSTRAINT "_CustomerToPriceList_B_fkey" FOREIGN KEY ("B") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MemberRoleGroups_B_fkey') THEN
+        ALTER TABLE "_MemberRoleGroups" ADD CONSTRAINT "_MemberRoleGroups_B_fkey" FOREIGN KEY ("B") REFERENCES "role_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_BusinessAccountToPriceList" ADD CONSTRAINT "_BusinessAccountToPriceList_A_fkey" FOREIGN KEY ("A") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_BusinessAccountToPriceList" ADD CONSTRAINT "_BusinessAccountToPriceList_B_fkey" FOREIGN KEY ("B") REFERENCES "PriceList"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MemberCustomRoles_A_fkey') THEN
+        ALTER TABLE "_MemberCustomRoles" ADD CONSTRAINT "_MemberCustomRoles_A_fkey" FOREIGN KEY ("A") REFERENCES "custom_role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_ExpenseApprovalWorkflows" ADD CONSTRAINT "_ExpenseApprovalWorkflows_A_fkey" FOREIGN KEY ("A") REFERENCES "ApprovalWorkflow"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_ExpenseApprovalWorkflows" ADD CONSTRAINT "_ExpenseApprovalWorkflows_B_fkey" FOREIGN KEY ("B") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MemberCustomRoles_B_fkey') THEN
+        ALTER TABLE "_MemberCustomRoles" ADD CONSTRAINT "_MemberCustomRoles_B_fkey" FOREIGN KEY ("B") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_VariantQCTemplates" ADD CONSTRAINT "_VariantQCTemplates_A_fkey" FOREIGN KEY ("A") REFERENCES "product_variant"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_VariantQCTemplates" ADD CONSTRAINT "_VariantQCTemplates_B_fkey" FOREIGN KEY ("B") REFERENCES "QCTemplate"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_RoleGroupPermissionSets_A_fkey') THEN
+        ALTER TABLE "_RoleGroupPermissionSets" ADD CONSTRAINT "_RoleGroupPermissionSets_A_fkey" FOREIGN KEY ("A") REFERENCES "permission_set"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_MemberRoleGroups" ADD CONSTRAINT "_MemberRoleGroups_A_fkey" FOREIGN KEY ("A") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_MemberRoleGroups" ADD CONSTRAINT "_MemberRoleGroups_B_fkey" FOREIGN KEY ("B") REFERENCES "role_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_RoleGroupPermissionSets_B_fkey') THEN
+        ALTER TABLE "_RoleGroupPermissionSets" ADD CONSTRAINT "_RoleGroupPermissionSets_B_fkey" FOREIGN KEY ("B") REFERENCES "role_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_MemberCustomRoles" ADD CONSTRAINT "_MemberCustomRoles_A_fkey" FOREIGN KEY ("A") REFERENCES "custom_role"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_MemberCustomRoles" ADD CONSTRAINT "_MemberCustomRoles_B_fkey" FOREIGN KEY ("B") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MovementSerialNumbers_A_fkey') THEN
+        ALTER TABLE "_MovementSerialNumbers" ADD CONSTRAINT "_MovementSerialNumbers_A_fkey" FOREIGN KEY ("A") REFERENCES "SerialNumber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_RoleGroupPermissionSets" ADD CONSTRAINT "_RoleGroupPermissionSets_A_fkey" FOREIGN KEY ("A") REFERENCES "permission_set"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_RoleGroupPermissionSets" ADD CONSTRAINT "_RoleGroupPermissionSets_B_fkey" FOREIGN KEY ("B") REFERENCES "role_group"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_MovementSerialNumbers_B_fkey') THEN
+        ALTER TABLE "_MovementSerialNumbers" ADD CONSTRAINT "_MovementSerialNumbers_B_fkey" FOREIGN KEY ("B") REFERENCES "StockMovement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_MovementSerialNumbers" ADD CONSTRAINT "_MovementSerialNumbers_A_fkey" FOREIGN KEY ("A") REFERENCES "SerialNumber"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_MovementSerialNumbers" ADD CONSTRAINT "_MovementSerialNumbers_B_fkey" FOREIGN KEY ("B") REFERENCES "StockMovement"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_AutomationChannels_A_fkey') THEN
+        ALTER TABLE "_AutomationChannels" ADD CONSTRAINT "_AutomationChannels_A_fkey" FOREIGN KEY ("A") REFERENCES "report_automations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
 
--- AddForeignKey
-ALTER TABLE "_AutomationChannels" ADD CONSTRAINT "_AutomationChannels_A_fkey" FOREIGN KEY ("A") REFERENCES "report_automations"("id") ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "_AutomationChannels" ADD CONSTRAINT "_AutomationChannels_B_fkey" FOREIGN KEY ("B") REFERENCES "report_channels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = '_AutomationChannels_B_fkey') THEN
+        ALTER TABLE "_AutomationChannels" ADD CONSTRAINT "_AutomationChannels_B_fkey" FOREIGN KEY ("B") REFERENCES "report_channels"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

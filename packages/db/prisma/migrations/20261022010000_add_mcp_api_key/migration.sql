@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "mcp_api_key" (
+CREATE TABLE IF NOT EXISTS "mcp_api_key" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -18,16 +18,25 @@ CREATE TABLE "mcp_api_key" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "mcp_api_key_keyPrefix_key" ON "mcp_api_key"("keyPrefix");
+CREATE UNIQUE INDEX IF NOT EXISTS "mcp_api_key_keyPrefix_key" ON "mcp_api_key"("keyPrefix");
 
 -- CreateIndex
-CREATE INDEX "mcp_api_key_organizationId_idx" ON "mcp_api_key"("organizationId");
+CREATE INDEX IF NOT EXISTS "mcp_api_key_organizationId_idx" ON "mcp_api_key"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "mcp_api_key_isActive_idx" ON "mcp_api_key"("isActive");
+CREATE INDEX IF NOT EXISTS "mcp_api_key_isActive_idx" ON "mcp_api_key"("isActive");
 
 -- AddForeignKey
-ALTER TABLE "mcp_api_key" ADD CONSTRAINT "mcp_api_key_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mcp_api_key_organizationId_fkey') THEN
+        ALTER TABLE "mcp_api_key" ADD CONSTRAINT "mcp_api_key_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "mcp_api_key" ADD CONSTRAINT "mcp_api_key_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mcp_api_key_createdById_fkey') THEN
+        ALTER TABLE "mcp_api_key" ADD CONSTRAINT "mcp_api_key_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;

@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "passkey" (
+CREATE TABLE IF NOT EXISTS "passkey" (
     "id" TEXT NOT NULL,
     "name" TEXT,
     "publicKey" TEXT NOT NULL,
@@ -16,10 +16,14 @@ CREATE TABLE "passkey" (
 );
 
 -- CreateIndex
-CREATE INDEX "passkey_userId_idx" ON "passkey"("userId");
+CREATE INDEX IF NOT EXISTS "passkey_userId_idx" ON "passkey"("userId");
 
 -- CreateIndex
-CREATE INDEX "passkey_credentialID_idx" ON "passkey"("credentialID");
+CREATE INDEX IF NOT EXISTS "passkey_credentialID_idx" ON "passkey"("credentialID");
 
 -- AddForeignKey
-ALTER TABLE "passkey" ADD CONSTRAINT "passkey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'passkey_userId_fkey') THEN
+        ALTER TABLE "passkey" ADD CONSTRAINT "passkey_userId_fkey" FOREIGN KEY ("userId") REFERENCES "user"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
