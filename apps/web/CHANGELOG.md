@@ -1,5 +1,12 @@
 # web
 
+## 10.2.38
+
+### Patch Changes
+
+- Updated dependencies [f7bed69]
+  - @scryme/sdk@10.2.38
+
 ## 10.2.37
 
 ### Patch Changes
