@@ -13,6 +13,8 @@ import {
   CheckBookingConflictsDto,
   UpdateChecklistItemDto,
   CreateChecklistTemplateDto,
+  GenerateBookingTasksRequestDto,
+  AssignBookingStaffDto,
 } from "../../application/dto/booking-lifecycle.dto";
 
 @ApiTags("V3 Bookings Management & Lifecycle")
@@ -28,7 +30,7 @@ export class BookingLifecycleController {
 
   @Post("conflicts/check")
   @Permissions("services:read")
-  @ApiOperation({ summary: "Check for booking conflicts (staff schedule, overlapping shifts, room capacity)" })
+  @ApiOperation({ summary: "Check for booking conflicts (staff schedule, overlapping shifts, room capacity, customer double-booking)" })
   async checkConflicts(@Req() req: any, @Body() body: CheckBookingConflictsDto) {
     const orgId = req.organization?.id;
     return this.conflictDetector.detectConflicts({
@@ -36,8 +38,61 @@ export class BookingLifecycleController {
       startTime: new Date(body.startTime),
       endTime: new Date(body.endTime),
       staffMemberIds: body.staffMemberIds,
+      customerId: body.customerId,
       locationId: body.locationId,
       excludeBookingId: body.excludeBookingId,
+    });
+  }
+
+  @Get()
+  @Permissions("services:read")
+  @ApiOperation({ summary: "List organization bookings for projects and control dashboards" })
+  async listBookings(
+    @Req() req: any,
+    @Query("status") status?: string,
+    @Query("limit") limit = "50",
+    @Query("offset") offset = "0",
+  ) {
+    const orgId = req.organization?.id;
+    return this.prisma.client.serviceBooking.findMany({
+      where: {
+        organizationId: orgId,
+        ...(status && status !== "ALL" ? { status: status as any } : {}),
+      },
+      include: {
+        service: true,
+        customer: true,
+        location: true,
+        staff: {
+          include: {
+            member: {
+              include: { user: { select: { name: true, email: true, image: true } } },
+            },
+          },
+        },
+        tasks: {
+          include: {
+            checklistItems: {
+              include: {
+                completedBy: {
+                  include: { user: { select: { name: true } } },
+                },
+              },
+              orderBy: { order: "asc" },
+            },
+            assignedTo: {
+              include: { user: { select: { name: true } } },
+            },
+          },
+          orderBy: { createdAt: "asc" },
+        },
+        checklistItems: {
+          orderBy: { order: "asc" },
+        },
+      },
+      orderBy: { scheduledStartTime: "desc" },
+      take: Math.min(parseInt(limit, 10) || 50, 100),
+      skip: parseInt(offset, 10) || 0,
     });
   }
 
@@ -87,7 +142,7 @@ export class BookingLifecycleController {
 
   @Post(":id/lifecycle/transition")
   @Permissions("services:write")
-  @ApiOperation({ summary: "Transition booking lifecycle status" })
+  @ApiOperation({ summary: "Transition booking lifecycle status with soft conflict checks and override capability" })
   async transitionStatus(
     @Req() req: any,
     @Param("id") id: string,
@@ -102,28 +157,50 @@ export class BookingLifecycleController {
       actorMemberId,
       reason: body.reason,
       staffMemberIds: body.staffMemberIds,
+      overrideConflict: body.overrideConflict,
+    });
+  }
+
+  @Post(":id/staff/assign")
+  @Permissions("services:write")
+  @ApiOperation({ summary: "Assign or reassign staff to a booking with conflict verification" })
+  async assignStaff(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() body: AssignBookingStaffDto,
+  ) {
+    const orgId = req.organization?.id;
+    const actorMemberId = req.user?.memberId || req.user?.id;
+    return this.lifecycleService.assignStaff({
+      orgId,
+      bookingId: id,
+      staffMemberIds: body.staffMemberIds,
+      actorMemberId,
+      reason: body.reason,
+      overrideConflict: body.overrideConflict,
     });
   }
 
   @Post(":id/tasks/generate")
   @Permissions("services:write")
-  @ApiOperation({ summary: "Manually or automatically generate tasks for a booking from checklist templates" })
+  @ApiOperation({ summary: "Generate operational tasks and checklist items for a booking" })
   async generateTasks(
     @Req() req: any,
     @Param("id") id: string,
-    @Body("assigneeMemberId") assigneeMemberId?: string,
+    @Body() body: GenerateBookingTasksRequestDto = {},
   ) {
     const orgId = req.organization?.id;
     return this.taskGenerator.generateTasksForBooking({
       orgId,
       bookingId: id,
-      assigneeMemberId,
+      assigneeMemberId: body.assigneeMemberId,
+      projectId: body.projectId,
     });
   }
 
   @Put(":id/checklist/:itemId")
   @Permissions("services:write")
-  @ApiOperation({ summary: "Update checklist item completion state" })
+  @ApiOperation({ summary: "Update checklist item completion state and evaluate task/booking completion" })
   async updateChecklistItem(
     @Req() req: any,
     @Param("id") bookingId: string,

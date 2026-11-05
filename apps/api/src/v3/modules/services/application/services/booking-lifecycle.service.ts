@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException, BadRequestException, ConflictException } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { BookingStatus, BookingEventSource, TaskStatus } from "@repo/db";
-import { BookingConflictDetectionService } from "./booking-conflict-detection.service";
+import { BookingStatus, BookingEventSource, TaskStatus, ProjectTaskStatus } from "@repo/db";
+import { BookingConflictDetectionService, BookingConflictDetails } from "./booking-conflict-detection.service";
 import { BookingTaskGeneratorService } from "./booking-task-generator.service";
 
 @Injectable()
@@ -14,7 +14,7 @@ export class BookingLifecycleService {
 
   /**
    * Allowed state transitions for the full booking lifecycle.
-   * PENDING -> CONFIRMED -> ASSIGNED -> IN_PROGRESS -> COMPLETED
+   * REQUESTED / PENDING -> CONFIRMED -> ASSIGNED -> IN_PROGRESS -> COMPLETED
    * Any state (except COMPLETED/CANCELLED) can transition to CANCELLED.
    */
   private readonly validTransitions: Record<BookingStatus, BookingStatus[]> = {
@@ -30,7 +30,8 @@ export class BookingLifecycleService {
   };
 
   /**
-   * Transition booking state with business logic verification, conflict detection, and automated task generation.
+   * Transition booking state with business logic verification, soft conflict warnings, override capability,
+   * audit logging, and automated bidirectional task synchronization.
    */
   async transitionStatus(params: {
     orgId: string;
@@ -40,12 +41,24 @@ export class BookingLifecycleService {
     reason?: string;
     source?: BookingEventSource;
     staffMemberIds?: string[];
+    overrideConflict?: boolean;
+    projectId?: string;
   }) {
-    const { orgId, bookingId, targetStatus, actorMemberId, reason, source = BookingEventSource.ADMIN, staffMemberIds } = params;
+    const {
+      orgId,
+      bookingId,
+      targetStatus,
+      actorMemberId,
+      reason,
+      source = BookingEventSource.ADMIN,
+      staffMemberIds,
+      overrideConflict = false,
+      projectId,
+    } = params;
 
     const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id: bookingId, organizationId: orgId },
-      include: { staff: true },
+      include: { staff: true, customer: true },
     });
 
     if (!booking) {
@@ -61,23 +74,30 @@ export class BookingLifecycleService {
     }
 
     // If assigning staff or confirming booking, run conflict detection
-    const assignedStaff = staffMemberIds && staffMemberIds.length > 0 ? staffMemberIds : booking.staff.map((s) => s.memberId);
+    const assignedStaff =
+      staffMemberIds && staffMemberIds.length > 0 ? staffMemberIds : booking.staff.map((s) => s.memberId);
+
+    let conflictResult: BookingConflictDetails | null = null;
     if (
-      (targetStatus === BookingStatus.CONFIRMED || targetStatus === BookingStatus.ASSIGNED || targetStatus === BookingStatus.SCHEDULED) &&
+      (targetStatus === BookingStatus.CONFIRMED ||
+        targetStatus === BookingStatus.ASSIGNED ||
+        targetStatus === BookingStatus.SCHEDULED) &&
       assignedStaff.length > 0 &&
       booking.scheduledEndTime
     ) {
-      await this.conflictDetector.assertNoConflicts({
+      conflictResult = await this.conflictDetector.assertNoConflicts({
         orgId,
         startTime: booking.scheduledStartTime,
         endTime: booking.scheduledEndTime,
         staffMemberIds: assignedStaff,
+        customerId: booking.customerId || undefined,
         locationId: booking.locationId || undefined,
         excludeBookingId: booking.id,
+        allowOverride: overrideConflict,
       });
     }
 
-    // If new staff members were specified during ASSIGNED transition, update relations
+    // If staff members were specified during transition, update relations
     if (staffMemberIds && staffMemberIds.length > 0) {
       await this.prisma.client.bookingStaff.deleteMany({
         where: { bookingId },
@@ -113,24 +133,170 @@ export class BookingLifecycleService {
         actorMemberId,
         fromStatus: booking.status,
         toStatus: targetStatus,
-        metadata: reason ? { reason } : undefined,
+        metadata: {
+          ...(reason ? { reason } : {}),
+          ...(overrideConflict ? { overriddenConflicts: conflictResult?.conflicts || [] } : {}),
+        },
       },
     });
 
-    // Trigger Automated Task Generation upon confirmation or payment
-    if (targetStatus === BookingStatus.CONFIRMED) {
-      await this.taskGenerator.generateTasksForBooking({
-        orgId,
-        bookingId,
-        assigneeMemberId: assignedStaff[0],
+    // Bidirectional Task Synchronization
+    await this.syncTasksForBookingStatus(orgId, bookingId, targetStatus);
+
+    // Trigger Automated Task Generation upon confirmation or assignment if no tasks exist
+    if (targetStatus === BookingStatus.CONFIRMED || targetStatus === BookingStatus.ASSIGNED) {
+      const existingTaskCount = await this.prisma.client.bookingTask.count({
+        where: { bookingId },
       });
+      if (existingTaskCount === 0) {
+        await this.taskGenerator.generateTasksForBooking({
+          orgId,
+          bookingId,
+          assigneeMemberId: assignedStaff[0],
+          projectId,
+        });
+      }
     }
 
-    return updated;
+    return {
+      ...updated,
+      conflicts: conflictResult?.conflicts || [],
+    };
   }
 
   /**
-   * Toggles or marks a checklist item completed and checks if all required items are done.
+   * Assign or reassign staff members to a booking with conflict inspection and audit logging.
+   */
+  async assignStaff(params: {
+    orgId: string;
+    bookingId: string;
+    staffMemberIds: string[];
+    actorMemberId?: string;
+    reason?: string;
+    overrideConflict?: boolean;
+  }) {
+    const { orgId, bookingId, staffMemberIds, actorMemberId, reason, overrideConflict = false } = params;
+
+    const booking = await this.prisma.client.serviceBooking.findFirst({
+      where: { id: bookingId, organizationId: orgId },
+      include: { staff: true },
+    });
+
+    if (!booking) {
+      throw new NotFoundException(`Booking ${bookingId} not found`);
+    }
+
+    let conflictResult: BookingConflictDetails | null = null;
+    if (staffMemberIds.length > 0 && booking.scheduledEndTime) {
+      conflictResult = await this.conflictDetector.assertNoConflicts({
+        orgId,
+        startTime: booking.scheduledStartTime,
+        endTime: booking.scheduledEndTime,
+        staffMemberIds,
+        locationId: booking.locationId || undefined,
+        excludeBookingId: booking.id,
+        allowOverride: overrideConflict,
+      });
+    }
+
+    // Replace assigned staff
+    await this.prisma.client.bookingStaff.deleteMany({
+      where: { bookingId },
+    });
+
+    for (const mId of staffMemberIds) {
+      await this.prisma.client.bookingStaff.create({
+        data: {
+          bookingId,
+          memberId: mId,
+        },
+      });
+    }
+
+    // Reassign existing BookingTasks and StaffTasks to the primary staff member if one is assigned
+    if (staffMemberIds.length > 0) {
+      const primaryAssignee = staffMemberIds[0];
+      await this.prisma.client.bookingTask.updateMany({
+        where: { bookingId },
+        data: { assignedToId: primaryAssignee },
+      });
+      await this.prisma.client.staffTask.updateMany({
+        where: { bookingId },
+        data: { memberId: primaryAssignee },
+      });
+    }
+
+    // Audit event for staff assignment
+    await this.prisma.client.bookingEvent.create({
+      data: {
+        organizationId: orgId,
+        bookingId,
+        source: BookingEventSource.ADMIN,
+        type: "STAFF_ASSIGNMENT_UPDATED",
+        actorMemberId,
+        metadata: {
+          assignedStaffIds: staffMemberIds,
+          reason,
+          overriddenConflicts: conflictResult?.conflicts || [],
+        },
+      },
+    });
+
+    return {
+      success: true,
+      assignedStaffIds: staffMemberIds,
+      conflicts: conflictResult?.conflicts || [],
+    };
+  }
+
+  /**
+   * Synchronizes project and mobile tasks when booking status transitions.
+   */
+  private async syncTasksForBookingStatus(orgId: string, bookingId: string, status: BookingStatus) {
+    const taskStatus =
+      status === BookingStatus.IN_PROGRESS
+        ? TaskStatus.IN_PROGRESS
+        : status === BookingStatus.COMPLETED
+          ? TaskStatus.COMPLETED
+          : status === BookingStatus.CANCELLED
+            ? TaskStatus.CANCELLED
+            : null;
+
+    const projectTaskStatus =
+      status === BookingStatus.IN_PROGRESS
+        ? ProjectTaskStatus.IN_PROGRESS
+        : status === BookingStatus.COMPLETED
+          ? ProjectTaskStatus.DONE
+          : status === BookingStatus.CANCELLED
+            ? ProjectTaskStatus.CANCELED
+            : null;
+
+    if (taskStatus) {
+      await this.prisma.client.bookingTask.updateMany({
+        where: { bookingId, organizationId: orgId },
+        data: {
+          status: taskStatus,
+          ...(status === BookingStatus.COMPLETED ? { completedAt: new Date() } : {}),
+        },
+      });
+      await this.prisma.client.staffTask.updateMany({
+        where: { bookingId, organizationId: orgId },
+        data: { status: taskStatus },
+      });
+    }
+
+    if (projectTaskStatus) {
+      await this.prisma.client.task.updateMany({
+        where: { bookingId, organizationId: orgId },
+        data: { status: projectTaskStatus },
+      });
+    }
+  }
+
+  /**
+   * Toggles or marks a checklist item completed.
+   * If all items on a task are completed, marks the task completed.
+   * If all checklist items across the entire booking are completed, auto-advances booking to COMPLETED.
    */
   async updateChecklistItem(params: {
     orgId: string;
@@ -159,7 +325,7 @@ export class BookingLifecycleService {
       },
     });
 
-    // Check if the parent task should be marked DONE
+    // Check if the parent task should be marked completed
     if (item.taskId) {
       const remainingIncomplete = await this.prisma.client.bookingChecklistItem.count({
         where: { taskId: item.taskId, isCompleted: false },
@@ -192,12 +358,46 @@ export class BookingLifecycleService {
       where: { bookingId, isCompleted: true },
     });
 
+    const isAllCompleted = totalItems > 0 && totalItems === completedItems;
+
+    // Auto-advance booking to COMPLETED if all checklist items are done
+    if (isAllCompleted) {
+      const booking = await this.prisma.client.serviceBooking.findFirst({
+        where: { id: bookingId, organizationId: orgId },
+        select: { status: true },
+      });
+
+      if (booking && booking.status !== BookingStatus.COMPLETED && booking.status !== BookingStatus.CANCELLED) {
+        await this.prisma.client.serviceBooking.update({
+          where: { id: bookingId },
+          data: {
+            status: BookingStatus.COMPLETED,
+            actualEndTime: new Date(),
+            revision: { increment: 1 },
+          },
+        });
+
+        await this.prisma.client.bookingEvent.create({
+          data: {
+            organizationId: orgId,
+            bookingId,
+            source: BookingEventSource.SYSTEM,
+            type: "AUTO_COMPLETED_CHECKLIST_PROGRESS",
+            actorMemberId: memberId,
+            fromStatus: booking.status,
+            toStatus: BookingStatus.COMPLETED,
+            metadata: { message: "All service checklist items marked completed" },
+          },
+        });
+      }
+    }
+
     return {
       item: updatedItem,
       progress: {
         total: totalItems,
         completed: completedItems,
-        isAllCompleted: totalItems > 0 && totalItems === completedItems,
+        isAllCompleted,
       },
     };
   }

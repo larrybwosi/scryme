@@ -370,7 +370,8 @@ model BookingStaff {
 
 model StaffScheduleOverride {
   id             String               @id @default(cuid())
-  organizationId String               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String
+  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
   locationId     String?

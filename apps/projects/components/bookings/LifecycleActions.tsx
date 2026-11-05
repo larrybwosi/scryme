@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { CheckCircle2, UserPlus, Play, CheckSquare, XCircle, AlertTriangle } from "lucide-react";
 
 export type BookingStatus =
   | "REQUESTED"
@@ -16,7 +17,7 @@ export type BookingStatus =
 interface LifecycleActionsProps {
   currentStatus: BookingStatus;
   bookingId: string;
-  onTransition: (targetStatus: BookingStatus, reason?: string) => Promise<void>;
+  onTransition: (targetStatus: BookingStatus, reason?: string, overrideConflict?: boolean) => Promise<void>;
   isLoading?: boolean;
 }
 
@@ -41,18 +42,21 @@ export function LifecycleActions({
   const [cancelModalOpen, setCancelModalOpen] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
-  const nextActionMap: Partial<Record<BookingStatus, { next: BookingStatus; label: string; icon: string }>> = {
-    REQUESTED: { next: "CONFIRMED", label: "Confirm Booking", icon: "check_circle" },
-    PENDING: { next: "CONFIRMED", label: "Confirm Booking", icon: "check_circle" },
-    CONFIRMED: { next: "ASSIGNED", label: "Assign Staff", icon: "person_add" },
-    ASSIGNED: { next: "IN_PROGRESS", label: "Start Service", icon: "play_arrow" },
-    SCHEDULED: { next: "IN_PROGRESS", label: "Start Service", icon: "play_arrow" },
-    IN_PROGRESS: { next: "COMPLETED", label: "Complete Service", icon: "task_alt" },
+  const nextActionMap: Partial<
+    Record<BookingStatus, { next: BookingStatus; label: string; icon: React.ComponentType<{ className?: string }> }>
+  > = {
+    REQUESTED: { next: "CONFIRMED", label: "Confirm Booking", icon: CheckCircle2 },
+    PENDING: { next: "CONFIRMED", label: "Confirm Booking", icon: CheckCircle2 },
+    CONFIRMED: { next: "ASSIGNED", label: "Assign Staff", icon: UserPlus },
+    ASSIGNED: { next: "IN_PROGRESS", label: "Start Service", icon: Play },
+    SCHEDULED: { next: "IN_PROGRESS", label: "Start Service", icon: Play },
+    IN_PROGRESS: { next: "COMPLETED", label: "Complete Service", icon: CheckSquare },
   };
 
   const nextAction = nextActionMap[currentStatus];
   const canCancel = currentStatus !== "COMPLETED" && currentStatus !== "CANCELLED";
   const colors = statusColorMap[currentStatus] || statusColorMap.REQUESTED;
+  const NextIcon = nextAction?.icon;
 
   return (
     <div className="flex items-center gap-2 flex-wrap">
@@ -63,14 +67,14 @@ export function LifecycleActions({
       </span>
 
       {/* Primary Lifecycle Forward Transition */}
-      {nextAction && (
+      {nextAction && NextIcon && (
         <button
           type="button"
           disabled={isLoading}
-          onClick={() => onTransition(nextAction.next)}
+          onClick={() => onTransition(nextAction.next, undefined, true)}
           className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary text-black hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-[16px]">{nextAction.icon}</span>
+          <NextIcon className="w-3.5 h-3.5" />
           {nextAction.label}
         </button>
       )}
@@ -83,7 +87,7 @@ export function LifecycleActions({
           onClick={() => setCancelModalOpen(true)}
           className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-container hover:bg-rose-500/20 text-rose-400 border border-outline-variant/30 transition-colors disabled:opacity-50"
         >
-          <span className="material-symbols-outlined text-[14px]">cancel</span>
+          <XCircle className="w-3.5 h-3.5" />
           Cancel
         </button>
       )}
@@ -93,7 +97,7 @@ export function LifecycleActions({
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
           <div className="bg-surface border border-outline-variant rounded-xl p-5 max-w-md w-full shadow-2xl">
             <h3 className="text-base font-semibold text-on-surface mb-2 flex items-center gap-2">
-              <span className="material-symbols-outlined text-rose-400">warning</span>
+              <AlertTriangle className="w-4 h-4 text-rose-400" />
               Cancel Booking
             </h3>
             <p className="text-xs text-on-surface-variant mb-4">
@@ -120,7 +124,7 @@ export function LifecycleActions({
                   await onTransition("CANCELLED", cancelReason);
                   setCancelModalOpen(false);
                 }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500 text-white hover:bg-rose-600 transition-colors"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500 text-white hover:bg-rose-600 transition-colors disabled:opacity-50"
               >
                 Confirm Cancellation
               </button>
