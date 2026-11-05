@@ -1,14 +1,19 @@
 -- CreateEnum
-CREATE TYPE "McpDraftStatus" AS ENUM ('DRAFT', 'APPLIED', 'REVERTED', 'DISCARDED');
-
--- CreateEnum
-CREATE TYPE "McpDraftEntityType" AS ENUM ('PRODUCT', 'PRICE', 'ORDER', 'FULFILLMENT', 'STAFF_TASK');
-
--- CreateEnum
-CREATE TYPE "McpDraftAction" AS ENUM ('CREATE', 'UPDATE', 'STATUS_CHANGE');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'McpDraftStatus') THEN
+        CREATE TYPE "McpDraftStatus" AS ENUM ('DRAFT', 'APPLIED', 'REVERTED', 'DISCARDED');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'McpDraftEntityType') THEN
+        CREATE TYPE "McpDraftEntityType" AS ENUM ('PRODUCT', 'PRICE', 'ORDER', 'FULFILLMENT', 'STAFF_TASK');
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'McpDraftAction') THEN
+        CREATE TYPE "McpDraftAction" AS ENUM ('CREATE', 'UPDATE', 'STATUS_CHANGE');
+    END IF;
+END $$;
 
 -- CreateTable
-CREATE TABLE "mcp_draft_change" (
+CREATE TABLE IF NOT EXISTS "mcp_draft_change" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "entityType" "McpDraftEntityType" NOT NULL,
@@ -30,13 +35,18 @@ CREATE TABLE "mcp_draft_change" (
 );
 
 -- CreateIndex
-CREATE INDEX "mcp_draft_change_organizationId_status_idx" ON "mcp_draft_change"("organizationId", "status");
+CREATE INDEX IF NOT EXISTS "mcp_draft_change_organizationId_status_idx" ON "mcp_draft_change"("organizationId", "status");
 
 -- CreateIndex
-CREATE INDEX "mcp_draft_change_organizationId_entityType_idx" ON "mcp_draft_change"("organizationId", "entityType");
+CREATE INDEX IF NOT EXISTS "mcp_draft_change_organizationId_entityType_idx" ON "mcp_draft_change"("organizationId", "entityType");
 
 -- AddForeignKey
-ALTER TABLE "mcp_draft_change" ADD CONSTRAINT "mcp_draft_change_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "mcp_draft_change" ADD CONSTRAINT "mcp_draft_change_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mcp_draft_change_organizationId_fkey') THEN
+        ALTER TABLE "mcp_draft_change" ADD CONSTRAINT "mcp_draft_change_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'mcp_draft_change_createdById_fkey') THEN
+        ALTER TABLE "mcp_draft_change" ADD CONSTRAINT "mcp_draft_change_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;

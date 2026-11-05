@@ -166,7 +166,7 @@ if [ -f "dist/main.js" ] || [ -f "dist/main" ]; then
       echo "⚠️ Database migration deployment failed. Checking for failed migrations to resolve..."
 
       # Extract failed migration names directly from the Prisma migrate error output
-      FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -oE "20[0-9]{12}_[a-zA-Z0-9_]+" | sort -u || true)
+      FAILED_MIGRATIONS=$(echo "$MIGRATE_OUTPUT" | grep -E "Migration name:|failed" | grep -oE "20[0-9]{12}_[a-zA-Z0-9_]+" | sort -u || true)
 
       # Also query _prisma_migrations table to capture any unfinished/failed migrations in DB
       DB_FAILED=$(echo "SELECT migration_name FROM _prisma_migrations WHERE finished_at IS NULL AND rolled_back_at IS NULL;" | $PRISMA_BIN db execute --stdin 2>/dev/null | grep -oE "20[0-9]{12}_[a-zA-Z0-9_]+" | sort -u || true)
