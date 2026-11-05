@@ -128,28 +128,72 @@ CREATE UNIQUE INDEX IF NOT EXISTS "crm_field_definition_organizationId_entityTyp
 CREATE INDEX IF NOT EXISTS "crm_record_organizationId_entityType_idx" ON "crm_record"("organizationId", "entityType");
 
 -- AddForeignKey
-ALTER TABLE "campaign_segment" ADD CONSTRAINT "campaign_segment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'campaign_segment_organizationId_fkey') THEN
+        ALTER TABLE "campaign_segment" ADD CONSTRAINT "campaign_segment_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "crm_field_definition" ADD CONSTRAINT "crm_field_definition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_field_definition_organizationId_fkey') THEN
+        ALTER TABLE "crm_field_definition" ADD CONSTRAINT "crm_field_definition_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "crm_record" ADD CONSTRAINT "crm_record_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'crm_record_organizationId_fkey') THEN
+        ALTER TABLE "crm_record" ADD CONSTRAINT "crm_record_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "stock_report_template" ADD CONSTRAINT "stock_report_template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'stock_report_template_organizationId_fkey') THEN
+        ALTER TABLE "stock_report_template" ADD CONSTRAINT "stock_report_template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "generated_stock_report" ADD CONSTRAINT "generated_stock_report_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'generated_stock_report_organizationId_fkey') THEN
+        ALTER TABLE "generated_stock_report" ADD CONSTRAINT "generated_stock_report_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "generated_stock_report" ADD CONSTRAINT "generated_stock_report_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'generated_stock_report_templateId_fkey') THEN
+        ALTER TABLE "generated_stock_report" ADD CONSTRAINT "generated_stock_report_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "report_automation" ADD CONSTRAINT "report_automation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automation_organizationId_fkey') THEN
+        ALTER TABLE "report_automation" ADD CONSTRAINT "report_automation_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "report_automation" ADD CONSTRAINT "report_automation_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automation_templateId_fkey') THEN
+        ALTER TABLE "report_automation" ADD CONSTRAINT "report_automation_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "stock_report_template"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "report_automation_execution" ADD CONSTRAINT "report_automation_execution_automationId_fkey" FOREIGN KEY ("automationId") REFERENCES "report_automation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'report_automation_execution_automationId_fkey') THEN
+        ALTER TABLE "report_automation_execution" ADD CONSTRAINT "report_automation_execution_automationId_fkey" FOREIGN KEY ("automationId") REFERENCES "report_automation"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

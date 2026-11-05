@@ -1,6 +1,6 @@
 -- AlterTable
-ALTER TABLE "business_account" ADD COLUMN "logoUrl" TEXT,
-ADD COLUMN "customTheme" TEXT,
-ADD COLUMN "isEnterprise" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN "discountPercentage" DOUBLE PRECISION,
-ADD COLUMN "paymentTermsDays" INTEGER;
+ALTER TABLE "business_account" ADD COLUMN IF NOT EXISTS "logoUrl" TEXT,
+ADD COLUMN IF NOT EXISTS "customTheme" TEXT,
+ADD COLUMN IF NOT EXISTS "isEnterprise" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "discountPercentage" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "paymentTermsDays" INTEGER;

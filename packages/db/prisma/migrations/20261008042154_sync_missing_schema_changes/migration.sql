@@ -51,58 +51,58 @@ ALTER TABLE "communication_threads" ALTER COLUMN "channel" SET DEFAULT 'WHATSAPP
 COMMIT;
 
 -- DropForeignKey
-ALTER TABLE "campaign_segment" DROP CONSTRAINT "campaign_segment_organizationId_fkey";
+ALTER TABLE "campaign_segment" DROP CONSTRAINT IF EXISTS "campaign_segment_organizationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "communication_threads" DROP CONSTRAINT "communication_threads_crmRecordId_fkey";
+ALTER TABLE "communication_threads" DROP CONSTRAINT IF EXISTS "communication_threads_crmRecordId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "crm_field_definition" DROP CONSTRAINT "crm_field_definition_organizationId_fkey";
+ALTER TABLE "crm_field_definition" DROP CONSTRAINT IF EXISTS "crm_field_definition_organizationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "crm_record" DROP CONSTRAINT "crm_record_organizationId_fkey";
+ALTER TABLE "crm_record" DROP CONSTRAINT IF EXISTS "crm_record_organizationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "generated_stock_report" DROP CONSTRAINT "generated_stock_report_organizationId_fkey";
+ALTER TABLE "generated_stock_report" DROP CONSTRAINT IF EXISTS "generated_stock_report_organizationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "generated_stock_report" DROP CONSTRAINT "generated_stock_report_templateId_fkey";
+ALTER TABLE "generated_stock_report" DROP CONSTRAINT IF EXISTS "generated_stock_report_templateId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "report_automation" DROP CONSTRAINT "report_automation_organizationId_fkey";
+ALTER TABLE "report_automation" DROP CONSTRAINT IF EXISTS "report_automation_organizationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "report_automation" DROP CONSTRAINT "report_automation_templateId_fkey";
+ALTER TABLE "report_automation" DROP CONSTRAINT IF EXISTS "report_automation_templateId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "report_automation_execution" DROP CONSTRAINT "report_automation_execution_automationId_fkey";
+ALTER TABLE "report_automation_execution" DROP CONSTRAINT IF EXISTS "report_automation_execution_automationId_fkey";
 
 -- DropForeignKey
-ALTER TABLE "stock_report_template" DROP CONSTRAINT "stock_report_template_organizationId_fkey";
+ALTER TABLE "stock_report_template" DROP CONSTRAINT IF EXISTS "stock_report_template_organizationId_fkey";
 
 -- DropIndex
-DROP INDEX "recipe_ingredient_recipeId_ingredientVariantId_systemUnitId_key";
+DROP INDEX IF EXISTS "recipe_ingredient_recipeId_ingredientVariantId_systemUnitId_key";
 
 -- AlterTable
-ALTER TABLE "InventoryLocation" ADD COLUMN     "branchCode" TEXT,
-ADD COLUMN     "latitude" DOUBLE PRECISION,
-ADD COLUMN     "longitude" DOUBLE PRECISION,
-ADD COLUMN     "radiusMeters" INTEGER DEFAULT 100;
+ALTER TABLE "InventoryLocation" ADD COLUMN IF NOT EXISTS "branchCode" TEXT,
+ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "radiusMeters" INTEGER DEFAULT 100;
 
 -- AlterTable
 ALTER TABLE "LoyaltyProgram" DROP COLUMN "tiers";
 
 -- AlterTable
-ALTER TABLE "attendance_log" ADD COLUMN     "distanceMeters" DOUBLE PRECISION,
-ADD COLUMN     "isLocationVerified" BOOLEAN NOT NULL DEFAULT false,
-ADD COLUMN     "latitude" DOUBLE PRECISION,
-ADD COLUMN     "longitude" DOUBLE PRECISION,
-ADD COLUMN     "shiftId" TEXT,
-ADD COLUMN     "shiftStatus" "ShiftAttendanceStatus" NOT NULL DEFAULT 'UNSCHEDULED',
-ADD COLUMN     "verificationMethod" "AttendanceVerificationMethod" NOT NULL DEFAULT 'POS_DEVICE';
+ALTER TABLE "attendance_log" ADD COLUMN IF NOT EXISTS "distanceMeters" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "isLocationVerified" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN IF NOT EXISTS "latitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "longitude" DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS "shiftId" TEXT,
+ADD COLUMN IF NOT EXISTS "shiftStatus" "ShiftAttendanceStatus" NOT NULL DEFAULT 'UNSCHEDULED',
+ADD COLUMN IF NOT EXISTS "verificationMethod" "AttendanceVerificationMethod" NOT NULL DEFAULT 'POS_DEVICE';
 
 -- AlterTable
-ALTER TABLE "bakery_settings" ADD COLUMN     "batchGenerationType" TEXT NOT NULL DEFAULT 'SEQUENCE';
+ALTER TABLE "bakery_settings" ADD COLUMN IF NOT EXISTS "batchGenerationType" TEXT NOT NULL DEFAULT 'SEQUENCE';
 
 -- AlterTable
 ALTER TABLE "member" DROP COLUMN "customRoles",
@@ -116,28 +116,28 @@ DROP COLUMN "roleGroups";
 ALTER TABLE "permission_set" DROP COLUMN "roleGroups";
 
 -- DropTable
-DROP TABLE "campaign_segment";
+DROP TABLE IF EXISTS "campaign_segment";
 
 -- DropTable
-DROP TABLE "crm_field_definition";
+DROP TABLE IF EXISTS "crm_field_definition";
 
 -- DropTable
-DROP TABLE "crm_record";
+DROP TABLE IF EXISTS "crm_record";
 
 -- DropTable
-DROP TABLE "generated_stock_report";
+DROP TABLE IF EXISTS "generated_stock_report";
 
 -- DropTable
-DROP TABLE "report_automation";
+DROP TABLE IF EXISTS "report_automation";
 
 -- DropTable
-DROP TABLE "report_automation_execution";
+DROP TABLE IF EXISTS "report_automation_execution";
 
 -- DropTable
-DROP TABLE "stock_report_template";
+DROP TABLE IF EXISTS "stock_report_template";
 
 -- CreateTable
-CREATE TABLE "project" (
+CREATE TABLE IF NOT EXISTS "project" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "name" TEXT NOT NULL,
@@ -156,7 +156,7 @@ CREATE TABLE "project" (
 );
 
 -- CreateTable
-CREATE TABLE "project_member" (
+CREATE TABLE IF NOT EXISTS "project_member" (
     "id" TEXT NOT NULL,
     "projectId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -168,7 +168,7 @@ CREATE TABLE "project_member" (
 );
 
 -- CreateTable
-CREATE TABLE "task" (
+CREATE TABLE IF NOT EXISTS "task" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "projectId" TEXT NOT NULL,
@@ -191,7 +191,7 @@ CREATE TABLE "task" (
 );
 
 -- CreateTable
-CREATE TABLE "task_assignee" (
+CREATE TABLE IF NOT EXISTS "task_assignee" (
     "id" TEXT NOT NULL,
     "taskId" TEXT NOT NULL,
     "memberId" TEXT NOT NULL,
@@ -201,7 +201,7 @@ CREATE TABLE "task_assignee" (
 );
 
 -- CreateTable
-CREATE TABLE "task_dependency" (
+CREATE TABLE IF NOT EXISTS "task_dependency" (
     "id" TEXT NOT NULL,
     "taskId" TEXT NOT NULL,
     "dependsOnTaskId" TEXT NOT NULL,
@@ -212,7 +212,7 @@ CREATE TABLE "task_dependency" (
 );
 
 -- CreateTable
-CREATE TABLE "task_comment" (
+CREATE TABLE IF NOT EXISTS "task_comment" (
     "id" TEXT NOT NULL,
     "taskId" TEXT NOT NULL,
     "authorId" TEXT NOT NULL,
@@ -224,7 +224,7 @@ CREATE TABLE "task_comment" (
 );
 
 -- CreateTable
-CREATE TABLE "task_activity_log" (
+CREATE TABLE IF NOT EXISTS "task_activity_log" (
     "id" TEXT NOT NULL,
     "taskId" TEXT NOT NULL,
     "actorId" TEXT,
@@ -236,7 +236,7 @@ CREATE TABLE "task_activity_log" (
 );
 
 -- CreateTable
-CREATE TABLE "task_label" (
+CREATE TABLE IF NOT EXISTS "task_label" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "projectId" TEXT,
@@ -248,7 +248,7 @@ CREATE TABLE "task_label" (
 );
 
 -- CreateTable
-CREATE TABLE "task_label_on_task" (
+CREATE TABLE IF NOT EXISTS "task_label_on_task" (
     "taskId" TEXT NOT NULL,
     "labelId" TEXT NOT NULL,
 
@@ -256,154 +256,264 @@ CREATE TABLE "task_label_on_task" (
 );
 
 -- CreateIndex
-CREATE INDEX "project_organizationId_idx" ON "project"("organizationId");
+CREATE INDEX IF NOT EXISTS "project_organizationId_idx" ON "project"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "project_status_idx" ON "project"("status");
+CREATE INDEX IF NOT EXISTS "project_status_idx" ON "project"("status");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "project_organizationId_key_key" ON "project"("organizationId", "key");
+CREATE UNIQUE INDEX IF NOT EXISTS "project_organizationId_key_key" ON "project"("organizationId", "key");
 
 -- CreateIndex
-CREATE INDEX "project_member_memberId_idx" ON "project_member"("memberId");
+CREATE INDEX IF NOT EXISTS "project_member_memberId_idx" ON "project_member"("memberId");
 
 -- CreateIndex
-CREATE INDEX "project_member_projectId_idx" ON "project_member"("projectId");
+CREATE INDEX IF NOT EXISTS "project_member_projectId_idx" ON "project_member"("projectId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "project_member_projectId_memberId_key" ON "project_member"("projectId", "memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "project_member_projectId_memberId_key" ON "project_member"("projectId", "memberId");
 
 -- CreateIndex
-CREATE INDEX "task_organizationId_idx" ON "task"("organizationId");
+CREATE INDEX IF NOT EXISTS "task_organizationId_idx" ON "task"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "task_projectId_idx" ON "task"("projectId");
+CREATE INDEX IF NOT EXISTS "task_projectId_idx" ON "task"("projectId");
 
 -- CreateIndex
-CREATE INDEX "task_status_idx" ON "task"("status");
+CREATE INDEX IF NOT EXISTS "task_status_idx" ON "task"("status");
 
 -- CreateIndex
-CREATE INDEX "task_parentTaskId_idx" ON "task"("parentTaskId");
+CREATE INDEX IF NOT EXISTS "task_parentTaskId_idx" ON "task"("parentTaskId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "task_projectId_taskNumber_key" ON "task"("projectId", "taskNumber");
+CREATE UNIQUE INDEX IF NOT EXISTS "task_projectId_taskNumber_key" ON "task"("projectId", "taskNumber");
 
 -- CreateIndex
-CREATE INDEX "task_assignee_memberId_idx" ON "task_assignee"("memberId");
+CREATE INDEX IF NOT EXISTS "task_assignee_memberId_idx" ON "task_assignee"("memberId");
 
 -- CreateIndex
-CREATE INDEX "task_assignee_taskId_idx" ON "task_assignee"("taskId");
+CREATE INDEX IF NOT EXISTS "task_assignee_taskId_idx" ON "task_assignee"("taskId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "task_assignee_taskId_memberId_key" ON "task_assignee"("taskId", "memberId");
+CREATE UNIQUE INDEX IF NOT EXISTS "task_assignee_taskId_memberId_key" ON "task_assignee"("taskId", "memberId");
 
 -- CreateIndex
-CREATE INDEX "task_dependency_taskId_idx" ON "task_dependency"("taskId");
+CREATE INDEX IF NOT EXISTS "task_dependency_taskId_idx" ON "task_dependency"("taskId");
 
 -- CreateIndex
-CREATE INDEX "task_dependency_dependsOnTaskId_idx" ON "task_dependency"("dependsOnTaskId");
+CREATE INDEX IF NOT EXISTS "task_dependency_dependsOnTaskId_idx" ON "task_dependency"("dependsOnTaskId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "task_dependency_taskId_dependsOnTaskId_key" ON "task_dependency"("taskId", "dependsOnTaskId");
+CREATE UNIQUE INDEX IF NOT EXISTS "task_dependency_taskId_dependsOnTaskId_key" ON "task_dependency"("taskId", "dependsOnTaskId");
 
 -- CreateIndex
-CREATE INDEX "task_comment_taskId_idx" ON "task_comment"("taskId");
+CREATE INDEX IF NOT EXISTS "task_comment_taskId_idx" ON "task_comment"("taskId");
 
 -- CreateIndex
-CREATE INDEX "task_comment_authorId_idx" ON "task_comment"("authorId");
+CREATE INDEX IF NOT EXISTS "task_comment_authorId_idx" ON "task_comment"("authorId");
 
 -- CreateIndex
-CREATE INDEX "task_activity_log_taskId_idx" ON "task_activity_log"("taskId");
+CREATE INDEX IF NOT EXISTS "task_activity_log_taskId_idx" ON "task_activity_log"("taskId");
 
 -- CreateIndex
-CREATE INDEX "task_activity_log_actorId_idx" ON "task_activity_log"("actorId");
+CREATE INDEX IF NOT EXISTS "task_activity_log_actorId_idx" ON "task_activity_log"("actorId");
 
 -- CreateIndex
-CREATE INDEX "task_label_organizationId_idx" ON "task_label"("organizationId");
+CREATE INDEX IF NOT EXISTS "task_label_organizationId_idx" ON "task_label"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "task_label_projectId_idx" ON "task_label"("projectId");
+CREATE INDEX IF NOT EXISTS "task_label_projectId_idx" ON "task_label"("projectId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "task_label_organizationId_projectId_name_key" ON "task_label"("organizationId", "projectId", "name");
+CREATE UNIQUE INDEX IF NOT EXISTS "task_label_organizationId_projectId_name_key" ON "task_label"("organizationId", "projectId", "name");
 
 -- CreateIndex
-CREATE INDEX "task_label_on_task_taskId_idx" ON "task_label_on_task"("taskId");
+CREATE INDEX IF NOT EXISTS "task_label_on_task_taskId_idx" ON "task_label_on_task"("taskId");
 
 -- CreateIndex
-CREATE INDEX "task_label_on_task_labelId_idx" ON "task_label_on_task"("labelId");
+CREATE INDEX IF NOT EXISTS "task_label_on_task_labelId_idx" ON "task_label_on_task"("labelId");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "InventoryLocation_branchCode_key" ON "InventoryLocation"("branchCode");
+CREATE UNIQUE INDEX IF NOT EXISTS "InventoryLocation_branchCode_key" ON "InventoryLocation"("branchCode");
 
 -- CreateIndex
-CREATE INDEX "attendance_log_shiftId_idx" ON "attendance_log"("shiftId");
+CREATE INDEX IF NOT EXISTS "attendance_log_shiftId_idx" ON "attendance_log"("shiftId");
 
 -- AddForeignKey
-ALTER TABLE "communication_threads" ADD CONSTRAINT "communication_threads_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'communication_threads_crmRecordId_fkey') THEN
+        ALTER TABLE "communication_threads" ADD CONSTRAINT "communication_threads_crmRecordId_fkey" FOREIGN KEY ("crmRecordId") REFERENCES "crm_records"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "staff_shift"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'attendance_log_shiftId_fkey') THEN
+        ALTER TABLE "attendance_log" ADD CONSTRAINT "attendance_log_shiftId_fkey" FOREIGN KEY ("shiftId") REFERENCES "staff_shift"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "project" ADD CONSTRAINT "project_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'project_organizationId_fkey') THEN
+        ALTER TABLE "project" ADD CONSTRAINT "project_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "project" ADD CONSTRAINT "project_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'project_ownerId_fkey') THEN
+        ALTER TABLE "project" ADD CONSTRAINT "project_ownerId_fkey" FOREIGN KEY ("ownerId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "project_member" ADD CONSTRAINT "project_member_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'project_member_projectId_fkey') THEN
+        ALTER TABLE "project_member" ADD CONSTRAINT "project_member_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "project_member" ADD CONSTRAINT "project_member_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'project_member_memberId_fkey') THEN
+        ALTER TABLE "project_member" ADD CONSTRAINT "project_member_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task" ADD CONSTRAINT "task_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_organizationId_fkey') THEN
+        ALTER TABLE "task" ADD CONSTRAINT "task_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task" ADD CONSTRAINT "task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_projectId_fkey') THEN
+        ALTER TABLE "task" ADD CONSTRAINT "task_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task" ADD CONSTRAINT "task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_parentTaskId_fkey') THEN
+        ALTER TABLE "task" ADD CONSTRAINT "task_parentTaskId_fkey" FOREIGN KEY ("parentTaskId") REFERENCES "task"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task" ADD CONSTRAINT "task_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_createdById_fkey') THEN
+        ALTER TABLE "task" ADD CONSTRAINT "task_createdById_fkey" FOREIGN KEY ("createdById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_assignee" ADD CONSTRAINT "task_assignee_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_assignee_taskId_fkey') THEN
+        ALTER TABLE "task_assignee" ADD CONSTRAINT "task_assignee_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_assignee" ADD CONSTRAINT "task_assignee_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_assignee_memberId_fkey') THEN
+        ALTER TABLE "task_assignee" ADD CONSTRAINT "task_assignee_memberId_fkey" FOREIGN KEY ("memberId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_dependency" ADD CONSTRAINT "task_dependency_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_dependency_taskId_fkey') THEN
+        ALTER TABLE "task_dependency" ADD CONSTRAINT "task_dependency_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_dependency" ADD CONSTRAINT "task_dependency_dependsOnTaskId_fkey" FOREIGN KEY ("dependsOnTaskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_dependency_dependsOnTaskId_fkey') THEN
+        ALTER TABLE "task_dependency" ADD CONSTRAINT "task_dependency_dependsOnTaskId_fkey" FOREIGN KEY ("dependsOnTaskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_comment_taskId_fkey') THEN
+        ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_comment_authorId_fkey') THEN
+        ALTER TABLE "task_comment" ADD CONSTRAINT "task_comment_authorId_fkey" FOREIGN KEY ("authorId") REFERENCES "member"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_activity_log" ADD CONSTRAINT "task_activity_log_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_activity_log_taskId_fkey') THEN
+        ALTER TABLE "task_activity_log" ADD CONSTRAINT "task_activity_log_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_activity_log" ADD CONSTRAINT "task_activity_log_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_activity_log_actorId_fkey') THEN
+        ALTER TABLE "task_activity_log" ADD CONSTRAINT "task_activity_log_actorId_fkey" FOREIGN KEY ("actorId") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_label" ADD CONSTRAINT "task_label_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_label_organizationId_fkey') THEN
+        ALTER TABLE "task_label" ADD CONSTRAINT "task_label_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_label" ADD CONSTRAINT "task_label_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_label_projectId_fkey') THEN
+        ALTER TABLE "task_label" ADD CONSTRAINT "task_label_projectId_fkey" FOREIGN KEY ("projectId") REFERENCES "project"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_label_on_task" ADD CONSTRAINT "task_label_on_task_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_label_on_task_taskId_fkey') THEN
+        ALTER TABLE "task_label_on_task" ADD CONSTRAINT "task_label_on_task_taskId_fkey" FOREIGN KEY ("taskId") REFERENCES "task"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- AddForeignKey
-ALTER TABLE "task_label_on_task" ADD CONSTRAINT "task_label_on_task_labelId_fkey" FOREIGN KEY ("labelId") REFERENCES "task_label"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'task_label_on_task_labelId_fkey') THEN
+        ALTER TABLE "task_label_on_task" ADD CONSTRAINT "task_label_on_task_labelId_fkey" FOREIGN KEY ("labelId") REFERENCES "task_label"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- RenameIndex
 ALTER INDEX "communication_threads_organizationId_channel_participantPhone_k" RENAME TO "communication_threads_organizationId_channel_participantPho_key";

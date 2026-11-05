@@ -1,5 +1,5 @@
 -- Create table company_contacts
-CREATE TABLE "company_contacts" (
+CREATE TABLE IF NOT EXISTS "company_contacts" (
     "id" TEXT NOT NULL,
     "name" TEXT NOT NULL,
     "email" TEXT,
@@ -13,16 +13,31 @@ CREATE TABLE "company_contacts" (
 );
 
 -- Add foreign key constraints to company_contacts
-ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'company_contacts_businessAccountId_fkey') THEN
+        ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'company_contacts_organizationId_fkey') THEN
+        ALTER TABLE "company_contacts" ADD CONSTRAINT "company_contacts_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- Create indexes for company_contacts
-CREATE INDEX "company_contacts_businessAccountId_idx" ON "company_contacts"("businessAccountId");
-CREATE INDEX "company_contacts_organizationId_idx" ON "company_contacts"("organizationId");
+CREATE INDEX IF NOT EXISTS "company_contacts_businessAccountId_idx" ON "company_contacts"("businessAccountId");
+CREATE INDEX IF NOT EXISTS "company_contacts_organizationId_idx" ON "company_contacts"("organizationId");
 
 -- Add businessAccountId column and fkey to Invoice
-ALTER TABLE "Invoice" ADD COLUMN "businessAccountId" TEXT;
-ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "Invoice" ADD COLUMN IF NOT EXISTS "businessAccountId" TEXT;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'Invoice_businessAccountId_fkey') THEN
+        ALTER TABLE "Invoice" ADD CONSTRAINT "Invoice_businessAccountId_fkey" FOREIGN KEY ("businessAccountId") REFERENCES "business_account"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+    END IF;
+END $$;
+
 
 -- Step 1: Copy existing B2B contacts from Customer to company_contacts
 INSERT INTO "company_contacts" ("id", "name", "email", "phone", "businessAccountId", "organizationId", "createdAt", "updatedAt")

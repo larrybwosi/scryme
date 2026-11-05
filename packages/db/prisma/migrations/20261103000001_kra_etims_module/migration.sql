@@ -63,4 +63,8 @@ CREATE INDEX IF NOT EXISTS "kra_compliance_log_transactionId_idx" ON "kra_compli
 CREATE INDEX IF NOT EXISTS "kra_compliance_log_status_idx" ON "kra_compliance_log"("status");
 
 -- AddForeignKey
-ALTER TABLE "kra_config" ADD CONSTRAINT "kra_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$ BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'kra_config_organizationId_fkey') THEN
+        ALTER TABLE "kra_config" ADD CONSTRAINT "kra_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;

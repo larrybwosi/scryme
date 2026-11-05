@@ -1,5 +1,5 @@
 -- CreateTable
-CREATE TABLE "pos_release_binary" (
+CREATE TABLE IF NOT EXISTS "pos_release_binary" (
     "id" TEXT NOT NULL,
     "version" TEXT NOT NULL,
     "platform" TEXT NOT NULL,
@@ -19,7 +19,7 @@ CREATE TABLE "pos_release_binary" (
 );
 
 -- CreateIndex
-CREATE INDEX "pos_release_binary_platform_variant_isLatest_idx" ON "pos_release_binary"("platform", "variant", "isLatest");
+CREATE INDEX IF NOT EXISTS "pos_release_binary_platform_variant_isLatest_idx" ON "pos_release_binary"("platform", "variant", "isLatest");
 
 -- CreateIndex
-CREATE UNIQUE INDEX "pos_release_binary_platform_variant_version_key" ON "pos_release_binary"("platform", "variant", "version");
+CREATE UNIQUE INDEX IF NOT EXISTS "pos_release_binary_platform_variant_version_key" ON "pos_release_binary"("platform", "variant", "version");
