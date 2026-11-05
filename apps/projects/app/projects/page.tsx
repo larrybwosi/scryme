@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { LayoutGrid, Rows, Plus, Search, X, FolderOpen, Sparkles, ListTodo, Pencil, ArrowRight, Trash2 } from "lucide-react";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Project } from "@/lib/api";
@@ -120,7 +121,7 @@ export default function ProjectsPage() {
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[15px]">grid_view</span>
+                  <LayoutGrid className="h-4 w-4" />
                   <span className="hidden sm:inline">Grid</span>
                 </button>
                 <button
@@ -132,7 +133,7 @@ export default function ProjectsPage() {
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
-                  <span className="material-symbols-outlined text-[15px]">view_agenda</span>
+                  <Rows className="h-4 w-4" />
                   <span className="hidden sm:inline">Table</span>
                 </button>
               </div>
@@ -144,7 +145,7 @@ export default function ProjectsPage() {
                   onClick={() => setIsNewProjectOpen(true)}
                   className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
                 >
-                  <span className="material-symbols-outlined text-[15px]">add</span>
+                  <Plus className="h-4 w-4" />
                   <span>New Project</span>
                   <span className="ml-1 text-label-kbd font-label-kbd text-on-primary-container/70 bg-on-primary-fixed/20 px-1 py-0.2 rounded-lg">P</span>
                 </button>
@@ -227,7 +228,7 @@ export default function ProjectsPage() {
             </div>
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-outline focus-within:text-on-surface focus-within:bg-surface-container-low transition-all">
-                <span className="material-symbols-outlined text-[14px]">search</span>
+                <Search className="h-3.5 w-3.5" />
                 <input
                   type="text"
                   value={searchQuery}
@@ -241,7 +242,7 @@ export default function ProjectsPage() {
                     onClick={() => setSearchQuery("")}
                     className="text-outline hover:text-on-surface"
                   >
-                    <span className="material-symbols-outlined text-[14px]">close</span>
+                    <X className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
@@ -260,7 +261,7 @@ export default function ProjectsPage() {
                   onClick={() => setIsNewProjectOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleCreateProject} className="flex flex-col gap-4 mt-4">
@@ -329,7 +330,7 @@ export default function ProjectsPage() {
                   onClick={() => setEditingProject(null)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleSaveEdit} className="flex flex-col gap-4 mt-4">
@@ -404,7 +405,7 @@ export default function ProjectsPage() {
         {/* Empty State */}
         {!isLoading && filteredProjects.length === 0 && (
           <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center gap-3 my-6">
-            <span className="material-symbols-outlined text-[36px] text-outline">folder_open</span>
+            <FolderOpen className="h-9 w-9 text-outline" />
             <div className="text-on-surface font-headline-sm text-body-md">No projects found</div>
             <p className="text-outline text-body-sm max-w-sm">
               Get started by creating your first project workspace to collaborate on tasks, cycles, and milestones.
@@ -434,7 +435,7 @@ export default function ProjectsPage() {
                   <div className="flex items-start justify-between gap-2">
                     <div className="flex items-center gap-2 min-w-0">
                       <div className="w-6 h-6 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary text-[13px] font-label-code shrink-0">
-                        <span className="material-symbols-outlined text-[15px] text-primary">auto_awesome</span>
+                        <Sparkles className="h-4 w-4 text-primary" />
                       </div>
                       <div className="min-w-0">
                         <h3 className="font-headline-sm text-headline-sm text-on-surface truncate group-hover:text-primary transition-colors">
@@ -458,7 +459,7 @@ export default function ProjectsPage() {
                     </div>
                     {project._count && (
                       <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-highest text-outline font-label-code text-label-code">
-                        <span className="material-symbols-outlined text-[13px]">checklist</span>
+                        <ListTodo className="h-3.5 w-3.5" />
                         <span>{project._count.tasks} Tasks</span>
                       </div>
                     )}
@@ -479,12 +480,10 @@ export default function ProjectsPage() {
                         className="p-1 text-outline hover:text-on-surface transition-colors"
                         title="Edit Project"
                       >
-                        <span className="material-symbols-outlined text-[15px]">edit</span>
+                        <Pencil className="h-3.5 w-3.5" />
                       </button>
                     )}
-                    <span className="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-[16px]">
-                      arrow_forward
-                    </span>
+<ArrowRight className="h-4 w-4 text-outline group-hover:text-primary transition-colors" />
                   </div>
                 </div>
               </Link>
@@ -543,7 +542,7 @@ export default function ProjectsPage() {
                             className="p-1 text-outline hover:text-on-surface"
                             title="Edit Project"
                           >
-                            <span className="material-symbols-outlined text-[15px]">edit</span>
+                            <Pencil className="h-3.5 w-3.5" />
                           </button>
                           <button
                             type="button"
@@ -551,7 +550,7 @@ export default function ProjectsPage() {
                             className="p-1 text-outline hover:text-red-400"
                             title="Delete Project"
                           >
-                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                            <Trash2 className="h-3.5 w-3.5" />
                           </button>
                         </div>
                       )}

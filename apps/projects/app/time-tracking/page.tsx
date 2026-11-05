@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
+import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   useTasks,
@@ -292,7 +293,7 @@ function TimeTrackingContent() {
                     disabled={!activeTaskId}
                     className="h-9 px-4 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-md disabled:opacity-50"
                   >
-                    <span className="material-symbols-outlined text-[18px]">play_arrow</span>
+                    <Play className="h-4 w-4" />
                     <span>Start Timer</span>
                   </button>
                 )}
@@ -304,9 +305,7 @@ function TimeTrackingContent() {
                       onClick={handlePauseResume}
                       className="h-9 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30"
                     >
-                      <span className="material-symbols-outlined text-[18px]">
-                        {timerState.isRunning ? "pause" : "play_arrow"}
-                      </span>
+{timerState.isRunning ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
                       <span>{timerState.isRunning ? "Pause" : "Resume"}</span>
                     </button>
                     <button
@@ -315,7 +314,7 @@ function TimeTrackingContent() {
                       disabled={timerState.elapsedSeconds < 5}
                       className="h-9 px-4 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-md disabled:opacity-50"
                     >
-                      <span className="material-symbols-outlined text-[18px]">check_circle</span>
+                      <CheckCircle2 className="h-4 w-4" />
                       <span>Stop & Log</span>
                     </button>
                   </>
@@ -327,7 +326,7 @@ function TimeTrackingContent() {
                   disabled={!activeTaskId}
                   className="h-9 px-4 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30 disabled:opacity-50"
                 >
-                  <span className="material-symbols-outlined text-[18px]">edit_calendar</span>
+                  <CalendarDays className="h-4 w-4" />
                   <span>Manual Log</span>
                 </button>
               </div>
@@ -356,7 +355,7 @@ function TimeTrackingContent() {
                   onClick={exportTimesheetCSV}
                   className="h-8 px-3 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30"
                 >
-                  <span className="material-symbols-outlined text-[16px]">download</span>
+                  <Download className="h-4 w-4" />
                   <span>Export CSV</span>
                 </button>
                 <button
@@ -364,7 +363,7 @@ function TimeTrackingContent() {
                   onClick={() => setIsSubmitModalOpen(true)}
                   className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 transition-colors shadow-xs"
                 >
-                  <span className="material-symbols-outlined text-[16px]">send</span>
+                  <Send className="h-4 w-4" />
                   <span>Submit Weekly Timesheet</span>
                 </button>
               </div>
@@ -422,7 +421,7 @@ function TimeTrackingContent() {
             <div className="rounded-lg bg-surface-container-low border border-outline-variant/30 overflow-hidden shadow-sm">
               <div className="flex items-center justify-between p-4 border-b border-outline-variant/30">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-primary text-[18px]">history</span>
+                  <HistoryIcon className="h-4 w-4 text-primary" />
                   <h3 className="font-headline-sm text-body-md text-on-surface font-semibold">
                     Logged Entries on {activeTask?.taskKey || "Task"}
                   </h3>
@@ -471,7 +470,7 @@ function TimeTrackingContent() {
                               className="text-outline hover:text-red-400 p-1 transition-colors"
                               title="Delete Entry"
                             >
-                              <span className="material-symbols-outlined text-[16px]">delete</span>
+                              <Trash2 className="h-4 w-4" />
                             </button>
                           )}
                         </td>
@@ -580,7 +579,7 @@ function TimeTrackingContent() {
                   onClick={() => setIsManualModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleManualLog} className="flex flex-col gap-4 mt-4">
@@ -707,7 +706,7 @@ function TimeTrackingContent() {
                   onClick={() => setIsSubmitModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleSubmitTimesheet} className="flex flex-col gap-4 mt-4">
@@ -760,7 +759,7 @@ function TimeTrackingContent() {
                   onClick={() => setIsApprovalModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 

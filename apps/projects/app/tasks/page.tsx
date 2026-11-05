@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { Plus, Search, X, CheckSquare, Check } from "lucide-react";
 import {
   useTasks,
   useProjects,
@@ -170,7 +171,7 @@ export default function TasksPage() {
                 onClick={() => setIsNewTaskOpen(true)}
                 className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
+                <Plus className="h-4 w-4" />
                 <span>New Issue</span>
               </button>
             )}
@@ -244,9 +245,7 @@ export default function TasksPage() {
           </div>
 
           <div className="relative w-full sm:w-64">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-outline text-[16px]">
-              search
-            </span>
+<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-outline h-4 w-4" />
             <input
               type="text"
               placeholder="Search issues..."
@@ -268,7 +267,7 @@ export default function TasksPage() {
                   onClick={() => setIsNewTaskOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 
@@ -398,7 +397,7 @@ export default function TasksPage() {
         {/* Empty State */}
         {!isLoading && filteredTasks.length === 0 && (
           <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center gap-3">
-            <span className="material-symbols-outlined text-[36px] text-outline">check_box</span>
+            <CheckSquare className="h-9 w-9 text-outline" />
             <div className="text-on-surface font-headline-sm text-body-md">No tasks found</div>
             <p className="text-outline text-body-sm max-w-sm">
               All caught up! Create a new task or adjust your filters.
@@ -442,8 +441,8 @@ export default function TasksPage() {
                             : "border-outline-variant group-hover:border-outline bg-surface-container"
                         } ${!canManageTasks ? "cursor-default" : "cursor-pointer"}`}
                       >
-                        {isCompleted && (
-                          <span className="material-symbols-outlined text-[13px]">check</span>
+{isCompleted && (
+                          <Check className="h-3.5 w-3.5" />
                         )}
                       </button>
                       <Link

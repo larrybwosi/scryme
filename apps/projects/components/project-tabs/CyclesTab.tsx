@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Plus, X, Trash2 } from "lucide-react";
 import {
   useSprints,
   useCreateSprint,
@@ -50,7 +51,7 @@ export function CyclesTab({ projectId }: { projectId: string }) {
           onClick={() => setIsCreateOpen(true)}
           className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 shadow-sm transition-all"
         >
-          <span className="material-symbols-outlined text-[16px]">add</span>
+          <Plus className="h-4 w-4" />
           <span>New Sprint Cycle</span>
         </button>
       </div>
@@ -65,7 +66,7 @@ export function CyclesTab({ projectId }: { projectId: string }) {
                 onClick={() => setIsCreateOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
@@ -175,7 +176,7 @@ export function CyclesTab({ projectId }: { projectId: string }) {
                   className="text-outline hover:text-red-400 p-1 transition-colors"
                   title="Delete Sprint"
                 >
-                  <span className="material-symbols-outlined text-[16px]">delete</span>
+                  <Trash2 className="h-4 w-4" />
                 </button>
               </div>
             </div>

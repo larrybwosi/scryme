@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { ListTodo, Check, History as HistoryIcon } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   useTasks,
@@ -195,7 +196,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
               <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-[16px] text-primary">checklist</span>
+                    <ListTodo className="h-4 w-4 text-primary" />
                     <span className="font-headline-sm text-body-md text-on-surface font-semibold">Subtasks</span>
                     <span className="text-[11px] font-label-code text-outline">
                       ({doneCount}/{subtasks.length} done)
@@ -220,7 +221,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                               : "border-outline-variant bg-surface-container"
                           }`}
                         >
-                          {isDone && <span className="material-symbols-outlined text-[12px]">check</span>}
+                          {isDone && <Check className="h-3 w-3" />}
                         </button>
                         <span
                           className={`text-body-sm ${
@@ -255,7 +256,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
               {/* Activity & Comment Thread */}
               <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[16px] text-primary">history</span>
+                  <HistoryIcon className="h-4 w-4 text-primary" />
                   <span className="font-headline-sm text-body-md text-on-surface font-semibold">Activity & Comments</span>
                 </div>
 

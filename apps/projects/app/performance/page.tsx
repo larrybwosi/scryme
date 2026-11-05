@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { TrendingUp, ChevronRight } from "lucide-react";
 import { useTeamPerformance, useMembers } from "@/lib/hooks/use-projects";
 import { MemberPerformanceDrawer } from "@/components/MemberPerformanceDrawer";
 
@@ -27,7 +28,7 @@ function PerformanceContent() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-outline-variant/30 pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[24px]">trending_up</span>
+            <TrendingUp className="h-6 w-6 text-primary" />
             <h1 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
               Squad Performance & Throughput
             </h1>
@@ -253,7 +254,7 @@ function PerformanceContent() {
                               className="text-primary hover:text-primary/80 transition-colors inline-flex items-center text-[12px] font-medium"
                             >
                               <span>Drawer</span>
-                              <span className="material-symbols-outlined text-[16px]">chevron_right</span>
+                              <ChevronRight className="h-4 w-4" />
                             </button>
                           </td>
                         </tr>

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X } from "lucide-react";
 import {
   useMembers,
   useProjects,
@@ -358,7 +359,7 @@ export default function SchedulePage() {
                   onClick={() => setWeekOffset((p) => p - 1)}
                   className="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                  <ChevronLeft className="h-4 w-4" />
                 </button>
                 <div className="font-headline-sm text-body-md text-on-surface font-semibold px-2 min-w-[200px] text-center">
                   {weekLabel}
@@ -368,7 +369,7 @@ export default function SchedulePage() {
                   onClick={() => setWeekOffset((p) => p + 1)}
                   className="w-8 h-8 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface flex items-center justify-center transition-colors"
                 >
-                  <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                  <ChevronRight className="h-4 w-4" />
                 </button>
                 {weekOffset !== 0 && (
                   <button
@@ -408,7 +409,7 @@ export default function SchedulePage() {
                     onClick={() => setIsBookModalOpen(true)}
                     className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
                   >
-                    <span className="material-symbols-outlined text-[16px]">add_circle</span>
+                    <PlusCircle className="h-4 w-4" />
                     <span>Book Capacity</span>
                   </button>
                 )}
@@ -526,7 +527,7 @@ export default function SchedulePage() {
                   }}
                   className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
                 >
-                  <span className="material-symbols-outlined text-[16px]">add</span>
+                  <Plus className="h-4 w-4" />
                   <span>Schedule Shift</span>
                 </button>
               )}
@@ -534,7 +535,7 @@ export default function SchedulePage() {
 
             {shiftConflicts.size > 0 && (
               <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-body-sm flex items-center gap-2">
-                <span className="material-symbols-outlined text-[18px]">warning</span>
+                <AlertTriangle className="h-4 w-4" />
                 <span>
                   <strong>Shift Conflicts Detected:</strong> {shiftConflicts.size} shift(s) have overlapping scheduled intervals on the same day. Please review highlighted rows below.
                 </span>
@@ -605,7 +606,7 @@ export default function SchedulePage() {
                                   className="text-outline hover:text-on-surface p-1 transition-colors"
                                   title="Edit Shift"
                                 >
-                                  <span className="material-symbols-outlined text-[16px]">edit</span>
+                                  <Pencil className="h-4 w-4" />
                                 </button>
                                 <button
                                   type="button"
@@ -613,7 +614,7 @@ export default function SchedulePage() {
                                   className="text-outline hover:text-red-400 p-1 transition-colors"
                                   title="Delete Shift"
                                 >
-                                  <span className="material-symbols-outlined text-[16px]">delete</span>
+                                  <Trash2 className="h-4 w-4" />
                                 </button>
                               </div>
                             )}
@@ -645,7 +646,7 @@ export default function SchedulePage() {
                 onClick={() => setIsTradeModalOpen(true)}
                 className="h-8 px-space-md bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
               >
-                <span className="material-symbols-outlined text-[16px]">swap_horiz</span>
+                <ArrowLeftRight className="h-4 w-4" />
                 <span>Request Shift Trade</span>
               </button>
             </div>
@@ -758,7 +759,7 @@ export default function SchedulePage() {
                   onClick={() => setIsBookModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleBooking} className="flex flex-col gap-4 mt-4">
@@ -845,7 +846,7 @@ export default function SchedulePage() {
                   onClick={() => setIsShiftModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleSaveShift} className="flex flex-col gap-4 mt-4">
@@ -932,7 +933,7 @@ export default function SchedulePage() {
                   onClick={() => setIsTradeModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleCreateTrade} className="flex flex-col gap-4 mt-4">

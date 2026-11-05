@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { Kanban, Rows, Plus, Search, X } from "lucide-react";
 import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
@@ -137,14 +138,14 @@ export default function BoardPage() {
                 href="/board"
                 className="px-2.5 py-1 rounded bg-surface-container-high text-on-surface font-body-sm text-body-sm flex items-center gap-1 shadow-sm"
               >
-                <span className="material-symbols-outlined text-[15px]">view_kanban</span>
+                <Kanban className="h-4 w-4" />
                 <span>Board</span>
               </Link>
               <Link
                 href="/tasks"
                 className="px-2.5 py-1 rounded text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors"
               >
-                <span className="material-symbols-outlined text-[15px]">view_agenda</span>
+                <Rows className="h-4 w-4" />
                 <span>List</span>
               </Link>
             </div>
@@ -157,7 +158,7 @@ export default function BoardPage() {
                 }}
                 className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1 shadow-sm transition-all"
               >
-                <span className="material-symbols-outlined text-[16px]">add</span>
+                <Plus className="h-4 w-4" />
                 <span>New Issue</span>
               </button>
             )}
@@ -168,7 +169,7 @@ export default function BoardPage() {
         <div className="flex flex-wrap items-center justify-between gap-3 pb-4">
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30 text-outline focus-within:text-on-surface">
-              <span className="material-symbols-outlined text-[14px]">search</span>
+              <Search className="h-3.5 w-3.5" />
               <input
                 type="text"
                 value={searchQuery}
@@ -213,7 +214,7 @@ export default function BoardPage() {
                   onClick={() => setIsAddModalOpen(false)}
                   className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
               <form onSubmit={handleAddTask} className="flex flex-col gap-4 mt-4">
@@ -317,7 +318,7 @@ export default function BoardPage() {
                         }}
                         className="w-5 h-5 rounded flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
                       >
-                        <span className="material-symbols-outlined text-[15px]">add</span>
+                        <Plus className="h-3.5 w-3.5" />
                       </button>
                     )}
                   </div>
