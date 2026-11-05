@@ -1,8 +1,8 @@
 -- AlterTable
-ALTER TABLE "organization_settings" ADD COLUMN "defaultDeliveryNoteTemplate" TEXT NOT NULL DEFAULT 'delivery-note-v3';
+ALTER TABLE "organization_settings" ADD COLUMN IF NOT EXISTS "defaultDeliveryNoteTemplate" TEXT NOT NULL DEFAULT 'delivery-note-v3';
 
 -- CreateTable
-CREATE TABLE "delivery_note_config" (
+CREATE TABLE IF NOT EXISTS "delivery_note_config" (
     "id" TEXT NOT NULL,
     "organizationId" TEXT NOT NULL,
     "showLogo" BOOLEAN NOT NULL DEFAULT true,
@@ -20,10 +20,15 @@ CREATE TABLE "delivery_note_config" (
 );
 
 -- CreateIndex
-CREATE UNIQUE INDEX "delivery_note_config_organizationId_key" ON "delivery_note_config"("organizationId");
+CREATE UNIQUE INDEX IF NOT EXISTS "delivery_note_config_organizationId_key" ON "delivery_note_config"("organizationId");
 
 -- CreateIndex
-CREATE INDEX "delivery_note_config_organizationId_idx" ON "delivery_note_config"("organizationId");
+CREATE INDEX IF NOT EXISTS "delivery_note_config_organizationId_idx" ON "delivery_note_config"("organizationId");
 
 -- AddForeignKey
-ALTER TABLE "delivery_note_config" ADD CONSTRAINT "delivery_note_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_constraint WHERE conname = 'delivery_note_config_organizationId_fkey') THEN
+        ALTER TABLE "delivery_note_config" ADD CONSTRAINT "delivery_note_config_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+    END IF;
+END $$;
