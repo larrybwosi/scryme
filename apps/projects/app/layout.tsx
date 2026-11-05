@@ -3,6 +3,8 @@ import "./globals.css";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { QueryProvider } from "@/components/QueryProvider";
+import { OpenPanelProvider } from "@/components/openpanel-provider";
+import { TelemetryProvider } from "@repo/shared/telemetry/client";
 
 export const metadata: Metadata = {
   title: "Scryme Projects - Kinetic Precision Workspace",
@@ -25,7 +27,9 @@ export default function RootLayout({
         />
       </head>
       <body className="bg-surface font-body-md text-body-md text-on-surface antialiased">
-        <QueryProvider>
+        <TelemetryProvider service="projects-app">
+          <OpenPanelProvider />
+          <QueryProvider>
           <Sidebar />
           <div className="pl-60 min-h-screen flex flex-col">
             <Header />
@@ -33,7 +37,8 @@ export default function RootLayout({
               {children}
             </main>
           </div>
-        </QueryProvider>
+          </QueryProvider>
+        </TelemetryProvider>
       </body>
     </html>
   );

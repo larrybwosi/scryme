@@ -260,20 +260,34 @@ export async function createLocation(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  if (data.parentLocationId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate parent location belongs to current tenant
-    const parent = await db.inventoryLocation.findFirst({
-      where: { id: data.parentLocationId, organizationId: context.organizationId },
-    });
-    if (!parent) throw new Error("Invalid parent location ID or unauthorized");
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * Parallelize relational entity validation lookups (parent location and manager).
+   * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+   * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
+   * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+   */
+  const [parent, manager] = await Promise.all([
+    data.parentLocationId
+      ? db.inventoryLocation.findFirst({
+          where: { id: data.parentLocationId, organizationId: context.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    data.managerId
+      ? db.member.findFirst({
+          where: { id: data.managerId, organizationId: context.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (data.parentLocationId && !parent) {
+    throw new Error("Invalid parent location ID or unauthorized");
   }
 
-  if (data.managerId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate manager member belongs to current tenant
-    const manager = await db.member.findFirst({
-      where: { id: data.managerId, organizationId: context.organizationId },
-    });
-    if (!manager) throw new Error("Invalid manager ID or unauthorized");
+  if (data.managerId && !manager) {
+    throw new Error("Invalid manager ID or unauthorized");
   }
 
   const location = await db.$transaction(async tx => {
@@ -325,23 +339,38 @@ export async function updateLocation(
   });
   if (!existingLocation) throw new Error("Location not found or unauthorized");
 
-  if (data.parentLocationId) {
-    if (data.parentLocationId === id) {
-      throw new Error("Location cannot be its own parent");
-    }
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate parent location belongs to current tenant
-    const parent = await db.inventoryLocation.findFirst({
-      where: { id: data.parentLocationId, organizationId: context.organizationId },
-    });
-    if (!parent) throw new Error("Invalid parent location ID or unauthorized");
+  if (data.parentLocationId && data.parentLocationId === id) {
+    throw new Error("Location cannot be its own parent");
   }
 
-  if (data.managerId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate manager member belongs to current tenant
-    const manager = await db.member.findFirst({
-      where: { id: data.managerId, organizationId: context.organizationId },
-    });
-    if (!manager) throw new Error("Invalid manager ID or unauthorized");
+  /**
+   * ⚡ Bolt Performance Optimization:
+   * Parallelize relational entity validation lookups (parent location and manager).
+   * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+   * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
+   * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+   */
+  const [parent, manager] = await Promise.all([
+    data.parentLocationId
+      ? db.inventoryLocation.findFirst({
+          where: { id: data.parentLocationId, organizationId: context.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+    data.managerId
+      ? db.member.findFirst({
+          where: { id: data.managerId, organizationId: context.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
+  if (data.parentLocationId && !parent) {
+    throw new Error("Invalid parent location ID or unauthorized");
+  }
+
+  if (data.managerId && !manager) {
+    throw new Error("Invalid manager ID or unauthorized");
   }
 
   const location = await db.$transaction(async tx => {

@@ -2333,11 +2333,40 @@ export async function linkProductSupplier(data: {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // Security Mitigation (BOLA/IDOR): Validate that product and supplier belong to authenticated organization.
+  // ProductSupplier lacks a direct organizationId column, so tenant ownership is scoped through Product and Supplier.
+  const [product, supplier] = await Promise.all([
+    db.product.findFirst({
+      where: {
+        id: data.productId,
+        organizationId: context.organizationId,
+        variants: {
+          some: { id: data.variantId },
+        },
+      },
+      select: { id: true },
+    }),
+    db.supplier.findFirst({
+      where: {
+        id: data.supplierId,
+        organizationId: context.organizationId,
+      },
+      select: { id: true },
+    }),
+  ]);
+
+  if (!product || !supplier) {
+    throw new Error("Product or supplier not found or unauthorized");
+  }
+
   return db.$transaction(async (tx) => {
-    // If set as preferred, un-prefer other supplier links for this product
+    // If set as preferred, un-prefer other supplier links for this product strictly within the tenant
     if (data.isPreferred) {
       await tx.productSupplier.updateMany({
-        where: { productId: data.productId },
+        where: {
+          productId: data.productId,
+          product: { organizationId: context.organizationId },
+        },
         data: { isPreferred: false },
       });
     }
@@ -2378,28 +2407,47 @@ export async function updateProductSupplierLink(
   if (!context?.organizationId) throw new Error("Unauthorized");
 
   return db.$transaction(async (tx) => {
-    const existing = await tx.productSupplier.findUnique({
-      where: { id },
-      select: { productId: true },
+    // Security Mitigation (BOLA/IDOR): Verify the product supplier link belongs to caller's tenant via Product relation
+    const existing = await tx.productSupplier.findFirst({
+      where: {
+        id,
+        product: { organizationId: context.organizationId },
+      },
+      select: { id: true, productId: true },
     });
 
-    if (!existing) throw new Error("Product supplier link not found.");
+    if (!existing) throw new Error("Product supplier link not found or unauthorized");
 
     if (data.isPreferred) {
       await tx.productSupplier.updateMany({
-        where: { productId: existing.productId },
+        where: {
+          productId: existing.productId,
+          product: { organizationId: context.organizationId },
+        },
         data: { isPreferred: false },
       });
     }
 
-    const updatedLink = await tx.productSupplier.update({
-      where: { id },
+    // Security Mitigation (BOLA/IDOR): ProductSupplier lacks a composite unique index on [id, organizationId].
+    // Scoping updateMany to { id, product: { organizationId } } guarantees database-level multi-tenant isolation.
+    await tx.productSupplier.updateMany({
+      where: {
+        id,
+        product: { organizationId: context.organizationId },
+      },
       data: {
         supplierSku: data.supplierSku !== undefined ? (data.supplierSku || null) : undefined,
         costPrice: data.costPrice !== undefined ? new Decimal(data.costPrice) : undefined,
         leadTimeDays: data.leadTimeDays !== undefined ? (data.leadTimeDays ? Number(data.leadTimeDays) : null) : undefined,
         minimumOrderQuantity: data.minimumOrderQuantity !== undefined ? (data.minimumOrderQuantity ? Number(data.minimumOrderQuantity) : null) : undefined,
         isPreferred: data.isPreferred !== undefined ? Boolean(data.isPreferred) : undefined,
+      },
+    });
+
+    const updatedLink = await tx.productSupplier.findFirstOrThrow({
+      where: {
+        id,
+        product: { organizationId: context.organizationId },
       },
       include: {
         supplier: true,
@@ -2416,15 +2464,22 @@ export async function unlinkProductSupplier(id: string): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  const existing = await db.productSupplier.findUnique({
-    where: { id },
-    select: { productId: true },
+  // Security Mitigation (BOLA/IDOR): Scope link lookup and deletion strictly to caller's organization via Product relation
+  const existing = await db.productSupplier.findFirst({
+    where: {
+      id,
+      product: { organizationId: context.organizationId },
+    },
+    select: { id: true, productId: true },
   });
 
-  if (!existing) throw new Error("Product supplier link not found.");
+  if (!existing) throw new Error("Product supplier link not found or unauthorized");
 
-  await db.productSupplier.delete({
-    where: { id },
+  await db.productSupplier.deleteMany({
+    where: {
+      id,
+      product: { organizationId: context.organizationId },
+    },
   });
 
   revalidatePath(`/inventory/products/${existing.productId}`);

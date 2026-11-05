@@ -77,17 +77,19 @@ export default defineConfig([
       "services/notification/system": "src/services/notification/system.ts",
       "services/email/index": "src/services/email/index.ts",
       "kra/index": "src/kra/index.ts",
+      "telemetry/index": "src/telemetry/index.ts",
     },
   },
   {
     ...commonOptions,
     entry: {
       "realtime/client": "src/realtime/client.tsx",
+      "telemetry/client": "src/telemetry/provider.tsx",
     },
     onSuccess: async () => {
       const fs = await import("node:fs/promises");
       const path = await import("node:path");
-      const files = ["dist/realtime/client.js"];
+      const files = ["dist/realtime/client.js", "dist/telemetry/client.js"];
       for (const file of files) {
         const filePath = path.join(process.cwd(), file);
         try {

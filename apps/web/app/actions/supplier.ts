@@ -260,26 +260,32 @@ export async function addProductToSupplier(data: {
     throw new Error("Unauthorized");
   }
 
-  // Security Mitigation (BOLA/IDOR): Validate both supplierId and productId belong to authenticated organization.
-  const supplier = await db.supplier.findFirst({
-    where: {
-      id: data.supplierId,
-      organizationId: auth.organizationId,
-    },
-    select: { id: true },
-  });
+  /**
+   * ⚡ Bolt Performance Optimization & Security (BOLA/IDOR):
+   * Parallelize relational validation lookups for supplier and product using Promise.all.
+   * This reduces validation database latency from 2 sequential blocking roundtrips down to 1
+   * concurrent roundtrip while strictly enforcing multi-tenant organization boundary checks.
+   */
+  const [supplier, product] = await Promise.all([
+    db.supplier.findFirst({
+      where: {
+        id: data.supplierId,
+        organizationId: auth.organizationId,
+      },
+      select: { id: true },
+    }),
+    db.product.findFirst({
+      where: {
+        id: data.productId,
+        organizationId: auth.organizationId,
+      },
+      select: { id: true },
+    }),
+  ]);
 
   if (!supplier) {
     throw new Error("Supplier not found or unauthorized");
   }
-
-  const product = await db.product.findFirst({
-    where: {
-      id: data.productId,
-      organizationId: auth.organizationId,
-    },
-    select: { id: true },
-  });
 
   if (!product) {
     throw new Error("Product not found or unauthorized");
@@ -315,26 +321,32 @@ export async function addVariantsToSupplier(
     throw new Error("Unauthorized");
   }
 
-  // Security Mitigation (BOLA/IDOR): Validate both supplierId and productId belong to authenticated organization.
-  const supplier = await db.supplier.findFirst({
-    where: {
-      id: data.supplierId,
-      organizationId: auth.organizationId,
-    },
-    select: { id: true },
-  });
+  /**
+   * ⚡ Bolt Performance Optimization & Security (BOLA/IDOR):
+   * Parallelize relational validation lookups for supplier and product using Promise.all.
+   * This reduces validation database latency from 2 sequential blocking roundtrips down to 1
+   * concurrent roundtrip while strictly enforcing multi-tenant organization boundary checks.
+   */
+  const [supplier, product] = await Promise.all([
+    db.supplier.findFirst({
+      where: {
+        id: data.supplierId,
+        organizationId: auth.organizationId,
+      },
+      select: { id: true },
+    }),
+    db.product.findFirst({
+      where: {
+        id: data.productId,
+        organizationId: auth.organizationId,
+      },
+      select: { id: true },
+    }),
+  ]);
 
   if (!supplier) {
     throw new Error("Supplier not found or unauthorized");
   }
-
-  const product = await db.product.findFirst({
-    where: {
-      id: data.productId,
-      organizationId: auth.organizationId,
-    },
-    select: { id: true },
-  });
 
   if (!product) {
     throw new Error("Product not found or unauthorized");

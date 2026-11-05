@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "@/lib/providers";
 import { OpenPanelProvider } from "@/components/openpanel-provider";
+import { TelemetryProvider } from "@repo/shared/telemetry/client";
 import { PostHogProvider } from "@/components/posthog-provider";
 
 const geistSans = Geist({
@@ -39,10 +40,12 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} font-sans antialiased`}
       >
-        <OpenPanelProvider />
-        <PostHogProvider>
-          <Providers>{children}</Providers>
-        </PostHogProvider>
+        <TelemetryProvider service="admin-app">
+          <OpenPanelProvider />
+          <PostHogProvider>
+            <Providers>{children}</Providers>
+          </PostHogProvider>
+        </TelemetryProvider>
       </body>
     </html>
   );

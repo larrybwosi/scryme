@@ -178,10 +178,25 @@ export async function createOrgInvitation(data: {
     const expiresAt = new Date();
     expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
 
-    // Check if user is already a member of this organization
-    const userWithEmail = await db.user.findUnique({
-      where: { email: data.email },
-    });
+    // ⚡ Bolt Optimization: Concurrently fetch user existence, pending invitation status,
+    // and organization metadata in parallel via Promise.all. This collapses 3 sequential blocking
+    // roundtrips into 1 concurrent roundtrip, reducing action execution latency.
+    const [userWithEmail, existingInvitation, org] = await Promise.all([
+      db.user.findUnique({
+        where: { email: data.email },
+      }),
+      db.invitation.findFirst({
+        where: {
+          organizationId: session.organizationId,
+          email: data.email,
+          status: "PENDING",
+        },
+      }),
+      db.organization.findUnique({
+        where: { id: session.organizationId },
+        select: { name: true },
+      }),
+    ]);
 
     if (userWithEmail) {
       const existingMember = await db.member.findUnique({
@@ -200,20 +215,6 @@ export async function createOrgInvitation(data: {
         };
       }
     }
-
-    // Check if there is already a PENDING invitation for this email in this organization
-    const existingInvitation = await db.invitation.findFirst({
-      where: {
-        organizationId: session.organizationId,
-        email: data.email,
-        status: "PENDING",
-      },
-    });
-
-    const org = await db.organization.findUnique({
-      where: { id: session.organizationId },
-      select: { name: true },
-    });
 
     const appUrl =
       process.env.NEXT_PUBLIC_APP_URL ||

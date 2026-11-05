@@ -124,14 +124,23 @@ export class QuotaService {
    * System Defaults < Base Tier Limits < Organization Quota Overrides.
    */
   async getEffectiveQuota(organizationId: string): Promise<EffectiveQuotaResult> {
-    const org = await this.prisma.client.organization.findUnique({
-      where: { id: organizationId },
-      select: { id: true, quotaOverrides: true },
-    });
-
-    const subscription = await this.prisma.client.subscription.findUnique({
-      where: { organizationId },
-    });
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize independent organization and subscription lookups using Promise.all,
+     * and add an explicit select projection for subscription ({ dodoPriceId: true }).
+     * This reduces sequential database roundtrips from 2 to 1 concurrent roundtrip
+     * and eliminates over-fetching of unnecessary subscription fields on the quota check path.
+     */
+    const [org, subscription] = await Promise.all([
+      this.prisma.client.organization.findUnique({
+        where: { id: organizationId },
+        select: { id: true, quotaOverrides: true },
+      }),
+      this.prisma.client.subscription.findUnique({
+        where: { organizationId },
+        select: { dodoPriceId: true },
+      }),
+    ]);
 
     const defaultAllocations = await this.getDefaultQuotaAllocations();
     const tierSlug = subscription?.dodoPriceId || "free";
