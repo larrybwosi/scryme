@@ -131,7 +131,7 @@ export class ServiceManagementService {
   }
 
   async createService(orgId: string, dto: CreateServiceDto) {
-    const { staffIds, resourceIds, materials, taxRateIds, customFields, ...serviceData } = dto;
+    const { staffIds, resourceIds, materials, taxRateIds, customFields, taskChecklistTemplate, ...serviceData } = dto;
 
     // Validate category
     const category = await this.prisma.client.serviceCategory.findFirst({
@@ -195,6 +195,7 @@ export class ServiceManagementService {
       data: {
         ...serviceData,
         customFields: customFields as any,
+        taskChecklistTemplate: taskChecklistTemplate as any,
         organizationId: orgId,
         staff: staffIds ? {
           create: staffIds.map(id => ({ memberId: id }))
@@ -219,7 +220,7 @@ export class ServiceManagementService {
 
     if (!service) throw new NotFoundException("Service not found");
 
-    const { staffIds, resourceIds, materials, taxRateIds, customFields, ...serviceData } = dto;
+    const { staffIds, resourceIds, materials, taxRateIds, customFields, taskChecklistTemplate, ...serviceData } = dto;
 
     // Validate category if updating it
     if (dto.categoryId) {
@@ -280,6 +281,7 @@ export class ServiceManagementService {
         data: {
             ...serviceData,
             customFields: customFields as any,
+            ...(taskChecklistTemplate !== undefined ? { taskChecklistTemplate: taskChecklistTemplate as any } : {}),
         }
     });
 

@@ -1,3 +1,7 @@
+// ==========================================
+// ENUMS
+// ==========================================
+
 enum PricingModel {
   FIXED
   HOURLY
@@ -68,12 +72,16 @@ enum BookingEventSource {
   SYSTEM
 }
 
+// ==========================================
+// MODELS
+// ==========================================
+
 model ServiceCategory {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   description    String?
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   services       Service[]
 
   parentId      String?
@@ -89,12 +97,12 @@ model ServiceCategory {
 }
 
 model Service {
-  id             String       @id @default(cuid())
+  id             String          @id @default(cuid())
   name           String
   description    String?
-  sku            String       @unique
+  sku            String          @unique
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   categoryId String
   category   ServiceCategory @relation(fields: [categoryId], references: [id])
@@ -111,17 +119,18 @@ model Service {
   bufferTimeBefore  Int  @default(0) // In minutes
   bufferTimeAfter   Int  @default(0) // In minutes
 
-  isActive     Boolean @default(true)
-  customFields Json?
+  isActive              Boolean @default(true)
+  customFields          Json?
+  taskChecklistTemplate Json?
 
   // Relations
   bookings           ServiceBooking[]
   materials          ServiceMaterial[]
   checklistTemplates ChecklistTemplate[]
-  resources        ServiceResourceAssignment[]
-  staff            ServiceStaffAssignment[]
-  taxRates         ServiceTaxRate[]
-  transactionItems TransactionServiceItem[]
+  resources          ServiceResourceAssignment[]
+  staff              ServiceStaffAssignment[]
+  taxRates           ServiceTaxRate[]
+  transactionItems   TransactionServiceItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -239,10 +248,13 @@ model ServiceBooking {
   transaction     Transaction?            @relation(fields: [transactionId], references: [id])
   transactionItem TransactionServiceItem?
 
+  staffTasks     StaffTask[]
+  bookingTasks   BookingTask[]
+  checklistItems BookingChecklistItem[]
+  tasks          Task[]
+
   revision Int            @default(1)
   events   BookingEvent[]
-  tasks    BookingTask[]
-  checklistItems BookingChecklistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -358,8 +370,7 @@ model BookingStaff {
 
 model StaffScheduleOverride {
   id             String               @id @default(cuid())
-  organizationId String
-  organization   Organization         @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String               @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member               @relation(fields: [memberId], references: [id], onDelete: Cascade)
   locationId     String?
@@ -443,6 +454,9 @@ model StaffTask {
   shiftId String?
   shift   StaffShift? @relation(fields: [shiftId], references: [id], onDelete: SetNull)
 
+  bookingId String?
+  booking   ServiceBooking? @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+
   locationId String?
   location   InventoryLocation? @relation(fields: [locationId], references: [id], onDelete: SetNull)
 
@@ -456,6 +470,7 @@ model StaffTask {
   @@index([organizationId, status])
   @@index([memberId, status])
   @@index([shiftId])
+  @@index([bookingId])
   @@map("staff_task")
 }
 
@@ -485,17 +500,17 @@ model BookingConsumedMaterial {
 }
 
 model ChecklistTemplate {
-  id             String          @id @default(cuid())
+  id             String                  @id @default(cuid())
   organizationId String
-  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization            @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   serviceId      String?
-  service        Service?        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  service        Service?                @relation(fields: [serviceId], references: [id], onDelete: Cascade)
   title          String
   description    String?
-  isActive       Boolean         @default(true)
+  isActive       Boolean                 @default(true)
   items          ChecklistItemTemplate[]
-  createdAt      DateTime        @default(now())
-  updatedAt      DateTime        @updatedAt
+  createdAt      DateTime                @default(now())
+  updatedAt      DateTime                @updatedAt
 
   @@index([organizationId])
   @@index([serviceId])
@@ -519,23 +534,23 @@ model ChecklistItemTemplate {
 }
 
 model BookingTask {
-  id             String         @id @default(cuid())
+  id             String                 @id @default(cuid())
   organizationId String
-  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization           @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   bookingId      String
-  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  booking        ServiceBooking         @relation(fields: [bookingId], references: [id], onDelete: Cascade)
   title          String
   description    String?
-  status         TaskStatus     @default(TODO)
-  priority       TaskPriority   @default(MEDIUM)
-  stage          ChecklistStage @default(PRE_SERVICE)
+  status         TaskStatus             @default(TODO)
+  priority       TaskPriority           @default(MEDIUM)
+  stage          ChecklistStage         @default(PRE_SERVICE)
   assignedToId   String?
-  assignedTo     Member?        @relation("BookingTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  assignedTo     Member?                @relation("BookingTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
   dueDate        DateTime?
   completedAt    DateTime?
   checklistItems BookingChecklistItem[]
-  createdAt      DateTime       @default(now())
-  updatedAt      DateTime       @updatedAt
+  createdAt      DateTime               @default(now())
+  updatedAt      DateTime               @updatedAt
 
   @@index([organizationId])
   @@index([bookingId])
@@ -544,22 +559,22 @@ model BookingTask {
 }
 
 model BookingChecklistItem {
-  id          String         @id @default(cuid())
-  bookingId   String
-  booking     ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
-  taskId      String?
-  task        BookingTask?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
-  title       String
-  description String?
-  stage       ChecklistStage @default(PRE_SERVICE)
-  isRequired  Boolean        @default(true)
-  isCompleted Boolean        @default(false)
+  id            String         @id @default(cuid())
+  bookingId     String
+  booking       ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  taskId        String?
+  task          BookingTask?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  stage         ChecklistStage @default(PRE_SERVICE)
+  isRequired    Boolean        @default(true)
+  isCompleted   Boolean        @default(false)
   completedById String?
-  completedBy   Member?      @relation("BookingChecklistCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
-  completedAt DateTime?
-  order       Int            @default(0)
-  createdAt   DateTime       @default(now())
-  updatedAt   DateTime       @updatedAt
+  completedBy   Member?        @relation("BookingChecklistCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  completedAt   DateTime?
+  order         Int            @default(0)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([bookingId])
   @@index([taskId])

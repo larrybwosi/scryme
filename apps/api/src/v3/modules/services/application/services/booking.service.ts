@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional } from "@nestjs/common";
+import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional, Inject, forwardRef  } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateBookingDto, CompleteBookingDto } from "../dto/service.dto";
 import { BookingAssignmentStatus, BookingEventSource, BookingStatus, MovementType, PricingModel, TransactionType, TransactionChannel, PaymentStatus, DepositType, TransactionStatus } from "@repo/db";
@@ -9,6 +9,8 @@ import { CalComService } from "./calcom.service";
 import { Prisma } from "@repo/db";
 import { rrulestr } from "rrule";
 import { SchedulingQueueService } from "../../infrastructure/jobs/scheduling-queue.service";
+import { BookingConflictService } from "./booking-conflict.service";
+import { BookingTaskIntegrationService } from "./booking-task-integration.service";
 
 @Injectable()
 export class BookingService {
@@ -18,6 +20,8 @@ export class BookingService {
     private readonly staffSchedulingService: StaffSchedulingService,
     private readonly calComService: CalComService,
     @Optional() private readonly schedulingQueue?: SchedulingQueueService,
+    @Optional() private readonly conflictService?: BookingConflictService,
+    @Optional() @Inject(forwardRef(() => BookingTaskIntegrationService)) private readonly taskIntegrationService?: BookingTaskIntegrationService,
   ) {}
 
   /**
@@ -418,6 +422,18 @@ export class BookingService {
     }
 
     await this.schedulingQueue?.scheduleBooking(orgId, booking.id);
+
+    // Auto-create linked Task and StaffTask if requested or by default
+    if (dto.autoCreateTasks !== false && this.taskIntegrationService) {
+      try {
+        await this.taskIntegrationService.generateTasksForBooking(orgId, booking.id, {
+          includeChecklist: true,
+        });
+      } catch (err) {
+        console.error("Failed to auto-create booking tasks:", err);
+      }
+    }
+
     return booking;
   }
 
@@ -813,6 +829,10 @@ export class BookingService {
         metadata: reason ? { reason } : undefined,
       },
     });
+    if (this.taskIntegrationService) {
+      await this.taskIntegrationService.onBookingStatusChanged(orgId, id, status).catch(() => {});
+    }
+
     return this.getBookingById(orgId, id);
   }
 

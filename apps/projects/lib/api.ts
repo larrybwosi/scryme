@@ -1,3 +1,7 @@
+import axios from "axios";
+import { env } from "@repo/env";
+import { authClient } from "./auth-client";
+import { getResolvedApiUrl } from "./urls";
 
 export interface MemberPerformance {
   member: {
@@ -82,10 +86,6 @@ export interface ShiftTradeItem {
   shift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
   offeredShift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
 }
-import axios from "axios";
-import { env } from "@repo/env";
-import { authClient } from "./auth-client";
-import { getResolvedApiUrl } from "./urls";
 
 const API_BASE_URL = getResolvedApiUrl(env.NEXT_PUBLIC_API_URL, env.NODE_ENV);
 
@@ -146,6 +146,16 @@ export interface Task {
   actualHours?: number;
   startDate?: string;
   dueDate?: string;
+  bookingId?: string | null;
+  booking?: {
+    id: string;
+    serviceName: string;
+    status: string;
+    scheduledStartTime: string;
+    scheduledEndTime?: string;
+    customer?: { id: string; name: string; phone?: string; email?: string };
+    locationId?: string;
+  };
   batches?: {
     id: string;
     batchNumber: string;

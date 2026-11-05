@@ -15,6 +15,8 @@ import { OtpService } from "./application/services/otp.service";
 import { InventoryMovementService } from "../inventory/application/services/inventory-movement.service";
 import { SchedulingNotificationService } from "./application/services/scheduling-notification.service";
 import { SchedulingProcessor } from "./infrastructure/jobs/scheduling.processor";
+import { BookingConflictService } from "./application/services/booking-conflict.service";
+import { BookingTaskIntegrationService } from "./application/services/booking-task-integration.service";
 import { SchedulingQueueService, SCHEDULING_QUEUE } from "./infrastructure/jobs/scheduling-queue.service";
 import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-reconciler.service";
 
@@ -24,9 +26,6 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
   providers: [
     ServiceManagementService,
     BookingService,
-    BookingLifecycleService,
-    BookingConflictDetectionService,
-    BookingTaskGeneratorService,
     StaffSchedulingService,
     CalComService,
     ServiceAnalyticsService,
@@ -36,7 +35,11 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
     SchedulingQueueService,
     SchedulingProcessor,
     SchedulingReconcilerService,
+    BookingConflictService,
+    BookingTaskIntegrationService,
+    BookingConflictService,
+    BookingTaskIntegrationService,
   ],
-  exports: [ServiceManagementService, BookingService, BookingLifecycleService, BookingConflictDetectionService, BookingTaskGeneratorService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService],
+  exports: [ServiceManagementService, BookingService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService, BookingLifecycleService, BookingConflictDetectionService, BookingTaskGeneratorService, ],
 })
 export class ServicesModule {}

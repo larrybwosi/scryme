@@ -147,6 +147,8 @@ model Task {
   labels       TaskLabelOnTask[]
   batches      Batch[]           @relation("BatchTask")
   timeEntries  TaskTimeEntry[]
+  bookingId    String?
+  booking      ServiceBooking?   @relation(fields: [bookingId], references: [id], onDelete: SetNull)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -158,6 +160,7 @@ model Task {
   @@index([parentTaskId])
   @@index([milestoneId])
   @@index([sprintId])
+  @@index([bookingId])
   @@map("task")
 }
 
