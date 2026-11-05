@@ -1,3 +1,5 @@
+import Link from "next/link";
+import { ArrowRight } from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
 import {
   Card,
@@ -37,7 +39,7 @@ export function MembersTable({ members }: { members: MemberRow[] }) {
           Members
         </CardTitle>
         <CardDescription>
-          Everyone with access to this organization.
+          Everyone with access to this organization ({members.length} total).
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -50,13 +52,14 @@ export function MembersTable({ members }: { members: MemberRow[] }) {
                 <TableHead>Role</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Joined</TableHead>
+                <TableHead className="w-10" />
               </TableRow>
             </TableHeader>
             <TableBody>
               {members.length === 0 ? (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="py-8 text-center text-sm text-muted-foreground"
                   >
                     No members yet.
@@ -64,12 +67,22 @@ export function MembersTable({ members }: { members: MemberRow[] }) {
                 </TableRow>
               ) : (
                 members.map((member) => (
-                  <TableRow key={member.id}>
+                  <TableRow key={member.id} className="group">
                     <TableCell className="font-medium text-foreground">
-                      {member.user.name || "—"}
+                      <Link
+                        href={`/users/${member.user.id}`}
+                        className="hover:underline"
+                      >
+                        {member.user.name || "—"}
+                      </Link>
                     </TableCell>
                     <TableCell className="text-muted-foreground">
-                      {member.user.email}
+                      <Link
+                        href={`/users/${member.user.id}`}
+                        className="hover:underline"
+                      >
+                        {member.user.email}
+                      </Link>
                     </TableCell>
                     <TableCell>
                       <Badge
@@ -100,6 +113,14 @@ export function MembersTable({ members }: { members: MemberRow[] }) {
                     </TableCell>
                     <TableCell className="text-muted-foreground">
                       {new Date(member.createdAt).toLocaleDateString()}
+                    </TableCell>
+                    <TableCell>
+                      <Link
+                        href={`/users/${member.user.id}`}
+                        aria-label={`View ${member.user.name || member.user.email}`}
+                      >
+                        <ArrowRight className="size-4 text-muted-foreground transition-colors group-hover:text-foreground" />
+                      </Link>
                     </TableCell>
                   </TableRow>
                 ))

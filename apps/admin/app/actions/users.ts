@@ -1,31 +1,160 @@
 "use server";
 
-import { db, MembershipStatus } from "@repo/db";
+import { db, MembershipStatus, UserRole } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "./auth";
 
-export async function listUsers() {
+export interface ListUsersParams {
+  page?: number;
+  pageSize?: number;
+  search?: string;
+}
+
+export interface PaginatedUsersResult {
+  users: Array<{
+    id: string;
+    name: string | null;
+    email: string;
+    role: string | null;
+    isActive: boolean;
+    banned: boolean | null;
+    banReason: string | null;
+    banExpires: Date | null;
+    acquisitionSource: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+    _count: {
+      members: number;
+    };
+  }>;
+  pagination: {
+    page: number;
+    pageSize: number;
+    totalCount: number;
+    totalPages: number;
+  };
+}
+
+export async function listUsers(params?: ListUsersParams): Promise<PaginatedUsersResult> {
   await requireSuperAdmin();
 
-  return db.user.findMany({
-    orderBy: { createdAt: "desc" },
-    select: {
-      id: true,
-      name: true,
-      email: true,
-      role: true,
-      isActive: true,
-      banned: true,
-      banReason: true,
-      banExpires: true,
-      acquisitionSource: true,
-      createdAt: true,
-      updatedAt: true,
+  const page = Math.max(1, params?.page || 1);
+  const pageSize = Math.max(1, params?.pageSize || 50);
+  const skip = (page - 1) * pageSize;
+  const search = params?.search?.trim();
+
+  // If search matches any valid UserRole enum value, match role as well
+  const matchedRole = search && Object.values(UserRole).includes(search.toUpperCase() as UserRole)
+    ? (search.toUpperCase() as UserRole)
+    : undefined;
+
+  const where = search
+    ? {
+        OR: [
+          { name: { contains: search, mode: "insensitive" as const } },
+          { email: { contains: search, mode: "insensitive" as const } },
+          { acquisitionSource: { contains: search, mode: "insensitive" as const } },
+          ...(matchedRole ? [{ role: matchedRole }] : []),
+        ],
+      }
+    : undefined;
+
+  const [totalCount, rawUsers] = await Promise.all([
+    db.user.count({ where }),
+    db.user.findMany({
+      where,
+      skip,
+      take: pageSize,
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        role: true,
+        isActive: true,
+        banned: true,
+        banReason: true,
+        banExpires: true,
+        acquisitionSource: true,
+        createdAt: true,
+        updatedAt: true,
+        _count: {
+          select: { members: true },
+        },
+      },
+    }),
+  ]);
+
+  const users = rawUsers.map((u) => ({
+    ...u,
+    role: u.role ? String(u.role) : null,
+  }));
+
+  return {
+    users,
+    pagination: {
+      page,
+      pageSize,
+      totalCount,
+      totalPages: Math.ceil(totalCount / pageSize) || 1,
+    },
+  };
+}
+
+export async function getUserDetails(id: string) {
+  await requireSuperAdmin();
+
+  const user = await db.user.findUnique({
+    where: { id },
+    include: {
+      members: {
+        include: {
+          organization: {
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              isSuspended: true,
+              createdAt: true,
+            },
+          },
+        },
+        orderBy: { createdAt: "desc" },
+      },
+      accounts: {
+        select: {
+          id: true,
+          providerId: true,
+          createdAt: true,
+        },
+      },
+      sessions: {
+        take: 10,
+        orderBy: { createdAt: "desc" },
+        select: {
+          id: true,
+          ipAddress: true,
+          userAgent: true,
+          createdAt: true,
+          expiresAt: true,
+        },
+      },
       _count: {
-        select: { members: true },
+        select: {
+          members: true,
+          sessions: true,
+          apikeys: true,
+          passkeys: true,
+        },
       },
     },
   });
+
+  if (!user) {
+    throw new Error(`User with ID ${id} not found`);
+  }
+
+  return user;
 }
 
 export async function banUser(
@@ -66,6 +195,7 @@ export async function banUser(
   });
 
   revalidatePath("/users");
+  revalidatePath(`/users/${id}`);
   return updated;
 }
 
@@ -103,12 +233,14 @@ export async function syncUserScrymeChatAccess(input: {
     }
 
     revalidatePath("/users");
+    revalidatePath(`/users/${input.userId}`);
     return {
       success: true,
       message: `Scryme Chat workspace access ${input.action === "grant" ? "granted" : "revoked"} for ${user.email}.`,
     };
   } catch (error: any) {
     revalidatePath("/users");
+    revalidatePath(`/users/${input.userId}`);
     return {
       success: true,
       message: `Updated Scryme Chat access settings for ${user.email}. (${error.message || "Scryme Chat API fallback"})`,
@@ -148,6 +280,7 @@ export async function unbanUser(id: string) {
   });
 
   revalidatePath("/users");
+  revalidatePath(`/users/${id}`);
   return updated;
 }
 
@@ -192,6 +325,7 @@ export async function resetUserPassword(
       data: { password: hashedPassword },
     });
     revalidatePath("/users");
+    revalidatePath(`/users/${userId}`);
     return {
       success: true,
       message: `Password updated successfully for ${user.email}`,

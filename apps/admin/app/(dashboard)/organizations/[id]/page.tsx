@@ -1,7 +1,20 @@
 import { notFound } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
+import {
+  ArrowLeft,
+  Activity,
+  Users,
+  CreditCard,
+  Boxes,
+  HardDrive,
+} from "lucide-react";
 import { Badge } from "@repo/ui/components/ui/badge";
+import {
+  Tabs,
+  TabsContent,
+  TabsList,
+  TabsTrigger,
+} from "@repo/ui/components/ui/tabs";
 import {
   getOrganizationDetails,
   getOrganizationMembers,
@@ -58,6 +71,7 @@ export default async function OrganizationDetailPage({
 
   return (
     <div className="flex flex-col gap-8">
+      {/* Top Breadcrumb & Tenant Header */}
       <div className="flex flex-col gap-4">
         <Link
           href="/organizations"
@@ -93,31 +107,72 @@ export default async function OrganizationDetailPage({
         </div>
       </div>
 
-      <OrganizationActivityPanel
-        usage={usage}
-        activityLogs={activityLogs}
-        acquisitionSource={org.acquisitionSource}
-      />
+      {/* Tabs Layout for Optimal Developer & Admin Experience */}
+      <Tabs defaultValue="overview" className="w-full space-y-6">
+        <TabsList className="bg-muted/60 p-1 flex-wrap h-auto gap-1">
+          <TabsTrigger value="overview" className="gap-2 text-xs sm:text-sm">
+            <Activity className="size-4" aria-hidden="true" />
+            Overview & Activity
+          </TabsTrigger>
+          <TabsTrigger value="members" className="gap-2 text-xs sm:text-sm">
+            <Users className="size-4" aria-hidden="true" />
+            Members ({members.length})
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="gap-2 text-xs sm:text-sm">
+            <CreditCard className="size-4" aria-hidden="true" />
+            Billing & Quotas
+          </TabsTrigger>
+          <TabsTrigger value="modules" className="gap-2 text-xs sm:text-sm">
+            <Boxes className="size-4" aria-hidden="true" />
+            Modules
+          </TabsTrigger>
+          <TabsTrigger value="storage" className="gap-2 text-xs sm:text-sm">
+            <HardDrive className="size-4" aria-hidden="true" />
+            Storage
+          </TabsTrigger>
+        </TabsList>
 
-      <OrgModuleEditor organizationId={org.id} initialModules={modules} />
+        {/* Tab: Overview & Activity */}
+        <TabsContent value="overview" className="mt-0 focus-visible:outline-none">
+          <OrganizationActivityPanel
+            usage={usage}
+            activityLogs={activityLogs}
+            acquisitionSource={org.acquisitionSource}
+          />
+        </TabsContent>
 
-      <StorageControl organizationId={org.id} storage={storage} />
+        {/* Tab: Members */}
+        <TabsContent value="members" className="mt-0 focus-visible:outline-none">
+          <MembersTable members={members} />
+        </TabsContent>
 
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        <SubscriptionEditor
-          organizationId={org.id}
-          subscription={subscription}
-          tiers={tiers}
-        />
-        <QuotaEditor organizationId={org.id} quota={quota} />
-      </div>
+        {/* Tab: Billing & Quotas */}
+        <TabsContent value="billing" className="mt-0 space-y-6 focus-visible:outline-none">
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+            <SubscriptionEditor
+              organizationId={org.id}
+              subscription={subscription}
+              tiers={tiers}
+            />
+            <QuotaEditor organizationId={org.id} quota={quota} />
+          </div>
 
-      <OrganizationPaymentCredentialsCard
-        organizationId={org.id}
-        credentials={credentials}
-      />
+          <OrganizationPaymentCredentialsCard
+            organizationId={org.id}
+            credentials={credentials}
+          />
+        </TabsContent>
 
-      <MembersTable members={members} />
+        {/* Tab: Modules */}
+        <TabsContent value="modules" className="mt-0 focus-visible:outline-none">
+          <OrgModuleEditor organizationId={org.id} initialModules={modules} />
+        </TabsContent>
+
+        {/* Tab: Storage */}
+        <TabsContent value="storage" className="mt-0 focus-visible:outline-none">
+          <StorageControl organizationId={org.id} storage={storage} />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
