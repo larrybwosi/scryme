@@ -1,5 +1,11 @@
 # create-scryme-app
 
+## 10.2.39
+
+### Patch Changes
+
+- bdc2301: Prepare release v10.2.8
+
 ## 10.2.38
 
 ### Patch Changes
