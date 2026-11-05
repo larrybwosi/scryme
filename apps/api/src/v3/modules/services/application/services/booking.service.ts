@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional } from "@nestjs/common";
+import { Injectable, BadRequestException, ConflictException, NotFoundException, Optional, Inject, forwardRef  } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
 import { CreateBookingDto, CompleteBookingDto } from "../dto/service.dto";
 import { BookingAssignmentStatus, BookingEventSource, BookingStatus, MovementType, PricingModel, TransactionType, TransactionChannel, PaymentStatus, DepositType, TransactionStatus } from "@repo/db";
@@ -11,7 +11,6 @@ import { rrulestr } from "rrule";
 import { SchedulingQueueService } from "../../infrastructure/jobs/scheduling-queue.service";
 import { BookingConflictService } from "./booking-conflict.service";
 import { BookingTaskIntegrationService } from "./booking-task-integration.service";
-import { Inject, forwardRef } from "@nestjs/common";
 
 @Injectable()
 export class BookingService {
@@ -792,8 +791,11 @@ export class BookingService {
     }
 
     const transitions: Record<BookingStatus, BookingStatus[]> = {
-      REQUESTED: [BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
-      SCHEDULED: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED, BookingStatus.NOSHOW],
+      REQUESTED: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
+      PENDING: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+      CONFIRMED: [BookingStatus.ASSIGNED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
+      ASSIGNED: [BookingStatus.IN_PROGRESS, BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
+      SCHEDULED: [BookingStatus.ASSIGNED, BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED, BookingStatus.NOSHOW],
       IN_PROGRESS: [BookingStatus.COMPLETED, BookingStatus.CANCELLED],
       COMPLETED: [],
       CANCELLED: [],

@@ -1,3 +1,7 @@
+import axios from "axios";
+import { env } from "@repo/env";
+import { authClient } from "./auth-client";
+import { getResolvedApiUrl } from "./urls";
 
 export interface MemberPerformance {
   member: {
@@ -82,12 +86,8 @@ export interface ShiftTradeItem {
   shift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
   offeredShift?: { id: string; dayOfWeek: number; startTime: string; endTime: string };
 }
-import axios from "axios";
-import { env } from "@repo/env";
-import { authClient } from "./auth-client";
 
-const API_BASE_URL =
-  env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
+const API_BASE_URL = getResolvedApiUrl(env.NEXT_PUBLIC_API_URL, env.NODE_ENV);
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

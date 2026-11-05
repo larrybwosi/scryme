@@ -10,6 +10,12 @@ EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;
 
+-- AlterTable: service
+ALTER TABLE "service" ADD COLUMN IF NOT EXISTS "taskChecklistTemplate" JSONB;
+
+-- AlterTable: staff_task
+ALTER TABLE "staff_task" ADD COLUMN IF NOT EXISTS "bookingId" TEXT;
+
 -- CreateTable
 CREATE TABLE IF NOT EXISTS "checklist_template" (
     "id" TEXT NOT NULL,
@@ -93,6 +99,9 @@ CREATE INDEX IF NOT EXISTS "booking_task_assignedToId_idx" ON "booking_task"("as
 CREATE INDEX IF NOT EXISTS "booking_checklist_item_bookingId_idx" ON "booking_checklist_item"("bookingId");
 CREATE INDEX IF NOT EXISTS "booking_checklist_item_taskId_idx" ON "booking_checklist_item"("taskId");
 
+-- CreateIndex
+CREATE INDEX IF NOT EXISTS "staff_task_bookingId_idx" ON "staff_task"("bookingId");
+
 -- AddForeignKey
 DO $$ BEGIN
     ALTER TABLE "checklist_template" ADD CONSTRAINT "checklist_template_organizationId_fkey" FOREIGN KEY ("organizationId") REFERENCES "organization"("id") ON DELETE CASCADE ON UPDATE CASCADE;
@@ -144,6 +153,12 @@ END $$;
 
 DO $$ BEGIN
     ALTER TABLE "booking_checklist_item" ADD CONSTRAINT "booking_checklist_item_completedById_fkey" FOREIGN KEY ("completedById") REFERENCES "member"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+EXCEPTION
+    WHEN duplicate_object THEN null;
+END $$;
+
+DO $$ BEGIN
+    ALTER TABLE "staff_task" ADD CONSTRAINT "staff_task_bookingId_fkey" FOREIGN KEY ("bookingId") REFERENCES "service_booking"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 EXCEPTION
     WHEN duplicate_object THEN null;
 END $$;

@@ -1,3 +1,7 @@
+import { BookingLifecycleController } from "./interfaces/http/booking-lifecycle.controller";
+import { BookingLifecycleService } from "./application/services/booking-lifecycle.service";
+import { BookingConflictDetectionService } from "./application/services/booking-conflict-detection.service";
+import { BookingTaskGeneratorService } from "./application/services/booking-task-generator.service";
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { ServicesController } from "./interfaces/http/services.controller";
@@ -18,7 +22,7 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
 
 @Module({
   imports: [BullModule.registerQueue({ name: SCHEDULING_QUEUE })],
-  controllers: [ServicesController, PublicServicesController],
+  controllers: [ServicesController, PublicServicesController, BookingLifecycleController],
   providers: [
     ServiceManagementService,
     BookingService,
@@ -33,7 +37,9 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
     SchedulingReconcilerService,
     BookingConflictService,
     BookingTaskIntegrationService,
+    BookingConflictService,
+    BookingTaskIntegrationService,
   ],
-  exports: [ServiceManagementService, BookingService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService],
+  exports: [ServiceManagementService, BookingService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService, BookingLifecycleService, BookingConflictDetectionService, BookingTaskGeneratorService, ],
 })
 export class ServicesModule {}
