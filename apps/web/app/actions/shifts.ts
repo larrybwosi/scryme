@@ -189,13 +189,6 @@ export async function createStaffShift(data: {
   if (!permission.success) return permission;
 
   try {
-    /**
-     * ⚡ Bolt Performance Optimization:
-     * Parallelize relational entity validation lookups (member, location, and department).
-     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
-     * projections reduces validation latency from up to 3 sequential DB roundtrips to 1 concurrent roundtrip
-     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
-     */
     const [member, loc, dept] = await Promise.all([
       db.member.findFirst({
         where: { id: data.memberId, organizationId: session!.organizationId },
@@ -291,13 +284,6 @@ export async function updateStaffShift(
     const mergedEndTime = data.endTime !== undefined ? data.endTime : shift.endTime;
     const mergedIsActive = data.isActive !== undefined ? data.isActive : shift.isActive;
 
-    /**
-     * ⚡ Bolt Performance Optimization:
-     * Parallelize relational entity validation lookups (location and department).
-     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
-     * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
-     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
-     */
     const [loc, dept] = await Promise.all([
       data.locationId
         ? db.inventoryLocation.findFirst({

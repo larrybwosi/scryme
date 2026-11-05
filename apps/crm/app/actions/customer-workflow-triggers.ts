@@ -66,9 +66,6 @@ export async function dispatchCustomerWorkflowTrigger(
     });
 
     if (matchingWorkflows.length > 0) {
-      // ⚡ Bolt Performance Optimization:
-      // 1. Hoist db.customer.findUnique out of the iteration loop to query customer record ONCE (O(1) vs O(N) DB calls).
-      // 2. Parallelize campaignWorkflowInstance.create calls using Promise.all to collapse execution latency from O(N) sequential roundtrips to 1 parallel roundtrip.
       const customer = await db.customer.findUnique({
         where: { id: payload.customerId },
       });

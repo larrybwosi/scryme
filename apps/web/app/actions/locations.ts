@@ -260,13 +260,6 @@ export async function createLocation(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * Parallelize relational entity validation lookups (parent location and manager).
-   * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
-   * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
-   * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
-   */
   const [parent, manager] = await Promise.all([
     data.parentLocationId
       ? db.inventoryLocation.findFirst({
@@ -342,14 +335,7 @@ export async function updateLocation(
   if (data.parentLocationId && data.parentLocationId === id) {
     throw new Error("Location cannot be its own parent");
   }
-
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * Parallelize relational entity validation lookups (parent location and manager).
-   * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
-   * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
-   * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
-   */
+  
   const [parent, manager] = await Promise.all([
     data.parentLocationId
       ? db.inventoryLocation.findFirst({

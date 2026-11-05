@@ -39,12 +39,6 @@ export async function getSuppliers(options?: {
     ];
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * auth.memberId is already validated and extracted from session context by getServerAuth().
-   * Using memberId directly in relation queries eliminates a redundant, sequential db.member.findUnique
-   * query before fetching suppliers, cutting down server latency by 1 database roundtrip.
-   */
   const suppliers = await db.supplier.findMany({
     where,
     include: {
@@ -260,12 +254,6 @@ export async function addProductToSupplier(data: {
     throw new Error("Unauthorized");
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization & Security (BOLA/IDOR):
-   * Parallelize relational validation lookups for supplier and product using Promise.all.
-   * This reduces validation database latency from 2 sequential blocking roundtrips down to 1
-   * concurrent roundtrip while strictly enforcing multi-tenant organization boundary checks.
-   */
   const [supplier, product] = await Promise.all([
     db.supplier.findFirst({
       where: {
@@ -321,12 +309,6 @@ export async function addVariantsToSupplier(
     throw new Error("Unauthorized");
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization & Security (BOLA/IDOR):
-   * Parallelize relational validation lookups for supplier and product using Promise.all.
-   * This reduces validation database latency from 2 sequential blocking roundtrips down to 1
-   * concurrent roundtrip while strictly enforcing multi-tenant organization boundary checks.
-   */
   const [supplier, product] = await Promise.all([
     db.supplier.findFirst({
       where: {
@@ -402,8 +384,6 @@ export async function removeProductFromSupplier(
     throw new Error("Supplier not found or unauthorized");
   }
 
-  // Security Mitigation (BOLA/IDOR): ProductSupplier lacks a composite unique index on [id, organizationId].
-  // Using deleteMany scoped to { id, supplierId } ensures database-level multi-tenant isolation.
   await db.productSupplier.deleteMany({
     where: {
       id: productSupplierId,
@@ -427,11 +407,6 @@ export async function getSupplierById(id: string): Promise<Supplier | null> {
     throw new Error("Member not found");
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * auth.memberId is already validated and extracted from session context by getServerAuth().
-   * Using memberId directly in favorites lookup eliminates a redundant sequential db.member.findUnique call.
-   */
   const supplier = await db.supplier.findFirst({
     where: {
       id,
@@ -533,10 +508,6 @@ export async function toggleFavoriteSupplier(supplierId: string): Promise<any> {
     throw new Error("Member not found");
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * Using memberId directly from auth context eliminates a redundant db.member.findUnique database call.
-   */
   const existing = await db.favoriteSupplier.findUnique({
     where: {
       memberId_supplierId: {
@@ -583,10 +554,6 @@ export async function addSupplierReview(
     throw new Error("Member not found");
   }
 
-  /**
-   * ⚡ Bolt Performance Optimization:
-   * Using memberId directly from auth context eliminates a redundant db.member.findUnique database call.
-   */
   await db.supplierReview.create({
     data: {
       organizationId: orgId,
