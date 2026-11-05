@@ -2,6 +2,20 @@
 
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  Loader2,
+  X,
+  LayoutDashboard,
+  CheckCircle2,
+  UtensilsCrossed,
+  Truck,
+  Headphones,
+  UserCheck,
+  Flag,
+} from "lucide-react";
 import {
   useUnifiedCalendarEvents,
   useUpdateUnifiedEvent,
@@ -17,13 +31,19 @@ const MONTH_NAMES = [
 
 const WEEKDAY_NAMES = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
 
-const CATEGORIES = [
-  { id: "all", label: "All Activities", icon: "dashboard" },
-  { id: "tasks", label: "User Tasks", icon: "check_circle" },
-  { id: "production", label: "Production", icon: "bakery_dining" },
-  { id: "deliveries", label: "Deliveries", icon: "local_shipping" },
-  { id: "crm", label: "Customer Follow-ups", icon: "support_agent" },
-  { id: "shifts", label: "Staff Shifts", icon: "badge" },
+interface CategoryConfig {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const CATEGORIES: CategoryConfig[] = [
+  { id: "all", label: "All Activities", icon: LayoutDashboard },
+  { id: "tasks", label: "User Tasks", icon: CheckCircle2 },
+  { id: "production", label: "Production", icon: UtensilsCrossed },
+  { id: "deliveries", label: "Deliveries", icon: Truck },
+  { id: "crm", label: "Customer Follow-ups", icon: Headphones },
+  { id: "shifts", label: "Staff Shifts", icon: UserCheck },
 ];
 
 export default function CalendarPage() {
@@ -92,14 +112,14 @@ export default function CalendarPage() {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = (category: string): LucideIcon => {
     switch (category) {
-      case "production": return "bakery_dining";
-      case "delivery": return "local_shipping";
-      case "crm": return "support_agent";
-      case "shift": return "badge";
-      case "milestone": return "flag";
-      case "task": default: return "check_circle";
+      case "production": return UtensilsCrossed;
+      case "delivery": return Truck;
+      case "crm": return Headphones;
+      case "shift": return UserCheck;
+      case "milestone": return Flag;
+      case "task": default: return CheckCircle2;
     }
   };
 
@@ -237,7 +257,7 @@ export default function CalendarPage() {
                 className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Previous"
               >
-                <span className="material-symbols-outlined text-[18px]">chevron_left</span>
+                <ChevronLeft className="h-4 w-4" />
               </button>
               <button
                 type="button"
@@ -252,7 +272,7 @@ export default function CalendarPage() {
                 className="p-1 hover:bg-surface-container-highest text-outline hover:text-on-surface rounded transition-colors"
                 title="Next"
               >
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                <ChevronRight className="h-4 w-4" />
               </button>
             </div>
           </div>
@@ -278,7 +298,7 @@ export default function CalendarPage() {
                     : "bg-surface-container-high text-outline hover:text-on-surface border-outline-variant/30"
                 }`}
               >
-                <span className="material-symbols-outlined text-[16px]">{cat.icon}</span>
+                <cat.icon className="h-4 w-4" />
                 <span>{cat.label}</span>
                 {count > 0 && (
                   <span
@@ -303,7 +323,7 @@ export default function CalendarPage() {
           </span>
           {isLoading && (
             <span className="text-outline text-body-sm flex items-center gap-1.5">
-              <span className="material-symbols-outlined animate-spin text-[16px]">progress_activity</span>
+              <Loader2 className="animate-spin h-4 w-4" />
               Syncing operational schedules...
             </span>
           )}
@@ -370,9 +390,10 @@ export default function CalendarPage() {
                           )}`}
                           title={`${ev.title} (${ev.status})`}
                         >
-                          <span className="material-symbols-outlined text-[13px] shrink-0">
-                            {getCategoryIcon(ev.category)}
-                          </span>
+                          {(() => {
+                            const IconComp = getCategoryIcon(ev.category);
+                            return <IconComp className="h-3 w-3 shrink-0" />;
+                          })()}
                           <span className="truncate">{ev.title}</span>
                         </button>
                       ))}
@@ -419,9 +440,10 @@ export default function CalendarPage() {
                           ev
                         )}`}
                       >
-                        <span className="material-symbols-outlined text-[20px]">
-                          {getCategoryIcon(ev.category)}
-                        </span>
+                        {(() => {
+                          const IconComp = getCategoryIcon(ev.category);
+                          return <IconComp className="h-5 w-5" />;
+                        })()}
                       </div>
 
                       <div className="flex flex-col">
@@ -477,9 +499,10 @@ export default function CalendarPage() {
                       selectedEvent
                     )}`}
                   >
-                    <span className="material-symbols-outlined text-[18px]">
-                      {getCategoryIcon(selectedEvent.category)}
-                    </span>
+                    {(() => {
+                      const IconComp = getCategoryIcon(selectedEvent.category);
+                      return <IconComp className="h-4 w-4" />;
+                    })()}
                   </div>
                   <div>
                     <span className="text-[11px] font-label-code uppercase text-outline">
@@ -496,7 +519,7 @@ export default function CalendarPage() {
                   onClick={() => setSelectedEvent(null)}
                   className="p-1 hover:bg-surface-container-highest rounded text-outline hover:text-on-surface"
                 >
-                  <span className="material-symbols-outlined text-[18px]">close</span>
+                  <X className="h-4 w-4" />
                 </button>
               </div>
 

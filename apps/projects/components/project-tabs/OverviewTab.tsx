@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { Check, Link2, Settings, PlusCircle, X } from "lucide-react";
 import { useProject, useTasks, useMilestones, useSprints, useProjectDocuments, useUpdateProject } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Project } from "@/lib/api";
@@ -87,9 +88,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
               onClick={handleCopy}
               className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30"
             >
-              <span className="material-symbols-outlined text-[15px]">
-                {copied ? "check" : "link"}
-              </span>
+{copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
               <span>{copied ? "Copied" : "Copy URL"}</span>
             </button>
 
@@ -99,7 +98,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
                 onClick={openEditModal}
                 className="h-8 px-2.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm flex items-center gap-1.5 transition-colors border border-outline-variant/30"
               >
-                <span className="material-symbols-outlined text-[15px]">settings</span>
+                <Settings className="h-3.5 w-3.5" />
                 <span>Settings</span>
               </button>
             )}
@@ -109,7 +108,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
                 href={`/tasks?projectId=${projectId}`}
                 className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container text-body-sm font-headline-sm flex items-center gap-1.5 shadow-sm transition-colors"
               >
-                <span className="material-symbols-outlined text-[15px]">add_circle</span>
+                <PlusCircle className="h-3.5 w-3.5" />
                 <span>New Issue</span>
               </Link>
             )}
@@ -161,7 +160,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
                 onClick={() => setIsEditModalOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <form onSubmit={handleSaveProject} className="flex flex-col gap-4 mt-4">

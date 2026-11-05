@@ -1,56 +1,39 @@
 "use client";
 
 import React, { useState } from "react";
+import { X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useMemberPerformance } from "@/lib/hooks/use-projects";
 
 interface MemberPerformanceDrawerProps {
-  isOpen: boolean;
+  isOpen?: boolean;
   memberId: string | null;
   onClose: () => void;
 }
 
 export function MemberPerformanceDrawer({
-  isOpen,
+  isOpen = true,
   memberId,
   onClose,
 }: MemberPerformanceDrawerProps) {
   const [dateFilter, setDateFilter] = useState<"7d" | "30d" | "90d">("30d");
-
-  const { fromDate, toDate } = React.useMemo(() => {
-    const now = new Date();
-    const days = dateFilter === "7d" ? 7 : dateFilter === "90d" ? 90 : 30;
-    const from = new Date(now.getTime() - days * 24 * 60 * 60 * 1000);
-    return {
-      fromDate: from.toISOString(),
-      toDate: now.toISOString(),
-    };
-  }, [dateFilter]);
-
-  const { data: performance, isLoading } = useMemberPerformance(
-    memberId || undefined,
-    fromDate,
-    toDate
-  );
+  const { data: performance, isLoading } = useMemberPerformance(memberId || "");
 
   if (!isOpen || !memberId) return null;
 
   const kpis = performance?.kpis;
 
   return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-xs transition-opacity animate-in fade-in duration-200">
-      <div
-        className="w-full max-w-xl h-full bg-surface-container-lowest border-l border-outline-variant/30 flex flex-col shadow-2xl overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end">
+      <div className="w-full max-w-xl bg-surface-container-lowest border-l border-outline-variant/30 h-full overflow-y-auto flex flex-col shadow-2xl">
         {/* Header */}
-        <div className="p-6 border-b border-outline-variant/30 flex items-center justify-between sticky top-0 bg-surface-container-lowest/90 backdrop-blur-md z-10">
+        <div className="p-6 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
           <div className="flex items-center gap-3">
-            <div className="w-11 h-11 rounded-full bg-primary-container flex items-center justify-center text-on-primary-container font-headline-sm text-body-lg font-semibold">
-              {performance?.member.name?.charAt(0) || "M"}
+            <div className="w-10 h-10 rounded-full bg-primary/20 text-primary border border-primary/30 flex items-center justify-center font-bold text-body-md">
+              {performance?.member.name?.charAt(0) || "U"}
             </div>
             <div>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                {performance?.member.name || "Member Profile"}
+              <h2 className="font-headline-md text-headline-md text-on-surface font-semibold tracking-tight">
+                {performance?.member.name || "Member Performance"}
               </h2>
               <div className="text-[12px] text-outline">
                 {performance?.member.role || "Member"} • {performance?.member.email}
@@ -63,7 +46,7 @@ export function MemberPerformanceDrawer({
             onClick={onClose}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">close</span>
+            <X className="h-5 w-5" />
           </button>
         </div>
 
@@ -175,13 +158,13 @@ export function MemberPerformanceDrawer({
             {(kpis?.overdueTaskCount || 0) > 0 ? (
               <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-between text-body-sm text-red-400">
                 <div className="flex items-center gap-2">
-                  <span className="material-symbols-outlined text-[18px]">error</span>
+                  <AlertCircle className="h-4 w-4" />
                   <span><strong>{kpis?.overdueTaskCount} Overdue Issue(s)</strong> currently pending resolution.</span>
                 </div>
               </div>
             ) : (
               <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-body-sm text-emerald-400">
-                <span className="material-symbols-outlined text-[18px]">verified</span>
+                <CheckCircle2 className="h-4 w-4" />
                 <span>Zero overdue tasks in active backlog. Excellent SLA adherence!</span>
               </div>
             )}

@@ -2,6 +2,16 @@
 
 import React, { use } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import type { LucideIcon } from "lucide-react";
+import {
+  LayoutDashboard,
+  CheckSquare,
+  RotateCw,
+  Flag,
+  FileText,
+  ShieldCheck,
+  BarChart2,
+} from "lucide-react";
 import { useProject } from "@/lib/hooks/use-projects";
 import { OverviewTab } from "@/components/project-tabs/OverviewTab";
 import { IssuesTab } from "@/components/project-tabs/IssuesTab";
@@ -11,14 +21,20 @@ import { DocsTab } from "@/components/project-tabs/DocsTab";
 import { TeamTab } from "@/components/project-tabs/TeamTab";
 import { AnalyticsTab } from "@/components/project-tabs/AnalyticsTab";
 
-const tabs = [
-  { id: "overview", label: "Overview", icon: "dashboard" },
-  { id: "issues", label: "Issues", icon: "check_box" },
-  { id: "cycles", label: "Cycles & Sprints", icon: "cycle" },
-  { id: "milestones", label: "Milestones", icon: "flag" },
-  { id: "docs", label: "Documents & RFCs", icon: "description" },
-  { id: "team", label: "Team & Access", icon: "shield_person" },
-  { id: "analytics", label: "Analytics & Telemetry", icon: "monitoring" },
+interface TabConfig {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const tabs: TabConfig[] = [
+  { id: "overview", label: "Overview", icon: LayoutDashboard },
+  { id: "issues", label: "Issues", icon: CheckSquare },
+  { id: "cycles", label: "Cycles & Sprints", icon: RotateCw },
+  { id: "milestones", label: "Milestones", icon: Flag },
+  { id: "docs", label: "Documents & RFCs", icon: FileText },
+  { id: "team", label: "Team & Access", icon: ShieldCheck },
+  { id: "analytics", label: "Analytics & Telemetry", icon: BarChart2 },
 ];
 
 function ProjectWorkspaceContent({
@@ -53,6 +69,7 @@ function ProjectWorkspaceContent({
         <nav className="flex items-center gap-space-xs font-body-sm text-body-sm">
           {tabs.map((tab) => {
             const isActive = activeTab === tab.id;
+            const TabIcon = tab.icon;
             return (
               <button
                 key={tab.id}
@@ -64,14 +81,11 @@ function ProjectWorkspaceContent({
                     : "text-outline hover:text-on-surface hover:bg-surface-container"
                 }`}
               >
-                <span
-                  className={`material-symbols-outlined text-[15px] ${
+                <TabIcon
+                  className={`h-4 w-4 shrink-0 transition-colors ${
                     isActive ? "text-primary" : ""
                   }`}
-                  style={isActive ? { fontVariationSettings: "'FILL' 1" } : undefined}
-                >
-                  {tab.icon}
-                </span>
+                />
                 <span>{tab.label}</span>
                 {isActive && <span className="w-1.5 h-1.5 rounded-full bg-primary ml-1"></span>}
               </button>
@@ -96,7 +110,6 @@ function ProjectWorkspaceContent({
     </div>
   );
 }
-
 
 export default function ProjectWorkspacePage({
   params,

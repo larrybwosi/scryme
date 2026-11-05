@@ -4,13 +4,31 @@ import Link from "next/link";
 import React, { useState, useMemo } from "react";
 import { useUnifiedCalendarEvents, useProjects } from "@/lib/hooks/use-projects";
 import { UnifiedCalendarEvent } from "@/lib/api";
+import type { LucideIcon } from "lucide-react";
+import {
+  Calendar,
+  Clock,
+  Loader2,
+  LayoutDashboard,
+  CheckCircle2,
+  UtensilsCrossed,
+  Truck,
+  Headphones,
+  Flag,
+} from "lucide-react";
 
-const CATEGORY_TABS = [
-  { id: "all", label: "All Items", icon: "dashboard" },
-  { id: "tasks", label: "Tasks", icon: "check_circle" },
-  { id: "production", label: "Production", icon: "bakery_dining" },
-  { id: "deliveries", label: "Deliveries", icon: "local_shipping" },
-  { id: "crm", label: "CRM Follow-ups", icon: "support_agent" },
+interface CategoryTabConfig {
+  id: string;
+  label: string;
+  icon: LucideIcon;
+}
+
+const CATEGORY_TABS: CategoryTabConfig[] = [
+  { id: "all", label: "All Items", icon: LayoutDashboard },
+  { id: "tasks", label: "Tasks", icon: CheckCircle2 },
+  { id: "production", label: "Production", icon: UtensilsCrossed },
+  { id: "deliveries", label: "Deliveries", icon: Truck },
+  { id: "crm", label: "CRM Follow-ups", icon: Headphones },
 ];
 
 export default function GanttPage() {
@@ -91,13 +109,13 @@ export default function GanttPage() {
     }
   };
 
-  const getCategoryIcon = (category: string) => {
+  const getCategoryIcon = (category: string): LucideIcon => {
     switch (category) {
-      case "production": return "bakery_dining";
-      case "delivery": return "local_shipping";
-      case "crm": return "support_agent";
-      case "milestone": return "flag";
-      case "task": default: return "check_circle";
+      case "production": return UtensilsCrossed;
+      case "delivery": return Truck;
+      case "crm": return Headphones;
+      case "milestone": return Flag;
+      case "task": default: return CheckCircle2;
     }
   };
 
@@ -150,14 +168,14 @@ export default function GanttPage() {
               href="/calendar"
               className="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30"
             >
-              <span className="material-symbols-outlined text-[15px]">calendar_month</span>
+              <Calendar className="h-4 w-4" />
               <span>Calendar</span>
             </Link>
             <Link
               href="/schedule"
               className="flex items-center gap-1 px-2.5 py-1 rounded bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30"
             >
-              <span className="material-symbols-outlined text-[15px]">schedule</span>
+              <Clock className="h-4 w-4" />
               <span>Schedule</span>
             </Link>
           </div>
@@ -178,7 +196,7 @@ export default function GanttPage() {
                     : "bg-surface-container-high text-outline hover:text-on-surface border-outline-variant/30"
                 }`}
               >
-                <span className="material-symbols-outlined text-[15px]">{tab.icon}</span>
+                <tab.icon className="h-4 w-4" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -187,7 +205,7 @@ export default function GanttPage() {
 
         {isLoading && (
           <div className="w-full py-16 text-center text-outline text-body-sm flex items-center justify-center gap-2">
-            <span className="material-symbols-outlined animate-spin text-[18px]">progress_activity</span>
+            <Loader2 className="animate-spin h-4 w-4" />
             Loading timeline activities...
           </div>
         )}
@@ -210,9 +228,10 @@ export default function GanttPage() {
                 {events.map((ev) => (
                   <div key={ev.id} className="p-3 h-14 flex items-center justify-between hover:bg-surface-container transition-colors">
                     <div className="flex items-center gap-2.5 min-w-0 pr-2">
-                      <span className="material-symbols-outlined text-[16px] text-outline shrink-0">
-                        {getCategoryIcon(ev.category)}
-                      </span>
+                      {(() => {
+                        const IconComp = getCategoryIcon(ev.category);
+                        return <IconComp className="h-4 w-4 text-outline shrink-0" />;
+                      })()}
                       <div className="min-w-0">
                         <span className="font-label-code text-[11px] text-primary">
                           {ev.code || ev.category.toUpperCase()}

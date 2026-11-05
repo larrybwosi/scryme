@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Plus, Check } from "lucide-react";
 import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 import { Task } from "@/lib/api";
 import Link from "next/link";
@@ -45,7 +46,7 @@ export function IssuesTab({ projectId }: { projectId: string }) {
           onClick={() => setIsNewOpen(true)}
           className="px-3 py-1 bg-primary-container text-on-primary-container rounded-lg font-headline-sm text-body-sm flex items-center gap-1"
         >
-          <span className="material-symbols-outlined text-[15px]">add</span>
+          <Plus className="h-4 w-4" />
           <span>Add Issue</span>
         </button>
       </div>
@@ -100,7 +101,7 @@ export function IssuesTab({ projectId }: { projectId: string }) {
                     task.status === "DONE" ? "bg-primary-container text-on-primary-container" : "border-outline-variant"
                   }`}
                 >
-                  {task.status === "DONE" && <span className="material-symbols-outlined text-[12px]">check</span>}
+                  {task.status === "DONE" && <Check className="h-3 w-3" />}
                 </button>
                 <Link href={`/tasks/${task.id}`} className="font-label-code text-primary text-[11px]">
                   {task.taskKey || task.id.slice(-6)}

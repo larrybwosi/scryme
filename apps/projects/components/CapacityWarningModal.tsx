@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { AlertTriangle } from "lucide-react";
 
 interface CapacityWarningModalProps {
   isOpen: boolean;
@@ -31,7 +32,7 @@ export function CapacityWarningModal({
       <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-amber-500/30 p-6 shadow-2xl">
         <div className="flex items-center gap-3 pb-3 border-b border-outline-variant/30">
           <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
-            <span className="material-symbols-outlined text-[20px]">warning</span>
+            <AlertTriangle className="h-5 w-5" />
           </div>
           <div>
             <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">

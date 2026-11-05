@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { Search, Plus, X } from "lucide-react";
 import {
   useProjectDocuments,
   useCreateProjectDocument,
@@ -66,7 +67,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
 
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30 text-outline focus-within:text-on-surface">
-            <span className="material-symbols-outlined text-[14px]">search</span>
+            <Search className="h-3.5 w-3.5" />
             <input
               type="text"
               value={search}
@@ -81,7 +82,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
             onClick={() => setIsCreateOpen(true)}
             className="h-8 px-3 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm flex items-center gap-1.5 shadow-sm transition-all"
           >
-            <span className="material-symbols-outlined text-[16px]">add</span>
+            <Plus className="h-4 w-4" />
             <span>New Document</span>
           </button>
         </div>
@@ -97,7 +98,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
                 onClick={() => setIsCreateOpen(false)}
                 className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
               >
-                <span className="material-symbols-outlined text-[18px]">close</span>
+                <X className="h-4 w-4" />
               </button>
             </div>
             <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">

@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { ChevronRight } from "lucide-react";
 import { useMembers } from "@/lib/hooks/use-projects";
 import { MemberPerformanceDrawer } from "@/components/MemberPerformanceDrawer";
 
@@ -56,7 +57,7 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
 
               <div className="flex items-center gap-1 text-outline group-hover:text-on-surface transition-colors">
                 <span className="text-[11px] font-medium hidden sm:inline">Analytics</span>
-                <span className="material-symbols-outlined text-[18px]">chevron_right</span>
+                <ChevronRight className="h-4 w-4" />
               </div>
             </div>
           ))}

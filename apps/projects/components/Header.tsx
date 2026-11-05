@@ -2,6 +2,16 @@
 
 import Link from "next/link";
 import { useState } from "react";
+import {
+  ChevronDown,
+  PlayCircle,
+  PauseCircle,
+  Bell,
+  Plus,
+  User,
+  Users,
+  LogOut,
+} from "lucide-react";
 import { env } from "@repo/env";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
@@ -50,7 +60,7 @@ export function Header() {
           >
             <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
             <span className="font-medium text-body-sm text-on-surface">Projects Hub</span>
-            <span className="material-symbols-outlined text-[14px] text-outline">expand_more</span>
+            <ChevronDown className="h-3.5 w-3.5 text-outline" />
           </Link>
         </div>
       </div>
@@ -83,9 +93,11 @@ export function Header() {
             }}
             title={timerState.isRunning ? "Pause Timer" : "Resume Timer"}
           >
-            <span className="material-symbols-outlined text-[14px]">
-              {timerState.isRunning ? "pause_circle" : "play_circle"}
-            </span>
+            {timerState.isRunning ? (
+              <PauseCircle className="h-3.5 w-3.5" />
+            ) : (
+              <PlayCircle className="h-3.5 w-3.5" />
+            )}
           </button>
         </div>
 
@@ -95,7 +107,7 @@ export function Header() {
           type="button"
           title="Notifications"
         >
-          <span className="material-symbols-outlined text-[18px]">notifications</span>
+          <Bell className="h-4 w-4" />
           <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span>
         </button>
 
@@ -104,7 +116,7 @@ export function Header() {
           href="/new"
           className="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors"
         >
-          <span className="material-symbols-outlined text-[16px]">add</span>
+          <Plus className="h-4 w-4" />
           <span>New Task</span>
           <span className="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span>
         </Link>
@@ -123,7 +135,7 @@ export function Header() {
               // eslint-disable-next-line @next/next/no-img-element
               <img src={user.image} alt={user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
             ) : (
-              <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+              <User className="h-4 w-4 text-on-primary" />
             )}
           </button>
 
@@ -138,7 +150,7 @@ export function Header() {
                 onClick={() => setIsProfileOpen(false)}
                 className="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px] text-outline">group</span>
+                <Users className="h-4 w-4 text-outline" />
                 <span>Team & Squad</span>
               </Link>
               <button
@@ -146,7 +158,7 @@ export function Header() {
                 onClick={handleSignOut}
                 className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-error hover:bg-surface-container transition-colors text-left"
               >
-                <span className="material-symbols-outlined text-[16px]">logout</span>
+                <LogOut className="h-4 w-4" />
                 <span>Sign Out</span>
               </button>
             </div>

@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
+import { Check, Link2, MessageSquare, User, Clock, Hash, CheckSquare, Square } from "lucide-react";
 
 interface CommentItem {
   id: string;
@@ -90,9 +91,7 @@ export default function NotesAndDocsPage() {
               onClick={handleCopyLink}
               className="flex items-center gap-1 px-3 py-1 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface font-body-sm text-body-sm border border-outline-variant/30 transition-colors"
             >
-              <span className="material-symbols-outlined text-[15px]">
-                {copied ? "check" : "link"}
-              </span>
+{copied ? <Check className="h-3.5 w-3.5" /> : <Link2 className="h-3.5 w-3.5" />}
               <span>{copied ? "Copied!" : "Copy Link"}</span>
             </button>
 
@@ -105,7 +104,7 @@ export default function NotesAndDocsPage() {
                   : "bg-surface-container text-on-surface hover:bg-surface-container-high"
               }`}
             >
-              <span className="material-symbols-outlined text-[15px]">comment</span>
+              <MessageSquare className="h-3.5 w-3.5" />
               <span>Comments ({comments.length})</span>
             </button>
           </div>
@@ -126,15 +125,15 @@ export default function NotesAndDocsPage() {
               {/* Document Meta Row */}
               <div className="flex flex-wrap items-center gap-4 text-[12px] text-outline font-label-code pb-4 border-b border-outline-variant/20">
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px]">person</span>
+                  <User className="h-3.5 w-3.5" />
                   <span>Authored by Elena Rostova</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px]">schedule</span>
+                  <Clock className="h-3.5 w-3.5" />
                   <span>Updated 12m ago</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="material-symbols-outlined text-[15px]">tag</span>
+                  <Hash className="h-3.5 w-3.5" />
                   <span>RFC-8819 Reference</span>
                 </div>
               </div>
@@ -166,15 +165,15 @@ export default function NotesAndDocsPage() {
                   </h2>
                   <div className="flex flex-col gap-2 text-body-sm">
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">check_box</span>
+                      <CheckSquare className="h-4 w-4 text-primary" />
                       <span>SCR-104: Finalize interactive real-time telemetry component canvas (Assigned: Elena)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-primary text-[16px]">check_box</span>
+                      <CheckSquare className="h-4 w-4 text-primary" />
                       <span>SCR-102: Memory-mapped buffer recycling in WebGL viewport (Assigned: Marcus)</span>
                     </div>
                     <div className="flex items-center gap-2">
-                      <span className="material-symbols-outlined text-outline text-[16px]">check_box_outline_blank</span>
+                      <Square className="h-4 w-4 text-outline" />
                       <span>SCR-103: Automated design tokens compiler CLI distribution (Assigned: Sarah)</span>
                     </div>
                   </div>

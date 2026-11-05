@@ -3,19 +3,38 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
+import type { LucideIcon } from "lucide-react";
+import {
+  CheckCircle2,
+  List,
+  Kanban,
+  GitCommitHorizontal,
+  Calendar,
+  CalendarDays,
+  Folder,
+  Flag,
+  Timer,
+  TrendingUp,
+  Users,
+  FileText,
+  Search,
+  ChevronDown,
+  Plus,
+  ChevronsUpDown,
+} from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 
 interface NavSubItem {
   name: string;
   href: string;
-  icon: string;
+  icon: LucideIcon;
 }
 
 interface NavItem {
   name: string;
   href: string;
-  icon: string;
+  icon: LucideIcon;
   children?: NavSubItem[];
   matchPrefixes?: string[];
 }
@@ -39,16 +58,16 @@ const navGroups: NavGroup[] = [
       {
         name: "Tasks",
         href: "/tasks",
-        icon: "check_circle",
+        icon: CheckCircle2,
         matchPrefixes: ["/tasks", "/board", "/gantt"],
         children: [
-          { name: "List", href: "/tasks", icon: "format_list_bulleted" },
-          { name: "Board", href: "/board", icon: "view_kanban" },
-          { name: "Timeline", href: "/gantt", icon: "reorder" },
+          { name: "List", href: "/tasks", icon: List },
+          { name: "Board", href: "/board", icon: Kanban },
+          { name: "Timeline", href: "/gantt", icon: GitCommitHorizontal },
         ],
       },
-      { name: "Calendar", href: "/calendar", icon: "calendar_today", matchPrefixes: ["/calendar"] },
-      { name: "Schedule", href: "/schedule", icon: "date_range", matchPrefixes: ["/schedule"] },
+      { name: "Calendar", href: "/calendar", icon: Calendar, matchPrefixes: ["/calendar"] },
+      { name: "Schedule", href: "/schedule", icon: CalendarDays, matchPrefixes: ["/schedule"] },
     ],
   },
   {
@@ -56,12 +75,12 @@ const navGroups: NavGroup[] = [
     title: "Operations",
     quickAction: { href: "/new?type=PROJECT", title: "New project" },
     items: [
-      { name: "Projects", href: "/projects", icon: "folder", matchPrefixes: ["/projects"] },
-      { name: "Milestones", href: "/milestones", icon: "flag", matchPrefixes: ["/milestones"] },
-      { name: "Time tracking", href: "/time-tracking", icon: "timer", matchPrefixes: ["/time-tracking"] },
-      { name: "Performance", href: "/performance", icon: "trending_up", matchPrefixes: ["/performance"] },
-      { name: "Team", href: "/team", icon: "group", matchPrefixes: ["/team"] },
-      { name: "Notes & docs", href: "/notes-and-docs", icon: "description", matchPrefixes: ["/notes-and-docs"] },
+      { name: "Projects", href: "/projects", icon: Folder, matchPrefixes: ["/projects"] },
+      { name: "Milestones", href: "/milestones", icon: Flag, matchPrefixes: ["/milestones"] },
+      { name: "Time tracking", href: "/time-tracking", icon: Timer, matchPrefixes: ["/time-tracking"] },
+      { name: "Performance", href: "/performance", icon: TrendingUp, matchPrefixes: ["/performance"] },
+      { name: "Team", href: "/team", icon: Users, matchPrefixes: ["/team"] },
+      { name: "Notes & docs", href: "/notes-and-docs", icon: FileText, matchPrefixes: ["/notes-and-docs"] },
     ],
   },
 ];
@@ -79,130 +98,121 @@ function matchesPath(pathname: string, prefix: string) {
   return pathname === prefix || pathname.startsWith(`${prefix}/`);
 }
 
-function readStored<T>(key: string, fallback: T): T {
-  try {
-    const raw = localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
-
-function writeStored(key: string, value: unknown) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value));
-  } catch {
-    // localStorage unavailable; state stays in memory only
-  }
-}
-
-interface SidebarProps {
-  /** Called when the search field is clicked or ⌘K / Ctrl+K is pressed. */
-  onSearch?: () => void;
-}
-
-export function Sidebar({ onSearch }: SidebarProps) {
+export function Sidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
   const { data: workspace } = useWorkspaceContext();
 
-  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme";
-  const orgSlug = workspace?.orgSlug || session?.session?.activeOrganizationSlug || "workspace";
-  const userName = session?.user?.name || session?.user?.email || "Account";
-
-  // Both default to open; persisted after mount to avoid hydration mismatch.
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [collapsedItems, setCollapsedItems] = useState<Record<string, boolean>>({});
 
+  // Restore disclosure state on client mount only to prevent SSR hydration mismatches.
   useEffect(() => {
-    setCollapsedSections(readStored<Record<string, boolean>>(SECTIONS_KEY, {}));
-    setCollapsedItems(readStored<Record<string, boolean>>(EXPANDED_KEY, {}));
-  }, []);
-
-  useEffect(() => {
-    if (!onSearch) return;
-    const handler = (e: KeyboardEvent) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        onSearch();
+    try {
+      const storedSections = localStorage.getItem(SECTIONS_KEY);
+      if (storedSections) {
+        setCollapsedSections(JSON.parse(storedSections));
       }
-    };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [onSearch]);
+      const storedItems = localStorage.getItem(EXPANDED_KEY);
+      if (storedItems) {
+        setCollapsedItems(JSON.parse(storedItems));
+      }
+    } catch {
+      // Ignore localStorage read errors in restricted contexts
+    }
+  }, []);
 
   const toggleSection = (id: string) => {
     setCollapsedSections((prev) => {
       const next = { ...prev, [id]: !prev[id] };
-      writeStored(SECTIONS_KEY, next);
+      try {
+        localStorage.setItem(SECTIONS_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
       return next;
     });
   };
 
   const toggleItem = (name: string) => {
     setCollapsedItems((prev) => {
-      const next = { ...prev, [name]: !prev[name] };
-      writeStored(EXPANDED_KEY, next);
+      // Default state is expanded (false in collapsed map)
+      const isCurrentlyCollapsed = prev[name] ?? false;
+      const next = { ...prev, [name]: !isCurrentlyCollapsed };
+      try {
+        localStorage.setItem(EXPANDED_KEY, JSON.stringify(next));
+      } catch {
+        // ignore storage errors
+      }
       return next;
     });
   };
 
-  const isRouteActive = (item: NavItem) => {
-    const prefixes = item.matchPrefixes ?? [item.href];
-    return prefixes.some((p) => (p === "/" ? pathname === "/" : matchesPath(pathname, p)));
-  };
-
   const isChildActive = (href: string) => matchesPath(pathname, href);
 
-  // Shared row styling. The active marker is an absolutely positioned pill,
-  // so selecting an item never shifts its content (the old border-l did).
+  const isRouteActive = (item: NavItem) => {
+    if (item.matchPrefixes) {
+      return item.matchPrefixes.some((p) => matchesPath(pathname, p));
+    }
+    return matchesPath(pathname, item.href);
+  };
+
+  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme Workspace";
+  const user = session?.user;
+  const userName = user?.name || user?.email?.split("@")[0] || "Operator";
+
   const rowClasses = (active: boolean) =>
-    `group/item relative flex items-center rounded-lg font-body-md text-body-md transition-colors ${
+    `group flex items-center rounded-lg font-body-sm text-[13px] transition-colors ${
       active
-        ? "bg-surface-container-high text-on-surface font-medium before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary"
-        : "text-on-surface-variant hover:bg-surface-container hover:text-on-surface"
+        ? "bg-surface-container text-on-surface font-medium"
+        : "text-on-surface-variant hover:bg-surface-container/60 hover:text-on-surface"
     }`;
 
   const iconClasses = (active: boolean) =>
-    `material-symbols-outlined text-[18px] shrink-0 transition-colors ${
-      active ? "text-primary" : "text-outline group-hover/item:text-on-surface"
+    `h-4 w-4 shrink-0 transition-colors ${
+      active ? "text-primary" : "text-outline group-hover:text-on-surface"
     }`;
 
   return (
     <aside
-      className="fixed left-0 top-0 z-50 flex h-full w-60 select-none flex-col justify-between border-r border-outline-variant/30 bg-surface-container-lowest"
-      aria-label="Primary"
+      aria-label="Workspace sidebar"
+      className="fixed left-0 top-0 bottom-0 z-50 flex w-60 flex-col border-r border-outline-variant/30 bg-surface-container-lowest"
     >
-      <div className="flex min-h-0 flex-1 flex-col">
-        {/* Workspace header */}
-        <div className="flex h-14 shrink-0 items-center px-space-sm">
-          <Link
-            href="/projects"
-            className={`flex w-full min-w-0 items-center gap-space-sm rounded-lg px-space-xs py-1.5 text-left transition-colors hover:bg-surface-container ${FOCUS_RING}`}
-            title={`${orgName} workspace`}
-          >
-            <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-primary-container font-headline-sm text-body-sm font-semibold text-on-primary-container">
-              {orgName.charAt(0).toUpperCase()}
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col gap-0.5 leading-none">
-              <span className="truncate font-headline-sm text-body-sm font-medium text-on-surface">
-                {orgName}
-              </span>
-              <span className="truncate font-body-sm text-[11px] text-outline">{orgSlug}</span>
-            </div>
-            <span className="material-symbols-outlined shrink-0 text-[16px] text-outline">unfold_more</span>
-          </Link>
-        </div>
+      {/* Workspace Brand / Header */}
+      <div className="flex h-12 shrink-0 items-center justify-between border-b border-outline-variant/30 px-space-md">
+        <Link
+          href="/projects"
+          className={`flex min-w-0 items-center gap-2 rounded-md py-1 pr-1 hover:opacity-90 ${FOCUS_RING}`}
+        >
+          <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-md bg-primary-container text-on-primary-container font-headline-sm text-[11px] font-bold shadow-xs">
+            SP
+          </div>
+          <span className="truncate font-headline-sm text-body-sm font-semibold tracking-tight text-on-surface">
+            {orgName}
+          </span>
+        </Link>
+        <button
+          type="button"
+          aria-label="Switch workspace"
+          title="Switch workspace"
+          className={`flex h-7 w-7 items-center justify-center rounded-md text-outline hover:bg-surface-container hover:text-on-surface ${FOCUS_RING}`}
+        >
+          <ChevronsUpDown className="h-4 w-4 shrink-0 text-outline" />
+        </button>
+      </div>
 
-        {/* Search */}
-        <div className="shrink-0 px-space-sm pb-space-xs">
+      <div className="flex flex-1 flex-col overflow-hidden">
+        {/* Quick Search Trigger */}
+        <div className="p-space-sm pb-1">
           <button
             type="button"
-            onClick={onSearch}
+            onClick={() => {
+              window.dispatchEvent(new KeyboardEvent("keydown", { key: "k", metaKey: true }));
+            }}
             className={`flex w-full cursor-pointer items-center justify-between rounded-lg border border-outline-variant/30 bg-surface-container-low px-space-sm py-1.5 text-on-surface-variant transition-colors hover:border-outline/60 hover:text-on-surface ${FOCUS_RING}`}
           >
             <span className="flex items-center gap-space-sm">
-              <span className="material-symbols-outlined text-[16px] text-outline">search</span>
+              <Search className="h-4 w-4 text-outline" />
               <span className="font-body-sm text-body-sm text-outline">Search</span>
             </span>
             <kbd className="rounded border border-outline-variant/40 bg-surface-container px-1.5 py-0.5 font-label-kbd text-label-kbd text-outline">
@@ -225,14 +235,12 @@ export function Sidebar({ onSearch }: SidebarProps) {
                     aria-expanded={!isCollapsed}
                     className={`-ml-1 flex cursor-pointer items-center gap-1 rounded-md px-1 py-1 text-left font-label-badge text-[12px] font-medium text-outline transition-colors hover:text-on-surface ${FOCUS_RING}`}
                   >
-                    <span
-                      className={`material-symbols-outlined text-[14px] transition-transform duration-200 motion-reduce:transition-none ${
+                    <ChevronDown
+                      className={`h-3.5 w-3.5 transition-transform duration-200 motion-reduce:transition-none ${
                         isCollapsed ? "-rotate-90" : "rotate-0"
                       }`}
                       aria-hidden
-                    >
-                      expand_more
-                    </span>
+                    />
                     <span>{group.title}</span>
                   </button>
 
@@ -243,7 +251,7 @@ export function Sidebar({ onSearch }: SidebarProps) {
                       aria-label={group.quickAction.title}
                       className={`flex h-5 w-5 items-center justify-center rounded-md text-outline opacity-0 transition hover:bg-surface-container-high hover:text-on-surface focus-visible:opacity-100 group-hover/header:opacity-100 ${FOCUS_RING}`}
                     >
-                      <span className="material-symbols-outlined text-[16px]">add</span>
+                      <Plus className="h-4 w-4" />
                     </Link>
                   )}
                 </div>
@@ -253,6 +261,7 @@ export function Sidebar({ onSearch }: SidebarProps) {
                     {group.items.map((item) => {
                       const isActive = isRouteActive(item);
                       const children = item.children;
+                      const IconComponent = item.icon;
 
                       if (!children || children.length === 0) {
                         return (
@@ -262,9 +271,7 @@ export function Sidebar({ onSearch }: SidebarProps) {
                             aria-current={isActive ? "page" : undefined}
                             className={`${rowClasses(isActive)} gap-space-sm px-space-sm py-1.5 ${FOCUS_RING}`}
                           >
-                            <span className={iconClasses(isActive)} aria-hidden>
-                              {item.icon}
-                            </span>
+                            <IconComponent className={iconClasses(isActive)} aria-hidden />
                             <span className="truncate">{item.name}</span>
                           </Link>
                         );
@@ -281,9 +288,7 @@ export function Sidebar({ onSearch }: SidebarProps) {
                               aria-current={isActive && !children.some((c) => isChildActive(c.href)) ? "page" : undefined}
                               className={`flex min-w-0 flex-1 items-center gap-space-sm rounded-lg px-space-sm py-1.5 ${FOCUS_RING}`}
                             >
-                              <span className={iconClasses(isActive)} aria-hidden>
-                                {item.icon}
-                              </span>
+                              <IconComponent className={iconClasses(isActive)} aria-hidden />
                               <span className="truncate">{item.name}</span>
                             </Link>
                             <button
@@ -294,14 +299,12 @@ export function Sidebar({ onSearch }: SidebarProps) {
                               title={isOpen ? `Collapse ${item.name.toLowerCase()} views` : `Expand ${item.name.toLowerCase()} views`}
                               className={`mr-1 flex h-6 w-6 shrink-0 cursor-pointer items-center justify-center rounded-md text-outline transition-colors hover:bg-surface-container-highest hover:text-on-surface ${FOCUS_RING}`}
                             >
-                              <span
-                                className={`material-symbols-outlined block text-[16px] transition-transform duration-200 motion-reduce:transition-none ${
+                              <ChevronDown
+                                className={`block h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${
                                   isOpen ? "rotate-0" : "-rotate-90"
                                 }`}
                                 aria-hidden
-                              >
-                                expand_more
-                              </span>
+                              />
                             </button>
                           </div>
 
@@ -316,6 +319,7 @@ export function Sidebar({ onSearch }: SidebarProps) {
                               <div className="ml-[18px] mt-0.5 flex flex-col gap-0.5 border-l border-outline-variant/40 pl-2">
                                 {children.map((sub) => {
                                   const active = isChildActive(sub.href);
+                                  const SubIcon = sub.icon;
                                   return (
                                     <Link
                                       key={sub.name}
@@ -334,14 +338,12 @@ export function Sidebar({ onSearch }: SidebarProps) {
                                           aria-hidden
                                         />
                                       )}
-                                      <span
-                                        className={`material-symbols-outlined shrink-0 text-[16px] transition-colors ${
+                                      <SubIcon
+                                        className={`h-4 w-4 shrink-0 transition-colors ${
                                           active ? "text-primary" : "text-outline group-hover/sub:text-on-surface"
                                         }`}
                                         aria-hidden
-                                      >
-                                        {sub.icon}
-                                      </span>
+                                      />
                                       <span className="truncate">{sub.name}</span>
                                     </Link>
                                   );
