@@ -229,3 +229,57 @@ describe("Android Controller Suite", () => {
     });
   });
 });
+
+import { AndroidCustomerController } from "../android-customer.controller";
+
+describe("AndroidCustomerController", () => {
+  let controller: AndroidCustomerController;
+  let mockUseCase: any;
+
+  beforeEach(() => {
+    mockUseCase = {
+      getCustomers: vi.fn(),
+      getCustomerDetails: vi.fn(),
+      getCustomerTransactions: vi.fn(),
+      updateCustomer: vi.fn(),
+    };
+    controller = new AndroidCustomerController(mockUseCase as any);
+  });
+
+  it("should get customers", async () => {
+    const req = { v3Context: { organizationId: "org-1" } };
+    mockUseCase.getCustomers.mockResolvedValue({ customers: [] });
+
+    const res = await controller.getCustomers(req, "test", 20, 0);
+    expect(mockUseCase.getCustomers).toHaveBeenCalledWith(req.v3Context, "test", 20, 0);
+    expect(res.customers).toEqual([]);
+  });
+
+  it("should get customer details", async () => {
+    const req = { v3Context: { organizationId: "org-1" } };
+    mockUseCase.getCustomerDetails.mockResolvedValue({ id: "cust-1", name: "Alice" });
+
+    const res = await controller.getCustomerDetails(req, "cust-1");
+    expect(mockUseCase.getCustomerDetails).toHaveBeenCalledWith(req.v3Context, "cust-1");
+    expect(res.name).toBe("Alice");
+  });
+
+  it("should get customer transactions", async () => {
+    const req = { v3Context: { organizationId: "org-1" } };
+    mockUseCase.getCustomerTransactions.mockResolvedValue({ transactions: [] });
+
+    const res = await controller.getCustomerTransactions(req, "cust-1", 10);
+    expect(mockUseCase.getCustomerTransactions).toHaveBeenCalledWith(req.v3Context, "cust-1", 10);
+    expect(res.transactions).toEqual([]);
+  });
+
+  it("should update customer", async () => {
+    const req = { v3Context: { organizationId: "org-1" } };
+    const dto = { name: "Alice Smith" };
+    mockUseCase.updateCustomer.mockResolvedValue({ id: "cust-1", name: "Alice Smith" });
+
+    const res = await controller.updateCustomer(req, "cust-1", dto);
+    expect(mockUseCase.updateCustomer).toHaveBeenCalledWith(req.v3Context, "cust-1", dto);
+    expect(res.name).toBe("Alice Smith");
+  });
+});
