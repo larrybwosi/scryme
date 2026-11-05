@@ -7,7 +7,8 @@
     "dev": "vite dev",
     "build": "NODE_OPTIONS=\"--max-old-space-size=8192\" vite build",
     "start": "node server.js",
-    "type-check": "NODE_OPTIONS=\"--max-old-space-size=8192\" tsc --noEmit"
+    "type-check": "NODE_OPTIONS=\"--max-old-space-size=8192\" tsc --noEmit",
+    "schema:deploy": "sanity schemas deploy"
   },
   "dependencies": {
     "@portabletext/react": "^6.2.0",

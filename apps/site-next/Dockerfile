@@ -88,6 +88,9 @@ RUN useradd --system --uid 1001 -g nodejs appuser
 # Copy the built dist directory and server script from installer/pruner stages
 COPY --from=installer --chown=appuser:nodejs /app/apps/site-next/dist ./dist
 COPY --from=pruner --chown=appuser:nodejs /app/out/full/apps/site-next/server.js ./server.js
+COPY --from=pruner --chown=appuser:nodejs /app/out/full/apps/site-next/sanity.config.ts ./sanity.config.ts
+COPY --from=pruner --chown=appuser:nodejs /app/out/full/apps/site-next/sanity.cli.ts ./sanity.cli.ts
+COPY --from=pruner --chown=appuser:nodejs /app/out/full/apps/site-next/package.json ./package.json
 
 # Copy entrypoint script safely from the pruner stage root
 COPY --from=pruner --chown=appuser:nodejs /app/entrypoint.sh ./entrypoint.sh

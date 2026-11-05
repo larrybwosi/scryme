@@ -156,7 +156,7 @@ export const DEFAULT_PRICING_FALLBACK: PricingConfig = {
 
 export async function fetchPricingConfig(): Promise<PricingConfig> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const config = await sanityClient.fetch(PRICING_CONFIG_QUERY)
       if (config && config.currencies && config.currencies.length > 0) {
         return config
@@ -320,7 +320,7 @@ export const DEFAULT_SITE_SETTINGS_FALLBACK: SiteSettings = {
 
 export async function fetchSiteSettings(): Promise<SiteSettings> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const settings = await sanityClient.fetch(SITE_SETTINGS_QUERY)
       if (settings && (settings.navItems || settings.siteTitle)) {
         return {
@@ -560,7 +560,7 @@ export const DEFAULT_HOME_PAGE_FALLBACK: HomePageData = {
 
 export async function fetchHomePage(): Promise<HomePageData> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(HOME_PAGE_QUERY)
       if (page && (page.hero || page.pillarsSection)) {
         return {
@@ -662,7 +662,7 @@ export const DEFAULT_CMS_PAGE_FALLBACK: CmsPageData = {
 
 export async function fetchCmsPage(): Promise<CmsPageData> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(CMS_PAGE_QUERY)
       if (page && (page.hero || page.features)) {
         return {
@@ -765,7 +765,7 @@ export const DEFAULT_CRM_PAGE_FALLBACK: CrmPageData = {
 
 export async function fetchCrmPage(): Promise<CrmPageData> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(CRM_PAGE_QUERY)
       if (page && (page.hero || page.features)) {
         return {
@@ -856,7 +856,7 @@ export const DEFAULT_PAYMENTS_PAGE_FALLBACK: PaymentsPageData = {
 
 export async function fetchPaymentsPage(): Promise<PaymentsPageData> {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(PAYMENTS_PAGE_QUERY)
       if (page && (page.hero || page.channels)) {
         return {
@@ -1070,7 +1070,7 @@ const DEFAULT_COMPARISON_FALLBACKS: Record<string, any> = {
 
 export async function fetchComparisonPageBySlug(slug: string) {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(COMPARISON_PAGE_QUERY, { slug })
       if (page) return page
     }
@@ -1132,7 +1132,7 @@ export async function fetchComparisonPageBySlug(slug: string) {
 
 export async function fetchLandingPageBySlug(slug: string) {
   try {
-    if (sanityClient && process.env.VITE_SANITY_PROJECT_ID !== 'placeholder_project_id') {
+    if (sanityClient) {
       const page = await sanityClient.fetch(LANDING_PAGE_QUERY, { slug })
       if (page) return page
     }
