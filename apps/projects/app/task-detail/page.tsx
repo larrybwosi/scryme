@@ -182,6 +182,48 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                 </div>
               </div>
 
+              {/* Customer Booking Integration Banner */}
+              {task.bookingId && (
+                <div className="p-4 rounded-lg bg-primary/5 border border-primary/20 flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="material-symbols-outlined text-[18px] text-primary">event_available</span>
+                      <span className="text-body-sm font-semibold text-foreground">
+                        Linked Customer Booking
+                      </span>
+                      <span className="text-[10px] font-label-code px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">
+                        #{task.bookingId.slice(-6).toUpperCase()}
+                      </span>
+                    </div>
+                    {task.booking?.status && (
+                      <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-surface-container-highest text-on-surface">
+                        {task.booking.status}
+                      </span>
+                    )}
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-2 text-body-sm text-muted-foreground pt-1">
+                    <div>
+                      <span className="text-outline text-[10px] uppercase block">Service:</span>
+                      <span className="text-on-surface font-medium">{task.booking?.serviceName || "Service Delivery"}</span>
+                    </div>
+                    {task.booking?.customer && (
+                      <div>
+                        <span className="text-outline text-[10px] uppercase block">Customer:</span>
+                        <span className="text-on-surface font-medium">{task.booking.customer.name}</span>
+                      </div>
+                    )}
+                    {task.booking?.scheduledStartTime && (
+                      <div className="col-span-full">
+                        <span className="text-outline text-[10px] uppercase block">Scheduled Slot:</span>
+                        <span className="text-on-surface font-label-code text-[12px]">
+                          {new Date(task.booking.scheduledStartTime).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
               <div>
                 <h4 className="text-outline text-[11px] font-label-badge uppercase tracking-wider mb-1">
                   Description

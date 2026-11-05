@@ -460,6 +460,12 @@ export default function TasksPage() {
                       >
                         {task.title}
                       </Link>
+                      {task.bookingId && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-label-code bg-primary/10 text-primary border border-primary/20 shrink-0" title="Linked to customer service booking">
+                          <span className="material-symbols-outlined text-[12px]">event_available</span>
+                          Booking
+                        </span>
+                      )}
                     </div>
 
                     <div className="flex items-center gap-8 shrink-0">

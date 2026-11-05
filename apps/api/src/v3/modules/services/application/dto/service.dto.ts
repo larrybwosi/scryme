@@ -110,6 +110,11 @@ export class CreateServiceDto {
   @IsString({ each: true })
   taxRateIds?: string[];
 
+  @ApiPropertyOptional({ description: "Standard checklist templates cloned into operational tasks", type: "array" })
+  @IsOptional()
+  @IsArray()
+  taskChecklistTemplate?: Array<{ title: string; required?: boolean }>;
+
   @ApiPropertyOptional({ description: "Is service active" })
   @IsOptional()
   @IsBoolean()
@@ -185,6 +190,16 @@ export class CreateBookingDto {
   @IsOptional()
   @IsString()
   recurrenceRule?: string;
+
+  @ApiPropertyOptional({ description: "Manager override flag to proceed past non-blocking conflict warnings" })
+  @IsOptional()
+  @IsBoolean()
+  overrideConflicts?: boolean;
+
+  @ApiPropertyOptional({ description: "Automatically generate operational Task and StaffTask upon creation" })
+  @IsOptional()
+  @IsBoolean()
+  autoCreateTasks?: boolean;
 }
 
 export class CompleteBookingDto {

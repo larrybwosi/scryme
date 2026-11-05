@@ -85,9 +85,9 @@ export interface ShiftTradeItem {
 import axios from "axios";
 import { env } from "@repo/env";
 import { authClient } from "./auth-client";
-import { getResolvedApiUrl } from "./urls";
 
-const API_BASE_URL = getResolvedApiUrl(env.NEXT_PUBLIC_API_URL, env.NODE_ENV);
+const API_BASE_URL =
+  env.NEXT_PUBLIC_API_URL || "http://localhost:3002";
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,
@@ -146,6 +146,16 @@ export interface Task {
   actualHours?: number;
   startDate?: string;
   dueDate?: string;
+  bookingId?: string | null;
+  booking?: {
+    id: string;
+    serviceName: string;
+    status: string;
+    scheduledStartTime: string;
+    scheduledEndTime?: string;
+    customer?: { id: string; name: string; phone?: string; email?: string };
+    locationId?: string;
+  };
   batches?: {
     id: string;
     batchNumber: string;

@@ -1,7 +1,3 @@
-import { BookingLifecycleController } from "./interfaces/http/booking-lifecycle.controller";
-import { BookingLifecycleService } from "./application/services/booking-lifecycle.service";
-import { BookingConflictDetectionService } from "./application/services/booking-conflict-detection.service";
-import { BookingTaskGeneratorService } from "./application/services/booking-task-generator.service";
 import { Module } from "@nestjs/common";
 import { BullModule } from "@nestjs/bullmq";
 import { ServicesController } from "./interfaces/http/services.controller";
@@ -15,18 +11,17 @@ import { OtpService } from "./application/services/otp.service";
 import { InventoryMovementService } from "../inventory/application/services/inventory-movement.service";
 import { SchedulingNotificationService } from "./application/services/scheduling-notification.service";
 import { SchedulingProcessor } from "./infrastructure/jobs/scheduling.processor";
+import { BookingConflictService } from "./application/services/booking-conflict.service";
+import { BookingTaskIntegrationService } from "./application/services/booking-task-integration.service";
 import { SchedulingQueueService, SCHEDULING_QUEUE } from "./infrastructure/jobs/scheduling-queue.service";
 import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-reconciler.service";
 
 @Module({
   imports: [BullModule.registerQueue({ name: SCHEDULING_QUEUE })],
-  controllers: [ServicesController, PublicServicesController, BookingLifecycleController],
+  controllers: [ServicesController, PublicServicesController],
   providers: [
     ServiceManagementService,
     BookingService,
-    BookingLifecycleService,
-    BookingConflictDetectionService,
-    BookingTaskGeneratorService,
     StaffSchedulingService,
     CalComService,
     ServiceAnalyticsService,
@@ -36,7 +31,9 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
     SchedulingQueueService,
     SchedulingProcessor,
     SchedulingReconcilerService,
+    BookingConflictService,
+    BookingTaskIntegrationService,
   ],
-  exports: [ServiceManagementService, BookingService, BookingLifecycleService, BookingConflictDetectionService, BookingTaskGeneratorService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService],
+  exports: [ServiceManagementService, BookingService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService],
 })
 export class ServicesModule {}

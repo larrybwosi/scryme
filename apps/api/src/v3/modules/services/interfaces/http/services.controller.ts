@@ -50,6 +50,9 @@ import {
   RescheduleBookingDto,
 } from "../../application/dto/scheduling.dto";
 import { BookingStatus } from "@repo/db";
+import { BookingConflictService } from "../../application/services/booking-conflict.service";
+import { BookingTaskIntegrationService } from "../../application/services/booking-task-integration.service";
+import { CheckBookingConflictsDto, GenerateBookingTasksDto } from "../../application/dto/booking-conflict.dto";
 import { ApiErrorResponseDto } from "@/v3/common/dto/response.dto";
 
 @ApiTags("V3 Services")
@@ -64,6 +67,8 @@ export class ServicesController {
     private readonly bookingService: BookingService,
     private readonly analyticsService: ServiceAnalyticsService,
     private readonly staffScheduling: StaffSchedulingService,
+    private readonly conflictService: BookingConflictService,
+    private readonly taskIntegrationService: BookingTaskIntegrationService,
   ) {}
 
   @Post("categories")
@@ -377,6 +382,65 @@ export class ServicesController {
   @ApiResponse({ status: 401, type: ApiErrorResponseDto, description: "Unauthorized" })
   async getResources(@Req() req: any) {
     return this.serviceManagement.getResources(req.organization.id);
+  }
+
+
+  @Post("bookings/check-conflicts")
+  @Permissions("services:read")
+  @ApiOperation({
+    summary: "Check booking conflicts",
+    description: "Multi-dimensional conflict detection across staff shifts, existing bookings, staff capacity, resources, customer schedule, and location hours.",
+    operationId: "Services_CheckBookingConflicts",
+  })
+  @ApiBody({ type: CheckBookingConflictsDto })
+  @ApiResponse({ status: 200, description: "Conflict report with warnings and override capability" })
+  async checkConflicts(@Req() req: any, @Body() dto: CheckBookingConflictsDto) {
+    return this.conflictService.checkConflicts(req.organization.id, dto);
+  }
+
+  @Post("bookings/:id/generate-tasks")
+  @Permissions("services:write")
+  @ApiOperation({
+    summary: "Generate tasks from booking",
+    description: "Generates or re-generates linked Project Task and StaffTask from an active ServiceBooking, cloning checklist templates.",
+    operationId: "Services_GenerateBookingTasks",
+  })
+  @ApiParam({ name: "id", type: "string", description: "Booking ID" })
+  @ApiBody({ type: GenerateBookingTasksDto, required: false })
+  @ApiResponse({ status: 201, description: "Generated task and staff task" })
+  async generateBookingTasks(
+    @Req() req: any,
+    @Param("id") id: string,
+    @Body() dto: GenerateBookingTasksDto,
+  ) {
+    return this.taskIntegrationService.generateTasksForBooking(
+      req.organization.id,
+      id,
+      dto,
+      req.v3Context?.memberId,
+    );
+  }
+
+  @Post("bookings/tasks/:taskId/complete")
+  @Permissions("services:write")
+  @ApiOperation({
+    summary: "Complete task and sync booking",
+    description: "Marks an operational task complete and automatically transitions any linked ServiceBooking to COMPLETED, deducting bill of materials.",
+    operationId: "Services_CompleteTaskAndSyncBooking",
+  })
+  @ApiParam({ name: "taskId", type: "string", description: "Task ID" })
+  @ApiResponse({ status: 200, description: "Task and booking synchronization result" })
+  async completeTaskAndSyncBooking(
+    @Req() req: any,
+    @Param("taskId") taskId: string,
+    @Query("type") type?: "project" | "staff",
+  ) {
+    return this.taskIntegrationService.onTaskCompleted(
+      req.organization.id,
+      taskId,
+      req.v3Context?.memberId || "system",
+      type || "project",
+    );
   }
 
   @Post("bookings")
