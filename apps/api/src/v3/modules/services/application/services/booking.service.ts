@@ -775,8 +775,11 @@ export class BookingService {
     }
 
     const transitions: Record<BookingStatus, BookingStatus[]> = {
-      REQUESTED: [BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
-      SCHEDULED: [BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED, BookingStatus.NOSHOW],
+      REQUESTED: [BookingStatus.PENDING, BookingStatus.CONFIRMED, BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
+      PENDING: [BookingStatus.CONFIRMED, BookingStatus.CANCELLED],
+      CONFIRMED: [BookingStatus.ASSIGNED, BookingStatus.SCHEDULED, BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED],
+      ASSIGNED: [BookingStatus.IN_PROGRESS, BookingStatus.SCHEDULED, BookingStatus.CANCELLED],
+      SCHEDULED: [BookingStatus.ASSIGNED, BookingStatus.IN_PROGRESS, BookingStatus.CANCELLED, BookingStatus.NOSHOW],
       IN_PROGRESS: [BookingStatus.COMPLETED, BookingStatus.CANCELLED],
       COMPLETED: [],
       CANCELLED: [],

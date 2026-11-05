@@ -6,11 +6,20 @@ enum PricingModel {
 
 enum BookingStatus {
   REQUESTED
+  PENDING
+  CONFIRMED
+  ASSIGNED
   SCHEDULED
   IN_PROGRESS
   COMPLETED
   CANCELLED
   NOSHOW
+}
+
+enum ChecklistStage {
+  PRE_SERVICE
+  IN_SERVICE
+  POST_SERVICE
 }
 
 enum DepositType {
@@ -106,8 +115,9 @@ model Service {
   customFields Json?
 
   // Relations
-  bookings         ServiceBooking[]
-  materials        ServiceMaterial[]
+  bookings           ServiceBooking[]
+  materials          ServiceMaterial[]
+  checklistTemplates ChecklistTemplate[]
   resources        ServiceResourceAssignment[]
   staff            ServiceStaffAssignment[]
   taxRates         ServiceTaxRate[]
@@ -231,6 +241,8 @@ model ServiceBooking {
 
   revision Int            @default(1)
   events   BookingEvent[]
+  tasks    BookingTask[]
+  checklistItems BookingChecklistItem[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -470,4 +482,86 @@ model BookingConsumedMaterial {
 
   @@unique([bookingId, variantId])
   @@map("booking_consumed_material")
+}
+
+model ChecklistTemplate {
+  id             String          @id @default(cuid())
+  organizationId String
+  organization   Organization    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  serviceId      String?
+  service        Service?        @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  isActive       Boolean         @default(true)
+  items          ChecklistItemTemplate[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([organizationId])
+  @@index([serviceId])
+  @@map("checklist_template")
+}
+
+model ChecklistItemTemplate {
+  id          String            @id @default(cuid())
+  templateId  String
+  template    ChecklistTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  stage       ChecklistStage    @default(PRE_SERVICE)
+  isRequired  Boolean           @default(true)
+  order       Int               @default(0)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+
+  @@index([templateId])
+  @@map("checklist_item_template")
+}
+
+model BookingTask {
+  id             String         @id @default(cuid())
+  organizationId String
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  bookingId      String
+  booking        ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  title          String
+  description    String?
+  status         TaskStatus     @default(TODO)
+  priority       TaskPriority   @default(MEDIUM)
+  stage          ChecklistStage @default(PRE_SERVICE)
+  assignedToId   String?
+  assignedTo     Member?        @relation("BookingTaskAssignee", fields: [assignedToId], references: [id], onDelete: SetNull)
+  dueDate        DateTime?
+  completedAt    DateTime?
+  checklistItems BookingChecklistItem[]
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@index([bookingId])
+  @@index([assignedToId])
+  @@map("booking_task")
+}
+
+model BookingChecklistItem {
+  id          String         @id @default(cuid())
+  bookingId   String
+  booking     ServiceBooking @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  taskId      String?
+  task        BookingTask?   @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  title       String
+  description String?
+  stage       ChecklistStage @default(PRE_SERVICE)
+  isRequired  Boolean        @default(true)
+  isCompleted Boolean        @default(false)
+  completedById String?
+  completedBy   Member?      @relation("BookingChecklistCompletedBy", fields: [completedById], references: [id], onDelete: SetNull)
+  completedAt DateTime?
+  order       Int            @default(0)
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@index([bookingId])
+  @@index([taskId])
+  @@map("booking_checklist_item")
 }

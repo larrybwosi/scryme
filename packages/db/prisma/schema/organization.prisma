@@ -210,6 +210,8 @@ model Organization {
   bookingVerificationCodes BookingVerificationCode[]
   shiftTradeRequests       ShiftTradeRequest[]
   staffTasks               StaffTask[]
+  checklistTemplates       ChecklistTemplate[]
+  bookingTasks             BookingTask[]
 
 
   qcTemplates       QCTemplate[]
@@ -390,6 +392,8 @@ model Member {
   tradeRequestsRequested ShiftTradeRequest[]      @relation("TradeRequester")
   tradeRequestsTargeted  ShiftTradeRequest[]      @relation("TradeTarget")
   staffTasks             StaffTask[]
+  assignedBookingTasks   BookingTask[]          @relation("BookingTaskAssignee")
+  completedChecklistItems BookingChecklistItem[] @relation("BookingChecklistCompletedBy")
 
   submittedExpenses        Expense[]          @relation("ExpenseSubmitter")
   approvedExpenses         Expense[]          @relation("ExpenseApprover")
