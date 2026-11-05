@@ -1106,6 +1106,10 @@ export async function adjustStock(data: {
   quantity: number;
   reason: StockAdjustmentReason;
   notes?: string;
+  stockBatchId?: string;
+  serialNumbers?: string[];
+  attachmentIds?: string[];
+  autoApprove?: boolean;
 }): Promise<StockAdjustment | null> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId) {
@@ -1116,9 +1120,15 @@ export async function adjustStock(data: {
 
   if (isNaN(quantity) || quantity === 0) return null;
 
-  // Start a transaction
   return db.$transaction(async tx => {
-    // 1. Create Stock Adjustment
+    const member = await tx.member.findUnique({
+      where: { id: context.memberId },
+    });
+    const isPrivileged = member?.role === "OWNER" || member?.role === "ADMIN";
+    const status = (data.autoApprove !== undefined ? data.autoApprove : isPrivileged)
+      ? AdjustmentStatus.APPROVED
+      : AdjustmentStatus.PENDING;
+
     const adjustment = await tx.stockAdjustment.create({
       data: {
         variantId,
@@ -1127,38 +1137,24 @@ export async function adjustStock(data: {
         quantity: new Decimal(quantity),
         reason,
         notes,
-        status: AdjustmentStatus.APPROVED,
+        stockBatchId: data.stockBatchId,
+        status,
+        approvedById: status === AdjustmentStatus.APPROVED ? context.memberId : null,
+        approvedAt: status === AdjustmentStatus.APPROVED ? new Date() : null,
         organizationId: context.organizationId,
       },
     });
 
-    // 2. Create Stock Movement
-    await tx.stockMovement.create({
-      data: {
-        variantId,
-        quantity: new Decimal(quantity),
-        toLocationId: quantity > 0 ? locationId : null,
-        fromLocationId: quantity < 0 ? locationId : null,
-        movementType:
-          quantity > 0
-            ? MovementType.ADJUSTMENT_IN
-            : MovementType.ADJUSTMENT_OUT,
-        adjustmentId: adjustment.id,
-        memberId: context.memberId,
-        notes,
-        organizationId: context.organizationId,
-      },
-    });
+    if (data.attachmentIds && data.attachmentIds.length > 0) {
+      await tx.attachment.updateMany({
+        where: { id: { in: data.attachmentIds }, organizationId: context.organizationId },
+        data: { stockAdjustmentId: adjustment.id },
+      });
+    }
 
-    // 3. Update ProductVariantStock
-    const stock = await tx.productVariantStock.findUnique({
-      where: {
-        variantId_locationId: {
-          variantId,
-          locationId,
-        },
-      },
-    });
+    if (status === AdjustmentStatus.PENDING) {
+      return adjustment;
+    }
 
     const variant = await tx.productVariant.findUnique({
       where: { id: variantId },
@@ -1167,10 +1163,9 @@ export async function adjustStock(data: {
 
     if (!variant) throw new Error("Variant not found");
 
-    let batchId: string | undefined;
+    let batchId: string | undefined = data.stockBatchId;
 
-    // Create a batch if adding stock
-    if (quantity > 0) {
+    if (quantity > 0 && !batchId) {
       const batch = await tx.stockBatch.create({
         data: {
           organizationId: context.organizationId,
@@ -1185,6 +1180,56 @@ export async function adjustStock(data: {
       });
       batchId = batch.id;
     }
+
+    await tx.stockMovement.create({
+      data: {
+        variantId,
+        quantity: new Decimal(quantity),
+        toLocationId: quantity > 0 ? locationId : null,
+        fromLocationId: quantity < 0 ? locationId : null,
+        movementType:
+          quantity > 0
+            ? MovementType.ADJUSTMENT_IN
+            : MovementType.ADJUSTMENT_OUT,
+        adjustmentId: adjustment.id,
+        stockBatchId: batchId,
+        memberId: context.memberId,
+        notes,
+        organizationId: context.organizationId,
+        serialNumbers: data.serialNumbers
+          ? {
+              connect: data.serialNumbers.map(sn => ({
+                organizationId_serialNumber: {
+                  organizationId: context.organizationId,
+                  serialNumber: sn,
+                },
+              })),
+            }
+          : undefined,
+      },
+    });
+
+    if (data.serialNumbers && data.serialNumbers.length > 0) {
+      await tx.serialNumber.updateMany({
+        where: {
+          organizationId: context.organizationId,
+          serialNumber: { in: data.serialNumbers },
+        },
+        data: {
+          status: quantity > 0 ? "IN_STOCK" : "DAMAGED",
+          locationId: quantity > 0 ? locationId : null,
+        },
+      });
+    }
+
+    const stock = await tx.productVariantStock.findUnique({
+      where: {
+        variantId_locationId: {
+          variantId,
+          locationId,
+        },
+      },
+    });
 
     if (stock) {
       await tx.productVariantStock.update({

@@ -1,6 +1,6 @@
 # 0003 Organization Subscription and Checkout Flow
 
-- **Status**: Proposed
+- **Status**: Accepted
 - **Date**: 2026-10-30
 - **Mode**: FEATURE
 - **Build Approach**: End-to-end slice

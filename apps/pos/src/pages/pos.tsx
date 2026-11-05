@@ -78,32 +78,12 @@ export function POS() {
 
   const navigate = useNavigate();
   const [showTableSelector, setShowTableSelector] = useState(false);
-  const [showShiftAlert, setShowShiftAlert] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
-
-  useEffect(() => {
-    const checkActiveShift = async () => {
-      if (false) return;
-      if (typeof navigator !== 'undefined' && navigator.webdriver) {
-        // Bypass shift alert during automated end-to-end tests
-        return;
-      }
-      try {
-        const shift = await invoke<any>('get_shift_command');
-        if (!shift) {
-          setShowShiftAlert(true);
-        }
-      } catch (err) {
-        console.error('Failed to check shift status:', err);
-      }
-    };
-    checkActiveShift();
-  }, []);
   const lastProcessedBarcode = useRef<string | null>(null);
   const lastScanTime = useRef<number>(0);
 
   // Initialize scanner hook
-  const { startScanner, stopScanner, isConnected, lastScanned, clearLastScanned, error: scannerError } = useScanner();
+  const { startScanner, stopScanner, isConnected, lastScanned, clearLastScanned } = useScanner();
 
   // Shortcuts are now managed centrally in AppLayout
 
@@ -422,15 +402,6 @@ export function POS() {
 
     processScan();
   }, [lastScanned, clearLastScanned, addItemToOrder, pricingMode, currentOrder.customerId]);
-
-  useEffect(() => {
-    if (scannerError) {
-      toast.error('Scanner Error', {
-        description: scannerError,
-        duration: 2000,
-      });
-    }
-  }, [scannerError]);
 
   const handleOpenCustomerScreen = async () => {
     if (!settings.customerDisplayConfig?.enabled) {
@@ -906,30 +877,6 @@ export function POS() {
               }, 500);
             }}>
               Register Product
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      <AlertDialog open={showShiftAlert} onOpenChange={() => {}}>
-        <AlertDialogContent className="bg-slate-900 border border-slate-800 text-white">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="text-xl font-bold flex items-center gap-2">
-              No Active Shift / Cash Drawer Open
-            </AlertDialogTitle>
-            <AlertDialogDescription className="text-slate-400">
-              You must open the cash drawer (start a shift session) to create cash transactions and process orders. You will be redirected to the Shift Manager.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogAction
-              className="bg-primary text-primary-foreground font-bold"
-              onClick={() => {
-                setShowShiftAlert(false);
-                navigate('/cash-drawer');
-              }}
-            >
-              Open Cash Drawer / Go to Shift Manager
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

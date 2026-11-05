@@ -32,9 +32,11 @@ import {
   Search,
   Loader2,
   RotateCcw,
+  DollarSign,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
-import { reconcileDelivery } from "../../../actions/sales";
+import { reconcileDeliveryFull } from "@/app/actions/deliveries";
 
 export function ReconciliationClient({ fulfillments: initialFulfillments }: { fulfillments: any[] }) {
   const [fulfillments, setFulfillments] = useState(initialFulfillments);
@@ -45,6 +47,9 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
 
   const [receivedBy, setReceivedBy] = useState("");
   const [notes, setNotes] = useState("");
+  const [isDelivered, setIsDelivered] = useState(true);
+  const [codCollected, setCodCollected] = useState("");
+  const [returnedItemState, setReturnedItemState] = useState<{ [key: string]: { returned: number; damaged: number; reason: string } }>({});
 
   const filtered = fulfillments.filter(
     (f) =>
@@ -56,7 +61,21 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
   const handleOpenReconcile = (f: any) => {
     setSelectedFulfillment(f);
     setReceivedBy(f.receivedBy || f.transaction?.customer?.name || "");
-    setNotes("");
+    setNotes(f.reconciliationNotes || "");
+    setIsDelivered(f.status !== "CANCELLED" && f.status !== "FAILED");
+    setCodCollected(f.codAmountCollected ? String(f.codAmountCollected) : "");
+
+    const initialReturns: any = {};
+    if (f.items) {
+      f.items.forEach((item: any) => {
+        initialReturns[item.id] = {
+          returned: item.quantityReturned || 0,
+          damaged: item.quantityDamaged || 0,
+          reason: "",
+        };
+      });
+    }
+    setReturnedItemState(initialReturns);
     setDialogOpen(true);
   };
 
@@ -64,11 +83,22 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
     if (!selectedFulfillment) return;
     setSubmitting(true);
     try {
-      const res = await reconcileDelivery({
+      const returnedItemsPayload = Object.entries(returnedItemState)
+        .filter(([_, val]) => val.returned > 0)
+        .map(([itemId, val]) => ({
+          fulfillmentItemId: itemId,
+          quantityReturned: val.returned,
+          quantityDamaged: val.damaged,
+          reason: val.reason,
+        }));
+
+      const res = await reconcileDeliveryFull({
         fulfillmentId: selectedFulfillment.id,
-        isReconciled: true,
-        receivedBy,
-        reconciliationNotes: notes,
+        isDelivered,
+        receivedBy: receivedBy.trim() || undefined,
+        reconciliationNotes: notes.trim() || undefined,
+        codAmountCollected: codCollected ? parseFloat(codCollected) : undefined,
+        returnedItems: returnedItemsPayload.length > 0 ? returnedItemsPayload : undefined,
       });
 
       if (res.success) {
@@ -76,13 +106,19 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
         setFulfillments((prev) =>
           prev.map((item) =>
             item.id === selectedFulfillment.id
-              ? { ...item, isReconciled: true, receivedBy, reconciledAt: new Date().toISOString() }
+              ? {
+                  ...item,
+                  isReconciled: true,
+                  receivedBy,
+                  reconciledAt: new Date().toISOString(),
+                  codAmountCollected: codCollected ? parseFloat(codCollected) : item.codAmountCollected,
+                }
               : item
           )
         );
         setDialogOpen(false);
       } else {
-        toast.error(res.error || "Failed to reconcile delivery");
+        toast.error((res as any).error || "Failed to reconcile delivery");
       }
     } catch (err: any) {
       toast.error(err.message || "An error occurred during reconciliation");
@@ -145,23 +181,31 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
               )}
 
               <div className="flex items-center justify-between">
-                <span className="font-medium text-foreground">Items Delivered:</span>
-                <span>{ful.items?.length || 0} Line Items</span>
+                <span className="font-medium text-foreground">Total Order Amount:</span>
+                <span className="font-semibold text-foreground">
+                  ${Number(ful.transaction?.finalTotal || 0).toFixed(2)}
+                </span>
               </div>
+
+              {ful.codAmountCollected && (
+                <div className="flex items-center justify-between text-emerald-600 dark:text-emerald-400">
+                  <span className="font-medium">COD Collected:</span>
+                  <span className="font-bold">${Number(ful.codAmountCollected).toFixed(2)}</span>
+                </div>
+              )}
 
               <div className="pt-2 border-t border-border/40 flex items-center justify-between">
                 <span className="text-[11px]">
                   {ful.deliveredAt
                     ? `Delivered: ${new Date(ful.deliveredAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`
-                    : "Status: In-Transit"}
+                    : "Status: " + ful.status}
                 </span>
                 <Button
                   size="sm"
                   variant={ful.isReconciled ? "outline" : "default"}
                   onClick={() => handleOpenReconcile(ful)}
-                  disabled={ful.isReconciled}
                 >
-                  {ful.isReconciled ? "View Record" : "Audit & Reconcile"}
+                  {ful.isReconciled ? "Review Audit" : "Audit & Reconcile"}
                 </Button>
               </div>
             </CardContent>
@@ -179,36 +223,59 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
 
       {/* Audit & Reconcile Dialog */}
       <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[560px] max-h-[85vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Reconcile Delivery
+              <CheckCircle2 className="w-5 h-5 text-emerald-600 dark:text-emerald-400" /> Enterprise Delivery Reconciliation
             </DialogTitle>
             <DialogDescription>
-              Verify handover details, recipient signatures, and trigger driver/partner wallet adjustments.
+              Verify handover details, recipient signatures, Cash on Delivery payments, and restock returned batches.
             </DialogDescription>
           </DialogHeader>
 
           {selectedFulfillment && (
-            <div className="space-y-4 py-2">
-              <div className="p-3 bg-muted/40 rounded-lg space-y-1 text-xs">
+            <div className="space-y-4 py-2 text-xs">
+              <div className="p-3 bg-muted/40 rounded-lg space-y-1.5">
                 <div className="flex justify-between">
-                  <span className="font-semibold">Order Number:</span>
-                  <span>{selectedFulfillment.transaction?.number}</span>
+                  <span className="text-muted-foreground">Order Number:</span>
+                  <span className="font-bold">{selectedFulfillment.transaction?.number}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="font-semibold">Assigned Driver:</span>
-                  <span>{selectedFulfillment.driver?.name || "Unassigned"}</span>
+                  <span className="text-muted-foreground">Assigned Driver:</span>
+                  <span className="font-semibold">{selectedFulfillment.driver?.name || "Unassigned"}</span>
                 </div>
-                {selectedFulfillment.driver?.deliveryPartner && (
-                  <div className="flex justify-between text-emerald-600 dark:text-emerald-400 font-semibold">
-                    <span>Partner Fixed Payout:</span>
-                    <span>${selectedFulfillment.driver.deliveryPartner.fixedFee || "0.00"}</span>
-                  </div>
-                )}
+                <div className="flex justify-between">
+                  <span className="text-muted-foreground">Order Total:</span>
+                  <span className="font-semibold">${Number(selectedFulfillment.transaction?.finalTotal || 0).toFixed(2)}</span>
+                </div>
               </div>
 
-              <div className="space-y-2">
+              {/* Delivery Outcome Selection */}
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Delivery Outcome</Label>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={isDelivered ? "default" : "outline"}
+                    onClick={() => setIsDelivered(true)}
+                    className="flex-1"
+                  >
+                    Successful Delivery
+                  </Button>
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant={!isDelivered ? "destructive" : "outline"}
+                    onClick={() => setIsDelivered(false)}
+                    className="flex-1"
+                  >
+                    Failed / Returned
+                  </Button>
+                </div>
+              </div>
+
+              <div className="space-y-1.5">
                 <Label className="text-xs font-semibold">Received By / Recipient Name</Label>
                 <Input
                   value={receivedBy}
@@ -217,13 +284,83 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label className="text-xs font-semibold">Reconciliation Notes & Verification</Label>
+              {/* COD Recording */}
+              <div className="space-y-1.5 p-3 rounded-lg border border-border/60 bg-muted/20">
+                <Label className="text-xs font-semibold flex items-center gap-1.5">
+                  <DollarSign className="w-3.5 h-3.5 text-emerald-600" /> Cash on Delivery (COD) Amount Received
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={codCollected}
+                  onChange={(e) => setCodCollected(e.target.value)}
+                  placeholder="Enter collected cash to create payment automatically"
+                />
+              </div>
+
+              {/* Line Items & Returns Restocking */}
+              {selectedFulfillment.items && selectedFulfillment.items.length > 0 && (
+                <div className="space-y-2 border-t pt-3">
+                  <Label className="text-xs font-semibold flex items-center gap-1">
+                    <RotateCcw className="w-3.5 h-3.5" /> Returned Items & Batch Restocking
+                  </Label>
+                  <div className="space-y-2">
+                    {selectedFulfillment.items.map((item: any) => {
+                      const state = returnedItemState[item.id] || { returned: 0, damaged: 0, reason: "" };
+                      return (
+                        <div key={item.id} className="p-2.5 rounded border border-border/60 space-y-2">
+                          <div className="flex justify-between font-medium">
+                            <span>{item.transactionItem?.productName || "Product Line Item"}</span>
+                            <span className="text-muted-foreground">Qty Handed Over: {item.quantity}</span>
+                          </div>
+                          <div className="grid grid-cols-2 gap-2">
+                            <div>
+                              <span className="text-[10px] text-muted-foreground">Qty Returned</span>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={item.quantity}
+                                value={state.returned}
+                                onChange={(e) =>
+                                  setReturnedItemState((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...state, returned: parseInt(e.target.value) || 0 },
+                                  }))
+                                }
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                            <div>
+                              <span className="text-[10px] text-muted-foreground">Qty Damaged (Waste)</span>
+                              <Input
+                                type="number"
+                                min={0}
+                                max={state.returned}
+                                value={state.damaged}
+                                onChange={(e) =>
+                                  setReturnedItemState((prev) => ({
+                                    ...prev,
+                                    [item.id]: { ...state, damaged: parseInt(e.target.value) || 0 },
+                                  }))
+                                }
+                                className="h-7 text-xs"
+                              />
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold">Audit & Reconciliation Notes</Label>
                 <Textarea
                   value={notes}
                   onChange={(e) => setNotes(e.target.value)}
-                  placeholder="Note any cash collected, POD status, returned items, or delivery discrepancies..."
-                  rows={3}
+                  placeholder="Record POD review, discrepancy notes, or cash handover..."
+                  rows={2}
                 />
               </div>
             </div>
@@ -235,7 +372,7 @@ export function ReconciliationClient({ fulfillments: initialFulfillments }: { fu
             </Button>
             <Button onClick={handleConfirmReconcile} disabled={submitting}>
               {submitting && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Confirm & Complete Reconciliation
+              Confirm Reconciliation
             </Button>
           </DialogFooter>
         </DialogContent>

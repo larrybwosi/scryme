@@ -117,6 +117,7 @@ describe("Android Controller Suite", () => {
         getStaffTasks: vi.fn(),
         createStaffTask: vi.fn(),
         updateStaffTask: vi.fn(),
+        deleteStaffTask: vi.fn(),
       };
       controller = new AndroidShiftsController(mockUseCase);
     });
@@ -141,6 +142,16 @@ describe("Android Controller Suite", () => {
       expect(mockUseCase.createStaffTask).toHaveBeenCalledWith(req.v3Context, dto);
       expect(res.title).toBe("Clean registers");
     });
+
+    it("deleteStaffTask should delegate task deletion", async () => {
+      const req = { v3Context: { organizationId: "org-1" } };
+      mockUseCase.deleteStaffTask.mockResolvedValue({ id: "task-1", deleted: true });
+
+      const res = await controller.deleteStaffTask(req, "task-1");
+
+      expect(mockUseCase.deleteStaffTask).toHaveBeenCalledWith(req.v3Context, "task-1");
+      expect(res.deleted).toBe(true);
+    });
   });
 
   describe("AndroidBranchController", () => {
@@ -151,6 +162,10 @@ describe("Android Controller Suite", () => {
       mockUseCase = {
         getBranchLocations: vi.fn(),
         getBranchDetails: vi.fn(),
+        createBranch: vi.fn(),
+        updateBranch: vi.fn(),
+        updateBranchCoordinates: vi.fn(),
+        deleteBranch: vi.fn(),
       };
       controller = new AndroidBranchController(mockUseCase);
     });
@@ -163,6 +178,28 @@ describe("Android Controller Suite", () => {
 
       expect(mockUseCase.getBranchLocations).toHaveBeenCalledWith(req.v3Context);
       expect(res.locations).toHaveLength(1);
+    });
+
+    it("updateBranchCoordinates should delegate to branch use case", async () => {
+      const req = { v3Context: { organizationId: "org-1" } };
+      const dto = { latitude: -1.28, longitude: 36.82 };
+      mockUseCase.updateBranchCoordinates.mockResolvedValue({ id: "loc-1", ...dto });
+
+      const res = await controller.updateBranchCoordinates(req, "loc-1", dto);
+
+      expect(mockUseCase.updateBranchCoordinates).toHaveBeenCalledWith(req.v3Context, "loc-1", dto);
+      expect(res.latitude).toBe(-1.28);
+    });
+
+    it("updateBranch should delegate to branch use case", async () => {
+      const req = { v3Context: { organizationId: "org-1" } };
+      const dto = { name: "Updated Name" };
+      mockUseCase.updateBranch.mockResolvedValue({ id: "loc-1", name: "Updated Name" });
+
+      const res = await controller.updateBranch(req, "loc-1", dto);
+
+      expect(mockUseCase.updateBranch).toHaveBeenCalledWith(req.v3Context, "loc-1", dto);
+      expect(res.name).toBe("Updated Name");
     });
   });
 

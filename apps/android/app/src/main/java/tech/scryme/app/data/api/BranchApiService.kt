@@ -7,8 +7,12 @@ import retrofit2.http.GET
 import retrofit2.http.PATCH
 import retrofit2.http.POST
 import retrofit2.http.Path
+import retrofit2.http.Query
+import tech.scryme.app.data.dto.BranchActivityResponseDto
 import tech.scryme.app.data.dto.BranchDto
 import tech.scryme.app.data.dto.BranchListResponseDto
+import tech.scryme.app.data.dto.BranchSalesResponseDto
+import tech.scryme.app.data.dto.BranchStockMovementsResponseDto
 import tech.scryme.app.data.dto.CreateBranchRequestDto
 import tech.scryme.app.data.dto.UpdateBranchCoordinatesDto
 import tech.scryme.app.data.dto.UpdateBranchRequestDto
@@ -23,6 +27,24 @@ interface BranchApiService {
     suspend fun getBranchDetails(
         @Path("id") id: String
     ): Response<V3ApiResponse<BranchDto>>
+
+    @GET("android/branches/locations/{id}/activity")
+    suspend fun getBranchActivity(
+        @Path("id") id: String,
+        @Query("limit") limit: Int = 20
+    ): Response<V3ApiResponse<BranchActivityResponseDto>>
+
+    @GET("android/branches/locations/{id}/sales")
+    suspend fun getBranchSales(
+        @Path("id") id: String,
+        @Query("limit") limit: Int = 20
+    ): Response<V3ApiResponse<BranchSalesResponseDto>>
+
+    @GET("android/branches/locations/{id}/stock-movements")
+    suspend fun getBranchStockMovements(
+        @Path("id") id: String,
+        @Query("limit") limit: Int = 20
+    ): Response<V3ApiResponse<BranchStockMovementsResponseDto>>
 
     @POST("android/branches/locations")
     suspend fun createBranch(

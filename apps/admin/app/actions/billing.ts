@@ -896,6 +896,10 @@ export type PricingConfigData = {
     symbol: string;
     name: string;
     badge: string;
+    free?: {
+      monthly: { amount: string; period: string };
+      annual: { amount: string; period: string; billedNote?: string };
+    };
     growth: {
       monthly: { amount: string; period: string };
       annual: { amount: string; period: string; billedNote?: string };
@@ -929,6 +933,10 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         symbol: "$",
         name: "USD ($)",
         badge: "Global USD",
+        free: {
+          monthly: { amount: "$0", period: "/ month" },
+          annual: { amount: "$0", period: "/ month" },
+        },
         growth: {
           monthly: { amount: "$599", period: "/ month" },
           annual: {
@@ -955,6 +963,10 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         symbol: "KSh ",
         name: "KSh (M-Pesa)",
         badge: "M-Pesa Direct",
+        free: {
+          monthly: { amount: "KSh 0", period: "/ month" },
+          annual: { amount: "KSh 0", period: "/ month" },
+        },
         growth: {
           monthly: { amount: "KSh 78,000", period: "/ month" },
           annual: {
@@ -981,6 +993,10 @@ export async function getPricingConfig(): Promise<PricingConfigData> {
         symbol: "€",
         name: "EUR (€)",
         badge: "Eurozone SEPA",
+        free: {
+          monthly: { amount: "€0", period: "/ month" },
+          annual: { amount: "€0", period: "/ month" },
+        },
         growth: {
           monthly: { amount: "€550", period: "/ month" },
           annual: {

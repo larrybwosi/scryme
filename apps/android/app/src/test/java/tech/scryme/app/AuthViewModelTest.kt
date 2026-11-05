@@ -9,6 +9,8 @@ import org.junit.After
 import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
+import tech.scryme.app.analytics.OpenPanelTracker
+import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.repository.AuthRepository
 import tech.scryme.app.ui.auth.AuthUiState
 import tech.scryme.app.ui.auth.AuthViewModel
@@ -18,13 +20,15 @@ class AuthViewModelTest {
 
     private val testDispatcher = StandardTestDispatcher()
     private val authRepository = mockk<AuthRepository>()
+    private val sessionManager = mockk<SessionManager>(relaxed = true)
+    private val openPanelTracker = mockk<OpenPanelTracker>(relaxed = true)
     private lateinit var viewModel: AuthViewModel
 
     @Before
     fun setUp() {
         Dispatchers.setMain(testDispatcher)
         every { authRepository.isLoggedIn() } returns flowOf(false)
-        viewModel = AuthViewModel(authRepository)
+        viewModel = AuthViewModel(authRepository, sessionManager, openPanelTracker)
     }
 
     @After

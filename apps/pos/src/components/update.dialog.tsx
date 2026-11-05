@@ -102,7 +102,7 @@ const markdownOptions = {
 interface UpdateDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  /** Snooze: remind me later (24 h). */
+  /** Dismiss: snooze (24 h) while pending, or just close once installed. */
   onClose: () => void;
   /** Skip: never prompt for this version again. */
   onSkip: () => void;
@@ -110,6 +110,8 @@ interface UpdateDialogProps {
   releaseNotes: string | null;
   isCritical: boolean;
   status?: string;
+  /** Error message shown when status === 'ERROR'. */
+  error?: string | null;
 }
 
 // ─── Component ───────────────────────────────────────────────────────────────
@@ -123,6 +125,7 @@ export function UpdateDialog({
   releaseNotes,
   isCritical,
   status,
+  error,
 }: UpdateDialogProps) {
   const [isMounted, setIsMounted] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -135,6 +138,12 @@ export function UpdateDialog({
       return () => clearTimeout(t);
     }
   }, [open]);
+
+  // The download runs after "Download Update" is clicked, so the button's
+  // loading state must be cleared once the install finishes or fails.
+  useEffect(() => {
+    if (status === 'DONE' || status === 'ERROR') setIsLoading(false);
+  }, [status]);
 
   if (!isMounted) return null;
 
@@ -284,20 +293,23 @@ export function UpdateDialog({
               <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
 
               <div className="flex items-center justify-end gap-3">
-                <button
-                  onClick={onClose}
-                  className="ud-btn-ghost h-9 rounded-lg px-4 text-[13px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
-                >
-                  Later
-                </button>
+                {/* Critical updates can't be postponed */}
+                {!isCritical && (
+                  <button
+                    onClick={onClose}
+                    className="ud-btn-ghost h-9 rounded-lg px-4 text-[13px] font-medium text-zinc-500 hover:bg-zinc-100 hover:text-zinc-700 dark:text-zinc-400 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-200 dark:focus-visible:ring-zinc-700"
+                  >
+                    Later
+                  </button>
+                )}
                 <button
                   onClick={handleConfirm}
                   disabled={isLoading}
-                  className="ud-btn-primary h-9 rounded-lg px-5 text-[13px] font-semibold inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
+                  className="ud-btn-primary h-9 rounded-lg px-5 text-[13px] font-semibold inline-flex items-center gap-2 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 bg-zinc-900 text-white hover:bg-zinc-800 dark:bg-white dark:text-zinc-900 dark:hover:bg-zinc-100"
                 >
                   {isLoading ? (
                     <>
-                      <span className="ud-spinner" />
+                      <span className="ud-spinner dark:ud-spinner-dark" />
                       Restarting…
                     </>
                   ) : (
@@ -410,6 +422,13 @@ export function UpdateDialog({
                 </div>
               </div>
 
+              {/* ── ERROR BANNER ── */}
+              {status === 'ERROR' && error && (
+                <div className="mx-6 mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-[12px] leading-relaxed text-red-600 dark:border-red-900/50 dark:bg-red-950/30 dark:text-red-400">
+                  Update failed: {error}. You can try again.
+                </div>
+              )}
+
               {/* Divider */}
               <div className="h-px bg-zinc-100 dark:bg-zinc-800/80" />
 
@@ -463,6 +482,11 @@ export function UpdateDialog({
                       <>
                         <span className={`ud-spinner ${!isCritical ? 'dark:ud-spinner-dark' : ''}`} />
                         {isCritical ? 'Installing…' : 'Downloading…'}
+                      </>
+                    ) : status === 'ERROR' ? (
+                      <>
+                        Try Again
+                        <ArrowRight className="h-3.5 w-3.5" />
                       </>
                     ) : isCritical ? (
                       <>

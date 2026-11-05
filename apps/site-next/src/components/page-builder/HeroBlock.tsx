@@ -35,7 +35,7 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12 lg:items-center">
           <div className="lg:col-span-7">
             {badge && (
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d2ff3a]/30 bg-[#d2ff3a]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#d2ff3a]">
+              <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#d2ff3a]/30 bg-[#d2ff3a]/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#d2ff3a] animate-pulse" />
                 {badge}
               </div>
@@ -65,7 +65,7 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({
               {secondaryCtaText && secondaryCtaLink && (
                 <a
                   href={secondaryCtaLink}
-                  className="inline-flex items-center gap-2 rounded-full border border-[var(--card-border)] bg-[var(--card-bg)] px-7 py-3.5 text-base font-medium text-[var(--text-main)] hover:bg-white/10 transition-all duration-200"
+                  className="inline-flex items-center gap-2 rounded-full border border-[var(--border-prominent)] bg-[var(--card-bg)] px-7 py-3.5 text-base font-medium text-[var(--text-main)] hover:bg-black/5 dark:hover:bg-white/10 transition-all duration-200"
                 >
                   {secondaryCtaText}
                 </a>
@@ -74,7 +74,7 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({
 
             {ratingText && (
               <div className="mt-8 flex items-center gap-3 text-sm text-[var(--text-muted)]">
-                <div className="flex text-amber-400">
+                <div className="flex text-amber-500 dark:text-amber-400">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 fill-amber-400" />
                   ))}

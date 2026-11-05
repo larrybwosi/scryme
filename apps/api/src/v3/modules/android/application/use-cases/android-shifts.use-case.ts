@@ -293,23 +293,52 @@ export class AndroidShiftsUseCase {
       orderBy: { createdAt: "desc" },
     });
 
-    return tasks.map((t) => ({
-      id: t.id,
-      title: t.title,
-      description: t.description || "",
-      status: t.status,
-      priority: t.priority || "MEDIUM",
-      dueDate: t.dueDate ? t.dueDate.toISOString() : null,
-      assignedMemberId: t.memberId,
-      assignedMemberName: t.member?.user?.name || null,
-      estimatedHours: null,
-      actualHours: null,
-      assessment: this.taskAssessmentStore.get(t.id) || null,
-    }));
+    return tasks.map((t) => {
+      let subtaskGroups = null;
+      let category = "UI/UX Design";
+      let dueTime = null;
+      let estimatedHours = null;
+      let actualHours = null;
+
+      if (t.checklist && typeof t.checklist === "object") {
+        const cl = t.checklist as any;
+        if (Array.isArray(cl.subtaskGroups)) {
+          subtaskGroups = cl.subtaskGroups;
+        }
+        if (cl.category) category = cl.category;
+        if (cl.dueTime) dueTime = cl.dueTime;
+        if (cl.estimatedHours !== undefined) estimatedHours = cl.estimatedHours;
+        if (cl.actualHours !== undefined) actualHours = cl.actualHours;
+      }
+
+      return {
+        id: t.id,
+        title: t.title,
+        description: t.description || "",
+        status: t.status,
+        priority: t.priority || "MEDIUM",
+        category,
+        dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+        dueTime,
+        assignedMemberId: t.memberId,
+        assignedMemberName: t.member?.user?.name || null,
+        estimatedHours,
+        actualHours,
+        assessment: this.taskAssessmentStore.get(t.id) || null,
+        subtaskGroups,
+      };
+    });
   }
 
   async createStaffTask(v3Context: any, dto: AndroidCreateTaskDto) {
     const { organizationId, memberId } = v3Context;
+
+    const checklistPayload: any = {
+      category: dto.category || "UI/UX Design",
+      dueTime: dto.dueTime || null,
+      estimatedHours: dto.estimatedHours || null,
+      subtaskGroups: dto.subtaskGroups || [],
+    };
 
     const task = await this.prisma.client.staffTask.create({
       data: {
@@ -320,6 +349,10 @@ export class AndroidShiftsUseCase {
         memberId: dto.assignedMemberId || memberId,
         priority: (dto.priority as TaskPriority) || TaskPriority.MEDIUM,
         status: TaskStatus.TODO,
+        checklist: checklistPayload,
+      },
+      include: {
+        member: { select: { user: { select: { name: true } } } },
       },
     });
 
@@ -329,15 +362,81 @@ export class AndroidShiftsUseCase {
       description: task.description || "",
       status: task.status,
       priority: task.priority,
+      category: checklistPayload.category,
       dueDate: task.dueDate ? task.dueDate.toISOString() : null,
+      dueTime: checklistPayload.dueTime,
       assignedMemberId: task.memberId,
-      estimatedHours: null,
+      assignedMemberName: task.member?.user?.name || null,
+      estimatedHours: checklistPayload.estimatedHours,
       actualHours: null,
       assessment: null,
+      subtaskGroups: checklistPayload.subtaskGroups,
     };
   }
 
   async updateStaffTask(v3Context: any, id: string, dto: AndroidUpdateTaskDto) {
+    const { organizationId } = v3Context;
+
+    const task = await this.prisma.client.staffTask.findFirst({
+      where: { id, organizationId },
+      include: {
+        member: { select: { user: { select: { name: true } } } },
+      },
+    });
+
+    if (!task) {
+      throw new NotFoundException(`Task '${id}' not found`);
+    }
+
+    const currentChecklist: any = (task.checklist && typeof task.checklist === "object") ? { ...(task.checklist as any) } : {};
+    if (dto.category !== undefined) currentChecklist.category = dto.category;
+    if (dto.dueTime !== undefined) currentChecklist.dueTime = dto.dueTime;
+    if (dto.estimatedHours !== undefined) currentChecklist.estimatedHours = dto.estimatedHours;
+    if (dto.actualHours !== undefined) currentChecklist.actualHours = dto.actualHours;
+    if (dto.subtaskGroups !== undefined) currentChecklist.subtaskGroups = dto.subtaskGroups;
+
+    const updateData: any = {
+      title: dto.title || task.title,
+      description: dto.description !== undefined ? dto.description : task.description,
+      status: (dto.status as TaskStatus) || task.status,
+      priority: (dto.priority as TaskPriority) || task.priority,
+      checklist: currentChecklist,
+    };
+
+    if (dto.dueDate !== undefined) {
+      updateData.dueDate = dto.dueDate ? new Date(dto.dueDate) : null;
+    }
+    if (dto.assignedMemberId !== undefined) {
+      updateData.memberId = dto.assignedMemberId || null;
+    }
+
+    const updated = await this.prisma.client.staffTask.update({
+      where: { id },
+      data: updateData,
+      include: {
+        member: { select: { user: { select: { name: true } } } },
+      },
+    });
+
+    return {
+      id: updated.id,
+      title: updated.title,
+      description: updated.description || "",
+      status: updated.status,
+      priority: updated.priority,
+      category: currentChecklist.category || "UI/UX Design",
+      dueDate: updated.dueDate ? updated.dueDate.toISOString() : null,
+      dueTime: currentChecklist.dueTime || null,
+      assignedMemberId: updated.memberId,
+      assignedMemberName: updated.member?.user?.name || null,
+      estimatedHours: currentChecklist.estimatedHours || null,
+      actualHours: currentChecklist.actualHours || null,
+      assessment: this.taskAssessmentStore.get(id) || null,
+      subtaskGroups: currentChecklist.subtaskGroups || [],
+    };
+  }
+
+  async deleteStaffTask(v3Context: any, id: string) {
     const { organizationId } = v3Context;
 
     const task = await this.prisma.client.staffTask.findFirst({
@@ -348,23 +447,16 @@ export class AndroidShiftsUseCase {
       throw new NotFoundException(`Task '${id}' not found`);
     }
 
-    const updated = await this.prisma.client.staffTask.update({
-      where: { id },
-      data: {
-        title: dto.title || task.title,
-        description: dto.description ?? task.description,
-        status: (dto.status as TaskStatus) || task.status,
-        priority: (dto.priority as TaskPriority) || task.priority,
-      },
+    // BOLA defense: deleteMany scoped strictly by id and organizationId
+    await this.prisma.client.staffTask.deleteMany({
+      where: { id, organizationId },
     });
 
+    this.taskAssessmentStore.delete(id);
+
     return {
-      id: updated.id,
-      title: updated.title,
-      description: updated.description || "",
-      status: updated.status,
-      priority: updated.priority,
-      assessment: this.taskAssessmentStore.get(id) || null,
+      id,
+      deleted: true,
     };
   }
 

@@ -75,20 +75,20 @@ export function CategoryManager({
 
   return (
     <div className="h-full flex flex-col">
-      <div className="p-6 border-b border-zinc-100 flex items-center justify-between bg-zinc-50/50">
+      <div className="p-6 border-b border-border/60 flex items-center justify-between bg-muted/40">
         <div>
-          <h3 className="text-base font-bold text-zinc-900">
+          <h3 className="text-base font-bold text-foreground">
             Expense Categories
           </h3>
-          <p className="text-xs text-zinc-500 mt-0.5">
+          <p className="text-xs text-muted-foreground mt-0.5">
             Categorize and map expenses to General Ledger
           </p>
         </div>
       </div>
 
-      <div className="p-6 border-b border-zinc-100 flex items-center gap-4 bg-white sticky top-0 z-10">
+      <div className="p-6 border-b border-border/60 flex items-center gap-4 bg-card sticky top-0 z-10">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-zinc-400" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
           <Input
             placeholder="Search categories..."
             className="pl-9 h-10 text-sm"
@@ -110,23 +110,23 @@ export function CategoryManager({
             {filtered.map(cat => (
               <div
                 key={cat.id}
-                className="p-4 rounded-xl border border-zinc-200 bg-white hover:border-zinc-300 transition-all flex items-center justify-between group">
+                className="p-4 rounded-xl border border-border bg-card hover:border-border transition-all flex items-center justify-between group">
                 <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-zinc-100 flex items-center justify-center text-zinc-400 group-hover:bg-zinc-200 transition-colors">
+                  <div className="w-10 h-10 rounded-xl bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-muted/80 transition-colors">
                     <Tag className="w-5 h-5" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-zinc-900 flex items-center gap-2">
+                    <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
                       {cat.name}
                     </h4>
                     <div className="flex items-center gap-2 mt-0.5">
                       <span className="text-[10px] font-mono text-[#34A853] font-bold">
                         {cat.code || "NO-CODE"}
                       </span>
-                      <span className="text-[10px] text-zinc-300">•</span>
+                      <span className="text-[10px] text-muted-foreground/60">•</span>
                       <div className="flex items-center gap-1">
-                        <Lock className="w-2.5 h-2.5 text-zinc-400" />
-                        <span className="text-[10px] text-zinc-400 font-medium">
+                        <Lock className="w-2.5 h-2.5 text-muted-foreground" />
+                        <span className="text-[10px] text-muted-foreground font-medium">
                           GL: {cat.glCode || "Unmapped"}
                         </span>
                       </div>
@@ -136,10 +136,10 @@ export function CategoryManager({
 
                 <div className="flex items-center gap-4">
                   <div className="text-right hidden md:block">
-                    <p className="text-[10px] text-zinc-400 font-bold uppercase">
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase">
                       Approvals
                     </p>
-                    <p className="text-xs font-semibold text-zinc-700">
+                    <p className="text-xs font-semibold text-foreground/90">
                       {cat.requiresApproval ? "Mandatory" : "Optional"}
                     </p>
                   </div>

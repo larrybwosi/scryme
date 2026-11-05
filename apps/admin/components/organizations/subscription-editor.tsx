@@ -33,6 +33,9 @@ import {
 interface SubscriptionEditorProps {
   organizationId: string;
   subscription: {
+    status?: string | null;
+    trialStartedAt?: Date | string | null;
+    trialEndsAt?: Date | string | null;
     tierSlug: string;
     status?: string | null;
     trialStartedAt?: Date | null;
@@ -64,7 +67,7 @@ export function SubscriptionEditor({
   const [subStatus, setSubStatus] = useState<string>(
     subscription.status || "ACTIVE",
   );
-  const [trialEndsAt, setTrialEndsAt] = useState(
+  const [trialEndsAt, setTrialEndsAt] = useState<string>(
     subscription.trialEndsAt
       ? new Date(subscription.trialEndsAt).toISOString().slice(0, 10)
       : "",

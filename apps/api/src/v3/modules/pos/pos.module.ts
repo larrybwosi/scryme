@@ -1,3 +1,4 @@
+import { ProductionModule } from "../production/production.module";
 import { CrmModule } from "../crm/crm.module";
 import { AutomationModule } from "../../../automation/automation.module";
 import { Module, Global, forwardRef } from "@nestjs/common";
@@ -22,6 +23,7 @@ import { FinanceModule } from "../finance/finance.module";
 @Module({
   imports: [
     forwardRef(() => AutomationModule),
+    forwardRef(() => ProductionModule),
     PrismaModule,
     InventoryModule,
     CatalogModule,

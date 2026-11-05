@@ -4,21 +4,21 @@ import retrofit2.Response
 import retrofit2.http.GET
 import retrofit2.http.Path
 import retrofit2.http.Query
+import tech.scryme.app.data.dto.OrderItemDto
+import tech.scryme.app.data.dto.SalesAnalyticsDto
 import tech.scryme.app.data.dto.V3ApiResponse
-import tech.scryme.app.domain.model.OrderItem
-import tech.scryme.app.domain.model.SalesAnalytics
 
 interface SalesApiService {
     @GET("sales/analytics")
-    suspend fun getAnalytics(): Response<V3ApiResponse<SalesAnalytics>>
+    suspend fun getAnalytics(): Response<V3ApiResponse<SalesAnalyticsDto>>
 
     @GET("sales/orders")
     suspend fun getOrders(
         @Query("query") query: String? = null
-    ): Response<V3ApiResponse<List<OrderItem>>>
+    ): Response<V3ApiResponse<List<OrderItemDto>>>
 
     @GET("sales/orders/{id}")
     suspend fun getOrderDetails(
         @Path("id") id: String
-    ): Response<V3ApiResponse<OrderItem>>
+    ): Response<V3ApiResponse<OrderItemDto>>
 }

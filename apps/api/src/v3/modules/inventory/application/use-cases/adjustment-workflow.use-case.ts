@@ -1,17 +1,19 @@
 import {
   Injectable,
-  Inject,
   NotFoundException,
   BadRequestException,
 } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ApprovalRequestType, ApprovalStatus } from "@repo/db";
+import { ApprovalRequestType, ApprovalStatus, MovementType, SerialNumberStatus } from "@repo/db";
 import { InventoryMovementService } from "../services/inventory-movement.service";
 import { emitStockAdjustment } from "@repo/shared/server";
 
 @Injectable()
 export class RequestStockAdjustmentUseCase {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly inventoryMovementService: InventoryMovementService,
+  ) {}
 
   async execute(
     organizationId: string,
@@ -23,16 +25,23 @@ export class RequestStockAdjustmentUseCase {
       reason: any; // StockAdjustmentReason
       notes?: string;
       stockBatchId?: string;
+      serialNumbers?: string[];
+      attachmentIds?: string[];
+      autoApprove?: boolean;
     },
   ) {
-    // SECURITY (Sentinel): Verify that linked resources belong to the authenticated tenant
-    const [variant, location] = await Promise.all([
+    const [variant, location, member] = await Promise.all([
       this.prisma.client.productVariant.findFirst({
         where: { id: data.variantId, product: { organizationId } },
       }),
       this.prisma.client.inventoryLocation.findFirst({
         where: { id: data.locationId, organizationId },
       }),
+      this.prisma.client.member?.findFirst
+        ? this.prisma.client.member.findFirst({
+            where: { id: memberId, organizationId },
+          })
+        : Promise.resolve(null),
     ]);
 
     if (!variant) throw new NotFoundException("Product variant not found");
@@ -45,7 +54,11 @@ export class RequestStockAdjustmentUseCase {
       if (!batch) throw new NotFoundException("Stock batch not found");
     }
 
-    return this.prisma.client.$transaction(async tx => {
+    const isPrivileged =
+      member && (member.role === "OWNER" || member.role === "ADMIN");
+    const shouldAutoApprove = data.autoApprove || isPrivileged;
+
+    return this.prisma.client.$transaction(async (tx) => {
       const adjustment = await tx.stockAdjustment.create({
         data: {
           organizationId,
@@ -56,7 +69,9 @@ export class RequestStockAdjustmentUseCase {
           reason: data.reason,
           notes: data.notes,
           stockBatchId: data.stockBatchId,
-          status: "PENDING",
+          status: shouldAutoApprove ? "APPROVED" : "PENDING",
+          approvedById: shouldAutoApprove ? memberId : null,
+          approvedAt: shouldAutoApprove ? new Date() : null,
         },
         include: {
           variant: { include: { product: true } },
@@ -64,20 +79,94 @@ export class RequestStockAdjustmentUseCase {
         },
       });
 
-      // Create Approval Request
-      await tx.approvalRequest.create({
-        data: {
-          organizationId,
-          requesterId: memberId,
-          requestType: ApprovalRequestType.STOCK_ADJUSTMENT,
-          relatedId: adjustment.id,
-          relatedRecordNumber: `ADJ-${adjustment.id.slice(-6)}`,
-          amount: 0, // Stock adjustments might not have a direct financial amount in the same way
-          status: ApprovalStatus.PENDING,
-        },
-      });
+      if (data.attachmentIds && data.attachmentIds.length > 0) {
+        await tx.attachment.updateMany({
+          where: { id: { in: data.attachmentIds }, organizationId },
+          data: { stockAdjustmentId: adjustment.id },
+        });
+      }
 
-      // Emit Windmill Event
+      if (!shouldAutoApprove) {
+        await tx.approvalRequest.create({
+          data: {
+            organizationId,
+            requesterId: memberId,
+            requestType: ApprovalRequestType.STOCK_ADJUSTMENT,
+            relatedId: adjustment.id,
+            relatedRecordNumber: `ADJ-${adjustment.id.slice(-6)}`,
+            amount: 0,
+            status: ApprovalStatus.PENDING,
+          },
+        });
+      } else {
+        const isIncrement =
+          [
+            "FOUND",
+            "ADJUSTMENT_IN",
+            "INITIAL_STOCK",
+            "CUSTOMER_RETURN",
+            "TRANSFER_IN",
+          ].includes(adjustment.reason as string) || Number(adjustment.quantity) > 0;
+        const quantityChange = adjustment.quantity;
+
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
+              variantId: adjustment.variantId,
+              locationId: adjustment.locationId,
+            },
+          },
+          create: {
+            organizationId,
+            productId: adjustment.variant.productId,
+            variantId: adjustment.variantId,
+            locationId: adjustment.locationId,
+            currentStock: quantityChange,
+            availableStock: quantityChange,
+          },
+          update: {
+            currentStock: { increment: quantityChange },
+            availableStock: { increment: quantityChange },
+          },
+        });
+
+        if (adjustment.stockBatchId) {
+          await tx.stockBatch.update({
+            where: { id: adjustment.stockBatchId },
+            data: { currentQuantity: { increment: quantityChange } },
+          });
+        } else if (Number(quantityChange) > 0) {
+          const newBatch = await tx.stockBatch.create({
+            data: {
+              organizationId,
+              variantId: adjustment.variantId,
+              locationId: adjustment.locationId,
+              initialQuantity: quantityChange,
+              currentQuantity: quantityChange,
+              purchasePrice: adjustment.variant.buyingPrice || 0,
+              receivedDate: new Date(),
+              batchNumber: `ADJ-${adjustment.id.slice(-6)}`,
+            },
+          });
+          adjustment.stockBatchId = newBatch.id;
+        }
+
+        await this.inventoryMovementService.recordMovement(tx, {
+          organizationId,
+          memberId: adjustment.memberId,
+          variantId: adjustment.variantId,
+          quantity: Math.abs(Number(adjustment.quantity)),
+          fromLocationId: isIncrement ? null : adjustment.locationId,
+          toLocationId: isIncrement ? adjustment.locationId : null,
+          movementType: isIncrement ? MovementType.ADJUSTMENT_IN : MovementType.ADJUSTMENT_OUT,
+          stockBatchId: adjustment.stockBatchId || undefined,
+          referenceId: adjustment.id,
+          referenceType: "StockAdjustment",
+          notes: adjustment.notes || undefined,
+          serialNumbers: data.serialNumbers,
+        });
+      }
+
       await emitStockAdjustment(organizationId, {
         adjustmentId: adjustment.id,
         variantName: `${adjustment.variant.product.name} ${adjustment.variant.name || ""}`,
@@ -85,11 +174,8 @@ export class RequestStockAdjustmentUseCase {
         quantity: Number(adjustment.quantity),
         reason: String(adjustment.reason),
         notes: adjustment.notes || undefined,
-      }).catch(err =>
-        console.error(
-          "[v3 StockAdjustment] Failed to emit Windmill event:",
-          err,
-        ),
+      }).catch((err) =>
+        console.error("[v3 StockAdjustment] Failed to emit Windmill event:", err),
       );
 
       return adjustment;
@@ -108,15 +194,9 @@ export class ApproveStockAdjustmentUseCase {
     organizationId: string,
     approvalMemberId: string,
     adjustmentId: string,
+    serialNumbers?: string[],
   ) {
-    return this.prisma.client.$transaction(async tx => {
-      /**
-       * OPTIMIZATION (Bolt ⚡): Eager load the variant relation's productId on stockAdjustment.
-       * This gives us O(1) direct access to `adjustment.variant.productId`, completely avoiding
-       * the sequential nested database query on `tx.productVariant.findUnique` inside the transaction.
-       */
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
-      // StockAdjustment lacks a composite unique index on [id, organizationId].
+    return this.prisma.client.$transaction(async (tx) => {
       const adjustment = await tx.stockAdjustment.findFirst({
         where: { id: adjustmentId, organizationId },
         include: { variant: { select: { productId: true } } },
@@ -127,7 +207,6 @@ export class ApproveStockAdjustmentUseCase {
       if (adjustment.status !== "PENDING")
         throw new BadRequestException("Adjustment is not in PENDING status");
 
-      // 1. Update adjustment status
       const updatedAdjustment = await tx.stockAdjustment.update({
         where: { id: adjustmentId },
         data: {
@@ -137,7 +216,6 @@ export class ApproveStockAdjustmentUseCase {
         },
       });
 
-      // 2. Update stock levels
       const isIncrement =
         [
           "FOUND",
@@ -145,10 +223,9 @@ export class ApproveStockAdjustmentUseCase {
           "INITIAL_STOCK",
           "CUSTOMER_RETURN",
           "TRANSFER_IN",
-        ].includes(adjustment.reason as string) || adjustment.quantity.gt(0);
+        ].includes(adjustment.reason as string) || Number(adjustment.quantity) > 0;
       const quantityChange = adjustment.quantity;
 
-      // Update variant stock summary
       await tx.productVariantStock.upsert({
         where: {
           variantId_locationId: {
@@ -170,7 +247,6 @@ export class ApproveStockAdjustmentUseCase {
         },
       });
 
-      // 3. Update batch if specified
       if (adjustment.stockBatchId) {
         await tx.stockBatch.update({
           where: { id: adjustment.stockBatchId },
@@ -178,9 +254,22 @@ export class ApproveStockAdjustmentUseCase {
             currentQuantity: { increment: quantityChange },
           },
         });
+      } else if (Number(quantityChange) > 0) {
+        const newBatch = await tx.stockBatch.create({
+          data: {
+            organizationId,
+            variantId: adjustment.variantId,
+            locationId: adjustment.locationId,
+            initialQuantity: quantityChange,
+            currentQuantity: quantityChange,
+            purchasePrice: (adjustment.variant as any).buyingPrice || 0,
+            receivedDate: new Date(),
+            batchNumber: `ADJ-${adjustment.id.slice(-6)}`,
+          },
+        });
+        adjustment.stockBatchId = newBatch.id;
       }
 
-      // 4. Create movement record via unified service
       await this.inventoryMovementService.recordMovement(tx, {
         organizationId,
         memberId: adjustment.memberId,
@@ -188,14 +277,14 @@ export class ApproveStockAdjustmentUseCase {
         quantity: Math.abs(Number(adjustment.quantity)),
         fromLocationId: isIncrement ? null : adjustment.locationId,
         toLocationId: isIncrement ? adjustment.locationId : null,
-        movementType: isIncrement ? "ADJUSTMENT_IN" : "ADJUSTMENT_OUT",
+        movementType: isIncrement ? MovementType.ADJUSTMENT_IN : MovementType.ADJUSTMENT_OUT,
         stockBatchId: adjustment.stockBatchId || undefined,
         referenceId: adjustment.id,
         referenceType: "StockAdjustment",
         notes: adjustment.notes || undefined,
+        serialNumbers,
       });
 
-      // 5. Update corresponding ApprovalRequest status to APPROVED
       await tx.approvalRequest.updateMany({
         where: {
           organizationId,
@@ -257,6 +346,7 @@ export class GetStockAdjustmentsUseCase {
               },
             },
           },
+          attachments: true,
         },
         skip: offset,
         take: limit,
@@ -284,9 +374,7 @@ export class RejectStockAdjustmentUseCase {
     adjustmentId: string,
     reason?: string,
   ) {
-    return this.prisma.client.$transaction(async tx => {
-      // SECURITY (Sentinel): Using findFirst instead of findUnique because
-      // StockAdjustment lacks a composite unique index on [id, organizationId].
+    return this.prisma.client.$transaction(async (tx) => {
       const adjustment = await tx.stockAdjustment.findFirst({
         where: { id: adjustmentId, organizationId },
       });
@@ -296,7 +384,6 @@ export class RejectStockAdjustmentUseCase {
       if (adjustment.status !== "PENDING")
         throw new BadRequestException("Adjustment is not in PENDING status");
 
-      // 1. Update adjustment status
       const updatedAdjustment = await tx.stockAdjustment.update({
         where: { id: adjustmentId },
         data: {
@@ -307,7 +394,6 @@ export class RejectStockAdjustmentUseCase {
         },
       });
 
-      // 2. Update corresponding ApprovalRequest status to REJECTED
       await tx.approvalRequest.updateMany({
         where: {
           organizationId,

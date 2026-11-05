@@ -126,7 +126,6 @@ export function InventoryTable({
             <SortableHeader title="Item name" column="name" />
             <TableHead>SKU</TableHead>
             <TableHead>Category</TableHead>
-            <TableHead>Supplier</TableHead>
             <SortableHeader title="Current Stock" column="currentStock" />
             <SortableHeader title="Unit Price" column="unitPrice" />
             <TableHead className="w-12.5"></TableHead>
@@ -177,9 +176,6 @@ export function InventoryTable({
                 </TableCell>
                 <TableCell className="text-sm text-gray-500">
                   {item.category}
-                </TableCell>
-                <TableCell className="text-sm text-gray-500">
-                  {item.supplier}
                 </TableCell>
                 <TableCell>
                   <div className="flex flex-col gap-1">

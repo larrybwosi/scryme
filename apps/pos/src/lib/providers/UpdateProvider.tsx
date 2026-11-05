@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useState, useEffect, useCallback, useContext, ReactNode } from 'react';
+import { createContext, useState, useEffect, useCallback, useContext, useRef, ReactNode } from 'react';
 import { check, Update } from '@tauri-apps/plugin-updater';
 import { relaunch } from '@tauri-apps/plugin-process';
 import { UpdateDialog } from '@/components/update.dialog';
@@ -32,12 +32,14 @@ export interface UpdaterContextType {
   error: string | null;
   /** Open the update dialog manually (e.g. from Settings) */
   openModal: () => void;
-  /** Close the update dialog (calls snooze) */
+  /** Close the update dialog (calls snooze, or just closes if already installed) */
   closeModal: () => void;
   /** Manually check for updates */
   checkForUpdates: () => Promise<void>;
   /** Start download & install manually (e.g. user clicked "Update Now") */
   startInstall: () => Promise<void>;
+  /** Restart the app to apply an installed update */
+  restartApp: () => Promise<void>;
   /** Hide update for 24 h (snooze) */
   snoozeUpdate: () => void;
   /** Skip this specific version permanently */
@@ -106,7 +108,7 @@ const ProgressToast = ({ progress }: { progress: number }) => (
     <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
       <div className="h-full bg-blue-600 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
     </div>
-    <p className="mt-2 text-xs text-gray-500">The application will restart automatically when finished.</p>
+    <p className="mt-2 text-xs text-gray-500">You will be asked to restart once the update is ready.</p>
   </div>
 );
 
@@ -139,14 +141,15 @@ export const UpdaterProvider = ({
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Mirror of `status` so async callbacks (polling) always see the latest value
+  const statusRef = useRef<UpdateStatus>('IDLE');
+  useEffect(() => {
+    statusRef.current = status;
+  }, [status]);
+
   // ── Modal controls ──────────────────────────────────────────────────────────
 
   const openModal = useCallback(() => setIsModalOpen(true), []);
-
-  const closeModal = useCallback(() => {
-    if (isCritical) return; // critical updates cannot be dismissed
-    setIsModalOpen(false);
-  }, [isCritical]);
 
   // ── Snooze: hide for snoozeDuration, re-prompt on next interval ─────────────
 
@@ -155,6 +158,18 @@ export const UpdaterProvider = ({
     setSnoozedUntil(Date.now() + snoozeDuration);
     setIsModalOpen(false);
   }, [isCritical, snoozeDuration]);
+
+  // ── Close: snooze if pending, plain close if already installed ──────────────
+
+  const closeModal = useCallback(() => {
+    if (isCritical) return; // critical updates cannot be dismissed
+    if (status === 'DONE') {
+      // Update is already installed; it will apply on next launch. Don't snooze.
+      setIsModalOpen(false);
+      return;
+    }
+    snoozeUpdate();
+  }, [isCritical, status, snoozeUpdate]);
 
   // ── Skip: never prompt for this specific version again ──────────────────────
 
@@ -168,50 +183,48 @@ export const UpdaterProvider = ({
 
   // ── Install ─────────────────────────────────────────────────────────────────
 
-  const triggerRelaunch = useCallback(async () => {
+  const restartApp = useCallback(async () => {
     clearSnooze();
     await relaunch();
   }, []);
 
-  const processUpdate = useCallback(
-    async (updateObj: Update) => {
-      setStatus('DOWNLOADING');
-      setIsModalOpen(false);
-      setError(null);
+  const processUpdate = useCallback(async (updateObj: Update) => {
+    setStatus('DOWNLOADING');
+    setDownloadProgress(0);
+    setIsModalOpen(false);
+    setError(null);
 
-      try {
-        let downloadedBytes = 0;
-        let totalBytes = 0;
+    try {
+      let downloadedBytes = 0;
+      let totalBytes = 0;
 
-        await updateObj.downloadAndInstall(progress => {
-          switch (progress.event) {
-            case 'Started':
-              totalBytes = progress.data.contentLength ?? 0;
-              break;
-            case 'Progress':
-              downloadedBytes += progress.data.chunkLength;
-              if (totalBytes > 0) {
-                setDownloadProgress(Math.round((downloadedBytes / totalBytes) * 100));
-              }
-              break;
-            case 'Finished':
-              setStatus('DONE');
-              break;
-          }
-        });
+      await updateObj.downloadAndInstall(progress => {
+        switch (progress.event) {
+          case 'Started':
+            totalBytes = progress.data.contentLength ?? 0;
+            break;
+          case 'Progress':
+            downloadedBytes += progress.data.chunkLength;
+            if (totalBytes > 0) {
+              setDownloadProgress(Math.round((downloadedBytes / totalBytes) * 100));
+            }
+            break;
+          // 'Finished' only means the download ended; install completes when
+          // downloadAndInstall resolves, so we handle that below.
+        }
+      });
 
-        // Clear any snooze/skip state now that we've installed
-        clearSnooze();
-        setStatus('DONE');
-        await triggerRelaunch();
-      } catch (e: any) {
-        setError(e.message ?? 'Failed to update');
-        setStatus('ERROR');
-        setIsModalOpen(true);
-      }
-    },
-    [triggerRelaunch]
-  );
+      // Installed. Ask the user to restart instead of relaunching automatically.
+      clearSnooze();
+      setDownloadProgress(100);
+      setStatus('DONE');
+      setIsModalOpen(true);
+    } catch (e: any) {
+      setError(e?.message ?? 'Failed to update');
+      setStatus('ERROR');
+      setIsModalOpen(true);
+    }
+  }, []);
 
   const startInstall = useCallback(async () => {
     if (!update) return;
@@ -235,8 +248,11 @@ export const UpdaterProvider = ({
   // ── Core check ─────────────────────────────────────────────────────────────
 
   const checkForUpdates = useCallback(async () => {
+    // Don't disturb an in-flight download or an installed-but-not-restarted update
+    if (statusRef.current === 'DOWNLOADING' || statusRef.current === 'DONE') return;
+
     const isConfigured = useAuthStore.getState().isConfigured;
-    if (false || !isConfigured) {
+    if (!isConfigured) {
       setStatus('IDLE');
       return;
     }
@@ -308,7 +324,7 @@ export const UpdaterProvider = ({
 
       setIsModalOpen(true);
     } catch (e: any) {
-      setError(e.message);
+      setError(e?.message ?? 'Failed to check for updates');
       setStatus('ERROR');
     }
   }, [deprecatedAfterDays, processUpdate]);
@@ -341,6 +357,7 @@ export const UpdaterProvider = ({
     closeModal,
     checkForUpdates,
     startInstall,
+    restartApp,
     snoozeUpdate,
     skipVersion,
   };
@@ -352,14 +369,15 @@ export const UpdaterProvider = ({
       <UpdateDialog
         open={isModalOpen}
         onOpenChange={open => {
-          if (!open) snoozeUpdate();
+          if (!open) closeModal();
         }}
-        onClose={snoozeUpdate}
+        onClose={closeModal}
         onSkip={skipVersion}
-        onConfirm={status === 'DONE' ? triggerRelaunch : startInstall}
+        onConfirm={status === 'DONE' ? restartApp : startInstall}
         releaseNotes={releaseNotes}
         isCritical={isCritical}
         status={status}
+        error={error}
       />
 
       {status === 'DOWNLOADING' && <ProgressToast progress={downloadProgress} />}

@@ -13,6 +13,10 @@ import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.ShiftBreak
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
+import tech.scryme.app.domain.model.StaffTask
+import tech.scryme.app.domain.model.SubtaskGroup
+import tech.scryme.app.domain.model.SubtaskItem
+import tech.scryme.app.domain.model.TimelineItem
 import tech.scryme.app.data.dto.AttendanceStatusDto
 import tech.scryme.app.domain.model.BranchLocation
 import tech.scryme.app.domain.model.UserProfile
@@ -27,10 +31,18 @@ import javax.inject.Inject
 sealed interface ScheduleUiState {
     object Loading : ScheduleUiState
     data class Success(
-        val myShifts: List<StaffShift>,
-        val teamShifts: List<StaffShift>,
-        val trades: List<ShiftTrade>,
-        val selectedTab: Int = 0, // 0: My Shifts, 1: Team Roster, 2: Shift Trades
+        val selectedDate: String = tech.scryme.app.util.DateUtils.getTodayString(),
+        val weekDays: List<tech.scryme.app.util.CalendarDay> = emptyList(),
+        val currentMonthTitle: String = "",
+        val isMonthPickerVisible: Boolean = false,
+        val monthPickerCalendar: java.util.Calendar = java.util.Calendar.getInstance(),
+        val monthGridDays: List<tech.scryme.app.util.CalendarDay> = emptyList(),
+        val myTasks: List<StaffTask> = emptyList(),
+        val myShifts: List<StaffShift> = emptyList(),
+        val teamShifts: List<StaffShift> = emptyList(),
+        val trades: List<ShiftTrade> = emptyList(),
+        val timelineItems: List<tech.scryme.app.domain.model.TimelineItem> = emptyList(),
+        val selectedTab: Int = 0, // 0: Timeline, 1: Team Roster, 2: Shift Trades
         val attendanceStatus: AttendanceStatusDto? = null,
         val locations: List<BranchLocation> = emptyList(),
         val members: List<UserProfile> = emptyList(),
@@ -47,6 +59,190 @@ class ScheduleViewModel @Inject constructor(
     private val sessionManager: SessionManager,
     @ApplicationContext private val context: Context
 ) : ViewModel() {
+    private var currentSelectedDate: String = tech.scryme.app.util.DateUtils.getTodayString()
+    private var monthCalendar: java.util.Calendar = java.util.Calendar.getInstance()
+
+    fun selectDate(dateStr: String) {
+        currentSelectedDate = dateStr
+        val state = _uiState.value as? ScheduleUiState.Success ?: return
+        val dateObj = tech.scryme.app.util.DateUtils.parseDate(dateStr) ?: java.util.Date()
+        val weekDays = tech.scryme.app.util.DateUtils.getWeekDays(dateObj, dateStr)
+        val monthTitle = tech.scryme.app.util.DateUtils.formatMonthYear(java.util.Calendar.getInstance().apply { time = dateObj })
+        val timeline = computeTimelineItems(state.myTasks, state.myShifts, dateStr)
+
+        _uiState.value = state.copy(
+            selectedDate = dateStr,
+            weekDays = weekDays,
+            currentMonthTitle = monthTitle,
+            timelineItems = timeline,
+            isMonthPickerVisible = false
+        )
+    }
+
+    fun openMonthPicker() {
+        val state = _uiState.value as? ScheduleUiState.Success ?: return
+        val dateObj = tech.scryme.app.util.DateUtils.parseDate(currentSelectedDate) ?: java.util.Date()
+        monthCalendar.time = dateObj
+        _uiState.value = state.copy(
+            isMonthPickerVisible = true,
+            monthPickerCalendar = monthCalendar,
+            monthGridDays = tech.scryme.app.util.DateUtils.getMonthGrid(
+                monthCalendar.get(java.util.Calendar.YEAR),
+                monthCalendar.get(java.util.Calendar.MONTH),
+                currentSelectedDate
+            )
+        )
+    }
+
+    fun closeMonthPicker() {
+        val state = _uiState.value as? ScheduleUiState.Success ?: return
+        _uiState.value = state.copy(isMonthPickerVisible = false)
+    }
+
+    fun nextMonth() {
+        val state = _uiState.value as? ScheduleUiState.Success ?: return
+        monthCalendar.add(java.util.Calendar.MONTH, 1)
+        _uiState.value = state.copy(
+            monthPickerCalendar = monthCalendar,
+            monthGridDays = tech.scryme.app.util.DateUtils.getMonthGrid(
+                monthCalendar.get(java.util.Calendar.YEAR),
+                monthCalendar.get(java.util.Calendar.MONTH),
+                currentSelectedDate
+            )
+        )
+    }
+
+    fun previousMonth() {
+        val state = _uiState.value as? ScheduleUiState.Success ?: return
+        monthCalendar.add(java.util.Calendar.MONTH, -1)
+        _uiState.value = state.copy(
+            monthPickerCalendar = monthCalendar,
+            monthGridDays = tech.scryme.app.util.DateUtils.getMonthGrid(
+                monthCalendar.get(java.util.Calendar.YEAR),
+                monthCalendar.get(java.util.Calendar.MONTH),
+                currentSelectedDate
+            )
+        )
+    }
+
+    private fun computeTimelineItems(
+        tasks: List<StaffTask>,
+        shifts: List<StaffShift>,
+        targetDateStr: String
+    ): List<tech.scryme.app.domain.model.TimelineItem> {
+        val filteredTasks = tasks.filter { task ->
+            task.dueDate.isNullOrBlank() || task.dueDate.startsWith(targetDateStr)
+        }
+
+        val cal = java.util.Calendar.getInstance().apply {
+            time = tech.scryme.app.util.DateUtils.parseDate(targetDateStr) ?: java.util.Date()
+        }
+        val calDayOfWeek = cal.get(java.util.Calendar.DAY_OF_WEEK)
+        val dayOfWeekNormalized = if (calDayOfWeek == java.util.Calendar.SUNDAY) 7 else calDayOfWeek - 1
+
+        val matchingShifts = shifts.filter { it.dayOfWeek == dayOfWeekNormalized }
+
+        val taskItems = filteredTasks.map { tech.scryme.app.domain.model.TimelineItem.TaskItem(task = it) }
+        val shiftItems = matchingShifts.map { tech.scryme.app.domain.model.TimelineItem.ShiftItem(shift = it) }
+
+        return (taskItems + shiftItems).sortedBy { it.timeDisplay }
+    }
+
+    fun toggleTaskCompletion(taskId: String) {
+        viewModelScope.launch {
+            val state = _uiState.value as? ScheduleUiState.Success ?: return@launch
+            val task = state.myTasks.find { it.id == taskId } ?: return@launch
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            val isCurrentlyCompleted = task.status.equals("COMPLETED", ignoreCase = true) ||
+                    task.status.equals("DONE", ignoreCase = true)
+            val newStatus = if (isCurrentlyCompleted) "TODO" else "COMPLETED"
+
+            val result = scheduleRepository.updateStaffTask(
+                orgSlug = orgSlug,
+                taskId = taskId,
+                title = task.title,
+                description = task.description,
+                priority = task.priority,
+                status = newStatus,
+                dueDate = task.dueDate,
+                dueTime = task.dueTime,
+                category = task.category,
+                subtaskGroups = task.subtaskGroups
+            )
+
+            result.fold(
+                onSuccess = { updatedTask ->
+                    val updatedList = state.myTasks.map {
+                        if (it.id == taskId) updatedTask else it
+                    }
+                    val updatedTimeline = computeTimelineItems(updatedList, state.myShifts, state.selectedDate)
+                    _uiState.value = state.copy(
+                        myTasks = updatedList,
+                        timelineItems = updatedTimeline
+                    )
+                },
+                onFailure = { error ->
+                    _uiState.value = state.copy(
+                        errorMessage = error.message ?: "Failed to update task completion"
+                    )
+                }
+            )
+        }
+    }
+
+    fun createStaffTask(
+        title: String,
+        description: String?,
+        priority: String = "MEDIUM",
+        assignedMemberId: String? = null,
+        dueDate: String?,
+        dueTime: String?,
+        category: String?,
+        subtaskGroups: List<tech.scryme.app.domain.model.SubtaskGroup> = emptyList(),
+        onSuccess: () -> Unit = {},
+        onError: (String) -> Unit = {}
+    ) {
+        viewModelScope.launch {
+            val state = _uiState.value as? ScheduleUiState.Success ?: return@launch
+            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
+
+            val result = scheduleRepository.createStaffTask(
+                orgSlug = orgSlug,
+                title = title,
+                description = description,
+                assignedMemberId = assignedMemberId,
+                priority = priority,
+                dueDate = dueDate ?: currentSelectedDate,
+                dueTime = dueTime,
+                category = category,
+                subtaskGroups = subtaskGroups
+            )
+
+            result.fold(
+                onSuccess = { newTask ->
+                    val updatedTasks = state.myTasks + newTask
+                    val updatedTimeline = computeTimelineItems(updatedTasks, state.myShifts, state.selectedDate)
+                    _uiState.value = state.copy(
+                        myTasks = updatedTasks,
+                        timelineItems = updatedTimeline
+                    )
+                    NotificationHelper.showScheduleNotification(
+                        context,
+                        "Task Created",
+                        newTask.title
+                    )
+                    onSuccess()
+                },
+                onFailure = { error ->
+                    val msg = error.message ?: "Failed to create task"
+                    _uiState.value = state.copy(errorMessage = msg)
+                    onError(msg)
+                }
+            )
+        }
+    }
+
 
     private val _uiState = MutableStateFlow<ScheduleUiState>(ScheduleUiState.Loading)
     val uiState: StateFlow<ScheduleUiState> = _uiState.asStateFlow()
@@ -74,10 +270,28 @@ class ScheduleViewModel @Inject constructor(
                     val attendanceStatus = attendanceStatusResult.getOrNull()
                     val locations = locationsResult.getOrDefault(emptyList())
                     val members = membersResult.getOrDefault(emptyList())
+                    val tasks = scheduleRepository.getStaffTasks(orgSlug).getOrDefault(emptyList())
+                    val selectedDateObj = tech.scryme.app.util.DateUtils.parseDate(currentSelectedDate) ?: java.util.Date()
+                    val weekDays = tech.scryme.app.util.DateUtils.getWeekDays(selectedDateObj, currentSelectedDate)
+                    val currentMonthTitle = tech.scryme.app.util.DateUtils.formatMonthYear(java.util.Calendar.getInstance().apply { time = selectedDateObj })
+                    val timeline = computeTimelineItems(tasks, myShifts, currentSelectedDate)
+
                     _uiState.value = ScheduleUiState.Success(
+                        selectedDate = currentSelectedDate,
+                        weekDays = weekDays,
+                        currentMonthTitle = currentMonthTitle,
+                        isMonthPickerVisible = (_uiState.value as? ScheduleUiState.Success)?.isMonthPickerVisible ?: false,
+                        monthPickerCalendar = monthCalendar,
+                        monthGridDays = tech.scryme.app.util.DateUtils.getMonthGrid(
+                            monthCalendar.get(java.util.Calendar.YEAR),
+                            monthCalendar.get(java.util.Calendar.MONTH),
+                            currentSelectedDate
+                        ),
+                        myTasks = tasks,
                         myShifts = myShifts,
                         teamShifts = teamShifts,
                         trades = trades,
+                        timelineItems = timeline,
                         selectedTab = tabIndex,
                         attendanceStatus = attendanceStatus,
                         locations = locations,

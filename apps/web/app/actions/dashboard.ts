@@ -3,16 +3,21 @@
 import { db } from "@repo/db";
 import { getServerAuth } from "@repo/auth/server";
 import {
+  startOfDay,
+  endOfDay,
+  startOfWeek,
+  endOfWeek,
   startOfMonth,
   endOfMonth,
-  subMonths,
+  startOfQuarter,
+  endOfQuarter,
   subDays,
   subWeeks,
+  subMonths,
+  subQuarters,
   subYears,
   eachDayOfInterval,
   format,
-  startOfWeek,
-  endOfWeek,
   startOfYear,
   endOfYear,
 } from "date-fns";
@@ -40,6 +45,12 @@ export type ChartDataPoint = {
   date: string;
   oneTime: number;
   recurring: number;
+  current: number;
+  previous: number;
+};
+
+export type MetricChartPoint = {
+  date: string;
   current: number;
   previous: number;
 };
@@ -92,10 +103,26 @@ export type DashboardData = {
   heatmapData: HeatmapDay[];
   recentActivity: RecentActivityItem[];
   periodLabel: string;
+  averageOrderValue: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
+  averageSales: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
+  totalSessions: {
+    value: number;
+    change: number;
+    chartData: MetricChartPoint[];
+  };
 };
 
 export async function getDashboardData(
   timeframe: string = "month",
+  compareMode: string = "previous_period",
 ): Promise<DashboardData> {
   const auth = await getServerAuth();
 
@@ -112,14 +139,51 @@ export async function getDashboardData(
   let previousEnd: Date;
   let periodLabel: string;
 
+  const isCompareLastYear = compareMode === "last_year";
+
   switch (timeframe) {
+    case "today":
+      currentStart = startOfDay(now);
+      currentEnd = endOfDay(now);
+      if (isCompareLastYear) {
+        previousStart = startOfDay(subYears(now, 1));
+        previousEnd = endOfDay(subYears(now, 1));
+        periodLabel = "vs same day last year";
+      } else {
+        previousStart = startOfDay(subDays(now, 1));
+        previousEnd = endOfDay(subDays(now, 1));
+        periodLabel = "vs yesterday";
+      }
+      break;
+
     case "week":
       currentStart = startOfWeek(now);
       currentEnd = endOfWeek(now);
-      previousStart = startOfWeek(subWeeks(now, 1));
-      previousEnd = endOfWeek(subWeeks(now, 1));
-      periodLabel = "vs last week";
+      if (isCompareLastYear) {
+        previousStart = startOfWeek(subYears(now, 1));
+        previousEnd = endOfWeek(subYears(now, 1));
+        periodLabel = "vs same week last year";
+      } else {
+        previousStart = startOfWeek(subWeeks(now, 1));
+        previousEnd = endOfWeek(subWeeks(now, 1));
+        periodLabel = "vs last week";
+      }
       break;
+
+    case "quarter":
+      currentStart = startOfQuarter(now);
+      currentEnd = endOfQuarter(now);
+      if (isCompareLastYear) {
+        previousStart = startOfQuarter(subYears(now, 1));
+        previousEnd = endOfQuarter(subYears(now, 1));
+        periodLabel = "vs same quarter last year";
+      } else {
+        previousStart = startOfQuarter(subQuarters(now, 1));
+        previousEnd = endOfQuarter(subQuarters(now, 1));
+        periodLabel = "vs last quarter";
+      }
+      break;
+
     case "year":
       currentStart = startOfYear(now);
       currentEnd = endOfYear(now);
@@ -127,13 +191,28 @@ export async function getDashboardData(
       previousEnd = endOfYear(subYears(now, 1));
       periodLabel = "vs last year";
       break;
+
+    case "all":
+      currentStart = subYears(now, 5);
+      currentEnd = now;
+      previousStart = subYears(currentStart, 5);
+      previousEnd = currentStart;
+      periodLabel = "all time";
+      break;
+
     case "month":
     default:
       currentStart = startOfMonth(now);
       currentEnd = endOfMonth(now);
-      previousStart = startOfMonth(subMonths(now, 1));
-      previousEnd = endOfMonth(subMonths(now, 1));
-      periodLabel = "vs last month";
+      if (isCompareLastYear) {
+        previousStart = startOfMonth(subYears(now, 1));
+        previousEnd = endOfMonth(subYears(now, 1));
+        periodLabel = "vs same month last year";
+      } else {
+        previousStart = startOfMonth(subMonths(now, 1));
+        previousEnd = endOfMonth(subMonths(now, 1));
+        periodLabel = "vs last month";
+      }
       break;
   }
 
@@ -141,11 +220,13 @@ export async function getDashboardData(
   const sixMonthsAgo = subWeeks(now, 26);
 
   let totalProductsCount = 0;
+  let previousProductsCount = 0;
   let currentTransactions: Array<{
     id: string;
     number: string;
     finalTotal: any;
     createdAt: Date;
+    type: string;
     customer?: { name?: string | null } | null;
     items: Array<{
       quantity: number;
@@ -170,11 +251,40 @@ export async function getDashboardData(
     createdAt: Date;
     finalTotal: any;
   }> = [];
+  let currentExpensesTotal = 0;
+  let previousExpensesTotal = 0;
+  let lowStockVariants: Array<{
+    id: string;
+    currentStock: any;
+    reorderPoint: any;
+    product: { name: string };
+  }> = [];
 
   try {
-    const [productsCount, currentRes, previousRes, heatmapRes] = await Promise.all([
+    const [
+      productsCount,
+      prevProductsCount,
+      currentRes,
+      previousRes,
+      heatmapRes,
+      currentExpensesRes,
+      previousExpensesRes,
+      lowStockRes,
+    ] = await Promise.all([
       db.product.count({
-        where: { organizationId: orgId, isArchived: false },
+        where: {
+          organizationId: orgId,
+          isArchived: false,
+        },
+      }),
+      db.product.count({
+        where: {
+          organizationId: orgId,
+          isArchived: false,
+          createdAt: {
+            lte: previousEnd,
+          },
+        },
       }),
       db.transaction.findMany({
         where: {
@@ -192,6 +302,7 @@ export async function getDashboardData(
           number: true,
           finalTotal: true,
           createdAt: true,
+          type: true,
           customer: {
             select: { name: true },
           },
@@ -238,6 +349,10 @@ export async function getDashboardData(
           number: true,
           finalTotal: true,
           createdAt: true,
+          type: true,
+          customer: {
+            select: { name: true },
+          },
           items: {
             select: {
               quantity: true,
@@ -265,12 +380,63 @@ export async function getDashboardData(
           finalTotal: true,
         },
       }),
+      db.expense.aggregate({
+        where: {
+          organizationId: orgId,
+          deletedAt: null,
+          expenseDate: {
+            gte: currentStart,
+            lte: currentEnd,
+          },
+          status: {
+            in: ["PAID", "APPROVED"],
+          },
+        },
+        _sum: { amount: true },
+      }),
+      db.expense.aggregate({
+        where: {
+          organizationId: orgId,
+          deletedAt: null,
+          expenseDate: {
+            gte: previousStart,
+            lte: previousEnd,
+          },
+          status: {
+            in: ["PAID", "APPROVED"],
+          },
+        },
+        _sum: { amount: true },
+      }),
+      db.productVariantStock.findMany({
+        where: {
+          organizationId: orgId,
+          product: { isArchived: false },
+        },
+        select: {
+          id: true,
+          currentStock: true,
+          reorderPoint: true,
+          product: {
+            select: { name: true },
+          },
+        },
+        take: 10,
+      }),
     ]);
 
     totalProductsCount = productsCount;
+    previousProductsCount = prevProductsCount;
     currentTransactions = currentRes as any;
     previousTransactions = previousRes as any;
     heatmapTransactions = heatmapRes;
+    currentExpensesTotal = Number(currentExpensesRes._sum.amount || 0);
+    previousExpensesTotal = Number(previousExpensesRes._sum.amount || 0);
+    lowStockVariants = (lowStockRes as any[]).filter(
+      (v) =>
+        v.reorderPoint !== null &&
+        Number(v.currentStock || 0) <= Number(v.reorderPoint || 0),
+    );
   } catch (error) {
     console.error("Failed to load dashboard transactions:", error);
   }
@@ -288,13 +454,19 @@ export async function getDashboardData(
   const currentSalesCount = currentTransactions.length;
   const previousSalesCount = previousTransactions.length;
 
-  const currentExpenses = currentIncome * 0.12;
-  const previousExpenses = previousIncome * 0.12;
+  const currentExpenses = currentExpensesTotal;
+  const previousExpenses = previousExpensesTotal;
 
   const calculateChange = (current: number, previous: number) => {
     if (previous === 0) return current > 0 ? 100 : 0;
     return Number((((current - previous) / previous) * 100).toFixed(1));
   };
+
+  // Average Order Value (AOV)
+  const currentAOV =
+    currentSalesCount > 0 ? currentIncome / currentSalesCount : 0;
+  const previousAOV =
+    previousSalesCount > 0 ? previousIncome / previousSalesCount : 0;
 
   // Process Popular Products & Category breakdown
   const productMap = new Map<
@@ -381,65 +553,6 @@ export async function getDashboardData(
       color: categoryColors[index % categoryColors.length],
     }));
 
-  if (popularProducts.length === 0) {
-    popularProducts.push(
-      {
-        id: "p1",
-        name: "iPhone 15 Pro",
-        stocks: 6200,
-        price: 999.0,
-        sales: 4800,
-        earnings: 4795200,
-        color: "#3B82F6",
-      },
-      {
-        id: "p2",
-        name: "MacBook Air M2",
-        stocks: 1020,
-        price: 1299.0,
-        sales: 3200,
-        earnings: 4156800,
-        color: "#A855F7",
-      },
-      {
-        id: "p3",
-        name: "Google Pixel 8",
-        stocks: 1500,
-        price: 699.0,
-        sales: 800,
-        earnings: 559200,
-        color: "#EAB308",
-      },
-      {
-        id: "p4",
-        name: "Nike Air Max 90",
-        stocks: 2400,
-        price: 130.0,
-        sales: 1800,
-        earnings: 234000,
-        color: "#EC4899",
-      },
-      {
-        id: "p5",
-        name: "Galaxy Buds Pro",
-        stocks: 850,
-        price: 199.0,
-        sales: 1000,
-        earnings: 199000,
-        color: "#22C55E",
-      },
-    );
-  }
-
-  if (categoryDistribution.length === 0) {
-    categoryDistribution.push(
-      { name: "Electronics", value: 85000, percentage: 68, color: "#3B82F6" },
-      { name: "Fashion", value: 25000, percentage: 20, color: "#A855F7" },
-      { name: "Health & Wellness", value: 10000, percentage: 8, color: "#EAB308" },
-      { name: "Home & Living", value: 5000, percentage: 4, color: "#EC4899" },
-    );
-  }
-
   const intervalDays = eachDayOfInterval({
     start: currentStart,
     end: currentEnd < now ? currentEnd : now,
@@ -455,8 +568,16 @@ export async function getDashboardData(
     currentByDay.set(key, list);
   });
 
+  const previousByDay = new Map<string, typeof previousTransactions>();
+  previousTransactions.forEach((t) => {
+    const key = getDayKey(new Date(t.createdAt));
+    const list = previousByDay.get(key) || [];
+    list.push(t);
+    previousByDay.set(key, list);
+  });
+
   const chartData: ChartDataPoint[] = intervalDays.map((day) => {
-    const dayStr = format(day, "MMM");
+    const dayStr = format(day, "MMM d");
     const dayKey = getDayKey(day);
     const dayTransactions = currentByDay.get(dayKey) || [];
 
@@ -465,11 +586,60 @@ export async function getDashboardData(
       0,
     );
 
+    const recurringRev = dayTransactions
+      .filter((t) => t.type === "SUBSCRIPTION")
+      .reduce((acc, t) => acc + Number(t.finalTotal || 0), 0);
+
+    const oneTimeRev = totalRev - recurringRev;
+
     return {
       date: dayStr,
-      oneTime: Math.round(totalRev * 0.35),
-      recurring: Math.round(totalRev * 0.65),
+      oneTime: Math.round(oneTimeRev),
+      recurring: Math.round(recurringRev),
       current: totalRev,
+      previous: 0,
+    };
+  });
+
+  // Calculate AOV, Average Sales, and Total Sessions charts per day
+  const aovChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    const count = dayTx.length;
+    const rev = dayTx.reduce((acc, t) => acc + Number(t.finalTotal || 0), 0);
+    const aov = count > 0 ? Math.round(rev / count) : 0;
+
+    return {
+      date: dayStr,
+      current: aov,
+      previous: 0,
+    };
+  });
+
+  const averageSalesChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    const count = dayTx.length;
+
+    return {
+      date: dayStr,
+      current: count,
+      previous: 0,
+    };
+  });
+
+  const totalSessionsChartData: MetricChartPoint[] = intervalDays.map((day) => {
+    const dayStr = format(day, "MMM d");
+    const dayKey = getDayKey(day);
+    const dayTx = currentByDay.get(dayKey) || [];
+    // Approximate active customer interactions / transactions
+    const count = dayTx.length;
+
+    return {
+      date: dayStr,
+      current: count,
       previous: 0,
     };
   });
@@ -513,88 +683,82 @@ export async function getDashboardData(
     };
   });
 
-  const recentActivity: RecentActivityItem[] = currentTransactions
-    .slice(0, 4)
-    .map((t) => ({
+  const recentActivity: RecentActivityItem[] = [];
+
+  currentTransactions.slice(0, 4).forEach((t) => {
+    recentActivity.push({
       id: t.id,
       title: `Order #${t.number}`,
       subtitle: `${t.customer?.name || "Customer"} • ${format(new Date(t.createdAt), "d MMM yy")}`,
       date: format(new Date(t.createdAt), "d MMM yy"),
-      type: "order" as const,
+      type: "order",
       badgeText: "New Order",
-      badgeVariant: "blue" as const,
-    }));
+      badgeVariant: "blue",
+    });
+  });
 
-  if (recentActivity.length === 0) {
-    recentActivity.push(
-      {
-        id: "act-1",
-        title: "Order #2048",
-        subtitle: "John Doe • 12 Jan 25",
-        date: "12 Jan 25",
-        type: "order",
-        badgeText: "New Order",
-        badgeVariant: "blue",
-      },
-      {
-        id: "act-2",
-        title: "Low Stock Alert",
-        subtitle: "MacBook Air M2 • 10 Jan 25",
-        date: "10 Jan 25",
-        type: "stock",
-        badgeText: "Low Stock",
-        badgeVariant: "red",
-      },
-      {
-        id: "act-3",
-        title: 'Promo code "SUMMER20"',
-        subtitle: "Applied 52 times • 8 Jan 25",
-        date: "8 Jan 25",
-        type: "promo",
-        badgeText: "Campaign",
-        badgeVariant: "purple",
-      },
-      {
-        id: "act-4",
-        title: "System Update",
-        subtitle: "Version 1.2.1 • 2 Jan 25",
-        date: "2 Jan 25",
-        type: "system",
-        badgeText: "System",
-        badgeVariant: "gray",
-      },
-    );
-  }
+  lowStockVariants.slice(0, 2).forEach((v) => {
+    recentActivity.push({
+      id: `stock-${v.id}`,
+      title: "Low Stock Alert",
+      subtitle: `${v.product.name} (${v.currentStock ?? 0} in stock)`,
+      date: format(now, "d MMM yy"),
+      type: "stock",
+      badgeText: "Low Stock",
+      badgeVariant: "red",
+    });
+  });
+
+  // Average daily sales volume
+  const totalDays = Math.max(intervalDays.length, 1);
+  const avgDailySales = Number((currentSalesCount / totalDays).toFixed(1));
+  const prevDays = Math.max(intervalDays.length, 1);
+  const prevAvgDailySales = Number((previousSalesCount / prevDays).toFixed(1));
 
   return {
     stats: {
       totalProducts: {
-        value: totalProductsCount || 1525,
-        change: 12.5,
+        value: totalProductsCount,
+        change: calculateChange(totalProductsCount, previousProductsCount),
       },
       totalSales: {
-        value: currentSalesCount || 10892,
-        change: calculateChange(currentSalesCount, previousSalesCount) || 8.4,
+        value: currentSalesCount,
+        change: calculateChange(currentSalesCount, previousSalesCount),
       },
       totalIncome: {
-        value: currentIncome || 157342,
-        change: calculateChange(currentIncome, previousIncome) || 14.2,
+        value: currentIncome,
+        change: calculateChange(currentIncome, previousIncome),
       },
       totalExpenses: {
-        value: currentExpenses || 12453,
-        change: calculateChange(currentExpenses, previousExpenses) || -2.1,
+        value: currentExpenses,
+        change: calculateChange(currentExpenses, previousExpenses),
       },
     },
     totalRevenue: {
-      value: currentIncome || 157342,
-      change: calculateChange(currentIncome, previousIncome) || 14.2,
+      value: currentIncome,
+      change: calculateChange(currentIncome, previousIncome),
       chartData,
     },
     popularProducts,
     categoryDistribution,
-    categoryTotalSales: categoryTotalSales || 125000,
+    categoryTotalSales,
     heatmapData,
     recentActivity,
     periodLabel,
+    averageOrderValue: {
+      value: Math.round(currentAOV),
+      change: calculateChange(currentAOV, previousAOV),
+      chartData: aovChartData,
+    },
+    averageSales: {
+      value: avgDailySales,
+      change: calculateChange(avgDailySales, prevAvgDailySales),
+      chartData: averageSalesChartData,
+    },
+    totalSessions: {
+      value: currentSalesCount,
+      change: calculateChange(currentSalesCount, previousSalesCount),
+      chartData: totalSessionsChartData,
+    },
   };
 }

@@ -42,10 +42,71 @@ describe('TaskUseCase', () => {
         taskActivityLog: {
           create: vi.fn(),
         },
+        taskTimeEntry: {
+          findMany: vi.fn(),
+          findFirst: vi.fn(),
+          create: vi.fn(),
+          updateMany: vi.fn(),
+          deleteMany: vi.fn(),
+          aggregate: vi.fn().mockResolvedValue({ _sum: { hours: 0 } }),
+        },
+        staffShift: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
       },
     };
 
-    useCase = new TaskUseCase(mockPrisma);
+    const mockFCM: any = {
+      sendToMembers: vi.fn().mockResolvedValue({ success: true }),
+    };
+    const mockRealtime: any = {
+      publish: vi.fn().mockResolvedValue(true),
+    };
+    useCase = new TaskUseCase(mockPrisma, mockFCM, mockRealtime);
+  });
+
+  
+  describe('manageAssignees', () => {
+    it('should assign multiple members with primary owner and allocated hours', async () => {
+      mockPrisma.client.task.findFirst.mockResolvedValue({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        organizationId: 'org_1',
+      });
+      mockPrisma.client.member.findMany.mockResolvedValue([
+        { id: 'member_1' },
+        { id: 'member_2' },
+      ]);
+      mockPrisma.client.task.findFirst.mockResolvedValueOnce({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        organizationId: 'org_1',
+      }).mockResolvedValueOnce({
+        id: 'task_1',
+        taskKey: 'DEV-1',
+        title: 'Feature A',
+        assignees: [
+          { memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+
+      await useCase.manageAssignees('org_1', 'task_1', {
+        assignees: [
+          { memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+
+      expect(mockPrisma.client.taskAssignee.createMany).toHaveBeenCalledWith({
+        data: [
+          { taskId: 'task_1', memberId: 'member_1', isPrimary: true, allocatedHours: 6 },
+          { taskId: 'task_1', memberId: 'member_2', isPrimary: false, allocatedHours: 4 },
+        ],
+      });
+    });
   });
 
   describe('createTask', () => {
@@ -111,6 +172,112 @@ describe('TaskUseCase', () => {
       } as any);
 
       expect(result.type).toEqual('BLOCKS');
+    });
+  });
+
+  describe('getMemberPerformance', () => {
+    it('should compute member KPIs accurately', async () => {
+      mockPrisma.client.member.findFirst.mockResolvedValue({
+        id: 'member_1',
+        role: 'ENGINEER',
+        user: { name: 'Alice Developer', email: 'alice@scryme.tech' },
+      });
+
+      const now = new Date();
+      mockPrisma.client.task.findMany.mockResolvedValue([
+        {
+          id: 'task_1',
+          taskKey: 'DEV-1',
+          title: 'Implement auth',
+          status: 'DONE',
+          dueDate: new Date(now.getTime() + 86400000),
+          startDate: new Date(now.getTime() - 86400000),
+          updatedAt: now,
+          estimatedHours: 8,
+          actualHours: 7,
+          project: { id: 'prj_1', name: 'Core', key: 'DEV' },
+        },
+        {
+          id: 'task_2',
+          taskKey: 'DEV-2',
+          title: 'Overdue bug',
+          status: 'IN_PROGRESS',
+          dueDate: new Date(now.getTime() - 86400000),
+          startDate: new Date(now.getTime() - 172800000),
+          updatedAt: now,
+          estimatedHours: 4,
+          actualHours: 2,
+          project: { id: 'prj_1', name: 'Core', key: 'DEV' },
+        },
+      ]);
+
+      mockPrisma.client.taskTimeEntry = {
+        findMany: vi.fn().mockResolvedValue([
+          { hours: 7, date: now },
+          { hours: 2, date: now },
+        ]),
+        aggregate: vi.fn().mockResolvedValue({ _sum: { hours: 9 } }),
+      };
+
+      mockPrisma.client.staffShift = {
+        findMany: vi.fn().mockResolvedValue([
+          { startTime: '09:00', endTime: '17:00', isActive: true, dayOfWeek: 1 },
+          { startTime: '09:00', endTime: '17:00', isActive: true, dayOfWeek: 2 },
+          { startTime: '09:00', endTime: '17:00', isActive: true, dayOfWeek: 3 },
+          { startTime: '09:00', endTime: '17:00', isActive: true, dayOfWeek: 4 },
+          { startTime: '09:00', endTime: '17:00', isActive: true, dayOfWeek: 5 },
+        ]),
+      };
+
+      const result = await useCase.getMemberPerformance('org_1', 'member_1');
+      expect(result.member.name).toBe('Alice Developer');
+      expect(result.kpis.totalTasks).toBe(2);
+      expect(result.kpis.completedTasks).toBe(1);
+      expect(result.kpis.velocity).toBe(1);
+      expect(result.kpis.onTimeCompletionRate).toBe(100);
+      expect(result.kpis.overdueTaskCount).toBe(1);
+      expect(result.kpis.totalActualHours).toBe(9);
+    });
+
+    it('should throw NotFoundException if member does not exist', async () => {
+      mockPrisma.client.member.findFirst.mockResolvedValue(null);
+
+      await expect(
+        useCase.getMemberPerformance('org_1', 'invalid_member'),
+      ).rejects.toThrow(NotFoundException);
+    });
+  });
+
+  describe('weeklyTimesheets', () => {
+    it('should submit weekly timesheet successfully', async () => {
+      mockPrisma.client.member.findFirst.mockResolvedValue({
+        id: 'member_1',
+        user: { name: 'Alice' },
+      });
+      mockPrisma.client.taskTimeEntry = {
+        ...mockPrisma.client.taskTimeEntry,
+        aggregate: vi.fn().mockResolvedValue({ _sum: { hours: 38.5 } }),
+      };
+
+      const result = await useCase.submitWeeklyTimesheet('org_1', 'member_1', {
+        weekStartDate: new Date('2026-10-12'),
+        notes: 'Submitted for sprint review',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('SUBMITTED');
+      expect(result.totalHours).toBe(38.5);
+    });
+
+    it('should process (approve/reject) weekly timesheet', async () => {
+      const result = await useCase.processWeeklyTimesheet('org_1', 'ts_123', 'manager_1', {
+        action: 'APPROVE',
+        notes: 'Looks good',
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.status).toBe('APPROVED');
+      expect(result.reviewedById).toBe('manager_1');
     });
   });
 });

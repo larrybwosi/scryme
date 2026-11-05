@@ -1,29 +1,36 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
+import { Header } from '../components/Header'
+import { Footer } from '../components/Footer'
 import {
   ArrowRight,
-  ChevronDown,
-  Activity,
-  Hash,
-  MessageSquare,
   Database,
-  LifeBuoy,
-  FileCheck2,
-  Network,
+  Layers,
+  Zap,
+  Globe,
+  Code2,
+  RefreshCw,
+  Cpu,
   Check,
   ShieldCheck,
-  Cpu,
+  Share2,
+  Boxes,
+  FileCode,
 } from 'lucide-react'
+import { fetchCmsPage, fetchSiteSettings, DEFAULT_CMS_PAGE_FALLBACK, DEFAULT_SITE_SETTINGS_FALLBACK, CmsPageData, SiteSettings } from '../sanity/queries'
 
 export const Route = createFileRoute('/cms')({
-  component: CrmComponent,
+  loader: async () => {
+    const [cmsData, siteSettings] = await Promise.all([
+      fetchCmsPage(),
+      fetchSiteSettings(),
+    ])
+    return {
+      cmsData: cmsData || DEFAULT_CMS_PAGE_FALLBACK,
+      siteSettings: siteSettings || DEFAULT_SITE_SETTINGS_FALLBACK,
+    }
+  },
+  component: CmsPageComponent,
 })
-
-// Swap for the real photo asset in /public/images
-const ACCOUNT_PHOTO = '/images/account-visibility.jpg'
-
-const LIME = '#c8f31d'
-const INK = '#0c1108'
-const DEEP = '#0d2a1a'
 
 /* ---------- small shared pieces ---------- */
 
@@ -33,76 +40,67 @@ const Mono = ({ children, className = '' }: { children: React.ReactNode; classNa
 
 const Pill = ({ children, className = '' }: { children: React.ReactNode; className?: string }) => (
   <span
-    className={`inline-flex items-center gap-1.5 rounded-full border border-[#d9e6a8] bg-[#eef7c9] px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-[#2c3a10] ${className}`}
+    className={`inline-flex items-center gap-1.5 rounded-full border border-[#d2ff3a]/30 bg-[#d2ff3a]/10 px-3 py-1 font-mono text-[10px] uppercase tracking-wide text-[#d2ff3a] ${className}`}
   >
     {children}
   </span>
 )
 
-const Dot = ({ color = '#7ac70c' }: { color?: string }) => (
+const Dot = ({ color = '#d2ff3a' }: { color?: string }) => (
   <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ background: color }} />
 )
 
-
 /* ---------- hero ---------- */
 
-function Hero() {
-  return (
-    <section
-      className="relative"
-      style={{ background: 'linear-gradient(180deg, #eaf8b4 0%, #f3f8dc 35%, #f7f8f3 100%)' }}
-    >
-      <div className="mx-auto max-w-7xl px-4 pb-10 pt-8 md:px-8">
-        <Mono className="text-[#59614d]">KERNEL_CORE / ORCHESTRATION / PILLAR_03_CRM_GRAPH</Mono>
+function Hero({ data }: { data?: CmsPageData['hero'] }) {
+  const hero = data || DEFAULT_CMS_PAGE_FALLBACK.hero!
 
-        <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_320px] lg:items-end">
+  return (
+    <section className="relative px-4 pb-12 pt-8 md:px-8 border-b border-white/10 dark:border-white/10 light:border-black/10">
+      <div className="mx-auto max-w-7xl">
+        <Mono className="text-[var(--text-muted)]">KERNEL_CORE / CATALOG_ORCHESTRATION / PILLAR_04_CATALOG_CLOUD</Mono>
+
+        <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[1fr_340px] lg:items-end">
           <div>
             <Pill>
-              <Dot /> CORE PILLAR 03 • 360° RELATIONSHIP CRM &amp; CUSTOMER GRAPH
+              <Dot /> {hero.badge || 'CORE PILLAR 04 • HEADLESS CMS & CATALOG CLOUD'}
             </Pill>
-            <h1
-              className="mt-5 max-w-3xl font-serif text-4xl font-medium leading-[1.08] tracking-tight sm:text-5xl md:text-[56px]"
-              style={{ color: INK }}
-            >
-              Turn fragmented customer signals into <em className="italic">unified account intelligence.</em>
+            <h1 className="mt-5 max-w-3xl font-serif text-4xl font-normal leading-[1.08] tracking-tight sm:text-5xl md:text-6xl dark:text-white light:text-[#090a0b]">
+              {hero.headline || 'Decouple your storefronts with a sub-50ms catalog edge.'}
             </h1>
-            <p className="mt-5 max-w-2xl text-[13px] leading-relaxed text-[#4a5140]">
-              Every client communication, multi-warehouse fulfillment state, purchase order, invoice ledger, and
-              support ticket unified into a real-time reactive customer graph with sub-minute churn prediction.
+            <p className="mt-5 max-w-2xl text-sm leading-relaxed text-[var(--text-muted)]">
+              {hero.subtitle || 'Synchronize multi-channel eCommerce storefronts, regional wholesale price books, and localized digital catalogs directly from your ERP inventory core with zero manual ETL drift.'}
             </p>
           </div>
 
           <div className="space-y-3">
-            <div className="rounded-lg border border-black/10 bg-white/70 p-4">
+            <div className="rounded-2xl glass-panel p-5 border-white/10">
               <div className="flex items-center justify-between">
-                <Mono className="text-[#59614d]">GRAPH STATE</Mono>
-                <span className="rounded bg-[#eef7c9] px-1.5 py-0.5 font-mono text-[9px] text-[#2c3a10]">
-                  SYNCHRONIZED
+                <Mono className="text-[var(--text-muted)]">EDGE TTFB LATENCY</Mono>
+                <span className="rounded bg-[#10b981]/20 px-2 py-0.5 font-mono text-[9px] font-bold text-emerald-400">
+                  GLOBAL CACHE
                 </span>
               </div>
               <div className="mt-2 flex items-baseline gap-2">
-                <span className="font-serif text-3xl" style={{ color: INK }}>
-                  1.4ms
+                <span className="font-serif text-3xl font-bold dark:text-white light:text-[#090a0b]">
+                  38ms
                 </span>
-                <span className="text-[11px] text-[#59614d]">cross-node signal propagation</span>
+                <span className="text-xs text-[var(--text-muted)]">P95 globally distributed</span>
               </div>
             </div>
             <div className="grid grid-cols-2 gap-3">
               <a
-                href="https://app.scryme.tech/signup"
-                className="flex h-16 items-end rounded-md p-3 text-xs font-semibold"
-                style={{ background: LIME, color: INK, border: `1px solid ${INK}` }}
+                href={hero.primaryCtaLink || 'https://app.scryme.tech/signup?plan=growth&trial=true'}
+                className="flex h-14 items-center justify-center rounded-xl text-center text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] transition shadow-sm"
               >
-                Explore Live Sandbox
+                {hero.primaryCtaText || 'Deploy Catalog'}
               </a>
-              <a
-                id="demo"
-                href="#"
-                className="flex h-16 items-end gap-2 rounded-md p-3 text-xs font-semibold text-white"
-                style={{ background: INK }}
+              <Link
+                to={hero.secondaryCtaLink || '/pricing'}
+                className="flex h-14 items-center justify-center gap-2 rounded-xl border border-white/15 dark:border-white/15 light:border-black/15 text-center text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition"
               >
-                <Dot color={LIME} /> Book Demo
-              </a>
+                <Dot color="#10b981" /> View Plans
+              </Link>
             </div>
           </div>
         </div>
@@ -116,155 +114,129 @@ function Hero() {
 /* ---------- telemetry panel ---------- */
 
 function Telemetry() {
-  const events = [
-    { icon: MessageSquare, t: 'Slack Connect Sync', d: 'VP Procurement requested +2,400 reserve unit...', ago: '14s ago' },
-    { icon: Database, t: 'ERP Ledger Settled', d: 'NetSuite auto-reconciliation complete: $340,20...', ago: '2s ago' },
-    { icon: LifeBuoy, t: 'Zendesk Ticket Resolved', d: 'Auto-mitigated routing variance: Frankfurt logis...', ago: '3m ago' },
-    { icon: FileCheck2, t: 'Contract Margin Verified', d: 'Margin guard approved 28.4% gross margin thr...', ago: '3m ago' },
+  const edgeNodes = [
+    { region: 'us-east (Virginia)', status: 'ACTIVE', ttfb: '18ms', reqs: '4.8M / hr' },
+    { region: 'eu-central (Frankfurt)', status: 'ACTIVE', ttfb: '22ms', reqs: '3.2M / hr' },
+    { region: 'af-south (Nairobi)', status: 'ACTIVE', ttfb: '26ms', reqs: '6.1M / hr' },
+    { region: 'ap-southeast (Singapore)', status: 'ACTIVE', ttfb: '31ms', reqs: '2.9M / hr' },
   ]
   return (
-    <div className="mt-10">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-y border-black/10 py-3">
+    <div className="mt-12">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-y border-white/10 dark:border-white/10 light:border-black/10 py-3">
         <div className="flex items-center gap-3">
-          <Dot color="#7ac70c" />
-          <span className="text-[13px] font-medium" style={{ color: INK }}>
-            Reactive Account Graph Telemetry
+          <Dot color="#10b981" />
+          <span className="text-xs font-bold uppercase tracking-wider font-mono dark:text-white light:text-[#090a0b]">
+            Catalog Cloud Edge Telemetry &amp; Sync Bus
           </span>
-          <span className="rounded border border-black/10 bg-white/70 px-1.5 py-0.5 font-mono text-[9px] text-[#59614d]">
-            LUMINA_TENANT_ID: 84092-A
+          <span className="rounded border border-white/10 bg-white/5 px-2 py-0.5 font-mono text-[9px] text-[var(--text-muted)]">
+            PROTOCOL: GRAPHQL v3.4 + REST
           </span>
         </div>
         <div className="flex items-center gap-3">
-          <Mono className="text-[#59614d]">STREAMING LIVE (12.4K EPS)</Mono>
-          <span className="rounded border border-black/10 bg-white px-2 py-1 text-[10px] text-[#2a2f24]">
-            Export Topology
+          <Mono className="text-[var(--text-muted)]">SUB-SECOND CACHE PURGE</Mono>
+          <span className="rounded border border-white/10 bg-white/5 px-2 py-1 text-[10px] text-[#d2ff3a] font-mono">
+            Zero Phantom Stock
           </span>
         </div>
       </div>
 
-      <div className="mt-4 grid grid-cols-1 gap-4 lg:grid-cols-3">
-        {/* Entity identity */}
-        <div className="rounded-lg border border-black/10 bg-white p-4">
+      <div className="mt-6 grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Catalog Snapshot */}
+        <div className="rounded-3xl glass-panel p-6 border-white/10 space-y-4">
           <div className="flex items-start justify-between">
             <div>
-              <Mono className="text-[#59614d]">ENTITY IDENTITY</Mono>
-              <h3 className="mt-1 font-serif text-xl" style={{ color: INK }}>
-                Lumina Global Corp
+              <Mono className="text-[var(--text-muted)]">HEADLESS REPOSITORY</Mono>
+              <h3 className="mt-1 font-serif text-2xl font-bold dark:text-white light:text-[#090a0b]">
+                Omnichannel Master Catalog
               </h3>
-              <p className="text-[10px] text-[#59614d]">Global Enterprise • Tier-1 High Velocity</p>
+              <p className="text-xs text-[var(--text-muted)]">Multi-Storefront • Localized Currency • Real-Time Stock</p>
             </div>
-            <span className="rounded-full px-2.5 py-1 text-center font-mono text-[9px] leading-tight" style={{ background: LIME, color: INK }}>
+            <span className="rounded-2xl px-3 py-1.5 text-center font-mono text-[10px] font-bold leading-tight bg-[#d2ff3a] text-[#090a0b]">
               HEALTH
               <br />
-              96/100
+              99.99%
             </span>
           </div>
-          <div className="mt-4 grid grid-cols-2 gap-2">
+          <div className="grid grid-cols-2 gap-3 pt-2">
             {[
-              ['Annual Recurring', '$1,428,000', ''],
-              ['Churn Probability', '1.2%', ' (-0.8%)'],
-              ['Open Ledgers', '4 Invoices', ''],
-              ['SLA Commitment', '99.995%', ''],
+              ['Master SKUs', '1,420,890', ''],
+              ['Sync Latency', '< 12ms', ' (-4ms)'],
+              ['Channels Connected', '12 Storefronts', ''],
+              ['Cache Hit Ratio', '99.4%', ''],
             ].map(([k, v, s]) => (
-              <div key={k} className="rounded border border-black/10 p-2">
-                <div className="text-[9px] text-[#59614d]">{k}</div>
-                <div className="mt-0.5 text-sm font-semibold" style={{ color: INK }}>
+              <div key={k} className="rounded-xl border border-white/5 bg-white/5 p-3">
+                <div className="text-[10px] text-[var(--text-muted)] font-mono">{k}</div>
+                <div className="mt-1 text-sm font-bold dark:text-white light:text-[#090a0b]">
                   {v}
-                  <span className="text-[9px] font-normal text-[#4a8a10]">{s}</span>
+                  <span className="text-[10px] font-normal text-emerald-400">{s}</span>
                 </div>
               </div>
             ))}
           </div>
-          <div className="mt-4 flex justify-between text-[10px] text-[#59614d]">
-            <span>Algorithmic Stakeholder Sentiment</span>
-            <span className="font-medium text-[#2c3a10]">94% Positive</span>
+          <div className="pt-2">
+            <div className="flex justify-between text-xs text-[var(--text-muted)] mb-1.5">
+              <span>Catalog Invalidation Frequency</span>
+              <span className="font-mono font-bold text-[#d2ff3a]">Real-Time Event Driven</span>
+            </div>
+            <div className="h-1.5 overflow-hidden rounded-full bg-white/10">
+              <div className="h-full w-[98%] bg-[#d2ff3a]" />
+            </div>
           </div>
-          <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-black/10">
-            <div className="h-full w-[94%]" style={{ background: INK }} />
-          </div>
-          <div className="mt-3 flex justify-between border-t border-black/10 pt-2 text-[9px] text-[#59614d]">
-            <span>Warehouse Inventory Allocation Health</span>
-            <span className="text-[#4a8a10]">Nominal (Optimal)</span>
-          </div>
-          <div className="mt-3 flex justify-between border-t border-black/10 pt-2">
-            <Mono className="text-[#59614d]">PRIMARY CS LEAD: ELEANOR V.</Mono>
-            <span className="rounded bg-[#eef7c9] px-1.5 py-0.5 font-mono text-[9px] text-[#2c3a10]">QBR SCHEDULED</span>
+          <div className="flex justify-between border-t border-white/10 pt-3 text-xs text-[var(--text-muted)]">
+            <span>Inventory Reservation Guard</span>
+            <span className="text-emerald-400 font-mono font-bold">Active &amp; Enforced</span>
           </div>
         </div>
 
-        {/* Event feed */}
-        <div className="rounded-lg border border-black/10 bg-white p-4">
+        {/* Global Edge Node Latencies */}
+        <div className="rounded-3xl glass-panel p-6 border-white/10 space-y-4">
           <div className="flex items-center justify-between">
-            <Mono className="text-[#59614d]">OMNICHANNEL EVENT FEED</Mono>
-            <span className="inline-flex items-center gap-1.5 font-mono text-[9px] text-[#2c3a10]">
-              <Dot /> LIVE INGEST
+            <Mono className="text-[var(--text-muted)]">DISTRIBUTED EDGE NODES</Mono>
+            <span className="inline-flex items-center gap-1.5 font-mono text-[9px] text-[#10b981]">
+              <Dot color="#10b981" /> 24 GLOBAL EDGES
             </span>
           </div>
-          <ul className="mt-3 space-y-2">
-            {events.map(({ icon: Icon, t, d, ago }) => (
-              <li key={t} className="flex gap-3 rounded border border-black/10 p-2.5">
-                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded border border-black/10 bg-[#f3f6e8]">
-                  <Icon className="h-3.5 w-3.5 text-[#2c3a10]" />
-                </span>
-                <div className="min-w-0 flex-1">
-                  <div className="flex justify-between gap-2">
-                    <span className="truncate text-[11px] font-semibold" style={{ color: INK }}>
-                      {t}
-                    </span>
-                    <span className="shrink-0 text-[9px] text-[#59614d]">{ago}</span>
+          <ul className="space-y-2.5">
+            {edgeNodes.map((n) => (
+              <li key={n.region} className="flex items-center justify-between gap-3 rounded-xl border border-white/5 bg-white/5 p-3">
+                <div className="flex items-center gap-3">
+                  <span className="h-2 w-2 rounded-full bg-[#d2ff3a]" />
+                  <div>
+                    <div className="text-xs font-bold dark:text-white light:text-[#090a0b]">{n.region}</div>
+                    <div className="text-[10px] font-mono text-[var(--text-muted)]">{n.reqs}</div>
                   </div>
-                  <p className="truncate text-[10px] text-[#59614d]">{d}</p>
                 </div>
+                <div className="font-mono text-xs font-bold text-[#d2ff3a]">{n.ttfb}</div>
               </li>
             ))}
           </ul>
-          <div className="mt-3 flex justify-between border-t border-black/10 pt-2 text-[9px] text-[#59614d]">
-            <span>DISPATCH RECORD COUNT: 1,482</span>
-            <a href="#" className="font-medium text-[#2a2f24]">
-              View full audit trail →
-            </a>
+          <div className="flex justify-between border-t border-white/10 pt-3 text-xs text-[var(--text-muted)]">
+            <span>GLOBAL PEAK LOAD</span>
+            <span className="font-mono text-emerald-400">Zero Throttling</span>
           </div>
         </div>
 
-        {/* Topology */}
-        <div className="rounded-lg border border-black/10 bg-white p-4">
+        {/* Live GraphQL Query Preview */}
+        <div className="rounded-3xl glass-panel p-6 border-white/10 space-y-4 flex flex-col justify-between">
           <div className="flex items-center justify-between">
-            <Mono className="text-[#59614d]">STAKEHOLDER TOPOLOGY</Mono>
-            <Mono className="text-[#59614d]">DIRECTED GRAPH</Mono>
+            <Mono className="text-[var(--text-muted)]">GRAPHQL QUERY EXAMPLE</Mono>
+            <Mono className="text-[#d2ff3a]">INSTANT PAYLOAD</Mono>
           </div>
-          <svg viewBox="0 0 300 220" className="mt-2 w-full">
-            <g stroke="#bfc7ad" strokeWidth="1" strokeDasharray="3 3" fill="none">
-              <path d="M150 112 L70 40" />
-              <path d="M150 112 L230 40" />
-              <path d="M150 112 L70 185" />
-              <path d="M150 112 L230 185" />
-            </g>
-            {[
-              [70, 40, 'CFO Office', 'Budget Signer'],
-              [230, 40, 'WH-1 Node', 'Fulfillment'],
-              [70, 185, 'VP Procurement', 'Commercial Intent'],
-              [230, 185, 'SAP/NetSuite', 'Ledger Origin'],
-            ].map(([x, y, a, b]) => (
-              <g key={a as string}>
-                <circle cx={x as number} cy={y as number} r="13" fill="#fff" stroke="#bfc7ad" />
-                <circle cx={x as number} cy={y as number} r="3.5" fill="#59614d" />
-                <text x={x as number} y={(y as number) + 28} textAnchor="middle" fontSize="8" fontWeight="600" fill={INK}>
-                  {a}
-                </text>
-                <text x={x as number} y={(y as number) + 38} textAnchor="middle" fontSize="7" fill="#59614d">
-                  {b}
-                </text>
-              </g>
-            ))}
-            <rect x="110" y="100" width="80" height="24" rx="12" fill={INK} />
-            <circle cx="124" cy="112" r="3" fill={LIME} />
-            <text x="134" y="115" fontSize="8" fontWeight="600" fill="#fff">
-              SCRYME KERNEL
-            </text>
-          </svg>
-          <div className="mt-1 flex justify-between border-t border-black/10 pt-2 font-mono text-[9px] text-[#59614d]">
-            <span>NODES DETECTED: 8 ACTIVE</span>
-            <span>EDGE LATENCY: 8ms</span>
+          <div className="p-4 rounded-2xl bg-[#090a0b] border border-white/10 font-mono text-xs text-slate-300 overflow-x-auto leading-relaxed my-auto">
+            <span className="text-blue-400">query</span> <span className="text-emerald-400">GetProductWithLiveStock</span> &#123;<br />
+            &nbsp;&nbsp;product(sku: <span className="text-[#d2ff3a]">"SKU-99201"</span>) &#123;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;title<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;price(currency: <span className="text-[#d2ff3a]">"KES"</span>)<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;stockByLocation(node: <span className="text-[#d2ff3a]">"Hub-NBO-01"</span>) &#123;<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;availableQuantity<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;isReserved<br />
+            &nbsp;&nbsp;&nbsp;&nbsp;&#125;<br />
+            &nbsp;&nbsp;&#125;<br />
+            &#125;
+          </div>
+          <div className="flex justify-between border-t border-white/10 pt-3 font-mono text-[9px] text-[var(--text-muted)]">
+            <span>RESPONSE: 200 OK</span>
+            <span className="text-[#d2ff3a]">EXECUTION: 4ms</span>
           </div>
         </div>
       </div>
@@ -274,63 +246,63 @@ function Telemetry() {
 
 /* ---------- architectural promise ---------- */
 
-function Promise() {
+function PromiseSection() {
   return (
-    <section className="mx-auto grid max-w-7xl grid-cols-1 gap-10 px-4 py-16 md:px-8 lg:grid-cols-2 lg:items-center">
-      <div className="relative overflow-hidden rounded-xl border border-black/10 bg-[#dfe6d0]">
-        <span className="absolute left-3 top-3 z-10 rounded bg-white/90 px-2 py-1 font-mono text-[9px] text-[#2a2f24]">
-          GRAPH_INSPECTOR // V3.2
+    <section className="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-4 py-20 md:px-8 lg:grid-cols-2 lg:items-center">
+      <div className="relative overflow-hidden rounded-3xl glass-panel border-white/10 shadow-2xl">
+        <span className="absolute left-4 top-4 z-10 rounded-full bg-black/70 backdrop-blur-md px-3 py-1 font-mono text-[10px] text-[#d2ff3a] border border-[#d2ff3a]/30">
+          CATALOG_ENGINE // V3.4
         </span>
-        <img src={ACCOUNT_PHOTO} alt="Account executive reviewing the unified account graph" className="h-[420px] w-full object-cover" />
-        <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-lg border border-black/10 bg-white p-3">
+        <img
+          src="/images/screen2.png"
+          alt="Omnichannel Catalog Management Interface"
+          className="h-[420px] w-full object-cover opacity-90"
+        />
+        <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl glass-panel border-white/15 p-4 backdrop-blur-md">
           <div className="flex items-center gap-3">
-            <span className="flex h-8 w-8 items-center justify-center rounded border border-black/10">
-              <Activity className="h-4 w-4" />
+            <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#d2ff3a]/10 text-[#d2ff3a]">
+              <Database className="h-5 w-5" />
             </span>
             <div>
-              <div className="text-[12px] font-semibold" style={{ color: INK }}>
-                Deterministic Account Visibility
+              <div className="text-xs font-bold dark:text-white light:text-[#090a0b]">
+                Zero Phantom Inventory Overselling
               </div>
-              <div className="text-[10px] text-[#59614d]">Zero-drift synchronization active across 14 ERP nodes</div>
+              <div className="text-[11px] text-[var(--text-muted)]">Instant edge inventory sync prevents cart allocation race conditions</div>
             </div>
           </div>
-          <span className="shrink-0 rounded px-2 py-1 font-mono text-[9px]" style={{ background: LIME, color: INK }}>
-            0-LAG COHERENCY
+          <span className="shrink-0 rounded-full px-3 py-1 font-mono text-[9px] font-bold bg-[#d2ff3a] text-[#090a0b]">
+            ATOMIC CACHE
           </span>
         </div>
       </div>
 
-      <div>
+      <div className="space-y-6">
         <Pill>
-          <Dot color="#59614d" /> ARCHITECTURAL PROMISE
+          <Dot color="#d2ff3a" /> ARCHITECTURAL ADVANTAGE
         </Pill>
-        <h2 className="mt-4 font-serif text-3xl leading-tight md:text-4xl" style={{ color: INK }}>
-          Eliminate the catastrophic 48-hour sync drift of legacy CRMs.
+        <h2 className="font-serif text-3xl font-normal leading-tight sm:text-4xl md:text-5xl dark:text-white light:text-[#090a0b]">
+          Never re-author products across fragmented eCommerce portals.
         </h2>
-        <p className="mt-4 text-[13px] leading-relaxed text-[#4a5140]">
-          Conventional cloud CRMs operate in isolation, treating customer interactions as disjointed text notes and
-          guessed renewal percentages. They lag days behind actual warehouse stock allocations, unresolved ERP billing
-          claims, and real supply-chain friction.
+        <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+          Most modern enterprises struggle with product catalogs split across Shopify, WooCommerce, physical retail POS, and custom mobile apps. Price changes take hours to propagate, and flash sales result in disastrous phantom orders.
         </p>
-        <p className="mt-3 text-[13px] leading-relaxed text-[#4a5140]">
-          Scryme roots the 360° CRM directly into the operational ERP kernel. When an account executive opens a Lumina
-          record, they observe authoritative ground-truth: inventory reservation quotas in Rotterdam, instantaneous
-          credit rating adjustments, and active logistics lead times.
+        <p className="text-sm leading-relaxed text-[var(--text-muted)]">
+          Scryme Catalog Cloud serves as the single immutable repository for your brand's digital catalog. Line-item prices, currency conversions, multi-tier wholesale discounts, and live branch inventory are exposed through lightning-fast edge APIs.
         </p>
-        <ul className="mt-5 space-y-4">
+        <ul className="space-y-4 pt-2">
           {[
-            ['Direct-to-Ledger Binding', 'Every contractual clause connects directly to automated billing schedulers and inventory manifests.'],
-            ['Algorithmic Predictive Retention', 'Sub-minute graph signals trigger playbooks based on actual product consumption velocity, not subjective rep feedback.'],
+            ['Atomic Multi-Storefront Invalidation', 'Update product descriptions, high-res assets, or tax codes once. Changes propagate to all consumer apps in sub-seconds.'],
+            ['Edge-Computed Wholesale Pricing', 'Dynamically calculate customer-specific price tiers and currency conversions at edge nodes closest to the user.'],
           ].map(([t, d]) => (
             <li key={t} className="flex gap-3">
-              <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border border-[#7ac70c]">
-                <Check className="h-2.5 w-2.5 text-[#4a8a10]" />
+              <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-[#10b981]/10 text-[#10b981] border border-[#10b981]/30">
+                <Check className="h-3 w-3" />
               </span>
               <div>
-                <div className="text-[12px] font-semibold" style={{ color: INK }}>
+                <div className="text-sm font-bold dark:text-white light:text-[#090a0b]">
                   {t}
                 </div>
-                <p className="text-[11px] text-[#59614d]">{d}</p>
+                <p className="text-xs text-[var(--text-muted)] mt-0.5 leading-relaxed">{d}</p>
               </div>
             </li>
           ))}
@@ -342,11 +314,13 @@ function Promise() {
 
 /* ---------- capabilities ---------- */
 
-function Capabilities() {
+function Capabilities({ data }: { data?: CmsPageData['features'] }) {
+  const features = data && data.length > 0 ? data : DEFAULT_CMS_PAGE_FALLBACK.features!
+
   const stat = (k: string, v: string) => (
-    <div className="flex-1 rounded border border-black/10 bg-white p-2">
-      <div className="font-mono text-[8px] uppercase text-[#59614d]">{k}</div>
-      <div className="mt-0.5 text-[11px] font-semibold" style={{ color: INK }}>
+    <div className="flex-1 rounded-xl border border-white/5 bg-white/5 p-3">
+      <div className="font-mono text-[9px] uppercase text-[var(--text-muted)]">{k}</div>
+      <div className="mt-1 text-xs font-bold dark:text-white light:text-[#090a0b]">
         {v}
       </div>
     </div>
@@ -364,92 +338,55 @@ function Capabilities() {
     body: string
     children: React.ReactNode
   }) => (
-    <div className="rounded-lg border border-black/10 bg-white p-5">
-      <div className="flex justify-between">
-        <Mono className="text-[#59614d]">{cap}</Mono>
-        <Mono className="text-[#59614d]">{tag}</Mono>
+    <div className="rounded-3xl glass-panel p-6 md:p-8 border-white/10 space-y-4">
+      <div className="flex justify-between items-center">
+        <Mono className="text-[var(--text-muted)]">{cap}</Mono>
+        <span className="font-mono text-[9px] font-bold uppercase tracking-wider text-[#d2ff3a] px-2 py-0.5 rounded bg-[#d2ff3a]/10 border border-[#d2ff3a]/20">
+          {tag}
+        </span>
       </div>
-      <h3 className="mt-2 font-serif text-xl" style={{ color: INK }}>
+      <h3 className="font-serif text-2xl font-bold dark:text-white light:text-[#090a0b]">
         {title}
       </h3>
-      <p className="mt-2 text-[11px] leading-relaxed text-[#59614d]">{body}</p>
-      <div className="mt-4">{children}</div>
+      <p className="text-xs text-[var(--text-muted)] leading-relaxed">{body}</p>
+      <div className="pt-2">{children}</div>
     </div>
   )
 
   return (
-    <section className="border-t border-black/10 bg-[#f7f8f3] py-14">
-      <div className="mx-auto max-w-7xl px-4 md:px-8">
-        <div className="flex items-end justify-between">
-          <div>
-            <Mono className="text-[#59614d]">OPERATIONAL CAPABILITIES</Mono>
-            <h2 className="mt-2 font-serif text-2xl md:text-3xl" style={{ color: INK }}>
-              Engineered for high-consequence enterprise ecosystems.
-            </h2>
-          </div>
-          <Mono className="hidden text-[#59614d] sm:block">SPECIFICATION // SPEC-CRM-409</Mono>
+    <section className="border-t border-white/10 dark:border-white/10 light:border-black/10 py-20 px-4 md:px-8 max-w-7xl mx-auto">
+      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-12">
+        <div>
+          <Mono className="text-[var(--text-muted)]">OMNICHANNEL CATALOG CAPABILITIES</Mono>
+          <h2 className="mt-2 font-serif text-3xl md:text-5xl dark:text-white light:text-[#090a0b]">
+            Architected for limitless storefront scale.
+          </h2>
         </div>
+        <Mono className="text-[#d2ff3a]">SPECIFICATION // SPEC-CMS-812</Mono>
+      </div>
 
-        <div className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {features.map((f, idx) => (
           <Card
-            cap="CAPABILITY 01"
-            tag="ALGORITHMIC MONITORED"
-            title="Predictive Account Health & Churn Early-Alerts"
-            body="Continuous sentiment analysis processes communication streams, dispatch cadence deviations, and order frequency drops. Autonomous playbooks deploy proactive mitigation sequences prior to contract renewal."
+            key={idx}
+            cap={`CAPABILITY 0${idx + 1}`}
+            tag={f.badge || 'CORE CAPABILITY'}
+            title={f.title}
+            body={f.description || ''}
           >
-            <div className="rounded border border-black/10 bg-[#f7f8f3] p-2">
-              <div className="flex justify-between font-mono text-[9px] text-[#59614d]">
-                <span>DETECTION MODEL</span>
-                <span>TENSOR-HEALTH-V6</span>
+            <div className="rounded-2xl border border-white/10 bg-white/5 p-3 space-y-3">
+              <div className="flex justify-between font-mono text-[9px] text-[var(--text-muted)]">
+                <span>CDN INFRASTRUCTURE</span>
+                <span className="text-[#d2ff3a]">ANYCAST WORKERS</span>
               </div>
-              <div className="mt-2 flex gap-2">
-                {stat('LEAD TIME', '42 Days')}
-                {stat('PRECISION', '98.4%')}
-                {stat('AUTONOMOUS', 'Active')}
+              <div className="flex gap-2">
+                {stat('AVG TTFB', '24ms')}
+                {stat('GLOBAL UPTIME', '99.999%')}
+                {stat('AUTO COMPRESSION', 'AVIF / WebP')}
               </div>
             </div>
           </Card>
-
-          <Card
-            cap="CAPABILITY 02"
-            tag="MARGIN GUARD"
-            title="Unified Quote-to-Contract Escalation"
-            body="Commercial representatives negotiate with full visibility into real-time global warehouse allocations, shipping lane volatility, and minimum approved margin constraints."
-          >
-            <div className="flex items-center justify-between rounded border border-black/10 bg-[#f7f8f3] px-3 py-3">
-              <span className="inline-flex items-center gap-2 text-[10px] text-[#2a2f24]">
-                <ShieldCheck className="h-3.5 w-3.5 text-[#4a8a10]" /> Margin Guardrails Enforced
-              </span>
-              <Mono className="text-[#59614d]">ZERO DRIFT</Mono>
-            </div>
-          </Card>
-
-          <Card
-            cap="CAPABILITY 03"
-            tag="ATTRIBUTION"
-            title="Autonomous Multichannel Attribution"
-            body="Unify revenues stemming from self-serve storefronts, EDI enterprise pipelines, and direct field representative deals into a singular unified account graph ledger."
-          >
-            <div className="flex gap-2 rounded border border-black/10 bg-[#f7f8f3] p-2">
-              {stat('EDI STREAMS', 'X12 & EDIFACT')}
-              {stat('PORTAL ORDERS', 'B2B Headless')}
-            </div>
-          </Card>
-
-          <Card
-            cap="CAPABILITY 04"
-            tag="DATA MESH"
-            title="Bi-directional ERP Data Mesh"
-            body="A high-frequency event bus updates billing thresholds, dynamic credit balances, logistics held tickets, and warehouse dispatch confirmations instantaneously between customer-facing staff and back-office controllers."
-          >
-            <div className="flex items-center justify-between rounded border border-black/10 bg-[#f7f8f3] px-3 py-2.5">
-              <span className="inline-flex items-center gap-2 text-[10px] text-[#2a2f24]">
-                <Dot /> Apache Kafka / Event Mesh Bus
-              </span>
-              <Mono className="text-[#59614d]">PERSISTENCE: ACID LEDGER</Mono>
-            </div>
-          </Card>
-        </div>
+        ))}
       </div>
     </section>
   )
@@ -459,20 +396,20 @@ function Capabilities() {
 
 function Metrics() {
   const items = [
-    ['Retention Efficacy', '89.4%', 'Net enterprise annual retention across high-velocity accounts with automated retention hooks.'],
-    ['Resolution Velocity', '< 3 min', 'Mean time to resolve Tier-1 supply-chain and fulfillment escalations without manual hand-offs.'],
-    ['Expansion Discovery', '4.2×', 'Faster identification of whitespace upsell opportunities derived from multi-node inventory flow.'],
+    ['Edge Response Time', '38ms', 'P95 global content latency across all mobile and web storefront clients.'],
+    ['SKU Scalability', '10M+', 'Catalog complexity supported with multi-variant hierarchical attributes.'],
+    ['Overselling Incidents', '0.00%', 'Atomic inventory reservation eliminates phantom stockouts completely.'],
   ]
   return (
-    <section className="mx-auto max-w-7xl px-4 py-12 md:px-8">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+    <section className="mx-auto max-w-7xl px-4 py-16 md:px-8 border-t border-white/10 dark:border-white/10 light:border-black/10">
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
         {items.map(([k, v, d]) => (
-          <div key={k} className="rounded-lg border border-black/10 bg-white p-5">
-            <Mono className="text-[#59614d]">{k}</Mono>
-            <div className="mt-2 font-serif text-4xl md:text-5xl" style={{ color: INK }}>
+          <div key={k} className="rounded-3xl glass-panel p-6 border-white/10 space-y-2">
+            <Mono className="text-[var(--text-muted)]">{k}</Mono>
+            <div className="font-serif text-4xl md:text-5xl font-bold text-[#d2ff3a]">
               {v}
             </div>
-            <p className="mt-2 text-[11px] text-[#59614d]">{d}</p>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">{d}</p>
           </div>
         ))}
       </div>
@@ -484,86 +421,50 @@ function Metrics() {
 
 function CaseStudy() {
   return (
-    <section className="mx-auto max-w-7xl px-4 pb-14 md:px-8">
-      <div className="grid grid-cols-1 gap-8 rounded-xl border border-black/10 bg-white p-6 md:p-8 lg:grid-cols-[1.2fr_1fr]">
+    <section className="mx-auto max-w-7xl px-4 pb-20 md:px-8">
+      <div className="grid grid-cols-1 gap-8 rounded-3xl glass-panel p-8 md:p-12 border-white/10 lg:grid-cols-[1.2fr_1fr] items-center">
         <div>
-          <Pill>ENTERPRISE CASE STUDY • MANUFACTURING &amp; LOGISTICS</Pill>
-          <h2 className="mt-4 font-serif text-3xl md:text-4xl" style={{ color: INK }}>
-            How Lumina Global retained $24M in ARR using Scryme 360° CRM.
+          <Pill>ENTERPRISE SPOTLIGHT • OMNICHANNEL RETAIL</Pill>
+          <h2 className="mt-4 font-serif text-3xl md:text-5xl dark:text-white light:text-[#090a0b]">
+            How Aetheria Retail unified 42 stores and 3 online storefronts.
           </h2>
-          <p className="mt-4 text-[12px] leading-relaxed text-[#4a5140]">
-            By connecting customer service reps directly to factory line schedules and multi-region inventories,
-            Lumina resolved supplier shortages before customers were impacted, converting potential cancelations into
-            multi-year commitments.
+          <p className="mt-4 text-sm leading-relaxed text-[var(--text-muted)]">
+            By shifting from a legacy CMS and fragmented inventory connectors to Scryme Catalog Cloud, Aetheria achieved sub-second product updates across both physical retail counters and headless Next.js digital stores.
           </p>
-          <blockquote className="mt-5 border-l-2 pl-4" style={{ borderColor: LIME }}>
-            <p className="font-serif text-[15px] italic leading-relaxed" style={{ color: INK }}>
-              “Scryme turned our commercial account managers into operational generals. We no longer ask clients for
-              time to check with warehouse supervisors; the graph answers before the client completes the sentence.”
+          <blockquote className="mt-6 border-l-2 border-[#d2ff3a] pl-4 space-y-3">
+            <p className="font-serif text-lg italic leading-relaxed dark:text-white light:text-[#090a0b]">
+              “We previously spent hours explaining to frustrated customers why an item showing in stock online had actually been sold an hour ago in our store. Scryme solved that fundamentally on day one.”
             </p>
-            <footer className="mt-3 text-[11px]">
-              <div className="font-semibold" style={{ color: INK }}>
-                Evelyn Kovač
-              </div>
-              <div className="text-[#59614d]">Chief Commercial Officer, Lumina Global</div>
+            <footer className="text-xs text-[var(--text-muted)]">
+              <span className="font-bold text-white">Marc Dubois</span> — VP eCommerce &amp; Digital, Aetheria Brands
             </footer>
           </blockquote>
         </div>
 
-        <div className="self-center rounded-lg border border-black/10 bg-[#f7f8f3] p-4">
-          <Mono className="text-[#59614d]">DEPLOYMENT RETROSPECTIVE</Mono>
-          <dl className="mt-3 divide-y divide-black/10 text-[12px]">
+        <div className="rounded-2xl border border-white/10 bg-white/5 p-6 space-y-4">
+          <Mono className="text-[#d2ff3a]">IMPACT ANALYSIS</Mono>
+          <dl className="divide-y divide-white/10 text-xs">
             {[
-              ['Pre-Scryme Baseline Churn', '14.8% ARR Loss', '#c0392b'],
-              ['Post-Scryme Implementation', '1.2% Risk Level', '#4a8a10'],
-              ['Net Preserved Revenue', '$24,100,000', INK],
+              ['Catalog Update Latency', '45 min → 800ms', 'text-emerald-400'],
+              ['Overselling Order Cancellations', '-99.2%', 'text-emerald-400'],
+              ['Monthly API Ingestion Volume', '240M Queries', 'text-[#d2ff3a]'],
             ].map(([k, v, c]) => (
-              <div key={k} className="flex justify-between py-2.5">
-                <dt className="text-[#2a2f24]">{k}</dt>
-                <dd className="font-mono font-semibold" style={{ color: c }}>
+              <div key={k} className="flex justify-between py-3">
+                <dt className="text-[var(--text-muted)]">{k}</dt>
+                <dd className={`font-mono font-bold ${c}`}>
                   {v}
                 </dd>
               </div>
             ))}
           </dl>
           <a
-            href="#"
-            className="mt-3 flex items-center justify-between rounded px-3 py-2.5 font-mono text-[10px] font-semibold uppercase text-white"
-            style={{ background: DEEP }}
+            href="https://app.scryme.tech/signup?plan=scale&trial=true"
+            className="flex items-center justify-between rounded-xl p-3 font-mono text-xs font-bold uppercase text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] transition"
           >
-            <span>Full verified audit report</span>
-            <span style={{ color: LIME }}>Download PDF ↓</span>
+            <span>Deploy Headless Storefront</span>
+            <ArrowRight className="h-4 w-4" />
           </a>
         </div>
-      </div>
-    </section>
-  )
-}
-
-/* ---------- explore links ---------- */
-
-function Explore() {
-  const items = [
-    ['PILLAR 01', 'Sales Automation'],
-    ['PILLAR 02', 'Multi-Location Inventory'],
-    ['PILLAR 04', 'Headless CMS'],
-    ['API LAYER', 'MCP & Event APIs'],
-  ]
-  return (
-    <section className="mx-auto max-w-7xl px-4 pb-14 md:px-8">
-      <Mono className="text-[#59614d]">EXPLORE COMPLEMENTARY SYSTEM ARCHITECTURE</Mono>
-      <div className="mt-3 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
-        {items.map(([k, v]) => (
-          <a key={v} href="#" className="flex items-center justify-between rounded-lg border border-black/10 bg-white px-4 py-3 hover:border-black/30">
-            <div>
-              <div className="font-mono text-[8px] uppercase text-[#59614d]">{k}</div>
-              <div className="text-[12px] font-semibold" style={{ color: INK }}>
-                {v}
-              </div>
-            </div>
-            <ArrowRight className="h-3.5 w-3.5 text-[#59614d]" />
-          </a>
-        ))}
       </div>
     </section>
   )
@@ -571,38 +472,33 @@ function Explore() {
 
 /* ---------- final CTA ---------- */
 
-function FinalCta() {
+function FinalCta({ data }: { data?: CmsPageData['bottomCta'] }) {
+  const cta = data || DEFAULT_CMS_PAGE_FALLBACK.bottomCta!
+
   return (
-    <section
-      className="px-4 py-14 md:px-8"
-      style={{ background: `linear-gradient(110deg, #08150d 0%, ${DEEP} 55%, #1c4a22 100%)` }}
-    >
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          <span className="inline-flex items-center gap-2 font-mono text-[10px] uppercase" style={{ color: LIME }}>
-            <Dot color={LIME} /> ENTERPRISE KERNEL ONBOARDING
-          </span>
-          <h2 className="mt-3 font-serif text-3xl text-white md:text-4xl">
-            Ready to establish real-time customer topology across your enterprise?
-          </h2>
-          <p className="mt-3 text-[12px] text-white/60">
-            Deploy the Scryme CRM Graph alongside your existing data infrastructure with zero production downtime and
-            guaranteed sub-second event ingestion.
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
+    <section className="px-4 py-20 md:px-8 max-w-7xl mx-auto text-center">
+      <div className="glass-panel-elevated p-10 md:p-16 rounded-3xl relative overflow-hidden">
+        <Pill className="mb-6">
+          <Dot color="#d2ff3a" /> {cta.badge || 'FAST-START DEVELOPER PORTAL'}
+        </Pill>
+        <h2 className="font-serif text-3xl md:text-5xl lg:text-6xl max-w-3xl mx-auto dark:text-white light:text-[#090a0b] mb-6">
+          {cta.title || 'Power your storefronts with the fastest catalog API in commerce.'}
+        </h2>
+        <p className="max-w-2xl mx-auto text-sm md:text-base text-[var(--text-muted)] leading-relaxed mb-8">
+          {cta.subtitle || 'Integrate the Scryme SDK or query GraphQL endpoints directly from your frontend application in minutes.'}
+        </p>
+        <div className="flex flex-wrap items-center justify-center gap-4">
           <a
-            href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
-            className="rounded-md px-5 py-3 text-xs font-semibold"
-            style={{ background: LIME, color: INK }}
+            href={cta.primaryCtaLink || 'https://app.scryme.tech/signup?plan=free'}
+            className="rounded-full px-8 py-4 text-xs font-bold uppercase tracking-wider text-[#090a0b] bg-[#d2ff3a] hover:bg-[#c7f32c] transition shadow-lg"
           >
-            Launch Interactive Sandbox
+            {cta.primaryCtaText || 'Start Free Testing ($0/mo)'}
           </a>
           <Link
-            to="/pricing"
-            className="rounded-md border border-white/30 px-5 py-3 text-xs font-semibold text-white hover:bg-white/10"
+            to="/developers/apps"
+            className="rounded-full border border-white/20 px-8 py-4 text-xs font-semibold uppercase tracking-wider hover:bg-white/10 transition"
           >
-            Schedule Architecture Briefing
+            Configure Developer Auth Client
           </Link>
         </div>
       </div>
@@ -610,92 +506,23 @@ function FinalCta() {
   )
 }
 
-/* ---------- footer ---------- */
-
-function SiteFooter() {
-  const cols: [string, string[]][] = [
-    ['SOLUTIONS', ['Sales Automation', 'Multi-Location Inventory', '360° CRM Intelligence', 'Headless CMS Gateway', 'Automated Procurement']],
-    ['PLATFORM', ['Core Kernel', 'Global Architecture', 'Audit Telemetry', 'Ecosystem Hub']],
-    ['GOVERNANCE', ['Privacy Architecture', 'Terms of Provisioning', 'SOC2 & Sovereignty', 'Enterprise SLA (99.99%)', 'ISO/IEC 27001 Standard', 'Data Residency Matrix']],
-  ]
-  return (
-    <footer className="bg-[#f7f8f3] px-4 pt-12 md:px-8">
-      <div className="mx-auto grid max-w-7xl grid-cols-2 gap-8 border-b border-black/10 pb-10 lg:grid-cols-[1.4fr_1fr_1fr_1fr_1.3fr]">
-        <div className="col-span-2 lg:col-span-1">
-          <div className="flex items-center gap-2">
-            <span className="font-serif text-xl font-semibold" style={{ color: INK }}>
-              Scryme
-            </span>
-            <Mono className="text-[#59614d]">CORE SUITE</Mono>
-          </div>
-          <p className="mt-3 max-w-xs text-[11px] leading-relaxed text-[#59614d]">
-            High-fidelity enterprise operating kernel coordinating sales velocity, multi-node inventory, and
-            multi-tenant telemetry with sub-millisecond precision.
-          </p>
-          <span className="mt-4 inline-flex items-center gap-2 rounded border border-black/10 bg-white px-2 py-1 font-mono text-[9px] text-[#2a2f24]">
-            <Dot /> 99.99% Operational • All global regions live
-          </span>
-        </div>
-
-        {cols.map(([h, links]) => (
-          <div key={h}>
-            <Mono className="font-semibold text-[#2a2f24]">{h}</Mono>
-            <ul className="mt-3 space-y-2">
-              {links.map((l) => (
-                <li key={l}>
-                  <a href="#" className="text-[11px] text-[#59614d] hover:text-black">
-                    {l}
-                  </a>
-                </li>
-              ))}
-            </ul>
-          </div>
-        ))}
-
-        <div className="col-span-2 lg:col-span-1">
-          <Mono className="font-semibold text-[#2a2f24]">DISPATCH</Mono>
-          <p className="mt-3 text-[11px] leading-relaxed text-[#59614d]">
-            Executive analysis, kernel release logs, and architectural briefs delivered weekly.
-          </p>
-          <form className="mt-3 flex gap-2" onSubmit={(e) => e.preventDefault()}>
-            <input
-              type="email"
-              placeholder="executive@enterprise.com"
-              className="min-w-0 flex-1 rounded border border-black/15 bg-white px-3 py-2 text-[11px] outline-none focus:border-black/40"
-            />
-            <button
-              type="submit"
-              aria-label="Subscribe"
-              className="flex h-8 w-8 items-center justify-center rounded text-white"
-              style={{ background: INK }}
-            >
-              <ArrowRight className="h-3.5 w-3.5" />
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-2 py-4 font-mono text-[9px] text-[#59614d]">
-        <span>© 2026 Scryme ERP AG. All rights reserved. Registered Enterprise OS.</span>
-        <span>NODE_LATENCY: 12ms | TLS 1.3 / ENCRYPTED</span>
-      </div>
-    </footer>
-  )
-}
-
 /* ---------- page ---------- */
 
-function CrmComponent() {
+function CmsPageComponent() {
+  const { cmsData, siteSettings } = Route.useLoaderData()
+
   return (
-    <div className="min-h-screen bg-[#f7f8f3] font-sans text-[#0c1108] selection:bg-[#c8f31d] selection:text-[#0c1108]">
-      <Hero />
-      <Promise />
-      <Capabilities />
-      <Metrics />
-      <CaseStudy />
-      <Explore />
-      <FinalCta />
-      <SiteFooter />
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#d2ff3a] selection:text-[#090a0b] transition-colors">
+      <Header settings={siteSettings} />
+      <main className="w-full">
+        <Hero data={cmsData.hero} />
+        <PromiseSection />
+        <Capabilities data={cmsData.features} />
+        <Metrics />
+        <CaseStudy />
+        <FinalCta data={cmsData.bottomCta} />
+      </main>
+      <Footer settings={siteSettings} />
     </div>
   )
 }

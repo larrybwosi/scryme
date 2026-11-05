@@ -1,0 +1,4 @@
+-- AlterTable
+ALTER TABLE "LoyaltyProgram" ADD COLUMN IF NOT EXISTS "minRedeemPoints" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "LoyaltyProgram" ADD COLUMN IF NOT EXISTS "maxRedemptionPercentage" DECIMAL(5, 2) NOT NULL DEFAULT 100.0;
+ALTER TABLE "LoyaltyProgram" ADD COLUMN IF NOT EXISTS "allowDirectRedemption" BOOLEAN NOT NULL DEFAULT true;

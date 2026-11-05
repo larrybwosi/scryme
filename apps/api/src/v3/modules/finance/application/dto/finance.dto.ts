@@ -100,6 +100,31 @@ export class CreateExpenseDto {
   @ApiPropertyOptional()
   @IsOptional()
   @IsString()
+  costCenterId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  ledgerAccountId?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
+  currencyCode?: string;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  taxAmount?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsNumber()
+  taxRate?: number;
+
+  @ApiPropertyOptional()
+  @IsOptional()
+  @IsString()
   locationId?: string;
 
   @ApiPropertyOptional()

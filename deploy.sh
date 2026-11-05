@@ -50,6 +50,10 @@ if [ "$MIGRATE_FAILED" = "true" ]; then
   echo "Retrying database migrations deployment..."
   docker compose run --rm --no-deps api prisma migrate deploy
 fi
+if docker compose config --services | grep -q "^customer-db$"; then
+  echo "Deploying customer database migrations..."
+  docker compose run --rm --no-deps api prisma migrate deploy --config=prisma.config.ts || echo "⚠️ Customer DB migration failed, continuing anyway..."
+fi
 
 # Export SKIP_MIGRATIONS=true so starting apps skip redundant migration runs
 export SKIP_MIGRATIONS=true

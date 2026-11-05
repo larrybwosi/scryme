@@ -3,6 +3,7 @@ import { DependencyType, ProjectTaskPriority, ProjectTaskStatus } from '@repo/db
 import { Type } from 'class-transformer';
 import {
   IsArray,
+  IsBoolean,
   IsDate,
   IsEnum,
   IsInt,
@@ -11,6 +12,7 @@ import {
   IsOptional,
   IsString,
   Min,
+  ValidateNested,
 } from 'class-validator';
 
 export class CreateTaskDto {
@@ -134,11 +136,38 @@ export class UpdateTaskDto {
   parentTaskId?: string;
 }
 
+export class TaskAssigneeInput {
+  @ApiProperty({ example: 'cuid_member_1' })
+  @IsString()
+  @IsNotEmpty()
+  memberId!: string;
+
+  @ApiPropertyOptional({ example: true, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
+  @ApiPropertyOptional({ example: 4.5, description: 'Allocated hours out of total estimate' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  allocatedHours?: number;
+}
+
 export class ManageTaskAssigneesDto {
-  @ApiProperty({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
+  @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
+  @IsOptional()
   @IsArray()
   @IsString({ each: true })
-  memberIds!: string[];
+  memberIds?: string[];
+
+  @ApiPropertyOptional({ type: [TaskAssigneeInput] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskAssigneeInput)
+  assignees?: TaskAssigneeInput[];
 }
 
 export class AddTaskDependencyDto {
@@ -242,4 +271,57 @@ export class CreateTaskTimeEntryDto {
   @Type(() => Date)
   @IsDate()
   date?: Date;
+
+  @ApiPropertyOptional({ example: "cuid_task_id", description: "Optional: leave blank for general operational hours" })
+  @IsOptional()
+  @IsString()
+  taskId?: string;
+
+  @ApiPropertyOptional({ example: "OPERATION", description: "OPERATION, MEETING, SUPPORT, TRAINING" })
+  @IsOptional()
+  @IsString()
+  category?: string;
+
+  @ApiPropertyOptional({ example: true, default: true })
+  @IsOptional()
+  @IsBoolean()
+  isBillable?: boolean;
+}
+
+export class MemberPerformanceFilterDto {
+  @ApiPropertyOptional({ example: '2026-10-01T00:00:00.000Z' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  from?: Date;
+
+  @ApiPropertyOptional({ example: '2026-10-31T23:59:59.999Z' })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  to?: Date;
+}
+
+export class SubmitTimesheetDto {
+  @ApiProperty({ example: '2026-10-12T00:00:00.000Z', description: 'Monday start date of the week' })
+  @Type(() => Date)
+  @IsDate()
+  weekStartDate!: Date;
+
+  @ApiPropertyOptional({ example: 'Weekly development sprint tasks', description: 'Submission notes' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}
+
+export class ProcessTimesheetDto {
+  @ApiProperty({ example: 'APPROVE', enum: ['APPROVE', 'REJECT'] })
+  @IsString()
+  @IsNotEmpty()
+  action!: 'APPROVE' | 'REJECT';
+
+  @ApiPropertyOptional({ example: 'Approved for payroll processing' })
+  @IsOptional()
+  @IsString()
+  notes?: string;
 }

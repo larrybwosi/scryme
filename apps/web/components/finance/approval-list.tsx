@@ -40,16 +40,16 @@ export function ApprovalList({ requests }: ApprovalListProps) {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "APPROVED":
-        return <CheckCircle2 className="h-4 w-4 text-green-500" />;
+        return <CheckCircle2 className="h-4 w-4 text-emerald-500" />;
       case "REJECTED":
-        return <XCircle className="h-4 w-4 text-red-500" />;
+        return <XCircle className="h-4 w-4 text-rose-500" />;
       default:
-        return <Clock className="h-4 w-4 text-yellow-500" />;
+        return <Clock className="h-4 w-4 text-amber-500" />;
     }
   };
 
   return (
-    <div className="rounded-md border bg-white">
+    <div className="rounded-xl border border-border bg-card shadow-xs overflow-hidden">
       <Table>
         <TableHeader>
           <TableRow>
@@ -65,7 +65,7 @@ export function ApprovalList({ requests }: ApprovalListProps) {
         <TableBody>
           {requests.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+              <TableCell colSpan={7} className="text-center py-8 text-muted-foreground">
                 No pending approval requests
               </TableCell>
             </TableRow>
@@ -78,11 +78,11 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                 <TableCell>
                   <Badge variant="outline">{request.requestType}</Badge>
                 </TableCell>
-                <TableCell className="font-medium">
+                <TableCell className="font-medium text-foreground">
                   {request.relatedRecordNumber}
                 </TableCell>
                 <TableCell>{request.requester.user.name}</TableCell>
-                <TableCell>
+                <TableCell className="font-semibold text-foreground">
                   {new Intl.NumberFormat("en-US", {
                     style: "currency",
                     currency: request.currency || "USD",
@@ -91,7 +91,7 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                 <TableCell>
                   <div className="flex items-center gap-2">
                     {getStatusIcon(request.status)}
-                    <span className="capitalize">
+                    <span className="capitalize text-xs font-medium">
                       {request.status.toLowerCase()}
                     </span>
                   </div>
@@ -102,14 +102,14 @@ export function ApprovalList({ requests }: ApprovalListProps) {
                       <Button
                         size="sm"
                         variant="outline"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                        className="text-rose-600 hover:text-rose-700 hover:bg-rose-50 dark:hover:bg-rose-950/30 border-rose-200 dark:border-rose-900"
                         onClick={() => handleDecision(request.id, "REJECTED")}
                         disabled={isPending}>
                         Reject
                       </Button>
                       <Button
                         size="sm"
-                        className="bg-green-600 hover:bg-green-700 text-white"
+                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
                         onClick={() => handleDecision(request.id, "APPROVED")}
                         disabled={isPending}>
                         Approve

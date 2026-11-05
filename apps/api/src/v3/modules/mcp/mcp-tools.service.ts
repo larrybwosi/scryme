@@ -1,15 +1,19 @@
-import { Injectable, Logger } from "@nestjs/common";
+import { Injectable, Logger, BadRequestException, NotFoundException } from "@nestjs/common";
 import { db } from "@repo/db";
+import { McpDraftService } from "./mcp-draft.service";
 
 @Injectable()
 export class McpToolsService {
   private readonly logger = new Logger(McpToolsService.name);
+
+  constructor(private readonly mcpDraftService: McpDraftService) {}
 
   /**
    * Get tool definitions for MCP clients
    */
   getToolDefinitions() {
     return [
+      // 1. Inventory & Catalog Read Tools
       {
         name: "query_inventory",
         description: "Query product inventory levels, variant stock, and location details in Scryme.",
@@ -30,7 +34,7 @@ export class McpToolsService {
           properties: {
             query: { type: "string", description: "Search term for product name or SKU" },
             categoryId: { type: "string", description: "Filter products by category ID" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -42,9 +46,9 @@ export class McpToolsService {
           properties: {
             status: { type: "string", description: "Order status (COMPLETED, PENDING, CANCELLED)" },
             customerId: { type: "string", description: "Filter orders by customer ID" },
-            startDate: { type: "string", description: "Start date filter (ISO format)" },
-            endDate: { type: "string", description: "End date filter (ISO format)" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            startDate: { type: "string", description: "Start date filter in ISO 8601 format (e.g. 2026-01-01T00:00:00Z)" },
+            endDate: { type: "string", description: "End date filter in ISO 8601 format (e.g. 2026-01-31T23:59:59Z)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -66,7 +70,7 @@ export class McpToolsService {
           type: "object",
           properties: {
             query: { type: "string", description: "Search term for customer name, email, or phone" },
-            limit: { type: "number", description: "Max records to return (default 20)" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
           },
         },
       },
@@ -90,7 +94,7 @@ export class McpToolsService {
         inputSchema: {
           type: "object",
           properties: {
-            limit: { type: "number", description: "Number of top products to retrieve (default 10)" },
+            limit: { type: "number", description: "Number of top products to retrieve (default 10, max 50)" },
           },
         },
       },
@@ -102,7 +106,7 @@ export class McpToolsService {
           properties: {
             status: { type: "string", description: "Task status filter (PENDING, IN_PROGRESS, COMPLETED)" },
             assignedMemberId: { type: "string", description: "Filter by assigned staff member ID" },
-            limit: { type: "number", description: "Max tasks to return (default 20)" },
+            limit: { type: "number", description: "Max tasks to return (default 20, max 100)" },
           },
         },
       },
@@ -112,18 +116,243 @@ export class McpToolsService {
         inputSchema: {
           type: "object",
           properties: {
-            date: { type: "string", description: "Target date in YYYY-MM-DD format (defaults to today)" },
+            date: { type: "string", description: "Target date in YYYY-MM-DD or ISO format (defaults to today)" },
             locationId: { type: "string", description: "Filter shifts by location ID" },
           },
+        },
+      },
+
+      // 2. Draft & Staging Management Tools
+      {
+        name: "list_drafts",
+        description: "List pending or past staged MCP draft changes, diffs, and execution statuses.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            status: { type: "string", enum: ["DRAFT", "APPLIED", "REVERTED", "DISCARDED"], description: "Filter by draft status" },
+            entityType: { type: "string", enum: ["PRODUCT", "PRICE", "ORDER", "FULFILLMENT", "STAFF_TASK"], description: "Filter by entity type" },
+            limit: { type: "number", description: "Max records to return (default 20, max 100)" },
+          },
+        },
+      },
+      {
+        name: "get_draft_diff",
+        description: "Inspect the detailed before/after diff summary and proposed payload for a staged draft.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The ID of the staged draft to inspect" },
+          },
+          required: ["draftId"],
+        },
+      },
+      {
+        name: "publish_draft",
+        description: "Publish and execute a staged draft change live in the database within an ACID transaction.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The draft ID to publish" },
+            confirm: { type: "boolean", description: "Must explicitly be set to true to apply live changes" },
+          },
+          required: ["draftId", "confirm"],
+        },
+      },
+      {
+        name: "revert_draft",
+        description: "Revert an already-applied draft change back to its prior recorded state snapshot.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The applied draft ID to revert" },
+            confirm: { type: "boolean", description: "Must explicitly be set to true to revert changes" },
+          },
+          required: ["draftId", "confirm"],
+        },
+      },
+      {
+        name: "discard_draft",
+        description: "Discard an unapplied staged draft without making changes to live tables.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            draftId: { type: "string", description: "The staged draft ID to discard" },
+          },
+          required: ["draftId"],
+        },
+      },
+
+      // 3. Product Catalog Management Tools
+      {
+        name: "create_product",
+        description: "Stage or create a new product with category, SKU, name, description, and variants in the catalog.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            name: { type: "string", description: "Product name" },
+            sku: { type: "string", description: "Unique product SKU" },
+            categoryId: { type: "string", description: "Category ID the product belongs to" },
+            description: { type: "string", description: "Product description" },
+            barcode: { type: "string", description: "Optional barcode string" },
+            variants: {
+              type: "array",
+              description: "List of variant definitions (name, sku, buyingPrice, retailPrice, wholesalePrice)",
+              items: { type: "object" },
+            },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live without waiting for publish_draft" },
+          },
+          required: ["name", "sku", "categoryId"],
+        },
+      },
+      {
+        name: "update_product",
+        description: "Stage or update product catalog attributes (name, description, status, category).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            productId: { type: "string", description: "Product ID to update" },
+            name: { type: "string", description: "New product name" },
+            description: { type: "string", description: "New product description" },
+            categoryId: { type: "string", description: "New category ID" },
+            isActive: { type: "boolean", description: "Active status flag" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live" },
+          },
+          required: ["productId"],
+        },
+      },
+      {
+        name: "update_product_price",
+        description: "Stage or update pricing (retail, wholesale, buying price) on a product variant.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            variantId: { type: "string", description: "Product variant ID to update" },
+            retailPrice: { type: "number", description: "New retail sale price" },
+            wholesalePrice: { type: "number", description: "New wholesale price" },
+            buyingPrice: { type: "number", description: "New buying/cost price" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies changes live" },
+          },
+          required: ["variantId"],
+        },
+      },
+
+      // 4. Order Creation & Fulfillment Tools
+      {
+        name: "create_order",
+        description: "Stage or create a sales transaction/order with line items, location, and customer.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            locationId: { type: "string", description: "Inventory location ID for the transaction" },
+            customerId: { type: "string", description: "Optional customer ID" },
+            items: {
+              type: "array",
+              description: "Array of items with variantId, productName, quantity, and unitPrice",
+              items: {
+                type: "object",
+                properties: {
+                  variantId: { type: "string" },
+                  productName: { type: "string" },
+                  quantity: { type: "number" },
+                  unitPrice: { type: "number" },
+                },
+                required: ["quantity", "unitPrice"],
+              },
+            },
+            notes: { type: "string", description: "Order notes or terms" },
+            autoPublish: { type: "boolean", description: "If true, immediately applies order creation live" },
+          },
+          required: ["locationId", "items"],
+        },
+      },
+      {
+        name: "update_order_status",
+        description: "Stage or transition order status (CONFIRMED, PROCESSING, COMPLETED, CANCELLED).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            transactionId: { type: "string", description: "Transaction ID or order number" },
+            status: {
+              type: "string",
+              enum: ["PENDING_CONFIRMATION", "CONFIRMED", "PROCESSING", "READY", "COMPLETED", "CANCELLED"],
+              description: "New order status",
+            },
+            autoPublish: { type: "boolean", description: "If true, immediately applies status transition live" },
+          },
+          required: ["transactionId", "status"],
+        },
+      },
+      {
+        name: "fulfill_order",
+        description: "Stage or record order fulfillment with tracking number and dispatch status.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            transactionId: { type: "string", description: "Transaction ID or order number to fulfill" },
+            type: { type: "string", enum: ["IMMEDIATE", "PICKUP", "DELIVERY", "SHIPPING"], description: "Fulfillment delivery type" },
+            trackingNumber: { type: "string", description: "Optional courier/tracking number" },
+            notes: { type: "string", description: "Delivery or dispatch notes" },
+            autoPublish: { type: "boolean", description: "If true, immediately records fulfillment live" },
+          },
+          required: ["transactionId"],
+        },
+      },
+
+      // 5. Staff Task Management Tools
+      {
+        name: "create_staff_task",
+        description: "Stage or create a new task assignment for workspace staff members.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            title: { type: "string", description: "Task title" },
+            description: { type: "string", description: "Task instructions and details" },
+            priority: { type: "string", enum: ["LOW", "MEDIUM", "HIGH", "URGENT"], description: "Priority level" },
+            dueDate: { type: "string", description: "Due date in ISO 8601 format" },
+            memberId: { type: "string", description: "Assigned staff member ID" },
+            locationId: { type: "string", description: "Workspace location ID" },
+            autoPublish: { type: "boolean", description: "If true, immediately creates the staff task live" },
+          },
+          required: ["title"],
+        },
+      },
+      {
+        name: "assign_staff_task",
+        description: "Stage or reassign a staff task to a specific staff member.",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string", description: "Staff task ID" },
+            memberId: { type: "string", description: "Staff member ID to assign" },
+            autoPublish: { type: "boolean", description: "If true, immediately assigns the member live" },
+          },
+          required: ["taskId", "memberId"],
+        },
+      },
+      {
+        name: "update_staff_task_status",
+        description: "Stage or update progress status on a staff task (TODO, IN_PROGRESS, COMPLETED, CANCELLED).",
+        inputSchema: {
+          type: "object",
+          properties: {
+            taskId: { type: "string", description: "Staff task ID" },
+            status: { type: "string", enum: ["TODO", "IN_PROGRESS", "COMPLETED", "CANCELLED"], description: "New task status" },
+            autoPublish: { type: "boolean", description: "If true, immediately updates the status live" },
+          },
+          required: ["taskId", "status"],
         },
       },
     ];
   }
 
+  /**
+   * Execute tool with multi-tenant isolation
+   */
   async executeTool(name: string, args: Record<string, any>, organizationId: string) {
     this.logger.log(`Executing MCP Tool name=${name} orgId=${organizationId}`);
 
     switch (name) {
+      // Read & Analytics Tools
       case "query_inventory":
         return this.queryInventory(args, organizationId);
       case "search_products":
@@ -142,15 +371,145 @@ export class McpToolsService {
         return this.listStaffTasks(args, organizationId);
       case "get_shift_schedules":
         return this.getShiftSchedules(args, organizationId);
+
+      // Draft Management Tools
+      case "list_drafts":
+        return this.mcpDraftService.listDrafts(organizationId, args);
+      case "get_draft_diff":
+        return this.mcpDraftService.getDraftDiff(args?.draftId, organizationId);
+      case "publish_draft":
+        return this.mcpDraftService.publishDraft(args?.draftId, organizationId, Boolean(args?.confirm));
+      case "revert_draft":
+        return this.mcpDraftService.revertDraft(args?.draftId, organizationId, Boolean(args?.confirm));
+      case "discard_draft":
+        return this.mcpDraftService.discardDraft(args?.draftId, organizationId);
+
+      // Catalog Mutation Tools
+      case "create_product":
+        return this.handleStagedMutation(
+          "PRODUCT",
+          "CREATE",
+          `Create product: ${args?.name} (${args?.sku})`,
+          args,
+          organizationId
+        );
+      case "update_product":
+        return this.handleStagedMutation(
+          "PRODUCT",
+          "UPDATE",
+          `Update product ${args?.productId}`,
+          args,
+          organizationId,
+          args?.productId
+        );
+      case "update_product_price":
+        return this.handleStagedMutation(
+          "PRICE",
+          "UPDATE",
+          `Update price on variant ${args?.variantId}`,
+          args,
+          organizationId,
+          args?.variantId
+        );
+
+      // Orders & Fulfillment Mutation Tools
+      case "create_order":
+        return this.handleStagedMutation(
+          "ORDER",
+          "CREATE",
+          `Create sales order with ${Array.isArray(args?.items) ? args.items.length : 0} items`,
+          args,
+          organizationId
+        );
+      case "update_order_status":
+        return this.handleStagedMutation(
+          "ORDER",
+          "STATUS_CHANGE",
+          `Transition order ${args?.transactionId} status to ${args?.status}`,
+          args,
+          organizationId,
+          args?.transactionId
+        );
+      case "fulfill_order":
+        return this.handleStagedMutation(
+          "FULFILLMENT",
+          "STATUS_CHANGE",
+          `Fulfill order ${args?.transactionId}`,
+          args,
+          organizationId,
+          args?.transactionId
+        );
+
+      // Staff Task Mutation Tools
+      case "create_staff_task":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "CREATE",
+          `Create staff task: ${args?.title}`,
+          args,
+          organizationId
+        );
+      case "assign_staff_task":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "UPDATE",
+          `Assign staff task ${args?.taskId} to member ${args?.memberId}`,
+          args,
+          organizationId,
+          args?.taskId
+        );
+      case "update_staff_task_status":
+        return this.handleStagedMutation(
+          "STAFF_TASK",
+          "STATUS_CHANGE",
+          `Update staff task ${args?.taskId} status to ${args?.status}`,
+          args,
+          organizationId,
+          args?.taskId
+        );
+
       default:
-        throw new Error(`Unknown tool name: ${name}`);
+        throw new BadRequestException(`Unknown MCP Tool: '${name}'`);
     }
   }
 
+  /**
+   * Helper to either stage a draft or automatically publish if autoPublish: true
+   */
+  private async handleStagedMutation(
+    entityType: "PRODUCT" | "PRICE" | "ORDER" | "FULFILLMENT" | "STAFF_TASK",
+    action: "CREATE" | "UPDATE" | "STATUS_CHANGE",
+    summary: string,
+    args: Record<string, any>,
+    organizationId: string,
+    targetId?: string
+  ) {
+    const autoPublish = Boolean(args?.autoPublish);
+    const payload = { ...args };
+    delete payload.autoPublish;
+
+    const staged = await this.mcpDraftService.stageDraft({
+      organizationId,
+      entityType,
+      action,
+      summary,
+      payload,
+      targetId,
+    });
+
+    if (autoPublish) {
+      return this.mcpDraftService.publishDraft(staged.draftId, organizationId, true);
+    }
+
+    return staged;
+  }
+
+  // --- Original Read Tool Implementations ---
+
   private async queryInventory(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const search = args.search?.trim();
-    const locationId = args.locationId;
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const search = typeof args?.search === "string" ? args.search.trim() : "";
+    const locationId = typeof args?.locationId === "string" ? args.locationId.trim() : undefined;
 
     const where: any = { organizationId, isArchived: false };
     if (search) {
@@ -199,7 +558,7 @@ export class McpToolsService {
             sku: v.sku,
             price,
             totalStock,
-            locations: v.variantStocks?.map((s) => ({ locationId: s.locationId, quantity: Number(s.currentStock) })),
+            locations: v.variantStocks?.map((s) => ({ locationId: s.locationId, quantity: Number(s.currentStock || 0) })),
           };
         }),
       })),
@@ -207,9 +566,9 @@ export class McpToolsService {
   }
 
   private async searchProducts(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const query = args.query?.trim();
-    const categoryId = args.categoryId;
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const query = typeof args?.query === "string" ? args.query.trim() : "";
+    const categoryId = typeof args?.categoryId === "string" ? args.categoryId.trim() : undefined;
 
     const where: any = { organizationId, isArchived: false };
     if (categoryId) where.categoryId = categoryId;
@@ -250,15 +609,21 @@ export class McpToolsService {
   }
 
   private async listOrders(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
     const where: any = { organizationId };
 
-    if (args.status) where.status = args.status;
-    if (args.customerId) where.customerId = args.customerId;
-    if (args.startDate || args.endDate) {
+    if (args?.status && typeof args.status === "string") where.status = args.status.trim();
+    if (args?.customerId && typeof args.customerId === "string") where.customerId = args.customerId.trim();
+    if (args?.startDate || args?.endDate) {
       where.createdAt = {};
-      if (args.startDate) where.createdAt.gte = new Date(args.startDate);
-      if (args.endDate) where.createdAt.lte = new Date(args.endDate);
+      if (args.startDate) {
+        const start = new Date(args.startDate);
+        if (!isNaN(start.getTime())) where.createdAt.gte = start;
+      }
+      if (args.endDate) {
+        const end = new Date(args.endDate);
+        if (!isNaN(end.getTime())) where.createdAt.lte = end;
+      }
     }
 
     const transactions = await db.transaction.findMany({
@@ -282,8 +647,10 @@ export class McpToolsService {
   }
 
   private async getOrderDetails(args: Record<string, any>, organizationId: string) {
-    const { transactionId } = args;
-    if (!transactionId) throw new Error("transactionId is required");
+    const transactionId = typeof args?.transactionId === "string" ? args.transactionId.trim() : "";
+    if (!transactionId) {
+      throw new BadRequestException("transactionId parameter is required");
+    }
 
     const transaction = await db.transaction.findFirst({
       where: {
@@ -298,13 +665,15 @@ export class McpToolsService {
       },
     });
 
-    if (!transaction) throw new Error(`Transaction ${transactionId} not found`);
+    if (!transaction) {
+      throw new NotFoundException(`Transaction '${transactionId}' not found in this organization`);
+    }
     return transaction;
   }
 
   private async searchCustomers(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
-    const query = args.query?.trim();
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
+    const query = typeof args?.query === "string" ? args.query.trim() : "";
 
     const where: any = { organizationId, isActive: true };
     if (query) {
@@ -332,7 +701,7 @@ export class McpToolsService {
   }
 
   private async getSalesAnalytics(args: Record<string, any>, organizationId: string) {
-    const timeframe = args.timeframe || "month";
+    const timeframe = args?.timeframe || "month";
     const now = new Date();
     const startDate = new Date();
 
@@ -381,7 +750,7 @@ export class McpToolsService {
   }
 
   private async getTopSellingProducts(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 10, 50);
+    const limit = Math.min(Math.max(Number(args?.limit) || 10, 1), 50);
 
     const items = await db.transactionItem.findMany({
       where: {
@@ -418,15 +787,15 @@ export class McpToolsService {
       .sort((a, b) => b.totalRevenue - a.totalRevenue)
       .slice(0, limit);
 
-    return { topProducts };
+    return { count: topProducts.length, topProducts };
   }
 
   private async listStaffTasks(args: Record<string, any>, organizationId: string) {
-    const limit = Math.min(Number(args.limit) || 20, 100);
+    const limit = Math.min(Math.max(Number(args?.limit) || 20, 1), 100);
     const where: any = { organizationId };
 
-    if (args.status) where.status = args.status;
-    if (args.assignedMemberId) where.memberId = args.assignedMemberId;
+    if (args?.status && typeof args.status === "string") where.status = args.status.trim();
+    if (args?.assignedMemberId && typeof args.assignedMemberId === "string") where.memberId = args.assignedMemberId.trim();
 
     const tasks = await db.staffTask.findMany({
       where,
@@ -448,7 +817,14 @@ export class McpToolsService {
   }
 
   private async getShiftSchedules(args: Record<string, any>, organizationId: string) {
-    const targetDate = args.date ? new Date(args.date) : new Date();
+    let targetDate = new Date();
+    if (args?.date) {
+      const parsed = new Date(args.date);
+      if (!isNaN(parsed.getTime())) {
+        targetDate = parsed;
+      }
+    }
+
     const startOfDay = new Date(targetDate);
     startOfDay.setHours(0, 0, 0, 0);
     const endOfDay = new Date(targetDate);
@@ -458,7 +834,9 @@ export class McpToolsService {
       organizationId,
       startTime: { gte: startOfDay, lte: endOfDay },
     };
-    if (args.locationId) where.locationId = args.locationId;
+    if (args?.locationId && typeof args.locationId === "string") {
+      where.locationId = args.locationId.trim();
+    }
 
     const shifts = await db.staffShift.findMany({
       where,

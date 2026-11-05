@@ -468,4 +468,441 @@ export class SchedulingUseCase {
 
     return location;
   }
+
+  async getUnifiedCalendarEvents(
+    organizationId: string,
+    filter: { from?: string; to?: string; categories?: string; projectId?: string },
+  ) {
+    const fromDate = filter.from ? new Date(filter.from) : new Date(Date.now() - 30 * 86400000);
+    const toDate = filter.to ? new Date(filter.to) : new Date(Date.now() + 60 * 86400000);
+
+    const categoryList = filter.categories
+      ? filter.categories.split(",").map((c) => c.trim().toLowerCase())
+      : ["tasks", "production", "deliveries", "crm", "shifts"];
+
+    const includeTasks = categoryList.includes("tasks") || categoryList.includes("all");
+    const includeProduction = categoryList.includes("production") || categoryList.includes("all");
+    const includeDeliveries = categoryList.includes("deliveries") || categoryList.includes("all");
+    const includeCrm = categoryList.includes("crm") || categoryList.includes("all");
+    const includeShifts = categoryList.includes("shifts") || categoryList.includes("all");
+
+    // Parallelize queries across domains concurrently using Promise.all
+    const [tasks, milestones, batches, fulfillments, crmFollowUps, shifts] = await Promise.all([
+      includeTasks
+        ? this.prisma.client.task.findMany({
+            where: {
+              organizationId,
+              ...(filter.projectId ? { projectId: filter.projectId } : {}),
+              OR: [
+                { dueDate: { gte: fromDate, lte: toDate } },
+                { startDate: { gte: fromDate, lte: toDate } },
+                { dueDate: null, startDate: null },
+              ],
+            },
+            include: {
+              project: { select: { id: true, name: true, key: true } },
+              assignees: {
+                include: {
+                  member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+                },
+              },
+            },
+            take: 200,
+            orderBy: { dueDate: "asc" },
+          })
+        : Promise.resolve([]),
+
+      includeTasks
+        ? this.prisma.client.projectMilestone.findMany({
+            where: {
+              organizationId,
+              ...(filter.projectId ? { projectId: filter.projectId } : {}),
+              dueDate: { gte: fromDate, lte: toDate },
+            },
+            include: {
+              project: { select: { id: true, name: true, key: true } },
+            },
+            take: 100,
+            orderBy: { dueDate: "asc" },
+          })
+        : Promise.resolve([]),
+
+      includeProduction
+        ? this.prisma.client.batch.findMany({
+            where: {
+              organizationId,
+              scheduledStartAt: { gte: fromDate, lte: toDate },
+            },
+            include: {
+              recipe: { select: { id: true, name: true, category: true } },
+              leadBaker: { select: { id: true, member: { select: { user: { select: { name: true, email: true } } } } } },
+              task: { select: { id: true, title: true, projectId: true } },
+            },
+            take: 100,
+            orderBy: { scheduledStartAt: "asc" },
+          })
+        : Promise.resolve([]),
+
+      includeDeliveries
+        ? this.prisma.client.fulfillment.findMany({
+            where: {
+              transaction: { organizationId },
+              createdAt: { gte: fromDate, lte: toDate },
+            },
+            include: {
+              driver: { select: { id: true, name: true, phone: true } },
+              transaction: { select: { id: true, customer: { select: { name: true, phone: true } } } },
+              pickupLocation: { select: { id: true, name: true } },
+            },
+            take: 100,
+            orderBy: { createdAt: "desc" },
+          })
+        : Promise.resolve([]),
+
+      includeCrm
+        ? this.prisma.client.crmFollowUp.findMany({
+            where: {
+              organizationId,
+              dueDate: { gte: fromDate, lte: toDate },
+            },
+            include: {
+              record: { select: { id: true, data: true, objectDefinition: { select: { name: true } } } },
+              assignedTo: { select: { id: true, user: { select: { name: true, email: true } } } },
+              location: { select: { id: true, name: true } },
+            },
+            take: 100,
+            orderBy: { dueDate: "asc" },
+          })
+        : Promise.resolve([]),
+
+      includeShifts
+        ? this.prisma.client.staffShift.findMany({
+            where: {
+              organizationId,
+              isActive: true,
+            },
+            include: {
+              member: { select: { id: true, user: { select: { name: true, email: true, image: true } } } },
+            },
+            take: 100,
+          })
+        : Promise.resolve([]),
+    ]);
+
+    // Format all domain entities into a unified calendar event shape
+    const events: any[] = [];
+
+    // 1. User Tasks
+    for (const t of tasks) {
+      const start = t.startDate ? new Date(t.startDate) : t.dueDate ? new Date(t.dueDate) : new Date(t.createdAt);
+      const end = t.dueDate ? new Date(t.dueDate) : new Date(start.getTime() + (t.estimatedHours || 1) * 3600000);
+
+      events.push({
+        id: `task-${t.id}`,
+        rawId: t.id,
+        category: "task",
+        title: t.title,
+        status: t.status,
+        priority: t.priority,
+        startAt: start.toISOString(),
+        endAt: end.toISOString(),
+        projectId: t.projectId,
+        projectName: t.project?.name,
+        projectKey: t.project?.key,
+        code: t.taskKey,
+        assignees: (t.assignees || []).map((a: any) => ({
+          id: a.member?.id,
+          name: a.member?.user?.name || "Assignee",
+          email: a.member?.user?.email,
+          image: a.member?.user?.image,
+        })),
+        details: {
+          description: t.description,
+          estimatedHours: t.estimatedHours,
+        },
+      });
+    }
+
+    // 2. Project Milestones
+    for (const m of milestones) {
+      const date = new Date(m.dueDate);
+      events.push({
+        id: `milestone-${m.id}`,
+        rawId: m.id,
+        category: "milestone",
+        title: m.title,
+        status: m.status,
+        startAt: date.toISOString(),
+        endAt: date.toISOString(),
+        projectId: m.projectId,
+        projectName: m.project?.name,
+        details: {
+          description: m.description,
+        },
+      });
+    }
+
+    // 3. Production Batches / Schedules
+    for (const b of batches) {
+      const start = new Date(b.scheduledStartAt);
+      const durationMinutes = b.duration || 120;
+      const end = b.completedAt
+        ? new Date(b.completedAt)
+        : new Date(start.getTime() + durationMinutes * 60000);
+
+      events.push({
+        id: `production-${b.id}`,
+        rawId: b.id,
+        category: "production",
+        title: `${b.recipe?.name || "Production Batch"} (${b.plannedQuantity})`,
+        status: b.status,
+        priority: b.runType === "ON_DEMAND" ? "HIGH" : "MEDIUM",
+        startAt: start.toISOString(),
+        endAt: end.toISOString(),
+        code: b.batchNumber,
+        assignees: b.leadBaker
+          ? [
+              {
+                id: b.leadBaker.id,
+                name: b.leadBaker.member?.user?.name || "Lead Baker",
+                email: b.leadBaker.member?.user?.email,
+              },
+            ]
+          : [],
+        details: {
+          recipeName: b.recipe?.name,
+          recipeCategory: b.recipe?.category,
+          plannedQuantity: b.plannedQuantity?.toString(),
+          actualQuantity: b.actualQuantity?.toString(),
+          runType: b.runType,
+          orderReference: b.orderReference,
+          notes: b.notes,
+        },
+      });
+    }
+
+    // 4. Logistics & Deliveries
+    for (const f of fulfillments) {
+      const dispatchDate = new Date(f.createdAt);
+      const deliveryWindowEnd = new Date(dispatchDate.getTime() + 180 * 60000); // 3-hour fulfillment window
+
+      events.push({
+        id: `delivery-${f.id}`,
+        rawId: f.id,
+        category: "delivery",
+        title: `Delivery: ${f.transaction?.customer?.name || f.trackingNumber || "Order #" + f.transactionId.slice(-6)}`,
+        status: f.status,
+        priority: f.status === "FAILED" ? "URGENT" : "MEDIUM",
+        startAt: dispatchDate.toISOString(),
+        endAt: deliveryWindowEnd.toISOString(),
+        code: f.trackingNumber || `DLV-${f.id.slice(-6)}`,
+        assignees: f.driver
+          ? [
+              {
+                id: f.driver.id,
+                name: f.driver.name,
+                phone: f.driver.phone,
+              },
+            ]
+          : [],
+        details: {
+          type: f.type,
+          carrier: f.carrier,
+          receivedBy: f.receivedBy,
+          isReconciled: f.isReconciled,
+          deliveryNotes: f.deliveryNotes,
+          pickupLocation: f.pickupLocation?.name,
+          customerName: f.transaction?.customer?.name,
+          customerPhone: f.transaction?.customer?.phone,
+        },
+      });
+    }
+
+    // 5. CRM Customer Follow-Ups
+    for (const fu of crmFollowUps) {
+      const due = new Date(fu.dueDate);
+      const end = new Date(due.getTime() + 60 * 60000);
+
+      events.push({
+        id: `crm-${fu.id}`,
+        rawId: fu.id,
+        category: "crm",
+        title: `[${fu.type}] ${fu.title} - ${((fu.record?.data as any)?.name || (fu.record?.data as any)?.first_name || fu.title)}`,
+        status: fu.status,
+        priority: fu.priority,
+        startAt: due.toISOString(),
+        endAt: end.toISOString(),
+        code: `CRM-${fu.type}`,
+        assignees: fu.assignedTo
+          ? [
+              {
+                id: fu.assignedTo.id,
+                name: fu.assignedTo.user?.name || "Rep",
+                email: fu.assignedTo.user?.email,
+              },
+            ]
+          : [],
+        details: {
+          followUpType: fu.type,
+          description: fu.description,
+          recordObject: fu.record?.objectDefinition?.name,
+          locationName: fu.location?.name,
+          isRecurring: fu.isRecurring,
+          completedAt: fu.completedAt,
+        },
+      });
+    }
+
+    // 6. Staff Shifts (Project recurring weekly shifts across current range)
+    if (shifts.length > 0) {
+      const curDate = new Date(fromDate);
+      curDate.setHours(0, 0, 0, 0);
+
+      // Max scan 45 days to prevent loop explosion
+      const maxDays = Math.min(45, Math.ceil((toDate.getTime() - fromDate.getTime()) / 86400000));
+      for (let i = 0; i < maxDays; i++) {
+        const loopDate = new Date(curDate.getTime() + i * 86400000);
+        const dayOfWeek = loopDate.getDay();
+
+        const matchingShifts = shifts.filter((s: any) => s.dayOfWeek === dayOfWeek);
+        for (const s of matchingShifts) {
+          const [startHours, startMins] = (s.startTime || "09:00").split(":").map(Number);
+          const [endHours, endMins] = (s.endTime || "17:00").split(":").map(Number);
+
+          const shiftStart = new Date(loopDate);
+          shiftStart.setHours(startHours, startMins, 0, 0);
+
+          const shiftEnd = new Date(loopDate);
+          shiftEnd.setHours(endHours, endMins, 0, 0);
+
+          events.push({
+            id: `shift-${s.id}-${loopDate.toISOString().slice(0, 10)}`,
+            rawId: s.id,
+            category: "shift",
+            title: `Shift: ${s.member?.user?.name || "Staff"} (${s.startTime} - ${s.endTime})`,
+            status: s.isActive ? "ACTIVE" : "INACTIVE",
+            priority: "LOW",
+            startAt: shiftStart.toISOString(),
+            endAt: shiftEnd.toISOString(),
+            assignees: [
+              {
+                id: s.member?.id,
+                name: s.member?.user?.name || "Staff",
+                email: s.member?.user?.email,
+                image: s.member?.user?.image,
+              },
+            ],
+            details: {
+              locationId: s.locationId,
+              departmentId: s.departmentId,
+              dayOfWeek: s.dayOfWeek,
+              startTime: s.startTime,
+              endTime: s.endTime,
+            },
+          });
+        }
+      }
+    }
+
+    return {
+      range: {
+        from: fromDate.toISOString(),
+        to: toDate.toISOString(),
+      },
+      counts: {
+        total: events.length,
+        tasks: events.filter((e) => e.category === "task").length,
+        production: events.filter((e) => e.category === "production").length,
+        deliveries: events.filter((e) => e.category === "delivery").length,
+        crm: events.filter((e) => e.category === "crm").length,
+        shifts: events.filter((e) => e.category === "shift").length,
+      },
+      events,
+    };
+  }
+
+  async updateUnifiedEventStatus(
+    organizationId: string,
+    eventId: string,
+    dto: { category: "task" | "production" | "delivery" | "crm" | "shift"; status: string; scheduledDate?: string; notes?: string },
+    actorMemberId?: string,
+  ) {
+    const rawId = eventId.includes("-") ? eventId.split("-")[1] : eventId;
+
+    switch (dto.category) {
+      case "task": {
+        const updateData: any = { status: dto.status as any };
+        if (dto.scheduledDate) {
+          updateData.dueDate = new Date(dto.scheduledDate);
+        }
+        const updated = await this.prisma.client.task.updateMany({
+          where: { id: rawId, organizationId },
+          data: updateData,
+        });
+        if (updated.count === 0) throw new NotFoundException("Task not found");
+        return { success: true, category: "task", id: rawId, status: dto.status };
+      }
+
+      case "production": {
+        const updateData: any = { status: dto.status as any };
+        if (dto.scheduledDate) {
+          updateData.scheduledStartAt = new Date(dto.scheduledDate);
+        }
+        if (dto.status === "COMPLETED") {
+          updateData.completedAt = new Date();
+        } else if (dto.status === "IN_PROGRESS") {
+          updateData.startedAt = new Date();
+        }
+        const updated = await this.prisma.client.batch.updateMany({
+          where: { id: rawId, organizationId },
+          data: updateData,
+        });
+        if (updated.count === 0) throw new NotFoundException("Production batch not found");
+        return { success: true, category: "production", id: rawId, status: dto.status };
+      }
+
+      case "delivery": {
+        const updated = await this.prisma.client.fulfillment.updateMany({
+          where: { id: rawId, transaction: { organizationId } },
+          data: {
+            status: dto.status as any,
+            ...(dto.notes ? { deliveryNotes: dto.notes } : {}),
+          },
+        });
+        if (updated.count === 0) throw new NotFoundException("Delivery fulfillment not found");
+        return { success: true, category: "delivery", id: rawId, status: dto.status };
+      }
+
+      case "crm": {
+        const updateData: any = { status: dto.status as any };
+        if (dto.scheduledDate) {
+          updateData.dueDate = new Date(dto.scheduledDate);
+        }
+        if (dto.status === "COMPLETED") {
+          updateData.completedAt = new Date();
+        }
+        const updated = await this.prisma.client.crmFollowUp.updateMany({
+          where: { id: rawId, organizationId },
+          data: updateData,
+        });
+        if (updated.count === 0) throw new NotFoundException("CRM follow-up not found");
+        return { success: true, category: "crm", id: rawId, status: dto.status };
+      }
+
+      case "shift": {
+        const updated = await this.prisma.client.staffShift.updateMany({
+          where: { id: rawId, organizationId },
+          data: {
+            isActive: dto.status === "ACTIVE",
+          },
+        });
+        if (updated.count === 0) throw new NotFoundException("Staff shift not found");
+        return { success: true, category: "shift", id: rawId, status: dto.status };
+      }
+
+      default:
+        throw new BadRequestException("Unsupported event category");
+    }
+  }
+
 }

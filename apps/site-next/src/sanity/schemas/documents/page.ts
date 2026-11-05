@@ -34,9 +34,12 @@ export const pageDocument = defineType({
       description: 'Add, reorder, and configure page section blocks',
       of: [
         { type: 'heroBlock' },
-        { type: 'comparisonMatrixBlock' },
+        { type: 'bentoGridBlock' },
         { type: 'featureGridBlock' },
         { type: 'statsBarBlock' },
+        { type: 'workflowStepsBlock' },
+        { type: 'logoCloudBlock' },
+        { type: 'comparisonMatrixBlock' },
         { type: 'testimonialsBlock' },
         { type: 'faqAccordionBlock' },
         { type: 'ctaBannerBlock' },

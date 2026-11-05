@@ -2,10 +2,13 @@ package tech.scryme.app.ui.schedule
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
@@ -40,6 +43,12 @@ import tech.scryme.app.ui.components.WeekdayDropdown
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
+import java.time.LocalDate
+import java.time.temporal.ChronoUnit
+import java.util.Locale
+import kotlin.math.abs
+import kotlin.math.max
+import java.time.format.TextStyle as DateTextStyle
 
 // ---------------------------------------------------------------------------
 // Shared design tokens
@@ -114,17 +123,125 @@ private fun CenteredMessage(text: String) {
 }
 
 // ---------------------------------------------------------------------------
+// Scrollable date strip
+// ---------------------------------------------------------------------------
+
+/**
+ * Horizontally scrollable date strip. Shows [rangeDays] days either side of an anchor date,
+ * keeps the selected day in view, and re-anchors when the selection moves far away
+ * (e.g. picked from the month grid).
+ *
+ * [selectedDate] and [onDaySelected] use ISO "yyyy-MM-dd" strings.
+ */
+@Composable
+private fun ScrollableDateStrip(
+    selectedDate: String,
+    onDaySelected: (String) -> Unit,
+    modifier: Modifier = Modifier,
+    rangeDays: Int = 60
+) {
+    val today = remember { LocalDate.now() }
+    val selected = remember(selectedDate) {
+        runCatching { LocalDate.parse(selectedDate) }.getOrDefault(today)
+    }
+
+    var anchor by remember { mutableStateOf(selected) }
+    LaunchedEffect(selected) {
+        if (abs(ChronoUnit.DAYS.between(anchor, selected)) > rangeDays - 7) anchor = selected
+    }
+
+    val startDate = anchor.minusDays(rangeDays.toLong())
+    val count = rangeDays * 2 + 1
+    val listState = rememberLazyListState()
+
+    LaunchedEffect(selected, startDate) {
+        val index = ChronoUnit.DAYS.between(startDate, selected).toInt().coerceIn(0, count - 1)
+        listState.animateScrollToItem(max(0, index - 2))
+    }
+
+    OutlinedSurface(modifier = modifier) {
+        LazyRow(
+            state = listState,
+            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
+            horizontalArrangement = Arrangement.spacedBy(4.dp)
+        ) {
+            items(count = count, key = { startDate.plusDays(it.toLong()).toEpochDay() }) { i ->
+                val date = startDate.plusDays(i.toLong())
+                DateCell(
+                    date = date,
+                    isSelected = date == selected,
+                    isToday = date == today,
+                    onClick = { onDaySelected(date.toString()) }
+                )
+            }
+        }
+    }
+}
+
+@Composable
+private fun DateCell(
+    date: LocalDate,
+    isSelected: Boolean,
+    isToday: Boolean,
+    onClick: () -> Unit
+) {
+    val colors = MaterialTheme.colorScheme
+    val background = if (isSelected) colors.primary else Color.Transparent
+    val primaryText = if (isSelected) colors.onPrimary else colors.onSurface
+    val secondaryText = if (isSelected) colors.onPrimary.copy(alpha = 0.85f) else colors.onSurfaceVariant
+    val weekend = date.dayOfWeek.value >= 6
+
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .width(48.dp)
+            .clip(ControlShape)
+            .background(background)
+            .then(
+                if (isToday && !isSelected) Modifier.border(1.dp, colors.primary, ControlShape)
+                else Modifier
+            )
+            .clickable(onClick = onClick)
+            .padding(vertical = 8.dp)
+    ) {
+        Text(
+            text = date.dayOfWeek.getDisplayName(DateTextStyle.SHORT, Locale.getDefault()).uppercase(),
+            style = MaterialTheme.typography.labelSmall,
+            fontWeight = FontWeight.SemiBold,
+            letterSpacing = 0.6.sp,
+            color = if (weekend && !isSelected) colors.onSurfaceVariant.copy(alpha = 0.7f) else secondaryText
+        )
+        Spacer(modifier = Modifier.height(2.dp))
+        Text(
+            text = date.dayOfMonth.toString(),
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = if (isSelected || isToday) FontWeight.Bold else FontWeight.Medium,
+            color = primaryText
+        )
+        Spacer(modifier = Modifier.height(4.dp))
+        Box(
+            modifier = Modifier
+                .size(4.dp)
+                .clip(CircleShape)
+                .background(if (isToday) (if (isSelected) colors.onPrimary else colors.primary) else Color.Transparent)
+        )
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Screen
 // ---------------------------------------------------------------------------
 
 @Composable
 fun ScheduleScreen(
-    viewModel: ScheduleViewModel
+    viewModel: ScheduleViewModel,
+    onNavigateToTaskDetails: (String) -> Unit = {}
 ) {
     val uiState by viewModel.uiState.collectAsState()
     var showTradeDialog by remember { mutableStateOf<StaffShift?>(null) }
     var showBreakDialog by remember { mutableStateOf<StaffShift?>(null) }
     var showCreateShiftDialog by remember { mutableStateOf(false) }
+    var showCreateTaskDialog by remember { mutableStateOf(false) }
     var shiftToAssess by remember { mutableStateOf<StaffShift?>(null) }
 
     LaunchedEffect(Unit) {
@@ -247,12 +364,29 @@ fun ScheduleScreen(
                 Spacer(modifier = Modifier.height(12.dp))
 
                 when (state.selectedTab) {
-                    0 -> MyShiftsList(
-                        shifts = state.myShifts,
-                        onRequestTrade = { showTradeDialog = it },
-                        onAddBreak = { showBreakDialog = it },
-                        onAssessShift = { shiftToAssess = it }
-                    )
+                    0 -> {
+                        ScheduleCalendarHeader(
+                            monthTitle = state.currentMonthTitle,
+                            onMonthClick = { viewModel.openMonthPicker() },
+                            onTodayClick = { viewModel.selectDate(tech.scryme.app.util.DateUtils.getTodayString()) },
+                            onAddClick = { showCreateTaskDialog = true }
+                        )
+
+                        ScrollableDateStrip(
+                            selectedDate = state.selectedDate,
+                            onDaySelected = { dateStr -> viewModel.selectDate(dateStr) }
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        ScheduleTimeline(
+                            items = state.timelineItems,
+                            members = state.members,
+                            onToggleTaskCompletion = { taskId -> viewModel.toggleTaskCompletion(taskId) },
+                            onTaskClick = { taskId -> onNavigateToTaskDetails(taskId) },
+                            onShiftClick = { shift -> showBreakDialog = shift }
+                        )
+                    }
                     1 -> TeamRosterList(
                         shifts = state.teamShifts,
                         members = state.members,
@@ -291,6 +425,39 @@ fun ScheduleScreen(
                 viewModel.addShiftBreak(shift.id, startTime, endTime, description)
                 showBreakDialog = null
             }
+        )
+    }
+
+    if (showCreateTaskDialog) {
+        val currentState = uiState as? ScheduleUiState.Success
+        CreateScheduleTaskDialog(
+            initialDate = currentState?.selectedDate ?: tech.scryme.app.util.DateUtils.getTodayString(),
+            members = currentState?.members ?: emptyList(),
+            onDismiss = { showCreateTaskDialog = false },
+            onSubmit = { title, description, priority, assignedMemberId, dueDate, dueTime, category ->
+                viewModel.createStaffTask(
+                    title = title,
+                    description = description,
+                    priority = priority,
+                    assignedMemberId = assignedMemberId,
+                    dueDate = dueDate,
+                    dueTime = dueTime,
+                    category = category
+                )
+                showCreateTaskDialog = false
+            }
+        )
+    }
+
+    val curState = uiState as? ScheduleUiState.Success
+    if (curState?.isMonthPickerVisible == true) {
+        MonthGridModal(
+            monthCalendar = curState.monthPickerCalendar,
+            days = curState.monthGridDays,
+            onDaySelected = { dateStr -> viewModel.selectDate(dateStr) },
+            onPreviousMonth = { viewModel.previousMonth() },
+            onNextMonth = { viewModel.nextMonth() },
+            onDismiss = { viewModel.closeMonthPicker() }
         )
     }
 

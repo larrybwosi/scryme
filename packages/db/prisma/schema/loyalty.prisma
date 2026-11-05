@@ -32,10 +32,13 @@ model LoyaltyProgram {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   // Configuration
-  pointsLabel  String    @default("Points")
-  exchangeRate Decimal   @default(1.0) @db.Decimal(12, 4) // e.g., 100 points = $1 store credit
-  expiryMonths Int? // Points expire after X months (null = never)
-  tierBasis    TierBasis @default(CURRENT_BALANCE)
+  pointsLabel             String    @default("Points")
+  exchangeRate            Decimal   @default(1.0) @db.Decimal(12, 4) // e.g., 100 points = $1 store credit
+  expiryMonths            Int? // Points expire after X months (null = never)
+  tierBasis               TierBasis @default(CURRENT_BALANCE)
+  minRedeemPoints         Int       @default(0) // Minimum points balance to allow redemption
+  maxRedemptionPercentage Decimal   @default(100.0) @db.Decimal(5, 2) // Max % of transaction covered by points
+  allowDirectRedemption   Boolean   @default(true) // Whether points can be used directly at POS/checkout
 
   // Relations
   tiers        LoyaltyTier[]
@@ -174,7 +177,7 @@ model LoyaltyTransaction {
 
   // Link to business entities
   referenceId   String? // e.g., Transaction ID, Order Number
-  referenceType String? // e.g., "TRANSACTION", "REFERRAL", "SIGNUP"
+  referenceType String? // e.g., "TRANSACTION", "REFERRAL", "SIGNUP", "MANUAL_ADJUSTMENT"
 
   organizationId String
 

@@ -22,6 +22,8 @@ import { MemberUseCase } from "../../../members/application/use-cases/member.use
 import { GetUnitsUseCase } from "../../../units/application/use-cases/get-units.use-case";
 import { MemberQueryDto } from "../../../members/application/dto/member.dto";
 import { ProductionReportService } from "../../reports/production-report.service";
+import { ProductionProjectionService } from "../../application/services/production-projection.service";
+import { PlanPurchaseOrderDto, ProductionProjectionDto } from "../../application/dto/production-on-demand.dto";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 import { AllowPublic } from "@/v3/common/auth";
@@ -62,6 +64,7 @@ import {
 export class ProductionController {
   constructor(
     private readonly productionService: ProductionService,
+    private readonly productionProjectionService: ProductionProjectionService,
     private readonly productionReportService: ProductionReportService,
     private readonly memberUseCase: MemberUseCase,
     private readonly getUnitsUseCase: GetUnitsUseCase,
@@ -79,6 +82,42 @@ export class ProductionController {
   @ApiOperation({ summary: "Get production attendance status" })
   async getAttendanceStatus(@v3Context() ctx: V3ApiContext) {
     return this.productionService.getAttendanceStatus(ctx);
+  }
+
+  // Production Planning & Projections
+  @Get("projections")
+  @Permissions("production:recipe:read")
+  @ApiOperation({ summary: "Calculate ingredient shortages, supplier lead times, and completion estimates" })
+  async getProjections(
+    @v3Context() ctx: V3ApiContext,
+    @Query("recipeId") recipeId: string,
+    @Query("quantity") quantity?: string,
+    @Query("locationId") locationId?: string,
+  ) {
+    if (!recipeId) {
+      throw new BadRequestException("Recipe ID is required for projections");
+    }
+    const plannedQty = Number(quantity || 1);
+    return this.productionProjectionService.calculateIngredientProjections(
+      ctx.organizationId,
+      recipeId,
+      plannedQty,
+      locationId || ctx.locationId,
+    );
+  }
+
+  @Post("purchases/plan")
+  @Permissions("production:batch:write")
+  @ApiOperation({ summary: "Generate draft purchase orders for missing batch ingredients" })
+  async planPurchases(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: PlanPurchaseOrderDto,
+  ) {
+    return this.productionProjectionService.planPurchases(
+      ctx.organizationId,
+      body,
+      ctx.memberId,
+    );
   }
 
   // Units

@@ -1,4 +1,7 @@
-import axios, { AxiosInstance, AxiosResponse } from "axios";
+import type { AxiosInstance, AxiosResponse } from "axios";
+import { HttpClient } from "./http";
+import { createAxiosCompatibleInstance } from "./fetch-adapter";
+import { autoPaging, autoPagingToArray } from "./pagination";
 import type { AxiosRequestConfig } from "axios";
 import { getScrymeV3API } from "./proxy";
 import type {
@@ -395,9 +398,17 @@ export class ScrymeServerSDK<
       finalBaseURL = finalBaseURL.replace(/\/$/, "") + "/api";
     }
 
-    this.axiosInstance = axios.create({
-      baseURL: finalBaseURL,
+    const serverHttp = new HttpClient({
+      baseUrl: finalBaseURL,
+      timeout: (config as any).timeout,
+      retry: (config as any).retry,
+      logger: (config as any).logger,
+      fetch: (config as any).fetch,
+      onRequest: (config as any).onRequest,
+      onResponse: (config as any).onResponse,
+      onError: (config as any).onError,
     });
+    this.axiosInstance = createAxiosCompatibleInstance(serverHttp) as any;
 
     // Attach token or apiKey if present
     if (config.token) {

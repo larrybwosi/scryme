@@ -43,14 +43,8 @@ export async function GET(
 
       const apiUrl = getResolvedApiUrl();
 
-      let fetchUrl = "";
-      if (type === "invoice") {
-        fetchUrl = `${apiUrl}/api/v3/public-invoices/transactions/${id}/download?token=${token}`;
-      } else if (type === "receipt") {
-        fetchUrl = `${apiUrl}/api/v3/public-invoices/receipts/${id}/download?token=${token}`;
-      } else {
-        fetchUrl = `${apiUrl}/api/v2/public/documents/${type}/${id}?token=${token}`;
-      }
+      // Route through unified V3 public document endpoints
+      const fetchUrl = `${apiUrl}/api/v3/public-documents/${type}/${id}?token=${token}`;
 
       const response = await fetch(fetchUrl);
       if (!response.ok) {

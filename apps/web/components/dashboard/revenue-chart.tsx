@@ -26,24 +26,13 @@ interface RevenueChartProps {
 export function RevenueChart({ data, currency = "USD" }: RevenueChartProps) {
   const [timeframe, setTimeframe] = useState<"Monthly" | "Quarterly" | "Yearly">("Monthly");
 
-  const mockDisplayData = [
-    { date: "Jan", oneTime: 30000, recurring: 70000 },
-    { date: "Feb", oneTime: 20000, recurring: 35000 },
-    { date: "Mar", oneTime: 25000, recurring: 55000 },
-    { date: "Apr", oneTime: 60000, recurring: 25000 },
-    { date: "May", oneTime: 20000, recurring: 45000 },
-    { date: "Jun", oneTime: 18000, recurring: 35000 },
-    { date: "Jul", oneTime: 25000, recurring: 100000 },
-    { date: "Aug", oneTime: 20000, recurring: 50000 },
-  ];
-
-  const chartData = data && data.length > 0 && data.some(d => d.current > 0)
+  const chartData = data && data.length > 0
     ? data.map(d => ({
         date: d.date,
-        oneTime: d.oneTime || Math.round(d.current * 0.35),
-        recurring: d.recurring || Math.round(d.current * 0.65),
+        oneTime: d.oneTime || 0,
+        recurring: d.recurring || 0,
       }))
-    : mockDisplayData;
+    : [];
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {

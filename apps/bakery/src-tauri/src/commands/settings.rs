@@ -58,6 +58,8 @@ pub async fn update_settings(
         existing_id
     };
 
+    let default_op = settings.get("defaultOperatorId").or_else(|| settings.get("defaultBakerId")).and_then(|v| v.as_str());
+
     sqlx::query(
         "UPDATE bakery_settings SET
          organization_id = COALESCE(?, organization_id),
@@ -80,7 +82,7 @@ pub async fn update_settings(
     .bind(settings.get("organizationId").and_then(|v| v.as_str()))
     .bind(settings.get("isEnabled").and_then(|v| v.as_bool()))
     .bind(settings.get("defaultLocationId").and_then(|v| v.as_str()))
-    .bind(settings.get("defaultBakerId").and_then(|v| v.as_str()))
+    .bind(default_op)
     .bind(
         settings
             .get("autoCreateDailyBatches")
@@ -96,9 +98,52 @@ pub async fn update_settings(
     .bind(settings.get("batchSequence").and_then(|v| v.as_str()))
     .bind(settings.get("batchGenerationType").and_then(|v| v.as_str()))
     .bind(Utc::now())
-    .bind(id)
+    .bind(&id)
     .execute(&*pool)
     .await?;
+
+    // Also update production_settings if table exists
+    let _ = sqlx::query(
+        "UPDATE production_settings SET
+         organization_id = COALESCE(?, organization_id),
+         is_enabled = COALESCE(?, is_enabled),
+         default_location_id = COALESCE(?, default_location_id),
+         default_operator_id = COALESCE(?, default_operator_id),
+         auto_create_daily_batches = COALESCE(?, auto_create_daily_batches),
+         expiry_warning_days = COALESCE(?, expiry_warning_days),
+         auth_mode = COALESCE(?, auth_mode),
+         api_key = COALESCE(?, api_key),
+         api_endpoint_url = COALESCE(?, api_endpoint_url),
+         batch_prefix = COALESCE(?, batch_prefix),
+         batch_separator = COALESCE(?, batch_separator),
+         batch_date_format = COALESCE(?, batch_date_format),
+         batch_sequence = COALESCE(?, batch_sequence),
+         batch_generation_type = COALESCE(?, batch_generation_type),
+         updated_at = ?
+         WHERE id = ?",
+    )
+    .bind(settings.get("organizationId").and_then(|v| v.as_str()))
+    .bind(settings.get("isEnabled").and_then(|v| v.as_bool()))
+    .bind(settings.get("defaultLocationId").and_then(|v| v.as_str()))
+    .bind(default_op)
+    .bind(
+        settings
+            .get("autoCreateDailyBatches")
+            .and_then(|v| v.as_bool()),
+    )
+    .bind(settings.get("expiryWarningDays").and_then(|v| v.as_i64()))
+    .bind(settings.get("authMode").and_then(|v| v.as_str()))
+    .bind(settings.get("apiKey").and_then(|v| v.as_str()))
+    .bind(settings.get("apiEndpointUrl").and_then(|v| v.as_str()))
+    .bind(settings.get("batchPrefix").and_then(|v| v.as_str()))
+    .bind(settings.get("batchSeparator").and_then(|v| v.as_str()))
+    .bind(settings.get("batchDateFormat").and_then(|v| v.as_str()))
+    .bind(settings.get("batchSequence").and_then(|v| v.as_str()))
+    .bind(settings.get("batchGenerationType").and_then(|v| v.as_str()))
+    .bind(Utc::now())
+    .bind(&id)
+    .execute(&*pool)
+    .await;
 
     Ok(())
 }

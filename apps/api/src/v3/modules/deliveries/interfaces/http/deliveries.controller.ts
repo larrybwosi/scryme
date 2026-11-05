@@ -120,7 +120,7 @@ export class DeliveriesController {
 
   @Post("reconcile")
   @Permissions("orders:write")
-  @ApiOperation({ summary: "Reconcile completed or failed delivery with proof of delivery (POD)" })
+  @ApiOperation({ summary: "Reconcile completed or failed delivery with proof of delivery (POD), COD, and returned items" })
   async reconcileDelivery(
     @v3Context() ctx: V3ApiContext,
     @Body() body: ReconcileDeliveryDto,
@@ -133,5 +133,22 @@ export class DeliveriesController {
   @ApiOperation({ summary: "Get all active in-progress deliveries" })
   async getActiveDeliveries(@v3Context() ctx: V3ApiContext) {
     return this.deliveriesService.getActiveDeliveries(ctx.organizationId);
+  }
+
+  @Get("metrics")
+  @Permissions("orders:read")
+  @ApiOperation({ summary: "Get delivery overview metrics" })
+  async getDeliveryMetrics(@v3Context() ctx: V3ApiContext) {
+    return this.deliveriesService.getDeliveryMetrics(ctx.organizationId);
+  }
+
+  @Get("driver/:driverId")
+  @Permissions("orders:read")
+  @ApiOperation({ summary: "Get active deliveries assigned to a driver" })
+  async getDriverDeliveries(
+    @v3Context() ctx: V3ApiContext,
+    @Param("driverId") driverId: string,
+  ) {
+    return this.deliveriesService.getDriverDeliveries(ctx.organizationId, driverId);
   }
 }

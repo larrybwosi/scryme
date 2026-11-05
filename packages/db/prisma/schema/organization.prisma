@@ -118,6 +118,8 @@ model Organization {
   deliveryPartners DeliveryPartner[]
   templates        Template[]
   recipes          Recipe[]
+  productionCategories ProductionCategory[]
+  productionSettings   ProductionSettings?
   bakeryCategories BakeryCategory[]
   bakerySettings   BakerySettings?
 
@@ -141,6 +143,7 @@ model Organization {
   notificationDispatches     NotificationDispatch[]
   notificationChannelConfigs NotificationChannelConfig[]
   mcpApiKeys                 McpApiKey[]
+  mcpDraftChanges            McpDraftChange[]
   apiKeys                    ApiKey[]
   deviceSetupTokens          DeviceSetupToken[]
   deviceRegistries           DeviceRegistry[]
@@ -159,9 +162,11 @@ model Organization {
 
   invoices          Invoice[]
   kraComplianceLogs KRAComplianceLog[]
+  kraConfig         KRAConfig?
   invoiceConfig     InvoiceConfig?
   receiptConfig     ReceiptConfig?
   waybillConfig     WaybillConfig?
+  deliveryNoteConfig DeliveryNoteConfig?
   invoiceTemplates  InvoiceTemplate[]  @relation("OrgInvoiceTemplates")
   templateUsageLogs TemplateUsageLog[] @relation("OrgTemplateUsageLogs")
 
@@ -229,7 +234,7 @@ model Organization {
   reportAutomations ReportAutomation[]
   reportChannels    ReportChannel[]
 
-  // CRM Relations
+    // CRM Relations
   crmObjectDefinitions       CrmObjectDefinition[]       @relation("OrgCrmObjects")
   crmRecords                 CrmRecord[]                 @relation("OrgCrmRecords")
   crmRelationshipDefinitions CrmRelationshipDefinition[] @relation("OrgCrmRelationships")
@@ -243,6 +248,8 @@ model Organization {
   tasks                      Task[]
   taskLabels                 TaskLabel[]
   projectMilestones          ProjectMilestone[]
+  projectSprints             ProjectSprint[]
+  projectDocuments           ProjectDocument[]
   taskTimeEntries            TaskTimeEntry[]
 
   @@index([slug])
@@ -364,8 +371,10 @@ model Member {
   stockReceipts            StockReceipt[]
   createdApiKeys           ApiKey[]
   createdMcpApiKeys        McpApiKey[]     @relation("McpApiKeyCreator")
+  createdMcpDraftChanges   McpDraftChange[] @relation("McpDraftCreator")
   createdDeviceSetupTokens DeviceSetupToken[]     @relation("DeviceSetupTokenCreator")
 
+  productionRoles   ProductionOperator[]
   bakeryRoles       BakeryBaker[]
   dispatchedBatches BatchDispatch[] @relation("BatchDispatchedBy")
 
@@ -410,6 +419,8 @@ model Member {
   crmActivities             CrmActivity[]          @relation("CrmActivityMember")
   crmNotes                  CrmNote[]              @relation("CrmNoteCreator")
   crmFollowUps              CrmFollowUp[]          @relation("CrmFollowUpAssignedTo")
+  managedCustomers          Customer[]             @relation("CustomerAccountManager")
+  managedBusinessAccounts   BusinessAccount[]      @relation("BusinessAccountManager")
   sentCommunicationMessages CommunicationMessage[] @relation("SentCommunicationMessages")
 
   createdCampaigns  Campaign[] @relation("CampaignCreator")
@@ -452,6 +463,7 @@ model Member {
   taskComments            TaskComment[]     @relation("TaskCommentAuthor")
   taskActivityLogs        TaskActivityLog[] @relation("TaskActivityActor")
   taskTimeEntries         TaskTimeEntry[]   @relation("MemberTaskTimeEntries")
+  projectDocuments        ProjectDocument[] @relation("ProjectDocumentAuthor")
 
   @@unique([organizationId, userId])
   @@unique([organizationId, cardId])
@@ -664,6 +676,7 @@ model OrganizationSettings {
   defaultInvoiceTemplate  String  @default("default")
   defaultReceiptTemplate  String  @default("default")
   defaultWaybillTemplate  String  @default("default")
+  defaultDeliveryNoteTemplate String @default("delivery-note-v3")
   forcePrivateAttachments Boolean @default(false)
 
   adminsCanManageStaff    Boolean @default(false)
@@ -1033,6 +1046,18 @@ model ReportSettings {
   includeProduction Boolean @default(true)
   includeTax        Boolean @default(true)
   includeAiInsights Boolean @default(true)
+
+  // Customization & Scopes
+  formats              String[] @default(["HTML", "MARKDOWN"])
+  defaultLocationId    String?
+  defaultDepartmentId  String?
+  minRevenueThreshold  Float?
+  summaryPeriodDays    Int      @default(7)
+
+  // Automation & Workflows
+  workflowEnabled      Boolean  @default(false)
+  workflowKey          String?
+  webhookUrl           String?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt

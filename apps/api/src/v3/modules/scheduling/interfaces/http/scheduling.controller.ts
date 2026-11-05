@@ -22,6 +22,8 @@ import {
   ManualAttendanceCheckInDto,
   ManualAttendanceCheckOutDto,
   TransitionBookingDto,
+  UnifiedCalendarQueryDto,
+  UpdateUnifiedEventStatusDto,
 } from "../../dtos/scheduling.dto";
 
 @ApiTags("V3 Enterprise Scheduling Workspace")
@@ -110,4 +112,26 @@ export class SchedulingController {
       dto,
     );
   }
+
+  @Get("unified-calendar")
+  @Permissions("shifts:read")
+  @ApiOperation({ summary: "Get unified calendar events across tasks, production, deliveries, crm, and shifts" })
+  async getUnifiedCalendarEvents(
+    @v3Context() ctx: V3ApiContext,
+    @Query() query: UnifiedCalendarQueryDto,
+  ) {
+    return this.schedulingUseCase.getUnifiedCalendarEvents(ctx.organizationId, query);
+  }
+
+  @Patch("unified-calendar/events/:eventId/status")
+  @Permissions("shifts:manage")
+  @ApiOperation({ summary: "Update status or scheduled time for a unified calendar event" })
+  async updateUnifiedEventStatus(
+    @v3Context() ctx: V3ApiContext,
+    @Param("eventId") eventId: string,
+    @Body() dto: UpdateUnifiedEventStatusDto,
+  ) {
+    return this.schedulingUseCase.updateUnifiedEventStatus(ctx.organizationId, eventId, dto, ctx.memberId);
+  }
+
 }

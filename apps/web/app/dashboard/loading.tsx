@@ -4,12 +4,23 @@ export function DashboardSkeleton() {
   return (
     <div className="space-y-6">
       {/* Header Skeleton */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2 border-b border-border">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-2">
         <div className="space-y-2">
           <Skeleton className="h-8 w-48" />
           <Skeleton className="h-4 w-32" />
         </div>
-        <Skeleton className="h-10 w-36" />
+        <div className="flex gap-2">
+          <Skeleton className="h-9 w-32 rounded-lg" />
+          <Skeleton className="h-9 w-40 rounded-lg" />
+          <Skeleton className="h-9 w-28 rounded-lg" />
+        </div>
+      </div>
+
+      {/* Tabs Skeleton */}
+      <div className="flex gap-2">
+        <Skeleton className="h-10 w-28 rounded-xl" />
+        <Skeleton className="h-10 w-36 rounded-xl" />
+        <Skeleton className="h-10 w-44 rounded-xl" />
       </div>
 
       {/* Top 4 Stat Cards Skeleton */}
@@ -30,15 +41,14 @@ export function DashboardSkeleton() {
         </div>
       </div>
 
-      {/* Sales Heatmap Skeleton */}
-      <Skeleton className="h-48 rounded-xl" />
-
-      {/* Bottom Charts Row Skeleton */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <Skeleton className="h-64 rounded-xl" />
+      {/* Sales Heatmap and Activity Skeleton */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Skeleton className="h-64 rounded-xl" />
         <Skeleton className="h-64 rounded-xl" />
       </div>
+
+      {/* Popular Products Skeleton */}
+      <Skeleton className="h-72 rounded-xl" />
     </div>
   );
 }

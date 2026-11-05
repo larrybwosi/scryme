@@ -8,6 +8,13 @@ export interface PlatformModuleDefinition {
 
 export const PLATFORM_MODULES: PlatformModuleDefinition[] = [
   {
+    key: "kra",
+    name: "KRA & eTIMS Compliance",
+    description: "Fiscal device integration, ETR invoice generation, input/output VAT tracking, and tax compliance.",
+    category: "financial",
+    defaultEnabled: true,
+  },
+  {
     key: "finance",
     name: "Finance & Accounting",
     description: "Ledgers, journal entries, expense tracking, and financial reports.",
@@ -32,6 +39,13 @@ export const PLATFORM_MODULES: PlatformModuleDefinition[] = [
     key: "crm",
     name: "CRM & Customer Relationships",
     description: "Customer contacts, deals, activities, and marketing workflows.",
+    category: "core",
+    defaultEnabled: true,
+  },
+  {
+    key: "loyalty",
+    name: "Customer Loyalty & Rewards",
+    description: "Multi-tier loyalty ladders, custom earning rules, points expiration, and voucher/direct checkout redemptions.",
     category: "core",
     defaultEnabled: true,
   },

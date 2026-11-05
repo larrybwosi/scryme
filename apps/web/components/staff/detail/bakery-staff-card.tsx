@@ -55,7 +55,7 @@ export function BakeryStaffCard({ memberId }: { memberId: string }) {
       const res = await addMemberToBakeryStaff(memberId);
       if (res.success) {
         setIsBaker(true);
-        toast.success("Member added to production staff as baker");
+        toast.success("Member added to production staff as operator");
       } else {
         toast.error(res.error || "Failed to add member to production staff");
       }
@@ -69,7 +69,7 @@ export function BakeryStaffCard({ memberId }: { memberId: string }) {
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
             <ChefHat size={20} className="text-blue-500" />
-            Production & Bakery Staff
+            Production Staff & Operators
           </CardTitle>
           {!loading && (
             <Badge
@@ -79,12 +79,12 @@ export function BakeryStaffCard({ memberId }: { memberId: string }) {
                   : "bg-muted text-muted-foreground border-border"
               }
             >
-              {isBaker ? "Authorized Baker" : "Not Production Staff"}
+              {isBaker ? "Production Operator" : "Not Production Staff"}
             </Badge>
           )}
         </div>
         <CardDescription className="text-muted-foreground">
-          Authorize this member as production staff to perform batch operations in the Bakery app.
+          Authorize this member as production operator to run batch operations in production and bakery apps.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

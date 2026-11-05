@@ -1,6 +1,6 @@
 {
   "name": "@repo/shared",
-  "version": "10.2.30",
+  "version": "10.2.37",
   "main": "./dist/index.js",
   "types": "./src/index.ts",
   "type": "module",
@@ -139,6 +139,11 @@
       "types": "./src/services/email/index.ts",
       "import": "./dist/services/email/index.js",
       "require": "./dist/services/email/index.cjs"
+    },
+    "./kra": {
+      "types": "./src/kra/index.ts",
+      "import": "./dist/kra/index.js",
+      "require": "./dist/kra/index.cjs"
     }
   },
   "scripts": {

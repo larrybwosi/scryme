@@ -127,6 +127,25 @@ class AuthRepositoryTest {
     }
 
     @Test
+    fun pairPosDevice_withManualCodeAndCustomLocation_success() = runBlocking {
+        val pairingResponse = PosPairResponseDto(
+            sessionId = "CODE123",
+            authorized = true
+        )
+
+        coEvery { sessionManager.getOrgSlug() } returns "org-slug"
+        coEvery { sessionManager.getLocationId() } returns "loc-default"
+        coEvery {
+            authApiService.authorizePosPairingSession("CODE123", match { it.locationId == "loc-custom" && it.pairingCode == "CODE123" })
+        } returns Response.success(V3ApiResponse(success = true, data = pairingResponse))
+
+        val result = repository.pairPosDevice("CODE123", locationId = "loc-custom")
+
+        assertTrue(result.isSuccess)
+        assertTrue(result.getOrNull()?.contains("CODE123") == true)
+    }
+
+    @Test
     fun pairPosDevice_withSessionId_success() = runBlocking {
         val pairingResponse = PosPairResponseDto(
             sessionId = "sess_123",

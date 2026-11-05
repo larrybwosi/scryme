@@ -10,7 +10,7 @@ interface AuthRepository {
     suspend fun loginMember(orgSlug: String, pin: String?, cardId: String?, apiKey: String? = null): Result<Unit>
     suspend fun validateSession(): Result<AndroidMeResponseDto>
     suspend fun registerDeviceToken(pushToken: String? = null): Result<Unit>
-    suspend fun pairPosDevice(qrContent: String): Result<String>
+    suspend fun pairPosDevice(qrContent: String, locationId: String? = null): Result<String>
     suspend fun logout()
     fun isLoggedIn(): Flow<Boolean>
     fun getActiveOrgSlug(): Flow<String?>

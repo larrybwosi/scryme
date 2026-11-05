@@ -1,77 +1,156 @@
 "use client";
 
 import Link from "next/link";
-import { Bell, Search, Plus, Play, StopCircle, User, Folder } from "lucide-react";
 import { useState } from "react";
+import { env } from "@repo/env";
+import { useSession, signOut } from "@/lib/auth-client";
+import { useWorkspaceContext } from "@/lib/hooks/use-projects";
+import { useTimerStore } from "@/lib/timer-store";
 
 export function Header() {
-  const [isTimerRunning, setIsTimerRunning] = useState(true);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const { data: session } = useSession();
+  const { data: workspace } = useWorkspaceContext();
+  const { state: timerState, startTimer, pauseTimer } = useTimerStore();
+
+  const handleSignOut = async () => {
+    try {
+      await signOut();
+    } catch {
+      // Fallback
+    }
+    const isDev = env.NODE_ENV === "development";
+    const defaultAuthUrl = isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
+    const authUrl = env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
+    window.location.href = `${authUrl}/sign-in`;
+  };
+
+  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme Workspace";
+  const user = session?.user;
+
+  const formatTimer = (totalSeconds: number) => {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const secs = totalSeconds % 60;
+    return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
+  };
 
   return (
-    <header className="h-12 border-b border-[#2E3039]/50 bg-[#0d0e11]/90 backdrop-blur-md px-4 flex items-center justify-between sticky top-0 z-30 select-none">
-      <div className="flex items-center gap-3">
-        <div className="flex items-center gap-1.5 text-xs text-slate-400">
-          <Link href="/projects" className="hover:text-slate-200 transition-colors flex items-center gap-1">
-            <Folder className="h-3.5 w-3.5 text-slate-400" />
-            <span>Workspace</span>
+    <header className="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md">
+      {/* Workspace Breadcrumb Context */}
+      <div className="flex items-center gap-space-md">
+        <div className="flex items-center gap-1.5 text-body-sm font-body-sm text-outline">
+          <Link href="/projects" className="hover:text-on-surface transition-colors cursor-pointer font-medium text-on-surface">
+            {orgName}
           </Link>
-          <span className="text-slate-600">/</span>
-          <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-[#171922] border border-[#2E3039] text-slate-200">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#5E6AD2]"></span>
-            <span className="font-medium">Nexus 2.0 Redesign</span>
-          </div>
+          <span className="text-outline-variant">/</span>
+          <Link
+            href="/projects"
+            className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"
+          >
+            <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+            <span className="font-medium text-body-sm text-on-surface">Projects Hub</span>
+            <span className="material-symbols-outlined text-[14px] text-outline">expand_more</span>
+          </Link>
         </div>
       </div>
 
-      <div className="flex items-center gap-3">
-        {/* Active Timer Pill */}
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-[#171922] border border-[#2E3039] text-xs">
-          <span className={`w-2 h-2 rounded-full ${isTimerRunning ? "bg-[#5E6AD2] animate-pulse" : "bg-slate-500"}`}></span>
-          <span className="font-mono text-indigo-300 font-semibold">01:42:15</span>
-          <button
-            type="button"
-            onClick={() => setIsTimerRunning(!isTimerRunning)}
-            className="text-slate-400 hover:text-amber-400 transition-colors ml-1"
-            title={isTimerRunning ? "Pause Timer" : "Start Timer"}
+      {/* Right Action Rail */}
+      <div className="flex items-center gap-space-md">
+        {/* Live Active Timer Pill */}
+        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40">
+          <Link
+            href="/time-tracking"
+            className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
+            title={timerState.activeTaskTitle ? `Working on: ${timerState.activeTaskTitle}` : "Open Time Tracking"}
           >
-            {isTimerRunning ? <StopCircle className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+            <span
+              className={`w-2 h-2 rounded-full ${timerState.isRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
+            ></span>
+            <span className="font-label-code text-label-code text-primary">
+              {formatTimer(timerState.elapsedSeconds)}
+            </span>
+          </Link>
+          <button
+            className="text-outline hover:text-error transition-colors flex items-center cursor-pointer ml-1"
+            type="button"
+            onClick={() => {
+              if (timerState.isRunning) {
+                pauseTimer();
+              } else {
+                startTimer();
+              }
+            }}
+            title={timerState.isRunning ? "Pause Timer" : "Resume Timer"}
+          >
+            <span className="material-symbols-outlined text-[14px]">
+              {timerState.isRunning ? "pause_circle" : "play_circle"}
+            </span>
           </button>
         </div>
 
-        {/* Global Search Input */}
-        <div className="relative w-48 hidden md:block">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-slate-500" />
-          <input
-            type="text"
-            placeholder="Search... (⌘K)"
-            className="w-full bg-[#12141A] border border-[#2E3039] rounded-md pl-8 pr-3 py-1 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2] transition-colors"
-          />
-        </div>
-
-        {/* Notification Bell */}
+        {/* Notifications Button */}
         <button
+          className="relative p-1 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
           type="button"
-          className="p-1.5 rounded-md text-slate-400 hover:text-slate-200 hover:bg-[#171922] transition-colors relative"
           title="Notifications"
         >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1 right-1 h-1.5 w-1.5 rounded-full bg-[#5E6AD2]" />
+          <span className="material-symbols-outlined text-[18px]">notifications</span>
+          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span>
         </button>
 
-        {/* Quick New Task Button */}
+        {/* Quick New Task Action */}
         <Link
           href="/new"
-          className="h-7 px-2.5 bg-[#5E6AD2] hover:bg-[#717DE3] text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors shadow-sm"
+          className="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors"
         >
-          <Plus className="h-3.5 w-3.5" />
+          <span className="material-symbols-outlined text-[16px]">add</span>
           <span>New Task</span>
+          <span className="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span>
         </Link>
 
-        <div className="h-4 w-px bg-[#2E3039]/60"></div>
+        <div className="h-4 w-px bg-outline-variant/40"></div>
 
-        {/* User Profile */}
-        <div className="w-7 h-7 rounded-full bg-[#5E6AD2] flex items-center justify-center text-white font-semibold text-xs border border-indigo-400/30">
-          <User className="h-3.5 w-3.5" />
+        {/* User Profile Avatar & Dropdown */}
+        <div className="relative">
+          <button
+            type="button"
+            onClick={() => setIsProfileOpen(!isProfileOpen)}
+            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity focus:outline-none"
+            title={user?.name || "User profile"}
+          >
+            {user?.image ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={user.image} alt={user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
+            ) : (
+              <span className="material-symbols-outlined text-on-primary text-[18px]">person</span>
+            )}
+          </button>
+
+          {isProfileOpen && (
+            <div className="absolute right-0 mt-2 w-56 rounded-lg bg-surface-container-high border border-outline-variant/40 shadow-xl py-1 z-50">
+              <div className="px-3 py-2 border-b border-outline-variant/30">
+                <p className="text-body-sm font-medium text-on-surface truncate">{user?.name || "Authenticated User"}</p>
+                <p className="text-[11px] text-outline truncate">{user?.email || "user@scryme.tech"}</p>
+              </div>
+              <Link
+                href="/team"
+                onClick={() => setIsProfileOpen(false)}
+                className="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors"
+              >
+                <span className="material-symbols-outlined text-[16px] text-outline">group</span>
+                <span>Team & Squad</span>
+              </Link>
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-error hover:bg-surface-container transition-colors text-left"
+              >
+                <span className="material-symbols-outlined text-[16px]">logout</span>
+                <span>Sign Out</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </header>

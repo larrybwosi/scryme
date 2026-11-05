@@ -370,4 +370,221 @@ export class ProjectUseCase {
 
     return { success: true, id: milestoneId };
   }
+
+  // --- SPRINT / CYCLE MANAGEMENT ---
+
+  async createSprint(
+    organizationId: string,
+    projectId: string,
+    dto: any,
+  ) {
+    const project = await this.prisma.client.project.findFirst({
+      where: { id: projectId, organizationId },
+    });
+    if (!project) {
+      throw new NotFoundException("Project not found");
+    }
+
+    return this.prisma.client.projectSprint.create({
+      data: {
+        organizationId,
+        projectId,
+        name: dto.name,
+        goal: dto.goal,
+        status: dto.status || "PLANNED",
+        startDate: dto.startDate,
+        endDate: dto.endDate,
+        scopePoints: dto.scopePoints || 0,
+        completedPoints: dto.completedPoints || 0,
+      },
+    });
+  }
+
+  async listSprints(organizationId: string, projectId: string) {
+    const project = await this.prisma.client.project.findFirst({
+      where: { id: projectId, organizationId },
+    });
+    if (!project) {
+      throw new NotFoundException("Project not found");
+    }
+
+    return this.prisma.client.projectSprint.findMany({
+      where: { projectId, organizationId },
+      orderBy: { createdAt: "desc" },
+      include: {
+        _count: { select: { tasks: true } },
+      },
+    });
+  }
+
+  async getSprint(organizationId: string, sprintId: string) {
+    const sprint = await this.prisma.client.projectSprint.findFirst({
+      where: { id: sprintId, organizationId },
+      include: {
+        project: { select: { id: true, name: true, key: true } },
+        tasks: { select: { id: true, taskKey: true, title: true, status: true, priority: true } },
+        _count: { select: { tasks: true } },
+      },
+    });
+
+    if (!sprint) {
+      throw new NotFoundException("Project sprint not found");
+    }
+
+    return sprint;
+  }
+
+  async updateSprint(
+    organizationId: string,
+    sprintId: string,
+    dto: any,
+  ) {
+    const sprint = await this.prisma.client.projectSprint.findFirst({
+      where: { id: sprintId, organizationId },
+    });
+    if (!sprint) {
+      throw new NotFoundException("Project sprint not found");
+    }
+
+    await this.prisma.client.projectSprint.updateMany({
+      where: { id: sprintId, organizationId },
+      data: {
+        name: dto.name,
+        goal: dto.goal,
+        status: dto.status,
+        startDate: dto.startDate,
+        endDate: dto.endDate,
+        scopePoints: dto.scopePoints,
+        completedPoints: dto.completedPoints,
+      },
+    });
+
+    return this.getSprint(organizationId, sprintId);
+  }
+
+  async deleteSprint(organizationId: string, sprintId: string) {
+    const sprint = await this.prisma.client.projectSprint.findFirst({
+      where: { id: sprintId, organizationId },
+    });
+    if (!sprint) {
+      throw new NotFoundException("Project sprint not found");
+    }
+
+    await this.prisma.client.projectSprint.deleteMany({
+      where: { id: sprintId, organizationId },
+    });
+
+    return { success: true, id: sprintId };
+  }
+
+  // --- DOCUMENT / RFC MANAGEMENT ---
+
+  async createDocument(
+    organizationId: string,
+    projectId: string,
+    dto: any,
+    currentMemberId?: string,
+  ) {
+    const project = await this.prisma.client.project.findFirst({
+      where: { id: projectId, organizationId },
+    });
+    if (!project) {
+      throw new NotFoundException("Project not found");
+    }
+
+    return this.prisma.client.projectDocument.create({
+      data: {
+        organizationId,
+        projectId,
+        title: dto.title,
+        type: dto.type || "RFC",
+        status: dto.status || "DRAFT",
+        content: dto.content,
+        summary: dto.summary,
+        authorId: currentMemberId,
+      },
+      include: {
+        author: {
+          select: { id: true, role: true, user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
+  }
+
+  async listDocuments(organizationId: string, projectId?: string) {
+    const where: any = { organizationId };
+    if (projectId) {
+      where.projectId = projectId;
+    }
+
+    return this.prisma.client.projectDocument.findMany({
+      where,
+      orderBy: { updatedAt: "desc" },
+      include: {
+        project: { select: { id: true, name: true, key: true } },
+        author: {
+          select: { id: true, role: true, user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
+  }
+
+  async getDocument(organizationId: string, documentId: string) {
+    const doc = await this.prisma.client.projectDocument.findFirst({
+      where: { id: documentId, organizationId },
+      include: {
+        project: { select: { id: true, name: true, key: true } },
+        author: {
+          select: { id: true, role: true, user: { select: { id: true, name: true, email: true } } },
+        },
+      },
+    });
+
+    if (!doc) {
+      throw new NotFoundException("Project document not found");
+    }
+
+    return doc;
+  }
+
+  async updateDocument(
+    organizationId: string,
+    documentId: string,
+    dto: any,
+  ) {
+    const doc = await this.prisma.client.projectDocument.findFirst({
+      where: { id: documentId, organizationId },
+    });
+    if (!doc) {
+      throw new NotFoundException("Project document not found");
+    }
+
+    await this.prisma.client.projectDocument.updateMany({
+      where: { id: documentId, organizationId },
+      data: {
+        title: dto.title,
+        type: dto.type,
+        status: dto.status,
+        content: dto.content,
+        summary: dto.summary,
+      },
+    });
+
+    return this.getDocument(organizationId, documentId);
+  }
+
+  async deleteDocument(organizationId: string, documentId: string) {
+    const doc = await this.prisma.client.projectDocument.findFirst({
+      where: { id: documentId, organizationId },
+    });
+    if (!doc) {
+      throw new NotFoundException("Project document not found");
+    }
+
+    await this.prisma.client.projectDocument.deleteMany({
+      where: { id: documentId, organizationId },
+    });
+
+    return { success: true, id: documentId };
+  }
 }

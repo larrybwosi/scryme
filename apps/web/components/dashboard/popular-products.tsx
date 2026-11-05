@@ -11,53 +11,7 @@ interface PopularProductsProps {
 }
 
 export function PopularProducts({ products, currency = "USD" }: PopularProductsProps) {
-  const displayProducts = products && products.length > 0 ? products : [
-    {
-      id: "p1",
-      name: "iPhone 15 Pro",
-      stocks: 6200,
-      price: 999.0,
-      sales: 4800,
-      earnings: 4795200,
-      color: "#3B82F6",
-    },
-    {
-      id: "p2",
-      name: "MacBook Air M2",
-      stocks: 1020,
-      price: 1299.0,
-      sales: 3200,
-      earnings: 4156800,
-      color: "#A855F7",
-    },
-    {
-      id: "p3",
-      name: "Google Pixel 8",
-      stocks: 1500,
-      price: 699.0,
-      sales: 800,
-      earnings: 559200,
-      color: "#EAB308",
-    },
-    {
-      id: "p4",
-      name: "Nike Air Max 90",
-      stocks: 2400,
-      price: 130.0,
-      sales: 1800,
-      earnings: 234000,
-      color: "#EC4899",
-    },
-    {
-      id: "p5",
-      name: "Galaxy Buds Pro",
-      stocks: 850,
-      price: 199.0,
-      sales: 1000,
-      earnings: 199000,
-      color: "#22C55E",
-    },
-  ];
+  const displayProducts = products || [];
 
   const formatCurrency = (val: number) =>
     new Intl.NumberFormat("en-US", {
@@ -127,32 +81,40 @@ export function PopularProducts({ products, currency = "USD" }: PopularProductsP
             </tr>
           </thead>
           <tbody className="divide-y divide-border/30">
-            {displayProducts.map((p) => (
-              <tr key={p.id} className="hover:bg-muted/30 transition-colors group">
-                <td className="py-3.5 pr-4">
-                  <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
-                      {getProductIcon(p.name)}
-                    </div>
-                    <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
-                      {p.name}
-                    </span>
-                  </div>
-                </td>
-                <td className="py-3.5 text-right font-medium text-foreground">
-                  {p.stocks.toLocaleString()}
-                </td>
-                <td className="py-3.5 text-right font-medium text-foreground">
-                  {formatCurrency(p.price)}
-                </td>
-                <td className="py-3.5 text-right font-medium text-foreground">
-                  {p.sales.toLocaleString()}
-                </td>
-                <td className="py-3.5 text-right font-bold text-foreground">
-                  {formatCurrencyWhole(p.earnings)}
+            {displayProducts.length === 0 ? (
+              <tr>
+                <td colSpan={5} className="py-8 text-center text-muted-foreground">
+                  No product sales recorded for this period.
                 </td>
               </tr>
-            ))}
+            ) : (
+              displayProducts.map((p) => (
+                <tr key={p.id} className="hover:bg-muted/30 transition-colors group">
+                  <td className="py-3.5 pr-4">
+                    <div className="flex items-center gap-3">
+                      <div className="p-2 rounded-xl bg-muted/60 flex items-center justify-center shrink-0">
+                        {getProductIcon(p.name)}
+                      </div>
+                      <span className="font-semibold text-foreground group-hover:text-primary transition-colors">
+                        {p.name}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="py-3.5 text-right font-medium text-foreground">
+                    {p.stocks.toLocaleString()}
+                  </td>
+                  <td className="py-3.5 text-right font-medium text-foreground">
+                    {formatCurrency(p.price)}
+                  </td>
+                  <td className="py-3.5 text-right font-medium text-foreground">
+                    {p.sales.toLocaleString()}
+                  </td>
+                  <td className="py-3.5 text-right font-bold text-foreground">
+                    {formatCurrencyWhole(p.earnings)}
+                  </td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>

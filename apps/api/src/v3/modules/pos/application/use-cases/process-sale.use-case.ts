@@ -1,3 +1,5 @@
+import { ProductionService } from '../../../production/application/services/production.service';
+import { ProductionRunType } from '@repo/db';
 import { unitCalculationService } from "@repo/shared/lib";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { AutomationService } from "../../../../../automation/automation.service";
@@ -29,6 +31,9 @@ export class ProcessSaleUseCase {
     @Optional()
     @Inject(forwardRef(() => AutomationService))
     private readonly automationService?: AutomationService,
+    @Optional()
+    @Inject(forwardRef(() => ProductionService))
+    private readonly productionService?: ProductionService,
   ) {}
 
   async execute(ctx: any, dto: any) {
@@ -676,6 +681,49 @@ export class ProcessSaleUseCase {
   }
 
   private async triggerPreorderWorkflow(orgId: string, params: { transactionId: string; transactionNumber: string; customerId?: string; dto: any; total: number }) {
+    // ⚡ On-Demand Production Integration: Check if preorder line items correspond to recipes, and auto-queue on-demand batches
+    try {
+      if (this.productionService) {
+        const productItems = (params.dto.items || []).filter((i: any) => !i.isService);
+        const variantIds = productItems.map((i: any) => i.variantId).filter(Boolean);
+
+        if (variantIds.length > 0) {
+          const recipes = await this.prisma.client.recipe.findMany({
+            where: {
+              organizationId: orgId,
+              producesVariantId: { in: variantIds },
+            },
+            include: { systemUnit: true, orgUnit: true },
+          });
+
+          for (const item of productItems) {
+            const recipe = recipes.find((r) => r.producesVariantId === item.variantId);
+            if (recipe) {
+              const metadata = params.dto.metadata || {};
+              const scheduledStartAt = metadata.scheduledAt || (metadata.dueDate ? `${metadata.dueDate}T${metadata.dueTime || '09:00'}:00` : undefined);
+
+              await this.productionService.createBatch(orgId, {
+                recipeId: recipe.id,
+                plannedQuantity: Number(item.quantity || 1),
+                systemUnitId: recipe.systemUnitId || undefined,
+                orgUnitId: recipe.orgUnitId || undefined,
+                runType: ProductionRunType.ON_DEMAND,
+                orderReference: params.transactionNumber,
+                scheduledStartAt,
+                notes: `Auto-queued from POS Custom Order #${params.transactionNumber}. ${metadata.inscription ? `Inscription: ${metadata.inscription}. ` : ''}${metadata.customizationNotes || ''}`,
+                tags: ['custom-order', `order:${params.transactionNumber}`],
+                autoCreateTask: true,
+              }).catch((bErr) => {
+                console.warn(`[ProcessSale] Failed to auto-queue production batch for item ${item.variantId}:`, bErr.message);
+              });
+            }
+          }
+        }
+      }
+    } catch (err: any) {
+      console.warn('[ProcessSale] On-demand batch auto-queue error:', err.message);
+    }
+
     if (!this.automationService) return;
 
     let cust: any = null;

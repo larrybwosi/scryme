@@ -1,5 +1,47 @@
 # web
 
+## 10.2.37
+
+### Patch Changes
+
+- Updated dependencies [f463f2c]
+  - @scryme/sdk@10.2.37
+
+## 10.2.36
+
+### Patch Changes
+
+- Updated dependencies [1aa6951]
+  - @scryme/sdk@10.2.36
+
+## 10.2.34
+
+### Patch Changes
+
+- Updated dependencies [db807e8]
+  - @scryme/sdk@10.2.34
+
+## 10.2.33
+
+### Patch Changes
+
+- Updated dependencies [0c54f85]
+  - @scryme/sdk@10.2.33
+
+## 10.2.32
+
+### Patch Changes
+
+- Updated dependencies [67d8b34]
+  - @scryme/sdk@10.2.32
+
+## 10.2.31
+
+### Patch Changes
+
+- Updated dependencies [a0dd289]
+  - @scryme/sdk@10.2.31
+
 ## 10.2.29
 
 ### Patch Changes

@@ -362,43 +362,32 @@ export class InvoiceUseCase {
       items: { itemName: string; quantity: number; rate: number; amount: number }[];
     },
   ) {
-    const org = await this.prisma.client.organization.findUnique({
-      where: { id: organizationId },
-      include: { settings: true },
-    });
+    const { kraService } = await import("@repo/shared/kra");
+    const config = await kraService.getConfiguration(organizationId);
 
-    if (
-      org?.settings?.taxIntegrationEnabled &&
-      org?.settings?.country === "Kenya"
-    ) {
+    if (config && config.isActive) {
       try {
-        const result = await navariService.generateETRInvoice(organizationId, {
+        const result = await kraService.processInvoiceCompliance(organizationId, {
           invoiceId: invoice.id,
-          customer: String(invoice.customerName || "Walk-in Customer"),
-          kraPin: String(invoice.kraPin || "A000000000X"),
+          customerName: String(invoice.customerName || "Walk-in Customer"),
+          customerPin: String(invoice.kraPin || config.kraPin || "A000000000X"),
           netTotal: Number(invoice.netTotal || 0),
           totalTaxes: Number(invoice.totalTaxes || 0),
           grandTotal: Number(invoice.grandTotal || 0),
           etrMode: Boolean(invoice.etrMode),
           items: (invoice.items || []).map((i) => ({
-            description: String(i.itemName || "Item"),
+            itemName: String(i.itemName || "Item"),
             quantity: Number(i.quantity || 0),
-            price: Number(i.rate || 0),
-            amount: Number(i.amount || 0),
+            unitPrice: Number(i.rate || 0),
+            lineTotal: Number(i.amount || 0),
           })),
-        });
-
-        // 🛡️ Sentinel: Tenant Isolation / BOLA Protection - Enforce database-level scoping
-        await this.prisma.client.invoice.updateMany({
-          where: { id: invoice.id, organizationId },
-          data: { kraCompliant: true },
         });
 
         return result;
       } catch (error) {
         const errorMessage =
           error instanceof Error ? error.message : "Unknown error";
-        console.error("Navari ETR Generation failed:", errorMessage);
+        console.error("KRA ETR Generation failed:", errorMessage);
         return { error: errorMessage, status: "FAILED" };
       }
     }

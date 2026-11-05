@@ -2,12 +2,7 @@ package tech.scryme.app.domain.repository
 
 import tech.scryme.app.data.dto.AttendanceLogDto
 import tech.scryme.app.data.dto.AttendanceStatusDto
-import tech.scryme.app.domain.model.ShiftBreak
-import tech.scryme.app.domain.model.ShiftTrade
-import tech.scryme.app.domain.model.StaffShift
-import tech.scryme.app.domain.model.StaffTask
-import tech.scryme.app.domain.model.TaskAssessment
-import tech.scryme.app.domain.model.ShiftAssessment
+import tech.scryme.app.domain.model.*
 
 interface ScheduleRepository {
     suspend fun getCurrentMemberShifts(orgSlug: String): Result<List<StaffShift>>
@@ -17,9 +12,37 @@ interface ScheduleRepository {
     suspend fun getShiftTrades(orgSlug: String, memberId: String? = null, status: String? = null): Result<List<ShiftTrade>>
     suspend fun requestShiftTrade(orgSlug: String, shiftId: String, targetMemberId: String? = null, reason: String? = null): Result<ShiftTrade>
     suspend fun processShiftTrade(orgSlug: String, tradeId: String, action: String): Result<ShiftTrade>
+
     suspend fun getStaffTasks(orgSlug: String, memberId: String? = null, status: String? = null): Result<List<StaffTask>>
-    suspend fun createStaffTask(orgSlug: String, title: String, description: String? = null, assignedMemberId: String? = null, priority: String? = "MEDIUM", dueDate: String? = null): Result<StaffTask>
-    suspend fun updateStaffTask(orgSlug: String, taskId: String, status: String? = null, title: String? = null, description: String? = null): Result<StaffTask>
+    suspend fun getStaffTaskById(orgSlug: String, taskId: String): Result<StaffTask>
+    suspend fun createStaffTask(
+        orgSlug: String,
+        title: String,
+        description: String? = null,
+        assignedMemberId: String? = null,
+        priority: String? = "MEDIUM",
+        dueDate: String? = null,
+        dueTime: String? = null,
+        category: String? = null,
+        subtaskGroups: List<SubtaskGroup> = emptyList()
+    ): Result<StaffTask>
+    suspend fun deleteStaffTask(
+        orgSlug: String,
+        taskId: String
+    ): Result<Boolean>
+
+    suspend fun updateStaffTask(
+        orgSlug: String,
+        taskId: String,
+        status: String? = null,
+        title: String? = null,
+        description: String? = null,
+        priority: String? = null,
+        category: String? = null,
+        dueDate: String? = null,
+        dueTime: String? = null,
+        subtaskGroups: List<SubtaskGroup>? = null
+    ): Result<StaffTask>
 
     suspend fun saveTaskAssessment(
         orgSlug: String,
@@ -31,7 +54,6 @@ interface ScheduleRepository {
         actualHours: Double? = null,
         notes: String? = null
     ): Result<TaskAssessment>
-
     suspend fun getTaskAssessment(orgSlug: String, taskId: String): Result<TaskAssessment>
 
     suspend fun saveShiftAssessment(
@@ -39,14 +61,12 @@ interface ScheduleRepository {
         shiftId: String,
         ratingScore: Int,
         attendancePunctuality: String,
-        shiftNotes: String? = null,
+        shiftNotes: String?,
         verifiedBy: String? = null
     ): Result<ShiftAssessment>
-
     suspend fun getShiftAssessment(orgSlug: String, shiftId: String): Result<ShiftAssessment>
 
     suspend fun getMyAttendanceStatus(orgSlug: String): Result<AttendanceStatusDto>
-
     suspend fun checkInAttendance(
         orgSlug: String,
         locationId: String? = null,
@@ -58,7 +78,6 @@ interface ScheduleRepository {
         verificationMethod: String? = null,
         notes: String? = null
     ): Result<AttendanceLogDto>
-
     suspend fun checkOutAttendance(
         orgSlug: String,
         locationId: String? = null,

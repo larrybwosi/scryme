@@ -41,6 +41,11 @@ const expenseSchema = z.object({
   description: z.string().min(2, "Description is required"),
   amount: z.coerce.number().min(0.01, "Amount must be greater than 0"),
   categoryId: z.string().min(1, "Category is required"),
+  costCenterId: z.string().optional(),
+  pettyCashFundId: z.string().optional(),
+  taxAmount: z.coerce.number().optional(),
+  isReimbursable: z.boolean().default(false),
+  isBillable: z.boolean().default(false),
   utilityAccountId: z.string().optional(),
   expenseDate: z.string(),
   paymentMethod: z.nativeEnum(PaymentMethod),
@@ -56,10 +61,12 @@ type ExpenseFormValues = z.infer<typeof expenseSchema>;
 interface ExpenseDialogProps {
   categories: any[];
   utilityAccounts?: any[];
+  costCenters?: any[];
+  pettyCashFunds?: any[];
   children: React.ReactNode;
 }
 
-export function ExpenseDialog({ categories, utilityAccounts = [], children }: ExpenseDialogProps) {
+export function ExpenseDialog({ categories, utilityAccounts = [], costCenters = [], pettyCashFunds = [], children }: ExpenseDialogProps) {
   const [open, setOpen] = useState(false);
   const [mounted, setMounted] = useState(false);
   const [isPending, startTransition] = useTransition();
@@ -77,6 +84,11 @@ export function ExpenseDialog({ categories, utilityAccounts = [], children }: Ex
       expenseDate: new Date().toISOString().split("T")[0],
       paymentMethod: PaymentMethod.CASH,
       utilityAccountId: "none",
+      costCenterId: "none",
+      pettyCashFundId: "none",
+      taxAmount: 0,
+      isReimbursable: false,
+      isBillable: false,
       notes: "",
       isRecurring: false,
       frequency: RecurrenceFrequency.MONTHLY,
@@ -92,6 +104,8 @@ export function ExpenseDialog({ categories, utilityAccounts = [], children }: Ex
         await createExpense({
           ...values,
           utilityAccountId: values.utilityAccountId && values.utilityAccountId !== "none" ? values.utilityAccountId : undefined,
+          costCenterId: values.costCenterId && values.costCenterId !== "none" ? values.costCenterId : undefined,
+          pettyCashFundId: values.pettyCashFundId && values.pettyCashFundId !== "none" ? values.pettyCashFundId : undefined,
           expenseDate: new Date(values.expenseDate),
           startDate: values.startDate ? new Date(values.startDate) : undefined,
           endDate: values.endDate ? new Date(values.endDate) : undefined,
@@ -228,6 +242,62 @@ export function ExpenseDialog({ categories, utilityAccounts = [], children }: Ex
                 </FormItem>
               )}
             />
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="costCenterId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Cost Center (Optional)</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || "none"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select cost center" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None / General</SelectItem>
+                        {costCenters.map(cc => (
+                          <SelectItem key={cc.id} value={cc.id}>
+                            {cc.name} ({cc.code})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="pettyCashFundId"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Petty Cash Fund (Optional)</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value || "none"}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select fund" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="none">None / Bank or Cash</SelectItem>
+                        {pettyCashFunds.map(fund => (
+                          <SelectItem key={fund.id} value={fund.id}>
+                            {fund.name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
               name="paymentMethod"

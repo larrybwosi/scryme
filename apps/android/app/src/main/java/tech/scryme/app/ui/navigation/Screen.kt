@@ -6,9 +6,15 @@ sealed class Screen(val route: String, val title: String) {
     object Login : Screen("login", "Login")
     object Tasks : Screen("tasks", "Tasks")
     object Schedule : Screen("schedule", "Schedule")
+    object TaskDetails : Screen("tasks/details/{taskId}", "Task Details") {
+        fun createRoute(taskId: String) = "tasks/details/$taskId"
+    }
     object Admin : Screen("admin", "Admin Hub")
     object Sales : Screen("sales", "Sales & Analytics")
     object Branch : Screen("branch", "Branches")
+    object BranchDetails : Screen("branch/{branchId}", "Branch Details") {
+        fun createRoute(branchId: String) = "branch/$branchId"
+    }
     object Profile : Screen("profile", "Profile")
     object Settings : Screen("settings", "Settings")
 }

@@ -201,3 +201,162 @@ export class UpdateProjectMilestoneDto {
   @IsEnum(MilestoneStatus)
   status?: MilestoneStatus;
 }
+
+export enum SprintStatusDto {
+  PLANNED = "PLANNED",
+  ACTIVE = "ACTIVE",
+  COMPLETED = "COMPLETED",
+  CANCELLED = "CANCELLED",
+}
+
+export class CreateProjectSprintDto {
+  @ApiProperty({ example: "Sprint 14: Core UI & Analytics Telemetry" })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  name: string;
+
+  @ApiPropertyOptional({ example: "Core UI sprint goal" })
+  @IsOptional()
+  @IsString()
+  goal?: string;
+
+  @ApiPropertyOptional({ enum: SprintStatusDto, default: SprintStatusDto.PLANNED })
+  @IsOptional()
+  @IsEnum(SprintStatusDto)
+  status?: SprintStatusDto;
+
+  @ApiPropertyOptional({ example: "2026-10-15T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
+
+  @ApiPropertyOptional({ example: "2026-10-29T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
+
+  @ApiPropertyOptional({ example: 92 })
+  @IsOptional()
+  @Type(() => Number)
+  scopePoints?: number;
+
+  @ApiPropertyOptional({ example: 66 })
+  @IsOptional()
+  @Type(() => Number)
+  completedPoints?: number;
+}
+
+export class UpdateProjectSprintDto {
+  @ApiPropertyOptional({ example: "Sprint 14 Updated" })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(100)
+  name?: string;
+
+  @ApiPropertyOptional({ example: "Updated goal" })
+  @IsOptional()
+  @IsString()
+  goal?: string;
+
+  @ApiPropertyOptional({ enum: SprintStatusDto })
+  @IsOptional()
+  @IsEnum(SprintStatusDto)
+  status?: SprintStatusDto;
+
+  @ApiPropertyOptional({ example: "2026-10-15T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  startDate?: Date;
+
+  @ApiPropertyOptional({ example: "2026-10-29T00:00:00.000Z" })
+  @IsOptional()
+  @Type(() => Date)
+  @IsDate()
+  endDate?: Date;
+
+  @ApiPropertyOptional({ example: 92 })
+  @IsOptional()
+  @Type(() => Number)
+  scopePoints?: number;
+
+  @ApiPropertyOptional({ example: 66 })
+  @IsOptional()
+  @Type(() => Number)
+  completedPoints?: number;
+}
+
+export enum ProjectDocumentTypeDto {
+  RFC = "RFC",
+  SPEC = "SPEC",
+  PLAN = "PLAN",
+  GUIDE = "GUIDE",
+}
+
+export enum ProjectDocumentStatusDto {
+  DRAFT = "DRAFT",
+  REVIEW = "REVIEW",
+  APPROVED = "APPROVED",
+  DEPRECATED = "DEPRECATED",
+}
+
+export class CreateProjectDocumentDto {
+  @ApiProperty({ example: "Realtime Memory-Sharded Synchronization Protocol" })
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  title: string;
+
+  @ApiPropertyOptional({ enum: ProjectDocumentTypeDto, default: ProjectDocumentTypeDto.RFC })
+  @IsOptional()
+  @IsEnum(ProjectDocumentTypeDto)
+  type?: ProjectDocumentTypeDto;
+
+  @ApiPropertyOptional({ enum: ProjectDocumentStatusDto, default: ProjectDocumentStatusDto.DRAFT })
+  @IsOptional()
+  @IsEnum(ProjectDocumentStatusDto)
+  status?: ProjectDocumentStatusDto;
+
+  @ApiPropertyOptional({ example: "Specification document contents..." })
+  @IsOptional()
+  @IsString()
+  content?: string;
+
+  @ApiPropertyOptional({ example: "Short summary..." })
+  @IsOptional()
+  @IsString()
+  summary?: string;
+}
+
+export class UpdateProjectDocumentDto {
+  @ApiPropertyOptional({ example: "Updated document title" })
+  @IsOptional()
+  @IsString()
+  @MinLength(2)
+  @MaxLength(200)
+  title?: string;
+
+  @ApiPropertyOptional({ enum: ProjectDocumentTypeDto })
+  @IsOptional()
+  @IsEnum(ProjectDocumentTypeDto)
+  type?: ProjectDocumentTypeDto;
+
+  @ApiPropertyOptional({ enum: ProjectDocumentStatusDto })
+  @IsOptional()
+  @IsEnum(ProjectDocumentStatusDto)
+  status?: ProjectDocumentStatusDto;
+
+  @ApiPropertyOptional({ example: "Updated content..." })
+  @IsOptional()
+  @IsString()
+  content?: string;
+
+  @ApiPropertyOptional({ example: "Updated summary..." })
+  @IsOptional()
+  @IsString()
+  summary?: string;
+}

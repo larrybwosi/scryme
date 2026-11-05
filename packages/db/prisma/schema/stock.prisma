@@ -245,6 +245,7 @@ model StockAdjustment {
   approvedAt   DateTime?
 
   movement       StockMovement?
+  attachments    Attachment[]
   organizationId String
   organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
@@ -504,6 +505,7 @@ model StockTransfer {
   stockRequestId String?
   stockRequest   StockRequest?       @relation(fields: [stockRequestId], references: [id], onDelete: SetNull)
   items          StockTransferItem[]
+  attachments    Attachment[]
 
   @@unique([organizationId, transferNumber])
   @@index([organizationId, status])
@@ -812,6 +814,7 @@ model StockReconciliation {
   // Relations
   items           ReconciliationItem[]
   linkedMovements MovementReconciliationLink[]
+  attachments     Attachment[]
 
   createdAt   DateTime  @default(now())
   completedAt DateTime?

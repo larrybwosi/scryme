@@ -23,6 +23,10 @@ import {
   ProjectFilterDto,
   UpdateProjectDto,
   UpdateProjectMilestoneDto,
+  CreateProjectSprintDto,
+  UpdateProjectSprintDto,
+  CreateProjectDocumentDto,
+  UpdateProjectDocumentDto,
 } from '../../dtos/project.dto';
 
 @ApiTags('V3 Enterprise Tasks')
@@ -155,5 +159,123 @@ export class ProjectController {
     @Param("milestoneId") milestoneId: string,
   ) {
     return this.projectUseCase.deleteMilestone(ctx.organizationId, milestoneId);
+  }
+
+  // --- SPRINT / CYCLE ENDPOINTS ---
+
+  @Post(":id/sprints")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Create a new sprint for project" })
+  async createSprint(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() dto: CreateProjectSprintDto,
+  ) {
+    return this.projectUseCase.createSprint(ctx.organizationId, id, dto);
+  }
+
+  @Get(":id/sprints")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List sprints for project" })
+  async listSprints(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.projectUseCase.listSprints(ctx.organizationId, id);
+  }
+
+  @Get("sprints/:sprintId")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get sprint details" })
+  async getSprint(
+    @v3Context() ctx: V3ApiContext,
+    @Param("sprintId") sprintId: string,
+  ) {
+    return this.projectUseCase.getSprint(ctx.organizationId, sprintId);
+  }
+
+  @Patch("sprints/:sprintId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Update sprint" })
+  async updateSprint(
+    @v3Context() ctx: V3ApiContext,
+    @Param("sprintId") sprintId: string,
+    @Body() dto: UpdateProjectSprintDto,
+  ) {
+    return this.projectUseCase.updateSprint(ctx.organizationId, sprintId, dto);
+  }
+
+  @Delete("sprints/:sprintId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete sprint" })
+  async deleteSprint(
+    @v3Context() ctx: V3ApiContext,
+    @Param("sprintId") sprintId: string,
+  ) {
+    return this.projectUseCase.deleteSprint(ctx.organizationId, sprintId);
+  }
+
+  // --- DOCUMENT / RFC ENDPOINTS ---
+
+  @Post(":id/documents")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Create a document for project" })
+  async createDocument(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+    @Body() dto: CreateProjectDocumentDto,
+  ) {
+    return this.projectUseCase.createDocument(ctx.organizationId, id, dto, ctx.memberId);
+  }
+
+  @Get("documents")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List documents for organization or project" })
+  async listDocuments(
+    @v3Context() ctx: V3ApiContext,
+    @Query("projectId") projectId?: string,
+  ) {
+    return this.projectUseCase.listDocuments(ctx.organizationId, projectId);
+  }
+
+  @Get(":id/documents")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List documents for specific project" })
+  async listProjectDocuments(
+    @v3Context() ctx: V3ApiContext,
+    @Param("id") id: string,
+  ) {
+    return this.projectUseCase.listDocuments(ctx.organizationId, id);
+  }
+
+  @Get("documents/:documentId")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get document details" })
+  async getDocument(
+    @v3Context() ctx: V3ApiContext,
+    @Param("documentId") documentId: string,
+  ) {
+    return this.projectUseCase.getDocument(ctx.organizationId, documentId);
+  }
+
+  @Patch("documents/:documentId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Update document" })
+  async updateDocument(
+    @v3Context() ctx: V3ApiContext,
+    @Param("documentId") documentId: string,
+    @Body() dto: UpdateProjectDocumentDto,
+  ) {
+    return this.projectUseCase.updateDocument(ctx.organizationId, documentId, dto);
+  }
+
+  @Delete("documents/:documentId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete document" })
+  async deleteDocument(
+    @v3Context() ctx: V3ApiContext,
+    @Param("documentId") documentId: string,
+  ) {
+    return this.projectUseCase.deleteDocument(ctx.organizationId, documentId);
   }
 }

@@ -289,6 +289,71 @@ pub fn get_migrations() -> Vec<Migration> {
                 ALTER TABLE bakery_settings ADD COLUMN batch_generation_type TEXT DEFAULT 'SEQUENCE';
             ",
             kind: MigrationKind::Up,
+        },
+        Migration {
+            version: 8,
+            description: "general_production_settings_and_operators",
+            sql: "
+                CREATE TABLE IF NOT EXISTS production_settings (
+                    id TEXT PRIMARY KEY,
+                    organization_id TEXT NOT NULL,
+                    is_enabled BOOLEAN DEFAULT 1,
+                    default_location_id TEXT,
+                    default_operator_id TEXT,
+                    auto_create_daily_batches BOOLEAN DEFAULT 0,
+                    expiry_warning_days INTEGER DEFAULT 3,
+                    auth_mode TEXT DEFAULT 'CARD_PIN',
+                    api_key TEXT,
+                    api_endpoint_url TEXT,
+                    batch_prefix TEXT DEFAULT 'BAT',
+                    batch_separator TEXT DEFAULT '-',
+                    batch_date_format TEXT DEFAULT 'YYYYMMDD',
+                    batch_sequence TEXT DEFAULT '4',
+                    batch_generation_type TEXT DEFAULT 'SEQUENCE',
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+
+                CREATE TABLE IF NOT EXISTS operators (
+                    id TEXT PRIMARY KEY,
+                    name TEXT NOT NULL,
+                    role TEXT,
+                    member_id TEXT,
+                    card_id TEXT,
+                    pin_hash TEXT,
+                    email TEXT,
+                    is_active BOOLEAN DEFAULT 1,
+                    production_settings_id TEXT,
+                    organization_id TEXT NOT NULL,
+                    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                );
+
+                -- Copy existing bakery_settings into production_settings
+                INSERT OR IGNORE INTO production_settings (
+                    id, organization_id, is_enabled, default_location_id, default_operator_id,
+                    auto_create_daily_batches, expiry_warning_days, auth_mode, api_key,
+                    api_endpoint_url, batch_prefix, batch_separator, batch_date_format,
+                    batch_sequence, batch_generation_type, created_at, updated_at
+                )
+                SELECT
+                    id, organization_id, is_enabled, default_location_id, default_baker_id,
+                    auto_create_daily_batches, expiry_warning_days, auth_mode, api_key,
+                    api_endpoint_url, batch_prefix, batch_separator, batch_date_format,
+                    batch_sequence, batch_generation_type, created_at, updated_at
+                FROM bakery_settings;
+
+                -- Copy existing bakers into operators
+                INSERT OR IGNORE INTO operators (
+                    id, name, role, member_id, card_id, pin_hash, email, is_active,
+                    production_settings_id, organization_id, created_at, updated_at
+                )
+                SELECT
+                    id, name, role, member_id, card_id, pin_hash, email, is_active,
+                    bakery_settings_id, organization_id, created_at, updated_at
+                FROM bakers;
+            ",
+            kind: MigrationKind::Up,
         }
     ]
 }

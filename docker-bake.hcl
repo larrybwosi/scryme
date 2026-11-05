@@ -1,5 +1,5 @@
 group "default" {
-  targets = ["api", "crm", "cms", "web", "site", "admin", "auth", "docs", "prisma-studio"]
+  targets = ["api", "crm", "cms", "web", "projects", "site", "admin", "auth", "docs", "prisma-studio"]
 }
 
 variable "REPO_LOWER" {
@@ -12,6 +12,10 @@ variable "VERSION" {
 
 variable "NEXT_PUBLIC_API_URL" {
   default = "APP_NEXT_PUBLIC_API_URL_PLACEHOLDER"
+}
+
+variable "NEXT_PUBLIC_SOCKET_URL" {
+  default = "APP_NEXT_PUBLIC_SOCKET_URL_PLACEHOLDER"
 }
 
 variable "BETTER_AUTH_SECRET" {
@@ -181,5 +185,21 @@ target "auth" {
   args = {
     NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
     BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
+  }
+}
+
+target "projects" {
+  context = "."
+  dockerfile = "apps/projects/Dockerfile"
+  tags = [
+    "ghcr.io/${REPO_LOWER}/projects:latest",
+    "ghcr.io/${REPO_LOWER}/projects:${VERSION}"
+  ]
+  args = {
+    NEXT_PUBLIC_API_URL = NEXT_PUBLIC_API_URL
+    NEXT_PUBLIC_SOCKET_URL = NEXT_PUBLIC_SOCKET_URL
+    BETTER_AUTH_SECRET = BETTER_AUTH_SECRET
+    NEXT_PUBLIC_OPENPANEL_CLIENT_ID = NEXT_PUBLIC_OPENPANEL_CLIENT_ID
+    NEXT_PUBLIC_OPENPANEL_HOST = NEXT_PUBLIC_OPENPANEL_HOST
   }
 }

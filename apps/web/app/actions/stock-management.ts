@@ -196,17 +196,31 @@ export async function getStockTransferList(params?: {
 export async function createStockTransfer(data: {
   fromLocationId: string;
   toLocationId: string;
-  items: { variantId: string; quantity: number }[];
+  items: {
+    variantId: string;
+    quantity: number;
+    stockBatchId?: string;
+    serialNumbers?: string[];
+  }[];
   notes?: string;
+  priority?: any;
+  attachmentIds?: string[];
+  autoApproveAndShip?: boolean;
 }): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId)
     throw new Error("Unauthorized");
 
+  const member = await db.member.findUnique({
+    where: { id: context.memberId },
+  });
+
+  const isPrivileged = member?.role === "OWNER" || member?.role === "ADMIN";
+  const shouldAutoApprove = Boolean(data.autoApproveAndShip && isPrivileged);
+
   const transferNumber = `TRF-${Date.now()}`;
 
   const result = await db.$transaction(async tx => {
-    // ⚡ Bolt Optimization: Batch variant buying price lookup to prevent N+1 queries during transfer item creation.
     const variantIds = Array.from(new Set(data.items.map(i => i.variantId)));
     const variants = await tx.productVariant.findMany({
       where: { id: { in: variantIds } },
@@ -221,6 +235,7 @@ export async function createStockTransfer(data: {
         fromLocationId: data.fromLocationId,
         toLocationId: data.toLocationId,
         notes: data.notes,
+        priority: data.priority || "MEDIUM",
         requestedById: context.memberId,
         status: "PENDING_APPROVAL",
         items: {
@@ -228,13 +243,34 @@ export async function createStockTransfer(data: {
             variantId: item.variantId,
             requestedQuantity: new Decimal(item.quantity),
             unitCost: priceMap.get(item.variantId) || new Decimal(0),
+            stockBatchId: item.stockBatchId,
           })),
         },
       },
     });
 
+    if (data.attachmentIds && data.attachmentIds.length > 0) {
+      await tx.attachment.updateMany({
+        where: { id: { in: data.attachmentIds }, organizationId: context.organizationId },
+        data: { stockTransferId: transfer.id },
+      });
+    }
+
     return transfer;
   });
+
+  if (shouldAutoApprove) {
+    await updateStockTransferStatus(result.id, "APPROVED");
+    await updateStockTransferStatus(result.id, "SHIPPED", {
+      carrier: "Direct / Instant Dispatch",
+      items: data.items.map((item, idx) => ({
+        transferItemId: result.id,
+        shippedQuantity: item.quantity,
+        stockBatchId: item.stockBatchId,
+        serialNumbers: item.serialNumbers,
+      })),
+    });
+  }
 
   revalidatePath("/stocking/transfers");
   return result;
@@ -565,8 +601,10 @@ export async function getStockTransferDetails(id: string): Promise<any> {
               product: true,
             },
           },
+          stockBatch: true,
         },
       },
+      attachments: true,
     },
   });
 }
@@ -574,7 +612,23 @@ export async function getStockTransferDetails(id: string): Promise<any> {
 export async function updateStockTransferStatus(
   id: string,
   status: StockTransferStatus,
-  notes?: string,
+  options?: {
+    notes?: string;
+    carrier?: string;
+    trackingNumber?: string;
+    attachmentIds?: string[];
+    overrideQuarantine?: boolean;
+    items?: {
+      transferItemId: string;
+      shippedQuantity?: number;
+      receivedQuantity?: number;
+      stockBatchId?: string;
+      batchNumber?: string;
+      supplierBatchNumber?: string;
+      expiryDate?: string | Date;
+      serialNumbers?: string[];
+    }[];
+  },
 ): Promise<any> {
   const context = await getServerAuth();
   if (!context?.organizationId || !context.memberId)
@@ -582,7 +636,7 @@ export async function updateStockTransferStatus(
 
   const transfer = await db.stockTransfer.findUnique({
     where: { id, organizationId: context.organizationId },
-    include: { items: true },
+    include: { items: { include: { variant: true } } },
   });
 
   if (!transfer) throw new Error("Transfer not found");
@@ -590,113 +644,229 @@ export async function updateStockTransferStatus(
   const result = await db.$transaction(async tx => {
     const updateData: any = { status };
 
+    if (options?.attachmentIds && options.attachmentIds.length > 0) {
+      await tx.attachment.updateMany({
+        where: { id: { in: options.attachmentIds }, organizationId: context.organizationId },
+        data: { stockTransferId: transfer.id },
+      });
+    }
+
     if (status === "APPROVED") {
       updateData.approvedById = context.memberId;
     } else if (status === "SHIPPED") {
       updateData.shippedById = context.memberId;
       updateData.shippedDate = new Date();
+      if (options?.carrier) updateData.carrier = options.carrier;
+      if (options?.trackingNumber) updateData.trackingNumber = options.trackingNumber;
 
-      // ⚡ Bolt Optimization: Execute stock updates and movement logs concurrently using Promise.all,
-      // collapsing 2N sequential database queries into 1 parallel roundtrip.
-      await Promise.all(
-        transfer.items.flatMap(item => [
-          tx.productVariantStock.update({
-            where: {
-              variantId_locationId: {
-                variantId: item.variantId,
-                locationId: transfer.fromLocationId,
-              },
-            },
-            data: {
-              currentStock: { decrement: item.requestedQuantity },
-              availableStock: { decrement: item.requestedQuantity },
-            },
-          }),
-          tx.stockMovement.create({
-            data: {
-              organizationId: context.organizationId,
+      const variantIds = transfer.items.map(i => i.variantId);
+      const allBatches = await tx.stockBatch.findMany({
+        where: {
+          organizationId: context.organizationId,
+          variantId: { in: variantIds },
+          locationId: transfer.fromLocationId,
+          currentQuantity: { gt: 0 },
+        },
+        orderBy: [{ expiryDate: "asc" }, { receivedDate: "asc" }],
+      });
+
+      const batchesByVariant = new Map<string, typeof allBatches>();
+      for (const batch of allBatches) {
+        const variantBatches = batchesByVariant.get(batch.variantId) || [];
+        variantBatches.push(batch);
+        batchesByVariant.set(batch.variantId, variantBatches);
+      }
+
+      for (const item of transfer.items) {
+        const optItem = options?.items?.find(i => i.transferItemId === item.id);
+        const qtyToShip = optItem?.shippedQuantity ? new Decimal(optItem.shippedQuantity) : item.requestedQuantity;
+        let remaining = qtyToShip.toNumber();
+
+        let batches = optItem?.stockBatchId
+          ? (batchesByVariant.get(item.variantId) || []).filter(b => b.id === optItem.stockBatchId)
+          : (batchesByVariant.get(item.variantId) || []);
+
+        if (!options?.overrideQuarantine) {
+          batches = batches.filter(b => {
+            if (b.isQuarantined) return false;
+            if (b.expiryDate && new Date(b.expiryDate) < new Date()) return false;
+            return true;
+          });
+        }
+
+        let assignedBatchId = optItem?.stockBatchId;
+        for (const batch of batches) {
+          if (remaining <= 0) break;
+          const currentBatchQty = Number(batch.currentQuantity);
+          const deduction = Math.min(currentBatchQty, remaining);
+
+          await tx.stockBatch.update({
+            where: { id: batch.id },
+            data: { currentQuantity: { decrement: deduction } },
+          });
+
+          if (!assignedBatchId) assignedBatchId = batch.id;
+          remaining -= deduction;
+        }
+
+        await tx.productVariantStock.update({
+          where: {
+            variantId_locationId: {
               variantId: item.variantId,
-              quantity: item.requestedQuantity.mul(-1),
-              fromLocationId: transfer.fromLocationId,
-              toLocationId: transfer.toLocationId,
-              movementType: "TRANSFER",
-              referenceId: transfer.id,
-              referenceType: "StockTransfer",
-              memberId: context.memberId,
-              notes: `Transfer ${transfer.transferNumber} Shipped`,
+              locationId: transfer.fromLocationId,
             },
-          }),
-        ]),
-      );
+          },
+          data: {
+            currentStock: { decrement: qtyToShip },
+            availableStock: { decrement: qtyToShip },
+          },
+        });
+
+        await tx.stockMovement.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId: item.variantId,
+            stockBatchId: assignedBatchId,
+            quantity: qtyToShip.mul(-1),
+            fromLocationId: transfer.fromLocationId,
+            toLocationId: transfer.toLocationId,
+            movementType: "TRANSFER",
+            referenceId: transfer.id,
+            referenceType: "StockTransfer",
+            memberId: context.memberId,
+            notes: `Transfer ${transfer.transferNumber} Shipped`,
+            serialNumbers: optItem?.serialNumbers
+              ? {
+                  connect: optItem.serialNumbers.map(sn => ({
+                    organizationId_serialNumber: {
+                      organizationId: context.organizationId,
+                      serialNumber: sn,
+                    },
+                  })),
+                }
+              : undefined,
+          },
+        });
+
+        if (optItem?.serialNumbers && optItem.serialNumbers.length > 0) {
+          await tx.serialNumber.updateMany({
+            where: {
+              organizationId: context.organizationId,
+              serialNumber: { in: optItem.serialNumbers },
+            },
+            data: {
+              status: "TRANSFERRED",
+              locationId: transfer.toLocationId,
+            },
+          });
+        }
+
+        await tx.stockTransferItem.update({
+          where: { id: item.id },
+          data: {
+            shippedQuantity: qtyToShip,
+            stockBatchId: assignedBatchId,
+          },
+        });
+      }
     } else if (status === "COMPLETED") {
       updateData.receivedById = context.memberId;
       updateData.receivedDate = new Date();
       updateData.completedDate = new Date();
 
-      // ⚡ Bolt Optimization: Batch fetch existing stock records and missing product variants up-front,
-      // converting up to 3N sequential queries into 2 batched read queries and 1 concurrent write batch via Promise.all.
-      const variantIds = Array.from(
-        new Set(transfer.items.map(i => i.variantId)),
-      );
+      for (const item of transfer.items) {
+        const optItem = options?.items?.find(i => i.transferItemId === item.id);
+        const qtyReceived = optItem?.receivedQuantity ? new Decimal(optItem.receivedQuantity) : (item.shippedQuantity || item.requestedQuantity);
 
-      const existingStocks = await tx.productVariantStock.findMany({
-        where: {
-          locationId: transfer.toLocationId,
-          variantId: { in: variantIds },
-        },
-      });
-      const stockMap = new Map(existingStocks.map(s => [s.variantId, s]));
+        const batchNumber = optItem?.batchNumber || `TR-${transfer.transferNumber}-${item.id.slice(-4)}`;
+        const expDate = optItem?.expiryDate ? new Date(optItem.expiryDate) : null;
 
-      const missingVariantIds = variantIds.filter(vId => !stockMap.has(vId));
-      let variantMap = new Map<string, { productId: string }>();
-      if (missingVariantIds.length > 0) {
-        const variants = await tx.productVariant.findMany({
-          where: { id: { in: missingVariantIds } },
-          select: { id: true, productId: true },
+        const batch = await tx.stockBatch.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId: item.variantId,
+            locationId: transfer.toLocationId,
+            initialQuantity: qtyReceived,
+            currentQuantity: qtyReceived,
+            purchasePrice: item.unitCost,
+            batchNumber,
+            supplierBatchNumber: optItem?.supplierBatchNumber,
+            expiryDate: expDate,
+            receivedDate: new Date(),
+          },
         });
-        variantMap = new Map(variants.map(v => [v.id, v]));
-      }
 
-      await Promise.all(
-        transfer.items.flatMap(item => {
-          const stock = stockMap.get(item.variantId);
-          const stockOp = stock
-            ? tx.productVariantStock.update({
-                where: { id: stock.id },
-                data: {
-                  currentStock: { increment: item.requestedQuantity },
-                  availableStock: { increment: item.requestedQuantity },
-                },
-              })
-            : tx.productVariantStock.create({
-                data: {
-                  organizationId: context.organizationId,
-                  productId: variantMap.get(item.variantId)!.productId,
-                  variantId: item.variantId,
-                  locationId: transfer.toLocationId,
-                  currentStock: item.requestedQuantity,
-                  availableStock: item.requestedQuantity,
-                },
-              });
-
-          const movementOp = tx.stockMovement.create({
-            data: {
-              organizationId: context.organizationId,
+        await tx.productVariantStock.upsert({
+          where: {
+            variantId_locationId: {
               variantId: item.variantId,
-              quantity: item.requestedQuantity,
-              fromLocationId: transfer.fromLocationId,
-              toLocationId: transfer.toLocationId,
-              movementType: "TRANSFER",
-              referenceId: transfer.id,
-              referenceType: "StockTransfer",
-              memberId: context.memberId,
-              notes: `Transfer ${transfer.transferNumber} Completed`,
+              locationId: transfer.toLocationId,
             },
-          });
+          },
+          update: {
+            currentStock: { increment: qtyReceived },
+            availableStock: { increment: qtyReceived },
+          },
+          create: {
+            organizationId: context.organizationId,
+            productId: item.variant.productId,
+            variantId: item.variantId,
+            locationId: transfer.toLocationId,
+            currentStock: qtyReceived,
+            availableStock: qtyReceived,
+          },
+        });
 
-          return [stockOp, movementOp];
-        }),
-      );
+        if (optItem?.serialNumbers && optItem.serialNumbers.length > 0) {
+          for (const sn of optItem.serialNumbers) {
+            await tx.serialNumber.upsert({
+              where: {
+                organizationId_serialNumber: {
+                  organizationId: context.organizationId,
+                  serialNumber: sn,
+                },
+              },
+              update: {
+                status: "IN_STOCK",
+                locationId: transfer.toLocationId,
+                stockBatchId: batch.id,
+              },
+              create: {
+                organizationId: context.organizationId,
+                serialNumber: sn,
+                variantId: item.variantId,
+                locationId: transfer.toLocationId,
+                stockBatchId: batch.id,
+                status: "IN_STOCK",
+              },
+            });
+          }
+        }
+
+        await tx.stockMovement.create({
+          data: {
+            organizationId: context.organizationId,
+            variantId: item.variantId,
+            stockBatchId: batch.id,
+            quantity: qtyReceived,
+            fromLocationId: transfer.fromLocationId,
+            toLocationId: transfer.toLocationId,
+            movementType: "TRANSFER",
+            referenceId: transfer.id,
+            referenceType: "StockTransfer",
+            memberId: context.memberId,
+            notes: options?.notes || `Transfer ${transfer.transferNumber} Received`,
+          },
+        });
+
+        await tx.stockTransferItem.update({
+          where: { id: item.id },
+          data: {
+            receivedQuantity: qtyReceived,
+            stockBatchId: batch.id,
+          },
+        });
+      }
     }
 
     return tx.stockTransfer.update({

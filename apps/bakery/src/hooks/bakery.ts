@@ -727,3 +727,7 @@ export const useDisposeStagedStock = () => {
     },
   });
 };
+
+export const useProductionSettings = useBakerySettings;
+export const useProductionSettingsManagement = useBakerySettingsManagement;
+export const useOperators = useBakers;

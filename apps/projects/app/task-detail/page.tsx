@@ -1,324 +1,462 @@
 "use client";
 
 import Link from "next/link";
-import { useState, Suspense } from "react";
+import React, { useState } from "react";
 import { useSearchParams } from "next/navigation";
-import { useTasks, useLogTimeEntry } from "@/lib/hooks/use-projects";
 import {
-  Folder,
-  Copy,
-  Bell,
-  Flame,
-  Clock,
-  User,
-  CheckCircle2,
-  Send,
-  Calendar,
-  Tag,
-  Check
-} from "lucide-react";
+  useTasks,
+  useTask,
+  useMembers,
+  useStaffShifts,
+  useSubtasks,
+  useUpdateTaskStatus,
+  useUpdateTask,
+  useManageTaskAssignees,
+  useAddTaskComment,
+} from "@/lib/hooks/use-projects";
+import { usePermissions } from "@/lib/permissions";
+import { Task } from "@/lib/api";
+import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { toast } from "sonner";
 
-function TaskDetailContent() {
+interface TaskDetailPageProps {
+  taskId?: string;
+}
+
+function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   const searchParams = useSearchParams();
-  const taskId = searchParams.get("id") || "SCR-104";
+  const rawId = propTaskId || searchParams.get("id");
 
-  const { data: tasks = [] } = useTasks();
-  const logTimeEntry = useLogTimeEntry();
+  const { data: allTasks = [] } = useTasks();
+  const activeId = rawId || (allTasks.length > 0 ? allTasks[0].id : "");
 
-  const [copied, setCopied] = useState(false);
+  const { data: task, isLoading } = useTask(activeId);
+  const { data: subtasks = [] } = useSubtasks(activeId);
+  const { data: members = [] } = useMembers();
+  const { data: staffShifts = [] } = useStaffShifts();
+
+  const updateTaskStatusMutation = useUpdateTaskStatus();
+  const updateTaskMutation = useUpdateTask();
+  const manageAssigneesMutation = useManageTaskAssignees(activeId);
+  const addCommentMutation = useAddTaskComment(activeId);
+
+  const { canManageTasks } = usePermissions();
+
+  const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [commentText, setCommentText] = useState("");
-  const [logHours, setLogHours] = useState("");
-  const [comments, setComments] = useState([
-    {
-      id: "1",
-      author: "Arbian Musaf",
-      role: "Lead Reviewer",
-      time: "6h ago",
-      text: "Tested the latest WebGL memory allocators. Memory retention stays under 42MB during peak stress at 25,000 points."
-    },
-    {
-      id: "2",
-      author: "Elena Rostova",
-      role: "Assignee",
-      time: "2h ago",
-      text: "Great catch! Added a passive wheel listener with requestAnimationFrame throttling in subtask SCR-104.3."
+
+  // Capacity Warning Modal State
+  const [warningModalOpen, setWarningModalOpen] = useState(false);
+  const [pendingAssigneeId, setPendingAssigneeId] = useState<string | null>(null);
+  const [warningMemberName, setWarningMemberName] = useState("");
+  const [warningAssignedHours, setWarningAssignedHours] = useState(0);
+  const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
+  const [warningCapacityHours, setWarningCapacityHours] = useState(40);
+
+  const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
+    const memberTasks = allTasks.filter(
+      (t) =>
+        t.id !== activeId &&
+        (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
+        t.assignees?.some((a) => a.member?.id === memberId)
+    );
+    const currentHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 2), 0);
+
+    const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
+    let shiftHours = 0;
+    for (const s of memberShifts) {
+      const [h1, m1] = s.startTime.split(":").map(Number);
+      const [h2, m2] = s.endTime.split(":").map(Number);
+      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
+      if (diffM > 0) shiftHours += diffM / 60;
     }
-  ]);
+    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
 
-  const task = tasks.find((t) => t.id === taskId) || {
-    id: taskId,
-    title: "SCR-104: Interactive Analytics Dashboard & Real-time Canvas",
-    description: "Implement a 60fps rendering pipeline for the streaming metric topology canvas in @nexus/analytics-canvas. The canvas must handle up to 25,000 live data vectors concurrently with hardware-accelerated pan, zoom, and frame scrubbing.",
-    status: "IN_PROGRESS",
-    priority: "URGENT",
-    estimatedHours: 16,
-    actualHours: 14.3
+    return {
+      currentHours,
+      totalCapacity,
+      isOverloaded: currentHours + hoursToAdd > totalCapacity,
+    };
   };
 
-  const handleCopyLink = () => {
-    navigator.clipboard?.writeText(window.location.href);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleAssigneeChange = async (
+    assignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[]
+  ) => {
+    if (assignees.length === 0) {
+      manageAssigneesMutation.mutate([]);
+      return;
+    }
+
+    const primary = assignees.find((a) => a.isPrimary) || assignees[0];
+    const targetMember = members.find((m) => m.id === primary.memberId);
+    const estHours = Number(task?.estimatedHours) || 2;
+    const shareHours = primary.allocatedHours || estHours / assignees.length;
+    const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(primary.memberId, shareHours);
+
+    if (isOverloaded) {
+      setPendingAssigneeId(primary.memberId);
+      setWarningMemberName(targetMember?.name || "Lead Assignee");
+      setWarningAssignedHours(currentHours);
+      setWarningAdditionalHours(shareHours);
+      setWarningCapacityHours(totalCapacity);
+      setWarningModalOpen(true);
+      return;
+    }
+
+    manageAssigneesMutation.mutate(assignees);
+    toast.success("Assignees updated");
   };
 
-  const handleAddComment = () => {
+  const confirmOverloadedAssignee = () => {
+    if (pendingAssigneeId) {
+      manageAssigneesMutation.mutate([pendingAssigneeId]);
+      toast.success("Assignee updated (capacity overridden)");
+      setWarningModalOpen(false);
+      setPendingAssigneeId(null);
+    }
+  };
+
+  const addSubtask = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newSubtaskTitle.trim() || !task) return;
+    toast.info("Subtask added");
+    setNewSubtaskTitle("");
+  };
+
+  const toggleSubtask = (st: Task) => {
+    const nextStatus = st.status === "DONE" ? "TODO" : "DONE";
+    updateTaskStatusMutation.mutate({ taskId: st.id, status: nextStatus });
+  };
+
+  const addComment = async (e: React.FormEvent) => {
+    e.preventDefault();
     if (!commentText.trim()) return;
-    setComments([
-      ...comments,
-      {
-        id: Date.now().toString(),
-        author: "Engineering Admin",
-        role: "Operator",
-        time: "Just now",
-        text: commentText
-      }
-    ]);
+    await addCommentMutation.mutateAsync(commentText.trim());
+    toast.success("Comment posted");
     setCommentText("");
   };
 
-  const handleLogTime = () => {
-    const hours = parseFloat(logHours);
-    if (isNaN(hours) || hours <= 0) return;
-    logTimeEntry.mutate({ taskId, hours, notes: "Worked on WebGL streaming pipeline" });
-    setLogHours("");
-  };
+  if (isLoading || !task) {
+    return (
+      <div className="w-full min-h-screen bg-surface flex items-center justify-center p-8 text-outline text-body-sm">
+        Loading task detail...
+      </div>
+    );
+  }
+
+  const doneCount = subtasks.filter((st) => st.status === "DONE").length;
 
   return (
-    <div className="space-y-5">
-      {/* Action Bar Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[#2E3039]/50 pb-3 text-xs">
-        <div className="flex items-center gap-2 min-w-0 text-slate-400">
-          <Link href="/projects" className="hover:text-slate-200 transition-colors flex items-center gap-1">
-            <Folder className="h-3.5 w-3.5 text-slate-500" />
-            <span>Projects</span>
+    <div className="flex flex-col w-full min-h-screen bg-surface text-on-surface">
+      <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto w-full">
+        {/* Navigation Breadcrumb */}
+        <div className="flex items-center gap-2 text-body-sm text-outline border-b border-outline-variant/30 pb-3">
+          <Link href="/tasks" className="hover:text-on-surface transition-colors">
+            Tasks
           </Link>
           <span>/</span>
-          <Link href="/tasks" className="hover:text-slate-200 transition-colors">
-            Nexus 2.0
-          </Link>
-          <span>/</span>
-          <span className="font-mono text-[#5E6AD2] font-semibold">
-            {task.id.startsWith("SCR-") ? task.id : `SCR-${task.id.slice(0, 3).toUpperCase()}`}
-          </span>
-          <span className="px-2 py-0.5 rounded bg-[#171922] border border-[#2E3039] text-slate-300 font-mono text-[10px]">
-            Sprint 14
+          <span className="font-label-code text-on-surface font-medium">
+            {task.taskKey || task.id.slice(-6).toUpperCase()}
           </span>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleCopyLink}
-            className="h-7 px-2.5 rounded bg-[#171922] hover:bg-[#1f1f23] border border-[#2E3039] text-slate-300 transition-colors flex items-center gap-1.5"
-          >
-            {copied ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-            <span>{copied ? "Copied" : "Copy Link"}</span>
-          </button>
-          <button
-            type="button"
-            className="h-7 px-2.5 rounded bg-[#171922] hover:bg-[#1f1f23] border border-[#2E3039] text-slate-300 transition-colors flex items-center gap-1.5"
-          >
-            <Bell className="h-3.5 w-3.5 text-[#5E6AD2]" />
-            <span>Subscribed</span>
-          </button>
-        </div>
-      </div>
-
-      {/* Main Grid Detail View */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
-        {/* Left Main Canvas (Col 8) */}
-        <div className="lg:col-span-8 space-y-5">
-          {/* Issue Summary Block */}
-          <div className="bg-[#12141A] border border-[#2E3039] rounded-lg p-5 space-y-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <span className="px-2 py-0.5 rounded bg-[#5E6AD2]/10 text-[#5E6AD2] border border-[#5E6AD2]/20 text-[11px] font-semibold flex items-center gap-1">
-                <span className="w-1.5 h-1.5 rounded-full bg-[#5E6AD2] animate-pulse"></span>
-                <span>In Progress</span>
-              </span>
-
-              <span className="px-2 py-0.5 rounded bg-rose-500/10 text-rose-400 border border-rose-500/20 text-[11px] font-semibold flex items-center gap-1">
-                <Flame className="h-3 w-3" />
-                <span>Urgent</span>
-              </span>
-
-              <span className="px-2 py-0.5 rounded bg-[#171922] text-slate-400 border border-[#2E3039] text-[11px]">
-                Cycle 14 (8h est)
-              </span>
-            </div>
-
-            <h1 className="text-lg font-bold text-slate-100 tracking-tight leading-snug">
-              {task.title}
-            </h1>
-
-            <p className="text-xs text-slate-300 leading-relaxed bg-[#171922] p-3 rounded-md border border-[#2E3039]/60">
-              {task.description}
-            </p>
-
-            {/* Sparkline Architecture Visualizer */}
-            <div className="bg-[#0d0e11] border border-[#2E3039]/80 rounded-md p-3 space-y-2">
-              <div className="flex items-center justify-between text-xs font-mono text-slate-300">
-                <span>Live Telemetry Pipeline Buffer</span>
-                <span className="text-[#5E6AD2]">60.2 FPS TARGET</span>
-              </div>
-              <div className="h-16 bg-[#12141A] rounded flex items-center justify-center border border-[#2E3039]/40 relative overflow-hidden">
-                <svg className="w-full h-12 text-[#5E6AD2]" fill="none" viewBox="0 0 600 80" preserveAspectRatio="none">
-                  <path d="M0,60 Q40,25 90,45 T180,20 T270,55 T360,15 T450,40 T540,10 T600,25 L600,80 L0,80 Z" fill="currentColor" fillOpacity="0.12" />
-                  <path d="M0,60 Q40,25 90,45 T180,20 T270,55 T360,15 T450,40 T540,10 T600,25" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-                </svg>
-              </div>
-            </div>
-
-            {/* Acceptance Criteria Checklist */}
-            <div className="space-y-2 pt-2">
-              <h2 className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-[#5E6AD2]" />
-                <span>Acceptance Criteria</span>
-              </h2>
-
-              <div className="space-y-1.5 bg-[#171922] p-3 rounded-md border border-[#2E3039]/60 text-xs">
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
-                  <input type="checkbox" defaultChecked className="rounded border-[#2E3039] bg-[#0d0e11] text-[#5E6AD2]" />
-                  <span className="line-through text-slate-500">Off-screen Canvas instance pooling for WebGL context lifecycle management</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
-                  <input type="checkbox" defaultChecked className="rounded border-[#2E3039] bg-[#0d0e11] text-[#5E6AD2]" />
-                  <span className="line-through text-slate-500">Telemetry stream buffer with &lt; 4ms latency per 10k metrics frame</span>
-                </label>
-                <label className="flex items-center gap-2 cursor-pointer text-slate-300">
-                  <input type="checkbox" className="rounded border-[#2E3039] bg-[#0d0e11] text-[#5E6AD2]" />
-                  <span>Time-scrubbing controller with smooth timeline scrubbing and inertial drag</span>
-                </label>
-              </div>
-            </div>
-          </div>
-
-          {/* Activity Comments & Threading */}
-          <div className="bg-[#12141A] border border-[#2E3039] rounded-lg p-5 space-y-4">
-            <h2 className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-              Discussion Feed ({comments.length})
-            </h2>
-
-            <div className="space-y-3">
-              {comments.map((c) => (
-                <div key={c.id} className="bg-[#171922] p-3 rounded-md border border-[#2E3039]/60 space-y-1.5 text-xs">
-                  <div className="flex items-center justify-between text-slate-400">
-                    <div className="flex items-center gap-2">
-                      <span className="font-semibold text-slate-200">{c.author}</span>
-                      <span className="px-1.5 py-0.2 rounded bg-[#1f1f23] text-[10px] text-slate-400">{c.role}</span>
-                    </div>
-                    <span className="text-[10px] text-slate-500">{c.time}</span>
+        {/* Grid layout: Task Details & Inspector Sidebar */}
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+          {/* Main Content Area */}
+          <div className="xl:col-span-8 flex flex-col gap-6">
+            <div className="p-6 rounded-lg bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col gap-4">
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex flex-col gap-1">
+                  <div className="flex items-center gap-2">
+                    <span className="font-label-code text-label-code text-outline uppercase font-semibold">
+                      {task.project?.name || "Project"}
+                    </span>
+                    <span className="text-outline">•</span>
+                    <span className="font-label-code text-label-code text-primary font-semibold">
+                      {task.taskKey}
+                    </span>
                   </div>
-                  <p className="text-slate-300 leading-relaxed">{c.text}</p>
-                </div>
-              ))}
-            </div>
-
-            {/* Comment Composer */}
-            <div className="space-y-2 pt-2 border-t border-[#2E3039]/50">
-              <textarea
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                placeholder="Write a comment..."
-                rows={3}
-                className="w-full bg-[#171922] border border-[#2E3039] rounded-md p-2.5 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
-              />
-              <div className="flex justify-end">
-                <button
-                  type="button"
-                  onClick={handleAddComment}
-                  className="px-3 py-1.5 bg-[#5E6AD2] hover:bg-[#717DE3] text-white rounded-md text-xs font-medium flex items-center gap-1 transition-colors"
-                >
-                  <Send className="h-3 w-3" />
-                  <span>Post Comment</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Right Inspector Sidebar (Col 4) */}
-        <div className="lg:col-span-4 space-y-5">
-          {/* Metadata Properties */}
-          <div className="bg-[#12141A] border border-[#2E3039] rounded-lg p-4 space-y-3">
-            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 border-b border-[#2E3039]/50 pb-2">
-              Task Properties
-            </h2>
-
-            <div className="space-y-2.5 text-xs">
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <User className="h-3.5 w-3.5 text-slate-500" />
-                  <span>Assignee</span>
-                </span>
-                <span className="text-slate-200 font-medium">Elena Rostova</span>
-              </div>
-
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5 text-slate-500" />
-                  <span>Labels</span>
-                </span>
-                <div className="flex gap-1">
-                  <span className="px-1.5 py-0.5 rounded bg-[#1f1f23] text-[#5E6AD2] font-mono text-[10px]">frontend</span>
-                  <span className="px-1.5 py-0.5 rounded bg-[#1f1f23] text-indigo-300 font-mono text-[10px]">analytics</span>
+                  <h1 className="font-headline-lg text-headline-lg text-on-surface font-semibold tracking-tight">
+                    {task.title}
+                  </h1>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between">
-                <span className="text-slate-400 flex items-center gap-1.5">
-                  <Calendar className="h-3.5 w-3.5 text-slate-500" />
-                  <span>Due Date</span>
-                </span>
-                <span className="text-slate-200 font-mono">Oct 28, 2024</span>
+              <div>
+                <h4 className="text-outline text-[11px] font-label-badge uppercase tracking-wider mb-1">
+                  Description
+                </h4>
+                <p className="text-body-sm text-on-surface-variant mt-2 leading-relaxed">
+                  {task.description || "No detailed description provided."}
+                </p>
+              </div>
+
+              {/* Subtasks Component */}
+              <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="material-symbols-outlined text-[16px] text-primary">checklist</span>
+                    <span className="font-headline-sm text-body-md text-on-surface font-semibold">Subtasks</span>
+                    <span className="text-[11px] font-label-code text-outline">
+                      ({doneCount}/{subtasks.length} done)
+                    </span>
+                  </div>
+                </div>
+
+                <div className="divide-y divide-outline-variant/20 rounded-lg bg-surface-container-lowest border border-outline-variant/20 overflow-hidden">
+                  {subtasks.map((st) => {
+                    const isDone = st.status === "DONE";
+                    return (
+                      <div
+                        key={st.id}
+                        onClick={() => toggleSubtask(st)}
+                        className="p-3 flex items-center gap-3 hover:bg-surface-container/50 transition-colors cursor-pointer"
+                      >
+                        <button
+                          type="button"
+                          className={`w-4 h-4 rounded-xs border flex items-center justify-center transition-colors ${
+                            isDone
+                              ? "bg-primary-container border-primary-container text-on-primary-container"
+                              : "border-outline-variant bg-surface-container"
+                          }`}
+                        >
+                          {isDone && <span className="material-symbols-outlined text-[12px]">check</span>}
+                        </button>
+                        <span
+                          className={`text-body-sm ${
+                            isDone ? "line-through text-outline" : "text-on-surface"
+                          }`}
+                        >
+                          {st.title}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Add Subtask Input */}
+                <form onSubmit={addSubtask} className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newSubtaskTitle}
+                    onChange={(e) => setNewSubtaskTitle(e.target.value)}
+                    placeholder="Add new subtask item..."
+                    className="flex-1 h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  />
+                  <button
+                    type="submit"
+                    className="px-3 h-8 rounded-lg bg-surface-container-high hover:bg-surface-container-highest text-on-surface text-body-sm"
+                  >
+                    Add
+                  </button>
+                </form>
+              </div>
+
+              {/* Activity & Comment Thread */}
+              <div className="flex flex-col gap-3 pt-4 border-t border-outline-variant/20">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[16px] text-primary">history</span>
+                  <span className="font-headline-sm text-body-md text-on-surface font-semibold">Activity & Comments</span>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  {task.comments?.map((comment: any) => (
+                    <div key={comment.id} className="p-3 rounded-lg bg-surface-container-lowest border border-outline-variant/20 flex flex-col gap-1 text-body-sm">
+                      <div className="flex items-center justify-between">
+                        <span className="font-medium text-on-surface">{comment.author?.user?.name || "Member"}</span>
+                        <span className="text-[10px] font-label-code text-outline">
+                          {new Date(comment.createdAt).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}
+                        </span>
+                      </div>
+                      <p className="text-on-surface-variant text-body-sm">{comment.content}</p>
+                    </div>
+                  ))}
+                </div>
+
+                <form onSubmit={addComment} className="flex flex-col gap-2 pt-2">
+                  <textarea
+                    rows={2}
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Add comment or technical update..."
+                    className="w-full p-2.5 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  />
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={addCommentMutation.isPending}
+                      className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+                    >
+                      {addCommentMutation.isPending ? "Posting..." : "Post Update"}
+                    </button>
+                  </div>
+                </form>
               </div>
             </div>
           </div>
 
-          {/* Time Logging Widget */}
-          <div className="bg-[#12141A] border border-[#2E3039] rounded-lg p-4 space-y-3">
-            <div className="flex items-center justify-between">
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-400 flex items-center gap-1.5">
-                <Clock className="h-3.5 w-3.5 text-[#5E6AD2]" />
-                <span>Time Logged</span>
-              </h2>
-              <span className="text-xs font-mono text-indigo-300 font-semibold">{task.actualHours || 14.3}h / {task.estimatedHours || 16}h</span>
-            </div>
+          {/* Right Inspector Sidebar: Properties */}
+          <div className="xl:col-span-4 flex flex-col gap-4">
+            <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col gap-4">
+              <h3 className="font-headline-sm text-body-md text-on-surface font-semibold pb-2 border-b border-outline-variant/20">
+                Properties & Metadata
+              </h3>
 
-            <div className="w-full bg-[#1f1f23] h-2 rounded-full overflow-hidden">
-              <div
-                className="bg-[#5E6AD2] h-full rounded-full transition-all duration-300"
-                style={{ width: `${Math.min(100, ((task.actualHours || 14.3) / (task.estimatedHours || 16)) * 100)}%` }}
-              ></div>
-            </div>
+              <div className="flex flex-col gap-3 text-body-sm">
+                <div>
+                  <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Status</label>
+                  <select
+                    value={task.status}
+                    onChange={(e) => updateTaskStatusMutation.mutate({ taskId: task.id, status: e.target.value as Task["status"] })}
+                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                  >
+                    <option value="BACKLOG">Backlog</option>
+                    <option value="TODO">Todo</option>
+                    <option value="IN_PROGRESS">In Progress</option>
+                    <option value="IN_REVIEW">In Review</option>
+                    <option value="DONE">Done</option>
+                    <option value="CANCELED">Canceled</option>
+                  </select>
+                </div>
 
-            <div className="flex items-center gap-2 pt-1">
-              <input
-                type="number"
-                step="0.5"
-                value={logHours}
-                onChange={(e) => setLogHours(e.target.value)}
-                placeholder="Hours (e.g. 2.5)"
-                className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-2.5 py-1 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
-              />
-              <button
-                type="button"
-                onClick={handleLogTime}
-                className="px-3 py-1 bg-[#5E6AD2] hover:bg-[#717DE3] text-white rounded-md text-xs font-medium shrink-0 transition-colors"
-              >
-                Log
-              </button>
+                <div>
+                  <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Priority</label>
+                  <select
+                    value={task.priority}
+                    onChange={(e) => updateTaskMutation.mutate({ taskId: task.id, data: { priority: e.target.value as Task["priority"] } })}
+                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                  >
+                    <option value="URGENT">Urgent</option>
+                    <option value="HIGH">High</option>
+                    <option value="MEDIUM">Medium</option>
+                    <option value="LOW">Low</option>
+                  </select>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center justify-between">
+                    <label className="text-outline text-[11px] font-label-badge uppercase">Assignees & Squad</label>
+                    <span className="text-[10px] text-primary font-label-code">
+                      {task.assignees?.length || 0} Assigned
+                    </span>
+                  </div>
+
+                  {/* Primary Owner Dropdown */}
+                  <div>
+                    <label className="block text-outline text-[10px] mb-1">Primary Owner (Lead)</label>
+                    <select
+                      value={task.assignees?.find((a) => a.isPrimary)?.member?.id || task.assignees?.[0]?.member?.id || ""}
+                      onChange={(e) => {
+                        const newPrimaryId = e.target.value;
+                        if (!newPrimaryId) {
+                          handleAssigneeChange([]);
+                          return;
+                        }
+                        const existingContributors = (task.assignees || [])
+                          .filter((a) => a.member?.id !== newPrimaryId)
+                          .map((a) => ({ memberId: a.member.id, isPrimary: false, allocatedHours: a.allocatedHours }));
+                        handleAssigneeChange([
+                          { memberId: newPrimaryId, isPrimary: true },
+                          ...existingContributors,
+                        ]);
+                      }}
+                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    >
+                      <option value="">Unassigned</option>
+                      {members.map((m) => (
+                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
+                      ))}
+                    </select>
+                  </div>
+
+                  {/* Contributors Multi-Pill Selector */}
+                  <div className="pt-1">
+                    <label className="block text-outline text-[10px] mb-1">Contributors</label>
+                    <div className="flex flex-wrap gap-1 p-1.5 rounded-lg bg-surface-container border border-outline-variant/30">
+                      {members.map((m) => {
+                        const isPrimary = task.assignees?.some((a) => a.member?.id === m.id && a.isPrimary);
+                        const isContributor = task.assignees?.some((a) => a.member?.id === m.id && !a.isPrimary);
+                        if (isPrimary) return null;
+
+                        return (
+                          <button
+                            key={m.id}
+                            type="button"
+                            onClick={() => {
+                              const currentPrimary = task.assignees?.find((a) => a.isPrimary);
+                              let newAssignees: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[] = [];
+                              if (currentPrimary) {
+                                newAssignees.push({ memberId: currentPrimary.member.id, isPrimary: true });
+                              }
+                              const otherContribs = (task.assignees || [])
+                                .filter((a) => !a.isPrimary && a.member.id !== m.id)
+                                .map((a) => ({ memberId: a.member.id, isPrimary: false }));
+
+                              if (isContributor) {
+                                newAssignees = [...newAssignees, ...otherContribs];
+                              } else {
+                                newAssignees = [...newAssignees, ...otherContribs, { memberId: m.id, isPrimary: false }];
+                              }
+                              handleAssigneeChange(newAssignees);
+                            }}
+                            className={`px-2 py-0.5 rounded text-[10px] font-medium transition-colors border ${
+                              isContributor
+                                ? "bg-primary-container/30 border-primary text-primary"
+                                : "bg-surface-container-high border-outline-variant/30 text-outline hover:text-on-surface"
+                            }`}
+                          >
+                            {m.name.split(" ")[0]} {isContributor ? "✓" : "+"}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2">
+                  <div className="flex justify-between text-[11px] text-outline font-label-code">
+                    <span>Logged Hours</span>
+                    <span className="text-on-surface font-medium">{task.actualHours || 0}h</span>
+                  </div>
+                  <div className="flex justify-between text-[11px] text-outline font-label-code">
+                    <span>Estimated</span>
+                    <span className="text-on-surface font-medium">{task.estimatedHours || 0}h</span>
+                  </div>
+                  <Link
+                    href={`/time-tracking?taskId=${task.id}`}
+                    className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-body-sm font-medium border border-outline-variant/30 mt-2 transition-colors"
+                  >
+                    Track Time on {task.taskKey || "Task"}
+                  </Link>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Capacity Warning Soft Modal */}
+      <CapacityWarningModal
+        isOpen={warningModalOpen}
+        memberName={warningMemberName}
+        currentAssignedHours={warningAssignedHours}
+        additionalHours={warningAdditionalHours}
+        totalCapacityHours={warningCapacityHours}
+        onConfirm={confirmOverloadedAssignee}
+        onCancel={() => {
+          setWarningModalOpen(false);
+          setPendingAssigneeId(null);
+        }}
+      />
     </div>
   );
 }
 
-export default function TaskDetailPage() {
+
+export default function TaskDetailPage({ taskId }: TaskDetailPageProps = {}) {
   return (
-    <Suspense fallback={<div className="p-6 text-slate-400 text-xs">Loading task details...</div>}>
-      <TaskDetailContent />
-    </Suspense>
+    <React.Suspense fallback={<div className="p-8 text-outline text-body-sm">Loading task details...</div>}>
+      <TaskDetailContent taskId={taskId} />
+    </React.Suspense>
   );
 }

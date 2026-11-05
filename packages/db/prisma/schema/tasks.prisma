@@ -19,6 +19,8 @@ model Project {
   members    ProjectMember[]
   tasks      Task[]
   milestones ProjectMilestone[]
+  sprints    ProjectSprint[]
+  documents  ProjectDocument[]
   labels     TaskLabel[]
 
   createdAt DateTime @default(now())
@@ -131,6 +133,9 @@ model Task {
   milestoneId String?
   milestone   ProjectMilestone? @relation(fields: [milestoneId], references: [id], onDelete: SetNull)
 
+  sprintId    String?
+  sprint      ProjectSprint?    @relation(fields: [sprintId], references: [id], onDelete: SetNull)
+
   createdById String?
   createdBy   Member? @relation("TaskCreator", fields: [createdById], references: [id], onDelete: SetNull)
 
@@ -140,6 +145,7 @@ model Task {
   comments     TaskComment[]
   activityLogs TaskActivityLog[]
   labels       TaskLabelOnTask[]
+  batches      Batch[]           @relation("BatchTask")
   timeEntries  TaskTimeEntry[]
 
   createdAt DateTime @default(now())
@@ -151,6 +157,7 @@ model Task {
   @@index([status])
   @@index([parentTaskId])
   @@index([milestoneId])
+  @@index([sprintId])
   @@map("task")
 }
 
@@ -158,14 +165,17 @@ model TaskTimeEntry {
   id             String       @id @default(cuid())
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  taskId         String
-  task           Task         @relation(fields: [taskId], references: [id], onDelete: Cascade)
+  taskId         String?
+  task           Task?        @relation(fields: [taskId], references: [id], onDelete: Cascade)
   memberId       String
   member         Member       @relation("MemberTaskTimeEntries", fields: [memberId], references: [id], onDelete: Cascade)
 
-  hours       Decimal  @db.Decimal(10, 2)
-  description String?  @db.Text
-  date        DateTime @default(now())
+  hours          Decimal      @db.Decimal(10, 2)
+  description    String?      @db.Text
+  date           DateTime     @default(now())
+  category       String?
+  isBillable     Boolean      @default(true)
+  isLocked       Boolean      @default(false)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -181,8 +191,10 @@ model TaskAssignee {
   taskId     String
   task       Task     @relation(fields: [taskId], references: [id], onDelete: Cascade)
   memberId   String
-  member     Member   @relation("TaskAssigneeMember", fields: [memberId], references: [id], onDelete: Cascade)
-  assignedAt DateTime @default(now())
+  member         Member   @relation("TaskAssigneeMember", fields: [memberId], references: [id], onDelete: Cascade)
+  isPrimary      Boolean  @default(false)
+  allocatedHours Decimal? @db.Decimal(10, 2)
+  assignedAt     DateTime @default(now())
 
   @@unique([taskId, memberId])
   @@index([memberId])
@@ -268,4 +280,75 @@ model TaskLabelOnTask {
   @@index([taskId])
   @@index([labelId])
   @@map("task_label_on_task")
+}
+
+enum SprintStatus {
+  PLANNED
+  ACTIVE
+  COMPLETED
+  CANCELLED
+}
+
+model ProjectSprint {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  name            String
+  goal            String?      @db.Text
+  status          SprintStatus @default(PLANNED)
+  startDate       DateTime?
+  endDate         DateTime?
+  scopePoints     Int          @default(0)
+  completedPoints Int          @default(0)
+
+  tasks Task[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+  @@map("project_sprint")
+}
+
+enum ProjectDocumentType {
+  RFC
+  SPEC
+  PLAN
+  GUIDE
+}
+
+enum ProjectDocumentStatus {
+  DRAFT
+  REVIEW
+  APPROVED
+  DEPRECATED
+}
+
+model ProjectDocument {
+  id             String                @id @default(cuid())
+  organizationId String
+  organization   Organization          @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  projectId      String
+  project        Project               @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  title     String
+  type      ProjectDocumentType   @default(RFC)
+  status    ProjectDocumentStatus @default(DRAFT)
+  content   String?               @db.Text
+  summary   String?               @db.Text
+  authorId  String?
+  author    Member?               @relation("ProjectDocumentAuthor", fields: [authorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([organizationId])
+  @@index([projectId])
+  @@index([status])
+  @@map("project_document")
 }

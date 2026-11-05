@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ChevronRight
 import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -119,7 +120,8 @@ private fun StatusChip(text: String, color: Color) {
 @Composable
 fun AdminScreen(
     viewModel: AdminViewModel,
-    onNavigateToSales: (() -> Unit)? = null
+    onNavigateToSales: (() -> Unit)? = null,
+    onNavigateToBranches: (() -> Unit)? = null
 ) {
     val uiState by viewModel.uiState.collectAsState()
 
@@ -186,6 +188,61 @@ fun AdminScreen(
                         )
                         Text(
                             text = "Revenue, balance and recent orders",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Branch management entry point
+        OutlinedSurface(onClick = { onNavigateToBranches?.invoke() }) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                                TileShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Storefront,
+                            contentDescription = "Manage Branches",
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Manage Branches & Locations",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "View, create and inspect branch operations",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

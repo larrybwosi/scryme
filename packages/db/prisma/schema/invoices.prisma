@@ -18,6 +18,9 @@ model Invoice {
   kraPin            String?
   kraCompliant      Boolean          @default(false)
   etrMode           Boolean          @default(false)
+  kraControlCode    String?
+  kraReceiptNumber  String?
+  kraQrCode         String?
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -63,13 +66,25 @@ model InvoiceItem {
 model KRAComplianceLog {
   id            String  @id @default(cuid())
   invoiceId     String
+  transactionId String?
+  purchaseId    String?
+  provider      String  @default("NAVARI")
   kraPin        String
-  taxType       String // VAT, WITHHOLDING_TAX, EXCISE_DUTY
-  taxRate       Float
-  taxableAmount Float
-  taxAmount     Float
+  taxType       String  @default("VAT")
+  taxRate       Float   @default(16.0)
+  taxableAmount Float   @default(0)
+  taxAmount     Float   @default(0)
   etrMode       Boolean @default(false)
-  status        String  @default("LOGGED") // LOGGED, SUBMITTED, ACKNOWLEDGED, FAILED
+  status        String  @default("LOGGED")
+
+  controlCode   String?
+  receiptNumber String?
+  qrCodeUrl     String?
+
+  errorCode     String?
+  errorMessage  String? @db.Text
+  retryCount    Int     @default(0)
+  metadata      Json?
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -82,8 +97,11 @@ model KRAComplianceLog {
 
   @@index([organizationId])
   @@index([invoiceId])
+  @@index([transactionId])
   @@index([kraPin])
+  @@index([status])
   @@index([submittedAt])
+  @@map("kra_compliance_log")
 }
 
 // Invoice Template Management Models

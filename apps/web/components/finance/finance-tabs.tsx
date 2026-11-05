@@ -18,7 +18,7 @@ export function FinanceTabs() {
   const pathname = usePathname();
 
   return (
-    <div className="flex items-center gap-1 border-b pb-px">
+    <div className="flex items-center gap-1 border-b border-border pb-px overflow-x-auto">
       {tabs.map(tab => {
         const isActive = pathname === tab.href;
         return (
@@ -26,12 +26,14 @@ export function FinanceTabs() {
             key={tab.href}
             href={tab.href}
             className={cn(
-              "px-4 py-2 text-sm font-medium transition-colors relative",
-              isActive ? "text-[#34A853]" : "text-gray-500 hover:text-gray-700",
+              "px-4 py-2 text-sm font-medium transition-colors relative whitespace-nowrap",
+              isActive
+                ? "text-emerald-600 dark:text-emerald-400 font-semibold"
+                : "text-muted-foreground hover:text-foreground",
             )}>
             {tab.label}
             {isActive && (
-              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-[#34A853]" />
+              <div className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-600 dark:bg-emerald-400" />
             )}
           </Link>
         );

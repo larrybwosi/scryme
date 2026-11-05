@@ -44,6 +44,11 @@ enum BatchStatus {
   CANCELLED
 }
 
+enum ProductionRunType {
+  MAKE_TO_STOCK
+  ON_DEMAND
+}
+
 enum BatchStagingStatus {
   NOT_STAGED
   STAGED
@@ -60,8 +65,10 @@ enum BakeryAuthMode {
 model Recipe {
   id          String             @id @default(cuid())
   name        String
-  categoryId  String
-  category    BakeryCategory     @relation(fields: [categoryId], references: [id])
+  categoryId           String
+  category             BakeryCategory      @relation(fields: [categoryId], references: [id])
+  productionCategoryId String?
+  productionCategory   ProductionCategory? @relation(fields: [productionCategoryId], references: [id])
   ingredients RecipeIngredient[]
 
   producesVariantId String         @unique
@@ -127,6 +134,12 @@ model Batch {
   // Recipe scaling
   recipeMultiplier Decimal @default(1.0) @db.Decimal(10, 4)
 
+  // Production Run Type & On-Demand Order Tracking
+  runType        ProductionRunType @default(MAKE_TO_STOCK)
+  orderReference String?
+  taskId         String?
+  task           Task?             @relation("BatchTask", fields: [taskId], references: [id], onDelete: SetNull)
+
   // Scheduling & execution
   status           BatchStatus @default(PLANNED)
   scheduledStartAt DateTime
@@ -136,8 +149,10 @@ model Batch {
 
   leadBakerId String?
   leadBaker   BakeryBaker? @relation("LeadBakerBatches", fields: [leadBakerId], references: [id], onDelete: SetNull)
-
   assistantBakers BakeryBaker[] @relation("AssistantBakerBatches")
+  leadOperatorId String?
+  leadOperator   ProductionOperator? @relation("LeadOperatorBatches", fields: [leadOperatorId], references: [id], onDelete: SetNull)
+  assistantOperators ProductionOperator[] @relation("AssistantOperatorBatches")
 
   notes String? @db.Text
 
@@ -148,6 +163,8 @@ model Batch {
   cancelledAt  DateTime?
   canceledById String?
   canceledBy   BakeryBaker? @relation("CanceledBatches", fields: [canceledById], references: [id], onDelete: SetNull)
+  canceledByOperatorId String?
+  canceledByOperator   ProductionOperator? @relation("CanceledOperatorBatches", fields: [canceledByOperatorId], references: [id], onDelete: SetNull)
 
   // Output location
   outputLocationId String?
@@ -165,6 +182,8 @@ model Batch {
   disposedAt     DateTime?
   disposedById   String?
   disposedBy     BakeryBaker?    @relation("DisposedBatches", fields: [disposedById], references: [id], onDelete: SetNull)
+  disposedByOperatorId String?
+  disposedByOperator   ProductionOperator? @relation("DisposedOperatorBatches", fields: [disposedByOperatorId], references: [id], onDelete: SetNull)
   disposalReason DisposalReason?
   disposalNotes  String?
   tags           String[]
@@ -197,6 +216,9 @@ model Batch {
   @@index([organizationId, scheduledStartAt])
   @@index([organizationId, status, scheduledStartAt])
   @@index([organizationId, expirationStatus, expiresAt])
+  @@index([taskId])
+  @@index([orderReference])
+  @@index([runType])
   @@index([recipeId])
   @@index([leadBakerId])
   @@index([createdFromTemplateId])
@@ -226,6 +248,9 @@ model Template {
   leadBakerId     String?
   leadBaker       BakeryBaker?  @relation("TemplateLeadBaker", fields: [leadBakerId], references: [id], onDelete: SetNull)
   assistantBakers BakeryBaker[] @relation("TemplateAssistantBakers")
+  leadOperatorId     String?
+  leadOperator       ProductionOperator?  @relation("TemplateLeadOperator", fields: [leadOperatorId], references: [id], onDelete: SetNull)
+  assistantOperators ProductionOperator[] @relation("TemplateAssistantOperators")
 
   notes String? @db.Text
 
@@ -520,4 +545,94 @@ model BatchDispatch {
   @@index([toLocationId])
   @@index([organizationId])
   @@map("batch_dispatch")
+}
+
+// ===================================
+// GENERAL PRODUCTION SYSTEM MODELS
+// ===================================
+
+model ProductionCategory {
+  id             String       @id @default(cuid())
+  name           String
+  description    String?
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  recipes        Recipe[]
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+  @@map("production_categories")
+}
+
+model ProductionSettings {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  defaultOperatorId String?
+  defaultOperator   ProductionOperator? @relation("DefaultOperator", fields: [defaultOperatorId], references: [id], onDelete: SetNull)
+
+  operators ProductionOperator[] @relation("ProductionSettingsOperators")
+
+  autoCreateDailyBatches Boolean        @default(false)
+  expiryWarningDays      Int            @default(3)
+  authMode               BakeryAuthMode @default(CARD_PIN)
+
+  // Batch Numbering Configuration
+  batchPrefix         String @default("BAT")
+  batchSeparator      String @default("-")
+  batchDateFormat     String @default("YYYYMMDD")
+  batchSequence       String @default("4")
+  batchGenerationType String @default("SEQUENCE")
+
+  // Operational Rules
+  enableProductionStaging Boolean @default(false)
+  autoApproveBatches      Boolean @default(false)
+  lowStockAlerts          Boolean @default(true)
+  timezone                String  @default("UTC")
+
+  // Scryme Reports
+  scrymeReportEnabled  Boolean @default(false)
+  scrymeReportDay      Int     @default(1)
+  scrymeReportTime     String  @default("08:00")
+  scrymeReportSections Json?
+  scrymeReportChannel  String? @default("production-reports")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("production_settings")
+}
+
+model ProductionOperator {
+  id                   String             @id @default(cuid())
+  productionSettingsId String
+  productionSettings   ProductionSettings @relation("ProductionSettingsOperators", fields: [productionSettingsId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  leadBatches      Batch[] @relation("LeadOperatorBatches")
+  assistantBatches Batch[] @relation("AssistantOperatorBatches")
+
+  templateLeads      Template[] @relation("TemplateLeadOperator")
+  templateAssistants Template[] @relation("TemplateAssistantOperators")
+
+  canceledBatches    Batch[]              @relation("CanceledOperatorBatches")
+  disposedBatches    Batch[]              @relation("DisposedOperatorBatches")
+  defaultOperatorFor ProductionSettings[] @relation("DefaultOperator")
+
+  specialties String[]
+  isActive    Boolean  @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([productionSettingsId, memberId])
+  @@index([productionSettingsId])
+  @@index([memberId])
+  @@index([isActive])
+  @@map("production_operators")
 }

@@ -1,6 +1,7 @@
 import { Metadata } from "next";
 import React from "react";
 import { PageHeader } from "@/components/page-header";
+import { StockAttachmentManager } from "@/components/stocking/stock-attachment-manager";
 import {
   getStockTransferDetails,
   updateStockTransferStatus,
@@ -227,6 +228,7 @@ export default async function TransferDetailsPage({
                   <TableRow>
                     <TableHead>Product</TableHead>
                     <TableHead>SKU</TableHead>
+                    <TableHead>Batch / Expiry</TableHead>
                     <TableHead className="text-right">Quantity</TableHead>
                     <TableHead className="text-right">Unit Cost</TableHead>
                     <TableHead className="text-right">Total</TableHead>
@@ -246,6 +248,20 @@ export default async function TransferDetailsPage({
                       <TableCell className="text-muted-foreground">
                         {item.variant.sku}
                       </TableCell>
+                      <TableCell className="text-xs text-muted-foreground">
+                        {item.stockBatch ? (
+                          <div>
+                            <span className="font-mono font-medium text-foreground">{item.stockBatch.batchNumber}</span>
+                            {item.stockBatch.expiryDate && (
+                              <div className="text-[11px] text-muted-foreground">
+                                Exp: {format(new Date(item.stockBatch.expiryDate), "dd MMM yyyy")}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          <span className="italic">Auto FEFO</span>
+                        )}
+                      </TableCell>
                       <TableCell className="text-right font-medium text-foreground">
                         {item.requestedQuantity.toNumber()}
                       </TableCell>
@@ -263,7 +279,7 @@ export default async function TransferDetailsPage({
                   ))}
                   <TableRow className="bg-muted/50 font-bold">
                     <TableCell
-                      colSpan={4}
+                      colSpan={5}
                       className="text-right text-foreground">
                       Total Estimated Value
                     </TableCell>
@@ -399,6 +415,21 @@ export default async function TransferDetailsPage({
                   {transfer.notes || "No notes provided."}
                 </p>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-sm uppercase tracking-wider text-muted-foreground">
+                Documentation & Attachments
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <StockAttachmentManager
+                attachments={transfer.attachments || []}
+                onChange={() => {}}
+                readOnly={true}
+              />
             </CardContent>
           </Card>
         </div>

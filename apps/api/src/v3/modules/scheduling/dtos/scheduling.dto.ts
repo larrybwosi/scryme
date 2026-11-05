@@ -289,3 +289,47 @@ export class BranchCoordinatesDto {
   @IsString()
   branchCode?: string;
 }
+
+export class UnifiedCalendarQueryDto {
+  @ApiPropertyOptional({ description: "Start date boundary in ISO format" })
+  @IsOptional()
+  @IsString()
+  from?: string;
+
+  @ApiPropertyOptional({ description: "End date boundary in ISO format" })
+  @IsOptional()
+  @IsString()
+  to?: string;
+
+  @ApiPropertyOptional({ description: "Filter by domain categories (comma-separated: tasks,production,deliveries,crm,shifts)" })
+  @IsOptional()
+  @IsString()
+  categories?: string;
+
+  @ApiPropertyOptional({ description: "Filter by project ID for tasks and linked production batches" })
+  @IsOptional()
+  @IsString()
+  projectId?: string;
+}
+
+export class UpdateUnifiedEventStatusDto {
+  @ApiProperty({ description: "Event category: task, production, delivery, crm, shift" })
+  @IsString()
+  @IsNotEmpty()
+  category!: "task" | "production" | "delivery" | "crm" | "shift";
+
+  @ApiProperty({ description: "Target status string" })
+  @IsString()
+  @IsNotEmpty()
+  status!: string;
+
+  @ApiPropertyOptional({ description: "Optional rescheduled date string in ISO format" })
+  @IsOptional()
+  @IsString()
+  scheduledDate?: string;
+
+  @ApiPropertyOptional({ description: "Optional completion notes or commentary" })
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}

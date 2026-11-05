@@ -1,3 +1,9 @@
+import { Optional, Inject, forwardRef } from "@nestjs/common";
+import { ProductionRunType } from "@repo/db";
+import { TaskUseCase } from "../../../tasks/application/use-cases/task.use-case";
+import { WhatsappService } from "../../../crm-integrations/application/use-cases/whatsapp.service";
+import { ApiRealtimeService } from "@/common/services/realtime.service";
+import { FirebaseMessagingService } from "@/common/firebase/firebase-messaging.service";
 import { ProductVariantQueryDto } from "../../../catalog/application/dto/product.dto";
 import {
   Injectable,
@@ -79,6 +85,10 @@ export class ProductionService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly authCoreService: V3AuthCoreService,
+    @Optional() private readonly taskUseCase?: TaskUseCase,
+    @Optional() @Inject(forwardRef(() => WhatsappService)) private readonly whatsappService?: WhatsappService,
+    @Optional() private readonly realtimeService?: ApiRealtimeService,
+    @Optional() private readonly firebaseMessagingService?: FirebaseMessagingService,
   ) {}
 
   private async resolveUnitId(
@@ -580,9 +590,14 @@ export class ProductionService {
 
   async generateBatchNumber(organizationId: string, tx?: any) {
     const prisma = tx || this.prisma.client;
-    const settings = await prisma.bakerySettings.findUnique({
+    let settings: any = await (prisma.productionSettings ? prisma.productionSettings.findUnique({
       where: { organizationId },
-    });
+    }) : null);
+    if (!settings && prisma.bakerySettings) {
+      settings = await prisma.bakerySettings.findUnique({
+        where: { organizationId },
+      });
+    }
 
     const prefix = settings?.batchPrefix || "BAT";
     const separator = settings?.batchSeparator || "-";
@@ -1116,7 +1131,86 @@ export class ProductionService {
       scheduledStartAt = d;
     }
 
-    return this.prisma.client.batch.create({
+    const runType = data.runType || (data.tags?.includes('custom-order') ? ProductionRunType.ON_DEMAND : ProductionRunType.MAKE_TO_STOCK);
+    let linkedTaskId = data.taskId;
+
+    // Auto-create task in projects app if requested or on-demand
+    if (!linkedTaskId && data.autoCreateTask !== false && this.taskUseCase) {
+      try {
+        let project = await this.prisma.client.project.findFirst({
+          where: { organizationId, key: "BAKERY" },
+        });
+
+        if (!project) {
+          project = await this.prisma.client.project.findFirst({
+            where: { organizationId, status: "ACTIVE" },
+          });
+        }
+
+        if (!project) {
+          project = await this.prisma.client.project.create({
+            data: {
+              organizationId,
+              name: "Bakery Production",
+              key: "BAKERY",
+              description: "Automated Production Orders & Workflows",
+              status: "ACTIVE",
+            },
+          });
+        }
+
+        const recipe = await this.prisma.client.recipe.findUnique({
+          where: { id: recipeId },
+          select: { name: true, totalTime: true, prepTime: true, bakeTime: true },
+        });
+
+        let assigneeMemberIds: string[] = [];
+        if (leadBakerId) {
+          const baker = await this.prisma.client.bakeryBaker.findUnique({
+            where: { id: leadBakerId },
+            select: { memberId: true },
+          });
+          if (baker?.memberId) assigneeMemberIds.push(baker.memberId);
+        }
+
+        if (assistantBakerIds && assistantBakerIds.length > 0) {
+          const assistants = await this.prisma.client.bakeryBaker.findMany({
+            where: { id: { in: assistantBakerIds } },
+            select: { memberId: true },
+          });
+          assigneeMemberIds.push(...assistants.map((a) => a.memberId));
+        }
+
+        const totalMinutes = recipe?.totalTime || (Number(recipe?.prepTime || 0) + Number(recipe?.bakeTime || 0)) || 60;
+        const estHours = Number((totalMinutes / 60).toFixed(2));
+        const start = scheduledStartAt || new Date();
+        const due = new Date(start.getTime() + totalMinutes * 60000);
+
+        const taskTitle = runType === ProductionRunType.ON_DEMAND
+          ? `[On-Demand] ${recipe?.name || 'Production Batch'} - ${batchNumber}${data.orderReference ? ` (Ref: ${data.orderReference})` : ''}`
+          : `[Production] ${recipe?.name || 'Batch'} - ${batchNumber}`;
+
+        const createdTask = await this.taskUseCase.createTask(
+          organizationId,
+          {
+            projectId: project.id,
+            title: taskTitle,
+            description: `Production Batch ${batchNumber} (${runType}). Planned quantity: ${plannedQuantity}.\n${notes || ''}`,
+            status: 'TODO' as any,
+            priority: runType === ProductionRunType.ON_DEMAND ? ('HIGH' as any) : ('MEDIUM' as any),
+            startDate: start,
+            dueDate: due,
+            estimatedHours: estHours,
+            assigneeIds: assigneeMemberIds.length > 0 ? Array.from(new Set(assigneeMemberIds)) : undefined,
+          },
+        );
+        linkedTaskId = createdTask.id;
+      } catch (err: any) {
+        this.logger.warn(`Failed to auto-create project task for batch ${batchNumber}: ${err.message}`);
+      }
+    }
+
+    const batch = await this.prisma.client.batch.create({
       data: {
         recipeId,
         plannedQuantity,
@@ -1128,6 +1222,9 @@ export class ProductionService {
         outputLocationId,
         tags,
         batchNumber,
+        runType,
+        orderReference: data.orderReference,
+        taskId: linkedTaskId,
         scheduledStartAt: scheduledStartAt || new Date(),
         organizationId,
         assistantBakers: assistantBakerIds?.length
@@ -1137,6 +1234,20 @@ export class ProductionService {
           : undefined,
       },
     });
+
+    if (this.realtimeService) {
+      this.realtimeService
+        .publish(`production:org:${organizationId}`, "batch:created", {
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          runType: batch.runType,
+          orderReference: batch.orderReference,
+          scheduledStartAt: batch.scheduledStartAt,
+        })
+        .catch(() => {});
+    }
+
+    return batch;
   }
 
   async updateBatch(organizationId: string, id: string, data: UpdateBatchDto) {
@@ -1210,7 +1321,7 @@ export class ProductionService {
       };
     }
 
-    return await this.prisma.client.$transaction(async tx => {
+    const result = await this.prisma.client.$transaction(async tx => {
       const updatedBatch = await tx.batch.update({
         where: { id, organizationId },
         data: {
@@ -1392,6 +1503,84 @@ export class ProductionService {
 
       return updatedBatch;
     });
+
+    // Post-completion workflows for on-demand batch & notifications
+    try {
+      // 1. Update linked task status in projects to DONE
+      if (batch.taskId && this.taskUseCase) {
+        this.taskUseCase
+          .updateTask(organizationId, batch.taskId, { status: 'DONE' as any })
+          .catch((err) => this.logger.warn(`Failed to update linked task ${batch.taskId} status: ${err.message}`));
+      }
+
+      // 2. Multi-channel real-time broadcast to POS / Web clients
+      if (this.realtimeService) {
+        const payload = {
+          batchId: batch.id,
+          batchNumber: batch.batchNumber,
+          runType: (batch as any).runType,
+          orderReference: (batch as any).orderReference,
+          recipeName: batch.recipe?.name,
+          completedAt: new Date().toISOString(),
+          actualQuantity: grossQuantity,
+          netQuantity,
+        };
+        this.realtimeService.publish(`production:org:${organizationId}`, 'batch:completed', payload).catch(() => {});
+        this.realtimeService.publish(`pos:org:${organizationId}`, 'production:batch:completed', payload).catch(() => {});
+        if ((batch as any).orderReference) {
+          this.realtimeService.publish(`order:${(batch as any).orderReference}`, 'production:batch:completed', payload).catch(() => {});
+        }
+      }
+
+      // 3. Client push notification via Firebase FCM
+      if (this.firebaseMessagingService) {
+        this.firebaseMessagingService
+          .sendToOrganization(organizationId, {
+            title: `Batch Completed: ${batch.batchNumber}`,
+            body: `${batch.recipe?.name || 'Item'} is ready (${netQuantity} produced)${(batch as any).orderReference ? ` for Order ${(batch as any).orderReference}` : ''}.`,
+            data: {
+              eventType: 'BATCH_COMPLETED',
+              batchId: batch.id,
+              batchNumber: batch.batchNumber,
+              orderReference: (batch as any).orderReference || '',
+              organizationId,
+            },
+          })
+          .catch((err) => this.logger.warn(`FCM batch completion push failed: ${err.message}`));
+      }
+
+      // 4. Client Notification via WhatsApp if batch is linked to an order
+      const orderRef = (batch as any).orderReference;
+      if (orderRef && this.whatsappService) {
+        const transaction = await this.prisma.client.transaction.findFirst({
+          where: {
+            organizationId,
+            OR: [
+              { id: orderRef },
+              { number: orderRef },
+            ],
+          },
+          include: { customer: true },
+        });
+
+        const targetPhone = transaction?.customer?.phone || (transaction?.metadata as any)?.customerPhone;
+        const targetName = transaction?.customer?.name || (transaction?.metadata as any)?.customerName || 'Valued Customer';
+
+        if (targetPhone) {
+          const messageText = `Hello ${targetName}! Great news: your custom order #${transaction?.number || orderRef} (${batch.recipe?.name || 'Production Item'}) is freshly prepared and ready for pickup. Thank you!`;
+          this.whatsappService
+            .sendMessage(organizationId, ctx.memberId, {
+              recipientPhone: targetPhone,
+              text: messageText,
+            })
+            .catch((err) => this.logger.warn(`WhatsApp order completion notification failed: ${err.message}`));
+        }
+      }
+    } catch (postErr: any) {
+      this.logger.error(`Error executing post-completion workflows for batch ${batch.batchNumber}: ${postErr.message}`);
+    }
+
+    return result;
   }
 
 
@@ -1830,53 +2019,145 @@ export class ProductionService {
   }
 
   async getSettings(organizationId: string) {
-    let settings = await this.prisma.client.bakerySettings.findUnique({
-      where: { organizationId },
-      include: {
-        defaultBaker: { include: { member: { include: { user: true } } } },
-      },
-    });
+    let settings: any = null;
+    if (this.prisma.client.productionSettings) {
+      settings = await this.prisma.client.productionSettings.findUnique({
+        where: { organizationId },
+        include: {
+          defaultOperator: { include: { member: { include: { user: true } } } },
+        },
+      });
 
-    if (!settings) {
-      settings = await this.prisma.client.bakerySettings.create({
-        data: { organizationId },
+      if (!settings) {
+        settings = await this.prisma.client.productionSettings.create({
+          data: { organizationId },
+          include: {
+            defaultOperator: { include: { member: { include: { user: true } } } },
+          },
+        });
+      }
+    }
+
+    if (!settings && this.prisma.client.bakerySettings) {
+      settings = await this.prisma.client.bakerySettings.findUnique({
+        where: { organizationId },
         include: {
           defaultBaker: { include: { member: { include: { user: true } } } },
         },
       });
+
+      if (!settings) {
+        settings = await this.prisma.client.bakerySettings.create({
+          data: { organizationId },
+          include: {
+            defaultBaker: { include: { member: { include: { user: true } } } },
+          },
+        });
+      }
+    }
+
+    if (settings) {
+      settings.defaultBakerId = settings.defaultOperatorId || settings.defaultBakerId;
+      settings.defaultBaker = settings.defaultOperator || settings.defaultBaker;
+      settings.defaultOperatorId = settings.defaultOperatorId || settings.defaultBakerId;
+      settings.defaultOperator = settings.defaultOperator || settings.defaultBaker;
     }
 
     return settings;
   }
 
   async updateSettings(organizationId: string, data: UpdateProductionSettingsDto) {
-    return this.prisma.client.bakerySettings.update({
-      where: { organizationId },
-      data: data as any,
-    });
+    const payload: any = { ...data };
+    if (payload.defaultBakerId && !payload.defaultOperatorId) {
+      payload.defaultOperatorId = payload.defaultBakerId;
+    }
+    if (payload.defaultOperatorId && !payload.defaultBakerId) {
+      payload.defaultBakerId = payload.defaultOperatorId;
+    }
+
+    let result: any = null;
+    if (this.prisma.client.productionSettings) {
+      const prodData: any = { ...payload };
+      delete prodData.defaultBakerId;
+      result = await this.prisma.client.productionSettings.upsert({
+        where: { organizationId },
+        update: prodData,
+        create: { organizationId, ...prodData },
+      });
+    }
+
+    if (this.prisma.client.bakerySettings) {
+      const bakeryData: any = { ...payload };
+      delete bakeryData.defaultOperatorId;
+      await this.prisma.client.bakerySettings.upsert({
+        where: { organizationId },
+        update: bakeryData,
+        create: { organizationId, ...bakeryData },
+      }).catch(() => null);
+    }
+
+    if (result) {
+      result.defaultBakerId = result.defaultOperatorId || result.defaultBakerId;
+      result.defaultOperatorId = result.defaultOperatorId || result.defaultBakerId;
+    }
+
+    return result;
   }
 
   async getBakers(organizationId: string) {
-    return this.prisma.client.bakeryBaker.findMany({
-      where: { bakerySettings: { organizationId } },
-      select: {
-        id: true,
-        bakerySettingsId: true,
-        memberId: true,
-        specialties: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        member: {
-          select: {
-            id: true,
-            user: {
-              select: { id: true, name: true, email: true, image: true },
+    if (this.prisma.client.productionOperator) {
+      const operators = await this.prisma.client.productionOperator.findMany({
+        where: { productionSettings: { organizationId } },
+        select: {
+          id: true,
+          productionSettingsId: true,
+          memberId: true,
+          specialties: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              user: {
+                select: { id: true, name: true, email: true, image: true },
+              },
             },
           },
         },
-      },
-    });
+      });
+      if (operators.length > 0) {
+        return operators.map((op: any) => ({
+          ...op,
+          bakerySettingsId: op.productionSettingsId,
+        }));
+      }
+    }
+
+    if (this.prisma.client.bakeryBaker) {
+      return this.prisma.client.bakeryBaker.findMany({
+        where: { bakerySettings: { organizationId } },
+        select: {
+          id: true,
+          bakerySettingsId: true,
+          memberId: true,
+          specialties: true,
+          isActive: true,
+          createdAt: true,
+          updatedAt: true,
+          member: {
+            select: {
+              id: true,
+              user: {
+                select: { id: true, name: true, email: true, image: true },
+              },
+            },
+          },
+        },
+      });
+    }
+
+    return [];
   }
 
   async addBaker(organizationId: string, data: AddBakerDto) {
@@ -1892,68 +2173,153 @@ export class ProductionService {
 
     const settings = await this.getSettings(organizationId);
 
-    const baker = await this.prisma.client.bakeryBaker.create({
-      data: {
-        memberId,
-        specialties: specialties || [],
-        isActive: isActive !== undefined ? isActive : true,
-        bakerySettingsId: settings.id,
-      },
-    });
-
-    if (isDefault) {
-      await this.prisma.client.bakerySettings.update({
-        where: { id: settings.id },
-        data: { defaultBakerId: baker.id },
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.create({
+        data: {
+          memberId,
+          specialties: specialties || [],
+          isActive: isActive !== undefined ? isActive : true,
+          productionSettingsId: settings.id,
+        },
       });
+
+      if (isDefault) {
+        await this.prisma.client.productionSettings.update({
+          where: { id: settings.id },
+          data: { defaultOperatorId: operator.id },
+        }).catch(() => null);
+      }
     }
 
-    return baker;
+    if (this.prisma.client.bakeryBaker) {
+      const bakerySettings = await this.prisma.client.bakerySettings?.findUnique({
+        where: { organizationId },
+      });
+      if (bakerySettings) {
+        const baker = await this.prisma.client.bakeryBaker.create({
+          data: {
+            memberId,
+            specialties: specialties || [],
+            isActive: isActive !== undefined ? isActive : true,
+            bakerySettingsId: bakerySettings.id,
+          },
+        }).catch(() => null);
+        if (isDefault && baker) {
+          await this.prisma.client.bakerySettings.update({
+            where: { id: bakerySettings.id },
+            data: { defaultBakerId: baker.id },
+          }).catch(() => null);
+        }
+      }
+    }
+
+    if (operator) {
+      operator.bakerySettingsId = operator.productionSettingsId;
+      return operator;
+    }
+
+    return { id: "op-" + Date.now(), memberId, specialties: specialties || [], isActive: true };
   }
 
   async updateBaker(organizationId: string, id: string, data: UpdateBakerDto) {
-    const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: { id, bakerySettings: { organizationId } },
-    });
-    if (!baker) throw new NotFoundException("Baker not found");
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.findFirst({
+        where: { id, productionSettings: { organizationId } },
+      });
+    }
+
+    let baker: any = null;
+    if (!operator && this.prisma.client.bakeryBaker) {
+      baker = await this.prisma.client.bakeryBaker.findFirst({
+        where: { id, bakerySettings: { organizationId } },
+      });
+    }
+
+    if (!operator && !baker) throw new NotFoundException("Operator not found");
 
     const { specialties, isActive, isDefault } = data;
 
-    const updatedBaker = await this.prisma.client.bakeryBaker.update({
-      where: { id },
-      data: {
-        specialties,
-        isActive,
-      },
-    });
+    let updated: any = null;
+    if (operator) {
+      updated = await this.prisma.client.productionOperator.update({
+        where: { id },
+        data: {
+          specialties,
+          isActive,
+        },
+      });
 
-    if (isDefault !== undefined) {
-      const settings = await this.getSettings(organizationId);
-      if (isDefault) {
-        await this.prisma.client.bakerySettings.update({
-          where: { id: settings.id },
-          data: { defaultBakerId: id },
-        });
-      } else if (settings.defaultBakerId === id) {
-        await this.prisma.client.bakerySettings.update({
-          where: { id: settings.id },
-          data: { defaultBakerId: null },
+      if (isDefault !== undefined) {
+        const settings = await this.getSettings(organizationId);
+        if (isDefault) {
+          await this.prisma.client.productionSettings.update({
+            where: { id: settings.id },
+            data: { defaultOperatorId: id },
+          });
+        } else if (settings.defaultOperatorId === id || settings.defaultBakerId === id) {
+          await this.prisma.client.productionSettings.update({
+            where: { id: settings.id },
+            data: { defaultOperatorId: null },
+          });
+        }
+      }
+    }
+
+    if (baker) {
+      updated = await this.prisma.client.bakeryBaker.update({
+        where: { id },
+        data: {
+          specialties,
+          isActive,
+        },
+      });
+
+      if (isDefault !== undefined) {
+        const settings = await this.getSettings(organizationId);
+        if (isDefault) {
+          await this.prisma.client.bakerySettings?.update({
+            where: { id: settings.id },
+            data: { defaultBakerId: id },
+          }).catch(() => null);
+        } else if (settings.defaultBakerId === id) {
+          await this.prisma.client.bakerySettings?.update({
+            where: { id: settings.id },
+            data: { defaultBakerId: null },
+          }).catch(() => null);
+        }
+      }
+    }
+
+    return updated;
+  }
+
+  async removeBaker(organizationId: string, id: string) {
+    let operator: any = null;
+    if (this.prisma.client.productionOperator) {
+      operator = await this.prisma.client.productionOperator.findFirst({
+        where: { id, productionSettings: { organizationId } },
+      });
+      if (operator) {
+        return this.prisma.client.productionOperator.delete({
+          where: { id },
         });
       }
     }
 
-    return updatedBaker;
-  }
+    if (this.prisma.client.bakeryBaker) {
+      const baker = await this.prisma.client.bakeryBaker.findFirst({
+        where: { id, bakerySettings: { organizationId } },
+      });
+      if (baker) {
+        return this.prisma.client.bakeryBaker.delete({
+          where: { id },
+        });
+      }
+    }
 
-  async removeBaker(organizationId: string, id: string) {
-    const baker = await this.prisma.client.bakeryBaker.findFirst({
-      where: { id, bakerySettings: { organizationId } },
-    });
-    if (!baker) throw new NotFoundException("Baker not found");
-
-    return this.prisma.client.bakeryBaker.delete({
-      where: { id },
-    });
+    throw new NotFoundException("Operator not found");
   }
 
   async getQualityIncident(organizationId: string, id: string) {
@@ -2625,4 +2991,9 @@ export class ProductionService {
       limit: limitNum,
     };
   }
+
+  async getOperators(organizationId: string) { return this.getBakers(organizationId); }
+  async addOperator(organizationId: string, data: any) { return this.addBaker(organizationId, data); }
+  async updateOperator(organizationId: string, id: string, data: any) { return this.updateBaker(organizationId, id, data); }
+  async removeOperator(organizationId: string, id: string) { return this.removeBaker(organizationId, id); }
 }

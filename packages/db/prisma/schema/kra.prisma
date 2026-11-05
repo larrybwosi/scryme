@@ -1,0 +1,45 @@
+
+enum KRAProvider {
+  NAVARI
+  DIRECT_ETIMS
+}
+
+enum KRAEnvironment {
+  SANDBOX
+  PRODUCTION
+}
+
+enum KRAEnforcementMode {
+  BLOCKING
+  ASYNC
+}
+
+model KRAConfig {
+  id             String         @id @default(cuid())
+  organizationId String         @unique
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  provider       KRAProvider    @default(NAVARI)
+  environment    KRAEnvironment @default(SANDBOX)
+  enforcementMode KRAEnforcementMode @default(ASYNC)
+
+  kraPin         String
+  businessName   String?
+  branchCode     String         @default("00")
+  deviceSerialNumber String?
+  controlUnitId  String?
+
+  apiKey         String?
+  apiSecret      String?
+
+  highValueThreshold Decimal    @default(100000.00) @db.Decimal(15, 2)
+  autoSyncSales     Boolean     @default(true)
+  autoSyncPurchases Boolean     @default(true)
+  isActive          Boolean     @default(true)
+
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  @@index([organizationId])
+  @@map("kra_config")
+}

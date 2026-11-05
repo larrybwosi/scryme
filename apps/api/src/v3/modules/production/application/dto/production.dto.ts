@@ -1,3 +1,4 @@
+import { ProductionRunType } from "@repo/db";
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import {
   IsString,
@@ -317,6 +318,25 @@ export class UpdateRecipeDto {
 }
 
 export class CreateBatchDto {
+  @ApiPropertyOptional({ description: "Production run type", enum: ProductionRunType, default: ProductionRunType.MAKE_TO_STOCK })
+  @IsOptional()
+  @IsEnum(ProductionRunType)
+  runType?: ProductionRunType;
+
+  @ApiPropertyOptional({ description: "Order reference or transaction number for on-demand orders" })
+  @IsOptional()
+  @IsString()
+  orderReference?: string;
+
+  @ApiPropertyOptional({ description: "Linked project task ID" })
+  @IsOptional()
+  @IsString()
+  taskId?: string;
+
+  @ApiPropertyOptional({ description: "Auto-create task in projects app for this batch", default: true })
+  @IsOptional()
+  @IsBoolean()
+  autoCreateTask?: boolean;
   @ApiProperty({ description: "Recipe ID" })
   @IsString()
   @IsNotEmpty()
@@ -387,6 +407,20 @@ export class CreateBatchDto {
 }
 
 export class UpdateBatchDto {
+  @ApiPropertyOptional({ description: "Production run type", enum: ProductionRunType })
+  @IsOptional()
+  @IsEnum(ProductionRunType)
+  runType?: ProductionRunType;
+
+  @ApiPropertyOptional({ description: "Order reference or transaction number for on-demand orders" })
+  @IsOptional()
+  @IsString()
+  orderReference?: string;
+
+  @ApiPropertyOptional({ description: "Linked project task ID" })
+  @IsOptional()
+  @IsString()
+  taskId?: string;
   @ApiPropertyOptional({ description: "System unit ID" })
   @IsOptional()
   @IsString()
@@ -640,7 +674,12 @@ export class UpdateProductionSettingsDto {
   @IsBoolean()
   enableProductionStaging?: boolean;
 
-  @ApiPropertyOptional({ description: "Default baker ID" })
+  @ApiPropertyOptional({ description: "Default operator ID" })
+  @IsOptional()
+  @IsString()
+  defaultOperatorId?: string;
+
+  @ApiPropertyOptional({ description: "Default baker ID (alias)" })
   @IsOptional()
   @IsString()
   defaultBakerId?: string;
@@ -1015,3 +1054,6 @@ export class DisposeStagedStockDto {
   @IsString()
   notes?: string;
 }
+
+export class AddOperatorDto extends AddBakerDto {}
+export class UpdateOperatorDto extends UpdateBakerDto {}

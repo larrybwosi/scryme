@@ -13,10 +13,16 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CmsRouteImport } from './routes/cms'
 import { Route as CrmRouteImport } from './routes/crm'
 import { Route as InventoryRouteImport } from './routes/inventory'
-import { Route as LightRouteImport } from './routes/light'
+import { Route as LocationsRouteImport } from './routes/locations'
+import { Route as McpAgentApisRouteImport } from './routes/mcp-agent-apis'
+import { Route as MobileFieldOpsRouteImport } from './routes/mobile-field-ops'
 import { Route as PaymentsRouteImport } from './routes/payments'
+import { Route as PointOfSaleRouteImport } from './routes/point-of-sale'
 import { Route as PricingRouteImport } from './routes/pricing'
+import { Route as ProcurementSupplyChainRouteImport } from './routes/procurement-supply-chain'
+import { Route as ProjectManagementSchedulingRouteImport } from './routes/project-management-scheduling'
 import { Route as SalesRouteImport } from './routes/sales'
+import { Route as StockOpsRouteImport } from './routes/stock-ops'
 import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
 import { Route as DevelopersAppsRouteImport } from './routes/developers/apps'
 import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
@@ -43,9 +49,19 @@ const InventoryRoute = InventoryRouteImport.update({
   path: '/inventory',
   getParentRoute: () => rootRouteImport,
 } as any)
-const LightRoute = LightRouteImport.update({
-  id: '/light',
-  path: '/light',
+const LocationsRoute = LocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const McpAgentApisRoute = McpAgentApisRouteImport.update({
+  id: '/mcp-agent-apis',
+  path: '/mcp-agent-apis',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MobileFieldOpsRoute = MobileFieldOpsRouteImport.update({
+  id: '/mobile-field-ops',
+  path: '/mobile-field-ops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PaymentsRoute = PaymentsRouteImport.update({
@@ -53,14 +69,35 @@ const PaymentsRoute = PaymentsRouteImport.update({
   path: '/payments',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PointOfSaleRoute = PointOfSaleRouteImport.update({
+  id: '/point-of-sale',
+  path: '/point-of-sale',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const PricingRoute = PricingRouteImport.update({
   id: '/pricing',
   path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ProcurementSupplyChainRoute = ProcurementSupplyChainRouteImport.update({
+  id: '/procurement-supply-chain',
+  path: '/procurement-supply-chain',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ProjectManagementSchedulingRoute =
+  ProjectManagementSchedulingRouteImport.update({
+    id: '/project-management-scheduling',
+    path: '/project-management-scheduling',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const SalesRoute = SalesRouteImport.update({
   id: '/sales',
   path: '/sales',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const StockOpsRoute = StockOpsRouteImport.update({
+  id: '/stock-ops',
+  path: '/stock-ops',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompareSlugRoute = CompareSlugRouteImport.update({
@@ -94,10 +131,16 @@ export interface FileRoutesByFullPath {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -109,10 +152,16 @@ export interface FileRoutesByTo {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -125,10 +174,16 @@ export interface FileRoutesById {
   '/cms': typeof CmsRoute
   '/crm': typeof CrmRoute
   '/inventory': typeof InventoryRoute
-  '/light': typeof LightRoute
+  '/locations': typeof LocationsRoute
+  '/mcp-agent-apis': typeof McpAgentApisRoute
+  '/mobile-field-ops': typeof MobileFieldOpsRoute
   '/payments': typeof PaymentsRoute
+  '/point-of-sale': typeof PointOfSaleRoute
   '/pricing': typeof PricingRoute
+  '/procurement-supply-chain': typeof ProcurementSupplyChainRoute
+  '/project-management-scheduling': typeof ProjectManagementSchedulingRoute
   '/sales': typeof SalesRoute
+  '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
   '/pages/$slug': typeof PagesSlugRoute
@@ -142,10 +197,16 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
+    | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -157,10 +218,16 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
+    | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -172,10 +239,16 @@ export interface FileRouteTypes {
     | '/cms'
     | '/crm'
     | '/inventory'
-    | '/light'
+    | '/locations'
+    | '/mcp-agent-apis'
+    | '/mobile-field-ops'
     | '/payments'
+    | '/point-of-sale'
     | '/pricing'
+    | '/procurement-supply-chain'
+    | '/project-management-scheduling'
     | '/sales'
+    | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
     | '/pages/$slug'
@@ -188,10 +261,16 @@ export interface RootRouteChildren {
   CmsRoute: typeof CmsRoute
   CrmRoute: typeof CrmRoute
   InventoryRoute: typeof InventoryRoute
-  LightRoute: typeof LightRoute
+  LocationsRoute: typeof LocationsRoute
+  McpAgentApisRoute: typeof McpAgentApisRoute
+  MobileFieldOpsRoute: typeof MobileFieldOpsRoute
   PaymentsRoute: typeof PaymentsRoute
+  PointOfSaleRoute: typeof PointOfSaleRoute
   PricingRoute: typeof PricingRoute
+  ProcurementSupplyChainRoute: typeof ProcurementSupplyChainRoute
+  ProjectManagementSchedulingRoute: typeof ProjectManagementSchedulingRoute
   SalesRoute: typeof SalesRoute
+  StockOpsRoute: typeof StockOpsRoute
   CompareSlugRoute: typeof CompareSlugRoute
   DevelopersAppsRoute: typeof DevelopersAppsRoute
   PagesSlugRoute: typeof PagesSlugRoute
@@ -229,11 +308,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InventoryRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/light': {
-      id: '/light'
-      path: '/light'
-      fullPath: '/light'
-      preLoaderRoute: typeof LightRouteImport
+    '/locations': {
+      id: '/locations'
+      path: '/locations'
+      fullPath: '/locations'
+      preLoaderRoute: typeof LocationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mcp-agent-apis': {
+      id: '/mcp-agent-apis'
+      path: '/mcp-agent-apis'
+      fullPath: '/mcp-agent-apis'
+      preLoaderRoute: typeof McpAgentApisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mobile-field-ops': {
+      id: '/mobile-field-ops'
+      path: '/mobile-field-ops'
+      fullPath: '/mobile-field-ops'
+      preLoaderRoute: typeof MobileFieldOpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/payments': {
@@ -243,6 +336,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PaymentsRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/point-of-sale': {
+      id: '/point-of-sale'
+      path: '/point-of-sale'
+      fullPath: '/point-of-sale'
+      preLoaderRoute: typeof PointOfSaleRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/pricing': {
       id: '/pricing'
       path: '/pricing'
@@ -250,11 +350,32 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/procurement-supply-chain': {
+      id: '/procurement-supply-chain'
+      path: '/procurement-supply-chain'
+      fullPath: '/procurement-supply-chain'
+      preLoaderRoute: typeof ProcurementSupplyChainRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/project-management-scheduling': {
+      id: '/project-management-scheduling'
+      path: '/project-management-scheduling'
+      fullPath: '/project-management-scheduling'
+      preLoaderRoute: typeof ProjectManagementSchedulingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/sales': {
       id: '/sales'
       path: '/sales'
       fullPath: '/sales'
       preLoaderRoute: typeof SalesRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/stock-ops': {
+      id: '/stock-ops'
+      path: '/stock-ops'
+      fullPath: '/stock-ops'
+      preLoaderRoute: typeof StockOpsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/compare/$slug': {
@@ -300,10 +421,16 @@ const rootRouteChildren: RootRouteChildren = {
   CmsRoute: CmsRoute,
   CrmRoute: CrmRoute,
   InventoryRoute: InventoryRoute,
-  LightRoute: LightRoute,
+  LocationsRoute: LocationsRoute,
+  McpAgentApisRoute: McpAgentApisRoute,
+  MobileFieldOpsRoute: MobileFieldOpsRoute,
   PaymentsRoute: PaymentsRoute,
+  PointOfSaleRoute: PointOfSaleRoute,
   PricingRoute: PricingRoute,
+  ProcurementSupplyChainRoute: ProcurementSupplyChainRoute,
+  ProjectManagementSchedulingRoute: ProjectManagementSchedulingRoute,
   SalesRoute: SalesRoute,
+  StockOpsRoute: StockOpsRoute,
   CompareSlugRoute: CompareSlugRoute,
   DevelopersAppsRoute: DevelopersAppsRoute,
   PagesSlugRoute: PagesSlugRoute,

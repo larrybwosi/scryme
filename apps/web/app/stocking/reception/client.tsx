@@ -1,5 +1,9 @@
 "use client";
 
+import { BarcodeScannerDialog } from "@/components/stocking/barcode-scanner-dialog";
+import { StockAttachmentManager, StockAttachment } from "@/components/stocking/stock-attachment-manager";
+import { Scan } from "lucide-react";
+
 import React, { useState, useEffect } from "react";
 import {
   PackageCheck,
@@ -78,6 +82,7 @@ export default function StockReceptionClient() {
     locationId: string;
     documentRef: string;
     notes: string;
+    attachments?: StockAttachment[];
     items: {
       purchaseItemId: string;
       productName: string;
@@ -101,6 +106,7 @@ export default function StockReceptionClient() {
   const [transferForm, setTransferForm] = useState<{
     documentRef: string;
     notes: string;
+    attachments?: StockAttachment[];
     items: {
       transferItemId: string;
       productName: string;
@@ -181,6 +187,7 @@ export default function StockReceptionClient() {
         locationId: poForm.locationId,
         documentRef: poForm.documentRef,
         notes: poForm.notes,
+        attachmentIds: (poForm as any).attachments?.map((a: any) => a.id) || [],
         items: poForm.items
           .filter(i => i.quantity > 0)
           .map(i => ({
@@ -190,6 +197,7 @@ export default function StockReceptionClient() {
             supplierBatchNumber: i.supplierBatchNumber,
             expiryDate: i.expiryDate ? new Date(i.expiryDate) : undefined,
             unitCost: Number(i.unitCost),
+            serialNumbers: (i as any).serialNumbers || [],
           })),
       });
       setSelectedPO(null);

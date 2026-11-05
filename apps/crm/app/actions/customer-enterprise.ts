@@ -427,3 +427,297 @@ export async function importCustomersCSV(csvContent: string): Promise<{
   revalidatePath("/customers");
   return { success: true, importedCount, errors };
 }
+
+export async function calculateCustomerLifetimeValue(
+  customerId: string
+): Promise<{ lifetimeValue: number; totalTransactions: number; averageOrderValue: number }> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId },
+    include: {
+      transactions: {
+        select: {
+          id: true,
+          finalTotal: true,
+        },
+      },
+    },
+  });
+
+  if (!customer) throw new Error("Customer not found");
+
+  const transactions = (customer as any).transactions || [];
+  const totalTransactions = transactions.length;
+  const lifetimeValue = transactions.reduce(
+    (sum: number, tx: any) => sum + (Number(tx.finalTotal) || 0),
+    0
+  );
+  const averageOrderValue = totalTransactions > 0 ? lifetimeValue / totalTransactions : 0;
+
+  await db.customer.update({
+    where: { id: customerId },
+    data: { lifetimeValue },
+  });
+
+  return {
+    lifetimeValue,
+    totalTransactions,
+    averageOrderValue,
+  };
+}
+
+export async function updateCustomerLifecycleStage(
+  customerId: string,
+  stage: "LEAD" | "PROSPECT" | "ACTIVE" | "ENTERPRISE" | "AT_RISK" | "CHURNED"
+) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId },
+  });
+
+  if (!customer) return { success: false, error: "Customer not found" };
+
+  const prevStage = customer.lifecycleStage;
+  const updated = await db.customer.update({
+    where: { id: customerId },
+    data: { lifecycleStage: stage },
+  });
+
+  if (customer.crmRecordId) {
+    await db.crmActivity.create({
+      data: {
+        recordId: customer.crmRecordId,
+        organizationId,
+        type: "LIFECYCLE_STAGE_CHANGED",
+        description: `Lifecycle stage transitioned from ${prevStage} to ${stage}`,
+        memberId: auth.memberId || null,
+      },
+    });
+  }
+
+  await dispatchCustomerWorkflowTrigger(organizationId, "CUSTOMER_TIER_CHANGED", {
+    customerId: customer.id,
+    customerName: customer.name,
+    customerEmail: customer.email,
+    customerPhone: customer.phone,
+    tier: stage,
+    details: `Customer lifecycle stage updated to ${stage}.`,
+  });
+
+  revalidatePath(`/customers/${customerId}`);
+  revalidatePath("/customers");
+  return { success: true, data: updated };
+}
+
+export async function assignCustomerAccountManager(
+  customerId: string,
+  accountManagerId: string | null
+) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  const customer = await db.customer.findFirst({
+    where: { id: customerId, organizationId },
+  });
+
+  if (!customer) return { success: false, error: "Customer not found" };
+
+  if (accountManagerId) {
+    const member = await db.member.findFirst({
+      where: { id: accountManagerId, organizationId },
+      include: { user: true },
+    });
+    if (!member) return { success: false, error: "Member not found" };
+  }
+
+  const updated = await db.customer.update({
+    where: { id: customerId },
+    data: { accountManagerId },
+    include: { accountManager: { include: { user: true } } },
+  });
+
+  if (customer.crmRecordId) {
+    await db.crmActivity.create({
+      data: {
+        recordId: customer.crmRecordId,
+        organizationId,
+        type: "ACCOUNT_MANAGER_ASSIGNED",
+        description: accountManagerId
+          ? `Assigned Account Manager: ${updated.accountManager?.user?.name || updated.accountManager?.user?.email}`
+          : "Unassigned Account Manager",
+        memberId: auth.memberId || null,
+      },
+    });
+  }
+
+  revalidatePath(`/customers/${customerId}`);
+  return { success: true, data: updated };
+}
+
+export async function getCustomerDuplicates(query?: string) {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  const customers = await db.customer.findMany({
+    where: { organizationId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      phone: true,
+      company: true,
+      createdAt: true,
+    },
+    orderBy: { createdAt: "desc" },
+    take: 200,
+  });
+
+  const emailGroups: Record<string, typeof customers> = {};
+  const phoneGroups: Record<string, typeof customers> = {};
+  const nameGroups: Record<string, typeof customers> = {};
+
+  for (const c of customers) {
+    if (c.email) {
+      const email = c.email.toLowerCase().trim();
+      emailGroups[email] = emailGroups[email] || [];
+      emailGroups[email].push(c);
+    }
+    if (c.phone) {
+      const phone = c.phone.trim();
+      phoneGroups[phone] = phoneGroups[phone] || [];
+      phoneGroups[phone].push(c);
+    }
+    const name = c.name.toLowerCase().trim();
+    nameGroups[name] = nameGroups[name] || [];
+    nameGroups[name].push(c);
+  }
+
+  const duplicates: Array<{
+    reason: "SAME_EMAIL" | "SAME_PHONE" | "SAME_NAME";
+    matchValue: string;
+    records: typeof customers;
+  }> = [];
+
+  for (const [email, list] of Object.entries(emailGroups)) {
+    if (list.length > 1) {
+      duplicates.push({ reason: "SAME_EMAIL", matchValue: email, records: list });
+    }
+  }
+
+  for (const [phone, list] of Object.entries(phoneGroups)) {
+    if (list.length > 1) {
+      duplicates.push({ reason: "SAME_PHONE", matchValue: phone, records: list });
+    }
+  }
+
+  for (const [name, list] of Object.entries(nameGroups)) {
+    if (list.length > 1) {
+      duplicates.push({ reason: "SAME_NAME", matchValue: name, records: list });
+    }
+  }
+
+  return duplicates;
+}
+
+export async function mergeCustomers(
+  primaryCustomerId: string,
+  secondaryCustomerId: string
+): Promise<{ success: boolean; error?: string }> {
+  const auth = await getServerAuth();
+  if (!auth?.organizationId) redirect("/login");
+  const organizationId = auth.organizationId;
+
+  if (primaryCustomerId === secondaryCustomerId) {
+    return { success: false, error: "Cannot merge customer into itself" };
+  }
+
+  const [primary, secondary] = await Promise.all([
+    db.customer.findFirst({
+      where: { id: primaryCustomerId, organizationId },
+      include: { crmRecord: true },
+    }),
+    db.customer.findFirst({
+      where: { id: secondaryCustomerId, organizationId },
+      include: { crmRecord: true },
+    }),
+  ]);
+
+  if (!primary || !secondary) {
+    return { success: false, error: "One or both customer accounts not found" };
+  }
+
+  await db.transaction.updateMany({
+    where: { customerId: secondaryCustomerId },
+    data: { customerId: primaryCustomerId },
+  });
+
+  await db.invoice.updateMany({
+    where: { customerId: secondaryCustomerId },
+    data: { customerId: primaryCustomerId },
+  });
+
+  await db.address.updateMany({
+    where: { customerId: secondaryCustomerId },
+    data: { customerId: primaryCustomerId },
+  });
+
+  if (secondary.crmRecordId && primary.crmRecordId) {
+    await db.crmNote.updateMany({
+      where: { recordId: secondary.crmRecordId },
+      data: { recordId: primary.crmRecordId },
+    });
+
+    await db.crmActivity.updateMany({
+      where: { recordId: secondary.crmRecordId },
+      data: { recordId: primary.crmRecordId },
+    });
+
+    await db.crmFollowUp.updateMany({
+      where: { recordId: secondary.crmRecordId },
+      data: { recordId: primary.crmRecordId },
+    });
+  }
+
+  const combinedTags = Array.from(new Set([...(primary.tags || []), ...(secondary.tags || [])]));
+  const combinedPoints = (primary.loyaltyPoints || 0) + (secondary.loyaltyPoints || 0);
+
+  await db.customer.update({
+    where: { id: primaryCustomerId },
+    data: {
+      tags: combinedTags,
+      loyaltyPoints: combinedPoints,
+      phone: primary.phone || secondary.phone,
+      company: primary.company || secondary.company,
+      taxId: primary.taxId || secondary.taxId,
+      dateOfBirth: primary.dateOfBirth || secondary.dateOfBirth,
+    },
+  });
+
+  await db.customer.delete({
+    where: { id: secondaryCustomerId },
+  });
+
+  if (primary.crmRecordId) {
+    await db.crmActivity.create({
+      data: {
+        recordId: primary.crmRecordId,
+        organizationId,
+        type: "CUSTOMER_MERGED",
+        description: `Merged duplicate customer account '${secondary.name}' (ID: ${secondary.id}) into this account.`,
+        memberId: auth.memberId || null,
+      },
+    });
+  }
+
+  revalidatePath("/customers");
+  revalidatePath(`/customers/${primaryCustomerId}`);
+  return { success: true };
+}
