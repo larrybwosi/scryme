@@ -8,15 +8,20 @@ export class TransitionBookingStatusDto {
   @IsNotEmpty()
   status!: BookingStatus;
 
-  @ApiPropertyOptional({ description: "Reason for transition (especially for cancellations or changes)" })
+  @ApiPropertyOptional({ description: "Reason for transition (especially for cancellations or overrides)" })
   @IsString()
   @IsOptional()
   reason?: string;
 
-  @ApiPropertyOptional({ description: "Assigned staff member IDs (for ASSIGNED status)" })
+  @ApiPropertyOptional({ description: "Assigned staff member IDs (for ASSIGNED status or re-assignment)" })
   @IsArray()
   @IsOptional()
   staffMemberIds?: string[];
+
+  @ApiPropertyOptional({ description: "Allow manager override on detected soft conflicts" })
+  @IsBoolean()
+  @IsOptional()
+  overrideConflict?: boolean;
 }
 
 export class CheckBookingConflictsDto {
@@ -33,6 +38,11 @@ export class CheckBookingConflictsDto {
   @IsOptional()
   staffMemberIds?: string[];
 
+  @ApiPropertyOptional({ description: "Customer ID to check for double bookings" })
+  @IsString()
+  @IsOptional()
+  customerId?: string;
+
   @ApiPropertyOptional({ description: "Location ID to check capacity" })
   @IsString()
   @IsOptional()
@@ -48,6 +58,40 @@ export class UpdateChecklistItemDto {
   @ApiProperty({ description: "Whether the checklist item is completed" })
   @IsBoolean()
   isCompleted!: boolean;
+}
+
+export class GenerateBookingTasksRequestDto {
+  @ApiPropertyOptional({ description: "Target Project ID for Task" })
+  @IsString()
+  @IsOptional()
+  projectId?: string;
+
+  @ApiPropertyOptional({ description: "Assignee member ID" })
+  @IsString()
+  @IsOptional()
+  assigneeMemberId?: string;
+
+  @ApiPropertyOptional({ description: "Include checklist templates" })
+  @IsBoolean()
+  @IsOptional()
+  includeChecklist?: boolean;
+}
+
+export class AssignBookingStaffDto {
+  @ApiProperty({ description: "List of staff member IDs to assign" })
+  @IsArray()
+  @IsString({ each: true })
+  staffMemberIds!: string[];
+
+  @ApiPropertyOptional({ description: "Optional manager note or reassignment reason" })
+  @IsString()
+  @IsOptional()
+  reason?: string;
+
+  @ApiPropertyOptional({ description: "Allow manager override on conflicts" })
+  @IsBoolean()
+  @IsOptional()
+  overrideConflict?: boolean;
 }
 
 export class CreateChecklistTemplateDto {

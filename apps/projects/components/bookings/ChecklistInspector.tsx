@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CheckSquare, Sparkles, User, FileText, CheckCircle2 } from "lucide-react";
 
 export interface ChecklistItem {
   id: string;
@@ -39,10 +40,10 @@ interface ChecklistInspectorProps {
   isGenerating?: boolean;
 }
 
-const stageLabels: Record<string, { label: string; icon: string }> = {
-  PRE_SERVICE: { label: "Pre-Service Preparation", icon: "assignment" },
-  IN_SERVICE: { label: "Active Service Execution", icon: "engineering" },
-  POST_SERVICE: { label: "Post-Service & Handover", icon: "verified" },
+const stageLabels: Record<string, { label: string; icon: React.ComponentType<{ className?: string }> }> = {
+  PRE_SERVICE: { label: "Pre-Service Preparation", icon: FileText },
+  IN_SERVICE: { label: "Active Service Execution", icon: CheckSquare },
+  POST_SERVICE: { label: "Post-Service & Handover", icon: CheckCircle2 },
 };
 
 export function ChecklistInspector({
@@ -62,7 +63,7 @@ export function ChecklistInspector({
       <div className="flex items-center justify-between">
         <div>
           <h4 className="text-sm font-semibold text-on-surface flex items-center gap-2">
-            <span className="material-symbols-outlined text-primary text-[18px]">checklist</span>
+            <CheckSquare className="w-4 h-4 text-primary" />
             Service Tasks & Checklists
           </h4>
           <p className="text-xs text-on-surface-variant">
@@ -77,8 +78,8 @@ export function ChecklistInspector({
             onClick={onGenerateTasks}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-black hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
-            <span className="material-symbols-outlined text-[15px]">auto_mode</span>
-            Generate Checklist
+            <Sparkles className="w-3.5 h-3.5" />
+            Generate Tasks & Checklist
           </button>
         )}
       </div>
@@ -95,27 +96,28 @@ export function ChecklistInspector({
       {/* Task Groups with Checklists */}
       {tasks.length === 0 ? (
         <div className="py-8 text-center text-xs text-outline border border-dashed border-outline-variant/40 rounded-lg">
-          <span className="material-symbols-outlined text-3xl mb-1 text-outline/50 block">task</span>
-          No tasks or checklist templates generated yet for this booking.
+          <FileText className="w-8 h-8 mx-auto mb-1 text-outline/50 block" />
+          No operational tasks or checklist items generated yet for this booking.
         </div>
       ) : (
         <div className="space-y-4">
           {tasks.map((task) => {
             const stageConfig = stageLabels[task.stage || ""] || {
               label: task.title,
-              icon: "task",
+              icon: FileText,
             };
+            const StageIcon = stageConfig.icon;
 
             return (
               <div key={task.id} className="bg-surface-container-low rounded-lg p-3 border border-outline-variant/30 space-y-2">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
-                    <span className="material-symbols-outlined text-primary text-[16px]">{stageConfig.icon}</span>
+                    <StageIcon className="w-4 h-4 text-primary" />
                     <span className="text-xs font-semibold text-on-surface">{task.title}</span>
                   </div>
                   {task.assignedTo && (
                     <span className="text-[11px] text-outline flex items-center gap-1">
-                      <span className="material-symbols-outlined text-[13px]">person</span>
+                      <User className="w-3 h-3" />
                       {task.assignedTo.user?.name || "Assigned"}
                     </span>
                   )}
@@ -144,7 +146,7 @@ export function ChecklistInspector({
                           >
                             {item.title}
                             {item.isRequired && (
-                              <span className="text-rose-400 text-[10px] ml-1">*required</span>
+                              <span className="text-amber-400 text-[10px] ml-1.5">*required</span>
                             )}
                           </p>
                           {item.description && (

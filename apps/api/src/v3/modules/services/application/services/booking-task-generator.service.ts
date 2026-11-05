@@ -1,6 +1,6 @@
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "@/prisma/prisma.service";
-import { ChecklistStage, TaskStatus, TaskPriority } from "@repo/db";
+import { ChecklistStage, TaskStatus, TaskPriority, ProjectTaskStatus, ProjectTaskPriority } from "@repo/db";
 
 @Injectable()
 export class BookingTaskGeneratorService {
@@ -9,14 +9,39 @@ export class BookingTaskGeneratorService {
   constructor(private readonly prisma: PrismaService) {}
 
   /**
-   * Generates operational tasks and checklist items for a confirmed booking based on service templates.
+   * Auto-provisions or retrieves default "Service Operations" Project for the organization.
+   */
+  async getOrCreateServiceOperationsProject(orgId: string, memberId?: string) {
+    let project = await this.prisma.client.project.findFirst({
+      where: { organizationId: orgId, key: "SRV" },
+    });
+
+    if (!project) {
+      project = await this.prisma.client.project.create({
+        data: {
+          organizationId: orgId,
+          name: "Service Operations",
+          key: "SRV",
+          description: "Operational delivery tasks generated from customer service bookings.",
+          ownerId: memberId,
+        },
+      });
+    }
+
+    return project;
+  }
+
+  /**
+   * Generates operational tasks and checklist items for a booking based on service templates or hybrid stages.
+   * Creates records in BookingTask/BookingChecklistItem as well as linked Project Tasks and StaffTasks.
    */
   async generateTasksForBooking(params: {
     orgId: string;
     bookingId: string;
     assigneeMemberId?: string;
+    projectId?: string;
   }): Promise<{ createdTasksCount: number; createdItemsCount: number }> {
-    const { orgId, bookingId, assigneeMemberId } = params;
+    const { orgId, bookingId, assigneeMemberId, projectId } = params;
 
     const booking = await this.prisma.client.serviceBooking.findFirst({
       where: { id: bookingId, organizationId: orgId },
@@ -29,6 +54,7 @@ export class BookingTaskGeneratorService {
             },
           },
         },
+        customer: true,
         staff: true,
       },
     });
@@ -38,17 +64,19 @@ export class BookingTaskGeneratorService {
       return { createdTasksCount: 0, createdItemsCount: 0 };
     }
 
-    // Determine default assignee if not passed
     const defaultAssigneeId = assigneeMemberId || booking.staff[0]?.memberId;
-
     let createdTasksCount = 0;
     let createdItemsCount = 0;
 
     const templates = booking.service.checklistTemplates;
 
+    // Resolve target project for Project Task linkage
+    const targetProject = projectId
+      ? await this.prisma.client.project.findFirst({ where: { id: projectId, organizationId: orgId } })
+      : await this.getOrCreateServiceOperationsProject(orgId, defaultAssigneeId);
+
     if (templates.length > 0) {
       for (const template of templates) {
-        // Create a task for this checklist template
         const task = await this.prisma.client.bookingTask.create({
           data: {
             organizationId: orgId,
@@ -63,7 +91,6 @@ export class BookingTaskGeneratorService {
         });
         createdTasksCount++;
 
-        // Create checklist items for this task
         for (const itemTemplate of template.items) {
           await this.prisma.client.bookingChecklistItem.create({
             data: {
@@ -131,6 +158,40 @@ export class BookingTaskGeneratorService {
           createdItemsCount++;
         }
       }
+    }
+
+    // Also link/create Project Task in targetProject if available
+    if (targetProject) {
+      const taskCount = await this.prisma.client.task.count({ where: { projectId: targetProject.id } });
+      const taskNumber = taskCount + 1;
+      const taskKey = `${targetProject.key}-${taskNumber}`;
+
+      await this.prisma.client.task.create({
+        data: {
+          organizationId: orgId,
+          projectId: targetProject.id,
+          taskNumber,
+          taskKey,
+          title: `Deliver ${booking.serviceName} - ${booking.customer?.name || "Customer"}`,
+          description: `Customer Service Booking #${booking.id}\nCustomer: ${booking.customer?.name || "Guest"}\nScheduled: ${booking.scheduledStartTime.toISOString()}`,
+          status: ProjectTaskStatus.TODO,
+          priority: ProjectTaskPriority.MEDIUM,
+          startDate: booking.scheduledStartTime,
+          dueDate: booking.scheduledEndTime || booking.scheduledStartTime,
+          bookingId: booking.id,
+          createdById: defaultAssigneeId,
+          assignees: defaultAssigneeId
+            ? {
+                create: [
+                  {
+                    memberId: defaultAssigneeId,
+                    isPrimary: true,
+                  },
+                ],
+              }
+            : undefined,
+        },
+      });
     }
 
     return { createdTasksCount, createdItemsCount };

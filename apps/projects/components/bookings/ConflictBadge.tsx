@@ -1,6 +1,7 @@
 "use client";
 
 import React from "react";
+import { CheckCircle2, AlertTriangle, AlertCircle } from "lucide-react";
 
 interface ConflictItem {
   type: string;
@@ -14,10 +15,12 @@ interface ConflictBadgeProps {
 }
 
 export function ConflictBadge({ conflicts = [], hasConflict = false }: ConflictBadgeProps) {
-  if (!hasConflict && conflicts.length === 0) {
+  const isConflictPresent = hasConflict || conflicts.length > 0;
+
+  if (!isConflictPresent) {
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-        <span className="material-symbols-outlined text-[14px]">check_circle</span>
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+        <CheckCircle2 className="w-3.5 h-3.5" />
         No Conflicts
       </span>
     );
@@ -25,15 +28,15 @@ export function ConflictBadge({ conflicts = [], hasConflict = false }: ConflictB
 
   return (
     <div className="flex flex-col gap-1">
-      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium bg-rose-500/10 text-rose-400 border border-rose-500/20 w-fit">
-        <span className="material-symbols-outlined text-[14px]">warning</span>
-        {conflicts.length} Conflict{conflicts.length > 1 ? "s" : ""} Detected
+      <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-amber-500/10 text-amber-400 border border-amber-500/20 w-fit">
+        <AlertTriangle className="w-3.5 h-3.5" />
+        {conflicts.length} Warning{conflicts.length > 1 ? "s" : ""} (Override Allowed)
       </span>
       {conflicts.length > 0 && (
-        <ul className="text-xs text-rose-300 space-y-0.5 pl-1">
+        <ul className="text-xs text-amber-300/90 space-y-1 pl-1">
           {conflicts.map((c, idx) => (
-            <li key={idx} className="flex items-start gap-1">
-              <span className="text-[10px] text-rose-400 mt-0.5">•</span>
+            <li key={idx} className="flex items-start gap-1.5">
+              <AlertCircle className="w-3 h-3 text-amber-400 shrink-0 mt-0.5" />
               <span>{c.message}</span>
             </li>
           ))}
