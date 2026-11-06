@@ -22,6 +22,7 @@ import { Route as DocsGettingStartedRouteImport } from './routes/docs.getting-st
 import { Route as DocsInstallationRouteImport } from './routes/docs.installation'
 import { Route as DocsIntegrationsRouteImport } from './routes/docs.integrations'
 import { Route as DocsInventoryLifecycleRouteImport } from './routes/docs.inventory-lifecycle'
+import { Route as DocsMcpRouteImport } from './routes/docs.mcp'
 import { Route as DocsRateLimitsRouteImport } from './routes/docs.rate-limits'
 import { Route as DocsSecurityRouteImport } from './routes/docs.security'
 import { Route as DocsSupportRouteImport } from './routes/docs.support'
@@ -99,6 +100,11 @@ const DocsIntegrationsRoute = DocsIntegrationsRouteImport.update({
 const DocsInventoryLifecycleRoute = DocsInventoryLifecycleRouteImport.update({
   id: '/docs/inventory-lifecycle',
   path: '/docs/inventory-lifecycle',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsMcpRoute = DocsMcpRouteImport.update({
+  id: '/docs/mcp',
+  path: '/docs/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsRateLimitsRoute = DocsRateLimitsRouteImport.update({
@@ -185,6 +191,7 @@ export interface FileRoutesByFullPath {
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
+  '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -213,6 +220,7 @@ export interface FileRoutesByTo {
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
+  '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -242,6 +250,7 @@ export interface FileRoutesById {
   '/docs/installation': typeof DocsInstallationRoute
   '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
+  '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
   '/docs/security': typeof DocsSecurityRoute
   '/docs/support': typeof DocsSupportRoute
@@ -272,6 +281,7 @@ export interface FileRouteTypes {
     | '/docs/installation'
     | '/docs/integrations'
     | '/docs/inventory-lifecycle'
+    | '/docs/mcp'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -300,6 +310,7 @@ export interface FileRouteTypes {
     | '/docs/installation'
     | '/docs/integrations'
     | '/docs/inventory-lifecycle'
+    | '/docs/mcp'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -328,6 +339,7 @@ export interface FileRouteTypes {
     | '/docs/installation'
     | '/docs/integrations'
     | '/docs/inventory-lifecycle'
+    | '/docs/mcp'
     | '/docs/rate-limits'
     | '/docs/security'
     | '/docs/support'
@@ -357,6 +369,7 @@ export interface RootRouteChildren {
   DocsInstallationRoute: typeof DocsInstallationRoute
   DocsIntegrationsRoute: typeof DocsIntegrationsRoute
   DocsInventoryLifecycleRoute: typeof DocsInventoryLifecycleRoute
+  DocsMcpRoute: typeof DocsMcpRoute
   DocsRateLimitsRoute: typeof DocsRateLimitsRoute
   DocsSecurityRoute: typeof DocsSecurityRoute
   DocsSupportRoute: typeof DocsSupportRoute
@@ -466,6 +479,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsInventoryLifecycleRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/mcp': {
+      id: '/docs/mcp'
+      path: '/docs/mcp'
+      fullPath: '/docs/mcp'
+      preLoaderRoute: typeof DocsMcpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/docs/rate-limits': {
       id: '/docs/rate-limits'
       path: '/docs/rate-limits'
@@ -573,6 +593,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsInstallationRoute: DocsInstallationRoute,
   DocsIntegrationsRoute: DocsIntegrationsRoute,
   DocsInventoryLifecycleRoute: DocsInventoryLifecycleRoute,
+  DocsMcpRoute: DocsMcpRoute,
   DocsRateLimitsRoute: DocsRateLimitsRoute,
   DocsSecurityRoute: DocsSecurityRoute,
   DocsSupportRoute: DocsSupportRoute,
