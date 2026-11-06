@@ -255,21 +255,6 @@ if [ -f "apps/cms/server.js" ] || [ "$1" = "node" -a "$2" = "apps/cms/server.js"
 fi
 
 # ---------------------------------------------------------
-# 3. Sanity Schema Deployment (e.g., site-next app)
-# ---------------------------------------------------------
-SANITY_PID="${SANITY_STUDIO_PROJECT_ID:-$VITE_SANITY_PROJECT_ID}"
-SANITY_TOK="${SANITY_AUTH_TOKEN:-${SANITY_API_TOKEN:-$SANITY_TOKEN}}"
-
-if [ -f "sanity.cli.ts" ] || [ -f "apps/site-next/sanity.cli.ts" ]; then
-  if [ -n "$SANITY_PID" ] && [ "$SANITY_PID" != "placeholder-project-id" ] && [ "$SANITY_PID" != "placeholder_project_id" ] && [ -n "$SANITY_TOK" ]; then
-    echo "Pushing Sanity schemas to project $SANITY_PID..."
-    SANITY_AUTH_TOKEN="$SANITY_TOK" npm_config_cache="${npm_config_cache:-/tmp/.npm}" npx sanity schemas deploy || echo "⚠️ Sanity schema deploy failed, continuing anyway..."
-  else
-    echo "ℹ️ Sanity credentials not configured or placeholder used, skipping schema deployment."
-  fi
-fi
-
-# ---------------------------------------------------------
 # 4. Running Frontend or API App CMD
 # ---------------------------------------------------------
 echo "Executing: $@"
