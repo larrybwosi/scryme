@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Play, ArrowRight, CheckCircle2 } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/getting-started')({
+  head: () =>
+    createDocSeo({
+      title: 'Getting Started Guide',
+      description:
+        'Step-by-step introduction to integrating with Scryme V3 platform: tenant context, authentication, permissions, and request lifecycle.',
+      pathname: '/docs/getting-started',
+      keywords: ['Getting Started', 'Tenant Context', 'API Integration', 'Authentication']
+    }),
   component: GettingStartedPage
 })
 

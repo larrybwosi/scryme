@@ -74,7 +74,7 @@ ENV NODE_OPTIONS="--max-old-space-size=768"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs nestjs
+RUN useradd --system --create-home --uid 1001 -g nodejs nestjs
 
 # Install Prisma and tsx globally for migrations and seeding
 RUN pnpm add -g prisma@7.8.0 tsx@4.21.0

@@ -1,7 +1,16 @@
 import { createFileRoute, Link } from '@tanstack/react-router'
-import { Code2, ShoppingBag, Package, DollarSign, Users, Factory, Bell, Play } from 'lucide-react'
+import { Code2, ShoppingBag, Package, Play } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/api-reference/')({
+  head: () =>
+    createDocSeo({
+      title: 'V3 REST API Reference Overview',
+      description:
+        'Official REST API reference for Scryme V3: POS checkout, multi-location inventory, stocking transfers, and interactive testing.',
+      pathname: '/api-reference',
+      keywords: ['API Reference', 'V3 REST API', 'Endpoints', 'OpenAPI', 'Swagger']
+    }),
   component: ApiReferenceIndexPage
 })
 

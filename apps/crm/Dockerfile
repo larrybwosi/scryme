@@ -82,7 +82,7 @@ ENV NODE_OPTIONS="--max-old-space-size=384"
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs nextjs
+RUN useradd --system --create-home --uid 1001 -g nodejs nextjs
 
 # Copy built outputs preserving workspace paths
 COPY --from=installer --chown=nextjs:nodejs /app/apps/crm/.next/standalone ./

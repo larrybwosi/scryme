@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Plug, MessageSquareText, Wallet, DatabaseZap } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/integrations')({
+  head: () =>
+    createDocSeo({
+      title: 'Third-Party Integrations',
+      description:
+        'Integration patterns for payment gateways (M-Pesa, card settlements), multi-channel messaging (WhatsApp, Scryme Chat), and CRM data sync.',
+      pathname: '/docs/integrations',
+      keywords: ['Integrations', 'Payments', 'M-Pesa', 'WhatsApp CRM', 'Webhooks']
+    }),
   component: IntegrationsPage
 })
 

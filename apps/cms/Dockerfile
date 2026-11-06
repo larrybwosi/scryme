@@ -65,7 +65,7 @@ ENV HOSTNAME="0.0.0.0"
 ENV NODE_OPTIONS="--max-old-space-size=512"
 
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs nextjs
+RUN useradd --system --create-home --uid 1001 -g nodejs nextjs
 
 COPY --from=installer --chown=nextjs:nodejs /app/apps/cms/.next/standalone ./
 COPY --from=installer --chown=nextjs:nodejs /app/apps/cms/.next/static ./apps/cms/.next/static

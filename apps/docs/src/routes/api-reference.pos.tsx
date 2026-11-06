@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
-import { ShoppingBag, Tag, Code2 } from 'lucide-react'
+import { ShoppingBag } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/api-reference/pos')({
+  head: () =>
+    createDocSeo({
+      title: 'POS & Sales API Endpoints',
+      description:
+        'V3 REST endpoints for processing sales, cash/card/M-Pesa split payments, preorder bookings, and receipt validation.',
+      pathname: '/api-reference/pos',
+      keywords: ['POS API', 'Point of Sale', 'Checkout API', 'Preorders', 'Payment Processing']
+    }),
   component: ApiPosPage
 })
 

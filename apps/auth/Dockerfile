@@ -73,7 +73,7 @@ ENV PORT=4444
 
 # Create a system user to run the application securely
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs appuser
+RUN useradd --system --create-home --uid 1001 -g nodejs appuser
 
 # Copy the built static files and the server script from the installer/pruner stages
 COPY --from=installer --chown=appuser:nodejs /app/apps/auth/dist ./dist

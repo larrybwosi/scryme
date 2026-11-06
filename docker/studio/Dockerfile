@@ -51,7 +51,7 @@ ENV NODE_ENV=production
 ENV PORT=5555
 
 RUN groupadd --system --gid 1001 nodejs
-RUN useradd --system --uid 1001 -g nodejs studio
+RUN useradd --system --create-home --uid 1001 -g nodejs studio
 
 RUN mkdir -p /pnpm && chown -R studio:nodejs /pnpm
 

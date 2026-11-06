@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { HelpCircle } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/faq')({
+  head: () =>
+    createDocSeo({
+      title: 'Frequently Asked Questions',
+      description:
+        'Answers to common technical questions about Scryme multi-location architecture, API security, and stock operations.',
+      pathname: '/docs/faq',
+      keywords: ['FAQ', 'Questions', 'Troubleshooting', 'Multi-location ERP']
+    }),
   component: FaqPage
 })
 
