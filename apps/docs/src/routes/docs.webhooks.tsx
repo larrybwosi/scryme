@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Bell } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/webhooks')({
+  head: () =>
+    createDocSeo({
+      title: 'Webhooks & Event Streams',
+      description:
+        'Technical guide for receiving real-time webhooks, event delivery signatures, retry strategies, and payment callbacks.',
+      pathname: '/docs/webhooks',
+      keywords: ['Webhooks', 'Events', 'M-Pesa Webhooks', 'Event-driven Architecture']
+    }),
   component: WebhooksPage
 })
 

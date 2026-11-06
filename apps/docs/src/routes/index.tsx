@@ -5,11 +5,19 @@ import {
   Layers,
   Code2,
   BookOpen,
-  ShieldCheck,
-  ArrowRight
+  ShieldCheck
 } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/')({
+  head: () =>
+    createDocSeo({
+      title: 'Enterprise ERP & Retail Developer Platform',
+      description:
+        'Official documentation, guides, and V3 API reference for Scryme enterprise ERP, POS, multi-location inventory, and retail operations.',
+      pathname: '/',
+      keywords: ['API', 'Documentation', 'Developer Hub', 'ERP System', 'Point of Sale']
+    }),
   component: HomePage
 })
 

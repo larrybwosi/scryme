@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Gauge } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/rate-limits')({
+  head: () =>
+    createDocSeo({
+      title: 'API Rate Limits & Quotas',
+      description:
+        'Understanding API rate limiting tiers, headers, retry backoff algorithms, and quota governance on Scryme V3 endpoints.',
+      pathname: '/docs/rate-limits',
+      keywords: ['Rate Limits', 'Throttling', 'API Quotas', 'Retry Backoff']
+    }),
   component: RateLimitsPage
 })
 

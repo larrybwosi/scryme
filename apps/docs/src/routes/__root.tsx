@@ -1,4 +1,4 @@
-import { createRootRoute, HeadContent, Link, Outlet, Scripts } from '@tanstack/react-router'
+import { createRootRoute, HeadContent, Link, Outlet, Scripts, useRouterState } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import {
   Search,
@@ -19,7 +19,14 @@ import {
   Play,
   Layers,
   Package,
-  Boxes
+  Boxes,
+  Truck,
+  Tag,
+  DollarSign,
+  Archive,
+  FileSpreadsheet,
+  PackageCheck,
+  AlertOctagon
 } from 'lucide-react'
 import '../styles/app.css'
 
@@ -28,7 +35,8 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Scryme Developer Docs & V3 API Reference' }
+      { title: 'Scryme Developer Docs & V3 API Reference' },
+      { name: 'description', content: 'Official developer documentation and API reference for Scryme enterprise ERP, POS, and inventory.' }
     ]
   }),
   component: RootComponent
@@ -37,6 +45,25 @@ export const Route = createRootRoute({
 function RootComponent() {
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
+
+  // Track active route to auto-expand relevant accordion sections
+  const routerState = useRouterState()
+  const currentPath = routerState.location.pathname
+
+  const isInventoryActive = currentPath.startsWith('/docs/inventory') || currentPath === '/docs/inventory-lifecycle'
+  const isStockingActive = currentPath.startsWith('/docs/stocking')
+  const isApiActive = currentPath.startsWith('/api-reference')
+
+  const [inventoryExpanded, setInventoryExpanded] = useState(true)
+  const [stockingExpanded, setStockingExpanded] = useState(true)
+  const [apiExpanded, setApiExpanded] = useState(false)
+
+  // Auto-expand when navigating
+  useEffect(() => {
+    if (isInventoryActive) setInventoryExpanded(true)
+    if (isStockingActive) setStockingExpanded(true)
+    if (isApiActive) setApiExpanded(true)
+  }, [isInventoryActive, isStockingActive, isApiActive])
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -49,37 +76,53 @@ function RootComponent() {
     return () => window.removeEventListener('keydown', handleKeyDown)
   }, [])
 
-  const navSections = [
-    {
-      title: 'Menu',
-      items: [
-        { label: 'Getting Started', to: '/docs/getting-started', icon: Play },
-        { label: 'Installation', to: '/docs/installation', icon: Package },
-        { label: 'Components', to: '/docs/components', icon: Layers, hasSub: true },
-        { label: 'API Reference', to: '/api-reference', icon: Code2, hasSub: true },
-        { label: 'Guides', to: '/docs/core-concepts', icon: BookOpen, hasSub: true },
-        { label: 'Inventory & Variants', to: '/docs/inventory-lifecycle', icon: Boxes },
-        { label: 'Webhooks', to: '/docs/webhooks', icon: Bell },
-        { label: 'Third-Party Integrations', to: '/docs/integrations', icon: Plug },
-        { label: 'Rate Limits', to: '/docs/rate-limits', icon: Gauge },
-        { label: 'Security Best Practices', to: '/docs/security', icon: ShieldCheck },
-        { label: 'Documentation', to: '/docs/core-concepts', icon: FileText },
-        { label: 'Changelog', to: '/docs/changelog', icon: FileText },
-        { label: 'FAQ', to: '/docs/faq', icon: HelpCircle },
-        { label: 'Support', to: '/docs/support', icon: Headphones }
-      ]
-    }
+  const inventorySubItems = [
+    { label: 'Lifecycle Overview', to: '/docs/inventory-lifecycle' as const, icon: Boxes },
+    { label: 'Create Products', to: '/docs/inventory/create-product' as const, icon: Tag },
+    { label: 'Manage Variants & Scanners', to: '/docs/inventory/manage-variants' as const, icon: Layers },
+    { label: 'Pricing & Multi-Units', to: '/docs/inventory/update-and-pricing' as const, icon: DollarSign },
+    { label: 'Archive & Restore', to: '/docs/inventory/archive-and-restore' as const, icon: Archive },
+  ]
+
+  const stockingSubItems = [
+    { label: 'Stocking Overview', to: '/docs/stocking' as const, icon: Boxes },
+    { label: 'Inter-Location Transfers', to: '/docs/stocking/transfers' as const, icon: Truck },
+    { label: 'Physical Reconciliation', to: '/docs/stocking/reconciliation' as const, icon: FileSpreadsheet },
+    { label: 'PO Receiving & Batches', to: '/docs/stocking/reception' as const, icon: PackageCheck },
+    { label: 'Waste & Adjustments', to: '/docs/stocking/adjustments' as const, icon: AlertOctagon },
+  ]
+
+  const apiSubItems = [
+    { label: 'API Overview', to: '/api-reference' as const, icon: Code2 },
+    { label: 'POS & Sales API', to: '/api-reference/pos' as const, icon: Tag },
+    { label: 'Stocking & Inventory API', to: '/api-reference/stocking' as const, icon: Package },
+    { label: 'Interactive Playground', to: '/api-reference/playground' as const, icon: Play },
   ]
 
   const searchResults = [
     { title: 'Getting Started', category: 'Guide', to: '/docs/getting-started' },
     { title: 'Installation and SDK Setup', category: 'Guide', to: '/docs/installation' },
     { title: 'Core Platform Concepts', category: 'Guide', to: '/docs/core-concepts' },
-    { title: 'Inventory & Variant Lifecycle', category: 'Operator Guide', to: '/docs/inventory-lifecycle' },
-    { title: 'Product Creation & Archiving', category: 'Operator Guide', to: '/docs/inventory-lifecycle' },
+    { title: 'Inventory & Variant Lifecycle', category: 'Inventory', to: '/docs/inventory-lifecycle' },
+    { title: 'Create Products & Initial Stock', category: 'Inventory', to: '/docs/inventory/create-product' },
+    { title: 'Manage Variants & Hardware Scanners', category: 'Inventory', to: '/docs/inventory/manage-variants' },
+    { title: 'Details & Multi-Unit Pricing', category: 'Inventory', to: '/docs/inventory/update-and-pricing' },
+    { title: 'Archiving, Disabling & Restoring', category: 'Inventory', to: '/docs/inventory/archive-and-restore' },
+    { title: 'Stocking Operations Overview', category: 'Stocking', to: '/docs/stocking' },
+    { title: 'Inter-Location Stock Transfers', category: 'Stocking', to: '/docs/stocking/transfers' },
+    { title: 'Physical Stocktaking & Reconciliation', category: 'Stocking', to: '/docs/stocking/reconciliation' },
+    { title: 'Receiving Purchase Orders & Batches', category: 'Stocking', to: '/docs/stocking/reception' },
+    { title: 'Waste Tracking & Manual Adjustments', category: 'Stocking', to: '/docs/stocking/adjustments' },
     { title: 'POS & Sales API', category: 'API Reference', to: '/api-reference/pos' },
-    { title: 'Inventory & Stocking API', category: 'API Reference', to: '/api-reference/stocking' },
-    { title: 'Security Best Practices', category: 'Guide', to: '/docs/security' }
+    { title: 'Stocking & Inventory API', category: 'API Reference', to: '/api-reference/stocking' },
+    { title: 'Interactive API Playground', category: 'API Reference', to: '/api-reference/playground' },
+    { title: 'Security Best Practices', category: 'Guide', to: '/docs/security' },
+    { title: 'Webhooks & Event Streams', category: 'Guide', to: '/docs/webhooks' },
+    { title: 'Third-Party Integrations', category: 'Guide', to: '/docs/integrations' },
+    { title: 'API Rate Limits', category: 'Guide', to: '/docs/rate-limits' },
+    { title: 'Release Changelog', category: 'General', to: '/docs/changelog' },
+    { title: 'Frequently Asked Questions', category: 'General', to: '/docs/faq' },
+    { title: 'Developer Support', category: 'General', to: '/docs/support' },
   ].filter(r => r.title.toLowerCase().includes(searchQuery.toLowerCase()) || r.category.toLowerCase().includes(searchQuery.toLowerCase()))
 
   return (
@@ -113,7 +156,7 @@ function RootComponent() {
                   <span>Search</span>
                 </div>
                 <kbd className="px-1.5 py-0.5 text-[10px] bg-slate-100 text-slate-500 rounded border border-slate-200">
-                  ⌘F
+                  ⌘K
                 </kbd>
               </button>
 
@@ -129,6 +172,7 @@ function RootComponent() {
                 <Link
                   to="/docs/getting-started"
                   className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium text-slate-700 hover:bg-slate-200/60 transition-colors"
+                  activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
                 >
                   <div className="flex items-center gap-2.5">
                     <Box className="w-4 h-4 text-slate-500" />
@@ -149,32 +193,296 @@ function RootComponent() {
                 </a>
               </div>
 
-              {navSections.map(section => (
-                <div key={section.title} className="space-y-1">
-                  <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
-                    {section.title}
-                  </span>
-                  <nav className="space-y-0.5 pt-1">
-                    {section.items.map(item => {
-                      const Icon = item.icon
-                      return (
-                        <Link
-                          key={item.label}
-                          to={item.to}
-                          className="flex items-center justify-between px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
-                          activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
-                        >
-                          <div className="flex items-center gap-2.5">
-                            <Icon className="w-4 h-4 text-slate-400" />
-                            <span>{item.label}</span>
-                          </div>
-                          {item.hasSub && <ChevronRight className="w-3.5 h-3.5 text-slate-400" />}
-                        </Link>
-                      )
-                    })}
-                  </nav>
-                </div>
-              ))}
+              {/* Navigation Sections */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
+                  Core Guides
+                </span>
+                <nav className="space-y-0.5 pt-1">
+                  <Link
+                    to="/docs/getting-started"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Play className="w-4 h-4 text-slate-400" />
+                    <span>Getting Started</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/installation"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Package className="w-4 h-4 text-slate-400" />
+                    <span>Installation</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/core-concepts"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <BookOpen className="w-4 h-4 text-slate-400" />
+                    <span>Core Concepts</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/components"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Layers className="w-4 h-4 text-slate-400" />
+                    <span>Components</span>
+                  </Link>
+                </nav>
+              </div>
+
+              {/* Expandable Section 1: Inventory & Variants */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
+                  Catalog & Logistics
+                </span>
+                <nav className="space-y-0.5 pt-1">
+                  <div>
+                    <div
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                        isInventoryActive
+                          ? 'bg-slate-200/70 text-slate-900 font-semibold'
+                          : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                      }`}
+                      onClick={() => setInventoryExpanded(prev => !prev)}
+                    >
+                      <Link
+                        to="/docs/inventory-lifecycle"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2.5 flex-1"
+                      >
+                        <Boxes className="w-4 h-4 text-emerald-600" />
+                        <span>Inventory & Variants</span>
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setInventoryExpanded(prev => !prev)
+                        }}
+                        className="p-0.5 hover:bg-slate-300/60 rounded"
+                        aria-label="Toggle Inventory sub-menu"
+                      >
+                        <ChevronRight
+                          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                            inventoryExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {inventoryExpanded && (
+                      <div className="pl-6 pr-1 pt-1 space-y-0.5 border-l border-slate-200 ml-5 my-0.5">
+                        {inventorySubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          return (
+                            <Link
+                              key={sub.to}
+                              to={sub.to}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors"
+                              activeProps={{ className: 'text-emerald-700 bg-emerald-50/80 font-semibold' }}
+                            >
+                              <SubIcon className="w-3 h-3 text-slate-400" />
+                              <span>{sub.label}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Expandable Section 2: Stocking Operations */}
+                  <div>
+                    <div
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                        isStockingActive
+                          ? 'bg-slate-200/70 text-slate-900 font-semibold'
+                          : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                      }`}
+                      onClick={() => setStockingExpanded(prev => !prev)}
+                    >
+                      <Link
+                        to="/docs/stocking"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2.5 flex-1"
+                      >
+                        <Truck className="w-4 h-4 text-blue-600" />
+                        <span>Stocking Operations</span>
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setStockingExpanded(prev => !prev)
+                        }}
+                        className="p-0.5 hover:bg-slate-300/60 rounded"
+                        aria-label="Toggle Stocking sub-menu"
+                      >
+                        <ChevronRight
+                          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                            stockingExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {stockingExpanded && (
+                      <div className="pl-6 pr-1 pt-1 space-y-0.5 border-l border-slate-200 ml-5 my-0.5">
+                        {stockingSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          return (
+                            <Link
+                              key={sub.to}
+                              to={sub.to}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors"
+                              activeProps={{ className: 'text-blue-700 bg-blue-50/80 font-semibold' }}
+                            >
+                              <SubIcon className="w-3 h-3 text-slate-400" />
+                              <span>{sub.label}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </nav>
+              </div>
+
+              {/* Expandable Section 3: API Reference */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
+                  API Reference
+                </span>
+                <nav className="space-y-0.5 pt-1">
+                  <div>
+                    <div
+                      className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs transition-colors cursor-pointer ${
+                        isApiActive
+                          ? 'bg-slate-200/70 text-slate-900 font-semibold'
+                          : 'text-slate-600 hover:bg-slate-200/60 hover:text-slate-900'
+                      }`}
+                      onClick={() => setApiExpanded(prev => !prev)}
+                    >
+                      <Link
+                        to="/api-reference"
+                        onClick={(e) => e.stopPropagation()}
+                        className="flex items-center gap-2.5 flex-1"
+                      >
+                        <Code2 className="w-4 h-4 text-purple-600" />
+                        <span>V3 REST Modules</span>
+                      </Link>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setApiExpanded(prev => !prev)
+                        }}
+                        className="p-0.5 hover:bg-slate-300/60 rounded"
+                        aria-label="Toggle API sub-menu"
+                      >
+                        <ChevronRight
+                          className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                            apiExpanded ? 'rotate-90' : ''
+                          }`}
+                        />
+                      </button>
+                    </div>
+
+                    {apiExpanded && (
+                      <div className="pl-6 pr-1 pt-1 space-y-0.5 border-l border-slate-200 ml-5 my-0.5">
+                        {apiSubItems.map((sub) => {
+                          const SubIcon = sub.icon
+                          return (
+                            <Link
+                              key={sub.to}
+                              to={sub.to}
+                              className="flex items-center gap-2 px-2.5 py-1.5 rounded-md text-[11px] text-slate-600 hover:text-slate-900 hover:bg-slate-200/50 transition-colors"
+                              activeProps={{ className: 'text-purple-700 bg-purple-50/80 font-semibold' }}
+                            >
+                              <SubIcon className="w-3 h-3 text-slate-400" />
+                              <span>{sub.label}</span>
+                            </Link>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </nav>
+              </div>
+
+              {/* General Reference Section */}
+              <div className="space-y-1">
+                <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider px-3">
+                  Integration & Operations
+                </span>
+                <nav className="space-y-0.5 pt-1">
+                  <Link
+                    to="/docs/webhooks"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Bell className="w-4 h-4 text-slate-400" />
+                    <span>Webhooks</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/integrations"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Plug className="w-4 h-4 text-slate-400" />
+                    <span>Integrations</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/rate-limits"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Gauge className="w-4 h-4 text-slate-400" />
+                    <span>Rate Limits</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/security"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <ShieldCheck className="w-4 h-4 text-slate-400" />
+                    <span>Security Best Practices</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/changelog"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <FileText className="w-4 h-4 text-slate-400" />
+                    <span>Changelog</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/faq"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <HelpCircle className="w-4 h-4 text-slate-400" />
+                    <span>FAQ</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/support"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Headphones className="w-4 h-4 text-slate-400" />
+                    <span>Support</span>
+                  </Link>
+                </nav>
+              </div>
             </div>
           </aside>
 

@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { FileText } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/changelog')({
+  head: () =>
+    createDocSeo({
+      title: 'Platform Changelog & Release Notes',
+      description:
+        'Detailed platform release notes, API updates, performance upgrades, and architectural enhancements across Scryme V3.',
+      pathname: '/docs/changelog',
+      keywords: ['Changelog', 'Release Notes', 'V3 Platform', 'API Versions']
+    }),
   component: ChangelogPage
 })
 

@@ -1,9 +1,18 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ApiReferenceReact } from '@scalar/api-reference-react'
 import { openApiSpec } from '../openapi-spec'
+import { createDocSeo } from '../lib/seo'
 import '@scalar/api-reference-react/style.css'
 
 export const Route = createFileRoute('/api-reference/playground')({
+  head: () =>
+    createDocSeo({
+      title: 'Interactive Scalar API Playground',
+      description:
+        'Live interactive OpenAPI test console for Scryme V3: test endpoints, review request bodies, and generate client code.',
+      pathname: '/api-reference/playground',
+      keywords: ['API Playground', 'Scalar API', 'Interactive Console', 'OpenAPI Test Console']
+    }),
   component: ApiPlaygroundPage
 })
 

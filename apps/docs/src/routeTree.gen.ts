@@ -26,6 +26,15 @@ import { Route as DocsRateLimitsRouteImport } from './routes/docs.rate-limits'
 import { Route as DocsSecurityRouteImport } from './routes/docs.security'
 import { Route as DocsSupportRouteImport } from './routes/docs.support'
 import { Route as DocsWebhooksRouteImport } from './routes/docs.webhooks'
+import { Route as DocsInventoryArchiveAndRestoreRouteImport } from './routes/docs.inventory.archive-and-restore'
+import { Route as DocsInventoryCreateProductRouteImport } from './routes/docs.inventory.create-product'
+import { Route as DocsInventoryManageVariantsRouteImport } from './routes/docs.inventory.manage-variants'
+import { Route as DocsInventoryUpdateAndPricingRouteImport } from './routes/docs.inventory.update-and-pricing'
+import { Route as DocsStockingIndexRouteImport } from './routes/docs.stocking.index'
+import { Route as DocsStockingAdjustmentsRouteImport } from './routes/docs.stocking.adjustments'
+import { Route as DocsStockingReceptionRouteImport } from './routes/docs.stocking.reception'
+import { Route as DocsStockingReconciliationRouteImport } from './routes/docs.stocking.reconciliation'
+import { Route as DocsStockingTransfersRouteImport } from './routes/docs.stocking.transfers'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -112,6 +121,56 @@ const DocsWebhooksRoute = DocsWebhooksRouteImport.update({
   path: '/docs/webhooks',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DocsInventoryArchiveAndRestoreRoute =
+  DocsInventoryArchiveAndRestoreRouteImport.update({
+    id: '/docs/inventory/archive-and-restore',
+    path: '/docs/inventory/archive-and-restore',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DocsInventoryCreateProductRoute =
+  DocsInventoryCreateProductRouteImport.update({
+    id: '/docs/inventory/create-product',
+    path: '/docs/inventory/create-product',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DocsInventoryManageVariantsRoute =
+  DocsInventoryManageVariantsRouteImport.update({
+    id: '/docs/inventory/manage-variants',
+    path: '/docs/inventory/manage-variants',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DocsInventoryUpdateAndPricingRoute =
+  DocsInventoryUpdateAndPricingRouteImport.update({
+    id: '/docs/inventory/update-and-pricing',
+    path: '/docs/inventory/update-and-pricing',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DocsStockingIndexRoute = DocsStockingIndexRouteImport.update({
+  id: '/docs/stocking/',
+  path: '/docs/stocking/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsStockingAdjustmentsRoute = DocsStockingAdjustmentsRouteImport.update({
+  id: '/docs/stocking/adjustments',
+  path: '/docs/stocking/adjustments',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsStockingReceptionRoute = DocsStockingReceptionRouteImport.update({
+  id: '/docs/stocking/reception',
+  path: '/docs/stocking/reception',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsStockingReconciliationRoute =
+  DocsStockingReconciliationRouteImport.update({
+    id: '/docs/stocking/reconciliation',
+    path: '/docs/stocking/reconciliation',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const DocsStockingTransfersRoute = DocsStockingTransfersRouteImport.update({
+  id: '/docs/stocking/transfers',
+  path: '/docs/stocking/transfers',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -131,6 +190,15 @@ export interface FileRoutesByFullPath {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference/': typeof ApiReferenceIndexRoute
+  '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
+  '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
+  '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
+  '/docs/inventory/update-and-pricing': typeof DocsInventoryUpdateAndPricingRoute
+  '/docs/stocking/adjustments': typeof DocsStockingAdjustmentsRoute
+  '/docs/stocking/reception': typeof DocsStockingReceptionRoute
+  '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
+  '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/stocking/': typeof DocsStockingIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -150,6 +218,15 @@ export interface FileRoutesByTo {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference': typeof ApiReferenceIndexRoute
+  '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
+  '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
+  '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
+  '/docs/inventory/update-and-pricing': typeof DocsInventoryUpdateAndPricingRoute
+  '/docs/stocking/adjustments': typeof DocsStockingAdjustmentsRoute
+  '/docs/stocking/reception': typeof DocsStockingReceptionRoute
+  '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
+  '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/stocking': typeof DocsStockingIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -170,6 +247,15 @@ export interface FileRoutesById {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference/': typeof ApiReferenceIndexRoute
+  '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
+  '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
+  '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
+  '/docs/inventory/update-and-pricing': typeof DocsInventoryUpdateAndPricingRoute
+  '/docs/stocking/adjustments': typeof DocsStockingAdjustmentsRoute
+  '/docs/stocking/reception': typeof DocsStockingReceptionRoute
+  '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
+  '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/stocking/': typeof DocsStockingIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -191,6 +277,15 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference/'
+    | '/docs/inventory/archive-and-restore'
+    | '/docs/inventory/create-product'
+    | '/docs/inventory/manage-variants'
+    | '/docs/inventory/update-and-pricing'
+    | '/docs/stocking/adjustments'
+    | '/docs/stocking/reception'
+    | '/docs/stocking/reconciliation'
+    | '/docs/stocking/transfers'
+    | '/docs/stocking/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -210,6 +305,15 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference'
+    | '/docs/inventory/archive-and-restore'
+    | '/docs/inventory/create-product'
+    | '/docs/inventory/manage-variants'
+    | '/docs/inventory/update-and-pricing'
+    | '/docs/stocking/adjustments'
+    | '/docs/stocking/reception'
+    | '/docs/stocking/reconciliation'
+    | '/docs/stocking/transfers'
+    | '/docs/stocking'
   id:
     | '__root__'
     | '/'
@@ -229,6 +333,15 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference/'
+    | '/docs/inventory/archive-and-restore'
+    | '/docs/inventory/create-product'
+    | '/docs/inventory/manage-variants'
+    | '/docs/inventory/update-and-pricing'
+    | '/docs/stocking/adjustments'
+    | '/docs/stocking/reception'
+    | '/docs/stocking/reconciliation'
+    | '/docs/stocking/transfers'
+    | '/docs/stocking/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -249,6 +362,15 @@ export interface RootRouteChildren {
   DocsSupportRoute: typeof DocsSupportRoute
   DocsWebhooksRoute: typeof DocsWebhooksRoute
   ApiReferenceIndexRoute: typeof ApiReferenceIndexRoute
+  DocsInventoryArchiveAndRestoreRoute: typeof DocsInventoryArchiveAndRestoreRoute
+  DocsInventoryCreateProductRoute: typeof DocsInventoryCreateProductRoute
+  DocsInventoryManageVariantsRoute: typeof DocsInventoryManageVariantsRoute
+  DocsInventoryUpdateAndPricingRoute: typeof DocsInventoryUpdateAndPricingRoute
+  DocsStockingAdjustmentsRoute: typeof DocsStockingAdjustmentsRoute
+  DocsStockingReceptionRoute: typeof DocsStockingReceptionRoute
+  DocsStockingReconciliationRoute: typeof DocsStockingReconciliationRoute
+  DocsStockingTransfersRoute: typeof DocsStockingTransfersRoute
+  DocsStockingIndexRoute: typeof DocsStockingIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -372,6 +494,69 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsWebhooksRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/docs/inventory/archive-and-restore': {
+      id: '/docs/inventory/archive-and-restore'
+      path: '/docs/inventory/archive-and-restore'
+      fullPath: '/docs/inventory/archive-and-restore'
+      preLoaderRoute: typeof DocsInventoryArchiveAndRestoreRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/inventory/create-product': {
+      id: '/docs/inventory/create-product'
+      path: '/docs/inventory/create-product'
+      fullPath: '/docs/inventory/create-product'
+      preLoaderRoute: typeof DocsInventoryCreateProductRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/inventory/manage-variants': {
+      id: '/docs/inventory/manage-variants'
+      path: '/docs/inventory/manage-variants'
+      fullPath: '/docs/inventory/manage-variants'
+      preLoaderRoute: typeof DocsInventoryManageVariantsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/inventory/update-and-pricing': {
+      id: '/docs/inventory/update-and-pricing'
+      path: '/docs/inventory/update-and-pricing'
+      fullPath: '/docs/inventory/update-and-pricing'
+      preLoaderRoute: typeof DocsInventoryUpdateAndPricingRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/stocking/': {
+      id: '/docs/stocking/'
+      path: '/docs/stocking'
+      fullPath: '/docs/stocking/'
+      preLoaderRoute: typeof DocsStockingIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/stocking/adjustments': {
+      id: '/docs/stocking/adjustments'
+      path: '/docs/stocking/adjustments'
+      fullPath: '/docs/stocking/adjustments'
+      preLoaderRoute: typeof DocsStockingAdjustmentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/stocking/reception': {
+      id: '/docs/stocking/reception'
+      path: '/docs/stocking/reception'
+      fullPath: '/docs/stocking/reception'
+      preLoaderRoute: typeof DocsStockingReceptionRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/stocking/reconciliation': {
+      id: '/docs/stocking/reconciliation'
+      path: '/docs/stocking/reconciliation'
+      fullPath: '/docs/stocking/reconciliation'
+      preLoaderRoute: typeof DocsStockingReconciliationRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/stocking/transfers': {
+      id: '/docs/stocking/transfers'
+      path: '/docs/stocking/transfers'
+      fullPath: '/docs/stocking/transfers'
+      preLoaderRoute: typeof DocsStockingTransfersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -393,6 +578,15 @@ const rootRouteChildren: RootRouteChildren = {
   DocsSupportRoute: DocsSupportRoute,
   DocsWebhooksRoute: DocsWebhooksRoute,
   ApiReferenceIndexRoute: ApiReferenceIndexRoute,
+  DocsInventoryArchiveAndRestoreRoute: DocsInventoryArchiveAndRestoreRoute,
+  DocsInventoryCreateProductRoute: DocsInventoryCreateProductRoute,
+  DocsInventoryManageVariantsRoute: DocsInventoryManageVariantsRoute,
+  DocsInventoryUpdateAndPricingRoute: DocsInventoryUpdateAndPricingRoute,
+  DocsStockingAdjustmentsRoute: DocsStockingAdjustmentsRoute,
+  DocsStockingReceptionRoute: DocsStockingReceptionRoute,
+  DocsStockingReconciliationRoute: DocsStockingReconciliationRoute,
+  DocsStockingTransfersRoute: DocsStockingTransfersRoute,
+  DocsStockingIndexRoute: DocsStockingIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
