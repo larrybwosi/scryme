@@ -32,40 +32,40 @@ export const Route = createFileRoute('/project-management-scheduling')({
 
 function LiveTelemetryTicker() {
   return (
-    <section className="w-full border-b border-[#12372a]/10 bg-[#f4f3f0]/80 px-4 py-3 backdrop-blur-md md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full border-b border-[#12372a]/10 bg-[var(--bg-secondary)]/80 px-4 py-3 backdrop-blur-md md:px-8">
       <div className="mx-auto flex max-w-[1600px] flex-wrap items-center justify-between gap-x-6 gap-y-2">
-        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-[#414844]">
+        <div className="flex flex-wrap items-center gap-x-6 gap-y-2 font-mono text-xs text-[var(--text-muted)]">
           <div className="flex items-center gap-2">
             <span className="h-1.5 w-1.5 rounded-full bg-[#bef529]" />
             <span className="font-semibold text-[#1a1c1a]">ACTIVE PROJECTS:</span>
-            <span className="font-medium text-[#002116]">412 GLOBALLY</span>
+            <span className="font-medium text-[var(--text-main)]">412 GLOBALLY</span>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
-            <span className="text-[#414844]/40">/</span>
+            <span className="text-[var(--text-muted)]/40">/</span>
             <span className="font-semibold text-[#1a1c1a]">RESOURCE UTILIZATION:</span>
-            <span className="font-medium text-[#4d6700]">91.4% OPTIMAL</span>
+            <span className="font-medium text-[#4d6700] dark:text-[#d2ff3a]">91.4% OPTIMAL</span>
           </div>
           <div className="hidden items-center gap-2 md:flex">
-            <span className="text-[#414844]/40">/</span>
+            <span className="text-[var(--text-muted)]/40">/</span>
             <span className="font-semibold text-[#1a1c1a]">SCHEDULE DRIFT:</span>
-            <span className="font-medium text-[#002116]">±0.0% DETERMINISTIC</span>
+            <span className="font-medium text-[var(--text-main)]">±0.0% DETERMINISTIC</span>
           </div>
           <div className="hidden items-center gap-2 xl:flex">
-            <span className="text-[#414844]/40">/</span>
+            <span className="text-[var(--text-muted)]/40">/</span>
             <span className="font-semibold text-[#1a1c1a]">LEDGER-TIED BUDGETS:</span>
-            <span className="font-medium text-[#002116]">$84.2M ACTIVE COMMITTED</span>
+            <span className="font-medium text-[var(--text-main)]">$84.2M ACTIVE COMMITTED</span>
           </div>
         </div>
-        <div className="flex items-center gap-3 font-mono text-[10px] text-[#414844]">
-          <span className="flex items-center gap-1.5 rounded bg-[#efeeeb] px-2 py-0.5 font-medium text-[#1a1c1a]">
+        <div className="flex items-center gap-3 font-mono text-[10px] text-[var(--text-muted)]">
+          <span className="flex items-center gap-1.5 rounded bg-[var(--bg-tertiary)] px-2 py-0.5 font-medium text-[#1a1c1a]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700]" />
             LON_NODE [0.4ms]
           </span>
-          <span className="flex items-center gap-1.5 rounded bg-[#efeeeb] px-2 py-0.5 font-medium text-[#1a1c1a]">
+          <span className="flex items-center gap-1.5 rounded bg-[var(--bg-tertiary)] px-2 py-0.5 font-medium text-[#1a1c1a]">
             <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700]" />
             ZRH_CORE [0.6ms]
           </span>
-          <span className="hidden items-center gap-1.5 rounded bg-[#efeeeb] px-2 py-0.5 font-medium text-[#1a1c1a] sm:flex">
+          <span className="hidden items-center gap-1.5 rounded bg-[var(--bg-tertiary)] px-2 py-0.5 font-medium text-[#1a1c1a] sm:flex">
             <span className="h-1.5 w-1.5 rounded-full bg-[#4d6700]" />
             TYO_EDGE [1.1ms]
           </span>
@@ -87,21 +87,21 @@ function Hero() {
   }
 
   return (
-    <section className="mx-auto max-w-[1600px] w-full px-4 pt-14 pb-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="mx-auto max-w-[1600px] w-full px-4 pt-14 pb-20 md:px-8">
       <div className="grid grid-cols-1 gap-6 items-start lg:grid-cols-12">
         <div className="flex flex-col gap-6 lg:col-span-8">
-          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#12372a]/10 bg-[#efeeeb] px-3 py-1">
+          <div className="inline-flex w-fit items-center gap-2 rounded-full border border-[#12372a]/10 bg-[var(--bg-tertiary)] px-3 py-1">
             <span className="h-2 w-2 rounded-full bg-[#bef529]" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#414844]">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
               CORE PILLAR 06 • PROJECT MANAGEMENT, SCHEDULING &amp; RESOURCE ORCHESTRATION
             </span>
           </div>
 
-          <h1 className="max-w-4xl font-serif text-4xl font-normal leading-tight tracking-tight text-[#002116] sm:text-5xl lg:text-[64px] lg:leading-[70px]">
+          <h1 className="max-w-4xl font-serif text-4xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-5xl lg:text-[64px] lg:leading-[70px]">
             Synchronize capital, crews, and critical paths directly to the enterprise ledger.
           </h1>
 
-          <p className="max-w-2xl font-sans text-base leading-relaxed text-[#414844] sm:text-lg font-normal">
+          <p className="max-w-2xl font-sans text-base leading-relaxed text-[var(--text-muted)] sm:text-lg font-normal">
             Eliminate disconnected project trackers and manual timesheet reconciliation. Scryme fuses critical-path Gantt timelines, autonomous shift scheduling, contractor milestones, and real-time ERP inventory allocations into one deterministic operating kernel.
           </p>
 
@@ -117,14 +117,14 @@ function Hero() {
             <button
               type="button"
               onClick={scrollToPillars}
-              className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#12372a]/10 bg-[#efeeeb] px-5 py-3.5 font-sans text-xs font-semibold uppercase tracking-wider text-[#1a1c1a] transition-colors hover:bg-[#e9e8e5]"
+              className="flex cursor-pointer items-center gap-2 rounded-lg border border-[#12372a]/10 bg-[var(--bg-tertiary)] px-5 py-3.5 font-sans text-xs font-semibold uppercase tracking-wider text-[#1a1c1a] transition-colors hover:bg-[var(--bg-tertiary)]"
             >
               <span>Explore Resource Scheduler</span>
               <ArrowDown className="h-4 w-4" />
             </button>
             <a
               href="https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true"
-              className="flex items-center gap-1.5 px-4 py-3.5 font-sans text-xs font-semibold text-[#414844] transition-colors hover:text-[#002116]"
+              className="flex items-center gap-1.5 px-4 py-3.5 font-sans text-xs font-semibold text-[var(--text-muted)] transition-colors hover:text-[var(--text-main)]"
             >
               <Download className="h-4 w-4" />
               <span>Download Planning SDK v3.2</span>
@@ -137,7 +137,7 @@ function Hero() {
           <div className="relative overflow-hidden rounded-xl border border-[#12372a]/10 bg-white p-6 shadow-[0_4px_24px_rgba(18,55,42,0.06)]">
             <div className="pointer-events-none absolute -right-6 -bottom-6 h-32 w-32 rounded-full bg-[#bef529]/15 blur-2xl" />
             <div className="flex items-center justify-between border-b border-[#12372a]/10 pb-4">
-              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#414844]">
+              <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                 KERNEL PERFORMANCE INDEX
               </span>
               <span className="rounded-full bg-[#bef529] px-2 py-0.5 font-mono text-[10px] font-bold text-[#526d00]">
@@ -146,59 +146,59 @@ function Hero() {
             </div>
             <div className="divide-y divide-[#12372a]/10">
               <div className="flex flex-col py-4">
-                <span className="font-serif text-[44px] font-normal leading-tight text-[#002116]">
+                <span className="font-serif text-[44px] font-normal leading-tight text-[var(--text-main)]">
                   0.00s
                 </span>
                 <span className="font-sans text-xs font-semibold text-[#1a1c1a]">
                   Budget Sync Latency
                 </span>
-                <span className="mt-0.5 font-sans text-xs text-[#414844]">
+                <span className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Sub-millisecond ledger commit per task status alteration
                 </span>
               </div>
               <div className="flex flex-col py-4">
                 <div className="flex items-baseline gap-2">
-                  <span className="font-serif text-[44px] font-normal leading-tight text-[#002116]">
+                  <span className="font-serif text-[44px] font-normal leading-tight text-[var(--text-main)]">
                     99.8%
                   </span>
-                  <span className="font-mono text-[10px] font-bold text-[#4d6700]">
+                  <span className="font-mono text-[10px] font-bold text-[#4d6700] dark:text-[#d2ff3a]">
                     ↑ +14.2% YoY
                   </span>
                 </div>
                 <span className="font-sans text-xs font-semibold text-[#1a1c1a]">
                   Critical Path On-Time Rate
                 </span>
-                <span className="mt-0.5 font-sans text-xs text-[#414844]">
+                <span className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Automated material leveling eliminates stage gating bottlenecks
                 </span>
               </div>
               <div className="flex flex-col pt-4">
-                <span className="font-serif text-[44px] font-normal leading-tight text-[#002116]">
+                <span className="font-serif text-[44px] font-normal leading-tight text-[var(--text-main)]">
                   -42%
                 </span>
                 <span className="font-sans text-xs font-semibold text-[#1a1c1a]">
                   Project Overhead
                 </span>
-                <span className="mt-0.5 font-sans text-xs text-[#414844]">
+                <span className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Reduces administrative billing overhead &amp; discrepancy reviews
                 </span>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center justify-between rounded-xl border border-[#12372a]/5 bg-[#efeeeb] p-4">
+          <div className="flex items-center justify-between rounded-xl border border-[#12372a]/5 bg-[var(--bg-tertiary)] p-4">
             <div className="flex items-center gap-3">
               <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-[#002116] text-white">
                 <Wallet className="h-5 w-5 text-white" />
               </div>
               <div>
                 <div className="font-sans text-xs font-semibold text-[#1a1c1a]">EVM Engine Linked</div>
-                <div className="font-mono text-[11px] text-[#414844]">
+                <div className="font-mono text-[11px] text-[var(--text-muted)]">
                   ANSI/EIA-748-C Standard Certified
                 </div>
               </div>
             </div>
-            <Verified className="h-5 w-5 text-[#4d6700]" />
+            <Verified className="h-5 w-5 text-[#4d6700] dark:text-[#d2ff3a]" />
           </div>
         </div>
       </div>
@@ -218,26 +218,26 @@ function ProjectSimulatorCockpit() {
         <div className="flex flex-col items-start justify-between gap-4 border-b border-[#12372a]/10 pb-6 lg:flex-row lg:items-center">
           <div>
             <div className="flex items-center gap-3">
-              <h2 className="font-serif text-2xl font-medium text-[#002116] sm:text-3xl">
+              <h2 className="font-serif text-2xl font-medium text-[var(--text-main)] sm:text-3xl">
                 Interactive Project Simulator Cockpit
               </h2>
               <span className="rounded-full bg-[#bef529] px-2.5 py-0.5 font-mono text-[10px] font-semibold text-[#526d00]">
                 LIVE STATE v3.2
               </span>
             </div>
-            <p className="mt-1 font-sans text-sm text-[#414844]">
+            <p className="mt-1 font-sans text-sm text-[var(--text-muted)]">
               Multi-entity Work Breakdown Structure fused with deterministic supply chain allocation and labor ledger telemetry.
             </p>
           </div>
 
-          <div className="flex w-full items-center rounded-xl border border-[#12372a]/10 bg-[#efeeeb] p-1 sm:w-auto">
+          <div className="flex w-full items-center rounded-xl border border-[#12372a]/10 bg-[var(--bg-tertiary)] p-1 sm:w-auto">
             <button
               type="button"
               onClick={() => setMode('gantt')}
               className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 font-sans text-xs font-semibold transition-all sm:flex-none ${
                 mode === 'gantt'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               <GanttChart className="h-4 w-4" />
@@ -248,8 +248,8 @@ function ProjectSimulatorCockpit() {
               onClick={() => setMode('shifts')}
               className={`flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-lg px-4 py-2 font-sans text-xs font-semibold transition-all sm:flex-none ${
                 mode === 'shifts'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               <Users className="h-4 w-4" />
@@ -259,45 +259,45 @@ function ProjectSimulatorCockpit() {
         </div>
 
         {/* Active Project Metadata Bar */}
-        <div className="-mx-6 grid grid-cols-1 gap-4 border-b border-[#12372a]/10 bg-[#f4f3f0]/40 px-6 py-5 md:grid-cols-4 lg:-mx-8 lg:px-8">
+        <div className="-mx-6 grid grid-cols-1 gap-4 border-b border-[#12372a]/10 bg-[var(--bg-secondary)]/40 px-6 py-5 md:grid-cols-4 lg:-mx-8 lg:px-8">
           <div>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[#414844]">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
               PROJECT DESIGNATION
             </span>
-            <div className="mt-0.5 truncate font-sans text-sm font-semibold text-[#002116]">
+            <div className="mt-0.5 truncate font-sans text-sm font-semibold text-[var(--text-main)]">
               Project Chimera // Robotics DC
             </div>
-            <span className="font-mono text-xs text-[#414844]">$14.8M Capex Greenfield Build</span>
+            <span className="font-mono text-xs text-[var(--text-muted)]">$14.8M Capex Greenfield Build</span>
           </div>
           <div>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[#414844]">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
               EXECUTION INTEGRITY
             </span>
             <div className="mt-0.5 flex items-center gap-2">
               <span className="h-2 w-2 rounded-full bg-[#bef529]" />
               <span className="font-sans text-xs font-semibold text-[#1a1c1a]">ON SCHEDULE</span>
             </div>
-            <span className="font-mono text-xs font-medium text-[#4d6700]">P95 LATENCY: 0.4ms</span>
+            <span className="font-mono text-xs font-medium text-[#4d6700] dark:text-[#d2ff3a]">P95 LATENCY: 0.4ms</span>
           </div>
           <div>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[#414844]">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
               BUDGET BURN &amp; EARNED VALUE
             </span>
-            <div className="mt-0.5 font-sans text-xs font-semibold text-[#002116]">
+            <div className="mt-0.5 font-sans text-xs font-semibold text-[var(--text-main)]">
               $6.2M Spent / 42.0% Committed
             </div>
-            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[#efeeeb]">
+            <div className="mt-1.5 h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-tertiary)]">
               <div className="h-full rounded-full bg-[#002116]" style={{ width: '42%' }} />
             </div>
           </div>
           <div>
-            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[#414844]">
+            <span className="font-mono text-[10px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
               RESOURCE ORCHESTRATION
             </span>
             <div className="mt-0.5 font-sans text-xs font-semibold text-[#1a1c1a]">
               68 FTEs + 24 Specialized Contractors
             </div>
-            <span className="font-mono text-xs text-[#414844]">Rotterdam Node Logistics Sync</span>
+            <span className="font-mono text-xs text-[var(--text-muted)]">Rotterdam Node Logistics Sync</span>
           </div>
         </div>
 
@@ -307,42 +307,42 @@ function ProjectSimulatorCockpit() {
             <div className="grid grid-cols-1 gap-6 xl:grid-cols-12">
               {/* Left WBS Table (5 cols) */}
               <div className="flex flex-col gap-2 xl:col-span-5">
-                <div className="flex items-center justify-between rounded-lg bg-[#efeeeb] px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[#414844]">
+                <div className="flex items-center justify-between rounded-lg bg-[var(--bg-tertiary)] px-3 py-2 font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                   <span>WBS Phase &amp; Task Hierarchy</span>
                   <span>ERP Material Bind</span>
                 </div>
 
                 {/* Task Row 1 */}
-                <div className="flex flex-col gap-2 rounded-lg bg-[#f4f3f0] p-3 transition-colors hover:bg-[#efeeeb]">
+                <div className="flex flex-col gap-2 rounded-lg bg-[var(--bg-secondary)] p-3 transition-colors hover:bg-[var(--bg-tertiary)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-[#efeeeb] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#414844]">
+                      <span className="rounded bg-[var(--bg-tertiary)] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[var(--text-muted)]">
                         1.0
                       </span>
-                      <span className="font-sans text-xs font-semibold text-[#002116]">
+                      <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                         Civil &amp; Foundation Ingest
                       </span>
                     </div>
-                    <span className="rounded-full bg-[#efeeeb] px-2 py-0.5 font-mono text-[10px] font-bold text-[#414844]">
+                    <span className="rounded-full bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[10px] font-bold text-[var(--text-muted)]">
                       100% DONE
                     </span>
                   </div>
-                  <div className="flex items-center justify-between font-sans text-xs text-[#414844]">
+                  <div className="flex items-center justify-between font-sans text-xs text-[var(--text-muted)]">
                     <span>Crew A • J. Vogel (Lead)</span>
-                    <span className="font-mono text-[11px] font-medium text-[#4d6700]">
+                    <span className="font-mono text-[11px] font-medium text-[#4d6700] dark:text-[#d2ff3a]">
                       PO-9102 Material Cleared
                     </span>
                   </div>
                 </div>
 
                 {/* Task Row 2 (Critical Path Active) */}
-                <div className="flex flex-col gap-2 rounded-lg border-l-4 border-l-[#ba1a1a] bg-[#f4f3f0] p-3 shadow-sm transition-colors hover:bg-[#efeeeb]">
+                <div className="flex flex-col gap-2 rounded-lg border-l-4 border-l-[#ba1a1a] bg-[var(--bg-secondary)] p-3 shadow-sm transition-colors hover:bg-[var(--bg-tertiary)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-[#ffdad6] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#93000a]">
                         2.1
                       </span>
-                      <span className="font-sans text-xs font-semibold text-[#002116]">
+                      <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                         Automated AGV Track Deployment
                       </span>
                     </div>
@@ -350,77 +350,77 @@ function ProjectSimulatorCockpit() {
                       CRITICAL PATH
                     </span>
                   </div>
-                  <div className="flex items-center justify-between font-sans text-xs text-[#414844]">
+                  <div className="flex items-center justify-between font-sans text-xs text-[var(--text-muted)]">
                     <span>Robotics Fleet Eng • 14 Specialists</span>
-                    <span className="rounded bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-[#002116]">
+                    <span className="rounded bg-white px-2 py-0.5 font-mono text-[11px] font-semibold text-[var(--text-main)]">
                       PO-9912 Material Locked
                     </span>
                   </div>
-                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[#efeeeb]">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-[var(--bg-tertiary)]">
                     <div className="h-full rounded-full bg-[#4d6700]" style={{ width: '68%' }} />
                   </div>
                 </div>
 
                 {/* Task Row 3 */}
-                <div className="flex flex-col gap-2 rounded-lg border-l-4 border-l-[#ba1a1a] bg-[#f4f3f0] p-3 transition-colors hover:bg-[#efeeeb]">
+                <div className="flex flex-col gap-2 rounded-lg border-l-4 border-l-[#ba1a1a] bg-[var(--bg-secondary)] p-3 transition-colors hover:bg-[var(--bg-tertiary)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <span className="rounded bg-[#ffdad6] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#93000a]">
                         2.2
                       </span>
-                      <span className="font-sans text-xs font-semibold text-[#002116]">
+                      <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                         High-Bay Racking Sensor Bus
                       </span>
                     </div>
-                    <span className="rounded-full bg-[#efeeeb] px-2 py-0.5 font-mono text-[10px] text-[#414844]">
+                    <span className="rounded-full bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
                       PENDING DEP
                     </span>
                   </div>
-                  <div className="flex items-center justify-between font-sans text-xs text-[#414844]">
+                  <div className="flex items-center justify-between font-sans text-xs text-[var(--text-muted)]">
                     <span>Subcontractor: Kuka Field Integration</span>
-                    <span className="font-mono text-[11px] text-[#414844]">In-Stock Rotterdam WH</span>
+                    <span className="font-mono text-[11px] text-[var(--text-muted)]">In-Stock Rotterdam WH</span>
                   </div>
                 </div>
 
                 {/* Task Row 4 */}
-                <div className="flex flex-col gap-2 rounded-lg bg-[#f4f3f0] p-3 transition-colors hover:bg-[#efeeeb]">
+                <div className="flex flex-col gap-2 rounded-lg bg-[var(--bg-secondary)] p-3 transition-colors hover:bg-[var(--bg-tertiary)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-[#efeeeb] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#414844]">
+                      <span className="rounded bg-[var(--bg-tertiary)] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[var(--text-muted)]">
                         3.0
                       </span>
-                      <span className="font-sans text-xs font-semibold text-[#002116]">
+                      <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                         Firmware Mesh &amp; Sensor Calibration
                       </span>
                     </div>
-                    <span className="rounded-full bg-[#efeeeb] px-2 py-0.5 font-mono text-[10px] text-[#414844]">
+                    <span className="rounded-full bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
                       QUEUED
                     </span>
                   </div>
-                  <div className="flex items-center justify-between font-sans text-xs text-[#414844]">
+                  <div className="flex items-center justify-between font-sans text-xs text-[var(--text-muted)]">
                     <span>Firmware Squad Alpha • Zurich Remote</span>
-                    <span className="font-mono text-[11px] text-[#414844]">Cloud Node Staged</span>
+                    <span className="font-mono text-[11px] text-[var(--text-muted)]">Cloud Node Staged</span>
                   </div>
                 </div>
 
                 {/* Task Row 5 */}
-                <div className="flex flex-col gap-2 rounded-lg bg-[#f4f3f0] p-3 transition-colors hover:bg-[#efeeeb]">
+                <div className="flex flex-col gap-2 rounded-lg bg-[var(--bg-secondary)] p-3 transition-colors hover:bg-[var(--bg-tertiary)]">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-2">
-                      <span className="rounded bg-[#efeeeb] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[#414844]">
+                      <span className="rounded bg-[var(--bg-tertiary)] px-1.5 py-0.5 font-mono text-[11px] font-bold text-[var(--text-muted)]">
                         4.0
                       </span>
-                      <span className="font-sans text-xs font-semibold text-[#002116]">
+                      <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                         General Ledger Capitalization &amp; Handover
                       </span>
                     </div>
-                    <span className="rounded-full bg-[#efeeeb] px-2 py-0.5 font-mono text-[10px] text-[#414844]">
+                    <span className="rounded-full bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
                       FINAL GATE
                     </span>
                   </div>
-                  <div className="flex items-center justify-between font-sans text-xs text-[#414844]">
+                  <div className="flex items-center justify-between font-sans text-xs text-[var(--text-muted)]">
                     <span>CFO Desk • Auto Depreciation Schedule</span>
-                    <span className="font-mono text-[11px] font-medium text-[#4d6700]">
+                    <span className="font-mono text-[11px] font-medium text-[#4d6700] dark:text-[#d2ff3a]">
                       SAP/IFRS 16 Sync
                     </span>
                   </div>
@@ -428,12 +428,12 @@ function ProjectSimulatorCockpit() {
               </div>
 
               {/* Right Interactive Gantt Chart (7 cols) */}
-              <div className="flex flex-col overflow-x-auto rounded-xl bg-[#f4f3f0]/50 p-4 xl:col-span-7">
+              <div className="flex flex-col overflow-x-auto rounded-xl bg-[var(--bg-secondary)]/50 p-4 xl:col-span-7">
                 <div className="flex min-w-[540px] items-center justify-between border-b border-[#12372a]/10 pb-3">
-                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[var(--text-muted)]">
                     CRITICAL PATH GANTT TIMELINE // SPRINT WEEKS
                   </span>
-                  <div className="flex items-center gap-3 font-mono text-[11px] text-[#414844]">
+                  <div className="flex items-center gap-3 font-mono text-[11px] text-[var(--text-muted)]">
                     <span className="flex items-center gap-1">
                       <span className="h-1.5 w-3 rounded-sm bg-[#ba1a1a]" /> Critical Path
                     </span>
@@ -447,7 +447,7 @@ function ProjectSimulatorCockpit() {
                 </div>
 
                 {/* Timeline Header Weeks */}
-                <div className="grid min-w-[540px] grid-cols-6 border-b border-[#12372a]/10 py-2 text-center font-mono text-[11px] text-[#414844]">
+                <div className="grid min-w-[540px] grid-cols-6 border-b border-[#12372a]/10 py-2 text-center font-mono text-[11px] text-[var(--text-muted)]">
                   <div>W18 (May)</div>
                   <div>W20</div>
                   <div>W22 (Jun)</div>
@@ -472,7 +472,7 @@ function ProjectSimulatorCockpit() {
                   <div className="relative flex h-8 items-center">
                     <div className="flex h-6 w-1/3 items-center justify-between rounded-md bg-[#002116]/20 px-3 text-[#1a1c1a]">
                       <span className="font-mono text-[10px] font-bold">1.0 FOUNDATION</span>
-                      <CheckCircle2 className="h-3.5 w-3.5 text-[#4d6700]" />
+                      <CheckCircle2 className="h-3.5 w-3.5 text-[#4d6700] dark:text-[#d2ff3a]" />
                     </div>
                   </div>
 
@@ -509,7 +509,7 @@ function ProjectSimulatorCockpit() {
                   <div className="relative flex h-8 items-center">
                     <div className="ml-[92%] flex items-center gap-2">
                       <div className="h-4 w-4 rotate-45 bg-[#bef529] shadow-sm" />
-                      <span className="font-mono text-[10px] font-bold text-[#002116]">
+                      <span className="font-mono text-[10px] font-bold text-[var(--text-main)]">
                         CAPITALIZE
                       </span>
                     </div>
@@ -519,23 +519,23 @@ function ProjectSimulatorCockpit() {
                 {/* EVM Stream Sub-Panel */}
                 <div className="mt-4 flex min-w-[540px] flex-col gap-2 border-t border-[#12372a]/10 pt-4">
                   <div className="flex items-center justify-between">
-                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#414844]">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
                       LEDGER EARNED VALUE MANAGEMENT (EVM) STREAM
                     </span>
                     <div className="flex items-center gap-4 font-mono text-[11px]">
                       <span className="text-[#1a1c1a]">
-                        <span className="font-bold text-[#002116]">CPI: 1.04</span> (Cost Efficient)
+                        <span className="font-bold text-[var(--text-main)]">CPI: 1.04</span> (Cost Efficient)
                       </span>
                       <span className="text-[#1a1c1a]">
-                        <span className="font-bold text-[#4d6700]">SPI: 1.02</span> (Ahead of Schedule)
+                        <span className="font-bold text-[#4d6700] dark:text-[#d2ff3a]">SPI: 1.02</span> (Ahead of Schedule)
                       </span>
                     </div>
                   </div>
 
                   {/* SVG Inline Sparkline / S-Curve */}
-                  <div className="flex h-16 w-full items-center rounded-lg bg-[#efeeeb] p-2">
+                  <div className="flex h-16 w-full items-center rounded-lg bg-[var(--bg-tertiary)] p-2">
                     <svg
-                      className="h-full w-full text-[#002116]"
+                      className="h-full w-full text-[var(--text-main)]"
                       fill="none"
                       viewBox="0 0 500 50"
                       preserveAspectRatio="none"
@@ -551,7 +551,7 @@ function ProjectSimulatorCockpit() {
                       <circle cx="250" cy="22" fill="#bef529" r="4" stroke="#12372a" strokeWidth="2" />
                     </svg>
                   </div>
-                  <div className="flex justify-between font-mono text-[10px] text-[#414844]">
+                  <div className="flex justify-between font-mono text-[10px] text-[var(--text-muted)]">
                     <span>COMMITTED PO: $6.2M</span>
                     <span>EARNED VALUE: $6.45M</span>
                     <span>VARIANCE: +$250K FAVORABLE</span>
@@ -566,62 +566,62 @@ function ProjectSimulatorCockpit() {
         {mode === 'shifts' && (
           <div className="pt-6">
             <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="flex flex-col gap-3 rounded-xl bg-[#f4f3f0] p-5">
+              <div className="flex flex-col gap-3 rounded-xl bg-[var(--bg-secondary)] p-5">
                 <div className="flex items-center justify-between">
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Crew Alpha • Robotics Engineers
                   </span>
                   <span className="rounded bg-[#bef529] px-2 py-0.5 font-mono text-[10px] font-bold text-[#526d00]">
                     100% ROSTERED
                   </span>
                 </div>
-                <div className="font-sans text-xs text-[#414844]">
+                <div className="font-sans text-xs text-[var(--text-muted)]">
                   14 FTEs • Certified Level 4 Autonomous Rail Foremen
                 </div>
                 <div className="divide-y divide-[#12372a]/10">
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Day Shift (06:00 - 14:30)</span>
-                    <span className="font-mono text-[11px] font-medium text-[#002116]">
+                    <span className="font-mono text-[11px] font-medium text-[var(--text-main)]">
                       8 Engineers / Active
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Swing Shift (14:30 - 23:00)</span>
-                    <span className="font-mono text-[11px] font-medium text-[#002116]">
+                    <span className="font-mono text-[11px] font-medium text-[var(--text-main)]">
                       6 Engineers / Staged
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Overtime Cap Guardrail</span>
-                    <span className="font-mono text-[11px] font-medium text-[#4d6700]">
+                    <span className="font-mono text-[11px] font-medium text-[#4d6700] dark:text-[#d2ff3a]">
                       0.0h (Within CEA Rules)
                     </span>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-xl bg-[#f4f3f0] p-5">
+              <div className="flex flex-col gap-3 rounded-xl bg-[var(--bg-secondary)] p-5">
                 <div className="flex items-center justify-between">
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Crew Beta • High-Voltage Electricians
                   </span>
-                  <span className="rounded bg-[#efeeeb] px-2 py-0.5 font-mono text-[10px] font-bold text-[#414844]">
+                  <span className="rounded bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[10px] font-bold text-[var(--text-muted)]">
                     92% ROSTERED
                   </span>
                 </div>
-                <div className="font-sans text-xs text-[#414844]">
+                <div className="font-sans text-xs text-[var(--text-muted)]">
                   18 Subcontractors (Siemens Field Guild)
                 </div>
                 <div className="divide-y divide-[#12372a]/10">
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Busbar Termination Sprint</span>
-                    <span className="font-mono text-[11px] font-medium text-[#002116]">
+                    <span className="font-mono text-[11px] font-medium text-[var(--text-main)]">
                       10 Techs Assigned
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Safety Compliance Lock</span>
-                    <span className="font-mono text-[11px] font-medium text-[#4d6700]">
+                    <span className="font-mono text-[11px] font-medium text-[#4d6700] dark:text-[#d2ff3a]">
                       OSHA 1910 Cleared
                     </span>
                   </div>
@@ -634,34 +634,34 @@ function ProjectSimulatorCockpit() {
                 </div>
               </div>
 
-              <div className="flex flex-col gap-3 rounded-xl bg-[#f4f3f0] p-5">
+              <div className="flex flex-col gap-3 rounded-xl bg-[var(--bg-secondary)] p-5">
                 <div className="flex items-center justify-between">
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Heavy Machinery Allocation
                   </span>
                   <span className="rounded bg-[#bef529] px-2 py-0.5 font-mono text-[10px] font-bold text-[#526d00]">
                     NATIVE RESERVED
                   </span>
                 </div>
-                <div className="font-sans text-xs text-[#414844]">
+                <div className="font-sans text-xs text-[var(--text-muted)]">
                   Direct ERP Equipment Ledger Binding
                 </div>
                 <div className="divide-y divide-[#12372a]/10">
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Liebherr MK-88 Mobile Crane</span>
-                    <span className="font-mono text-[11px] font-medium text-[#002116]">
+                    <span className="font-mono text-[11px] font-medium text-[var(--text-main)]">
                       Reserved Gate 2.1
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Scissor Lift Battery Fleet (x8)</span>
-                    <span className="font-mono text-[11px] font-medium text-[#002116]">
+                    <span className="font-mono text-[11px] font-medium text-[var(--text-main)]">
                       Rotterdam Depot Pool
                     </span>
                   </div>
                   <div className="flex items-center justify-between py-2 font-sans text-xs">
                     <span>Telematics Sync</span>
-                    <span className="font-mono text-[11px] font-medium text-[#4d6700]">
+                    <span className="font-mono text-[11px] font-medium text-[#4d6700] dark:text-[#d2ff3a]">
                       CAN-Bus Live (428 hrs)
                     </span>
                   </div>
@@ -681,17 +681,17 @@ function ArchitecturalPillars() {
   return (
     <section
       id="architectural-pillars"
-      className="w-full border-y border-[#12372a]/5 bg-[#f4f3f0]/60 px-4 py-20 md:px-8"
+      className="w-full border-y border-[#12372a]/5 bg-[var(--bg-secondary)]/60 px-4 py-20 md:px-8"
     >
       <div className="mx-auto flex max-w-[1600px] flex-col gap-12">
         <div className="flex max-w-3xl flex-col gap-2">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             ARCHITECTURAL TAXONOMY
           </span>
-          <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Four Pillars of Deterministic Project Orchestration
           </h2>
-          <p className="font-sans text-base text-[#414844]">
+          <p className="font-sans text-base text-[var(--text-muted)]">
             Conventional project trackers operate as isolated silos. Scryme embeds task logic directly into the enterprise ERP ledger, accounting rules, and global supply networks.
           </p>
         </div>
@@ -705,49 +705,49 @@ function ArchitecturalPillars() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#002116] font-mono text-xs font-bold text-white">
                   01
                 </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700]">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                   ANSI/EIA-748-C COMPLIANT
                 </span>
               </div>
-              <h3 className="font-serif text-xl font-medium text-[#002116]">
+              <h3 className="font-serif text-xl font-medium text-[var(--text-main)]">
                 Direct-to-Ledger Cost &amp; EVM Engine
               </h3>
-              <p className="font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Eliminate month-end reconciliation drift between project controllers and the finance desk. Every timesheet sign-off, purchase order receipt, or subcontractor progress billing writes directly to the general ledger, updating Earned Value Management (EVM) metrics in real time.
               </p>
 
-              <div className="mt-2 grid grid-cols-3 gap-3 rounded-xl bg-[#f4f3f0] p-4">
+              <div className="mt-2 grid grid-cols-3 gap-3 rounded-xl bg-[var(--bg-secondary)] p-4">
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] font-semibold text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--text-muted)]">
                     CPI PRECISION
                   </span>
-                  <span className="mt-1 font-serif text-[22px] font-medium text-[#002116]">
+                  <span className="mt-1 font-serif text-[22px] font-medium text-[var(--text-main)]">
                     1.04
                   </span>
-                  <span className="font-mono text-[11px] text-[#4d6700]">Real-Time Earned</span>
+                  <span className="font-mono text-[11px] text-[#4d6700] dark:text-[#d2ff3a]">Real-Time Earned</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] font-semibold text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--text-muted)]">
                     PO CAPITALIZATION
                   </span>
-                  <span className="mt-1 font-serif text-[22px] font-medium text-[#002116]">
+                  <span className="mt-1 font-serif text-[22px] font-medium text-[var(--text-main)]">
                     Automatic
                   </span>
-                  <span className="font-mono text-[11px] text-[#414844]">Gate-driven split</span>
+                  <span className="font-mono text-[11px] text-[var(--text-muted)]">Gate-driven split</span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] font-semibold text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--text-muted)]">
                     DRIFT TOLERANCE
                   </span>
-                  <span className="mt-1 font-serif text-[22px] font-medium text-[#002116]">
+                  <span className="mt-1 font-serif text-[22px] font-medium text-[var(--text-main)]">
                     ±0.00%
                   </span>
-                  <span className="font-mono text-[11px] text-[#4d6700]">Zero Month-End Lag</span>
+                  <span className="font-mono text-[11px] text-[#4d6700] dark:text-[#d2ff3a]">Zero Month-End Lag</span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[#002116] transition-colors group-hover:text-[#4d6700]">
+            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:text-[#d2ff3a]">
               <span>Explore Ledger Depreciation Integration</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </div>
@@ -760,29 +760,29 @@ function ArchitecturalPillars() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#002116] font-mono text-xs font-bold text-white">
                   02
                 </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700]">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                   MONTE CARLO READY
                 </span>
               </div>
-              <h3 className="font-serif text-xl font-medium text-[#002116]">
+              <h3 className="font-serif text-xl font-medium text-[var(--text-main)]">
                 Algorithmic Critical Path &amp; Risk Auto-Leveling
               </h3>
-              <p className="font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 When supplier shipments slip or port customs delay freight, Scryme autonomously re-evaluates dependency graph topology. Buffer allocation preserves contracted completion gates without manual scheduler intervention.
               </p>
 
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-[#f4f3f0] p-3 font-sans text-xs">
+              <div className="mt-2 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] p-3 font-sans text-xs">
                 <span className="flex items-center gap-2 font-medium text-[#1a1c1a]">
-                  <GitFork className="h-4.5 w-4.5 text-[#4d6700]" />
+                  <GitFork className="h-4.5 w-4.5 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Dynamic Buffer Preservation
                 </span>
-                <span className="font-mono text-[10px] font-bold text-[#002116]">
+                <span className="font-mono text-[10px] font-bold text-[var(--text-main)]">
                   14.2 DAYS PRESERVED
                 </span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[#002116] transition-colors group-hover:text-[#4d6700]">
+            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:text-[#d2ff3a]">
               <span>Review Topology Solver Docs</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </div>
@@ -795,27 +795,27 @@ function ArchitecturalPillars() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#002116] font-mono text-xs font-bold text-white">
                   03
                 </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700]">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                   LABOR COMPLIANCE
                 </span>
               </div>
-              <h3 className="font-serif text-xl font-medium text-[#002116]">
+              <h3 className="font-serif text-xl font-medium text-[var(--text-main)]">
                 Multi-Crew Shift &amp; Labor Optimization
               </h3>
-              <p className="font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Match specialized certifications and security clearances against project requirements. Built-in guardrails prevent union mandate violations, excessive overtime premiums, and cross-project double-booking.
               </p>
 
-              <div className="mt-2 flex items-center justify-between rounded-lg bg-[#f4f3f0] p-3 font-sans text-xs">
+              <div className="mt-2 flex items-center justify-between rounded-lg bg-[var(--bg-secondary)] p-3 font-sans text-xs">
                 <span className="flex items-center gap-2 font-medium text-[#1a1c1a]">
-                  <ShieldCheck className="h-4.5 w-4.5 text-[#4d6700]" />
+                  <ShieldCheck className="h-4.5 w-4.5 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Biometric &amp; Geofenced Clock-In
                 </span>
-                <span className="font-mono text-[10px] font-bold text-[#002116]">100% AUDITABLE</span>
+                <span className="font-mono text-[10px] font-bold text-[var(--text-main)]">100% AUDITABLE</span>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[#002116] transition-colors group-hover:text-[#4d6700]">
+            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:text-[#d2ff3a]">
               <span>Explore Workforce Rules Engine</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </div>
@@ -828,44 +828,44 @@ function ArchitecturalPillars() {
                 <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#002116] font-mono text-xs font-bold text-white">
                   04
                 </span>
-                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700]">
+                <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                   ERP WAREHOUSE INTEGRATED
                 </span>
               </div>
-              <h3 className="font-serif text-xl font-medium text-[#002116]">
+              <h3 className="font-serif text-xl font-medium text-[var(--text-main)]">
                 Native Inventory &amp; Heavy Asset Reservation
               </h3>
-              <p className="font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Eliminate task stalls caused by missing components. As Gantt phases are scheduled, specialized parts, test fixtures, and high-tonnage machinery are locked down in regional warehouse inventory rings, issuing automated replenishment purchase orders before staging dates arrive.
               </p>
 
-              <div className="mt-2 grid grid-cols-2 gap-4 rounded-xl bg-[#f4f3f0] p-4">
+              <div className="mt-2 grid grid-cols-2 gap-4 rounded-xl bg-[var(--bg-secondary)] p-4">
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] font-semibold text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--text-muted)]">
                     ASSET ALLOCATION
                   </span>
-                  <span className="mt-1 font-sans text-xs font-semibold text-[#002116]">
+                  <span className="mt-1 font-sans text-xs font-semibold text-[var(--text-main)]">
                     Multi-Warehouse Hard Lock
                   </span>
-                  <span className="font-sans text-xs text-[#414844]">
+                  <span className="font-sans text-xs text-[var(--text-muted)]">
                     Rotterdam • Singapore • Houston
                   </span>
                 </div>
                 <div className="flex flex-col">
-                  <span className="font-mono text-[10px] font-semibold text-[#414844]">
+                  <span className="font-mono text-[10px] font-semibold text-[var(--text-muted)]">
                     TELEMATICS &amp; IOT
                   </span>
-                  <span className="mt-1 font-sans text-xs font-semibold text-[#002116]">
+                  <span className="mt-1 font-sans text-xs font-semibold text-[var(--text-main)]">
                     Real-Time Utilization Feed
                   </span>
-                  <span className="font-sans text-xs text-[#414844]">
+                  <span className="font-sans text-xs text-[var(--text-muted)]">
                     Fuel, hours &amp; scheduled maintenance
                   </span>
                 </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[#002116] transition-colors group-hover:text-[#4d6700]">
+            <div className="flex items-center gap-2 pt-6 font-sans text-xs font-semibold text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:text-[#d2ff3a]">
               <span>View Multi-Node Inventory Topology</span>
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </div>
@@ -880,16 +880,16 @@ function ArchitecturalPillars() {
 
 function SectorAdaptations() {
   return (
-    <section className="mx-auto max-w-[1600px] w-full px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="mx-auto max-w-[1600px] w-full px-4 py-20 md:px-8">
       <div className="flex flex-col gap-12">
         <div className="flex max-w-2xl flex-col gap-2">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             SECTOR ADAPTATION
           </span>
-          <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Precision execution tailored to operational topology
           </h2>
-          <p className="font-sans text-base text-[#414844]">
+          <p className="font-sans text-base text-[var(--text-muted)]">
             Whether capital-intensive industrial builds or fast-moving software sprints, Scryme adapts its scheduling kernel to meet regulatory and procedural mandates.
           </p>
         </div>
@@ -898,35 +898,35 @@ function SectorAdaptations() {
           {/* Vertical 1 */}
           <div className="flex flex-col justify-between rounded-2xl border border-[#12372a]/10 bg-white p-6">
             <div className="flex flex-col gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#efeeeb] text-[#002116]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Construction className="h-6 w-6" />
               </div>
-              <h3 className="font-sans text-sm font-semibold text-[#002116]">
+              <h3 className="font-sans text-sm font-semibold text-[var(--text-main)]">
                 Industrial Engineering &amp; Infrastructure
               </h3>
-              <p className="font-sans text-xs leading-relaxed text-[#414844]">
+              <p className="font-sans text-xs leading-relaxed text-[var(--text-muted)]">
                 Designed for megaprojects, multi-stage infrastructure, and civil EPC contractors requiring rigorous compliance.
               </p>
               <ul className="flex flex-col gap-2 pt-2 font-sans text-xs text-[#1a1c1a]">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Capex tracking &amp; subcontractor lien waivers
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Multi-tier procurement milestone gates
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Heavy equipment CAN-bus telemetry
                 </li>
               </ul>
             </div>
             <div className="mt-6 border-t border-[#12372a]/10 pt-6">
-              <span className="font-mono text-[10px] uppercase text-[#414844]">
+              <span className="font-mono text-[10px] uppercase text-[var(--text-muted)]">
                 TEMPLATE SPEC:
               </span>
-              <div className="font-sans text-xs font-semibold text-[#002116]">
+              <div className="font-sans text-xs font-semibold text-[var(--text-main)]">
                 EPC Megaproject Standard // Level 4
               </div>
             </div>
@@ -935,35 +935,35 @@ function SectorAdaptations() {
           {/* Vertical 2 */}
           <div className="flex flex-col justify-between rounded-2xl border border-[#12372a]/10 bg-white p-6">
             <div className="flex flex-col gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#efeeeb] text-[#002116]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Cpu className="h-6 w-6" />
               </div>
-              <h3 className="font-sans text-sm font-semibold text-[#002116]">
+              <h3 className="font-sans text-sm font-semibold text-[var(--text-main)]">
                 High-Tech R&amp;D &amp; Product Engineering
               </h3>
-              <p className="font-sans text-xs leading-relaxed text-[#414844]">
+              <p className="font-sans text-xs leading-relaxed text-[var(--text-muted)]">
                 Integrate hardware revisions, bill-of-materials changes, and embedded firmware roadmaps into unified delivery schedules.
               </p>
               <ul className="flex flex-col gap-2 pt-2 font-sans text-xs text-[#1a1c1a]">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Sprint cycles linked to engineering BOMs (eBOM)
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Prototype fabrication lot batch tracking
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Patent filing &amp; ISO 9001 audit gates
                 </li>
               </ul>
             </div>
             <div className="mt-6 border-t border-[#12372a]/10 pt-6">
-              <span className="font-mono text-[10px] uppercase text-[#414844]">
+              <span className="font-mono text-[10px] uppercase text-[var(--text-muted)]">
                 TEMPLATE SPEC:
               </span>
-              <div className="font-sans text-xs font-semibold text-[#002116]">
+              <div className="font-sans text-xs font-semibold text-[var(--text-main)]">
                 Agile Hardware Stage-Gate v2.4
               </div>
             </div>
@@ -972,35 +972,35 @@ function SectorAdaptations() {
           {/* Vertical 3 */}
           <div className="flex flex-col justify-between rounded-2xl border border-[#12372a]/10 bg-white p-6">
             <div className="flex flex-col gap-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#efeeeb] text-[#002116]">
+              <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Building2 className="h-6 w-6" />
               </div>
-              <h3 className="font-sans text-sm font-semibold text-[#002116]">
+              <h3 className="font-sans text-sm font-semibold text-[var(--text-main)]">
                 Professional Services &amp; Consultancies
               </h3>
-              <p className="font-sans text-xs leading-relaxed text-[#414844]">
+              <p className="font-sans text-xs leading-relaxed text-[var(--text-muted)]">
                 Maximize margin preservation across distributed advisory practices, accounting firms, and legal counsels.
               </p>
               <ul className="flex flex-col gap-2 pt-2 font-sans text-xs text-[#1a1c1a]">
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Multi-currency real-time billable utilization
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Blended rate card governance &amp; margin locks
                 </li>
                 <li className="flex items-center gap-2">
-                  <Check className="h-4 w-4 text-[#4d6700]" />
+                  <Check className="h-4 w-4 text-[#4d6700] dark:text-[#d2ff3a]" />
                   Milestone-triggered automated client invoicing
                 </li>
               </ul>
             </div>
             <div className="mt-6 border-t border-[#12372a]/10 pt-6">
-              <span className="font-mono text-[10px] uppercase text-[#414844]">
+              <span className="font-mono text-[10px] uppercase text-[var(--text-muted)]">
                 TEMPLATE SPEC:
               </span>
-              <div className="font-sans text-xs font-semibold text-[#002116]">
+              <div className="font-sans text-xs font-semibold text-[var(--text-main)]">
                 Global PSA Architecture // Multi-Tenant
               </div>
             </div>
@@ -1015,7 +1015,7 @@ function SectorAdaptations() {
 
 function CaseStudySection() {
   return (
-    <section className="w-full border-t border-[#12372a]/5 bg-[#f4f3f0]/70 px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full border-t border-[#12372a]/5 bg-[var(--bg-secondary)]/70 px-4 py-20 md:px-8">
       <div className="mx-auto max-w-[1600px]">
         <div className="relative overflow-hidden rounded-3xl bg-[#002116] p-8 text-white shadow-xl lg:p-12">
           <div className="pointer-events-none absolute right-0 top-0 h-96 w-96 rounded-full bg-[#12372a]/60 blur-3xl" />
@@ -1036,7 +1036,7 @@ function CaseStudySection() {
                 “Before Scryme, our project managers operated on weekly spreadsheets while ERP finance operated on monthly reconciliation cycles. The friction caused millions in idle equipment waiting on approvals. Scryme eliminated that divide entirely.”
               </blockquote>
               <div className="flex items-center gap-4 pt-2">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#efeeeb] font-mono text-base font-bold text-[#002116]">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[var(--bg-tertiary)] font-mono text-base font-bold text-[var(--text-main)]">
                   HL
                 </div>
                 <div>
@@ -1115,16 +1115,16 @@ function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section className="mx-auto max-w-[1200px] w-full px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="mx-auto max-w-[1200px] w-full px-4 py-20 md:px-8">
       <div className="flex flex-col gap-10">
         <div className="flex flex-col gap-2">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             TECHNICAL SPECIFICATIONS &amp; GOVERNANCE
           </span>
-          <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Frequently Answered Architectural Questions
           </h2>
-          <p className="font-sans text-base text-[#414844]">
+          <p className="font-sans text-base text-[var(--text-muted)]">
             In-depth technical clarifications for enterprise architects, program management offices (PMOs), and financial controllers.
           </p>
         </div>
@@ -1140,17 +1140,17 @@ function FaqSection() {
                   onClick={() => setOpenIndex(isOpen ? null : i)}
                   className="flex w-full cursor-pointer items-center justify-between text-left"
                 >
-                  <span className="font-sans text-sm font-semibold text-[#002116] transition-colors group-hover:text-[#4d6700]">
+                  <span className="font-sans text-sm font-semibold text-[var(--text-main)] transition-colors group-hover:text-[#4d6700] dark:text-[#d2ff3a]">
                     {faq.q}
                   </span>
                   <ChevronDown
-                    className={`h-5 w-5 text-[#002116] transition-transform duration-200 ${
+                    className={`h-5 w-5 text-[var(--text-main)] transition-transform duration-200 ${
                       isOpen ? 'rotate-180' : ''
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <div className="font-sans text-sm leading-relaxed text-[#414844]">
+                  <div className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                     {faq.a}
                   </div>
                 )}
@@ -1167,16 +1167,16 @@ function FaqSection() {
 
 function ExecutiveCtaBanner() {
   return (
-    <section className="mx-auto max-w-[1600px] w-full px-4 pb-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="mx-auto max-w-[1600px] w-full px-4 pb-20 md:px-8">
       <div className="flex flex-col items-start justify-between gap-8 rounded-3xl border border-[#12372a]/10 bg-white p-8 shadow-[0_20px_48px_rgba(18,55,42,0.06)] lg:flex-row lg:items-center lg:p-14">
         <div className="flex max-w-2xl flex-col gap-3">
-          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             ORCHESTRATION ARCHITECTURE DISPATCH
           </span>
-          <h3 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h3 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Deploy Scryme Unified Project Management across your enterprise.
           </h3>
-          <p className="font-sans text-base text-[#414844]">
+          <p className="font-sans text-base text-[var(--text-muted)]">
             Connect your critical path to your general ledger in under 14 days. Book an architectural deep dive with a Scryme Principal Systems Engineer.
           </p>
         </div>
@@ -1191,7 +1191,7 @@ function ExecutiveCtaBanner() {
           </a>
           <Link
             to="/pricing"
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#12372a]/10 bg-[#efeeeb] px-6 py-4 font-sans text-xs font-semibold uppercase tracking-wider text-[#1a1c1a] transition-colors hover:bg-[#e9e8e5]"
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#12372a]/10 bg-[var(--bg-tertiary)] px-6 py-4 font-sans text-xs font-semibold uppercase tracking-wider text-[#1a1c1a] transition-colors hover:bg-[var(--bg-tertiary)]"
           >
             <Terminal className="h-4.5 w-4.5" />
             <span>Access Staging Sandbox</span>
@@ -1206,7 +1206,7 @@ function ExecutiveCtaBanner() {
 
 function ProjectManagementComponent() {
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1c1a] font-sans selection:bg-[#bef529] selection:text-[#151f00]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#bef529] selection:text-[#151f00] transition-colors">
       <Header />
       <main className="w-full pt-20">
         <LiveTelemetryTicker />
