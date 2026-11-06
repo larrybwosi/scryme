@@ -1,4 +1,3 @@
-import { CustomerAuthModule } from "@/customer-auth/customer-auth.module";
 import { Module, forwardRef } from "@nestjs/common";
 import { CustomerController } from "./interfaces/http/customer.controller";
 import { CustomerResolver } from "./interfaces/graphql/customer.resolver";
@@ -19,7 +18,6 @@ import { LoyaltyModule } from "../loyalty/loyalty.module";
 
 @Module({
   imports: [
-    CustomerAuthModule,
     PrismaModule,
     RedisModule,
     CrmModule,
