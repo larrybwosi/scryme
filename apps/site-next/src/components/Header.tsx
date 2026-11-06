@@ -18,6 +18,7 @@ import {
 import { useTheme } from 'next-themes'
 import { useState, useEffect, useRef, useCallback, useId } from 'react'
 import { SiteSettings, DEFAULT_SITE_SETTINGS_FALLBACK } from '../sanity/queries'
+import { trackOpenPanelEvent } from '../lib/openpanel'
 
 export interface HeaderProps {
   settings?: SiteSettings
@@ -401,7 +402,11 @@ export function Header({ settings = DEFAULT_SITE_SETTINGS_FALLBACK }: HeaderProp
         <div className="flex items-center gap-2.5">
           {mounted ? (
             <button
-              onClick={() => setTheme(isDark ? 'light' : 'dark')}
+              onClick={() => {
+                const nextTheme = isDark ? 'light' : 'dark'
+                setTheme(nextTheme)
+                trackOpenPanelEvent('theme_changed', { theme: nextTheme, source: 'header_toggle' })
+              }}
               aria-label={isDark ? 'Switch to light theme' : 'Switch to dark theme'}
               className={`relative p-2 rounded-full border border-white/10 dark:border-white/15 light:border-black/15 text-[var(--text-main)] hover:bg-white/10 dark:hover:bg-white/10 light:hover:bg-black/5 transition ${focusRing}`}
             >

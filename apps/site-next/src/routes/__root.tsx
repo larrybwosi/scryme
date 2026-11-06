@@ -2,6 +2,7 @@ import { createRootRoute, HeadContent, Outlet, Scripts } from '@tanstack/react-r
 import { ThemeProvider } from '../components/ThemeProvider'
 import { AnalyticsSnippet } from '../components/AnalyticsSnippet'
 import { OpenPanelSnippet } from '../components/OpenPanelSnippet'
+import { ScrollAnimations } from '../components/ScrollAnimations'
 import '../styles/app.css'
 
 export const Route = createRootRoute({
@@ -31,6 +32,7 @@ function RootComponent() {
       </head>
       <body className="min-h-screen font-sans antialiased selection:bg-[#d2ff3a] selection:text-[#090a0b] bg-[var(--bg-main)] text-[var(--text-main)]">
         <ThemeProvider>
+          <ScrollAnimations />
           <Outlet />
         </ThemeProvider>
         <Scripts />

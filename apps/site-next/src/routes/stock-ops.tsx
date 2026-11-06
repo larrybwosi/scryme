@@ -35,7 +35,7 @@ const CASE_EXECUTIVE_IMG =
 
 function LivePulseRibbon() {
   return (
-    <section className="w-full border-b border-[#12372a]/20 bg-[#002116] px-4 py-2.5 text-white md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full border-b border-[#12372a]/20 bg-[#002116] px-4 py-2.5 text-white md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-3 font-mono text-[11px] md:flex-row">
         <div className="flex w-full items-center gap-3 overflow-x-auto pb-1 md:w-auto md:pb-0">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-[#bef529] px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-[#151f00]">
@@ -84,18 +84,18 @@ function Hero() {
   }
 
   return (
-    <section className="relative w-full overflow-hidden bg-[#faf9f6] px-4 py-16 md:px-8 lg:py-24">
+    <section data-scroll-reveal="fade-in" className="relative w-full overflow-hidden bg-[var(--bg-main)] px-4 py-16 md:px-8 lg:py-24">
       <div className="mx-auto flex max-w-7xl flex-col items-start justify-between gap-12 lg:flex-row">
         {/* Hero Left Column */}
         <div className="flex flex-col items-start lg:w-7/12">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#c1c8c3]/30 bg-[#e9e8e5] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-[#414844]">
+          <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-[#c1c8c3]/30 bg-[var(--bg-tertiary)] px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
             <span className="h-2 w-2 rounded-full bg-[#a4d700]" />
             Operational Execution • Stock, Reception &amp; Fulfillment
           </div>
-          <h1 className="mb-6 font-serif text-4xl font-normal leading-tight tracking-tight text-[#002116] sm:text-5xl lg:text-6xl">
+          <h1 className="mb-6 font-serif text-4xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-5xl lg:text-6xl">
             Frictionless stock execution from inbound loading dock to final-mile dispatch.
           </h1>
-          <p className="mb-8 max-w-2xl font-sans text-base leading-relaxed text-[#414844] sm:text-lg">
+          <p className="mb-8 max-w-2xl font-sans text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
             Coordinate gate-in reception, automated quarantine inspection, multi-node cross-docking, and high-velocity
             pick-pack deliveries with deterministic general ledger binding.
           </p>
@@ -112,9 +112,9 @@ function Hero() {
             <button
               type="button"
               onClick={scrollToStages}
-              className="inline-flex items-center justify-center rounded-lg border border-[#c1c8c3]/60 bg-white px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wider text-[#002116] transition-all hover:bg-[#f4f3f0] cursor-pointer"
+              className="inline-flex items-center justify-center rounded-lg border border-[#c1c8c3]/60 bg-white px-5 py-3 font-sans text-xs font-semibold uppercase tracking-wider text-[var(--text-main)] transition-all hover:bg-[var(--bg-secondary)] cursor-pointer"
             >
-              <Terminal className="mr-2 h-4.5 w-4.5 text-[#002116]" />
+              <Terminal className="mr-2 h-4.5 w-4.5 text-[var(--text-main)]" />
               Explore ASN &amp; Manifest Schema
             </button>
             <a
@@ -128,16 +128,16 @@ function Hero() {
           {/* Micro-stats strip */}
           <div className="grid w-full max-w-xl grid-cols-3 gap-6 border-t border-[#c1c8c3]/30 pt-6">
             <div>
-              <div className="font-mono text-2xl font-bold text-[#002116]">0.12s</div>
-              <div className="font-sans text-xs text-[#414844]">Gate-in scan to ledger</div>
+              <div className="font-mono text-2xl font-bold text-[var(--text-main)]">0.12s</div>
+              <div className="font-sans text-xs text-[var(--text-muted)]">Gate-in scan to ledger</div>
             </div>
             <div>
-              <div className="font-mono text-2xl font-bold text-[#4d6700]">0.00%</div>
-              <div className="font-sans text-xs text-[#414844]">Phantom stock variance</div>
+              <div className="font-mono text-2xl font-bold text-[#4d6700] dark:text-[#d2ff3a]">0.00%</div>
+              <div className="font-sans text-xs text-[var(--text-muted)]">Phantom stock variance</div>
             </div>
             <div>
-              <div className="font-mono text-2xl font-bold text-[#002116]">3.4x</div>
-              <div className="font-sans text-xs text-[#414844]">Faster pallet turnaround</div>
+              <div className="font-mono text-2xl font-bold text-[var(--text-main)]">3.4x</div>
+              <div className="font-sans text-xs text-[var(--text-muted)]">Faster pallet turnaround</div>
             </div>
           </div>
         </div>
@@ -148,11 +148,11 @@ function Hero() {
             <div className="flex items-center justify-between border-b border-[#c1c8c3]/20 pb-4">
               <div className="flex items-center gap-2">
                 <span className="h-3 w-3 rounded-full bg-[#a4d700]" />
-                <span className="font-sans text-sm font-semibold text-[#002116]">
+                <span className="font-sans text-sm font-semibold text-[var(--text-main)]">
                   Facility Node #ROT-04
                 </span>
               </div>
-              <span className="rounded bg-[#efeeeb] px-2 py-0.5 font-mono text-[11px] uppercase text-[#414844]">
+              <span className="rounded bg-[var(--bg-tertiary)] px-2 py-0.5 font-mono text-[11px] uppercase text-[var(--text-muted)]">
                 Rotterdam Port Hub
               </span>
             </div>
@@ -178,26 +178,26 @@ function Hero() {
 
             {/* Micro Workflow Telemetry */}
             <div className="space-y-3 font-mono text-xs">
-              <div className="flex items-center justify-between rounded bg-[#f4f3f0] p-2.5">
-                <span className="flex items-center gap-2 text-[#414844]">
-                  <Inbox className="h-4 w-4 text-[#002116]" />
+              <div className="flex items-center justify-between rounded bg-[var(--bg-secondary)] p-2.5">
+                <span className="flex items-center gap-2 text-[var(--text-muted)]">
+                  <Inbox className="h-4 w-4 text-[var(--text-main)]" />
                   Bay 03 ASN Validation
                 </span>
-                <span className="font-semibold text-[#002116]">100% Matched</span>
+                <span className="font-semibold text-[var(--text-main)]">100% Matched</span>
               </div>
-              <div className="flex items-center justify-between rounded bg-[#f4f3f0] p-2.5">
-                <span className="flex items-center gap-2 text-[#414844]">
-                  <Shuffle className="h-4 w-4 text-[#002116]" />
+              <div className="flex items-center justify-between rounded bg-[var(--bg-secondary)] p-2.5">
+                <span className="flex items-center gap-2 text-[var(--text-muted)]">
+                  <Shuffle className="h-4 w-4 text-[var(--text-main)]" />
                   Cross-Dock Bypass Lane
                 </span>
-                <span className="font-semibold text-[#4d6700]">412 SKUs Auto-Routed</span>
+                <span className="font-semibold text-[#4d6700] dark:text-[#d2ff3a]">412 SKUs Auto-Routed</span>
               </div>
-              <div className="flex items-center justify-between rounded bg-[#f4f3f0] p-2.5">
-                <span className="flex items-center gap-2 text-[#414844]">
-                  <Wallet className="h-4 w-4 text-[#002116]" />
+              <div className="flex items-center justify-between rounded bg-[var(--bg-secondary)] p-2.5">
+                <span className="flex items-center gap-2 text-[var(--text-muted)]">
+                  <Wallet className="h-4 w-4 text-[var(--text-main)]" />
                   Ledger Capitalization
                 </span>
-                <span className="font-semibold text-[#002116]">Instant Commit (0.11s)</span>
+                <span className="font-semibold text-[var(--text-main)]">Instant Commit (0.11s)</span>
               </div>
             </div>
           </div>
@@ -229,7 +229,7 @@ function LifecycleStages() {
       body: 'Dynamic bay slotting powered by demand velocity. Immediate cross-docking diverts urgent backordered stock from inbound trailer straight to outbound staging.',
       metricKey: 'Cross-Dock Dwell Time:',
       metricVal: '0.0 Min Hold',
-      metricValColor: 'text-[#4d6700]',
+      metricValColor: 'text-[#4d6700] dark:text-[#d2ff3a]',
       statKey: 'Inter-Node Rebalance:',
       statVal: 'Automated Dispatch',
     },
@@ -240,7 +240,7 @@ function LifecycleStages() {
       body: 'Cluster and wave picking algorithms guide floor operators via optimized spatial paths. Instant multi-carrier rating, EDI manifest generation, and label stamping.',
       metricKey: 'Picker Travel Path:',
       metricVal: '-44% Reduced',
-      metricValColor: 'text-[#4d6700]',
+      metricValColor: 'text-[#4d6700] dark:text-[#d2ff3a]',
       statKey: 'Carrier API Dispatch:',
       statVal: '< 140ms Response',
     },
@@ -251,25 +251,25 @@ function LifecycleStages() {
       body: 'Every barcode tap posts double-entry journal logs in real-time. Inventory asset valuation synchronizes automatically with balance sheets without closing intervals.',
       metricKey: 'Audit Halts Needed:',
       metricVal: '0 Days / Year',
-      metricValColor: 'text-[#4d6700]',
+      metricValColor: 'text-[#4d6700] dark:text-[#d2ff3a]',
       statKey: 'Ledger Latency:',
       statVal: 'Deterministic 0.12s',
     },
   ]
 
   return (
-    <section id="lifecycle-stages" className="w-full bg-[#f4f3f0] px-4 py-20 md:px-8">
+    <section id="lifecycle-stages" className="w-full bg-[var(--bg-secondary)] px-4 py-20 md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-12">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+            <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
               Deterministic Pipeline
             </span>
-            <h2 className="font-serif text-3xl font-normal tracking-tight text-[#002116] sm:text-4xl">
+            <h2 className="font-serif text-3xl font-normal tracking-tight text-[var(--text-main)] sm:text-4xl">
               The 4-Stage Stock Execution Engine
             </h2>
           </div>
-          <p className="max-w-md font-sans text-sm text-[#414844] leading-relaxed">
+          <p className="max-w-md font-sans text-sm text-[var(--text-muted)] leading-relaxed">
             Continuous mathematical validation at every inventory waypoint. Eliminates blind drop-offs and phantom
             variance before stock reaches storage.
           </p>
@@ -288,25 +288,25 @@ function LifecycleStages() {
                     <span className="rounded bg-[#002116] px-2.5 py-0.5 font-mono text-xs font-bold text-[#a4d700]">
                       {stg.num}
                     </span>
-                    <IconComp className="h-5 w-5 text-[#002116]" />
+                    <IconComp className="h-5 w-5 text-[var(--text-main)]" />
                   </div>
-                  <h3 className="mb-3 font-serif text-xl font-medium text-[#002116]">
+                  <h3 className="mb-3 font-serif text-xl font-medium text-[var(--text-main)]">
                     {stg.title}
                   </h3>
-                  <p className="mb-4 font-sans text-xs leading-relaxed text-[#414844]">
+                  <p className="mb-4 font-sans text-xs leading-relaxed text-[var(--text-muted)]">
                     {stg.body}
                   </p>
                 </div>
                 <div className="space-y-1.5 border-t border-[#c1c8c3]/20 pt-4 font-mono text-[11px]">
-                  <div className="flex justify-between text-[#414844]">
+                  <div className="flex justify-between text-[var(--text-muted)]">
                     <span>{stg.metricKey}</span>
                     <strong className={`font-semibold ${stg.metricValColor}`}>
                       {stg.metricVal}
                     </strong>
                   </div>
-                  <div className="flex justify-between text-[#414844]">
+                  <div className="flex justify-between text-[var(--text-muted)]">
                     <span>{stg.statKey}</span>
-                    <strong className="font-semibold text-[#002116]">{stg.statVal}</strong>
+                    <strong className="font-semibold text-[var(--text-main)]">{stg.statVal}</strong>
                   </div>
                 </div>
               </div>
@@ -329,9 +329,9 @@ const MANIFEST_BATCH_A = [
     status: 'PASS',
     statusBg: 'bg-[#bef529] text-[#151f00]',
     dest: 'Zone B • Shelf 12-R',
-    destColor: 'text-[#414844]',
+    destColor: 'text-[var(--text-muted)]',
     valuation: '$54,000.00',
-    rowBg: 'hover:bg-[#f4f3f0]/60',
+    rowBg: 'hover:bg-[var(--bg-secondary)]/60',
   },
   {
     sku: 'SKU-4412-TIT',
@@ -341,9 +341,9 @@ const MANIFEST_BATCH_A = [
     status: 'PASS',
     statusBg: 'bg-[#bef529] text-[#151f00]',
     dest: 'Cross-Dock Bay 08 (#ORD-8821)',
-    destColor: 'text-[#4d6700] font-semibold',
+    destColor: 'text-[#4d6700] dark:text-[#d2ff3a] font-semibold',
     valuation: '$67,200.00',
-    rowBg: 'hover:bg-[#f4f3f0]/60',
+    rowBg: 'hover:bg-[var(--bg-secondary)]/60',
   },
   {
     sku: 'SKU-1088-MCU',
@@ -368,9 +368,9 @@ const MANIFEST_BATCH_B = [
     status: 'PASS',
     statusBg: 'bg-[#bef529] text-[#151f00]',
     dest: 'Zone A • Shelf 04-B',
-    destColor: 'text-[#414844]',
+    destColor: 'text-[var(--text-muted)]',
     valuation: '$92,000.00',
-    rowBg: 'hover:bg-[#f4f3f0]/60',
+    rowBg: 'hover:bg-[var(--bg-secondary)]/60',
   },
   {
     sku: 'SKU-3120-COP',
@@ -380,9 +380,9 @@ const MANIFEST_BATCH_B = [
     status: 'PASS',
     statusBg: 'bg-[#bef529] text-[#151f00]',
     dest: 'Cross-Dock Bay 04 (#ORD-9110)',
-    destColor: 'text-[#4d6700] font-semibold',
+    destColor: 'text-[#4d6700] dark:text-[#d2ff3a] font-semibold',
     valuation: '$45,000.00',
-    rowBg: 'hover:bg-[#f4f3f0]/60',
+    rowBg: 'hover:bg-[var(--bg-secondary)]/60',
   },
 ]
 
@@ -392,30 +392,30 @@ function ConsoleSimulator() {
   const activeRows = batchToggle ? MANIFEST_BATCH_B : MANIFEST_BATCH_A
 
   return (
-    <section id="console-simulator" className="w-full bg-[#faf9f6] px-4 py-20 md:px-8">
+    <section id="console-simulator" className="w-full bg-[var(--bg-main)] px-4 py-20 md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-8">
         <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
           <div>
             <div className="mb-1 flex items-center gap-2">
               <span className="h-2.5 w-2.5 rounded-full bg-[#bef529]" />
-              <span className="font-mono text-xs uppercase tracking-wider text-[#414844]">
+              <span className="font-mono text-xs uppercase tracking-wider text-[var(--text-muted)]">
                 Live Console Simulation • Inbound Bay 04
               </span>
             </div>
-            <h2 className="font-serif text-3xl font-medium text-[#002116]">
+            <h2 className="font-serif text-3xl font-medium text-[var(--text-main)]">
               Pallet Manifest Execution Engine
             </h2>
           </div>
           <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-[#414844]">
-              Manifest: <strong className="text-[#002116]">#ASN-9042-ROT</strong>
+            <span className="font-mono text-xs text-[var(--text-muted)]">
+              Manifest: <strong className="text-[var(--text-main)]">#ASN-9042-ROT</strong>
             </span>
             <button
               type="button"
               onClick={() => setBatchToggle(!batchToggle)}
-              className="flex items-center gap-1.5 rounded-lg border border-[#c1c8c3]/50 bg-[#efeeeb] px-3 py-1.5 font-sans text-xs font-semibold text-[#002116] transition-colors hover:bg-[#e3e2e0] cursor-pointer"
+              className="flex items-center gap-1.5 rounded-lg border border-[#c1c8c3]/50 bg-[var(--bg-tertiary)] px-3 py-1.5 font-sans text-xs font-semibold text-[var(--text-main)] transition-colors hover:bg-[#e3e2e0] cursor-pointer"
             >
-              <RefreshCw className="h-4 w-4 text-[#002116]" />
+              <RefreshCw className="h-4 w-4 text-[var(--text-main)]" />
               Simulate Next Pallet
             </button>
           </div>
@@ -423,29 +423,29 @@ function ConsoleSimulator() {
 
         {/* Console Table Card */}
         <div className="overflow-hidden rounded-xl border border-[#c1c8c3]/40 bg-white shadow-lg">
-          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#c1c8c3]/30 bg-[#f4f3f0] p-4">
+          <div className="flex flex-wrap items-center justify-between gap-4 border-b border-[#c1c8c3]/30 bg-[var(--bg-secondary)] p-4">
             <div className="flex flex-wrap items-center gap-6">
               <div>
-                <span className="block font-sans text-[11px] font-bold uppercase text-[#414844]">
+                <span className="block font-sans text-[11px] font-bold uppercase text-[var(--text-muted)]">
                   Carrier / Origin
                 </span>
-                <span className="font-sans text-xs font-semibold text-[#002116]">
+                <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                   Maersk Logistics • Rotterdam Terminal
                 </span>
               </div>
               <div>
-                <span className="block font-sans text-[11px] font-bold uppercase text-[#414844]">
+                <span className="block font-sans text-[11px] font-bold uppercase text-[var(--text-muted)]">
                   Gate Status
                 </span>
-                <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-[#4d6700]">
+                <span className="inline-flex items-center gap-1 font-mono text-xs font-semibold text-[#4d6700] dark:text-[#d2ff3a]">
                   <span className="h-1.5 w-1.5 rounded-full bg-[#bef529]" /> Gate-In Confirmed
                 </span>
               </div>
               <div>
-                <span className="block font-sans text-[11px] font-bold uppercase text-[#414844]">
+                <span className="block font-sans text-[11px] font-bold uppercase text-[var(--text-muted)]">
                   Target Outbound Lane
                 </span>
-                <span className="font-sans text-xs font-semibold text-[#002116]">
+                <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                   Cross-Dock Bay 08 (Priority)
                 </span>
               </div>
@@ -458,7 +458,7 @@ function ConsoleSimulator() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-[#c1c8c3]/30 bg-[#efeeeb] font-mono text-[10px] font-bold uppercase tracking-wider text-[#414844]">
+                <tr className="border-b border-[#c1c8c3]/30 bg-[var(--bg-tertiary)] font-mono text-[10px] font-bold uppercase tracking-wider text-[var(--text-muted)]">
                   <th className="py-3 px-4">SKU / Serial</th>
                   <th className="py-3 px-4">Description</th>
                   <th className="py-3 px-4">Qty Manifested</th>
@@ -471,12 +471,12 @@ function ConsoleSimulator() {
               <tbody className="divide-y divide-[#c1c8c3]/20 font-sans text-sm">
                 {activeRows.map((r) => (
                   <tr key={r.sku} className={`transition-colors ${r.rowBg}`}>
-                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-[#002116]">
+                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-[var(--text-main)]">
                       {r.sku}
                     </td>
                     <td className="py-3.5 px-4 font-medium text-[#1a1c1a]">{r.desc}</td>
                     <td className="py-3.5 px-4 font-mono text-xs">{r.manifested}</td>
-                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-[#002116]">
+                    <td className="py-3.5 px-4 font-mono text-xs font-semibold text-[var(--text-main)]">
                       {r.scanned}
                     </td>
                     <td className="py-3.5 px-4">
@@ -489,7 +489,7 @@ function ConsoleSimulator() {
                     <td className={`py-3.5 px-4 font-mono text-xs ${r.destColor}`}>
                       {r.dest}
                     </td>
-                    <td className="py-3.5 px-4 text-right font-mono text-xs font-semibold text-[#002116]">
+                    <td className="py-3.5 px-4 text-right font-mono text-xs font-semibold text-[var(--text-main)]">
                       {r.valuation}
                     </td>
                   </tr>
@@ -520,16 +520,16 @@ function ConsoleSimulator() {
 
 function BentoCapabilities() {
   return (
-    <section className="w-full bg-[#f4f3f0] px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-secondary)] px-4 py-20 md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col gap-10">
         <div className="max-w-2xl">
-          <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             High-Density Infrastructure
           </span>
-          <h2 className="font-serif text-3xl font-normal tracking-tight text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal tracking-tight text-[var(--text-main)] sm:text-4xl">
             Built for 24/7 High-Throughput Hubs
           </h2>
-          <p className="mt-3 font-sans text-sm text-[#414844] leading-relaxed">
+          <p className="mt-3 font-sans text-sm text-[var(--text-muted)] leading-relaxed">
             Traditional ERPs batch inventory overnight. Scryme's reactive state engine executes every pick, transfer,
             and receipt instantaneously at the hardware edge.
           </p>
@@ -539,29 +539,29 @@ function BentoCapabilities() {
           {/* Card 1 (Span 2) */}
           <div className="flex flex-col justify-between rounded-xl border border-[#c1c8c3]/30 bg-white p-8 shadow-sm md:col-span-2">
             <div>
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[#efeeeb] text-[#002116]">
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Scan className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 font-serif text-2xl font-medium text-[#002116]">
+              <h3 className="mb-3 font-serif text-2xl font-medium text-[var(--text-main)]">
                 Serialized Bin-Level Traceability
               </h3>
-              <p className="mb-6 max-w-xl font-sans text-sm text-[#414844] leading-relaxed">
+              <p className="mb-6 max-w-xl font-sans text-sm text-[var(--text-muted)] leading-relaxed">
                 Every unit, carton, and pallet carries cryptographically signed lineage records. Full audit traceability
                 includes precise ambient temperature sensor telemetry, batch production origin, and transit custody logs.
               </p>
             </div>
             <div className="grid grid-cols-3 gap-4 border-t border-[#c1c8c3]/20 pt-6 font-mono text-xs">
               <div>
-                <span className="block text-[11px] text-[#414844]">SERIAL FORMAT</span>
-                <span className="font-semibold text-[#002116]">GS1-128 / Datamatrix</span>
+                <span className="block text-[11px] text-[var(--text-muted)]">SERIAL FORMAT</span>
+                <span className="font-semibold text-[var(--text-main)]">GS1-128 / Datamatrix</span>
               </div>
               <div>
-                <span className="block text-[11px] text-[#414844]">TEMP MONITORING</span>
-                <span className="font-semibold text-[#4d6700]">Active -18°C to +4°C</span>
+                <span className="block text-[11px] text-[var(--text-muted)]">TEMP MONITORING</span>
+                <span className="font-semibold text-[#4d6700] dark:text-[#d2ff3a]">Active -18°C to +4°C</span>
               </div>
               <div>
-                <span className="block text-[11px] text-[#414844]">RECALL WINDOW</span>
-                <span className="font-semibold text-[#002116]">&lt; 3.0 Seconds Global</span>
+                <span className="block text-[11px] text-[var(--text-muted)]">RECALL WINDOW</span>
+                <span className="font-semibold text-[var(--text-main)]">&lt; 3.0 Seconds Global</span>
               </div>
             </div>
           </div>
@@ -569,49 +569,49 @@ function BentoCapabilities() {
           {/* Card 2 */}
           <div className="flex flex-col justify-between rounded-xl border border-[#c1c8c3]/30 bg-white p-8 shadow-sm">
             <div>
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[#efeeeb] text-[#002116]">
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <RouteIcon className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 font-serif text-2xl font-medium text-[#002116]">
+              <h3 className="mb-3 font-serif text-2xl font-medium text-[var(--text-main)]">
                 Dynamic Wave &amp; Zone Picking
               </h3>
-              <p className="mb-6 font-sans text-xs text-[#414844] leading-relaxed">
+              <p className="mb-6 font-sans text-xs text-[var(--text-muted)] leading-relaxed">
                 Traveling salesperson algorithms optimize picker traversal paths in 3D aisle topologies. Reduces deadhead walking time by over 44%.
               </p>
             </div>
-            <div className="rounded-lg bg-[#efeeeb] p-3 font-mono text-xs text-[#1a1c1a]">
-              <span className="font-bold text-[#4d6700]">TRAVEL TIME SAVINGS:</span> 18.2 miles saved per picker / shift
+            <div className="rounded-lg bg-[var(--bg-tertiary)] p-3 font-mono text-xs text-[#1a1c1a]">
+              <span className="font-bold text-[#4d6700] dark:text-[#d2ff3a]">TRAVEL TIME SAVINGS:</span> 18.2 miles saved per picker / shift
             </div>
           </div>
 
           {/* Card 3 */}
           <div className="flex flex-col justify-between rounded-xl border border-[#c1c8c3]/30 bg-white p-8 shadow-sm">
             <div>
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[#efeeeb] text-[#002116]">
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Truck className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 font-serif text-2xl font-medium text-[#002116]">
+              <h3 className="mb-3 font-serif text-2xl font-medium text-[var(--text-main)]">
                 Carrier Matrix &amp; SLA Broker
               </h3>
-              <p className="mb-6 font-sans text-xs text-[#414844] leading-relaxed">
+              <p className="mb-6 font-sans text-xs text-[var(--text-muted)] leading-relaxed">
                 Real-time API rate shopping across FedEx, DHL, Maersk, and DB Schenker. Generates compliant cross-border customs declarations instantly.
               </p>
             </div>
-            <div className="rounded-lg bg-[#efeeeb] p-3 font-mono text-xs text-[#1a1c1a]">
-              <span className="font-bold text-[#002116]">SUPPORTED:</span> 120+ Global Freight &amp; Courier APIs
+            <div className="rounded-lg bg-[var(--bg-tertiary)] p-3 font-mono text-xs text-[#1a1c1a]">
+              <span className="font-bold text-[var(--text-main)]">SUPPORTED:</span> 120+ Global Freight &amp; Courier APIs
             </div>
           </div>
 
           {/* Card 4 (Span 2) */}
           <div className="flex flex-col justify-between rounded-xl border border-[#c1c8c3]/30 bg-white p-8 shadow-sm md:col-span-2">
             <div>
-              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[#efeeeb] text-[#002116]">
+              <div className="mb-6 flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                 <Wand2 className="h-6 w-6" />
               </div>
-              <h3 className="mb-3 font-serif text-2xl font-medium text-[#002116]">
+              <h3 className="mb-3 font-serif text-2xl font-medium text-[var(--text-main)]">
                 Real-Time Discrepancy Auto-Mitigation
               </h3>
-              <p className="mb-6 max-w-xl font-sans text-sm text-[#414844] leading-relaxed">
+              <p className="mb-6 max-w-xl font-sans text-sm text-[var(--text-muted)] leading-relaxed">
                 When a handheld terminal detects a single unit count delta, Scryme automatically initiates targeted micro-counts on surrounding bin locations. Isolates discrepancies before invoices clear.
               </p>
             </div>
@@ -636,7 +636,7 @@ function BentoCapabilities() {
 
 function ExecutiveCaseBrief() {
   return (
-    <section className="w-full bg-[#faf9f6] px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] px-4 py-20 md:px-8">
       <div className="mx-auto flex max-w-7xl flex-col overflow-hidden rounded-2xl border border-[#c1c8c3]/40 bg-white shadow-xl lg:flex-row">
         <div className="relative min-h-[380px] bg-[#002116] lg:w-1/2">
           <img
@@ -648,13 +648,13 @@ function ExecutiveCaseBrief() {
         </div>
         <div className="flex flex-col justify-between p-8 lg:w-1/2 lg:p-12">
           <div>
-            <span className="mb-4 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+            <span className="mb-4 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
               Enterprise Case Brief • North American Hub
             </span>
-            <h3 className="mb-6 font-serif text-3xl font-normal leading-tight tracking-tight text-[#002116]">
+            <h3 className="mb-6 font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)]">
               “We eliminated our 3-day quarterly stock takes entirely. Reception to dispatch cycle time fell by 65%.”
             </h3>
-            <p className="mb-6 font-sans text-sm text-[#414844] leading-relaxed">
+            <p className="mb-6 font-sans text-sm text-[var(--text-muted)] leading-relaxed">
               Prior to deploying Scryme, dock cross-docking took 4 hours of paper manifest validation and physical
               reconciliations. With Scryme's continuous ledger synchronization, arriving pallets pass directly from sea
               container to interstate distribution routes in under 18 minutes.
@@ -662,14 +662,14 @@ function ExecutiveCaseBrief() {
           </div>
           <div className="flex items-center justify-between border-t border-[#c1c8c3]/30 pt-6">
             <div>
-              <div className="font-sans text-sm font-bold text-[#002116]">Marcus Vance</div>
-              <div className="font-sans text-xs text-[#414844]">
+              <div className="font-sans text-sm font-bold text-[var(--text-main)]">Marcus Vance</div>
+              <div className="font-sans text-xs text-[var(--text-muted)]">
                 SVP Global Supply &amp; Logistics, Avantace Group
               </div>
             </div>
             <div className="text-right font-mono">
-              <span className="text-xl font-bold text-[#002116]">65%</span>
-              <span className="block text-[10px] uppercase text-[#414844]">Turnaround Gain</span>
+              <span className="text-xl font-bold text-[var(--text-main)]">65%</span>
+              <span className="block text-[10px] uppercase text-[var(--text-muted)]">Turnaround Gain</span>
             </div>
           </div>
         </div>
@@ -699,13 +699,13 @@ function Faq() {
   const [open, setOpen] = useState<number | null>(null)
 
   return (
-    <section className="w-full bg-[#f4f3f0] px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-secondary)] px-4 py-20 md:px-8">
       <div className="mx-auto max-w-4xl flex flex-col gap-10">
         <div className="text-center">
-          <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700]">
+          <span className="mb-2 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#4d6700] dark:text-[#d2ff3a]">
             Architectural Clarity
           </span>
-          <h2 className="font-serif text-3xl font-normal tracking-tight text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal tracking-tight text-[var(--text-main)] sm:text-4xl">
             Stock Execution Architecture FAQ
           </h2>
         </div>
@@ -722,17 +722,17 @@ function Faq() {
                   type="button"
                   aria-expanded={isOpen}
                   onClick={() => setOpen(isOpen ? null : i)}
-                  className="flex w-full cursor-pointer items-center justify-between gap-4 text-left font-sans text-base font-semibold text-[#002116]"
+                  className="flex w-full cursor-pointer items-center justify-between gap-4 text-left font-sans text-base font-semibold text-[var(--text-main)]"
                 >
                   <span>{q}</span>
                   <ChevronDown
                     className={`h-5 w-5 shrink-0 transition-transform duration-200 ${
-                      isOpen ? 'rotate-180 text-[#4d6700]' : 'text-[#717974]'
+                      isOpen ? 'rotate-180 text-[#4d6700] dark:text-[#d2ff3a]' : 'text-[#717974]'
                     }`}
                   />
                 </button>
                 {isOpen && (
-                  <p className="mt-4 border-t border-[#c1c8c3]/20 pt-4 font-sans text-sm leading-relaxed text-[#414844]">
+                  <p className="mt-4 border-t border-[#c1c8c3]/20 pt-4 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                     {a}
                   </p>
                 )}
@@ -749,7 +749,7 @@ function Faq() {
 
 function FinalCta() {
   return (
-    <section className="w-full bg-[#faf9f6] px-4 py-20 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] px-4 py-20 md:px-8">
       <div className="relative mx-auto flex max-w-7xl flex-col items-center justify-between gap-8 rounded-2xl bg-[#002116] p-10 text-white shadow-2xl md:flex-row lg:p-16">
         <div className="relative z-10 max-w-2xl">
           <span className="mb-3 block font-mono text-[10px] font-bold uppercase tracking-widest text-[#bef529]">
@@ -787,7 +787,7 @@ function FinalCta() {
 
 function StockOperationsComponent() {
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1c1a] font-sans selection:bg-[#bef529] selection:text-[#151f00]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#bef529] selection:text-[#151f00] transition-colors">
       <Header />
       <main className="w-full pt-20">
         <LivePulseRibbon />

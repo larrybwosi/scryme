@@ -43,7 +43,7 @@ export const Route = createFileRoute('/mcp-agent-apis')({
 
 function LiveTelemetryTicker() {
   return (
-    <section className="w-full overflow-hidden bg-[#002116] py-3 px-4 text-white shadow-sm md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full overflow-hidden bg-[#002116] py-3 px-4 text-white shadow-sm md:px-8">
       <div className="mx-auto flex max-w-[1440px] flex-wrap items-center justify-between gap-4">
         <div className="no-scrollbar flex items-center gap-4 overflow-x-auto py-0.5">
           <div className="flex shrink-0 items-center gap-2">
@@ -118,30 +118,30 @@ function Hero() {
   }
 
   return (
-    <section className="w-full bg-[#faf9f6] px-4 pt-12 pb-16 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] px-4 pt-12 pb-16 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         {/* Section Tag / Overline */}
         <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
-          <div className="inline-flex items-center gap-2 rounded-full bg-[#e9e8e5] px-3 py-1 text-[#002116]">
+          <div className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-tertiary)] px-3 py-1 text-[var(--text-main)]">
             <span className="h-2 w-2 rounded-full bg-[#bef529]" />
-            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#414844]">
+            <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
               CORE PILLAR 09 • MODEL CONTEXT PROTOCOL &amp; DEVELOPER API
             </span>
           </div>
-          <div className="flex items-center gap-2 font-mono text-xs text-[#414844]">
+          <div className="flex items-center gap-2 font-mono text-xs text-[var(--text-muted)]">
             <span>SPEC: JSON-RPC 2.0 / MCP-2024.11</span>
             <span className="text-[#c1c8c3]">|</span>
-            <span className="font-semibold text-[#4d6700]">EDITION: ENTERPRISE KERNEL</span>
+            <span className="font-semibold text-[#4d6700] dark:text-[#d2ff3a]">EDITION: ENTERPRISE KERNEL</span>
           </div>
         </div>
 
         {/* Main Headline Grid */}
         <div className="mb-12 grid grid-cols-1 gap-8 items-start lg:grid-cols-12">
           <div className="space-y-6 lg:col-span-8">
-            <h1 className="font-serif text-4xl font-normal leading-[1.08] tracking-tight text-[#002116] sm:text-5xl lg:text-[56px]">
+            <h1 className="font-serif text-4xl font-normal leading-[1.08] tracking-tight text-[var(--text-main)] sm:text-5xl lg:text-[56px]">
               Connect autonomous AI agents and customer storefronts directly to your enterprise ledger.
             </h1>
-            <p className="max-w-3xl font-sans text-base leading-relaxed text-[#414844] sm:text-lg">
+            <p className="max-w-3xl font-sans text-base leading-relaxed text-[var(--text-muted)] sm:text-lg">
               Expose deterministic ERP tools—inventory allocations, multi-currency CPQ quotes, supply chain re-orders, and order status tracking—to LLMs and agentic workflows via the standardized Model Context Protocol (MCP). Bridge customer-facing storefronts with sub-50ms headless GraphQL and bidirectional webhooks without risking ledger integrity.
             </p>
             <div className="flex flex-wrap items-center gap-4 pt-2">
@@ -157,7 +157,7 @@ function Hero() {
               <button
                 type="button"
                 onClick={scrollToExplorer}
-                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-6 py-3.5 font-sans text-xs font-semibold text-[#002116] shadow-sm transition-all hover:bg-[#efeeeb]"
+                className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-white px-6 py-3.5 font-sans text-xs font-semibold text-[var(--text-main)] shadow-sm transition-all hover:bg-[var(--bg-tertiary)]"
               >
                 <FileCode className="h-4.5 w-4.5 text-[#416656]" />
                 <span>Read OpenAPI &amp; MCP Specs</span>
@@ -169,15 +169,15 @@ function Hero() {
           <div className="flex flex-col gap-4 lg:col-span-4">
             <div className="flex flex-col justify-between rounded-xl bg-white p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#414844]">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                   Deterministic Speed
                 </span>
-                <Zap className="h-5 w-5 text-[#4d6700]" />
+                <Zap className="h-5 w-5 text-[#4d6700] dark:text-[#d2ff3a]" />
               </div>
-              <div className="font-serif text-4xl font-light tracking-tight text-[#002116] sm:text-5xl">
+              <div className="font-serif text-4xl font-light tracking-tight text-[var(--text-main)] sm:text-5xl">
                 14<span className="font-sans text-sm font-normal text-[#416656] ml-1">ms</span>
               </div>
-              <p className="mt-1 font-sans text-xs text-[#414844]">
+              <p className="mt-1 font-sans text-xs text-[var(--text-muted)]">
                 p99 Agent tool call latency measured across global multi-region edge pods.
               </p>
             </div>
@@ -197,17 +197,17 @@ function Hero() {
               </p>
             </div>
 
-            <div className="flex flex-col justify-between rounded-xl bg-[#f4f3f0] p-6 shadow-sm">
+            <div className="flex flex-col justify-between rounded-xl bg-[var(--bg-secondary)] p-6 shadow-sm">
               <div className="mb-3 flex items-center justify-between">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#414844]">
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                   Front-to-Back Sync
                 </span>
-                <Store className="h-5 w-5 text-[#002116]" />
+                <Store className="h-5 w-5 text-[var(--text-main)]" />
               </div>
-              <div className="font-serif text-2xl font-medium tracking-tight text-[#002116] sm:text-3xl">
+              <div className="font-serif text-2xl font-medium tracking-tight text-[var(--text-main)] sm:text-3xl">
                 1-Click Bridge
               </div>
-              <p className="mt-1 font-sans text-xs text-[#414844]">
+              <p className="mt-1 font-sans text-xs text-[var(--text-muted)]">
                 Sub-40ms inventory sync for Shopify Plus, Next.js Commerce, and enterprise B2B portals.
               </p>
             </div>
@@ -339,7 +339,7 @@ function McpCockpit() {
   }
 
   return (
-    <section id="cockpit" className="w-full bg-[#f4f3f0] py-16 px-4 md:px-8">
+    <section id="cockpit" className="w-full bg-[var(--bg-secondary)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
@@ -347,27 +347,27 @@ function McpCockpit() {
               <span className="rounded-full bg-[#002116] px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-wider text-[#bef529]">
                 LIVE REPL INSPECTOR
               </span>
-              <span className="font-mono text-xs text-[#414844]">
+              <span className="font-mono text-xs text-[var(--text-muted)]">
                 Scryme MCP Server // Stream v3.2
               </span>
             </div>
-            <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+            <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
               Interactive Agentic MCP Cockpit &amp; Storefront Bridge
             </h2>
-            <p className="mt-1 max-w-2xl font-sans text-sm text-[#414844]">
+            <p className="mt-1 max-w-2xl font-sans text-sm text-[var(--text-muted)]">
               Inspect live tool calling in real-time. Experience how Anthropic Claude or your custom AI agent issues standardized JSON-RPC queries to execute hardened ledger commitments.
             </p>
           </div>
 
           {/* Mode Switcher Tabs */}
-          <div className="inline-flex gap-1 self-start rounded-xl bg-[#efeeeb] p-1.5 shadow-sm md:self-auto">
+          <div className="inline-flex gap-1 self-start rounded-xl bg-[var(--bg-tertiary)] p-1.5 shadow-sm md:self-auto">
             <button
               type="button"
               onClick={() => setCockpitMode('agent')}
               className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 cockpitMode === 'agent'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               <span className="h-2 w-2 rounded-full bg-[#bef529]" />
@@ -378,8 +378,8 @@ function McpCockpit() {
               onClick={() => setCockpitMode('storefront')}
               className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 cockpitMode === 'storefront'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               <Store className="h-3.5 w-3.5" />
@@ -390,8 +390,8 @@ function McpCockpit() {
               onClick={() => setCockpitMode('guardrail')}
               className={`flex cursor-pointer items-center gap-1.5 rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 cockpitMode === 'guardrail'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               <Shield className="h-3.5 w-3.5" />
@@ -558,16 +558,16 @@ function McpCockpit() {
 
 function BentoGridPillars() {
   return (
-    <section className="w-full bg-[#faf9f6] py-16 px-4 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-8 max-w-3xl">
-          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[#e9e8e5] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[#002116]">
+          <div className="mb-2 inline-flex items-center gap-2 rounded-full bg-[var(--bg-tertiary)] px-2.5 py-1 font-mono text-[10px] uppercase tracking-wider text-[var(--text-main)]">
             <span>ARCHITECTURAL FOUNDATION</span>
           </div>
-          <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Four Pillars of the Scryme MCP &amp; Developer Ecosystem
           </h2>
-          <p className="mt-2 font-sans text-sm leading-relaxed text-[#414844]">
+          <p className="mt-2 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
             Standardized context, sub-50ms execution, ironclad guardrails, and real-time ledger streaming combine to give LLM agents and external digital storefronts native ERP capabilities without fragile glue-code.
           </p>
         </div>
@@ -578,42 +578,42 @@ function BentoGridPillars() {
           <div className="flex flex-col justify-between rounded-xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:col-span-7">
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <span className="rounded bg-[#efeeeb] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#002116]">
+                <span className="rounded bg-[var(--bg-tertiary)] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[var(--text-main)]">
                   PILLAR 01
                 </span>
-                <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#4d6700]">
+                <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#4d6700] dark:text-[#d2ff3a]">
                   <span className="h-2 w-2 rounded-full bg-[#bef529]" />
                   <span>NATIVE PROTOCOL</span>
                 </div>
               </div>
-              <h3 className="mb-2 font-serif text-xl font-medium text-[#002116]">
+              <h3 className="mb-2 font-serif text-xl font-medium text-[var(--text-main)]">
                 Native Model Context Protocol (MCP) Server
               </h3>
-              <p className="mb-4 font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="mb-4 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Standardized Anthropic &amp; open MCP specification running directly on Scryme Edge nodes. Connect any MCP-compatible client—such as Claude Desktop, Cursor IDE, LangChain, or custom enterprise agents—with instant discovery of schemas, tools, and read/write resources.
               </p>
 
               {/* Illustrated mini diagram */}
-              <div className="space-y-2 rounded-lg bg-[#f4f3f0] p-4 font-mono text-xs text-[#1a1c1a]">
-                <div className="flex items-center justify-between font-mono text-[10px] uppercase text-[#414844]">
+              <div className="space-y-2 rounded-lg bg-[var(--bg-secondary)] p-4 font-mono text-xs text-[#1a1c1a]">
+                <div className="flex items-center justify-between font-mono text-[10px] uppercase text-[var(--text-muted)]">
                   <span>Agent (Claude / Cursor)</span>
-                  <span className="font-semibold text-[#4d6700]">Stdio / SSE</span>
+                  <span className="font-semibold text-[#4d6700] dark:text-[#d2ff3a]">Stdio / SSE</span>
                   <span>Scryme MCP Gateway</span>
-                  <span className="font-semibold text-[#4d6700]">Zero-Copy IPC</span>
+                  <span className="font-semibold text-[#4d6700] dark:text-[#d2ff3a]">Zero-Copy IPC</span>
                   <span>Core Ledger DB</span>
                 </div>
                 <div className="relative h-1 w-full rounded-full bg-[#e3e2e0]">
                   <div className="absolute inset-0 w-3/4 animate-pulse rounded-full bg-[#bef529]" />
                 </div>
-                <div className="flex items-center justify-between font-mono text-[10px] text-[#414844]">
+                <div className="flex items-center justify-between font-mono text-[10px] text-[var(--text-muted)]">
                   <span>Tools Exposed: 48 Registered</span>
-                  <span className="font-semibold text-[#002116]">Resources: 12 Ledger Trees</span>
+                  <span className="font-semibold text-[var(--text-main)]">Resources: 12 Ledger Trees</span>
                 </div>
               </div>
             </div>
             <div className="pt-4 flex items-center gap-2">
-              <span className="font-mono text-xs text-[#414844]">
-                Schema: <code className="font-semibold text-[#002116]">mcp-server-scryme@3.2.0</code>
+              <span className="font-mono text-xs text-[var(--text-muted)]">
+                Schema: <code className="font-semibold text-[var(--text-main)]">mcp-server-scryme@3.2.0</code>
               </span>
             </div>
           </div>
@@ -622,31 +622,31 @@ function BentoGridPillars() {
           <div className="flex flex-col justify-between rounded-xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:col-span-5">
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <span className="rounded bg-[#efeeeb] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#002116]">
+                <span className="rounded bg-[var(--bg-tertiary)] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[var(--text-main)]">
                   PILLAR 02
                 </span>
-                <Store className="h-5 w-5 text-[#002116]" />
+                <Store className="h-5 w-5 text-[var(--text-main)]" />
               </div>
-              <h3 className="mb-2 font-serif text-xl font-medium text-[#002116]">
+              <h3 className="mb-2 font-serif text-xl font-medium text-[var(--text-main)]">
                 Headless Customer Storefront Bridges
               </h3>
-              <p className="mb-4 font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="mb-4 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 High-speed GraphQL &amp; webhook meshes syncing Next.js, Remix, Shopify Plus, and custom B2B portals in sub-40ms. Stop managing brittle inventory reconciliation jobs: stock deductions on your customer portal instantaneously update manufacturing BOM allocations.
               </p>
 
               {/* Metric Callout */}
-              <div className="grid grid-cols-2 gap-3 rounded-lg bg-[#efeeeb] p-3">
+              <div className="grid grid-cols-2 gap-3 rounded-lg bg-[var(--bg-tertiary)] p-3">
                 <div>
-                  <span className="block font-mono text-[10px] uppercase text-[#414844]">
+                  <span className="block font-mono text-[10px] uppercase text-[var(--text-muted)]">
                     Storefront Sync
                   </span>
-                  <span className="font-serif text-xl font-medium text-[#002116]">&lt; 38ms</span>
+                  <span className="font-serif text-xl font-medium text-[var(--text-main)]">&lt; 38ms</span>
                 </div>
                 <div>
-                  <span className="block font-mono text-[10px] uppercase text-[#414844]">
+                  <span className="block font-mono text-[10px] uppercase text-[var(--text-muted)]">
                     Webhook Delivery
                   </span>
-                  <span className="font-serif text-xl font-medium text-[#002116]">99.999%</span>
+                  <span className="font-serif text-xl font-medium text-[var(--text-main)]">99.999%</span>
                 </div>
               </div>
             </div>
@@ -694,48 +694,48 @@ function BentoGridPillars() {
           <div className="flex flex-col justify-between rounded-xl bg-white p-6 shadow-sm transition-shadow hover:shadow-md lg:col-span-7">
             <div>
               <div className="mb-4 flex items-center justify-between">
-                <span className="rounded bg-[#efeeeb] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[#002116]">
+                <span className="rounded bg-[var(--bg-tertiary)] px-2.5 py-1 font-mono text-[10px] font-semibold uppercase text-[var(--text-main)]">
                   PILLAR 04
                 </span>
-                <Globe className="h-5 w-5 text-[#002116]" />
+                <Globe className="h-5 w-5 text-[var(--text-main)]" />
               </div>
-              <h3 className="mb-2 font-serif text-xl font-medium text-[#002116]">
+              <h3 className="mb-2 font-serif text-xl font-medium text-[var(--text-main)]">
                 Bidirectional Webhook Mesh &amp; Event Streams
               </h3>
-              <p className="mb-4 font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="mb-4 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Kafka-compatible WebSocket and Server-Sent Event feeds broadcasting millisecond stock changes, container customs clears, payment reconciliations, and freight updates to third-party microservices.
               </p>
 
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-                <div className="rounded-lg bg-[#f4f3f0] p-3">
-                  <span className="block font-mono text-[10px] uppercase text-[#414844]">
+                <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+                  <span className="block font-mono text-[10px] uppercase text-[var(--text-muted)]">
                     Kafka Pipeline
                   </span>
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     100k events/sec
                   </span>
                 </div>
-                <div className="rounded-lg bg-[#f4f3f0] p-3">
-                  <span className="block font-mono text-[10px] uppercase text-[#414844]">
+                <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+                  <span className="block font-mono text-[10px] uppercase text-[var(--text-muted)]">
                     SSE Streams
                   </span>
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Zero Dropout
                   </span>
                 </div>
-                <div className="rounded-lg bg-[#f4f3f0] p-3">
-                  <span className="block font-mono text-[10px] uppercase text-[#414844]">
+                <div className="rounded-lg bg-[var(--bg-secondary)] p-3">
+                  <span className="block font-mono text-[10px] uppercase text-[var(--text-muted)]">
                     Audit Ledger
                   </span>
-                  <span className="font-sans text-xs font-semibold text-[#002116]">
+                  <span className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Immutable Hashes
                   </span>
                 </div>
               </div>
             </div>
             <div className="pt-4">
-              <span className="font-mono text-xs text-[#414844]">
-                Protocols supported: <strong className="text-[#002116]">SSE, WebSockets, gRPC, Kafka Sink, Webhook v2</strong>
+              <span className="font-mono text-xs text-[var(--text-muted)]">
+                Protocols supported: <strong className="text-[var(--text-main)]">SSE, WebSockets, gRPC, Kafka Sink, Webhook v2</strong>
               </span>
             </div>
           </div>
@@ -853,30 +853,30 @@ function CodeSandbox() {
   }
 
   return (
-    <section id="code-explorer" className="w-full bg-[#f4f3f0] py-16 px-4 md:px-8">
+    <section id="code-explorer" className="w-full bg-[var(--bg-secondary)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="mb-6 flex flex-col justify-between gap-4 md:flex-row md:items-end">
           <div>
-            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[#efeeeb] px-2.5 py-0.5 font-mono text-[10px] uppercase text-[#002116]">
+            <div className="mb-2 inline-flex items-center gap-1.5 rounded-full bg-[var(--bg-tertiary)] px-2.5 py-0.5 font-mono text-[10px] uppercase text-[var(--text-main)]">
               <span>DEVELOPER TOOLING</span>
             </div>
-            <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+            <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
               Code Sandbox &amp; SDK Explorer
             </h2>
-            <p className="mt-1 max-w-xl font-sans text-sm text-[#414844]">
+            <p className="mt-1 max-w-xl font-sans text-sm text-[var(--text-muted)]">
               Choose your language or agent runtime. Drop Scryme MCP tooling into Claude Desktop configuration, your Next.js application, or Python LangChain pipeline in seconds.
             </p>
           </div>
 
           {/* Code language tab switcher */}
-          <div className="flex flex-wrap gap-1 rounded-xl bg-[#efeeeb] p-1.5 shadow-sm">
+          <div className="flex flex-wrap gap-1 rounded-xl bg-[var(--bg-tertiary)] p-1.5 shadow-sm">
             <button
               type="button"
               onClick={() => setActiveSdk('claude')}
               className={`cursor-pointer rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 activeSdk === 'claude'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               claude_desktop_config.json
@@ -886,8 +886,8 @@ function CodeSandbox() {
               onClick={() => setActiveSdk('graphql')}
               className={`cursor-pointer rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 activeSdk === 'graphql'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               Storefront GraphQL
@@ -897,8 +897,8 @@ function CodeSandbox() {
               onClick={() => setActiveSdk('ts')}
               className={`cursor-pointer rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 activeSdk === 'ts'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               TypeScript SDK (@scryme/agent-sdk)
@@ -908,8 +908,8 @@ function CodeSandbox() {
               onClick={() => setActiveSdk('python')}
               className={`cursor-pointer rounded-lg px-3.5 py-2 font-sans text-xs font-semibold transition-all ${
                 activeSdk === 'python'
-                  ? 'bg-white text-[#002116] shadow-sm'
-                  : 'text-[#414844] hover:text-[#1a1c1a]'
+                  ? 'bg-white text-[var(--text-main)] shadow-sm'
+                  : 'text-[var(--text-muted)] hover:text-[#1a1c1a]'
               }`}
             >
               Python LangChain / LlamaIndex
@@ -1028,16 +1028,16 @@ const ECOSYSTEM_ITEMS = [
 
 function EcosystemGrid() {
   return (
-    <section className="w-full bg-[#faf9f6] py-16 px-4 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="mx-auto mb-12 max-w-2xl text-center">
-          <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[#414844]">
+          <span className="font-mono text-[10px] font-semibold uppercase tracking-widest text-[var(--text-muted)]">
             INTEROPERABILITY MATRIX
           </span>
-          <h2 className="mt-1 font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+          <h2 className="mt-1 font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
             Native Compatibility with Modern Agentic &amp; Commerce Runtimes
           </h2>
-          <p className="mt-2 font-sans text-sm text-[#414844]">
+          <p className="mt-2 font-sans text-sm text-[var(--text-muted)]">
             Zero proprietary lock-in. Built upon standard JSON-RPC, GraphQL, OpenAPI 3.1, and open-source MCP specifications.
           </p>
         </div>
@@ -1050,11 +1050,11 @@ function EcosystemGrid() {
                 key={item.name}
                 className="flex flex-col items-center rounded-xl bg-white p-4 text-center shadow-sm transition-all hover:shadow-md"
               >
-                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-[#efeeeb] text-[#002116]">
+                <div className="mb-3 flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--bg-tertiary)] text-[var(--text-main)]">
                   <IconComponent className="h-6 w-6" />
                 </div>
-                <h3 className="font-sans text-xs font-semibold text-[#002116]">{item.name}</h3>
-                <p className="mt-1 font-sans text-xs text-[#414844]">{item.desc}</p>
+                <h3 className="font-sans text-xs font-semibold text-[var(--text-main)]">{item.name}</h3>
+                <p className="mt-1 font-sans text-xs text-[var(--text-muted)]">{item.desc}</p>
               </div>
             )
           })}
@@ -1068,7 +1068,7 @@ function EcosystemGrid() {
 
 function CaseStudySpotlight() {
   return (
-    <section className="w-full bg-[#f4f3f0] py-16 px-4 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-secondary)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="grid grid-cols-1 overflow-hidden rounded-xl bg-white shadow-md lg:grid-cols-12">
           {/* Visual / Image Side */}
@@ -1110,57 +1110,57 @@ function CaseStudySpotlight() {
           {/* Narrative & Stats Side */}
           <div className="flex flex-col justify-between space-y-6 p-6 lg:col-span-7 lg:p-10">
             <div className="space-y-4">
-              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#4d6700]">
+              <div className="font-mono text-[10px] font-semibold uppercase tracking-wider text-[#4d6700] dark:text-[#d2ff3a]">
                 PRODUCTION ENTERPRISE DEPLOYMENT
               </div>
-              <h4 className="font-serif text-2xl font-normal leading-snug text-[#002116] sm:text-3xl">
+              <h4 className="font-serif text-2xl font-normal leading-snug text-[var(--text-main)] sm:text-3xl">
                 How Apex Global deployed autonomous procurement agents using Scryme MCP to process 45,000 supplier inquiries with zero human escalation.
               </h4>
-              <p className="font-sans text-sm leading-relaxed text-[#414844]">
+              <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                 Apex Global previously required a team of 40 technical sales reps to field RFP quotes across 180,000 fastener SKUs, cross-referencing bonded stock in Rotterdam, Houston, and Singapore. By embedding Scryme’s MCP server with strict deterministic price guardrails, agents handle real-time inventory allocation, tax calculations, and freight locking directly inside custom customer portals.
               </p>
             </div>
 
             {/* 3 Highlight Metrics */}
             <div className="grid grid-cols-1 gap-4 pt-2 sm:grid-cols-3">
-              <div className="rounded-lg bg-[#f4f3f0] p-4">
-                <div className="font-serif text-3xl font-light text-[#002116]">
-                  94<span className="font-sans text-base font-semibold text-[#4d6700]">%</span>
+              <div className="rounded-lg bg-[var(--bg-secondary)] p-4">
+                <div className="font-serif text-3xl font-light text-[var(--text-main)]">
+                  94<span className="font-sans text-base font-semibold text-[#4d6700] dark:text-[#d2ff3a]">%</span>
                 </div>
-                <div className="mt-1 font-sans text-xs font-semibold text-[#002116]">
+                <div className="mt-1 font-sans text-xs font-semibold text-[var(--text-main)]">
                   Touchless Orders
                 </div>
-                <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Resolved from quote to dispatch without staff intervention.
                 </p>
               </div>
-              <div className="rounded-lg bg-[#f4f3f0] p-4">
-                <div className="font-serif text-3xl font-light text-[#002116]">
-                  $3.8<span className="font-sans text-base font-semibold text-[#4d6700]">M</span>
+              <div className="rounded-lg bg-[var(--bg-secondary)] p-4">
+                <div className="font-serif text-3xl font-light text-[var(--text-main)]">
+                  $3.8<span className="font-sans text-base font-semibold text-[#4d6700] dark:text-[#d2ff3a]">M</span>
                 </div>
-                <div className="mt-1 font-sans text-xs font-semibold text-[#002116]">
+                <div className="mt-1 font-sans text-xs font-semibold text-[var(--text-main)]">
                   OpEx Savings
                 </div>
-                <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Annualized operating savings in cross-border quotation overhead.
                 </p>
               </div>
-              <div className="rounded-lg bg-[#f4f3f0] p-4">
-                <div className="font-serif text-3xl font-light text-[#002116]">
-                  &lt;42<span className="font-sans text-base font-semibold text-[#4d6700]">ms</span>
+              <div className="rounded-lg bg-[var(--bg-secondary)] p-4">
+                <div className="font-serif text-3xl font-light text-[var(--text-main)]">
+                  &lt;42<span className="font-sans text-base font-semibold text-[#4d6700] dark:text-[#d2ff3a]">ms</span>
                 </div>
-                <div className="mt-1 font-sans text-xs font-semibold text-[#002116]">
+                <div className="mt-1 font-sans text-xs font-semibold text-[var(--text-main)]">
                   Storefront Sync
                 </div>
-                <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                   Zero overselling across 45,000 live B2B portal sessions.
                 </p>
               </div>
             </div>
 
             <div className="flex items-center justify-between pt-2">
-              <div className="font-sans text-xs text-[#414844]">
-                <strong className="text-[#002116]">
+              <div className="font-sans text-xs text-[var(--text-muted)]">
+                <strong className="text-[var(--text-main)]">
                   “The only ERP that treated LLMs as first-class deterministic operators rather than hallucinating text generators.”
                 </strong>
                 <span className="mt-0.5 block text-[#416656]">
@@ -1200,53 +1200,53 @@ function FaqSection() {
   const [openIndex, setOpenIndex] = useState<number | null>(null)
 
   return (
-    <section className="w-full bg-[#faf9f6] py-16 px-4 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="grid grid-cols-1 gap-12 lg:grid-cols-12">
           {/* Left Side: Tech Specs Overview */}
           <div className="space-y-6 lg:col-span-5">
-            <div className="inline-flex items-center gap-2 rounded-full bg-[#e9e8e5] px-2.5 py-1 font-mono text-[10px] uppercase text-[#002116]">
+            <div className="inline-flex items-center gap-2 rounded-full bg-[var(--bg-tertiary)] px-2.5 py-1 font-mono text-[10px] uppercase text-[var(--text-main)]">
               <span>DEFENSE-IN-DEPTH ARCHITECTURE</span>
             </div>
-            <h2 className="font-serif text-3xl font-normal text-[#002116] sm:text-4xl">
+            <h2 className="font-serif text-3xl font-normal text-[var(--text-main)] sm:text-4xl">
               Zero-Trust Agentic Security &amp; Isolation
             </h2>
-            <p className="font-sans text-sm leading-relaxed text-[#414844]">
+            <p className="font-sans text-sm leading-relaxed text-[var(--text-muted)]">
               Giving generative AI access to core ERP financial ledgers requires uncompromising controls. Scryme isolates model executions in stateless WASM sandboxes, verifies mathematical bounds before ledger commits, and cryptographically signs every agent action.
             </p>
 
             <div className="space-y-3 pt-2">
-              <div className="flex items-start gap-3 rounded-lg bg-[#f4f3f0] p-3.5">
-                <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[#4d6700]" />
+              <div className="flex items-start gap-3 rounded-lg bg-[var(--bg-secondary)] p-3.5">
+                <Shield className="mt-0.5 h-5 w-5 shrink-0 text-[#4d6700] dark:text-[#d2ff3a]" />
                 <div>
-                  <h3 className="font-sans text-xs font-semibold text-[#002116]">
+                  <h3 className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Prompt Injection Immunity
                   </h3>
-                  <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                  <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                     Agent output strings never touch SQL or raw database mutations. All mutations are strictly mapped to typed Rust-compiled ledger procedures.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-lg bg-[#f4f3f0] p-3.5">
-                <Key className="mt-0.5 h-5 w-5 shrink-0 text-[#002116]" />
+              <div className="flex items-start gap-3 rounded-lg bg-[var(--bg-secondary)] p-3.5">
+                <Key className="mt-0.5 h-5 w-5 shrink-0 text-[var(--text-main)]" />
                 <div>
-                  <h3 className="font-sans text-xs font-semibold text-[#002116]">
+                  <h3 className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     Granular Tool-Level API Tokens
                   </h3>
-                  <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                  <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                     Issue scoped tokens that allow an agent to query stock in Rotterdam without authorization to inspect pricing margins or issue supplier invoices.
                   </p>
                 </div>
               </div>
 
-              <div className="flex items-start gap-3 rounded-lg bg-[#f4f3f0] p-3.5">
+              <div className="flex items-start gap-3 rounded-lg bg-[var(--bg-secondary)] p-3.5">
                 <History className="mt-0.5 h-5 w-5 shrink-0 text-[#416656]" />
                 <div>
-                  <h3 className="font-sans text-xs font-semibold text-[#002116]">
+                  <h3 className="font-sans text-xs font-semibold text-[var(--text-main)]">
                     SOC-2 Type II Immutable Merkle Logs
                   </h3>
-                  <p className="mt-0.5 font-sans text-xs text-[#414844]">
+                  <p className="mt-0.5 font-sans text-xs text-[var(--text-muted)]">
                     Every MCP tool call, human approval, and ledger settlement generates a cryptographic SHA-256 Merkle leaf for third-party compliance audits.
                   </p>
                 </div>
@@ -1264,17 +1264,17 @@ function FaqSection() {
                     type="button"
                     aria-expanded={isOpen}
                     onClick={() => setOpenIndex(isOpen ? null : idx)}
-                    className="flex w-full cursor-pointer items-center justify-between text-left font-sans text-xs font-semibold text-[#002116]"
+                    className="flex w-full cursor-pointer items-center justify-between text-left font-sans text-xs font-semibold text-[var(--text-main)]"
                   >
                     <span>{faq.q}</span>
                     <ChevronDown
-                      className={`h-5 w-5 text-[#414844] transition-transform ${
+                      className={`h-5 w-5 text-[var(--text-muted)] transition-transform ${
                         isOpen ? 'rotate-180' : ''
                       }`}
                     />
                   </button>
                   {isOpen && (
-                    <div className="mt-3 font-sans text-sm leading-relaxed text-[#414844]">
+                    <div className="mt-3 font-sans text-sm leading-relaxed text-[var(--text-muted)]">
                       {faq.a}
                     </div>
                   )}
@@ -1292,7 +1292,7 @@ function FaqSection() {
 
 function ExecutiveCtaBanner() {
   return (
-    <section className="w-full bg-[#faf9f6] py-16 px-4 md:px-8">
+    <section data-scroll-reveal="fade-in" className="w-full bg-[var(--bg-main)] py-16 px-4 md:px-8">
       <div className="mx-auto max-w-[1440px]">
         <div className="relative overflow-hidden rounded-xl bg-[#002116] p-8 text-white shadow-xl lg:p-12">
           {/* Subtle background pattern */}
@@ -1350,7 +1350,7 @@ function ExecutiveCtaBanner() {
 
 function McpAgentApisComponent() {
   return (
-    <div className="min-h-screen bg-[#faf9f6] text-[#1a1c1a] font-sans selection:bg-[#bef529] selection:text-[#151f00]">
+    <div className="min-h-screen bg-[var(--bg-main)] text-[var(--text-main)] font-sans selection:bg-[#bef529] selection:text-[#151f00] transition-colors">
       <Header />
       <main className="w-full pt-20">
         <LiveTelemetryTicker />
