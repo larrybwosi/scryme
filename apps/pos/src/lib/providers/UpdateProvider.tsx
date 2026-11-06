@@ -108,7 +108,7 @@ const ProgressToast = ({ progress }: { progress: number }) => (
     <div className="h-2 w-full overflow-hidden rounded-full bg-gray-100 dark:bg-gray-800">
       <div className="h-full bg-blue-600 transition-all duration-300 ease-out" style={{ width: `${progress}%` }} />
     </div>
-    <p className="mt-2 text-xs text-gray-500">You will be asked to restart once the update is ready.</p>
+    <p className="mt-2 text-xs text-gray-500">The application will restart automatically when finished.</p>
   </div>
 );
 
@@ -214,11 +214,11 @@ export const UpdaterProvider = ({
         }
       });
 
-      // Installed. Ask the user to restart instead of relaunching automatically.
+      // Installed. Automatically relaunch to apply the update.
       clearSnooze();
       setDownloadProgress(100);
       setStatus('DONE');
-      setIsModalOpen(true);
+      await relaunch();
     } catch (e: any) {
       setError(e?.message ?? 'Failed to update');
       setStatus('ERROR');
