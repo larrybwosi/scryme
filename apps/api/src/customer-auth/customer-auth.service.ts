@@ -1,4 +1,3 @@
-import { sendVerificationEmail, sendPasswordResetEmail } from "@repo/shared/services/email";
 import { getRedisClient } from "@repo/shared/redis";
 import {
   Injectable,
@@ -121,57 +120,6 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
         cookieCache: {
           enabled: true,
           maxAge: 5 * 60,
-        },
-      },
-      emailVerification: {
-        sendOnSignUp: false,
-        async sendVerificationEmail({ user, url, token }) {
-          try {
-            const verifyUrl = url || `${env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/verify-email?token=${token}`;
-            await sendVerificationEmail({
-              email: user.email,
-              url: verifyUrl,
-              user: { name: user.name || undefined },
-            });
-          } catch (error) {
-            console.error("Error sending customer verification email:", error);
-          }
-        },
-      },
-      emailAndPassword: {
-        enabled: true,
-        async sendResetPassword({ user, url, token }) {
-          try {
-            let targetOrigin = env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech";
-            if (url) {
-              try {
-                const parsedUrl = new URL(url);
-                const callbackParam = parsedUrl.searchParams.get("callbackURL");
-                if (callbackParam) {
-                  const decodedCallback = decodeURIComponent(callbackParam);
-                  if (decodedCallback.startsWith("http://") || decodedCallback.startsWith("https://")) {
-                    const parsedCallback = new URL(decodedCallback);
-                    targetOrigin = parsedCallback.origin;
-                  } else if (parsedUrl.origin) {
-                    targetOrigin = parsedUrl.origin;
-                  }
-                } else if (parsedUrl.origin) {
-                  targetOrigin = parsedUrl.origin;
-                }
-              } catch (e) {
-                // Ignore URL parse error
-              }
-            }
-            const cleanOrigin = targetOrigin.replace(/\/+$/, "");
-            const resetUrl = `${cleanOrigin}/reset-password?token=${token}`;
-            await sendPasswordResetEmail({
-              email: user.email,
-              url: resetUrl,
-              user: { name: user.name || undefined },
-            });
-          } catch (error) {
-            console.error("Error sending customer password reset email:", error);
-          }
         },
       },
       user: {

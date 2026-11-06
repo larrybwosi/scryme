@@ -1,6 +1,4 @@
-import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import {
-  Logger,
   Controller,
   Get,
   Post,
@@ -27,10 +25,6 @@ import {
   UpdateCustomerSchema,
   AddressSchema,
   CustomerLoginSchema,
-  CustomerForgotPasswordSchema,
-  CustomerResetPasswordSchema,
-  CustomerSendVerificationEmailSchema,
-  CustomerVerifyEmailSchema,
 } from "../../application/dto/customer.schema";
 import { GetCustomersUseCase } from "../../application/use-cases/get-customers.use-case";
 import { RegisterCustomerUseCase } from "../../application/use-cases/register-customer.use-case";
@@ -42,10 +36,6 @@ import {
   RegisterCustomerDto,
   AddressDto,
   CustomerLoginDto,
-  CustomerForgotPasswordDto,
-  CustomerResetPasswordDto,
-  CustomerSendVerificationEmailDto,
-  CustomerVerifyEmailDto,
 } from "../../application/dto/register-customer.dto";
 import { UpdateCustomerDto } from "../../application/dto/update-customer.dto";
 import { PrismaService } from "@/prisma/prisma.service";
@@ -73,7 +63,6 @@ import { UnauthorizedException, BadRequestException } from "@nestjs/common";
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 @UseInterceptors(AuditInterceptor, StandardResponseInterceptor)
 export class CustomerController {
-  private readonly logger = new Logger(CustomerController.name);
   constructor(
     private readonly getCustomersUseCase: GetCustomersUseCase,
     private readonly registerCustomerUseCase: RegisterCustomerUseCase,
@@ -83,7 +72,6 @@ export class CustomerController {
     private readonly manageAddressesUseCase: ManageAddressesUseCase,
     private readonly prisma: PrismaService,
     private readonly redis: RedisService,
-    private readonly customerAuthService: CustomerAuthService,
   ) {}
 
   @Get()
@@ -179,7 +167,7 @@ export class CustomerController {
   @UsePipes(new V3ZodValidationPipe(CustomerLoginSchema))
   @ApiOperation({
     summary:
-      "Authenticate a customer using email & password via CustomerAuthService (Better Auth)",
+      "Authenticate a customer using email & password, issuing a standard HS256 JWT and session",
     operationId: "Customers_Login",
   })
   @ApiResponse({
@@ -192,9 +180,10 @@ export class CustomerController {
     description: "Invalid credentials",
   })
   async login(@Req() req: any, @Body() dto: CustomerLoginDto) {
+
     const orgId = req.organization.id;
 
-    // Verify customer exists in this organization
+    // Retrieve the customer from DB
     const customer = await this.prisma.client.customer.findUnique({
       where: {
         organizationId_email: {
@@ -204,75 +193,66 @@ export class CustomerController {
       },
     });
 
-    if (!customer) {
+    // Authentication & BOLA Hardening - Verify user credentials for the customer profile email.
+    // Ensure user lookup is strictly scoped by email to prevent cross-user credential verification mismatches.
+    const user = await this.prisma.client.user.findUnique({
+      where: { email: dto.email },
+    });
+
+    // Mitigate timing attacks and username/email enumeration side-channels:
+    // Always perform a cryptographically heavy bcrypt.compare with a valid dummy hash
+    // when the customer or the linked user is not found.
+    const dummyHash =
+      "$2b$10$vI8tYnK6YKMH3O84S4eXQuKBLN3F3k4pXFmF0a.a2H88tM8vO6PzO";
+    const hashToCompare = user?.password || dummyHash;
+    const isPasswordValid = await bcrypt.compare(
+      dto.password || "",
+      hashToCompare,
+    );
+
+    if (!customer || !user || !isPasswordValid) {
       throw new UnauthorizedException("Invalid credentials");
     }
 
-    // Authenticate through CustomerAuthService (Better Auth)
-    let authResult: any = null;
-    try {
-      const headers = new Headers();
-      if (req.headers["user-agent"]) {
-        headers.set("user-agent", req.headers["user-agent"]);
-      }
-      if (req.ip) {
-        headers.set("x-forwarded-for", req.ip);
-      }
+    // Create a secure active customer session in Redis
+    const sessionId = `sess_${randomUUID()}`;
+    const tokenPayload = {
+      sub: customer.id,
+      sessionId,
+      customerEmail: customer.email,
+      customerName: customer.name,
+      organizationId: orgId,
+      orgSlug: req.organization.slug,
+      type: "v3_customer",
+    };
 
-      authResult = await this.customerAuthService.auth.api.signInEmail({
-        body: {
-          email: dto.email,
-          password: dto.password,
-        },
-        headers,
-      });
-    } catch (err: any) {
-      throw new UnauthorizedException(err?.message || "Invalid credentials");
-    }
-
-    if (!authResult || !authResult.session) {
-      throw new UnauthorizedException("Invalid credentials");
-    }
-
-    const token = authResult.token || authResult.session?.token;
-
-    // Link customer to Better Auth user via externalMapping if not yet mapped
-    if (authResult.user?.id) {
-      await this.prisma.client.externalMapping.upsert({
-        where: {
-          organizationId_provider_externalId_entityType: {
-            organizationId: orgId,
-            provider: "BETTER_AUTH",
-            externalId: authResult.user.id,
-            entityType: "CUSTOMER",
-          },
-        },
-        create: {
-          organizationId: orgId,
-          internalId: customer.id,
-          externalId: authResult.user.id,
-          provider: "BETTER_AUTH",
-          entityType: "CUSTOMER",
-          internalEntityType: "Customer",
-        },
-        update: {
-          internalId: customer.id,
-        },
-      });
-    }
+    const token = jwt.sign(
+      tokenPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
 
     const sessionState = {
-      id: authResult.session.id,
+      id: sessionId,
       customerId: customer.id,
-      userId: authResult.user?.id,
       email: customer.email,
       name: customer.name,
       token,
-      userAgent: authResult.session.userAgent || req.headers["user-agent"] || null,
-      ipAddress: authResult.session.ipAddress || req.ip || null,
-      createdAt: authResult.session.createdAt,
-      expiresAt: authResult.session.expiresAt,
+      userAgent: req.headers["user-agent"] || null,
+      ipAddress: req.ip || null,
+      createdAt: new Date().toISOString(),
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
     };
+
+    // Store the session in Redis with 7 days TTL
+    await this.redis.setex(
+      `customer_session:${customer.id}:${sessionId}`,
+      7 * 24 * 60 * 60,
+      JSON.stringify(sessionState),
+    );
 
     return {
       success: true,
@@ -285,7 +265,7 @@ export class CustomerController {
   @Post("auth/refresh")
   @AllowPublic()
   @ApiOperation({
-    summary: "Refresh active customer session using CustomerAuthService",
+    summary: "Refresh an active or expired customer session token, issuing a fresh HS256 customer JWT",
     operationId: "Customers_RefreshSession",
   })
   @ApiResponse({
@@ -302,66 +282,76 @@ export class CustomerController {
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       throw new UnauthorizedException("Missing or invalid authorization header");
     }
-    const token = authHeader.split(" ")[1];
+    const oldToken = authHeader.split(" ")[1];
 
-    const headers = new Headers();
-    headers.set("authorization", `Bearer ${token}`);
+    let payload: any;
+    try {
+      payload = jwt.verify(oldToken, env.JWT_SECRET || "default_jwt_secret", {
+        ignoreExpiration: true,
+        algorithms: ["HS256"],
+      }) as any;
+    } catch (e) {
+      throw new UnauthorizedException("Invalid token");
+    }
 
-    const session = await this.customerAuthService.auth.api.getSession({
-      headers,
-    });
+    if (!payload || payload.type !== "v3_customer" || !payload.sessionId) {
+      throw new UnauthorizedException("Invalid token type");
+    }
 
-    if (!session || !session.session) {
+    // Check if session is still active in Redis
+    const sessionKey = `customer_session:${payload.sub}:${payload.sessionId}`;
+    const sessionData = await this.redis.get<string>(sessionKey);
+    if (!sessionData) {
       throw new UnauthorizedException("Session has been revoked or expired");
     }
 
-    const targetOrgId = req.organization?.id;
-    let customer = null;
+    const parsedSession = JSON.parse(sessionData);
 
-    if (targetOrgId) {
-      const mapping = await this.prisma.client.externalMapping.findFirst({
-        where: {
-          organizationId: targetOrgId,
-          provider: "BETTER_AUTH",
-          externalId: session.user.id,
-          entityType: "CUSTOMER",
-        },
-      });
-      if (mapping?.internalId) {
-        customer = await this.prisma.client.customer.findUnique({
-          where: { id: mapping.internalId },
-        });
-      }
-      if (!customer && session.user.email) {
-        customer = await this.prisma.client.customer.findUnique({
-          where: {
-            organizationId_email: {
-              organizationId: targetOrgId,
-              email: session.user.email,
-            },
-          },
-        });
-      }
-    }
-
-    const sessionState = {
-      id: session.session.id,
-      customerId: customer?.id || session.session.userId,
-      userId: session.user.id,
-      email: customer?.email || session.user.email,
-      name: customer?.name || session.user.name,
-      token: session.session.token || token,
-      userAgent: session.session.userAgent || null,
-      ipAddress: session.session.ipAddress || null,
-      createdAt: session.session.createdAt,
-      expiresAt: session.session.expiresAt,
+    // Issue a fresh local HS256 customer JWT
+    const newPayload = {
+      sub: payload.sub,
+      sessionId: payload.sessionId,
+      customerEmail: payload.customerEmail,
+      customerName: payload.customerName,
+      organizationId: payload.organizationId,
+      orgSlug: payload.orgSlug,
+      type: "v3_customer",
     };
+
+    const token = jwt.sign(
+      newPayload,
+      env.JWT_SECRET || "default_jwt_secret",
+      {
+        expiresIn: "7d",
+        algorithm: "HS256",
+      },
+    );
+
+    // Update session token and expiresAt in Redis
+    const updatedSession = {
+      ...parsedSession,
+      token,
+      expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+    };
+
+    await this.redis.setex(
+      sessionKey,
+      7 * 24 * 60 * 60,
+      JSON.stringify(updatedSession),
+    );
+
+    const customer = await this.prisma.client.customer.findFirst({
+      where: {
+        id: payload.sub,
+        organizationId: payload.organizationId,
+      },
+    });
 
     return {
       success: true,
-      token: session.session.token || token,
-      session: sessionState,
-      user: customer || session.user,
+      token,
+      session: updatedSession,
+      user: customer,
     };
   }
 
@@ -380,6 +370,7 @@ export class CustomerController {
       throw new UnauthorizedException("Customer context required");
     }
 
+    // Retrieve safe customer details from DB
     const customer = await this.prisma.client.customer.findFirst({
       where: {
         id: customerId,
@@ -405,22 +396,20 @@ export class CustomerController {
       throw new UnauthorizedException("Customer profile not found");
     }
 
-    const authHeader = req.headers.authorization;
     let session = null;
-    if (authHeader && authHeader.startsWith("Bearer ")) {
-      const token = authHeader.split(" ")[1];
-      const headers = new Headers();
-      headers.set("authorization", `Bearer ${token}`);
-      try {
-        const authData = await this.customerAuthService.auth.api.getSession({
-          headers,
-        });
-        if (authData?.session) {
-          const { token: _t, ...safeSession } = authData.session;
+    const sessionId = req.v3Context?.sessionId;
+    if (sessionId) {
+      const sessionKey = `customer_session:${customerId}:${sessionId}`;
+      const sessionData = await this.redis.get<string>(sessionKey);
+      if (sessionData) {
+        try {
+          const parsedSession = JSON.parse(sessionData);
+          // Omit token for security in client response!
+          const { token, ...safeSession } = parsedSession;
           session = safeSession;
+        } catch (e) {
+          // Ignored
         }
-      } catch (e) {
-        // Ignored
       }
     }
 
@@ -440,22 +429,32 @@ export class CustomerController {
     description: "Active customer sessions list",
   })
   async getSessions(@Req() req: any) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Customer authentication required");
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
     }
-    const token = authHeader.split(" ")[1];
-    const headers = new Headers();
-    headers.set("authorization", `Bearer ${token}`);
 
-    try {
-      const sessions = await this.customerAuthService.auth.api.listSessions({
-        headers,
-      });
-      return Array.isArray(sessions) ? sessions : [];
-    } catch (e: any) {
-      return [];
+    const keys = await this.redis.keys(`customer_session:${customerId}:*`);
+
+    // Parallelize Redis key retrievals using Promise.all to avoid O(N) sequential blocking roundtrips
+    const sessionData = await Promise.all(
+      keys.map(key => this.redis.get<string>(key)),
+    );
+
+    const sessions = [];
+    for (const data of sessionData) {
+      if (data) {
+        try {
+          const parsedSession = JSON.parse(data);
+          const { token, ...safeSession } = parsedSession;
+          sessions.push(safeSession);
+        } catch (e) {
+          // Ignored
+        }
+      }
     }
+
+    return sessions;
   }
 
   @Delete("auth/sessions/:id")
@@ -467,27 +466,17 @@ export class CustomerController {
     status: 200,
     description: "Session successfully revoked",
   })
-  async revokeSession(@Req() req: any, @Param("id") sessionIdOrToken: string) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Customer authentication required");
+  async revokeSession(@Req() req: any, @Param("id") sessionId: string) {
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
     }
-    const token = authHeader.split(" ")[1];
-    const headers = new Headers();
-    headers.set("authorization", `Bearer ${token}`);
 
-    try {
-      await this.customerAuthService.auth.api.revokeSession({
-        body: { token: sessionIdOrToken },
-        headers,
-      });
-    } catch (e: any) {
-      this.logger.warn(`Revoke session notice: ${e?.message || e}`);
-    }
+    await this.redis.del(`customer_session:${customerId}:${sessionId}`);
 
     return {
       success: true,
-      message: `Session ${sessionIdOrToken} successfully revoked`,
+      message: `Session ${sessionId} successfully revoked`,
     };
   }
 
@@ -501,26 +490,26 @@ export class CustomerController {
     description: "Sessions successfully revoked",
   })
   async revokeAllSessions(@Req() req: any, @Query("mode") mode?: string) {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      throw new UnauthorizedException("Customer authentication required");
+    const customerId = req.v3Context?.customerId || req.user?.id;
+    const currentSessionId = req.v3Context?.sessionId;
+    if (!customerId) {
+      throw new UnauthorizedException("Customer context required");
     }
-    const token = authHeader.split(" ")[1];
-    const headers = new Headers();
-    headers.set("authorization", `Bearer ${token}`);
 
-    try {
-      if (mode === "other") {
-        await this.customerAuthService.auth.api.revokeOtherSessions({
-          headers,
-        });
-      } else {
-        await this.customerAuthService.auth.api.revokeSessions({
-          headers,
-        });
-      }
-    } catch (e: any) {
-      this.logger.warn(`Revoke sessions notice: ${e?.message || e}`);
+    const keys = await this.redis.keys(`customer_session:${customerId}:*`);
+
+    const keysToDelete = keys.filter(
+      key =>
+        !(
+          mode === "other" &&
+          currentSessionId &&
+          key.endsWith(`:${currentSessionId}`)
+        ),
+    );
+
+    if (keysToDelete.length > 0) {
+      // Batch delete all matching keys in a single Redis command to avoid sequential network roundtrips
+      await this.redis.del(...keysToDelete);
     }
 
     return {
@@ -529,121 +518,6 @@ export class CustomerController {
         mode === "other"
           ? "Other sessions successfully revoked"
           : "All sessions successfully revoked",
-    };
-  }
-
-  @Post("auth/forgot-password")
-  @AllowPublic()
-  @UsePipes(new V3ZodValidationPipe(CustomerForgotPasswordSchema))
-  @ApiOperation({
-    summary: "Initiate customer password reset via email",
-    operationId: "Customers_ForgotPassword",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Password reset instructions dispatched if email exists",
-  })
-  async forgotPassword(@Req() req: any, @Body() dto: CustomerForgotPasswordDto) {
-    try {
-      await this.customerAuthService.auth.api.requestPasswordReset({
-        body: {
-          email: dto.email,
-          redirectTo: dto.redirectTo,
-        },
-      });
-    } catch (e: any) {
-      this.logger.warn(`Forgot password notice: ${e?.message || e}`);
-    }
-
-    return {
-      success: true,
-      message: "If an account exists with this email, password reset instructions have been dispatched.",
-    };
-  }
-
-  @Post("auth/reset-password")
-  @AllowPublic()
-  @UsePipes(new V3ZodValidationPipe(CustomerResetPasswordSchema))
-  @ApiOperation({
-    summary: "Complete customer password reset using token",
-    operationId: "Customers_ResetPassword",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Password successfully reset",
-  })
-  async resetPassword(@Req() req: any, @Body() dto: CustomerResetPasswordDto) {
-    try {
-      await this.customerAuthService.auth.api.resetPassword({
-        body: {
-          token: dto.token,
-          newPassword: dto.newPassword,
-        },
-      });
-    } catch (e: any) {
-      throw new BadRequestException(e?.message || "Invalid or expired password reset token");
-    }
-
-    return {
-      success: true,
-      message: "Password successfully reset. You may now log in with your new credentials.",
-    };
-  }
-
-  @Post("auth/send-verification-email")
-  @AllowPublic()
-  @UsePipes(new V3ZodValidationPipe(CustomerSendVerificationEmailSchema))
-  @ApiOperation({
-    summary: "Send email verification link to customer",
-    operationId: "Customers_SendVerificationEmail",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Verification email dispatched if account exists",
-  })
-  async sendVerificationEmail(@Req() req: any, @Body() dto: CustomerSendVerificationEmailDto) {
-    try {
-      await this.customerAuthService.auth.api.sendVerificationEmail({
-        body: {
-          email: dto.email,
-          callbackURL: dto.callbackURL,
-        },
-      });
-    } catch (e: any) {
-      this.logger.warn(`Send verification email notice: ${e?.message || e}`);
-    }
-
-    return {
-      success: true,
-      message: "Verification email dispatched successfully.",
-    };
-  }
-
-  @Get("auth/verify-email")
-  @AllowPublic()
-  @ApiOperation({
-    summary: "Verify customer email with verification token",
-    operationId: "Customers_VerifyEmail",
-  })
-  @ApiResponse({
-    status: 200,
-    description: "Email verified successfully",
-  })
-  async verifyEmail(@Req() req: any, @Query() query: CustomerVerifyEmailDto) {
-    try {
-      await this.customerAuthService.auth.api.verifyEmail({
-        query: {
-          token: query.token,
-          callbackURL: query.callbackURL,
-        },
-      });
-    } catch (e: any) {
-      throw new BadRequestException(e?.message || "Invalid or expired verification token");
-    }
-
-    return {
-      success: true,
-      message: "Email verified successfully.",
     };
   }
 
