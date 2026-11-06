@@ -37,6 +37,12 @@ RUN turbo prune site-next --docker
 FROM base AS deployer
 WORKDIR /app
 
+# Set non-interactive CI flags and disable telemetry
+ENV CI=true \
+    SANITY_TELEMETRY=false \
+    DO_NOT_TRACK=1 \
+    NODE_OPTIONS="--max-old-space-size=4096"
+
 # Copy the pruned lockfile and package.json files
 COPY --from=pruner /app/out/json/ .
 COPY --from=pruner /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
@@ -54,5 +60,8 @@ RUN pnpm turbo run generate
 
 WORKDIR /app/apps/site-next
 
+# Disable Sanity CLI telemetry persistently in user config
+RUN npx --no-install sanity telemetry disable || true
+
 ENTRYPOINT ["sh", "-c"]
-CMD ["SANITY_AUTH_TOKEN=\"${SANITY_AUTH_TOKEN:-${SANITY_API_TOKEN:-$SANITY_TOKEN}}\" npx sanity schemas deploy"]
+CMD ["SANITY_AUTH_TOKEN=\"${SANITY_AUTH_TOKEN:-${SANITY_API_TOKEN:-$SANITY_TOKEN}}\" pnpm run schema:deploy"]

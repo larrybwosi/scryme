@@ -6,6 +6,10 @@ services:
     container_name: scryme-site-deploy
     restart: "no"
     environment:
+      - CI=true
+      - SANITY_TELEMETRY=false
+      - DO_NOT_TRACK=1
+      - NODE_OPTIONS=--max-old-space-size=4096
       - VITE_SANITY_PROJECT_ID=${VITE_SANITY_PROJECT_ID}
       - VITE_SANITY_DATASET=${VITE_SANITY_DATASET:-production}
       - SANITY_STUDIO_PROJECT_ID=${SANITY_STUDIO_PROJECT_ID:-${VITE_SANITY_PROJECT_ID}}
