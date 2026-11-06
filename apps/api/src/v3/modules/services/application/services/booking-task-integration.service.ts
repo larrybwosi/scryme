@@ -1,16 +1,25 @@
-import { Injectable, NotFoundException, BadRequestException, forwardRef, Inject } from "@nestjs/common";
+import { Injectable, NotFoundException, BadRequestException } from "@nestjs/common";
+import { ModuleRef } from "@nestjs/core";
 import { PrismaService } from "@/prisma/prisma.service";
 import { BookingStatus, ProjectTaskPriority, ProjectTaskStatus, TaskPriority, TaskStatus } from "@repo/db";
-import { BookingService } from "./booking.service";
+import type { BookingService } from "./booking.service";
 import { GenerateBookingTasksDto } from "../dto/booking-conflict.dto";
 
 @Injectable()
 export class BookingTaskIntegrationService {
+  private bookingService?: BookingService;
+
   constructor(
     private readonly prisma: PrismaService,
-    @Inject(forwardRef(() => BookingService))
-    private readonly bookingService: BookingService,
+    private readonly moduleRef: ModuleRef,
   ) {}
+
+  private getBookingService(): BookingService {
+    if (!this.bookingService) {
+      this.bookingService = this.moduleRef.get("BookingService", { strict: false });
+    }
+    return this.bookingService;
+  }
 
   /**
    * Auto-provisions or retrieves default "Service Operations" Project for the organization.
@@ -245,7 +254,7 @@ export class BookingTaskIntegrationService {
     });
 
     if (booking && booking.status !== BookingStatus.COMPLETED && booking.status !== BookingStatus.CANCELLED) {
-      await this.bookingService.completeBooking(orgId, booking.id, memberId, {
+      await this.getBookingService().completeBooking(orgId, booking.id, memberId, {
         actualEndTime: new Date().toISOString(),
       });
       return { updated: true, bookingId: booking.id, status: BookingStatus.COMPLETED };

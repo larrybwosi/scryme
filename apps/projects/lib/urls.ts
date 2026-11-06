@@ -1,3 +1,5 @@
+import { env } from "@repo/env";
+
 export function getResolvedApiUrl(customUrl?: string, nodeEnv?: string): string {
   const currentEnv = nodeEnv || process.env.NODE_ENV || "development";
   const isDev = currentEnv === "development";
@@ -5,7 +7,7 @@ export function getResolvedApiUrl(customUrl?: string, nodeEnv?: string): string 
 
   let rawApiUrl =
     customUrl ||
-    (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_API_URL : undefined);
+    (typeof process !== "undefined" ? env.NEXT_PUBLIC_API_URL : undefined);
 
   let apiUrl = defaultApiUrl;
   if (
@@ -47,9 +49,9 @@ export function getResolvedSocketUrl(customUrl?: string, nodeEnv?: string): stri
   let rawSocketUrl =
     customUrl ||
     (typeof process !== "undefined"
-      ? process.env.NEXT_PUBLIC_WS_URL ||
-        process.env.NEXT_PUBLIC_SOCKET_URL ||
-        process.env.NEXT_PUBLIC_API_URL
+      ? env.NEXT_PUBLIC_WS_URL ||
+        env.NEXT_PUBLIC_SOCKET_URL ||
+        env.NEXT_PUBLIC_API_URL
       : undefined);
 
   let socketUrl = defaultSocketUrl;

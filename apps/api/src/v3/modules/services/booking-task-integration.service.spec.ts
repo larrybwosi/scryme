@@ -6,6 +6,7 @@ describe("BookingTaskIntegrationService", () => {
   let service: BookingTaskIntegrationService;
   let mockPrisma: any;
   let mockBookingService: any;
+  let mockModuleRef: any;
 
   beforeEach(() => {
     mockPrisma = {
@@ -35,7 +36,11 @@ describe("BookingTaskIntegrationService", () => {
       completeBooking: vi.fn().mockResolvedValue({ id: "bk_1", status: BookingStatus.COMPLETED }),
     };
 
-    service = new BookingTaskIntegrationService(mockPrisma, mockBookingService);
+    mockModuleRef = {
+      get: vi.fn().mockReturnValue(mockBookingService),
+    };
+
+    service = new BookingTaskIntegrationService(mockPrisma, mockModuleRef as any);
   });
 
   it("should generate Task and StaffTask with cloned checklist items from Service template", async () => {

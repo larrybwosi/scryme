@@ -1,5 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { passkeyClient } from "@better-auth/passkey/client";
+import { env } from "@repo/env";
 
 function getValidAuthUrl(
   urls: (string | undefined)[],
@@ -17,8 +18,6 @@ function getValidAuthUrl(
   }
   return defaultUrl;
 }
-
-import { env } from "@repo/env";
 
 const isDev = env.NODE_ENV === "development";
 const defaultAppUrl = isDev

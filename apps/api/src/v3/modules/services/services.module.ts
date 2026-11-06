@@ -37,8 +37,9 @@ import { SchedulingReconcilerService } from "./infrastructure/jobs/scheduling-re
     SchedulingReconcilerService,
     BookingConflictService,
     BookingTaskIntegrationService,
-    BookingConflictService,
-    BookingTaskIntegrationService,
+    BookingLifecycleService,
+    BookingConflictDetectionService,
+    BookingTaskGeneratorService,
   ],
   exports: [ServiceManagementService, BookingService, StaffSchedulingService, CalComService, ServiceAnalyticsService, OtpService, SchedulingQueueService, BookingLifecycleService, BookingConflictDetectionService, BookingTaskGeneratorService, ],
 })
