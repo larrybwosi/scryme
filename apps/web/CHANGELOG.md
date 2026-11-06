@@ -1,5 +1,12 @@
 # web
 
+## 10.2.43
+
+### Patch Changes
+
+- Updated dependencies [616a01f]
+  - @scryme/sdk@10.2.43
+
 ## 10.2.42
 
 ### Patch Changes
