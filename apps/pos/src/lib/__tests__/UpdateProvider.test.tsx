@@ -1,7 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { UpdaterProvider, useUpdater } from '../UpdateProvider';
+import { UpdaterProvider, useUpdater } from '../providers/UpdateProvider';
 import { useAuthStore } from '@/store/pos-auth-store';
 import { usePosStore } from '@/store/store';
 import * as pluginUpdater from '@tauri-apps/plugin-updater';
