@@ -238,11 +238,11 @@ export function PettyCashClient({
     <div className="space-y-6">
       <Tabs defaultValue="funds" className="w-full">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 border-b border-border pb-3 mb-6">
-          <TabsList className="bg-muted p-1 rounded-xl w-fit flex gap-1">
-            <TabsTrigger value="funds" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+          <TabsList className="bg-muted p-1 rounded-md w-fit flex gap-1">
+            <TabsTrigger value="funds" className="px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
               Funds Overview ({filteredFunds.length})
             </TabsTrigger>
-            <TabsTrigger value="transactions" className="px-4 py-2 text-sm font-semibold rounded-lg data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
+            <TabsTrigger value="transactions" className="px-4 py-2 text-sm font-semibold data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm">
               All Expenses & Transactions ({filteredTransactions.length})
             </TabsTrigger>
           </TabsList>
@@ -257,7 +257,7 @@ export function PettyCashClient({
 
         {/* TAB 1: FUNDS OVERVIEW */}
         <TabsContent value="funds" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-md border border-border">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -315,10 +315,10 @@ export function PettyCashClient({
             {filteredFunds.map(fund => (
               <div
                 key={fund.id}
-                className="bg-card p-6 rounded-2xl border border-border hover:shadow-md transition-all group"
+                className="bg-card p-6 rounded-md border border-border hover:shadow-md transition-all group"
               >
                 <div className="flex items-start justify-between mb-6">
-                  <div className="p-3 rounded-2xl bg-muted text-muted-foreground group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
+                  <div className="p-3 rounded-md bg-muted text-muted-foreground group-hover:bg-[#34A853]/10 group-hover:text-[#34A853] transition-colors">
                     <Wallet className="w-6 h-6" />
                   </div>
                   <DropdownMenu>
@@ -346,11 +346,11 @@ export function PettyCashClient({
                   </div>
                 </div>
 
-                <div className="p-4 rounded-xl bg-background border border-border/60 space-y-4 mb-6">
+                <div className="p-4 rounded-md bg-background border border-border/60 space-y-4 mb-6">
                   <div className="flex justify-between items-end">
                     <div>
                       <p className="text-[10px] font-bold uppercase text-muted-foreground mb-1">Current Balance</p>
-                      <p className="text-2xl font-bold text-foreground">
+                      <p className="text-xl font-bold text-foreground">
                         {fund.currencyCode} {Number(fund.amount || 0).toLocaleString()}
                       </p>
                     </div>
@@ -390,7 +390,7 @@ export function PettyCashClient({
 
         {/* TAB 2: ALL TRANSACTIONS (ORGANISATION & BRANCH VIEW) */}
         <TabsContent value="transactions" className="space-y-6">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-2xl border border-border">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 bg-card p-6 rounded-md border border-border">
             <div className="flex flex-col sm:flex-row flex-1 gap-4">
               <div className="relative flex-1 max-w-md">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -456,7 +456,7 @@ export function PettyCashClient({
             </div>
           </div>
 
-          <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+          <div className="bg-card rounded-md border border-border overflow-hidden shadow-sm">
             <Table>
               <TableHeader className="bg-muted/50 border-b border-border">
                 <TableRow>
@@ -684,10 +684,10 @@ export function PettyCashClient({
             ) : (
               <div className="space-y-4 py-4">
                 {transactions.map(tx => (
-                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-xl border border-border/60 bg-muted/30">
+                  <div key={tx.id} className="flex items-center justify-between p-4 rounded-md border border-border/60 bg-muted/30">
                     <div className="flex items-center gap-4">
                       <div className={cn(
-                        "p-2 rounded-lg",
+                        "p-2 rounded-md",
                         tx.type === "TOP_UP" ? "bg-green-100 text-green-600" :
                         tx.type === "EXPENSE" ? "bg-red-100 text-red-600" :
                         "bg-blue-100 text-blue-600"

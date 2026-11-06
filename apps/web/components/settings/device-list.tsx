@@ -12,6 +12,7 @@ import {
   Monitor,
   MapPin,
   Clock,
+  Loader2,
 } from "lucide-react";
 import {
   Table,
@@ -63,7 +64,6 @@ import {
   deleteDevice,
 } from "@/app/actions/devices";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
 
 const PREDEFINED_PERMISSIONS = [
   { id: "*", label: "Super Admin (Full Access)" },
@@ -186,7 +186,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
 
   return (
     <>
-      <div className="rounded-md border bg-white">
+      <div className="rounded-md border border-border bg-background text-foreground">
         <Table>
           <TableHeader>
             <TableRow>
@@ -202,25 +202,25 @@ export function DeviceList({ devices }: { devices: any[] }) {
               <TableRow key={device.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-slate-100 rounded-lg">
+                    <div className="p-2 bg-muted rounded-lg">
                       {device.deviceType === "POS_TERMINAL" ? (
-                        <Monitor className="w-4 h-4 text-slate-600" />
+                        <Monitor className="w-4 h-4 text-muted-foreground" />
                       ) : (
-                        <Smartphone className="w-4 h-4 text-slate-600" />
+                        <Smartphone className="w-4 h-4 text-muted-foreground" />
                       )}
                     </div>
                     <div>
-                      <div className="font-medium text-slate-900">
+                      <div className="font-medium text-foreground">
                         {device.deviceName}
                       </div>
-                      <div className="text-xs text-slate-500 uppercase tracking-wider">
+                      <div className="text-xs text-muted-foreground uppercase tracking-wider">
                         {device.deviceType.replace("_", " ")}
                       </div>
                     </div>
                   </div>
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <MapPin className="w-3.5 h-3.5" />
                     <span className="text-sm">{device.location.name}</span>
                   </div>
@@ -229,21 +229,21 @@ export function DeviceList({ devices }: { devices: any[] }) {
                   {device.status === "ACTIVE" ? (
                     <Badge
                       variant="outline"
-                      className="bg-emerald-50 text-emerald-700 border-emerald-200 gap-1">
+                      className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20 gap-1">
                       <CheckCircle2 className="w-3 h-3" />
                       Active
                     </Badge>
                   ) : (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-slate-600 border-slate-200 gap-1">
+                      className="bg-muted text-muted-foreground border-border gap-1">
                       <Ban className="w-3 h-3" />
                       Inactive
                     </Badge>
                   )}
                 </TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-slate-600">
+                  <div className="flex items-center gap-2 text-muted-foreground">
                     <Clock className="w-3.5 h-3.5" />
                     <span className="text-sm">
                       {device.apiKey?.lastUsedAt
@@ -284,13 +284,13 @@ export function DeviceList({ devices }: { devices: any[] }) {
                       </DropdownMenuItem>
                       <DropdownMenuSeparator />
                       <DropdownMenuItem
-                        className="text-amber-600"
+                        className="text-amber-600 dark:text-amber-400 focus:text-amber-600 dark:focus:text-amber-400"
                         onClick={() => handleRevoke(device)}>
                         <Ban className="mr-2 h-4 w-4" />
                         Revoke Access
                       </DropdownMenuItem>
                       <DropdownMenuItem
-                        className="text-red-600"
+                        className="text-destructive focus:text-destructive"
                         onClick={() => handleDelete(device)}>
                         <Trash2 className="mr-2 h-4 w-4" />
                         Delete Device
@@ -304,7 +304,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
               <TableRow>
                 <TableCell
                   colSpan={5}
-                  className="h-24 text-center text-slate-500">
+                  className="h-24 text-center text-muted-foreground">
                   No devices registered yet.
                 </TableCell>
               </TableRow>
@@ -342,7 +342,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
                   onChange={e => setJsonPermissions(e.target.value)}
                   className="font-mono text-sm h-64"
                 />
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-muted-foreground">
                   Enter a valid JSON string array of permissions.
                 </p>
               </div>
@@ -351,7 +351,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
                 {PREDEFINED_PERMISSIONS.map(perm => (
                   <div
                     key={perm.id}
-                    className="flex items-start space-x-3 space-y-0 border p-3 rounded-lg hover:bg-slate-50 transition-colors cursor-pointer"
+                    className="flex items-start space-x-3 space-y-0 border border-border p-3 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer"
                     onClick={() => togglePermission(perm.id)}>
                     <Checkbox
                       id={perm.id}
@@ -364,7 +364,7 @@ export function DeviceList({ devices }: { devices: any[] }) {
                         className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer">
                         {perm.label}
                       </label>
-                      <code className="text-[10px] text-slate-500 bg-slate-100 px-1 rounded">
+                      <code className="text-[10px] text-muted-foreground bg-muted px-1 rounded">
                         {perm.id}
                       </code>
                     </div>
@@ -424,8 +424,8 @@ export function DeviceList({ devices }: { devices: any[] }) {
               disabled={isPending}
               className={
                 confirmationAction?.type === "delete"
-                  ? "bg-red-600 hover:bg-red-700 text-white"
-                  : "bg-amber-600 hover:bg-amber-700 text-white"
+                  ? "bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  : "bg-amber-600 hover:bg-amber-700 dark:bg-amber-600 dark:hover:bg-amber-500 text-white"
               }>
               {isPending ? (
                 <>
