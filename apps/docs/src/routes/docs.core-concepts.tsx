@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { BookOpen, ShieldCheck, Database, Building2, Warehouse } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/core-concepts')({
+  head: () =>
+    createDocSeo({
+      title: 'Platform Core Concepts & Architecture',
+      description:
+        'Architectural guide to Scryme multi-tenancy, location-aware stock calculation, operational workflows, and BOLA security defense patterns.',
+      pathname: '/docs/core-concepts',
+      keywords: ['Architecture', 'Multi-tenancy', 'Inventory Ledger', 'Security', 'BOLA Defense']
+    }),
   component: CoreConceptsPage
 })
 

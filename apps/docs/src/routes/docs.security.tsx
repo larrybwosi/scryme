@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { ShieldCheck } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/security')({
+  head: () =>
+    createDocSeo({
+      title: 'Security Best Practices & Multi-Tenant Isolation',
+      description:
+        'Comprehensive security controls for Scryme tenants: token scoping, BOLA mitigation, credential rotation, and webhook HMAC verification.',
+      pathname: '/docs/security',
+      keywords: ['Security', 'BOLA Protection', 'Tenant Isolation', 'HMAC Verification', 'Compliance']
+    }),
   component: SecurityPage
 })
 

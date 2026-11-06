@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Headphones } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/support')({
+  head: () =>
+    createDocSeo({
+      title: 'Developer Support & Incident Triage',
+      description:
+        'Get help with Scryme developer integrations, production incident escalations, and API troubleshooting.',
+      pathname: '/docs/support',
+      keywords: ['Support', 'Helpdesk', 'Incident Escalation', 'API Troubleshooting']
+    }),
   component: SupportPage
 })
 

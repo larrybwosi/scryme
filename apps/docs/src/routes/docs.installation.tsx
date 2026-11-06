@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Package, Terminal, CheckCircle2 } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/installation')({
+  head: () =>
+    createDocSeo({
+      title: 'Installation & SDK Setup',
+      description:
+        'Guide for installing the Scryme TypeScript SDK, local monorepo environment, Docker services, and CLI scaffolding.',
+      pathname: '/docs/installation',
+      keywords: ['Installation', 'SDK', 'TypeScript SDK', 'Docker Compose', 'Local Setup']
+    }),
   component: InstallationPage
 })
 

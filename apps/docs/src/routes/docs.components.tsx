@@ -1,7 +1,16 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { Layers } from 'lucide-react'
+import { createDocSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/docs/components')({
+  head: () =>
+    createDocSeo({
+      title: 'UI Components & Primitives',
+      description:
+        'Frontend component architecture and UX patterns for point of sale checkouts, inventory visibility, and fulfillment workflows.',
+      pathname: '/docs/components',
+      keywords: ['Components', 'UI Primitives', 'Design System', 'POS Frontend', 'React']
+    }),
   component: ComponentsPage
 })
 
