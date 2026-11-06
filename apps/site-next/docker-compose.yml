@@ -1,7 +1,7 @@
 services:
   site-deploy:
     build:
-      context: ../..
+      context: ../../
       dockerfile: apps/site-next/Dockerfile.deploy
     container_name: scryme-site-deploy
     restart: "no"
