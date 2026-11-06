@@ -263,6 +263,14 @@ export class ScrymeServerSDK<
       refreshSession<TSess = TSession, TU = TUser>(): Promise<
         CustomerAuthResponseDto<TU, TSess>
       >;
+      signOut(): Promise<void>;
+      getSessions<TSess = TSession>(): Promise<TSess[]>;
+      revokeSession(id: string): Promise<AxiosResponse<any>>;
+      revokeAllSessions(mode?: string): Promise<AxiosResponse<any>>;
+      requestPasswordReset(dto: { email: string; redirectTo?: string }): Promise<AxiosResponse<any>>;
+      resetPassword(dto: { token: string; newPassword: string }): Promise<AxiosResponse<any>>;
+      sendVerificationEmail(dto: { email: string; callbackURL?: string }): Promise<AxiosResponse<any>>;
+      verifyEmail(dto: { token: string; callbackURL?: string }): Promise<AxiosResponse<any>>;
     };
   };
 
@@ -371,6 +379,38 @@ export class ScrymeServerSDK<
     refreshSession<TSess = TSession, TU = TUser>(): Promise<
       CustomerAuthResponseDto<TU, TSess>
     >;
+    /**
+     * Sign out active customer session on server.
+     */
+    signOut(): Promise<void>;
+    /**
+     * Retrieves all active sessions for the authenticated customer.
+     */
+    getSessions<TSess = TSession>(): Promise<TSess[]>;
+    /**
+     * Revokes a specific session.
+     */
+    revokeSession(id: string): Promise<AxiosResponse<any>>;
+    /**
+     * Revokes all or other sessions.
+     */
+    revokeAllSessions(mode?: string): Promise<AxiosResponse<any>>;
+    /**
+     * Requests a password reset link for the given email address.
+     */
+    requestPasswordReset(dto: { email: string; redirectTo?: string }): Promise<AxiosResponse<any>>;
+    /**
+     * Resets password using the received token.
+     */
+    resetPassword(dto: { token: string; newPassword: string }): Promise<AxiosResponse<any>>;
+    /**
+     * Dispatches an email verification link.
+     */
+    sendVerificationEmail(dto: { email: string; callbackURL?: string }): Promise<AxiosResponse<any>>;
+    /**
+     * Verifies email using verification token.
+     */
+    verifyEmail(dto: { token: string; callbackURL?: string }): Promise<AxiosResponse<any>>;
   };
 
   private token: string | null = null;
@@ -803,10 +843,10 @@ export class ScrymeServerSDK<
           password?: string;
         }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
           const response = await this.axiosInstance.post(
-            "/auth/sign-in/email",
+            `/${config.orgSlug}/customers/auth/login`,
             credentials,
           );
-          const data = response.data;
+          const data = response.data?.data || response.data;
           const token = data?.session?.token || data?.token || null;
           if (token) {
             this.token = token;
@@ -815,6 +855,35 @@ export class ScrymeServerSDK<
               `Bearer ${token}`;
           }
           return data as any;
+        },
+        signOut: async () => {
+          this.token = null;
+          this.expiresAt = null;
+          delete this.axiosInstance.defaults.headers.common["Authorization"];
+        },
+        getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
+          const res = await this.axiosInstance.get(`/${config.orgSlug}/customers/auth/sessions`);
+          return (res.data?.data || res.data) as TSess[];
+        },
+        revokeSession: async (id: string) => {
+          return this.axiosInstance.delete(`/${config.orgSlug}/customers/auth/sessions/${id}`);
+        },
+        revokeAllSessions: async (mode?: string) => {
+          return this.axiosInstance.delete(`/${config.orgSlug}/customers/auth/sessions`, {
+            params: mode ? { mode } : undefined,
+          });
+        },
+        requestPasswordReset: async (dto: { email: string; redirectTo?: string }) => {
+          return this.axiosInstance.post(`/${config.orgSlug}/customers/auth/forgot-password`, dto);
+        },
+        resetPassword: async (dto: { token: string; newPassword: string }) => {
+          return this.axiosInstance.post(`/${config.orgSlug}/customers/auth/reset-password`, dto);
+        },
+        sendVerificationEmail: async (dto: { email: string; callbackURL?: string }) => {
+          return this.axiosInstance.post(`/${config.orgSlug}/customers/auth/send-verification-email`, dto);
+        },
+        verifyEmail: async (dto: { token: string; callbackURL?: string }) => {
+          return this.axiosInstance.get(`/${config.orgSlug}/customers/auth/verify-email`, { params: dto });
         },
 
         getCurrentSession: async <TU = TUser>(
@@ -921,6 +990,38 @@ export class ScrymeServerSDK<
 
       signIn: async <TSess = TSession, TU = TUser>(credentials: { email: string; password?: string }): Promise<CustomerAuthResponseDto<TU, TSess>> => {
         return this.customer.auth.signIn<TSess, TU>(credentials);
+      },
+
+      signOut: async (): Promise<void> => {
+        return this.customer.auth.signOut();
+      },
+
+      getSessions: async <TSess = TSession>(): Promise<TSess[]> => {
+        return this.customer.auth.getSessions<TSess>();
+      },
+
+      revokeSession: async (id: string): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.revokeSession(id);
+      },
+
+      revokeAllSessions: async (mode?: string): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.revokeAllSessions(mode);
+      },
+
+      requestPasswordReset: async (dto: { email: string; redirectTo?: string }): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.requestPasswordReset(dto);
+      },
+
+      resetPassword: async (dto: { token: string; newPassword: string }): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.resetPassword(dto);
+      },
+
+      sendVerificationEmail: async (dto: { email: string; callbackURL?: string }): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.sendVerificationEmail(dto);
+      },
+
+      verifyEmail: async (dto: { token: string; callbackURL?: string }): Promise<AxiosResponse<any>> => {
+        return this.customer.auth.verifyEmail(dto);
       },
 
       getCurrentSession: async <TU = TUser>(headers?: any | Record<string, string | string[]>): Promise<TU> => {

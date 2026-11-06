@@ -97,14 +97,14 @@ export class V3AuthGuard implements CanActivate {
       }
     }
 
-    // 2. Try better-auth session token
-    if (!payload && token) {
-      payload = await this.verifyBetterAuthSession(token, organization, request);
-    }
-
-    // 3. Try Customer Auth (Better Auth) session verification in-process
+    // 2. Try Customer Auth (Better Auth) session verification in-process
     if (!payload && token) {
       payload = await this.verifyCustomerAuthSession(token, organization);
+    }
+
+    // 3. Try Better Auth admin/staff session token
+    if (!payload && token) {
+      payload = await this.verifyBetterAuthSession(token, organization, request);
     }
 
     // 4. Try POS Device X-API-KEY / Client ID lookup
