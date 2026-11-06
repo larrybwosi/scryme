@@ -22,6 +22,7 @@ jobs:
       api: ${{ steps.changes.outputs.api }}
       crm: ${{ steps.changes.outputs.crm }}
       web: ${{ steps.changes.outputs.web }}
+      projects: ${{ steps.changes.outputs.projects }}
       packages: ${{ steps.changes.outputs.packages }}
       pkg_auth: ${{ steps.changes.outputs.pkg_auth }}
       pkg_config_eslint: ${{ steps.changes.outputs.pkg_config_eslint }}
@@ -57,6 +58,8 @@ jobs:
               - 'apps/crm/**'
             web:
               - 'apps/web/**'
+            projects:
+              - 'apps/projects/**'
             packages:
               - 'packages/**'
             pkg_auth:
@@ -103,6 +106,7 @@ jobs:
              [ "${{ needs.filter.outputs.api }}" == "true" ] || \
              [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
              [ "${{ needs.filter.outputs.web }}" == "true" ] || \
+             [ "${{ needs.filter.outputs.projects }}" == "true" ] || \
              [ "${{ needs.filter.outputs.packages }}" == "true" ] || \
              [ "${{ needs.filter.outputs.workflow }}" == "true" ] || \
              [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
@@ -232,7 +236,7 @@ jobs:
       - name: Lint and Type Check Apps
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.projects }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -248,6 +252,7 @@ jobs:
             if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
             if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
             if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
+            if [ "${{ needs.filter.outputs.projects }}" == "true" ]; then FILTER="$FILTER --filter=projects..."; fi
 
             if [ -n "$FILTER" ]; then
               echo "Running lint and type-check for changed apps..."
@@ -265,7 +270,7 @@ jobs:
       - name: Lint and Type Check Packages
         run: |
           APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ]; then
+          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.projects }}" == "true" ]; then
             APPS_CHANGED=true
           fi
 
@@ -428,6 +433,11 @@ jobs:
             pnpm --filter bakery test:frontend
           fi
 
+          if [ "${{ needs.filter.outputs.projects }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
+            echo "Running Projects tests..."
+            pnpm --filter projects test
+          fi
+
           if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             echo "Running CRM tests..."
             pnpm --filter crm test
@@ -490,6 +500,7 @@ jobs:
     if: |
       github.event_name == 'pull_request' && (
         needs.filter.outputs.web == 'true' ||
+        needs.filter.outputs.projects == 'true' ||
         needs.filter.outputs.packages == 'true' ||
         needs.filter.outputs.workflow == 'true' ||
         needs.filter.outputs.test_workflow == 'true'
@@ -531,6 +542,18 @@ jobs:
           ROOT_CHANGED=false
           if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
             ROOT_CHANGED=true
+          fi
+
+          PROJECTS_CHANGED=false
+          if [ "${{ needs.filter.outputs.projects }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
+            PROJECTS_CHANGED=true
+          fi
+
+          if [ "$PROJECTS_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
+            echo "Running verification build for projects app..."
+            pnpm turbo build --filter=projects...
+          else
+            echo "No projects app changes requiring build-verify detected"
           fi
 
           if [ "$WEB_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then

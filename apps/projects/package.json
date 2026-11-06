@@ -4,11 +4,12 @@
   "version": "10.2.43",
   "type": "module",
   "scripts": {
-    "dev": "next dev --port 3002",
+    "dev": "next dev --port 3004",
     "build": "next build",
-    "start": "next start --port 3002",
+    "start": "next start --port 3004",
     "lint": "eslint . --max-warnings 0",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "test": "vitest run"
   },
   "dependencies": {
     "@better-fetch/fetch": "^1.1.21",
