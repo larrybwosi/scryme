@@ -192,7 +192,7 @@ const clientSchema = z.object({
   ),
   NEXT_PUBLIC_PROJECTS_URL: z.preprocess(
     sanitizeUrl,
-    z.url().default("http://localhost:3002"),
+    z.url().default("http://localhost:3004"),
   ),
   NEXT_PUBLIC_ADMIN_URL: z.preprocess(
     sanitizeUrl,

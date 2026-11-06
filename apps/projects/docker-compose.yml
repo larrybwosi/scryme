@@ -4,7 +4,7 @@ services:
     container_name: ${INSTANCE_NAME:-scryme}-projects
     restart: always
     ports:
-      - "${PROJECTS_PORT:-3002}:3002"
+      - "${PROJECTS_PORT:-3004}:3004"
     deploy:
       resources:
         limits:
@@ -16,7 +16,7 @@ services:
         required: false
     environment:
       - NODE_ENV=production
-      - PORT=${PROJECTS_PORT:-3002}
+      - PORT=${PROJECTS_PORT:-3004}
       - DATABASE_URL=${DATABASE_URL:-postgresql://${POSTGRES_USER:-dbuser}:${POSTGRES_PASSWORD:-dbpassword}@db:5432/${POSTGRES_DB:-app_db}?schema=public}
       - REDIS_HOST=${REDIS_HOST:-redis}
       - REDIS_PORT=${REDIS_PORT:-6379}
@@ -37,7 +37,7 @@ services:
           "--tries=1",
           "--timeout=3",
           "--spider",
-          "http://localhost:${PROJECTS_PORT:-3002}/api/health",
+          "http://localhost:${PROJECTS_PORT:-3004}/api/health",
         ]
       interval: 30s
       timeout: 10s

@@ -22,7 +22,7 @@ import { env } from "@repo/env";
 
 const isDev = env.NODE_ENV === "development";
 const defaultAppUrl = isDev
-  ? "http://localhost:3002"
+  ? "http://localhost:3004"
   : "https://projects.scryme.tech";
 
 export const authClient: any = createAuthClient({

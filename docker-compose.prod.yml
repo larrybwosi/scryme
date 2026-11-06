@@ -622,7 +622,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${PROJECTS_PORT:-3002}/api/health",
+          "http://localhost:${PROJECTS_PORT:-3004}/api/health",
         ]
       interval: 60s
       timeout: 10s
@@ -634,7 +634,7 @@ services:
       NEXT_PUBLIC_REALTIME_PROVIDER: socketio
       NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.tech}
       NEXT_PUBLIC_PROJECTS_URL: https://${PROJECTS_DOMAIN:-projects.scryme.tech}
-      PORT: ${PROJECTS_PORT:-3002}
+      PORT: ${PROJECTS_PORT:-3004}
       NODE_ENV: production
       BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     depends_on:
@@ -649,7 +649,7 @@ services:
       - "traefik.http.routers.projects.rule=Host(`${PROJECTS_DOMAIN:-projects.scryme.tech}`)"
       - "traefik.http.routers.projects.entrypoints=${TRAEFIK_ENTRYPOINT:-websecure}"
       - "traefik.http.routers.projects.tls.certresolver=${TRAEFIK_CERTRESOLVER:-letsencrypt}"
-      - "traefik.http.services.projects.loadbalancer.server.port=${PROJECTS_PORT:-3002}"
+      - "traefik.http.services.projects.loadbalancer.server.port=${PROJECTS_PORT:-3004}"
       - "logging_job=projects"
 
 volumes:
