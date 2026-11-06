@@ -5,6 +5,15 @@ set -e
 # Print startup context
 echo "Starting container in directory: $(pwd)"
 
+# Ensure npm cache and writable home fallback for unprivileged system users (e.g. appuser)
+if [ -z "$HOME" ] || [ ! -d "$HOME" ] || [ ! -w "$HOME" ]; then
+  export HOME="${HOME:-/tmp}"
+fi
+if [ -z "$npm_config_cache" ]; then
+  export npm_config_cache="/tmp/.npm"
+  mkdir -p /tmp/.npm 2>/dev/null || true
+fi
+
 # ---------------------------------------------------------
 # 0. Dynamic NEXT_PUBLIC_ and VITE_ Environment Variable Injection
 # ---------------------------------------------------------
@@ -254,7 +263,7 @@ SANITY_TOK="${SANITY_AUTH_TOKEN:-${SANITY_API_TOKEN:-$SANITY_TOKEN}}"
 if [ -f "sanity.cli.ts" ] || [ -f "apps/site-next/sanity.cli.ts" ]; then
   if [ -n "$SANITY_PID" ] && [ "$SANITY_PID" != "placeholder-project-id" ] && [ "$SANITY_PID" != "placeholder_project_id" ] && [ -n "$SANITY_TOK" ]; then
     echo "Pushing Sanity schemas to project $SANITY_PID..."
-    SANITY_AUTH_TOKEN="$SANITY_TOK" npx sanity schemas deploy || echo "⚠️ Sanity schema deploy failed, continuing anyway..."
+    SANITY_AUTH_TOKEN="$SANITY_TOK" npm_config_cache="${npm_config_cache:-/tmp/.npm}" npx sanity schemas deploy || echo "⚠️ Sanity schema deploy failed, continuing anyway..."
   else
     echo "ℹ️ Sanity credentials not configured or placeholder used, skipping schema deployment."
   fi
