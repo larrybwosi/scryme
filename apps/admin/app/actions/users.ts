@@ -334,3 +334,55 @@ export async function resetUserPassword(
 
   throw new Error("Either newPassword or sendEmail must be provided");
 }
+
+export async function impersonateUserAction(targetUserId: string) {
+  const currentSession = await requireSuperAdmin();
+
+  const targetUser = await db.user.findUnique({
+    where: { id: targetUserId },
+    select: {
+      id: true,
+      role: true,
+      name: true,
+      email: true,
+      banned: true,
+    },
+  });
+
+  if (!targetUser) {
+    throw new Error(`User with ID ${targetUserId} not found`);
+  }
+
+  // Strictly forbid impersonating system admins
+  if ((targetUser.role as string) === "SUPER_ADMIN") {
+    throw new Error("Impersonating platform system admins is strictly prohibited");
+  }
+
+  // Resolve target application URL
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultAppUrl = isDev ? "http://localhost:3000" : "https://app.scryme.tech";
+  const targetAppUrl =
+    process.env.NEXT_PUBLIC_APP_URL ||
+    process.env.NEXT_PUBLIC_WEB_URL ||
+    defaultAppUrl;
+
+  return {
+    success: true,
+    targetUserId,
+    targetEmail: targetUser.email,
+    targetName: targetUser.name,
+    redirectUrl: targetAppUrl,
+  };
+}
+
+export async function stopImpersonatingAction() {
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultAdminUrl = isDev ? "http://localhost:3007" : "https://admin.scryme.tech";
+  const targetAdminUrl =
+    process.env.NEXT_PUBLIC_ADMIN_URL || defaultAdminUrl;
+
+  return {
+    success: true,
+    redirectUrl: `${targetAdminUrl}/users`,
+  };
+}

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { SidebarWrapper } from "../components/sidebar-wrapper";
 import { Providers } from "@/lib/providers";
+import { ImpersonationBanner } from "../components/impersonation-banner";
 import { OpenPanelProvider } from "../components/openpanel-provider";
 import { TelemetryProvider } from "@repo/shared/telemetry/client";
 
@@ -82,11 +83,14 @@ export default function RootLayout({
         <TelemetryProvider service="web-app">
           <OpenPanelProvider />
           <Providers>
-          <div className="flex h-screen overflow-hidden">
-            <SidebarWrapper />
-            <main className="flex-1 overflow-y-auto custom-scrollbar">
-              {children}
-            </main>
+          <div className="flex flex-col h-screen overflow-hidden">
+            <ImpersonationBanner />
+            <div className="flex flex-1 overflow-hidden">
+              <SidebarWrapper />
+              <main className="flex-1 overflow-y-auto custom-scrollbar">
+                {children}
+              </main>
+            </div>
           </div>
           </Providers>
         </TelemetryProvider>

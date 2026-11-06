@@ -183,3 +183,69 @@ describe("Admin Users Server Actions", () => {
     });
   });
 });
+
+import { impersonateUserAction, stopImpersonatingAction } from "../users";
+
+describe("Impersonation Server Actions", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  describe("impersonateUserAction", () => {
+    it("should allow impersonating standard users", async () => {
+      (db.user.findUnique as any).mockResolvedValue({
+        id: "u_standard",
+        role: "MEMBER",
+        name: "Standard Member",
+        email: "member@example.com",
+        banned: false,
+      });
+
+      const result = await impersonateUserAction("u_standard");
+
+      expect(db.user.findUnique).toHaveBeenCalledWith({
+        where: { id: "u_standard" },
+        select: expect.objectContaining({
+          id: true,
+          role: true,
+          name: true,
+          email: true,
+        }),
+      });
+      expect(result.success).toBe(true);
+      expect(result.targetUserId).toBe("u_standard");
+      expect(result.targetEmail).toBe("member@example.com");
+      expect(result.redirectUrl).toBeDefined();
+    });
+
+    it("should strictly forbid impersonating system administrators", async () => {
+      (db.user.findUnique as any).mockResolvedValue({
+        id: "u_super_admin",
+        role: "SUPER_ADMIN",
+        name: "System Super Admin",
+        email: "superadmin@scryme.tech",
+        banned: false,
+      });
+
+      await expect(impersonateUserAction("u_super_admin")).rejects.toThrow(
+        "Impersonating platform system admins is strictly prohibited",
+      );
+    });
+
+    it("should throw error if target user not found", async () => {
+      (db.user.findUnique as any).mockResolvedValue(null);
+
+      await expect(impersonateUserAction("non_existent")).rejects.toThrow(
+        "User with ID non_existent not found",
+      );
+    });
+  });
+
+  describe("stopImpersonatingAction", () => {
+    it("should return the redirect url back to admin users list", async () => {
+      const result = await stopImpersonatingAction();
+      expect(result.success).toBe(true);
+      expect(result.redirectUrl).toContain("/users");
+    });
+  });
+});

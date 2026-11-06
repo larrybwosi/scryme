@@ -2,6 +2,7 @@ import { betterAuth } from "better-auth";
 import type { User, Session } from "better-auth";
 import { authOptions } from "./index";
 import { admin, customSession, jwt, bearer, twoFactor } from "better-auth/plugins";
+import { defaultAc } from "better-auth/plugins/admin/access";
 import { passkey } from "@better-auth/passkey";
 import { oauthProvider } from "@better-auth/oauth-provider";
 import { sso } from "@better-auth/sso";
@@ -24,6 +25,32 @@ export interface ExtendedUser extends User {
   memberId?: string;
   twoFactorEnabled?: boolean;
 }
+
+
+const superAdminAc = defaultAc.newRole({
+  user: [
+    "create",
+    "list",
+    "set-role",
+    "ban",
+    "impersonate",
+    "delete",
+    "set-password",
+    "set-email",
+    "get",
+    "update",
+  ],
+  session: [
+    "list",
+    "revoke",
+    "delete",
+  ],
+});
+
+const defaultMemberAc = defaultAc.newRole({
+  user: [],
+  session: [],
+});
 
 // Extended Session interface including activeOrganizationId
 export interface ExtendedSession extends Session {
@@ -229,6 +256,16 @@ export const auth: any = betterAuth({
     }),
     admin({
       defaultRole: UserRole.MEMBER,
+      adminRoles: [UserRole.SUPER_ADMIN, "admin"],
+      roles: {
+        SUPER_ADMIN: superAdminAc,
+        ADMIN: superAdminAc,
+        DEVELOPER: superAdminAc,
+        MEMBER: defaultMemberAc,
+        CLIENT: defaultMemberAc,
+        admin: superAdminAc,
+        user: defaultMemberAc,
+      },
     }),
     customSession(
       async ({ user, session }: { user: ExtendedUser; session: Session }) => {
