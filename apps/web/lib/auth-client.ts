@@ -1,6 +1,6 @@
 import { createAuthClient } from "better-auth/react";
 import { passkeyClient } from "@better-auth/passkey/client";
-import { twoFactorClient } from "better-auth/client/plugins";
+import { twoFactorClient, adminClient } from "better-auth/client/plugins";
 
 function getValidAuthUrl(
   urls: (string | undefined)[],
@@ -38,6 +38,7 @@ export const authClient: any = createAuthClient({
         }
       },
     }),
+    adminClient(),
   ],
 });
 
@@ -51,3 +52,7 @@ export const resetPassword: typeof authClient.resetPassword =
 export const requestPasswordReset =
   authClient.requestPasswordReset || authClient.forgetPassword;
 export const twoFactor: typeof authClient.twoFactor = authClient.twoFactor;
+export const impersonateUser: typeof authClient.admin.impersonateUser =
+  authClient.admin.impersonateUser;
+export const stopImpersonating: typeof authClient.admin.stopImpersonating =
+  authClient.admin.stopImpersonating;
