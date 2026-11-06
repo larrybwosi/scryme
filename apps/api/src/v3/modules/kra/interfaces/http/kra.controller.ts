@@ -16,7 +16,7 @@ import { RequireModule } from "../../../../common/decorators/module.decorator";
 import { KraUseCase } from "../../application/use-cases/kra.use-case";
 import { SaveKRAConfigDto, ValidatePinDto } from "../../application/dto/kra-config.dto";
 
-@Controller("v3/kra")
+@Controller("kra")
 @UseGuards(V3AuthGuard, MultiTenancyGuard, ModuleGuard)
 @RequireModule("kra")
 export class KraController {

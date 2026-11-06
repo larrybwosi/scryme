@@ -17,7 +17,7 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { PermissionsGuard } from "@/v3/common/guards/permissions.guard";
 import { Permissions } from "@/v3/common/decorators/permissions.decorator";
 
-@Controller("v3/scryme")
+@Controller("scryme")
 @UseGuards(V3AuthGuard, PermissionsGuard)
 export class ScrymeController {
   constructor(

@@ -76,7 +76,58 @@ export class McpService {
       }
     }
 
-    // 2. Look up in McpApiKey table
+    // 1b. Check if token is an OAuth Access Token in database (BetterAuth oauthAccessToken)
+    const oauthToken = await db.oauthAccessToken.findFirst({
+      where: {
+        token: keyToken,
+        revoked: null,
+      },
+      include: {
+        user: true,
+        session: true,
+      },
+    });
+
+    if (oauthToken) {
+      if (oauthToken.expiresAt && new Date(oauthToken.expiresAt) < new Date()) {
+        throw new UnauthorizedException("OAuth Access Token has expired");
+      }
+
+      // Determine organizationId from active session or user
+      let organizationId = oauthToken.session?.activeOrganizationId || (oauthToken.user as any)?.activeOrganizationId;
+
+      if (!organizationId && oauthToken.userId) {
+        // Fall back to first organization the user is a member of
+        const member = await db.member.findFirst({
+          where: { userId: oauthToken.userId },
+          select: { organizationId: true },
+        });
+        organizationId = member?.organizationId;
+      }
+
+      if (!organizationId) {
+        throw new UnauthorizedException("No active organization found for authenticated OAuth user");
+      }
+
+      const tokenScopes = oauthToken.scopes || [];
+      const hasMcpScope =
+        tokenScopes.length === 0 ||
+        tokenScopes.some((s: string) => s === "mcp:read" || s === "mcp:write" || s === "*" || s === "admin");
+
+      if (!hasMcpScope) {
+        throw new UnauthorizedException("Insufficient token scopes for MCP operations");
+      }
+
+      return {
+        keyId: oauthToken.id,
+        organizationId,
+        name: oauthToken.user?.name || oauthToken.user?.email || "OAuth Authenticated User",
+        scopes: tokenScopes.length > 0 ? tokenScopes : ["mcp:read", "mcp:write"],
+        userId: oauthToken.userId || undefined,
+      };
+    }
+
+        // 2. Look up in McpApiKey table
     const hashedKey = createHash("sha256").update(keyToken).digest("hex");
 
     const mcpKey = await db.mcpApiKey.findFirst({

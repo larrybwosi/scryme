@@ -5,7 +5,7 @@
 
 ## Summary
 
-This specification defines the complete architecture, authentication protocols, transport channels, and tool definitions for the Scryme Model Context Protocol (MCP) server. External AI assistants (Claude Desktop, Cursor, and custom autonomous LLM agents) can securely interact with live Scryme workspace data via both Stdio CLI transport (`@scryme/mcp-server`) and remote HTTP / Server-Sent Events (SSE) endpoints.
+This specification defines the complete architecture, authentication protocols, transport channels, and tool definitions for the Scryme Model Context Protocol (MCP) server. External AI assistants (Claude Desktop, Cursor, and custom autonomous LLM agents) can securely interact with live Scryme workspace data via both Stdio CLI transport (`@scryme/mcp-server`) and remote Streamable HTTP endpoints (`/v3/mcp`).
 
 ## Context
 
@@ -15,7 +15,7 @@ Users and development teams increasingly rely on AI agent integrations (such as 
 
 **User stories**:
 - As a business user or developer, I want to authenticate AI clients using either an MCP API key (`mcp_live_...`) or an OAuth2 / JWT Bearer token with `mcp:read` / `mcp:write` scopes, so that my assistants can securely connect across various client environments.
-- As an AI client (Claude Desktop / Cursor), I want to connect via a lightweight Stdio CLI (`@repo/mcp-server` / `scryme-mcp`) or a remote HTTP/SSE stream (`/v3/mcp/sse`), so that both local and cloud workflows are supported.
+- As an AI client (Claude Desktop / Cursor), I want to connect via a lightweight Stdio CLI (`@repo/mcp-server` / `scryme-mcp`) or a remote HTTP/SSE stream (`/v3/mcp`), so that both local and cloud workflows are supported.
 - As an organization administrator, I want all MCP tool invocations to be strictly tenant-isolated to my organization ID, preventing cross-tenant data leakage (BOLA/IDOR).
 - As an AI model invoking tools, I want well-defined, complete JSON schemas with type constraints, descriptions, and reliable error responses across all 9 core workspace tools.
 
@@ -52,7 +52,7 @@ Users and development teams increasingly rely on AI agent integrations (such as 
             v                                     v
 +-----------------------+              +-----------------------+
 |  @repo/mcp-server     |              |     NestJS API        |
-|  (bin/cli.js -> stdio)|              |   /v3/mcp/sse         |
+|  (bin/cli.js -> stdio)|              |   /v3/mcp         |
 +-----------+-----------+              |   /v3/mcp/rpc         |
             | (HTTP REST/RPC)          |   /v3/mcp/tools       |
             +------------------------->+   /v3/mcp/messages    |
