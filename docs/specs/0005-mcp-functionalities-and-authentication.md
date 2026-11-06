@@ -5,7 +5,7 @@
 
 ## Summary
 
-This specification defines the complete architecture, authentication protocols, transport channels, and tool definitions for the Scryme Model Context Protocol (MCP) server. External AI assistants (Claude Desktop, Cursor, and custom autonomous LLM agents) can securely interact with live Scryme workspace data via both Stdio CLI transport (`@scryme/mcp-server`) and remote Streamable HTTP endpoints (`/v3/mcp`).
+This specification defines the complete architecture, authentication protocols, transport channels, and tool definitions for the Scryme Model Context Protocol (MCP) server. External AI assistants (Claude Desktop, Cursor, Claude Code, and custom autonomous LLM agents) can securely interact with live Scryme workspace data via both Stdio CLI transport (`@scryme/mcp-server`) and remote Streamable HTTP endpoints (`/v3/mcp`).
 
 ## Context
 
@@ -14,28 +14,29 @@ Users and development teams increasingly rely on AI agent integrations (such as 
 ## Requirements
 
 **User stories**:
-- As a business user or developer, I want to authenticate AI clients using either an MCP API key (`mcp_live_...`) or an OAuth2 / JWT Bearer token with `mcp:read` / `mcp:write` scopes, so that my assistants can securely connect across various client environments.
-- As an AI client (Claude Desktop / Cursor), I want to connect via a lightweight Stdio CLI (`@repo/mcp-server` / `scryme-mcp`) or a remote HTTP/SSE stream (`/v3/mcp`), so that both local and cloud workflows are supported.
+- As a business user or developer, I want to authenticate AI clients using either an MCP API key (`mcp_live_...`), a BetterAuth OAuth2 access token, or a JWT Bearer token with `mcp:read` / `mcp:write` scopes, so that my assistants can securely connect across various client environments.
+- As an AI client (Claude Desktop / Cursor / Claude Code), I want to connect via a lightweight Stdio CLI (`@repo/mcp-server` / `scryme-mcp`) or a remote Streamable HTTP stream (`/v3/mcp`), so that both local and cloud workflows are supported.
+- As an unauthenticated client, I want to receive standard RFC 9728 Protected Resource Metadata challenge headers pointing to metadata discovery endpoints.
 - As an organization administrator, I want all MCP tool invocations to be strictly tenant-isolated to my organization ID, preventing cross-tenant data leakage (BOLA/IDOR).
-- As an AI model invoking tools, I want well-defined, complete JSON schemas with type constraints, descriptions, and reliable error responses across all 9 core workspace tools.
+- As an AI model invoking tools, I want well-defined, complete JSON schemas with type constraints, descriptions, and reliable error responses across all workspace tools.
 
 **Acceptance criteria**:
-- **AC-1 (Hybrid Authentication)**: `McpService.validateApiKey` validates either:
+- **AC-1 (Hybrid Authentication)**: `McpService.validateApiKey` validates:
   1. MCP API Keys (`mcp_live_...` or hashed tokens) stored in `db.mcpApiKey` (with fallback to `db.apiKey`), checking active status and expiration.
-  2. HS256-signed JWT tokens using `JWT_SECRET`, extracting `organizationId`, user/member info, and ensuring valid scopes (`mcp:read`, `mcp:write`).
-- **AC-2 (Tool Definitions & Execution)**: Exactly 9 core tools are well-defined with complete JSON schemas and implemented with strict multi-tenant filtering:
-  1. `query_inventory`: stock levels, variant stocks, locations.
-  2. `search_products`: product catalog search with category & name filters.
-  3. `list_orders`: order history with status, date range, and customer filters.
-  4. `get_order_details`: single transaction breakdown by ID or order number.
-  5. `search_customers`: customer profiles, contact info, and loyalty points.
-  6. `get_sales_analytics`: financial revenue summaries and metrics.
-  7. `get_top_selling_products`: top products by sales revenue and quantity.
-  8. `list_staff_tasks`: staff task assignments, priority, and status.
-  9. `get_shift_schedules`: staff shift schedules and active attendance.
+  2. BetterAuth OAuth2 Access Tokens stored in `db.oauthAccessToken`, extracting active organization context and checking valid `mcp:read` / `mcp:write` scopes.
+  3. HS256-signed JWT tokens using `JWT_SECRET`, extracting `organizationId`, user/member info, and ensuring valid scopes (`mcp:read`, `mcp:write`).
+- **AC-2 (Tool Definitions & Execution)**: Catalog of 23 workspace tools is well-defined with complete JSON schemas and implemented with strict multi-tenant filtering:
+  1. Inventory and product catalog tools (`query_inventory`, `search_products`).
+  2. Sales, orders, and customer tools (`list_orders`, `get_order_details`, `search_customers`, `get_sales_analytics`, `get_top_selling_products`).
+  3. Staff and operations tools (`list_staff_tasks`, `get_shift_schedules`).
+  4. Staged draft lifecycle tools (`list_drafts`, `get_draft_diff`, `publish_draft`, `revert_draft`, `discard_draft`).
+  5. Staged mutation tools for products (`create_product`, `update_product`, `update_product_price`).
+  6. Staged mutation tools for orders (`create_order`, `update_order_status`, `fulfill_order`).
+  7. Staged mutation tools for tasks (`create_staff_task`, `assign_staff_task`, `update_staff_task_status`).
 - **AC-3 (MCP Resources)**: Supports standard MCP resources `scryme://analytics/summary` and `scryme://inventory/summary` scoped to the authenticated tenant.
 - **AC-4 (Stdio CLI Package)**: `@repo/mcp-server` compiles both `dist/index.js` and `dist/index.d.ts`, reads configuration from `SCRYME_API_KEY`/`MCP_API_KEY` or Bearer tokens, and communicates over stdio using JSON-RPC 2.0.
-- **AC-5 (Web Settings UI)**: Web application at `/integrations/mcp` provides key creation, revocation, clipboard copy, and instructions for Claude Desktop and Remote SSE setups.
+- **AC-5 (Web Settings UI)**: Web application at `/integrations/mcp` provides key creation, revocation, clipboard copy, and instructions for Claude Desktop and Remote Streamable HTTP setups.
+- **AC-6 (RFC 9728 Discovery)**: Unauthorized requests to `/v3/mcp` respond with `WWW-Authenticate: Bearer resource_metadata="https://api.scryme.tech/.well-known/oauth-protected-resource/v3/mcp"`.
 
 ## Design
 
@@ -48,14 +49,14 @@ Users and development teams increasingly rely on AI agent integrations (such as 
 +------------------------------+------------------------------+
                                |
             +------------------+------------------+
-            | (Stdio Transport)                   | (Remote HTTP / SSE)
+            | (Stdio Transport)                   | (Remote Streamable HTTP)
             v                                     v
 +-----------------------+              +-----------------------+
 |  @repo/mcp-server     |              |     NestJS API        |
-|  (bin/cli.js -> stdio)|              |   /v3/mcp         |
+|  (bin/cli.js -> stdio)|              |   /v3/mcp             |
 +-----------+-----------+              |   /v3/mcp/rpc         |
             | (HTTP REST/RPC)          |   /v3/mcp/tools       |
-            +------------------------->+   /v3/mcp/messages    |
+            +------------------------->+   /v3/mcp/tools/execute
                                        +-----------+-----------+
                                                    |
                                                    v
@@ -69,7 +70,7 @@ Users and development teams increasingly rely on AI agent integrations (such as 
                                                    v
                                        +-----------------------+
                                        |    McpToolsService    |
-                                       |  (9 Scoped Tools +    |
+                                       |  (23 Scoped Tools +   |
                                        |   2 Scoped Resources) |
                                        +-----------+-----------+
                                                    |
@@ -83,5 +84,6 @@ Users and development teams increasingly rely on AI agent integrations (such as 
 
 1. **Authentication Token Parsing**: Supports `Authorization: Bearer <token>`, `x-mcp-api-key`, and `?key=` query parameters.
 2. **Key Storage & Hashing**: Keys are generated as `mcp_live_<random_bytes>` and stored as SHA-256 hashes in `mcp_api_key`. Plaintext keys are never stored.
-3. **JWT Bearer Verification**: Decodes HS256 tokens using `JWT_SECRET`. Verifies `organizationId` presence and validates that the token carries required scopes (`mcp:read`, `mcp:write`).
-4. **Data Isolation**: Every database query in `McpToolsService` explicitly scopes by `{ organizationId }`. Foreign relational entities (such as location or customer lookups) are also validated within the authenticated organization.
+3. **BetterAuth OAuth Tokens**: Validates tokens in `oauth_access_token` and extracts the associated organization context.
+4. **JWT Bearer Verification**: Decodes HS256 tokens using `JWT_SECRET`. Verifies `organizationId` presence and validates that the token carries required scopes (`mcp:read`, `mcp:write`).
+5. **Data Isolation**: Every database query in `McpToolsService` explicitly scopes by `{ organizationId }`. Foreign relational entities (such as location or customer lookups) are also validated within the authenticated organization.
