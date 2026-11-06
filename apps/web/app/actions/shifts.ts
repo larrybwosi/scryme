@@ -645,15 +645,31 @@ export async function createScheduledBooking(data: {
       return { success: false, error: "Invalid scheduled start time" };
     }
 
-    const member = await db.member.findFirst({
-      where: { id: data.memberId, organizationId: session!.organizationId },
-      select: { id: true },
-    });
-    if (!member) return { success: false, error: "Staff member not found" };
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational validation lookups for member and service using Promise.all.
+     * Select only the required fields to avoid over-fetching data.
+     * This collapses 2 sequential blocking database roundtrips down to 1 concurrent roundtrip
+     * while preserving multi-tenant organization boundary checks.
+     */
+    const [member, service] = await Promise.all([
+      db.member.findFirst({
+        where: { id: data.memberId, organizationId: session!.organizationId },
+        select: { id: true },
+      }),
+      db.service.findFirst({
+        where: { id: data.serviceId, organizationId: session!.organizationId },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          pricingModel: true,
+          estimatedDuration: true,
+        },
+      }),
+    ]);
 
-    const service = await db.service.findFirst({
-      where: { id: data.serviceId, organizationId: session!.organizationId },
-    });
+    if (!member) return { success: false, error: "Staff member not found" };
     if (!service) return { success: false, error: "Service not found" };
 
     let endTime: Date;
