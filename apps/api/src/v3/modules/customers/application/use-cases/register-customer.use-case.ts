@@ -1,3 +1,4 @@
+import { CustomerAuthService } from "@/customer-auth/customer-auth.service";
 import {
   Injectable,
   Inject,
@@ -26,6 +27,7 @@ export class RegisterCustomerUseCase {
     private readonly prisma: PrismaService,
     private readonly crmSyncService: CrmSyncService,
     private readonly loyaltyService: LoyaltyService,
+    private readonly customerAuthService: CustomerAuthService,
   ) {}
 
   async execute(organizationId: string, dto: RegisterCustomerDto, contextInfo?: { authType?: string; clientId?: string }) {
@@ -147,7 +149,53 @@ export class RegisterCustomerUseCase {
       this.logger.warn(`Failed to auto-enroll customer ${result.id} in loyalty program: ${e instanceof Error ? e.message : String(e)}`);
     }
 
-    return new Customer(
+        // Synchronize customer credentials with CustomerAuthService (Better Auth)
+    let authSession: any = null;
+    try {
+      if (dto.password && this.customerAuthService?.auth?.api) {
+        try {
+          const authResult = await this.customerAuthService.auth.api.signUpEmail({
+            body: {
+              email: result.email,
+              password: dto.password,
+              name: result.name,
+            },
+          });
+          if (authResult?.session) {
+            authSession = authResult;
+          }
+          if (authResult?.user?.id) {
+            await this.prisma.client.externalMapping.upsert({
+              where: {
+                organizationId_provider_externalId_entityType: {
+                  organizationId,
+                  provider: "BETTER_AUTH",
+                  externalId: authResult.user.id,
+                  entityType: "CUSTOMER",
+                },
+              },
+              create: {
+                organizationId,
+                internalId: result.id,
+                externalId: authResult.user.id,
+                provider: "BETTER_AUTH",
+                entityType: "CUSTOMER",
+                internalEntityType: "Customer",
+              },
+              update: {
+                internalId: result.id,
+              },
+            });
+          }
+        } catch (authErr: any) {
+          this.logger.warn(`CustomerAuthService signUp notice: ${authErr?.message || authErr}`);
+        }
+      }
+    } catch (e: any) {
+      this.logger.warn(`Failed to sync with CustomerAuthService: ${e?.message || e}`);
+    }
+
+    const customerEntity: any = new Customer(
       result.id,
       result.name,
       result.email,
@@ -160,6 +208,11 @@ export class RegisterCustomerUseCase {
       result.dateOfBirth,
       result.taxId,
     );
+    if (authSession) {
+      customerEntity.session = authSession.session;
+      customerEntity.token = authSession.token || authSession.session?.token;
+    }
+    return customerEntity;
   }
 
 

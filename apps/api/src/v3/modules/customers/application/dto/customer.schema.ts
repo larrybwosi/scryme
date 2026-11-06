@@ -44,3 +44,23 @@ export const CustomerLoginSchema = z.object({
   email: z.string().email("Invalid email format"),
   password: z.string().min(1, "Password is required"),
 });
+
+export const CustomerForgotPasswordSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  redirectTo: z.string().url().optional(),
+});
+
+export const CustomerResetPasswordSchema = z.object({
+  token: z.string().min(1, "Reset token is required"),
+  newPassword: z.string().min(6, "New password must be at least 6 characters"),
+});
+
+export const CustomerSendVerificationEmailSchema = z.object({
+  email: z.string().email("Invalid email format"),
+  callbackURL: z.string().url().optional(),
+});
+
+export const CustomerVerifyEmailSchema = z.object({
+  token: z.string().min(1, "Verification token is required"),
+  callbackURL: z.string().url().optional(),
+});

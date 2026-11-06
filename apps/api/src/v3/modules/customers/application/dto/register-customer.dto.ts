@@ -120,3 +120,51 @@ export class CustomerLoginDto {
   @IsNotEmpty()
   password?: string;
 }
+
+export class CustomerForgotPasswordDto {
+  @ApiProperty({ example: "john@example.com" })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: "https://example.com/reset-password", required: false })
+  @IsString()
+  @IsOptional()
+  redirectTo?: string;
+}
+
+export class CustomerResetPasswordDto {
+  @ApiProperty({ example: "reset-token-xyz" })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty({ example: "newSecurePassword123" })
+  @IsString()
+  @IsNotEmpty()
+  newPassword: string;
+}
+
+export class CustomerSendVerificationEmailDto {
+  @ApiProperty({ example: "john@example.com" })
+  @IsEmail()
+  @IsNotEmpty()
+  email: string;
+
+  @ApiProperty({ example: "https://example.com/verify-email", required: false })
+  @IsString()
+  @IsOptional()
+  callbackURL?: string;
+}
+
+export class CustomerVerifyEmailDto {
+  @ApiProperty({ example: "verification-token-xyz" })
+  @IsString()
+  @IsNotEmpty()
+  token: string;
+
+  @ApiProperty({ example: "https://example.com/verified", required: false })
+  @IsString()
+  @IsOptional()
+  callbackURL?: string;
+}
