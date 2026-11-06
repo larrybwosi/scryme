@@ -51,6 +51,14 @@ export class AllExceptionsFilter implements ExceptionFilter {
     const reqMethod = request?.method || "UNKNOWN";
     const reqUrl = request?.originalUrl || request?.url || "unknown";
 
+    if (reqUrl.includes("/mcp") && status === HttpStatus.UNAUTHORIZED) {
+      const host = request?.headers?.["x-forwarded-host"] || request?.headers?.host || request?.hostname || "api.scryme.tech";
+      const proto = request?.headers?.["x-forwarded-proto"] || request?.protocol || "https";
+      const origin = `${proto}://${host}`;
+      const resourceMetadataUrl = `${origin}/.well-known/oauth-protected-resource/v3/mcp`;
+      response.header("WWW-Authenticate", `Bearer resource_metadata="${resourceMetadataUrl}"`);
+    }
+
     // @security Redact the entire exception object before logging to prevent
     // leaking sensitive data (secrets, PII) in server logs or OpenObserve.
     const redactedException = redactSensitiveData(exception);

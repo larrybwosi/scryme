@@ -29,7 +29,7 @@ export class StandardResponseInterceptor<T> implements NestInterceptor<
     const url = request?.url || "";
 
     // Skip intercepting for any better-auth or custom authentication API routes
-    if (url.includes("/api/auth")) {
+    if (url.includes("/api/auth") || url.includes("/v3/mcp") || url.includes("/mcp")) {
       return next.handle();
     }
 

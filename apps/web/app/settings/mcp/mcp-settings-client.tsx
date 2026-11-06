@@ -144,7 +144,7 @@ export function McpSettingsClient({ initialKeys }: Props) {
               <Server className="w-4 h-4" /> Dual Transport Support
             </div>
             <p className="text-xs text-slate-400">
-              Supports both HTTP/SSE remote endpoints and lightweight Stdio CLI package.
+              Supports both Streamable HTTP remote endpoints and lightweight Stdio CLI package.
             </p>
           </div>
         </div>
@@ -275,28 +275,28 @@ export function McpSettingsClient({ initialKeys }: Props) {
             </pre>
           </div>
 
-          {/* Remote SSE / Cursor Endpoint */}
+          {/* Remote Streamable HTTP / Claude.ai / Cursor Endpoint */}
           <div className="space-y-3 p-4 bg-slate-950 border border-slate-800 rounded-lg">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2 text-sm font-medium text-white">
-                <Server className="w-4 h-4 text-indigo-400" /> Remote HTTP / SSE Endpoint
+                <Server className="w-4 h-4 text-indigo-400" /> Streamable HTTP Endpoint
               </div>
               <button
-                onClick={() => copyToClipboard("https://api.scryme.tech/v3/mcp/sse", "sseUrl")}
+                onClick={() => copyToClipboard("https://api.scryme.tech/v3/mcp", "mcpUrl")}
                 className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1"
               >
-                {copiedIndex === "sseUrl" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                {copiedIndex === "sseUrl" ? "Copied" : "Copy URL"}
+                {copiedIndex === "mcpUrl" ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedIndex === "mcpUrl" ? "Copied" : "Copy URL"}
               </button>
             </div>
             <p className="text-xs text-slate-400">
-              Use this SSE endpoint for remote AI agents and web integrations:
+              Use this Streamable HTTP endpoint for Claude.ai, Cursor, and remote AI agents:
             </p>
             <div className="p-3 bg-slate-900 border border-slate-800 text-emerald-400 rounded text-xs font-mono break-all">
-              https://api.scryme.tech/v3/mcp/sse
+              https://api.scryme.tech/v3/mcp
             </div>
             <div className="text-[11px] text-slate-500">
-              Header required: <code className="text-slate-400">Authorization: Bearer &lt;YOUR_MCP_KEY&gt;</code>
+              Authentication: OAuth 2.0 Sign-In or <code className="text-slate-400">Authorization: Bearer &lt;YOUR_MCP_KEY&gt;</code>
             </div>
           </div>
         </div>

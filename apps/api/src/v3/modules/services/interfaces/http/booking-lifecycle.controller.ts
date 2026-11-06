@@ -18,7 +18,7 @@ import {
 } from "../../application/dto/booking-lifecycle.dto";
 
 @ApiTags("V3 Bookings Management & Lifecycle")
-@Controller("v3/bookings")
+@Controller("bookings")
 @UseGuards(V3AuthGuard, MultiTenancyGuard, PermissionsGuard)
 export class BookingLifecycleController {
   constructor(

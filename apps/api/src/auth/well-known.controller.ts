@@ -1,4 +1,4 @@
-import { Controller, Get, Req, Res } from "@nestjs/common";
+import { Controller, Get, Req, Res, Param } from "@nestjs/common";
 import { AuthService } from "./auth.service";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import {
@@ -107,6 +107,58 @@ export class WellKnownController {
     }
 
     return res.send();
+  }
+
+  @AllowPublic()
+  @Get("oauth-protected-resource")
+  async getOAuthProtectedResourceRoot(@Req() req: any, @Res() res: any) {
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || req.hostname || "api.scryme.tech";
+    const origin = `${protocol}://${host}`;
+
+    const metadata = {
+      resource: `${origin}/v3/mcp`,
+      authorization_servers: [origin],
+      scopes_supported: ["openid", "profile", "email", "org_info", "membership", "mcp:read", "mcp:write"],
+      resource_name: "Scryme MCP Server",
+      resource_documentation: "https://docs.scryme.tech",
+    };
+
+    res.header("content-type", "application/json");
+    res.header("access-control-allow-origin", "*");
+    return res.send(metadata);
+  }
+
+  @AllowPublic()
+  @Get("oauth-protected-resource/*")
+  async getOAuthProtectedResource(@Req() req: any, @Res() res: any) {
+    const protocol = req.headers["x-forwarded-proto"] || req.protocol || "https";
+    const host = req.headers["x-forwarded-host"] || req.headers.host || req.hostname || "api.scryme.tech";
+    const origin = `${protocol}://${host}`;
+
+    // Extract path after /oauth-protected-resource
+    const fullUrl = req.raw?.url || req.url || "";
+    const basePath = "/.well-known/oauth-protected-resource";
+    const idx = fullUrl.indexOf(basePath);
+    let resourcePath = "/v3/mcp";
+    if (idx !== -1) {
+      const rest = fullUrl.substring(idx + basePath.length).split("?")[0];
+      if (rest && rest.trim() !== "") {
+        resourcePath = rest;
+      }
+    }
+
+    const metadata = {
+      resource: `${origin}${resourcePath}`,
+      authorization_servers: [origin],
+      scopes_supported: ["openid", "profile", "email", "org_info", "membership", "mcp:read", "mcp:write"],
+      resource_name: "Scryme MCP Server",
+      resource_documentation: "https://docs.scryme.tech",
+    };
+
+    res.header("content-type", "application/json");
+    res.header("access-control-allow-origin", "*");
+    return res.send(metadata);
   }
 
   @AllowPublic()

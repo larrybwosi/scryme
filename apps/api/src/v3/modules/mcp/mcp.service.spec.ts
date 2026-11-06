@@ -15,6 +15,12 @@ vi.mock("@repo/db", () => ({
     apiKey: {
       findFirst: vi.fn(),
     },
+    oauthAccessToken: {
+      findFirst: vi.fn(),
+    },
+    member: {
+      findFirst: vi.fn(),
+    },
     product: {
       findMany: vi.fn(),
       findFirst: vi.fn(),
