@@ -91,7 +91,7 @@ describe("SchedulingUseCase", () => {
   });
 
   describe("createScheduledBooking", () => {
-    it("should create service booking and event log", async () => {
+    it("should create service booking and event log concurrently validating member and service", async () => {
       mockPrisma.client.member.findFirst.mockResolvedValue({ id: "member_1" });
       mockPrisma.client.service.findFirst.mockResolvedValue({
         id: "srv_1",
@@ -114,7 +114,55 @@ describe("SchedulingUseCase", () => {
       const result = await useCase.createScheduledBooking("org_1", "actor_1", dto as any);
 
       expect(result.id).toEqual("booking_1");
+      expect(mockPrisma.client.member.findFirst).toHaveBeenCalledWith({
+        where: { id: "member_1", organizationId: "org_1" },
+        select: { id: true },
+      });
+      expect(mockPrisma.client.service.findFirst).toHaveBeenCalledWith({
+        where: { id: "srv_1", organizationId: "org_1" },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          pricingModel: true,
+          estimatedDuration: true,
+        },
+      });
       expect(mockPrisma.client.bookingEvent.create).toHaveBeenCalled();
+    });
+
+    it("should throw BadRequestException when member is not found", async () => {
+      mockPrisma.client.member.findFirst.mockResolvedValue(null);
+      mockPrisma.client.service.findFirst.mockResolvedValue({
+        id: "srv_1",
+        name: "Haircut",
+        price: "30.00",
+      });
+
+      const dto = {
+        memberId: "missing_member",
+        serviceId: "srv_1",
+        scheduledStartTime: new Date("2026-10-15T10:00:00Z"),
+      };
+
+      await expect(
+        useCase.createScheduledBooking("org_1", "actor_1", dto as any),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("should throw BadRequestException when service is not found", async () => {
+      mockPrisma.client.member.findFirst.mockResolvedValue({ id: "member_1" });
+      mockPrisma.client.service.findFirst.mockResolvedValue(null);
+
+      const dto = {
+        memberId: "member_1",
+        serviceId: "missing_service",
+        scheduledStartTime: new Date("2026-10-15T10:00:00Z"),
+      };
+
+      await expect(
+        useCase.createScheduledBooking("org_1", "actor_1", dto as any),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 

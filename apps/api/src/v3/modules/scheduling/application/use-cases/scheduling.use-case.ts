@@ -145,17 +145,34 @@ export class SchedulingUseCase {
       throw new BadRequestException("Invalid scheduled start time");
     }
 
-    const member = await this.prisma.client.member.findFirst({
-      where: { id: dto.memberId, organizationId },
-      select: { id: true },
-    });
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational validation lookups for member and service concurrently using Promise.all.
+     * Select only the required fields on service to avoid over-fetching data.
+     * This collapses 2 sequential blocking database roundtrips down to 1 concurrent roundtrip
+     * while strictly preserving multi-tenant organization boundary checks and exception handling.
+     */
+    const [member, service] = await Promise.all([
+      this.prisma.client.member.findFirst({
+        where: { id: dto.memberId, organizationId },
+        select: { id: true },
+      }),
+      this.prisma.client.service.findFirst({
+        where: { id: dto.serviceId, organizationId },
+        select: {
+          id: true,
+          name: true,
+          price: true,
+          pricingModel: true,
+          estimatedDuration: true,
+        },
+      }),
+    ]);
+
     if (!member) {
       throw new BadRequestException("Staff member not found in organization");
     }
 
-    const service = await this.prisma.client.service.findFirst({
-      where: { id: dto.serviceId, organizationId },
-    });
     if (!service) {
       throw new BadRequestException("Service not found in organization");
     }
