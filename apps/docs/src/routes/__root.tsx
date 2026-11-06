@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import {
   Search,
   BookOpen,
+  Bot,
   Box,
   Code2,
   Bell,
@@ -118,6 +119,7 @@ function RootComponent() {
     { title: 'Interactive API Playground', category: 'API Reference', to: '/api-reference/playground' },
     { title: 'Security Best Practices', category: 'Guide', to: '/docs/security' },
     { title: 'Webhooks & Event Streams', category: 'Guide', to: '/docs/webhooks' },
+    { title: 'Model Context Protocol (MCP)', category: 'Guide', to: '/docs/mcp' },
     { title: 'Third-Party Integrations', category: 'Guide', to: '/docs/integrations' },
     { title: 'API Rate Limits', category: 'Guide', to: '/docs/rate-limits' },
     { title: 'Release Changelog', category: 'General', to: '/docs/changelog' },
@@ -426,6 +428,15 @@ function RootComponent() {
                   >
                     <Bell className="w-4 h-4 text-slate-400" />
                     <span>Webhooks</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/mcp"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Bot className="w-4 h-4 text-slate-400" />
+                    <span>Model Context Protocol</span>
                   </Link>
 
                   <Link
