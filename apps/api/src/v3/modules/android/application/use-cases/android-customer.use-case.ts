@@ -114,6 +114,7 @@ export class AndroidCustomerUseCase {
             },
           },
         },
+        items: true,
       },
       orderBy: { createdAt: "desc" },
       take: limit,
@@ -128,6 +129,13 @@ export class AndroidCustomerUseCase {
         status: tx.cancelledAt ? "CANCELLED" : tx.completedAt ? "COMPLETED" : "CONFIRMED",
         cashierName: tx.member?.user?.name || "Staff",
         createdAt: tx.createdAt.toISOString(),
+        items: (tx.items || []).map((it: any) => ({
+          id: it.id,
+          name: it.productName || "Product",
+          quantity: it.quantity || 1,
+          unitPrice: Number(it.unitPrice || 0),
+          totalPrice: Number(it.total || 0),
+        })),
       })),
     };
   }

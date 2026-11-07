@@ -13,28 +13,6 @@ class ScheduleRepositoryImpl @Inject constructor(
 ) : ScheduleRepository {
     private val localTaskCache = java.util.concurrent.ConcurrentHashMap<String, StaffTask>()
 
-    private fun createDefaultSubtasksForTask(title: String): List<SubtaskGroup> {
-        return listOf(
-            SubtaskGroup(
-                id = "group_design",
-                title = "Design System",
-                items = listOf(
-                    SubtaskItem(id = "sub_color", title = "Color System", isCompleted = false),
-                    SubtaskItem(id = "sub_typo", title = "Typography Scale", isCompleted = false),
-                    SubtaskItem(id = "sub_comp", title = "Components Library", isCompleted = false)
-                )
-            ),
-            SubtaskGroup(
-                id = "group_assets",
-                title = "Assets Integration",
-                items = listOf(
-                    SubtaskItem(id = "sub_icons", title = "Vector Icons", isCompleted = false),
-                    SubtaskItem(id = "sub_tokens", title = "Design Tokens Export", isCompleted = false)
-                )
-            )
-        )
-    }
-
     override suspend fun getStaffTaskById(orgSlug: String, taskId: String): Result<StaffTask> {
         val cached = localTaskCache[taskId]
         if (cached != null) return Result.success(cached)
@@ -42,15 +20,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         val tasksRes = getStaffTasks(orgSlug)
         return tasksRes.mapCatching { list ->
             list.find { it.id == taskId }
-                ?: StaffTask(
-                    id = taskId,
-                    title = "Scheduled Task",
-                    description = "Task details overview",
-                    status = "TODO",
-                    priority = "MEDIUM",
-                    category = "UI/UX Design",
-                    subtaskGroups = createDefaultSubtasksForTask("Scheduled Task")
-                )
+                ?: throw NoSuchElementException("Task not found with ID: $taskId")
         }
     }
 
@@ -233,8 +203,8 @@ class ScheduleRepositoryImpl @Inject constructor(
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 val enrichedTask = task.copy(
                     dueTime = dueTime ?: task.dueTime,
-                    category = category ?: task.category ?: "UI/UX Design",
-                    subtaskGroups = if (subtaskGroups.isNotEmpty()) subtaskGroups else createDefaultSubtasksForTask(title)
+                    category = category ?: task.category,
+                    subtaskGroups = subtaskGroups
                 )
                 localTaskCache[enrichedTask.id] = enrichedTask
                 Result.success(enrichedTask)
@@ -529,7 +499,7 @@ class ScheduleRepositoryImpl @Inject constructor(
         description = description,
         status = status,
         priority = priority ?: "MEDIUM",
-        category = category ?: "UI/UX Design",
+        category = category,
         assignedMemberId = assignedMemberId,
         dueDate = dueDate,
         dueTime = dueTime,
@@ -542,7 +512,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                 title = g.title,
                 items = g.items.map { SubtaskItem(it.id, it.title, it.isCompleted) }
             )
-        } ?: createDefaultSubtasksForTask(title)
+        } ?: emptyList()
     )
 
     private fun TaskAssessmentDto.toDomain() = TaskAssessment(

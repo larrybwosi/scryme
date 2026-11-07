@@ -31,6 +31,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Timelapse
+import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.SubtaskGroup
 import tech.scryme.app.domain.model.SubtaskItem
@@ -239,6 +242,7 @@ fun TaskDetailsScreen(
             is TaskDetailsUiState.Success -> {
                 TaskDetailsContent(
                     task = state.task,
+                    members = state.members,
                     isSaving = state.isSaving,
                     errorMessage = state.errorMessage,
                     onStatusChange = { newStatus -> viewModel.updateStatus(newStatus) },
@@ -359,6 +363,7 @@ fun TaskDetailsScreen(
 @Composable
 fun TaskDetailsContent(
     task: StaffTask,
+    members: List<UserProfile> = emptyList(),
     isSaving: Boolean,
     errorMessage: String?,
     onStatusChange: (String) -> Unit,
@@ -443,6 +448,41 @@ fun TaskDetailsContent(
                         icon = Icons.Default.Schedule,
                         label = "Time",
                         value = task.dueTime ?: "All Day",
+                        modifier = Modifier
+                            .weight(1f)
+                            .padding(start = 16.dp)
+                    )
+                }
+
+                val assignedMember = members.find { it.id == task.assignedMemberId }
+                val assigneeName = assignedMember?.name ?: if (!task.assignedMemberId.isNullOrBlank()) "Staff Assigned" else "Unassigned"
+                val hoursText = when {
+                    task.estimatedHours != null && task.actualHours != null -> "${task.actualHours}h / ${task.estimatedHours}h"
+                    task.estimatedHours != null -> "Est: ${task.estimatedHours}h"
+                    task.actualHours != null -> "Act: ${task.actualHours}h"
+                    else -> "No hours logged"
+                }
+
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+
+                // Assignee / Hours
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MetaItem(
+                        icon = Icons.Default.Person,
+                        label = "Assignee",
+                        value = assigneeName,
+                        modifier = Modifier.weight(1f)
+                    )
+                    VerticalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                    MetaItem(
+                        icon = Icons.Default.Timelapse,
+                        label = "Hours",
+                        value = hoursText,
                         modifier = Modifier
                             .weight(1f)
                             .padding(start = 16.dp)

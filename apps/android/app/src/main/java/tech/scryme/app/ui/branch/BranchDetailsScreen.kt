@@ -1,5 +1,7 @@
 package tech.scryme.app.ui.branch
 
+import tech.scryme.app.util.CurrencyUtils
+
 import kotlinx.coroutines.launch
 
 import android.Manifest
@@ -655,7 +657,7 @@ fun BranchSalesTab(
                         }
                         Spacer(Modifier.width(12.dp))
                         Text(
-                            text = "${sale.currencyCode} ${"%,.2f".format(sale.totalAmount)}",
+                            text = CurrencyUtils.formatAmount(sale.totalAmount, sale.currencyCode),
                             style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
                             color = MaterialTheme.colorScheme.onSurface
                         )

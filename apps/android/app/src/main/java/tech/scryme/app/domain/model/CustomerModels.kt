@@ -13,6 +13,14 @@ data class CustomerItem(
     val updatedAt: String
 )
 
+data class CustomerPurchasedItem(
+    val id: String,
+    val name: String,
+    val quantity: Int = 1,
+    val unitPrice: Double = 0.0,
+    val totalPrice: Double = 0.0
+)
+
 data class CustomerTransactionItem(
     val id: String,
     val transactionNumber: String,
@@ -20,5 +28,6 @@ data class CustomerTransactionItem(
     val currencyCode: String,
     val status: String,
     val cashierName: String?,
-    val createdAt: String
+    val createdAt: String,
+    val items: List<CustomerPurchasedItem> = emptyList()
 )

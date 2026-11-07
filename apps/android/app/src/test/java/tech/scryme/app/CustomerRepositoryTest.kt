@@ -90,7 +90,16 @@ class CustomerRepositoryTest {
                 currencyCode = "USD",
                 status = "COMPLETED",
                 cashierName = "Bob",
-                createdAt = "2026-11-02T00:00:00Z"
+                createdAt = "2026-11-02T00:00:00Z",
+                items = listOf(
+                    CustomerTransactionItemDto(
+                        id = "it-1",
+                        name = "Product A",
+                        quantity = 2,
+                        unitPrice = 49.75,
+                        totalPrice = 99.5
+                    )
+                )
             )
         )
         coEvery { apiService.getCustomerTransactions("cust-1", 20) } returns Response.success(
@@ -103,6 +112,8 @@ class CustomerRepositoryTest {
         assertEquals(1, list.size)
         assertEquals("TX001", list[0].transactionNumber)
         assertEquals(99.5, list[0].totalAmount, 0.01)
+        assertEquals(1, list[0].items.size)
+        assertEquals(49.75, list[0].items[0].unitPrice, 0.01)
     }
 
     @Test

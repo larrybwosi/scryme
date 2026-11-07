@@ -23,6 +23,14 @@ data class CustomerTransactionsResponseDto(
     @SerializedName("transactions") val transactions: List<CustomerTransactionDto>
 )
 
+data class CustomerTransactionItemDto(
+    @SerializedName("id") val id: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("quantity") val quantity: Int = 1,
+    @SerializedName("unitPrice") val unitPrice: Double = 0.0,
+    @SerializedName("totalPrice") val totalPrice: Double = 0.0
+)
+
 data class CustomerTransactionDto(
     @SerializedName("id") val id: String,
     @SerializedName("transactionNumber") val transactionNumber: String,
@@ -30,7 +38,8 @@ data class CustomerTransactionDto(
     @SerializedName("currencyCode") val currencyCode: String? = "USD",
     @SerializedName("status") val status: String? = "CONFIRMED",
     @SerializedName("cashierName") val cashierName: String? = null,
-    @SerializedName("createdAt") val createdAt: String
+    @SerializedName("createdAt") val createdAt: String,
+    @SerializedName("items") val items: List<CustomerTransactionItemDto>? = null
 )
 
 data class UpdateCustomerRequestDto(
