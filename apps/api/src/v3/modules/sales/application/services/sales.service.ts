@@ -161,7 +161,7 @@ export class SalesService {
           payments: true,
         },
       }),
-      this.prisma.client.organization.findUnique({
+      this.prisma.client.organization?.findUnique?.({
         where: { id: organizationId },
         include: { settings: true },
       }),
@@ -189,7 +189,7 @@ export class SalesService {
           payments: true,
         },
       }),
-      this.prisma.client.organization.findUnique({
+      this.prisma.client.organization?.findUnique?.({
         where: { id: organizationId },
         include: { settings: true },
       }),
