@@ -3,6 +3,10 @@ import {
   ProjectsAPI,
   Project,
   Task,
+  CreateTaskInput,
+  ServiceBookingItem,
+  ProductionBatchItem,
+  TaskLabelItem,
   Milestone,
   Sprint,
   ProjectDocument,
@@ -117,7 +121,7 @@ export function useCreateTask(projectId?: string) {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (data: Partial<Task> & { assigneeIds?: string[]; labelIds?: string[] }) =>
+    mutationFn: (data: CreateTaskInput) =>
       ProjectsAPI.createTask(data),
     onSuccess: (newTask) => {
       const targetProjectId = newTask.projectId || projectId;
@@ -649,5 +653,27 @@ export function useTeamPerformance(from?: string, to?: string) {
   return useQuery({
     queryKey: ["team-performance", from, to],
     queryFn: () => ProjectsAPI.getTeamPerformance(from, to),
+  });
+}
+
+
+export function useTaskLabels(projectId?: string) {
+  return useQuery<TaskLabelItem[]>({
+    queryKey: ["task-labels", projectId || "all"],
+    queryFn: () => ProjectsAPI.getTaskLabels(projectId),
+  });
+}
+
+export function useServiceBookings(status?: string) {
+  return useQuery<ServiceBookingItem[]>({
+    queryKey: ["service-bookings", status || "all"],
+    queryFn: () => ProjectsAPI.getServiceBookings(status),
+  });
+}
+
+export function useProductionBatches() {
+  return useQuery<ProductionBatchItem[]>({
+    queryKey: ["production-batches"],
+    queryFn: () => ProjectsAPI.getProductionBatches(),
   });
 }

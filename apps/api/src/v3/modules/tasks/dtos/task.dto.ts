@@ -15,6 +15,25 @@ import {
   ValidateNested,
 } from 'class-validator';
 
+export class TaskAssigneeInput {
+  @ApiProperty({ example: 'cuid_member_1' })
+  @IsString()
+  @IsNotEmpty()
+  memberId!: string;
+
+  @ApiPropertyOptional({ example: true, default: false })
+  @IsOptional()
+  @IsBoolean()
+  isPrimary?: boolean;
+
+  @ApiPropertyOptional({ example: 4.5, description: 'Allocated hours out of total estimate' })
+  @IsOptional()
+  @Type(() => Number)
+  @IsNumber()
+  @Min(0)
+  allocatedHours?: number;
+}
+
 export class CreateTaskDto {
   @ApiProperty({ example: 'cuid_project_id' })
   @IsString()
@@ -70,11 +89,33 @@ export class CreateTaskDto {
   @IsString()
   milestoneId?: string;
 
+  @ApiPropertyOptional({ example: 'cuid_sprint_id' })
+  @IsOptional()
+  @IsString()
+  sprintId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_booking_id' })
+  @IsOptional()
+  @IsString()
+  bookingId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_batch_id' })
+  @IsOptional()
+  @IsString()
+  batchId?: string;
+
   @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
   @IsOptional()
   @IsArray()
   @IsString({ each: true })
   assigneeIds?: string[];
+
+  @ApiPropertyOptional({ type: [TaskAssigneeInput] })
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => TaskAssigneeInput)
+  assignees?: TaskAssigneeInput[];
 
   @ApiPropertyOptional({ example: ['cuid_label_1'], type: [String] })
   @IsOptional()
@@ -136,24 +177,6 @@ export class UpdateTaskDto {
   parentTaskId?: string;
 }
 
-export class TaskAssigneeInput {
-  @ApiProperty({ example: 'cuid_member_1' })
-  @IsString()
-  @IsNotEmpty()
-  memberId!: string;
-
-  @ApiPropertyOptional({ example: true, default: false })
-  @IsOptional()
-  @IsBoolean()
-  isPrimary?: boolean;
-
-  @ApiPropertyOptional({ example: 4.5, description: 'Allocated hours out of total estimate' })
-  @IsOptional()
-  @Type(() => Number)
-  @IsNumber()
-  @Min(0)
-  allocatedHours?: number;
-}
 
 export class ManageTaskAssigneesDto {
   @ApiPropertyOptional({ example: ['cuid_member_1', 'cuid_member_2'], type: [String] })
@@ -231,6 +254,21 @@ export class TaskFilterDto {
   @IsOptional()
   @IsString()
   milestoneId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_sprint_id' })
+  @IsOptional()
+  @IsString()
+  sprintId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_booking_id' })
+  @IsOptional()
+  @IsString()
+  bookingId?: string;
+
+  @ApiPropertyOptional({ example: 'cuid_batch_id' })
+  @IsOptional()
+  @IsString()
+  batchId?: string;
 
   @ApiPropertyOptional({ example: 'cuid_parent_task_id' })
   @IsOptional()

@@ -110,6 +110,65 @@ describe('TaskUseCase', () => {
   });
 
   describe('createTask', () => {
+    it('should create task with integrations (sprint, booking, batch) and structured assignees', async () => {
+      mockPrisma.client.project.findFirst.mockResolvedValue({
+        id: 'prj_1',
+        key: 'PRJ',
+        organizationId: 'org_1',
+      });
+      mockPrisma.client.projectSprint = { findFirst: vi.fn().mockResolvedValue({ id: 'sprint_1' }) };
+      mockPrisma.client.serviceBooking = { findFirst: vi.fn().mockResolvedValue({ id: 'bkg_1' }) };
+      mockPrisma.client.batch = {
+        findFirst: vi.fn().mockResolvedValue({ id: 'batch_1' }),
+        updateMany: vi.fn().mockResolvedValue({ count: 1 }),
+      };
+      mockPrisma.client.member.findMany.mockResolvedValue([
+        { id: 'member_1' },
+        { id: 'member_2' },
+      ]);
+      mockPrisma.client.task.count.mockResolvedValue(10);
+      mockPrisma.client.task.create.mockResolvedValue({
+        id: 'task_new',
+        taskKey: 'PRJ-11',
+        title: 'Integrated Task',
+        sprintId: 'sprint_1',
+        bookingId: 'bkg_1',
+      });
+
+      const dto = {
+        projectId: 'prj_1',
+        title: 'Integrated Task',
+        sprintId: 'sprint_1',
+        bookingId: 'bkg_1',
+        batchId: 'batch_1',
+        assignees: [
+          { memberId: 'member_1', isPrimary: true, allocatedHours: 5 },
+          { memberId: 'member_2', isPrimary: false, allocatedHours: 3 },
+        ],
+      };
+
+      const result = await useCase.createTask('org_1', dto as any, 'member_1');
+      expect(result.taskKey).toBe('PRJ-11');
+      expect(mockPrisma.client.task.create).toHaveBeenCalledWith(
+        expect.objectContaining({
+          data: expect.objectContaining({
+            sprintId: 'sprint_1',
+            bookingId: 'bkg_1',
+            assignees: {
+              create: [
+                { memberId: 'member_1', isPrimary: true, allocatedHours: 5 },
+                { memberId: 'member_2', isPrimary: false, allocatedHours: 3 },
+              ],
+            },
+          }),
+        }),
+      );
+      expect(mockPrisma.client.batch.updateMany).toHaveBeenCalledWith({
+        where: { id: 'batch_1', organizationId: 'org_1' },
+        data: { taskId: 'task_new' },
+      });
+    });
+
     it('should create task and generate auto-incrementing taskKey per project', async () => {
       mockPrisma.client.project.findFirst.mockResolvedValue({
         id: 'prj_1',

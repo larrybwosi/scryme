@@ -43,6 +43,33 @@ export class TaskUseCase {
       }
     }
 
+    if (dto.sprintId) {
+      const sprint = await this.prisma.client.projectSprint.findFirst({
+        where: { id: dto.sprintId, organizationId, projectId: dto.projectId },
+      });
+      if (!sprint) {
+        throw new BadRequestException("Sprint not found within this project");
+      }
+    }
+
+    if (dto.bookingId) {
+      const booking = await this.prisma.client.serviceBooking.findFirst({
+        where: { id: dto.bookingId, organizationId },
+      });
+      if (!booking) {
+        throw new BadRequestException("Service booking not found within this organization");
+      }
+    }
+
+    if (dto.batchId) {
+      const batch = await this.prisma.client.batch.findFirst({
+        where: { id: dto.batchId, organizationId },
+      });
+      if (!batch) {
+        throw new BadRequestException("Production batch not found within this organization");
+      }
+    }
+
     if (dto.parentTaskId) {
       const parentTask = await this.prisma.client.task.findFirst({
         where: { id: dto.parentTaskId, organizationId, projectId: dto.projectId },
@@ -52,12 +79,29 @@ export class TaskUseCase {
       }
     }
 
-    if (dto.assigneeIds && dto.assigneeIds.length > 0) {
+    let assigneesToCreate: { memberId: string; isPrimary: boolean; allocatedHours?: number }[] = [];
+    if (dto.assignees && dto.assignees.length > 0) {
+      assigneesToCreate = dto.assignees.map((a, idx) => ({
+        memberId: a.memberId,
+        isPrimary: a.isPrimary ?? (idx === 0),
+        allocatedHours: a.allocatedHours,
+      }));
+    } else if (dto.assigneeIds && dto.assigneeIds.length > 0) {
+      assigneesToCreate = dto.assigneeIds.map((mId, idx) => ({
+        memberId: mId,
+        isPrimary: idx === 0,
+        allocatedHours: undefined,
+      }));
+    }
+
+    const uniqueAssigneeIds = Array.from(new Set(assigneesToCreate.map((a) => a.memberId)));
+
+    if (uniqueAssigneeIds.length > 0) {
       const validMembers = await this.prisma.client.member.findMany({
-        where: { id: { in: dto.assigneeIds }, organizationId },
+        where: { id: { in: uniqueAssigneeIds }, organizationId },
         select: { id: true },
       });
-      if (validMembers.length !== dto.assigneeIds.length) {
+      if (validMembers.length !== uniqueAssigneeIds.length) {
         throw new BadRequestException('One or more assignees do not belong to this organization');
       }
     }
@@ -93,10 +137,16 @@ export class TaskUseCase {
         estimatedHours: dto.estimatedHours,
         parentTaskId: dto.parentTaskId,
         milestoneId: dto.milestoneId,
+        sprintId: dto.sprintId,
+        bookingId: dto.bookingId,
         createdById: currentMemberId,
-        assignees: dto.assigneeIds?.length
+        assignees: assigneesToCreate.length > 0
           ? {
-              create: dto.assigneeIds.map((memberId) => ({ memberId })),
+              create: assigneesToCreate.map((item) => ({
+                memberId: item.memberId,
+                isPrimary: !!item.isPrimary,
+                allocatedHours: item.allocatedHours !== undefined ? item.allocatedHours : null,
+              })),
             }
           : undefined,
         labels: dto.labelIds?.length
@@ -120,15 +170,26 @@ export class TaskUseCase {
         },
         labels: { include: { label: true } },
         milestone: { select: { id: true, title: true, status: true, dueDate: true } },
+        sprint: { select: { id: true, name: true, status: true, startDate: true, endDate: true } },
+        booking: { select: { id: true, serviceName: true, status: true, scheduledStartTime: true, scheduledEndTime: true, customer: { select: { id: true, name: true, phone: true, email: true } } } },
+        batches: { select: { id: true, batchNumber: true, runType: true, orderReference: true, status: true } },
         subtasks: { select: { id: true, taskKey: true, title: true, status: true, priority: true } },
         _count: { select: { comments: true, subtasks: true } },
       },
     });
 
+    // If a production batch is linked, associate it with this task
+    if (dto.batchId) {
+      await this.prisma.client.batch.updateMany({
+        where: { id: dto.batchId, organizationId },
+        data: { taskId: task.id },
+      });
+    }
+
     // Send FCM push notification to assignees
-    if (dto.assigneeIds && dto.assigneeIds.length > 0) {
+    if (uniqueAssigneeIds.length > 0) {
       this.firebaseMessagingService
-        .sendToMembers(dto.assigneeIds, {
+        .sendToMembers(uniqueAssigneeIds, {
           title: `New Task Assigned: [${task.taskKey}]`,
           body: `${task.title} in project ${project.name}`,
           data: {
@@ -204,7 +265,7 @@ export class TaskUseCase {
   }
 
   async listTasks(organizationId: string, filter: TaskFilterDto) {
-    const { projectId, status, priority, assigneeId, milestoneId, parentTaskId, search, page = 1, limit = 20 } = filter;
+    const { projectId, status, priority, assigneeId, milestoneId, sprintId, bookingId, batchId, parentTaskId, search, page = 1, limit = 20 } = filter;
     const skip = (page - 1) * limit;
 
     const where: any = { organizationId };
@@ -229,6 +290,20 @@ export class TaskUseCase {
 
     if (milestoneId) {
       where.milestoneId = milestoneId;
+    }
+
+    if (sprintId) {
+      where.sprintId = sprintId;
+    }
+
+    if (bookingId) {
+      where.bookingId = bookingId;
+    }
+
+    if (batchId) {
+      where.batches = {
+        some: { id: batchId },
+      };
     }
 
     if (parentTaskId) {

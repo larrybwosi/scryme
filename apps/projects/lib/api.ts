@@ -1,3 +1,37 @@
+export interface CreateTaskInput extends Omit<Partial<Task>, "assignees"> {
+  assigneeIds?: string[];
+  assignees?: { memberId: string; isPrimary?: boolean; allocatedHours?: number }[];
+  labelIds?: string[];
+  batchId?: string;
+}
+
+export interface ServiceBookingItem {
+  id: string;
+  serviceName: string;
+  status: string;
+  scheduledStartTime: string;
+  scheduledEndTime?: string;
+  customer?: { id?: string; name?: string; phone?: string; phoneNumber?: string; email?: string };
+  location?: { id?: string; name?: string };
+}
+
+export interface ProductionBatchItem {
+  id: string;
+  batchNumber: string;
+  recipeName?: string;
+  status: string;
+  runType: string;
+  orderReference?: string;
+  scheduledStartAt?: string;
+}
+
+export interface TaskLabelItem {
+  id: string;
+  name: string;
+  color: string;
+  projectId?: string;
+}
+
 import axios from "axios";
 import { env } from "@repo/env";
 import { authClient } from "./auth-client";
@@ -399,9 +433,29 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
-  async createTask(taskData: Partial<Task> & { assigneeIds?: string[]; labelIds?: string[] }): Promise<Task> {
+  async createTask(taskData: CreateTaskInput): Promise<Task> {
     const res = await apiClient.post("/v3/tasks", taskData);
     return res.data?.data || res.data;
+  },
+
+  async getTaskLabels(projectId?: string): Promise<TaskLabelItem[]> {
+    const url = projectId ? `/v3/tasks/labels?projectId=${projectId}` : "/v3/tasks/labels";
+    const res = await apiClient.get(url);
+    const data = res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async getServiceBookings(status?: string): Promise<ServiceBookingItem[]> {
+    const url = status ? `/v3/bookings?status=${status}` : "/v3/bookings";
+    const res = await apiClient.get(url);
+    const data = res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
+  },
+
+  async getProductionBatches(): Promise<ProductionBatchItem[]> {
+    const res = await apiClient.get("/v3/production/batches");
+    const data = res.data?.data?.items || res.data?.items || res.data?.data || res.data;
+    return Array.isArray(data) ? data : [];
   },
 
   async updateTask(taskId: string, taskData: Partial<Task>): Promise<Task> {
