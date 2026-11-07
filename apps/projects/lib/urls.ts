@@ -3,7 +3,7 @@ import { env } from "@repo/env";
 export function getResolvedApiUrl(customUrl?: string, nodeEnv?: string): string {
   const currentEnv = nodeEnv || process.env.NODE_ENV || "development";
   const isDev = currentEnv === "development";
-  const defaultApiUrl = isDev ? "http://localhost:3002" : "https://api.scryme.tech";
+  const defaultApiUrl = isDev ? "http://localhost:3002/api" : "https://api.scryme.tech/api";
 
   let rawApiUrl =
     customUrl ||
@@ -23,7 +23,7 @@ export function getResolvedApiUrl(customUrl?: string, nodeEnv?: string): string 
     !isDev &&
     (apiUrl.includes("localhost") || apiUrl.includes("127.0.0.1") || apiUrl.includes("0.0.0.0"))
   ) {
-    apiUrl = "https://api.scryme.tech";
+    apiUrl = "https://api.scryme.tech/api";
   }
 
   try {
@@ -33,7 +33,10 @@ export function getResolvedApiUrl(customUrl?: string, nodeEnv?: string): string 
         parsed.port = "";
       }
     }
-    apiUrl = parsed.toString().replace(/\/$/, "");
+    apiUrl = parsed.toString().replace(/\/+$/, "");
+    if (!apiUrl.endsWith("/api")) {
+      apiUrl = `${apiUrl}/api`;
+    }
   } catch (e) {
     console.error("Failed to parse API URL in getResolvedApiUrl:", e);
   }

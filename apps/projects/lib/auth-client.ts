@@ -20,15 +20,18 @@ function getValidAuthUrl(
 }
 
 const isDev = env.NODE_ENV === "development";
-const defaultAppUrl = isDev
-  ? "http://localhost:3004"
-  : "https://projects.scryme.tech";
+const defaultCentralAuthUrl = isDev
+  ? "http://localhost:4444"
+  : "https://auth.scryme.tech";
 
 export const authClient: any = createAuthClient({
   baseURL: getValidAuthUrl(
-    [env.NEXT_PUBLIC_APP_URL, env.NEXT_PUBLIC_PROJECTS_URL],
-    defaultAppUrl,
+    [env.NEXT_PUBLIC_AUTH_URL],
+    defaultCentralAuthUrl,
   ),
+  fetchOptions: {
+    credentials: "include",
+  },
   plugins: [passkeyClient() as any],
 });
 
