@@ -2,33 +2,16 @@
 
 import React, { useState } from "react";
 import { Plus, Check } from "lucide-react";
-import { useTasks, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { useTasks, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 import { Task } from "@/lib/api";
+import { CreateTaskModal } from "@/components/CreateTaskModal";
 import Link from "next/link";
 
 export function IssuesTab({ projectId }: { projectId: string }) {
   const { data: tasks = [], isLoading } = useTasks(projectId);
-  const createTaskMutation = useCreateTask(projectId);
   const updateTaskStatusMutation = useUpdateTaskStatus(projectId);
 
   const [isNewOpen, setIsNewOpen] = useState(false);
-  const [newTitle, setNewTitle] = useState("");
-  const [newPriority, setNewPriority] = useState<Task["priority"]>("MEDIUM");
-
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim()) return;
-
-    await createTaskMutation.mutateAsync({
-      title: newTitle.trim(),
-      projectId,
-      priority: newPriority,
-      status: "TODO",
-    });
-
-    setNewTitle("");
-    setIsNewOpen(false);
-  };
 
   const toggleTask = (task: Task) => {
     const nextStatus = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
@@ -44,40 +27,18 @@ export function IssuesTab({ projectId }: { projectId: string }) {
         <button
           type="button"
           onClick={() => setIsNewOpen(true)}
-          className="px-3 py-1 bg-primary-container text-on-primary-container rounded-lg font-headline-sm text-body-sm flex items-center gap-1"
+          className="px-3 py-1 bg-primary-container text-on-primary-container rounded-lg font-headline-sm text-body-sm flex items-center gap-1 shadow-sm hover:opacity-90 transition-opacity"
         >
           <Plus className="h-4 w-4" />
           <span>Add Issue</span>
         </button>
       </div>
 
-      {isNewOpen && (
-        <form onSubmit={handleCreate} className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-3">
-          <input
-            type="text"
-            required
-            placeholder="Issue title..."
-            value={newTitle}
-            onChange={(e) => setNewTitle(e.target.value)}
-            className="h-8 px-3 rounded bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-          />
-          <div className="flex justify-end gap-2">
-            <button
-              type="button"
-              onClick={() => setIsNewOpen(false)}
-              className="px-3 py-1 text-outline text-body-sm"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              className="px-4 py-1 bg-primary-container text-on-primary-container rounded font-headline-sm text-body-sm"
-            >
-              Create
-            </button>
-          </div>
-        </form>
-      )}
+      <CreateTaskModal
+        isOpen={isNewOpen}
+        onClose={() => setIsNewOpen(false)}
+        defaultProjectId={projectId}
+      />
 
       {isLoading && (
         <div className="p-8 text-center text-outline text-body-sm">Loading issues...</div>
@@ -109,9 +70,14 @@ export function IssuesTab({ projectId }: { projectId: string }) {
                 <Link href={`/tasks/${task.id}`} className={`text-body-sm ${task.status === "DONE" ? "line-through text-outline" : "text-on-surface"}`}>
                   {task.title}
                 </Link>
-                {task.title?.includes("[On-Demand]") && (
-                  <span className="text-[10px] font-label-code px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20 font-bold uppercase tracking-wider">
-                    On-Demand
+                {task.bookingId && (
+                  <span className="text-[10px] font-label-code px-1.5 py-0.2 rounded bg-primary/10 text-primary border border-primary/20">
+                    Booking
+                  </span>
+                )}
+                {task.batches && task.batches.length > 0 && (
+                  <span className="text-[10px] font-label-code px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                    Batch
                   </span>
                 )}
               </div>

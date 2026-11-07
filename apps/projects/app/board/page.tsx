@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { Kanban, Rows, Plus, Search, X } from "lucide-react";
-import { useTasks, useProjects, useCreateTask, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
+import { Kanban, Rows, Plus, Search } from "lucide-react";
+import { useTasks, useProjects, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
+import { CreateTaskModal } from "@/components/CreateTaskModal";
 
 const COLUMNS: { id: Task["status"]; label: string }[] = [
   { id: "BACKLOG", label: "Backlog" },
@@ -21,7 +22,6 @@ export default function BoardPage() {
 
   const currentProjectId = selectedProjectId || (projects.length > 0 ? projects[0].id : "");
   const { data: tasks = [], isLoading } = useTasks(currentProjectId || undefined);
-  const createTaskMutation = useCreateTask(currentProjectId);
   const updateTaskStatusMutation = useUpdateTaskStatus(currentProjectId);
   const { canManageTasks } = usePermissions();
 
@@ -29,8 +29,6 @@ export default function BoardPage() {
   const [selectedPriority, setSelectedPriority] = useState<string>("all");
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [targetColumn, setTargetColumn] = useState<Task["status"]>("TODO");
-  const [newTitle, setNewTitle] = useState("");
-  const [newPriority, setNewPriority] = useState<Task["priority"]>("MEDIUM");
 
   // Drag and drop state
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
@@ -47,21 +45,6 @@ export default function BoardPage() {
     }
     return true;
   });
-
-  const handleAddTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTitle.trim() || !currentProjectId || !canManageTasks) return;
-
-    await createTaskMutation.mutateAsync({
-      title: newTitle.trim(),
-      projectId: currentProjectId,
-      priority: newPriority,
-      status: targetColumn,
-    });
-
-    setNewTitle("");
-    setIsAddModalOpen(false);
-  };
 
   const moveTaskStatus = (id: string, newStatus: Task["status"]) => {
     if (!canManageTasks) return;
@@ -201,81 +184,13 @@ export default function BoardPage() {
           </div>
         </div>
 
-        {/* Modal: Quick Add */}
-        {isAddModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Add Task
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsAddModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleAddTask} className="flex flex-col gap-4 mt-4">
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Issue Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="Describe issue..."
-                    value={newTitle}
-                    onChange={(e) => setNewTitle(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Column / Status</label>
-                  <select
-                    value={targetColumn}
-                    onChange={(e) => setTargetColumn(e.target.value as Task["status"])}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    {COLUMNS.map((col) => (
-                      <option key={col.id} value={col.id}>
-                        {col.label}
-                      </option>
-                    ))}
-                  </select>
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Priority</label>
-                  <select
-                    value={newPriority}
-                    onChange={(e) => setNewPriority(e.target.value as Task["priority"])}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    <option value="URGENT">Urgent</option>
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                  </select>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsAddModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createTaskMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {createTaskMutation.isPending ? "Adding..." : "Add Card"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {/* Modal: New Issue */}
+        <CreateTaskModal
+          isOpen={isAddModalOpen}
+          onClose={() => setIsAddModalOpen(false)}
+          defaultProjectId={currentProjectId}
+          defaultStatus={targetColumn}
+        />
 
         {/* Loading */}
         {isLoading && (
@@ -362,6 +277,38 @@ export default function BoardPage() {
                         >
                           {task.title}
                         </Link>
+
+                        {/* Integration Badges */}
+                        <div className="flex flex-wrap items-center gap-1">
+                          {task.bookingId && (
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-label-code bg-primary/10 text-primary border border-primary/20">
+                              <span className="material-symbols-outlined text-[10px]">event_available</span>
+                              Booking
+                            </span>
+                          )}
+                          {task.batches && task.batches.length > 0 && (
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-label-code bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                              <span className="material-symbols-outlined text-[10px]">cookie</span>
+                              Batch
+                            </span>
+                          )}
+                          {task.labels && task.labels.length > 0 && (
+                            <div className="flex items-center gap-1">
+                              {task.labels.slice(0, 1).map((l, idx) => (
+                                <span
+                                  key={l.label?.id || idx}
+                                  className="px-1 py-0.2 rounded text-[9px] font-medium"
+                                  style={{
+                                    color: l.label?.color || "#6B7280",
+                                    backgroundColor: `${l.label?.color || "#6B7280"}15`,
+                                  }}
+                                >
+                                  {l.label?.name}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
 
                         <div className="flex items-center justify-between pt-1 border-t border-outline-variant/15 text-[11px]">
                           <div className="flex items-center gap-1.5">
