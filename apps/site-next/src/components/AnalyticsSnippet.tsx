@@ -1,8 +1,9 @@
 import React from 'react'
+import { env } from '@repo/env'
 
 export function AnalyticsSnippet() {
-  const posthogKey = typeof process !== 'undefined' ? process.env.NEXT_PUBLIC_POSTHOG_KEY : undefined
-  const posthogHost = (typeof process !== 'undefined' && process.env.NEXT_PUBLIC_POSTHOG_HOST) || 'https://us.i.posthog.com'
+  const posthogKey = env.NEXT_PUBLIC_POSTHOG_KEY
+  const posthogHost = env.NEXT_PUBLIC_POSTHOG_HOST || 'https://us.i.posthog.com'
 
   if (!posthogKey || posthogKey.includes('PLACEHOLDER') || posthogKey === 'your-posthog-key') {
     return null

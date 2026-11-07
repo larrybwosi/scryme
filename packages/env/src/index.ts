@@ -113,6 +113,8 @@ const serverSchema = z.object({
   SANITY_PROJECT_ID: z.string().optional(),
   SANITY_DATASET: z.string().optional(),
   SANITY_API_TOKEN: z.string().optional(),
+  SANITY_STUDIO_PROJECT_ID: z.string().optional(),
+  SANITY_STUDIO_DATASET: z.string().optional(),
 
   // RustFS (S3 Compatible) Configuration
   RUSTFS_ENDPOINT: z.preprocess(
@@ -226,6 +228,10 @@ const clientSchema = z.object({
   // Sanity Public Configuration
   NEXT_PUBLIC_SITE_SANITY_DATASET: z.string().optional().default("production"),
   NEXT_PUBLIC_SITE_SANITY_PROJECT_ID: z.string().optional().default("ce88cj7n"),
+  VITE_SANITY_PROJECT_ID: z.string().optional(),
+  VITE_SANITY_DATASET: z.string().optional(),
+  SANITY_STUDIO_PROJECT_ID: z.string().optional(),
+  SANITY_STUDIO_DATASET: z.string().optional(),
 
   // OpenObserve Public/Vite Configuration
   VITE_OPENOBSERVE_URL: z.string().optional(),
@@ -328,6 +334,19 @@ function getRawEnv() {
   const rawWebUrl = process.env.NEXT_PUBLIC_WEB_URL || process.env.NEXT_PUBLIC_APP_URL || process.env.PUBLIC_WEB_URL || process.env.PUBLIC_APP_URL;
   const rawCrmUrl = process.env.NEXT_PUBLIC_CRM_URL || process.env.PUBLIC_CRM_URL;
   const rawProjectsUrl = process.env.NEXT_PUBLIC_PROJECTS_URL || process.env.PUBLIC_PROJECTS_URL;
+  const rawSanityProjectId =
+    process.env.SANITY_PROJECT_ID ||
+    process.env.SANITY_STUDIO_PROJECT_ID ||
+    process.env.VITE_SANITY_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
+    process.env.NEXT_PUBLIC_SANITY_PROJECT_ID;
+  const rawSanityDataset =
+    process.env.SANITY_DATASET ||
+    process.env.SANITY_STUDIO_DATASET ||
+    process.env.VITE_SANITY_DATASET ||
+    process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+    process.env.NEXT_PUBLIC_SANITY_DATASET ||
+    "production";
 
   return {
     // Server
@@ -377,9 +396,11 @@ function getRawEnv() {
     // Storage Configuration
     STORAGE_PROVIDER: process.env.STORAGE_PROVIDER,
     // Sanity Configuration
-    SANITY_PROJECT_ID: process.env.SANITY_PROJECT_ID,
-    SANITY_DATASET: process.env.SANITY_DATASET,
+    SANITY_PROJECT_ID: rawSanityProjectId,
+    SANITY_DATASET: rawSanityDataset,
     SANITY_API_TOKEN: process.env.SANITY_API_TOKEN,
+    SANITY_STUDIO_PROJECT_ID: process.env.SANITY_STUDIO_PROJECT_ID || rawSanityProjectId,
+    SANITY_STUDIO_DATASET: process.env.SANITY_STUDIO_DATASET || rawSanityDataset,
     // RustFS (S3 Compatible) Configuration
     RUSTFS_ENDPOINT: process.env.RUSTFS_ENDPOINT,
     RUSTFS_ACCESS_KEY: process.env.RUSTFS_ACCESS_KEY,
@@ -452,9 +473,11 @@ function getRawEnv() {
     NEXT_PUBLIC_POSTHOG_EMBED_URL: process.env.NEXT_PUBLIC_POSTHOG_EMBED_URL,
     NEXT_PUBLIC_SENTRY_DSN: process.env.NEXT_PUBLIC_SENTRY_DSN,
     NEXT_PUBLIC_SITE_SANITY_DATASET:
-      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET,
+      process.env.NEXT_PUBLIC_SITE_SANITY_DATASET || rawSanityDataset,
     NEXT_PUBLIC_SITE_SANITY_PROJECT_ID:
-      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID,
+      process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID || rawSanityProjectId,
+    VITE_SANITY_PROJECT_ID: process.env.VITE_SANITY_PROJECT_ID || rawSanityProjectId,
+    VITE_SANITY_DATASET: process.env.VITE_SANITY_DATASET || rawSanityDataset,
   };
 }
 
