@@ -1,6 +1,11 @@
 import { createClient, type SanityClient } from '@sanity/client'
+import { env } from '@repo/env'
 
-const rawProjectId = process.env.VITE_SANITY_PROJECT_ID || process.env.SANITY_PROJECT_ID
+const rawProjectId =
+  env.SANITY_PROJECT_ID ||
+  env.SANITY_STUDIO_PROJECT_ID ||
+  env.VITE_SANITY_PROJECT_ID ||
+  env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID
 const hasValidProjectId =
   Boolean(rawProjectId) &&
   rawProjectId !== 'placeholder-project-id' &&
@@ -9,9 +14,14 @@ const hasValidProjectId =
 export const sanityConfig = hasValidProjectId
   ? {
       projectId: rawProjectId!,
-      dataset: process.env.VITE_SANITY_DATASET || process.env.SANITY_DATASET || 'production',
+      dataset:
+        env.SANITY_DATASET ||
+        env.SANITY_STUDIO_DATASET ||
+        env.VITE_SANITY_DATASET ||
+        env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+        'production',
       apiVersion: '2024-01-01',
-      useCdn: process.env.NODE_ENV === 'production',
+      useCdn: env.NODE_ENV === 'production',
     }
   : null
 

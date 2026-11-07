@@ -2,11 +2,12 @@ import http from 'node:http';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { env } from '@repo/env';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-const PORT = process.env.PORT || 3006;
+const PORT = env.PORT || 3006;
 const CLIENT_DIR = path.join(__dirname, 'dist/client');
 const SERVER_ENTRY_PATH = path.join(__dirname, 'dist/server/server.js');
 
