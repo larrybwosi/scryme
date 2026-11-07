@@ -13,6 +13,7 @@ import {
   X,
 } from 'lucide-react'
 import { fetchHomePage, fetchSiteSettings, DEFAULT_HOME_PAGE_FALLBACK, DEFAULT_SITE_SETTINGS_FALLBACK, HomePageData, SiteSettings } from '../sanity/queries'
+import { createSiteSeo } from '../lib/seo'
 
 export const Route = createFileRoute('/')({
   loader: async () => {
@@ -24,6 +25,20 @@ export const Route = createFileRoute('/')({
       homeData: homeData || DEFAULT_HOME_PAGE_FALLBACK,
       siteSettings: siteSettings || DEFAULT_SITE_SETTINGS_FALLBACK,
     }
+  },
+  head: ({ loaderData }) => {
+    const home = loaderData?.homeData
+    const settings = loaderData?.siteSettings
+    const faqs = home?.faqsSection?.faqs
+
+    return createSiteSeo({
+      pathname: '/',
+      siteSettings: settings,
+      seoData: home?.seo,
+      title: home?.seo?.metaTitle || 'Scryme | Autonomous Next-Gen ERP Operating Kernel',
+      description: home?.seo?.metaDescription || home?.hero?.subtitle,
+      faqs,
+    })
   },
   component: HomeComponent,
 })

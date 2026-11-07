@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -25,6 +26,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/project-management-scheduling')({
+  head: () => createSiteSeo({
+    title: "Project Management, Scheduling & Shift Allocation | Scryme",
+    description: "Connect staff shifts, project milestones, manufacturing work orders, and field bookings in one synchronized calendar timeline.",
+    pathname: "/project-management-scheduling",
+    ogType: 'product',
+    keywords: ["ERP Project Management","Staff Scheduling","Work Order Dispatch","Capacity Planning"],
+  }),
   component: ProjectManagementComponent,
 })
 

@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../../lib/seo'
 import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect } from 'react'
 import { Header } from '../../components/Header'
@@ -28,6 +29,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/developers/apps')({
+  head: () => createSiteSeo({
+    title: "Developer Platform & Connected Apps Ecosystem | Scryme",
+    description: "Build custom integrations, micro-frontends, and automated webhooks with high-performance REST, GraphQL, and MCP APIs.",
+    pathname: "/developers/apps",
+    ogType: 'product',
+    keywords: ["Developer APIs","ERP Ecosystem","Webhook Integrations","Open ERP Platform"],
+  }),
   component: DevelopersAppsPage,
 })
 

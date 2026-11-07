@@ -1,9 +1,17 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import { DollarSign, ShieldCheck, ArrowRight, Zap, CheckCircle2, TrendingUp, RefreshCw, BarChart2, Layers } from 'lucide-react'
 
 export const Route = createFileRoute('/sales')({
+  head: () => createSiteSeo({
+    title: "Sales Velocity & Omnichannel Order Management | Scryme",
+    description: "Unify e-commerce orders, B2B wholesale contracts, and in-store counter checkouts with sub-millisecond execution.",
+    pathname: "/sales",
+    ogType: 'product',
+    keywords: ["Omnichannel Sales","Order Management System","B2B Wholesale Portal","Sales ERP"],
+  }),
   component: SalesComponent,
 })
 

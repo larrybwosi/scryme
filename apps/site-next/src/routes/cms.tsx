@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
@@ -28,6 +29,19 @@ export const Route = createFileRoute('/cms')({
       cmsData: cmsData || DEFAULT_CMS_PAGE_FALLBACK,
       siteSettings: siteSettings || DEFAULT_SITE_SETTINGS_FALLBACK,
     }
+  },
+  head: ({ loaderData }) => {
+    const cmsData = loaderData?.cmsData
+    const settings = loaderData?.siteSettings
+    return createSiteSeo({
+      pathname: '/cms',
+      siteSettings: settings,
+      seoData: cmsData?.seo,
+      title: cmsData?.seo?.metaTitle || 'Headless Commerce & Decoupled CMS Engine | Scryme',
+      description: cmsData?.seo?.metaDescription || cmsData?.hero?.subtitle || 'Decoupled catalog management, real-time structured content delivery, and sub-second global CDN caching.',
+      ogType: 'product',
+      keywords: ['Headless CMS', 'Decoupled Commerce', 'Sanity CMS ERP', 'Content API'],
+    })
   },
   component: CmsPageComponent,
 })

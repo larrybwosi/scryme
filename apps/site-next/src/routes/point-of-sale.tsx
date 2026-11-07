@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -27,6 +28,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/point-of-sale')({
+  head: () => createSiteSeo({
+    title: "High-Throughput Offline-First Cloud POS | Scryme ERP",
+    description: "Sub-second checkout, hardware terminal integration, offline resilience, and instant multi-branch ledger synchronization.",
+    pathname: "/point-of-sale",
+    ogType: 'product',
+    keywords: ["Cloud POS","Point of Sale System","Offline POS","Multi-branch Retail POS"],
+  }),
   component: PointOfSaleComponent,
 })
 

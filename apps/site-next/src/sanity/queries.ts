@@ -1,3 +1,14 @@
+export interface SeoData {
+  metaTitle?: string
+  metaDescription?: string
+  keywords?: string[]
+  ogImage?: any
+  ogType?: "website" | "article" | "product"
+  twitterCard?: "summary_large_image" | "summary"
+  canonicalUrl?: string
+  noIndex?: boolean
+}
+
 import { sanityClient } from './client'
 
 /* =========================================================================
@@ -178,6 +189,10 @@ export const SITE_SETTINGS_QUERY = `
     _id,
     siteTitle,
     siteDescription,
+    siteUrl,
+    twitterHandle,
+    defaultOgImage,
+    defaultKeywords,
     announcementBanner,
     navItems,
     headerCtas,
@@ -227,6 +242,10 @@ export interface SocialLink {
 export interface SiteSettings {
   siteTitle?: string
   siteDescription?: string
+  siteUrl?: string
+  twitterHandle?: string
+  defaultOgImage?: any
+  defaultKeywords?: string[]
   announcementBanner?: {
     enabled?: boolean
     text?: string
@@ -243,6 +262,20 @@ export interface SiteSettings {
 export const DEFAULT_SITE_SETTINGS_FALLBACK: SiteSettings = {
   siteTitle: 'Scryme - Next-Gen ERP Platform',
   siteDescription: 'Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship intelligence, and decoupled catalog engines.',
+  siteUrl: 'https://scryme.tech',
+  twitterHandle: '@ScrymeTech',
+  defaultKeywords: [
+    'ERP',
+    'Scryme',
+    'Autonomous ERP',
+    'POS',
+    'Point of Sale',
+    'Real-time Inventory',
+    'Multi-node Supply Chain',
+    'CRM',
+    'Headless CMS',
+    'Open Source ERP',
+  ],
   announcementBanner: {
     enabled: false,
     text: 'Scryme ERP v3.2 is now live with native M-Pesa STK push and distributed offline-first sync.',
@@ -344,6 +377,16 @@ export const HOME_PAGE_QUERY = `
   *[_type == "homePage"][0] {
     _id,
     title,
+    seo {
+      metaTitle,
+      metaDescription,
+      keywords,
+      ogImage,
+      ogType,
+      twitterCard,
+      canonicalUrl,
+      noIndex
+    },
     hero,
     pillarsSection,
     paradigmSection,
@@ -381,6 +424,7 @@ export interface PillarItem {
 export interface HomePageData {
   _id?: string
   title?: string
+  seo?: SeoData
   hero?: HomeHero
   pillarsSection?: {
     eyebrow?: string
@@ -584,6 +628,16 @@ export const CMS_PAGE_QUERY = `
   *[_type == "cmsPage"][0] {
     _id,
     title,
+    seo {
+      metaTitle,
+      metaDescription,
+      keywords,
+      ogImage,
+      ogType,
+      twitterCard,
+      canonicalUrl,
+      noIndex
+    },
     hero,
     features,
     architecturePoints,
@@ -594,6 +648,7 @@ export const CMS_PAGE_QUERY = `
 export interface CmsPageData {
   _id?: string
   title?: string
+  seo?: SeoData
   hero?: {
     badge?: string
     headline?: string
@@ -686,6 +741,16 @@ export const CRM_PAGE_QUERY = `
   *[_type == "crmPage"][0] {
     _id,
     title,
+    seo {
+      metaTitle,
+      metaDescription,
+      keywords,
+      ogImage,
+      ogType,
+      twitterCard,
+      canonicalUrl,
+      noIndex
+    },
     hero,
     features,
     testimonials,
@@ -696,6 +761,7 @@ export const CRM_PAGE_QUERY = `
 export interface CrmPageData {
   _id?: string
   title?: string
+  seo?: SeoData
   hero?: {
     badge?: string
     headline?: string
@@ -789,6 +855,16 @@ export const PAYMENTS_PAGE_QUERY = `
   *[_type == "paymentsPage"][0] {
     _id,
     title,
+    seo {
+      metaTitle,
+      metaDescription,
+      keywords,
+      ogImage,
+      ogType,
+      twitterCard,
+      canonicalUrl,
+      noIndex
+    },
     hero,
     channels,
     settlementPoints
@@ -798,6 +874,7 @@ export const PAYMENTS_PAGE_QUERY = `
 export interface PaymentsPageData {
   _id?: string
   title?: string
+  seo?: SeoData
   hero?: {
     badge?: string
     headline?: string
@@ -889,6 +966,8 @@ export const COMPARISON_PAGE_QUERY = `
       metaDescription,
       keywords,
       ogImage,
+      ogType,
+      twitterCard,
       canonicalUrl,
       noIndex
     },

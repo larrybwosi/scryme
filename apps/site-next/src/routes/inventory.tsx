@@ -1,9 +1,17 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import { MapPin, Box, Layers, RefreshCw, BarChart2, ShieldCheck, ArrowRight, Cpu, CheckCircle2 } from 'lucide-react'
 
 export const Route = createFileRoute('/inventory')({
+  head: () => createSiteSeo({
+    title: "Sub-Second Multi-Location Inventory Management | Scryme ERP",
+    description: "Coordinate global warehouses, retail stores, and stock batches with zero data latency. Single-kernel ledger tracking prevents stockouts.",
+    pathname: "/inventory",
+    ogType: 'product',
+    keywords: ["Multi-location Inventory","Real-time Stock Control","Batch Tracking","Warehouse ERP"],
+  }),
   component: InventoryComponent,
 })
 

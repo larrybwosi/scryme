@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../../lib/seo'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../../components/Header'
 import { Footer } from '../../components/Footer'
@@ -12,27 +13,15 @@ export const Route = createFileRoute('/pages/$slug')({
   },
   head: ({ loaderData }) => {
     const page = loaderData?.pageData
-    const title = page?.seo?.metaTitle || page?.title || `${loaderData?.slug?.replace(/[-_]/g, ' ') || 'Solutions'} | Scryme Enterprise ERP`
-    const description =
-      page?.seo?.metaDescription ||
-      `Explore ${page?.title || 'modern operational solutions'} powered by Scryme's single-kernel ERP architecture.`
-
-    return {
-      meta: [
-        { title },
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:type', content: 'website' },
-        ...(page?.seo?.keywords && page.seo.keywords.length > 0
-          ? [{ name: 'keywords', content: page.seo.keywords.join(', ') }]
-          : []),
-        ...(page?.seo?.noIndex ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
-      ],
-      links: [
-        ...(page?.seo?.canonicalUrl ? [{ rel: 'canonical', href: page.seo.canonicalUrl }] : []),
-      ],
-    }
+    const slug = loaderData?.slug
+    const displayTitle = page?.title || slug?.replace(/[-_]/g, ' ') || 'Solutions'
+    return createSiteSeo({
+      title: page?.seo?.metaTitle || page?.title || (displayTitle + ' | Scryme Enterprise ERP'),
+      description: page?.seo?.metaDescription || ('Explore ' + displayTitle + ' solutions powered by Scryme single-kernel ERP architecture.'),
+      pathname: '/pages/' + (slug || ''),
+      seoData: page?.seo,
+      ogType: 'website',
+    })
   },
   component: GenericLandingPageComponent,
 })

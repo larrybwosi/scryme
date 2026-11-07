@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -36,6 +37,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/mcp-agent-apis')({
+  head: () => createSiteSeo({
+    title: "Model Context Protocol (MCP) & AI Agent APIs | Scryme",
+    description: "Connect LLMs and autonomous agents directly to enterprise ERP state via Model Context Protocol (MCP) tools and realtime SSE streams.",
+    pathname: "/mcp-agent-apis",
+    ogType: 'product',
+    keywords: ["Model Context Protocol","MCP ERP","AI Agent API","Autonomous ERP","LLM Operations"],
+  }),
   component: McpAgentApisComponent,
 })
 

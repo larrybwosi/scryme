@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
@@ -9,6 +10,18 @@ export const Route = createFileRoute('/pricing')({
   loader: async () => {
     const config = await fetchPricingConfig()
     return { config: config || DEFAULT_PRICING_FALLBACK }
+  },
+  head: ({ loaderData }) => {
+    const config = loaderData?.config
+    const faqs = config?.faqs
+    return createSiteSeo({
+      title: config?.heroTitle || 'Predictable Enterprise Pricing | Scryme ERP',
+      description: config?.heroSubtitle || 'Transparent enterprise pricing with zero per-user seat taxes. Calculate your multi-node ROI with Scryme.',
+      pathname: '/pricing',
+      ogType: 'product',
+      faqs,
+      keywords: ['ERP Pricing', 'Enterprise ERP Cost', 'Zero Seat Tax ERP', 'POS Pricing'],
+    })
   },
   component: PricingComponent,
 })

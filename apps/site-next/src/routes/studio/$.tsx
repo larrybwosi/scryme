@@ -2,6 +2,12 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useState, useEffect, type ComponentType } from 'react'
 
 export const Route = createFileRoute('/studio/$')({
+  head: () => ({
+    meta: [
+      { title: 'Sanity Studio | Scryme CMS' },
+      { name: 'robots', content: 'noindex, nofollow' },
+    ],
+  }),
   component: StudioComponent,
 })
 

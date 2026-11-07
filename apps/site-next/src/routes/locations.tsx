@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -26,6 +27,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/locations')({
+  head: () => createSiteSeo({
+    title: "Multi-Store & Regional Warehouse Topology | Scryme ERP",
+    description: "Manage decentralized retail networks, distribution centers, and consignment locations with unified real-time governance.",
+    pathname: "/locations",
+    ogType: 'product',
+    keywords: ["Multi-Store Management","Branch Topology","Regional Warehouses","Store Locations ERP"],
+  }),
   component: WarehousesComponent,
 })
 

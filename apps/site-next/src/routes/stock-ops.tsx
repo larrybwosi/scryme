@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -23,6 +24,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/stock-ops')({
+  head: () => createSiteSeo({
+    title: "Stock Transfers, Audits & Reconciliation Operations | Scryme",
+    description: "Eliminate phantom inventory with immutable audit logs, inter-branch stock transfers, and automated reconciliation queues.",
+    pathname: "/stock-ops",
+    ogType: 'product',
+    keywords: ["Stock Audits","Inventory Reconciliation","Inter-branch Transfers","Stock Movements"],
+  }),
   component: StockOperationsComponent,
 })
 
