@@ -2,27 +2,20 @@
 
 import Link from "next/link";
 import React, { useState } from "react";
-import { Plus, Search, X, CheckSquare, Check } from "lucide-react";
+import { Plus, Search, CheckSquare, Check } from "lucide-react";
 import {
   useTasks,
   useProjects,
-  useMembers,
-  useStaffShifts,
-  useCreateTask,
   useUpdateTaskStatus,
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
-import { CapacityWarningModal } from "@/components/CapacityWarningModal";
-import { toast } from "sonner";
+import { CreateTaskModal } from "@/components/CreateTaskModal";
 
 export default function TasksPage() {
   const { data: tasks = [], isLoading } = useTasks();
   const { data: projects = [] } = useProjects();
-  const { data: members = [] } = useMembers();
-  const { data: staffShifts = [] } = useStaffShifts();
 
-  const createTaskMutation = useCreateTask();
   const updateTaskStatusMutation = useUpdateTaskStatus();
   const { canManageTasks } = usePermissions();
 
@@ -33,103 +26,11 @@ export default function TasksPage() {
 
   // Create Task Modal State
   const [isNewTaskOpen, setIsNewTaskOpen] = useState(false);
-  const [newTaskTitle, setNewTaskTitle] = useState("");
-  const [newTaskPriority, setNewTaskPriority] = useState<Task["priority"]>("MEDIUM");
-  const [newTaskProjectId, setNewTaskProjectId] = useState("");
-  const [newTaskAssigneeId, setNewTaskAssigneeId] = useState("");
-  const [newTaskDueDate, setNewTaskDueDate] = useState("");
-  const [newTaskEstHours, setNewTaskEstHours] = useState("");
-
-  // Capacity Warning Modal State
-  const [warningModalOpen, setWarningModalOpen] = useState(false);
-  const [pendingTaskData, setPendingTaskData] = useState<any>(null);
-  const [warningMemberName, setWarningMemberName] = useState("");
-  const [warningAssignedHours, setWarningAssignedHours] = useState(0);
-  const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
-  const [warningCapacityHours, setWarningCapacityHours] = useState(40);
 
   const toggleTaskCompletion = (task: Task) => {
     if (!canManageTasks) return;
     const nextStatus: Task["status"] = task.status === "DONE" ? "IN_PROGRESS" : "DONE";
     updateTaskStatusMutation.mutate({ taskId: task.id, status: nextStatus });
-  };
-
-  const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
-    const memberTasks = tasks.filter(
-      (t) =>
-        (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
-        t.assignees?.some((a) => a.member?.id === memberId)
-    );
-    const currentHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 2), 0);
-
-    const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
-    let shiftHours = 0;
-    for (const s of memberShifts) {
-      const [h1, m1] = s.startTime.split(":").map(Number);
-      const [h2, m2] = s.endTime.split(":").map(Number);
-      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
-      if (diffM > 0) shiftHours += diffM / 60;
-    }
-    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
-
-    return {
-      currentHours,
-      totalCapacity,
-      isOverloaded: currentHours + hoursToAdd > totalCapacity,
-    };
-  };
-
-  const handleCreateTask = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newTaskTitle.trim() || !canManageTasks) return;
-
-    const projectId = newTaskProjectId || (projects.length > 0 ? projects[0].id : "");
-    if (!projectId) return;
-
-    const estHours = newTaskEstHours ? parseFloat(newTaskEstHours) : 2;
-
-    const payload = {
-      title: newTaskTitle.trim(),
-      priority: newTaskPriority,
-      projectId,
-      dueDate: newTaskDueDate || undefined,
-      estimatedHours: estHours,
-      status: "TODO" as const,
-      assigneeIds: newTaskAssigneeId ? [newTaskAssigneeId] : undefined,
-    };
-
-    if (newTaskAssigneeId) {
-      const targetMember = members.find((m) => m.id === newTaskAssigneeId);
-      const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(newTaskAssigneeId, estHours);
-
-      if (isOverloaded) {
-        setPendingTaskData(payload);
-        setWarningMemberName(targetMember?.name || "Teammate");
-        setWarningAssignedHours(currentHours);
-        setWarningAdditionalHours(estHours);
-        setWarningCapacityHours(totalCapacity);
-        setWarningModalOpen(true);
-        return;
-      }
-    }
-
-    await executeCreateTask(payload);
-  };
-
-  const executeCreateTask = async (payload: any) => {
-    try {
-      await createTaskMutation.mutateAsync(payload);
-      toast.success("Task created successfully");
-      setNewTaskTitle("");
-      setNewTaskDueDate("");
-      setNewTaskEstHours("");
-      setNewTaskAssigneeId("");
-      setIsNewTaskOpen(false);
-      setWarningModalOpen(false);
-      setPendingTaskData(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to create task");
-    }
   };
 
   const filteredTasks = tasks.filter((task) => {
@@ -245,7 +146,7 @@ export default function TasksPage() {
           </div>
 
           <div className="relative w-full sm:w-64">
-<Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-outline h-4 w-4" />
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-outline h-4 w-4" />
             <input
               type="text"
               placeholder="Search issues..."
@@ -257,134 +158,10 @@ export default function TasksPage() {
         </div>
 
         {/* Modal: New Issue */}
-        {isNewTaskOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-lg rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Issue</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsNewTaskOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <form onSubmit={handleCreateTask} className="flex flex-col gap-4 mt-4">
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Issue Title</label>
-                  <input
-                    type="text"
-                    required
-                    placeholder="e.g. Optimize STOMP message parsing pipeline"
-                    value={newTaskTitle}
-                    onChange={(e) => setNewTaskTitle(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
-                    <select
-                      value={newTaskProjectId || (projects[0]?.id || "")}
-                      onChange={(e) => setNewTaskProjectId(e.target.value)}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                    >
-                      {projects.map((p) => (
-                        <option key={p.id} value={p.id}>{p.name}</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-body-sm font-medium text-on-surface mb-1">Priority</label>
-                    <select
-                      value={newTaskPriority}
-                      onChange={(e) => setNewTaskPriority(e.target.value as Task["priority"])}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                    >
-                      <option value="URGENT">Urgent</option>
-                      <option value="HIGH">High</option>
-                      <option value="MEDIUM">Medium</option>
-                      <option value="LOW">Low</option>
-                    </select>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className="block text-body-sm font-medium text-on-surface mb-1">Assignee</label>
-                    <select
-                      value={newTaskAssigneeId}
-                      onChange={(e) => setNewTaskAssigneeId(e.target.value)}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                    >
-                      <option value="">Unassigned</option>
-                      {members.map((m) => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                      ))}
-                    </select>
-                  </div>
-                  <div>
-                    <label className="block text-body-sm font-medium text-on-surface mb-1">Estimated Hours</label>
-                    <input
-                      type="number"
-                      step="0.5"
-                      min="0.5"
-                      value={newTaskEstHours}
-                      onChange={(e) => setNewTaskEstHours(e.target.value)}
-                      placeholder="e.g. 4"
-                      className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                    />
-                  </div>
-                </div>
-
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Due Date</label>
-                  <input
-                    type="date"
-                    value={newTaskDueDate}
-                    onChange={(e) => setNewTaskDueDate(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
-                  />
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewTaskOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createTaskMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {createTaskMutation.isPending ? "Creating..." : "Create Issue"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Capacity Warning Soft Modal */}
-        <CapacityWarningModal
-          isOpen={warningModalOpen}
-          memberName={warningMemberName}
-          currentAssignedHours={warningAssignedHours}
-          additionalHours={warningAdditionalHours}
-          totalCapacityHours={warningCapacityHours}
-          onConfirm={() => {
-            if (pendingTaskData) executeCreateTask(pendingTaskData);
-          }}
-          onCancel={() => {
-            setWarningModalOpen(false);
-            setPendingTaskData(null);
-          }}
+        <CreateTaskModal
+          isOpen={isNewTaskOpen}
+          onClose={() => setIsNewTaskOpen(false)}
+          defaultProjectId={selectedProjectId !== "all" ? selectedProjectId : undefined}
         />
 
         {/* Loading State */}
@@ -441,7 +218,7 @@ export default function TasksPage() {
                             : "border-outline-variant group-hover:border-outline bg-surface-container"
                         } ${!canManageTasks ? "cursor-default" : "cursor-pointer"}`}
                       >
-{isCompleted && (
+                        {isCompleted && (
                           <Check className="h-3.5 w-3.5" />
                         )}
                       </button>
@@ -464,6 +241,29 @@ export default function TasksPage() {
                           <span className="material-symbols-outlined text-[12px]">event_available</span>
                           Booking
                         </span>
+                      )}
+                      {task.batches && task.batches.length > 0 && (
+                        <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-label-code bg-amber-500/10 text-amber-400 border border-amber-500/20 shrink-0" title="Linked to production batch">
+                          <span className="material-symbols-outlined text-[12px]">cookie</span>
+                          Batch {task.batches[0].batchNumber}
+                        </span>
+                      )}
+                      {task.labels && task.labels.length > 0 && (
+                        <div className="flex items-center gap-1 shrink-0">
+                          {task.labels.slice(0, 2).map((l, idx) => (
+                            <span
+                              key={l.label?.id || idx}
+                              className="px-1.5 py-0.2 rounded text-[9px] font-medium border"
+                              style={{
+                                borderColor: `${l.label?.color || "#6B7280"}40`,
+                                color: l.label?.color || "#6B7280",
+                                backgroundColor: `${l.label?.color || "#6B7280"}15`,
+                              }}
+                            >
+                              {l.label?.name}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
 
