@@ -675,3 +675,5 @@ export { DocumentGenerator } from './index';
 export { WaybillV3Document } from './templates/v3/stock/WaybillV3';
 export { DeliveryNoteV3Document } from './templates/v3/stock/DeliveryNoteV3';
 export { PackingListDocument } from './templates/v1/PackingList';
+
+export { BusinessReportV3 } from './templates/v3/report/BusinessReportV3';

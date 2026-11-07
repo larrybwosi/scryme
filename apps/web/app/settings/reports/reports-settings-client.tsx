@@ -77,6 +77,7 @@ export function ReportsSettingsClient({
   const [isSaving, startSaving] = useTransition();
   const [isTriggering, startTriggering] = useTransition();
   const [previewData, setPreviewData] = useState<any>(null);
+  const [downloadingPdfId, setDownloadingPdfId] = useState<string | null>(null);
 
   // Multi-Category Report Generation State
   const [selectedCategory, setSelectedCategory] = useState<
@@ -313,6 +314,144 @@ export function ReportsSettingsClient({
     a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV report exported successfully");
+  };
+
+  const generateReportPdfData = (rep: any) => {
+    const rawData = rep.data || {};
+    const category = (rawData.category || rep.type?.replace("_REPORT", "") || "EXECUTIVE").toUpperCase();
+    const currency = "$";
+
+    const startStr = rep.startDate
+      ? new Date(rep.startDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+    const endStr = rep.endDate
+      ? new Date(rep.endDate).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" })
+      : "";
+    const periodText = startStr && endStr ? `${startStr} – ${endStr}` : `${rawData.days || 7} Days`;
+
+    const kpis: any[] = [];
+    if (rawData.sales) {
+      kpis.push({
+        label: "Total Revenue",
+        value: `${currency}${Number(rawData.sales.totalRevenue || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+        subtext: `${rawData.sales.transactionCount || 0} orders`,
+      });
+    }
+    if (rawData.inventory) {
+      kpis.push({
+        label: "Stock Movements",
+        value: `${Number(rawData.inventory.totalIn || 0) + Number(rawData.inventory.totalOut || 0)} units`,
+        subtext: `In: ${rawData.inventory.totalIn || 0} | Out: ${rawData.inventory.totalOut || 0}`,
+      });
+    }
+    if (rawData.production) {
+      kpis.push({
+        label: "Production Batches",
+        value: `${rawData.production.totalBatches || 0} batches`,
+        subtext: `Waste: ${rawData.production.totalWaste || 0} units`,
+      });
+    }
+    if (rawData.finance) {
+      kpis.push({
+        label: "Operating Spend",
+        value: `${currency}${Number(rawData.finance.totalExpenses || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+        subtext: `${rawData.finance.expenseCount || 0} expenses`,
+      });
+    }
+    if (rawData.tax) {
+      kpis.push({
+        label: "Estimated VAT",
+        value: `${currency}${Number(rawData.tax.netVatPayable || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+        subtext: "Net tax payable",
+      });
+    }
+
+    return {
+      id: rep.id,
+      number: `REP-${rep.id.substring(0, 8).toUpperCase()}`,
+      date: rep.generatedAt || new Date(),
+      title: `${category.charAt(0) + category.slice(1).toLowerCase()} Business Performance Report`,
+      category,
+      reportNumber: `REP-${rep.id.substring(0, 8).toUpperCase()}`,
+      periodText,
+      generatedAtText: new Date(rep.generatedAt || Date.now()).toLocaleString(),
+      generatedByText: rep.generatedBy?.user?.name || rep.generatedBy?.user?.email || "System",
+      currency,
+      aiSummary: rep.summary || rawData.aiInsights || undefined,
+      kpis,
+      salesBreakdown: rawData.sales?.topProducts?.map((p: any) => ({
+        name: p.name,
+        quantity: Number(p.quantity || 0),
+        revenue: Number(p.revenue || 0),
+      })),
+      inventoryBreakdown: rawData.inventory?.topMovedItems?.map((i: any) => ({
+        name: i.name,
+        qty: Number(i.qty || 0),
+      })),
+      productionBreakdown: rawData.production?.topRecipes?.map((r: any) => ({
+        name: r.name,
+        quantity: Number(r.quantity || 0),
+        unit: r.unit || "units",
+      })),
+      financeSummary: rawData.finance || rawData.tax ? {
+        totalExpenses: Number(rawData.finance?.totalExpenses || 0),
+        outputTax: Number(rawData.tax?.outputTax || 0),
+        inputTax: Number(rawData.tax?.inputTax || 0),
+        netVatPayable: Number(rawData.tax?.netVatPayable || 0),
+      } : undefined,
+      branding: {
+        companyName: "Scryme Platform",
+      },
+    };
+  };
+
+  const handleDownloadPDF = async (rep: any) => {
+    if (!rep?.id) return;
+    setDownloadingPdfId(rep.id);
+    const toastId = toast.loading("Generating PDF report...");
+
+    try {
+      // Dynamic import of @react-pdf/renderer and BusinessReportV3 template
+      const [{ pdf }, { BusinessReportV3 }] = await Promise.all([
+        import("@react-pdf/renderer"),
+        import("@repo/documents"),
+      ]);
+
+      const docData = generateReportPdfData(rep);
+      const blob = await pdf(React.createElement(BusinessReportV3, { data: docData }) as any).toBlob();
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${(docData.category || "report").toLowerCase()}-${rep.id.substring(0, 8)}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast.success("PDF report downloaded successfully", { id: toastId });
+    } catch (err: any) {
+      console.warn("[client-pdf] Client PDF generation error, falling back to server download:", err);
+      try {
+        // Fallback to server route
+        const res = await fetch(`/api/reports/${rep.id}/pdf`);
+        if (!res.ok) throw new Error("Server PDF generation failed");
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `report-${rep.id.substring(0, 8)}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        toast.success("PDF report downloaded successfully", { id: toastId });
+      } catch (fallbackErr: any) {
+        toast.error("Failed to generate PDF report", { id: toastId });
+      }
+    } finally {
+      setDownloadingPdfId(null);
+    }
   };
 
   const handlePrintPDF = () => {
@@ -582,11 +721,26 @@ export function ReportsSettingsClient({
                           type="button"
                           variant="outline"
                           size="sm"
+                          disabled={downloadingPdfId === previewData.id}
+                          onClick={() => handleDownloadPDF(previewData)}
+                          className="h-8 text-xs gap-1.5 bg-indigo-50/50 hover:bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800"
+                        >
+                          {downloadingPdfId === previewData.id ? (
+                            <RotateCw className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <FileText className="w-3.5 h-3.5 text-indigo-500" />
+                          )}
+                          Download PDF
+                        </Button>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
                           onClick={handlePrintPDF}
                           className="h-8 text-xs gap-1.5"
                         >
-                          <Printer className="w-3.5 h-3.5 text-indigo-500" />
-                          PDF / Print
+                          <Printer className="w-3.5 h-3.5 text-muted-foreground" />
+                          Print
                         </Button>
                       </div>
                     </div>
@@ -882,6 +1036,21 @@ export function ReportsSettingsClient({
                         className="h-7 text-[11px] gap-1"
                       >
                         <Eye className="w-3 h-3 text-indigo-500" /> View & AI
+                      </Button>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        disabled={downloadingPdfId === rep.id}
+                        onClick={() => handleDownloadPDF(rep)}
+                        className="h-7 text-[11px] gap-1 bg-indigo-50/40 hover:bg-indigo-50 dark:bg-indigo-950/20 text-indigo-600 dark:text-indigo-400 border-indigo-200 dark:border-indigo-800"
+                      >
+                        {downloadingPdfId === rep.id ? (
+                          <RotateCw className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <FileText className="w-3 h-3 text-indigo-500" />
+                        )}
+                        PDF
                       </Button>
                       <Button
                         type="button"

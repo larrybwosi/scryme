@@ -120,3 +120,5 @@ export const DocumentGenerator: any = {
   LinearGradient,
   RadialGradient,
 };
+
+export { BusinessReportV3 } from "./templates/v3/report/BusinessReportV3";

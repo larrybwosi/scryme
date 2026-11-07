@@ -18,3 +18,4 @@ export * from "./receipt/eight";
 
 export * from "./types";
 export * from "./stock";
+export * from "./report";
