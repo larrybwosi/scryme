@@ -20,6 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.ui.auth.SmokyBackgroundCanvas
+import tech.scryme.app.ui.theme.DarkBackground
 
 @Composable
 fun SplashScreen(
@@ -61,7 +62,7 @@ fun SplashScreen(
     Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFF0B0F17)),
+            .background(DarkBackground),
         contentAlignment = Alignment.Center
     ) {
         SmokyBackgroundCanvas()

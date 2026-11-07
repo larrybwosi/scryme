@@ -7,17 +7,17 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.graphics.Color
 
-private val DarkColorScheme = darkColorScheme(
+val DarkColorScheme = darkColorScheme(
     primary = Indigo500,
     onPrimary = Color.White,
     primaryContainer = Indigo900,
     onPrimaryContainer = Indigo100,
     secondary = Emerald500,
-    onSecondary = Slate900,
+    onSecondary = DarkBackground,
     secondaryContainer = Emerald700,
     onSecondaryContainer = Emerald100,
     tertiary = Amber500,
-    onTertiary = Slate900,
+    onTertiary = DarkBackground,
     background = DarkBackground,
     onBackground = DarkTextPrimary,
     surface = DarkSurface,
@@ -32,7 +32,7 @@ private val DarkColorScheme = darkColorScheme(
     onErrorContainer = Rose100
 )
 
-private val LightColorScheme = lightColorScheme(
+val LightColorScheme = lightColorScheme(
     primary = Indigo600,
     onPrimary = Color.White,
     primaryContainer = Indigo100,

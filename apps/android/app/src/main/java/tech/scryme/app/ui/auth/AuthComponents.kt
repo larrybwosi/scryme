@@ -51,7 +51,7 @@ fun SmokyBackgroundCanvas(
         val h = size.height
 
         // Base obsidian dark backdrop
-        drawRect(color = Color(0xFF070A10))
+        drawRect(color = Color(0xFF090A0B))
 
         // Large top-right indigo smoky nebula
         drawCircle(

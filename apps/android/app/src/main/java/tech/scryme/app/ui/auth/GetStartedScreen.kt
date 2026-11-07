@@ -21,7 +21,7 @@ fun GetStartedScreen(
     Box(
         modifier = modifier
             .fillMaxSize()
-            .background(Color(0xFF070A10))
+            .background(Color(0xFF090A0B))
     ) {
         // Atmospheric Smoky Nebula Canvas
         SmokyBackgroundCanvas()
