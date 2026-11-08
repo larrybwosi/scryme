@@ -13,7 +13,7 @@ This specification defines the modern architectural layout and UX restructuring 
 
 ## Context
 
-Previously, the Android settings and profile features were distributed across overloaded screens: `SettingsScreen` bundled raw JSON-like info rows with POS pairing dialogs, while `ProfileScreen` combined basic profile cards, theme preferences, and partial notification toggles. Notification management only accounted for 2 toggles despite the backend and `NotificationHelper` supporting 6 notification channels. Furthermore, updating user details was hidden within small dialogs. 
+Previously, the Android settings and profile features were distributed across overloaded screens: `SettingsScreen` bundled raw JSON-like info rows with POS pairing dialogs, while `ProfileScreen` combined basic profile cards, theme preferences, and partial notification toggles. Notification management only accounted for 2 toggles despite the backend and `NotificationHelper` supporting 6 notification channels. Furthermore, updating user details was hidden within small dialogs.
 
 Splitting these concerns into specialized screens ensures clean separation of concerns, rich editing workflows, expressive toggle controls, and seamless multi-tenant organization and hardware administration.
 

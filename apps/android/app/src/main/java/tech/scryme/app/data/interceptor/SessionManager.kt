@@ -36,7 +36,7 @@ class SessionManager @Inject constructor(
         val USER_AVATAR_URL = stringPreferencesKey("user_avatar_url")
         val THEME_MODE = stringPreferencesKey("theme_mode") // "SYSTEM", "LIGHT", "DARK"
         val DUTY_STATUS = stringPreferencesKey("duty_status") // "ONLINE", "BUSY", "OFFLINE"
-        
+
         // Notification channel keys
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val SHIFT_NOTIFICATIONS = booleanPreferencesKey("shift_notifications")
@@ -45,7 +45,7 @@ class SessionManager @Inject constructor(
         val POS_NOTIFICATIONS = booleanPreferencesKey("pos_notifications")
         val ANNOUNCEMENT_NOTIFICATIONS = booleanPreferencesKey("announcement_notifications")
         val ATTENDANCE_NOTIFICATIONS = booleanPreferencesKey("attendance_notifications")
-        
+
         val FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 
@@ -64,7 +64,7 @@ class SessionManager @Inject constructor(
     val userAvatarUrlFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_AVATAR_URL] }
     val themeModeFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[THEME_MODE] ?: "SYSTEM" }
     val dutyStatusFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[DUTY_STATUS] ?: "ONLINE" }
-    
+
     // Notification flows
     val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[NOTIFICATIONS_ENABLED] ?: true }
     val shiftNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHIFT_NOTIFICATIONS] ?: true }
@@ -73,7 +73,7 @@ class SessionManager @Inject constructor(
     val posNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[POS_NOTIFICATIONS] ?: true }
     val announcementNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[ANNOUNCEMENT_NOTIFICATIONS] ?: true }
     val attendanceNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[ATTENDANCE_NOTIFICATIONS] ?: true }
-    
+
     val fcmTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[FCM_TOKEN] }
 
     suspend fun getAccessToken(): String? = accessTokenFlow.first()
