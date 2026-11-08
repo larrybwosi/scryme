@@ -366,7 +366,6 @@ export class PosController {
   async processSale(
     @v3Context() ctx: V3ApiContext,
     @Body() body: ProcessSaleDto,
-  BatchProcessSaleDto,
     @Query("locationId") queryLocationId?: string,
   ) {
     const saleCtx = {
