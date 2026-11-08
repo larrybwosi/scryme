@@ -59,6 +59,39 @@ export class ProcessSaleUseCase {
       ? [{ method: dto.paymentMethod, amount: dto.total || dto.amountReceived || 0 }]
       : [];
 
+    const idempotencyKey = dto.idempotencyKey || dto.saleId || dto.metadata?.idempotencyKey || dto.metadata?.saleId;
+    if (idempotencyKey) {
+      const existingTxn = await this.prisma.client.transaction.findFirst({
+        where: {
+          organizationId: orgId,
+          OR: [
+            { number: dto.number || dto.orderNumber || dto.saleNumber || idempotencyKey },
+            {
+              metadata: {
+                path: ["idempotencyKey"],
+                equals: idempotencyKey,
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          number: true,
+          status: true,
+          paymentStatus: true,
+          finalTotal: true,
+          customerId: true,
+        },
+      });
+
+      if (existingTxn) {
+        return {
+          ...existingTxn,
+          isDuplicate: true,
+        };
+      }
+    }
+
     const { transaction, total } = await this.prisma.client.$transaction(
       async (tx: any) => {
         let sub = 0;
@@ -161,6 +194,7 @@ export class ProcessSaleUseCase {
             notes: dto.notes,
             metadata: {
               ...(dto.metadata || {}),
+              ...(idempotencyKey ? { idempotencyKey } : {}),
               ...(effectivePhone ? { customerPhone: effectivePhone } : {}),
               ...(effectiveName ? { customerName: effectiveName } : {}),
             },

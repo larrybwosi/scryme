@@ -23,7 +23,8 @@ import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
 import { type V3ApiContext } from "@repo/shared/api/v3";
 import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v3";
-import { ProcessSaleDto } from "../../application/dto/sale.dto";
+import { ProcessSaleDto,
+  BatchProcessSaleDto, BatchProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
 import { GetTransactionsUseCase } from "../../application/use-cases/get-transactions.use-case";
@@ -367,6 +368,7 @@ export class PosController {
   async processSale(
     @v3Context() ctx: V3ApiContext,
     @Body() body: ProcessSaleDto,
+  BatchProcessSaleDto,
     @Query("locationId") queryLocationId?: string,
   ) {
     const saleCtx = {
@@ -374,6 +376,64 @@ export class PosController {
       locationId: ctx.locationId || queryLocationId || body?.locationId,
     };
     return this.processSaleUseCase.execute(saleCtx, body);
+  }
+
+  @Post("sales/batch")
+  @RequireMember()
+  @UseGuards(V3AuthGuard, MultiTenancyGuard)
+  @ApiBearerAuth()
+  @ApiOperation({
+    summary: "Process a batch of offline POS sales with idempotency",
+    operationId: "POS_BatchProcessSale",
+  })
+  @ApiResponse({ status: 200, description: "Batch processed successfully" })
+  @ApiResponse({
+    status: 400,
+    type: ApiErrorResponseDto,
+    description: "Invalid batch payload",
+  })
+  async batchProcessSale(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: BatchProcessSaleDto,
+    @Query("locationId") queryLocationId?: string,
+  ) {
+    const sales = body.sales || [];
+    const results: Array<{ saleId?: string; success: boolean; transactionNumber?: string; isDuplicate?: boolean; error?: string }> = [];
+
+    let successful = 0;
+    let failed = 0;
+
+    for (const saleDto of sales) {
+      const saleCtx = {
+        ...ctx,
+        locationId: ctx.locationId || queryLocationId || saleDto?.locationId,
+      };
+
+      try {
+        const result = await this.processSaleUseCase.execute(saleCtx, saleDto);
+        successful++;
+        results.push({
+          saleId: saleDto.saleId || saleDto.idempotencyKey,
+          success: true,
+          transactionNumber: result.number,
+          isDuplicate: !!result.isDuplicate,
+        });
+      } catch (err: any) {
+        failed++;
+        results.push({
+          saleId: saleDto.saleId || saleDto.idempotencyKey,
+          success: false,
+          error: err.message || "Failed to process sale",
+        });
+      }
+    }
+
+    return {
+      processed: sales.length,
+      successful,
+      failed,
+      results,
+    };
   }
 
   @Post("sale/payments")

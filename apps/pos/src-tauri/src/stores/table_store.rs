@@ -25,6 +25,12 @@ pub struct Table {
     pub occupied_at: Option<String>, // ISO8601
     pub section: Option<String>,
     pub notes: Option<String>,
+    #[serde(default = "default_table_version")]
+    pub version: i64,
+}
+
+fn default_table_version() -> i64 {
+    1
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -74,7 +80,8 @@ pub async fn init_db(app: &AppHandle) -> Result<()> {
             guests_count INTEGER,
             occupied_at TEXT,
             section TEXT,
-            notes TEXT
+            notes TEXT,
+            version INTEGER NOT NULL DEFAULT 1
         )
         "#
     )
@@ -99,6 +106,7 @@ pub async fn init_db(app: &AppHandle) -> Result<()> {
     .execute(&pool)
     .await?;
 
+    let _ = sqlx::query("ALTER TABLE tables ADD COLUMN version INTEGER NOT NULL DEFAULT 1").execute(&pool).await;
     info!("[TableStore] Database initialized.");
     Ok(())
 }
@@ -124,6 +132,7 @@ pub async fn get_tables_command(app: AppHandle) -> Result<Vec<Table>, String> {
             occupied_at: row.get("occupied_at"),
             section: row.get("section"),
             notes: row.get("notes"),
+            version: row.try_get("version").unwrap_or(1),
         });
     }
 
@@ -203,6 +212,7 @@ pub async fn update_table_status_command(
             occupied_at: row.get("occupied_at"),
             section: row.get("section"),
             notes: row.get("notes"),
+            version: row.try_get("version").unwrap_or(1),
         })
         .map_err(|e| e.to_string())?;
 
@@ -246,9 +256,9 @@ pub async fn update_table_status_command(
         current.occupied_at
     };
 
-    // 3. Update the table status
+    // 3. Update the table status and bump version
     sqlx::query(
-        "UPDATE tables SET status = ?1, current_order_id = ?2, guests_count = ?3, occupied_at = ?4 WHERE id = ?5"
+        "UPDATE tables SET status = ?1, current_order_id = ?2, guests_count = ?3, occupied_at = ?4, version = version + 1 WHERE id = ?5"
     )
     .bind(&status)
     .bind(&order_id)

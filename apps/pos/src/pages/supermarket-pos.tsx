@@ -24,6 +24,8 @@ import { cn } from '@/lib/utils';
  import { shiftService } from '@/lib/shift-service';
 import { usePosProducts } from '@/hooks/products';
 import { useScanner } from '@/hooks/use-scanner';
+import { parseBarcodeEntry } from '@/lib/barcode-service';
+import { getPOSImageUrl } from '@/lib/image-helper';
 import { toast } from 'sonner';
 import { useAuth } from '@/hooks/use-auth';
 import { useProcessSale, PaymentMethod, PaymentStatus } from '@/hooks/sales';
@@ -32,7 +34,7 @@ import { useCashDrawer } from '@/hooks/use-cash-drawer';
 import { trackPosEvent, POS_EVENTS } from '@/lib/openpanel';
 import { logger } from '@/lib/logger';
 import { format } from 'date-fns';
-import { convertFileSrc, invoke } from '@tauri-apps/api/core';
+import { invoke } from '@tauri-apps/api/core';
 import {
   AlertDialog,
   AlertDialogAction,
@@ -133,22 +135,33 @@ export function SupermarketPOS() {
     }
 
     const processScan = async () => {
-      const barcode = lastScanned;
-      lastProcessedBarcode.current = barcode;
+      const rawBarcode = lastScanned;
+      lastProcessedBarcode.current = rawBarcode;
       lastScanTime.current = now;
       clearLastScanned(); // Clear immediately so the same barcode can be scanned again
 
-      const product = await invoke<any>('get_product_by_barcode_command', {
-        barcode,
+      const parsed = parseBarcodeEntry(rawBarcode);
+      const scanQty = parsed.quantity || 1;
+      const lookupBarcode = parsed.cleanBarcode;
+
+      let product = await invoke<any>('get_product_by_barcode_command', {
+        barcode: lookupBarcode,
       });
 
+      // If not found and variable weight/price with item code, attempt lookup by item code
+      if (!product && parsed.isVariableWeight && parsed.itemCode) {
+        product = await invoke<any>('get_product_by_barcode_command', {
+          barcode: parsed.itemCode,
+        });
+      }
+
       if (!product) {
-        logger.warn('Barcode not found', { barcode });
-        setUnknownBarcode(barcode);
+        logger.warn('Barcode not found', { rawBarcode, lookupBarcode });
+        setUnknownBarcode(lookupBarcode);
         return;
       }
 
-      const variant = product.variants?.find((v: any) => v.barcode === barcode) || product.variants?.[0];
+      const variant = product.variants?.find((v: any) => v.barcode === lookupBarcode || v.barcode === rawBarcode) || product.variants?.[0];
       const defaultUnit = product.sellableUnits?.find((u: any) => u.isBaseUnit) || product.sellableUnits?.[0];
 
       if (!variant || !defaultUnit) return;
@@ -192,7 +205,7 @@ export function SupermarketPOS() {
         },
         variant.variantId,
         unitToAdd,
-        1
+        scanQty
       );
 
       setLastAddedItemId({
@@ -312,6 +325,54 @@ export function SupermarketPOS() {
   }, [currentOrder, isProcessingSale, locationId, total, subTotal, taxAmount, createSale, settings, openPhysicalDrawer, handlePaymentComplete]);
 
   const handleKeyDown = useCallback((e: KeyboardEvent) => {
+    // Enter in search input to execute barcode lookup with multiplier
+    if (e.key === 'Enter' && document.activeElement === searchInputRef.current && inputValue.trim()) {
+      e.preventDefault();
+      const rawVal = inputValue.trim();
+      const parsed = parseBarcodeEntry(rawVal);
+      const qty = parsed.quantity || 1;
+
+      (async () => {
+        let product = await invoke<any>('get_product_by_barcode_command', {
+          barcode: parsed.cleanBarcode,
+        });
+
+        if (!product && parsed.isVariableWeight && parsed.itemCode) {
+          product = await invoke<any>('get_product_by_barcode_command', {
+            barcode: parsed.itemCode,
+          });
+        }
+
+        if (product) {
+          const variant = product.variants?.find((v: any) => v.barcode === parsed.cleanBarcode) || product.variants?.[0];
+          const defaultUnit = product.sellableUnits?.find((u: any) => u.isBaseUnit) || product.sellableUnits?.[0];
+          if (variant && defaultUnit) {
+            addItemToOrder({
+              ...product,
+              variantId: variant.variantId,
+              variantName: variant.variantName,
+              name: product.productName,
+              variants: product.variants?.map((v: any) => ({ ...v, name: v.variantName || v.name })),
+            }, variant.variantId, { ...defaultUnit, originalRetailPrice: defaultUnit.price }, qty);
+
+            setLastAddedItemId({
+              productId: product.productId,
+              variantId: variant.variantId,
+              unitId: defaultUnit.unitId
+            });
+
+            setInputValue('');
+            toast.success('Added to Cart', {
+              description: `${qty}x ${product.productName}`,
+              duration: 1000,
+            });
+          }
+        } else {
+          setUnknownBarcode(parsed.cleanBarcode);
+        }
+      })();
+    }
+
     // F1 or / to focus search
     if (e.key === 'F1' || (e.key === '/' && document.activeElement !== searchInputRef.current)) {
       e.preventDefault();

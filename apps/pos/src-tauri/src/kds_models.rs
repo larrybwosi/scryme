@@ -9,6 +9,10 @@ pub struct OrderItem {
     pub modifiers: String,
     pub is_allergy: bool,
     pub status: String,
+    #[serde(default)]
+    pub course: Option<String>, // STARTER, MAIN, DESSERT, BEVERAGE
+    #[serde(default)]
+    pub station: Option<String>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
