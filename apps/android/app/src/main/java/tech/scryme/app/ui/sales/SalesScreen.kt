@@ -1,5 +1,7 @@
 package tech.scryme.app.ui.sales
 
+import tech.scryme.app.domain.model.SalesAnalytics
+import tech.scryme.app.domain.model.OrderItem
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.Crossfade
 import androidx.compose.animation.expandVertically
@@ -239,11 +241,11 @@ private fun ColumnScope.SalesContent(
     isInitialLoading: Boolean,
     selectedTab: SalesTab,
     analytics: SalesAnalytics?,
-    orders: List<SalesOrder>,
+    orders: List<OrderItem>,
     searchQuery: String,
     onRefresh: () -> Unit,
     onSearchQueryChange: (String) -> Unit,
-    onOrderClick: (SalesOrder) -> Unit
+    onOrderClick: (OrderItem) -> Unit
 ) {
     Box(
         modifier = Modifier

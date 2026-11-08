@@ -36,9 +36,16 @@ class SessionManager @Inject constructor(
         val USER_AVATAR_URL = stringPreferencesKey("user_avatar_url")
         val THEME_MODE = stringPreferencesKey("theme_mode") // "SYSTEM", "LIGHT", "DARK"
         val DUTY_STATUS = stringPreferencesKey("duty_status") // "ONLINE", "BUSY", "OFFLINE"
+
+        // Notification channel keys
         val NOTIFICATIONS_ENABLED = booleanPreferencesKey("notifications_enabled")
         val SHIFT_NOTIFICATIONS = booleanPreferencesKey("shift_notifications")
         val TASK_NOTIFICATIONS = booleanPreferencesKey("task_notifications")
+        val DAILY_SHIFT_NOTIFICATIONS = booleanPreferencesKey("daily_shift_notifications")
+        val POS_NOTIFICATIONS = booleanPreferencesKey("pos_notifications")
+        val ANNOUNCEMENT_NOTIFICATIONS = booleanPreferencesKey("announcement_notifications")
+        val ATTENDANCE_NOTIFICATIONS = booleanPreferencesKey("attendance_notifications")
+
         val FCM_TOKEN = stringPreferencesKey("fcm_token")
     }
 
@@ -57,9 +64,16 @@ class SessionManager @Inject constructor(
     val userAvatarUrlFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[USER_AVATAR_URL] }
     val themeModeFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[THEME_MODE] ?: "SYSTEM" }
     val dutyStatusFlow: Flow<String> = context.dataStore.data.map { prefs -> prefs[DUTY_STATUS] ?: "ONLINE" }
+
+    // Notification flows
     val notificationsEnabledFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[NOTIFICATIONS_ENABLED] ?: true }
     val shiftNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[SHIFT_NOTIFICATIONS] ?: true }
     val taskNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[TASK_NOTIFICATIONS] ?: true }
+    val dailyShiftNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[DAILY_SHIFT_NOTIFICATIONS] ?: true }
+    val posNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[POS_NOTIFICATIONS] ?: true }
+    val announcementNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[ANNOUNCEMENT_NOTIFICATIONS] ?: true }
+    val attendanceNotificationsFlow: Flow<Boolean> = context.dataStore.data.map { prefs -> prefs[ATTENDANCE_NOTIFICATIONS] ?: true }
+
     val fcmTokenFlow: Flow<String?> = context.dataStore.data.map { prefs -> prefs[FCM_TOKEN] }
 
     suspend fun getAccessToken(): String? = accessTokenFlow.first()
@@ -151,6 +165,30 @@ class SessionManager @Inject constructor(
     suspend fun updateTaskNotifications(enabled: Boolean) {
         context.dataStore.edit { prefs ->
             prefs[TASK_NOTIFICATIONS] = enabled
+        }
+    }
+
+    suspend fun updateDailyShiftNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[DAILY_SHIFT_NOTIFICATIONS] = enabled
+        }
+    }
+
+    suspend fun updatePosNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[POS_NOTIFICATIONS] = enabled
+        }
+    }
+
+    suspend fun updateAnnouncementNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[ANNOUNCEMENT_NOTIFICATIONS] = enabled
+        }
+    }
+
+    suspend fun updateAttendanceNotifications(enabled: Boolean) {
+        context.dataStore.edit { prefs ->
+            prefs[ATTENDANCE_NOTIFICATIONS] = enabled
         }
     }
 
