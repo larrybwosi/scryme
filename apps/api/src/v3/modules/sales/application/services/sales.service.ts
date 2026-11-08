@@ -150,44 +150,84 @@ export class SalesService {
       ];
     }
 
-    const transactions = await this.prisma.client.transaction.findMany({
-      where: whereCondition,
-      orderBy: { createdAt: "desc" },
-      take: 50,
-      include: {
-        customer: { select: { name: true, email: true, phone: true } },
-        items: true,
-        payments: true,
-      },
-    });
+    const [transactions, org] = await Promise.all([
+      this.prisma.client.transaction.findMany({
+        where: whereCondition,
+        orderBy: { createdAt: "desc" },
+        take: 50,
+        include: {
+          customer: { select: { name: true, email: true, phone: true } },
+          items: true,
+          payments: true,
+        },
+      }),
+      this.prisma.client.organization?.findUnique?.({
+        where: { id: organizationId },
+        include: { settings: true },
+      }),
+    ]);
 
-    return transactions.map((txn) => this.mapTransactionToOrderItem(txn));
+    const defaultCurrency = org?.settings?.defaultCurrency || "USD";
+    const symbol = this.getCurrencySymbol(defaultCurrency);
+
+    return transactions.map((txn) => this.mapTransactionToOrderItem(txn, symbol));
   }
 
   async getOrderDetails(
     organizationId: string,
     orderId: string,
   ): Promise<OrderItemDto> {
-    const txn = await this.prisma.client.transaction.findFirst({
-      where: {
-        id: orderId,
-        organizationId,
-      },
-      include: {
-        customer: { select: { name: true, email: true, phone: true } },
-        items: true,
-        payments: true,
-      },
-    });
+    const [txn, org] = await Promise.all([
+      this.prisma.client.transaction.findFirst({
+        where: {
+          id: orderId,
+          organizationId,
+        },
+        include: {
+          customer: { select: { name: true, email: true, phone: true } },
+          items: true,
+          payments: true,
+        },
+      }),
+      this.prisma.client.organization?.findUnique?.({
+        where: { id: organizationId },
+        include: { settings: true },
+      }),
+    ]);
 
     if (!txn) {
       throw new NotFoundException(`Order '${orderId}' not found`);
     }
 
-    return this.mapTransactionToOrderItem(txn);
+    const defaultCurrency = org?.settings?.defaultCurrency || "USD";
+    const symbol = this.getCurrencySymbol(defaultCurrency);
+
+    return this.mapTransactionToOrderItem(txn, symbol);
   }
 
-  private mapTransactionToOrderItem(txn: any): OrderItemDto {
+  private getCurrencySymbol(currency: string): string {
+    const symbolMap: Record<string, string> = {
+      USD: "$",
+      EUR: "€",
+      GBP: "£",
+      KES: "KSh",
+      NGN: "₦",
+      JPY: "¥",
+      CAD: "CA$",
+      AUD: "A$",
+      INR: "₹",
+      GHS: "GH₵",
+      ZAR: "R",
+      UGX: "UGX",
+      TZS: "TZS",
+      RWF: "RF",
+      ETB: "Br",
+    };
+    return symbolMap[currency?.toUpperCase()] || currency || "$";
+  }
+
+  private mapTransactionToOrderItem(txn: any, fallbackSymbol: string = "$"): OrderItemDto {
+    const currSymbol = txn.currencyCode ? this.getCurrencySymbol(txn.currencyCode) : fallbackSymbol;
     const primaryItem = txn.items[0];
     const title =
       primaryItem?.productName ||
@@ -204,8 +244,8 @@ export class SalesService {
       id: item.id,
       name: item.productName || "Product Item",
       quantity: item.quantity,
-      unitPrice: `$${Number(item.unitPrice || 0).toFixed(2)}`,
-      totalPrice: `$${Number(item.total || 0).toFixed(2)}`,
+      unitPrice: `${currSymbol}${Number(item.unitPrice || 0).toFixed(2)}`,
+      totalPrice: `${currSymbol}${Number(item.total || 0).toFixed(2)}`,
       sku: item.sku || undefined,
       notes: item.notes || undefined,
     }));
@@ -230,10 +270,10 @@ export class SalesService {
       fulfillmentStatus: status === "FULFILLED" ? "Delivered" : status === "SHIPPED" ? "In Transit" : "Pending Fulfillment",
       paymentMethod,
       paymentStatus,
-      subtotal: `$${Number(txn.subtotal || txn.finalTotal || 0).toFixed(2)}`,
-      tax: `$${Number(txn.taxTotal || 0).toFixed(2)}`,
-      discount: `$${Number(txn.discountTotal || 0).toFixed(2)}`,
-      totalAmount: `$${Number(txn.finalTotal || 0).toFixed(2)}`,
+      subtotal: `${currSymbol}${Number(txn.subtotal || txn.finalTotal || 0).toFixed(2)}`,
+      tax: `${currSymbol}${Number(txn.taxTotal || 0).toFixed(2)}`,
+      discount: `${currSymbol}${Number(txn.discountTotal || 0).toFixed(2)}`,
+      totalAmount: `${currSymbol}${Number(txn.finalTotal || 0).toFixed(2)}`,
       deliveryAddress: txn.shippingAddress || undefined,
     };
   }

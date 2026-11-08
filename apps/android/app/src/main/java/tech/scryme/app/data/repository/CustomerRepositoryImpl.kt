@@ -103,6 +103,15 @@ class CustomerRepositoryImpl @Inject constructor(
         currencyCode = currencyCode ?: "USD",
         status = status ?: "CONFIRMED",
         cashierName = cashierName,
-        createdAt = createdAt
+        createdAt = createdAt,
+        items = items?.map {
+            tech.scryme.app.domain.model.CustomerPurchasedItem(
+                id = it.id,
+                name = it.name,
+                quantity = it.quantity,
+                unitPrice = it.unitPrice,
+                totalPrice = it.totalPrice
+            )
+        } ?: emptyList()
     )
 }

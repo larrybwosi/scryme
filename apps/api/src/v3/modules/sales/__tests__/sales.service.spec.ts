@@ -30,6 +30,12 @@ describe("SalesService", () => {
             _sum: { amount: 12318.0 },
           }),
         },
+        organization: {
+          findUnique: vi.fn().mockResolvedValue({
+            id: "org_1",
+            settings: { defaultCurrency: "USD" },
+          }),
+        },
       },
     };
 

@@ -128,7 +128,14 @@ class ScheduleRepositoryTest {
             status = "TODO",
             dueDate = "2026-10-25",
             dueTime = "08:00 AM",
-            category = "UI/UX Design"
+            category = "UI/UX Design",
+            subtaskGroups = listOf(
+                SubtaskGroupDto(
+                    id = "g1",
+                    title = "Preparation",
+                    items = listOf(SubtaskItemDto("i1", "Check ingredients", false))
+                )
+            )
         )
         coEvery {
             scheduleApiService.getStaffTasks(null, null)
