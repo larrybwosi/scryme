@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../../lib/seo'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../../components/Header'
 import { Footer } from '../../components/Footer'
@@ -13,28 +14,14 @@ export const Route = createFileRoute('/compare/$slug')({
   head: ({ loaderData }) => {
     const page = loaderData?.pageData
     const competitor = page?.competitorName || loaderData?.slug?.replace(/[-_]/g, ' ') || 'Legacy ERP'
-    const seo = page?.seo
-    const title = seo?.metaTitle || page?.title || `Scryme vs ${competitor} | Next-Gen ERP Comparison`
-    const description =
-      seo?.metaDescription ||
-      `Compare Scryme with ${competitor}. Sub-second telemetry, native M-Pesa & card settlement, and zero middleware tax.`
-
-    return {
-      meta: [
-        { title },
-        { name: 'description', content: description },
-        { property: 'og:title', content: title },
-        { property: 'og:description', content: description },
-        { property: 'og:type', content: 'website' },
-        ...(seo?.keywords && seo.keywords.length > 0
-          ? [{ name: 'keywords', content: seo.keywords.join(', ') }]
-          : []),
-        ...(seo?.noIndex ? [{ name: 'robots', content: 'noindex, nofollow' }] : []),
-      ],
-      links: [
-        ...(seo?.canonicalUrl ? [{ rel: 'canonical', href: seo.canonicalUrl }] : []),
-      ],
-    }
+    return createSiteSeo({
+      title: page?.seo?.metaTitle || page?.title || 'Scryme vs ' + competitor + ' | Next-Gen ERP Comparison',
+      description: page?.seo?.metaDescription || 'Compare Scryme with ' + competitor + '. Sub-second telemetry, native M-Pesa & card settlement, and zero middleware tax.',
+      pathname: '/compare/' + (loaderData?.slug || ''),
+      seoData: page?.seo,
+      ogType: 'article',
+      keywords: ['Scryme vs ' + competitor, competitor + ' Alternative', 'ERP Comparison'],
+    })
   },
   component: ComparisonPageComponent,
 })

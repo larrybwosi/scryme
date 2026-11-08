@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -34,6 +35,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/procurement-supply-chain')({
+  head: () => createSiteSeo({
+    title: "Automated Procurement & Supply Chain Orchestration | Scryme",
+    description: "Autonomous reorder triggers, supplier lead-time scoring, and purchase order workflow automation across your global supply chain.",
+    pathname: "/procurement-supply-chain",
+    ogType: 'product',
+    keywords: ["Supply Chain Orchestration","Automated Procurement","Vendor Management","Purchase Order ERP"],
+  }),
   component: ProcurementSupplyChainComponent,
 })
 

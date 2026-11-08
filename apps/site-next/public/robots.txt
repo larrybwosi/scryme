@@ -1,0 +1,9 @@
+# Scryme Production Robots Configuration
+User-agent: *
+Allow: /
+Disallow: /studio/
+Disallow: /studio/*
+
+# Host & Sitemap Specification
+Host: https://scryme.tech
+Sitemap: https://scryme.tech/sitemap.xml

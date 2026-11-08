@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { useState } from 'react'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
@@ -34,6 +35,13 @@ import {
 } from 'lucide-react'
 
 export const Route = createFileRoute('/mobile-field-ops')({
+  head: () => createSiteSeo({
+    title: "Mobile Field Operations & Barcode Scanner App | Scryme",
+    description: "Offline-first mobile operations for warehouse teams, delivery drivers, and retail floor workers on iOS and Android.",
+    pathname: "/mobile-field-ops",
+    ogType: 'product',
+    keywords: ["Mobile ERP","Field Operations App","Barcode Scanner POS","Offline First Mobile ERP"],
+  }),
   component: MobileFieldOpsComponent,
 })
 

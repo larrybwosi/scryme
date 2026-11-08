@@ -9,14 +9,16 @@ export const seoObject = defineType({
       name: 'metaTitle',
       title: 'Meta Title',
       type: 'string',
-      validation: (Rule) => Rule.max(60).warning('Titles over 60 characters may be truncated by search engines.'),
+      description: 'Optimal length: 50-60 characters.',
+      validation: (Rule) => Rule.max(70).warning('Titles over 70 characters may be truncated by search engines.'),
     }),
     defineField({
       name: 'metaDescription',
       title: 'Meta Description',
       type: 'text',
       rows: 3,
-      validation: (Rule) => Rule.max(160).warning('Descriptions over 160 characters may be truncated by search engines.'),
+      description: 'Optimal length: 140-160 characters.',
+      validation: (Rule) => Rule.max(180).warning('Descriptions over 180 characters may be truncated by search engines.'),
     }),
     defineField({
       name: 'keywords',
@@ -31,15 +33,41 @@ export const seoObject = defineType({
       name: 'ogImage',
       title: 'Open Graph Image (Social Sharing)',
       type: 'image',
+      description: 'Recommended size: 1200x630px.',
       options: {
         hotspot: true,
+      },
+    }),
+    defineField({
+      name: 'ogType',
+      title: 'Open Graph Type',
+      type: 'string',
+      initialValue: 'website',
+      options: {
+        list: [
+          { title: 'Website', value: 'website' },
+          { title: 'Article / Guide', value: 'article' },
+          { title: 'Product / App', value: 'product' },
+        ],
+      },
+    }),
+    defineField({
+      name: 'twitterCard',
+      title: 'Twitter Card Format',
+      type: 'string',
+      initialValue: 'summary_large_image',
+      options: {
+        list: [
+          { title: 'Summary Large Image', value: 'summary_large_image' },
+          { title: 'Summary', value: 'summary' },
+        ],
       },
     }),
     defineField({
       name: 'canonicalUrl',
       title: 'Canonical URL Override',
       type: 'url',
-      description: 'Leave blank to use default page URL',
+      description: 'Leave blank to use default page URL.',
     }),
     defineField({
       name: 'noIndex',

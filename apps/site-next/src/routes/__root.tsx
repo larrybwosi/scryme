@@ -10,7 +10,10 @@ export const Route = createRootRoute({
     meta: [
       { charSet: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
-      { title: 'Scryme - Next-Gen ERP Platform' }
+      { title: 'Scryme - Next-Gen ERP Platform' },
+      { name: 'theme-color', content: '#002116' },
+      { name: 'apple-mobile-web-app-capable', content: 'yes' },
+      { name: 'apple-mobile-web-app-status-bar-style', content: 'default' },
     ],
     links: [
       { rel: 'icon', href: '/favicon.ico' },

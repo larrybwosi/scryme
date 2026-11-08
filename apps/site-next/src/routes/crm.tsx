@@ -1,3 +1,4 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute, Link } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
@@ -29,6 +30,19 @@ export const Route = createFileRoute('/crm')({
       crmData: crmData || DEFAULT_CRM_PAGE_FALLBACK,
       siteSettings: siteSettings || DEFAULT_SITE_SETTINGS_FALLBACK,
     }
+  },
+  head: ({ loaderData }) => {
+    const crmData = loaderData?.crmData
+    const settings = loaderData?.siteSettings
+    return createSiteSeo({
+      pathname: '/crm',
+      siteSettings: settings,
+      seoData: crmData?.seo,
+      title: crmData?.seo?.metaTitle || 'Omnichannel CRM & Customer Telemetry | Scryme',
+      description: crmData?.seo?.metaDescription || crmData?.hero?.subtitle || 'Unified customer relationship intelligence, automated messaging, and lifetime value analytics.',
+      ogType: 'product',
+      keywords: ['Enterprise CRM', 'Omnichannel CRM', 'WhatsApp Cloud API CRM', 'Customer Lifetime Value'],
+    })
   },
   component: CrmPageComponent,
 })

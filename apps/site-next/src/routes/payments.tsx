@@ -1,9 +1,23 @@
+import { createSiteSeo } from '../lib/seo'
 import { createFileRoute } from '@tanstack/react-router'
 import { Header } from '../components/Header'
 import { Footer } from '../components/Footer'
 import { Check, ArrowRight, ShieldCheck, CreditCard, Smartphone, Building2, Zap, Lock, RefreshCw, Layers } from 'lucide-react'
 
 export const Route = createFileRoute('/payments')({
+  head: ({ loaderData }) => {
+    const paymentsData = (loaderData as any)?.paymentsData
+    const settings = (loaderData as any)?.siteSettings
+    return createSiteSeo({
+      pathname: '/payments',
+      siteSettings: settings,
+      seoData: paymentsData?.seo,
+      title: paymentsData?.seo?.metaTitle || 'Enterprise Payments & M-Pesa Rails | Scryme',
+      description: paymentsData?.seo?.metaDescription || paymentsData?.hero?.subtitle || 'High-throughput multi-currency settlement rails with native M-Pesa STK push and instant reconciliation.',
+      ogType: 'product',
+      keywords: ['M-Pesa STK Push', 'African Payment Rails', 'Multi-currency ERP', 'Instant Settlement'],
+    })
+  },
   component: PaymentsComponent,
 })
 
