@@ -8,6 +8,7 @@ import {
   Code2,
   Bell,
   Plug,
+  Wallet,
   Gauge,
   ShieldCheck,
   FileText,
@@ -121,6 +122,7 @@ function RootComponent() {
     { title: 'Webhooks & Event Streams', category: 'Guide', to: '/docs/webhooks' },
     { title: 'Model Context Protocol (MCP)', category: 'Guide', to: '/docs/mcp' },
     { title: 'Third-Party Integrations', category: 'Guide', to: '/docs/integrations' },
+    { title: 'M-Pesa Payment Integration', category: 'Guide', to: '/docs/integrations/mpesa' },
     { title: 'API Rate Limits', category: 'Guide', to: '/docs/rate-limits' },
     { title: 'Release Changelog', category: 'General', to: '/docs/changelog' },
     { title: 'Frequently Asked Questions', category: 'General', to: '/docs/faq' },
@@ -446,6 +448,15 @@ function RootComponent() {
                   >
                     <Plug className="w-4 h-4 text-slate-400" />
                     <span>Integrations</span>
+                  </Link>
+
+                  <Link
+                    to="/docs/integrations/mpesa"
+                    className="flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs text-slate-600 hover:bg-slate-200/60 hover:text-slate-900 transition-colors ml-2 border-l border-slate-200 pl-3"
+                    activeProps={{ className: 'bg-slate-200 text-slate-900 font-semibold' }}
+                  >
+                    <Wallet className="w-4 h-4 text-emerald-600" />
+                    <span>M-Pesa Setup</span>
                   </Link>
 
                   <Link

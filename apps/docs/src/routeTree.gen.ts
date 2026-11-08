@@ -20,13 +20,14 @@ import { Route as DocsCoreConceptsRouteImport } from './routes/docs.core-concept
 import { Route as DocsFaqRouteImport } from './routes/docs.faq'
 import { Route as DocsGettingStartedRouteImport } from './routes/docs.getting-started'
 import { Route as DocsInstallationRouteImport } from './routes/docs.installation'
-import { Route as DocsIntegrationsRouteImport } from './routes/docs.integrations'
 import { Route as DocsInventoryLifecycleRouteImport } from './routes/docs.inventory-lifecycle'
 import { Route as DocsMcpRouteImport } from './routes/docs.mcp'
 import { Route as DocsRateLimitsRouteImport } from './routes/docs.rate-limits'
 import { Route as DocsSecurityRouteImport } from './routes/docs.security'
 import { Route as DocsSupportRouteImport } from './routes/docs.support'
 import { Route as DocsWebhooksRouteImport } from './routes/docs.webhooks'
+import { Route as DocsIntegrationsIndexRouteImport } from './routes/docs.integrations.index'
+import { Route as DocsIntegrationsMpesaRouteImport } from './routes/docs.integrations.mpesa'
 import { Route as DocsInventoryArchiveAndRestoreRouteImport } from './routes/docs.inventory.archive-and-restore'
 import { Route as DocsInventoryCreateProductRouteImport } from './routes/docs.inventory.create-product'
 import { Route as DocsInventoryManageVariantsRouteImport } from './routes/docs.inventory.manage-variants'
@@ -92,11 +93,6 @@ const DocsInstallationRoute = DocsInstallationRouteImport.update({
   path: '/docs/installation',
   getParentRoute: () => rootRouteImport,
 } as any)
-const DocsIntegrationsRoute = DocsIntegrationsRouteImport.update({
-  id: '/docs/integrations',
-  path: '/docs/integrations',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const DocsInventoryLifecycleRoute = DocsInventoryLifecycleRouteImport.update({
   id: '/docs/inventory-lifecycle',
   path: '/docs/inventory-lifecycle',
@@ -125,6 +121,16 @@ const DocsSupportRoute = DocsSupportRouteImport.update({
 const DocsWebhooksRoute = DocsWebhooksRouteImport.update({
   id: '/docs/webhooks',
   path: '/docs/webhooks',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIntegrationsIndexRoute = DocsIntegrationsIndexRouteImport.update({
+  id: '/docs/integrations/',
+  path: '/docs/integrations/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DocsIntegrationsMpesaRoute = DocsIntegrationsMpesaRouteImport.update({
+  id: '/docs/integrations/mpesa',
+  path: '/docs/integrations/mpesa',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DocsInventoryArchiveAndRestoreRoute =
@@ -189,7 +195,6 @@ export interface FileRoutesByFullPath {
   '/docs/faq': typeof DocsFaqRoute
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
-  '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
@@ -197,6 +202,7 @@ export interface FileRoutesByFullPath {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference/': typeof ApiReferenceIndexRoute
+  '/docs/integrations/mpesa': typeof DocsIntegrationsMpesaRoute
   '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
   '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
   '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/docs/stocking/reception': typeof DocsStockingReceptionRoute
   '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
   '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/integrations/': typeof DocsIntegrationsIndexRoute
   '/docs/stocking/': typeof DocsStockingIndexRoute
 }
 export interface FileRoutesByTo {
@@ -218,7 +225,6 @@ export interface FileRoutesByTo {
   '/docs/faq': typeof DocsFaqRoute
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
-  '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
@@ -226,6 +232,7 @@ export interface FileRoutesByTo {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference': typeof ApiReferenceIndexRoute
+  '/docs/integrations/mpesa': typeof DocsIntegrationsMpesaRoute
   '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
   '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
   '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
@@ -234,6 +241,7 @@ export interface FileRoutesByTo {
   '/docs/stocking/reception': typeof DocsStockingReceptionRoute
   '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
   '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/integrations': typeof DocsIntegrationsIndexRoute
   '/docs/stocking': typeof DocsStockingIndexRoute
 }
 export interface FileRoutesById {
@@ -248,7 +256,6 @@ export interface FileRoutesById {
   '/docs/faq': typeof DocsFaqRoute
   '/docs/getting-started': typeof DocsGettingStartedRoute
   '/docs/installation': typeof DocsInstallationRoute
-  '/docs/integrations': typeof DocsIntegrationsRoute
   '/docs/inventory-lifecycle': typeof DocsInventoryLifecycleRoute
   '/docs/mcp': typeof DocsMcpRoute
   '/docs/rate-limits': typeof DocsRateLimitsRoute
@@ -256,6 +263,7 @@ export interface FileRoutesById {
   '/docs/support': typeof DocsSupportRoute
   '/docs/webhooks': typeof DocsWebhooksRoute
   '/api-reference/': typeof ApiReferenceIndexRoute
+  '/docs/integrations/mpesa': typeof DocsIntegrationsMpesaRoute
   '/docs/inventory/archive-and-restore': typeof DocsInventoryArchiveAndRestoreRoute
   '/docs/inventory/create-product': typeof DocsInventoryCreateProductRoute
   '/docs/inventory/manage-variants': typeof DocsInventoryManageVariantsRoute
@@ -264,6 +272,7 @@ export interface FileRoutesById {
   '/docs/stocking/reception': typeof DocsStockingReceptionRoute
   '/docs/stocking/reconciliation': typeof DocsStockingReconciliationRoute
   '/docs/stocking/transfers': typeof DocsStockingTransfersRoute
+  '/docs/integrations/': typeof DocsIntegrationsIndexRoute
   '/docs/stocking/': typeof DocsStockingIndexRoute
 }
 export interface FileRouteTypes {
@@ -279,7 +288,6 @@ export interface FileRouteTypes {
     | '/docs/faq'
     | '/docs/getting-started'
     | '/docs/installation'
-    | '/docs/integrations'
     | '/docs/inventory-lifecycle'
     | '/docs/mcp'
     | '/docs/rate-limits'
@@ -287,6 +295,7 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference/'
+    | '/docs/integrations/mpesa'
     | '/docs/inventory/archive-and-restore'
     | '/docs/inventory/create-product'
     | '/docs/inventory/manage-variants'
@@ -295,6 +304,7 @@ export interface FileRouteTypes {
     | '/docs/stocking/reception'
     | '/docs/stocking/reconciliation'
     | '/docs/stocking/transfers'
+    | '/docs/integrations/'
     | '/docs/stocking/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -308,7 +318,6 @@ export interface FileRouteTypes {
     | '/docs/faq'
     | '/docs/getting-started'
     | '/docs/installation'
-    | '/docs/integrations'
     | '/docs/inventory-lifecycle'
     | '/docs/mcp'
     | '/docs/rate-limits'
@@ -316,6 +325,7 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference'
+    | '/docs/integrations/mpesa'
     | '/docs/inventory/archive-and-restore'
     | '/docs/inventory/create-product'
     | '/docs/inventory/manage-variants'
@@ -324,6 +334,7 @@ export interface FileRouteTypes {
     | '/docs/stocking/reception'
     | '/docs/stocking/reconciliation'
     | '/docs/stocking/transfers'
+    | '/docs/integrations'
     | '/docs/stocking'
   id:
     | '__root__'
@@ -337,7 +348,6 @@ export interface FileRouteTypes {
     | '/docs/faq'
     | '/docs/getting-started'
     | '/docs/installation'
-    | '/docs/integrations'
     | '/docs/inventory-lifecycle'
     | '/docs/mcp'
     | '/docs/rate-limits'
@@ -345,6 +355,7 @@ export interface FileRouteTypes {
     | '/docs/support'
     | '/docs/webhooks'
     | '/api-reference/'
+    | '/docs/integrations/mpesa'
     | '/docs/inventory/archive-and-restore'
     | '/docs/inventory/create-product'
     | '/docs/inventory/manage-variants'
@@ -353,6 +364,7 @@ export interface FileRouteTypes {
     | '/docs/stocking/reception'
     | '/docs/stocking/reconciliation'
     | '/docs/stocking/transfers'
+    | '/docs/integrations/'
     | '/docs/stocking/'
   fileRoutesById: FileRoutesById
 }
@@ -367,7 +379,6 @@ export interface RootRouteChildren {
   DocsFaqRoute: typeof DocsFaqRoute
   DocsGettingStartedRoute: typeof DocsGettingStartedRoute
   DocsInstallationRoute: typeof DocsInstallationRoute
-  DocsIntegrationsRoute: typeof DocsIntegrationsRoute
   DocsInventoryLifecycleRoute: typeof DocsInventoryLifecycleRoute
   DocsMcpRoute: typeof DocsMcpRoute
   DocsRateLimitsRoute: typeof DocsRateLimitsRoute
@@ -375,6 +386,7 @@ export interface RootRouteChildren {
   DocsSupportRoute: typeof DocsSupportRoute
   DocsWebhooksRoute: typeof DocsWebhooksRoute
   ApiReferenceIndexRoute: typeof ApiReferenceIndexRoute
+  DocsIntegrationsMpesaRoute: typeof DocsIntegrationsMpesaRoute
   DocsInventoryArchiveAndRestoreRoute: typeof DocsInventoryArchiveAndRestoreRoute
   DocsInventoryCreateProductRoute: typeof DocsInventoryCreateProductRoute
   DocsInventoryManageVariantsRoute: typeof DocsInventoryManageVariantsRoute
@@ -383,6 +395,7 @@ export interface RootRouteChildren {
   DocsStockingReceptionRoute: typeof DocsStockingReceptionRoute
   DocsStockingReconciliationRoute: typeof DocsStockingReconciliationRoute
   DocsStockingTransfersRoute: typeof DocsStockingTransfersRoute
+  DocsIntegrationsIndexRoute: typeof DocsIntegrationsIndexRoute
   DocsStockingIndexRoute: typeof DocsStockingIndexRoute
 }
 
@@ -465,13 +478,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DocsInstallationRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/docs/integrations': {
-      id: '/docs/integrations'
-      path: '/docs/integrations'
-      fullPath: '/docs/integrations'
-      preLoaderRoute: typeof DocsIntegrationsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/docs/inventory-lifecycle': {
       id: '/docs/inventory-lifecycle'
       path: '/docs/inventory-lifecycle'
@@ -512,6 +518,20 @@ declare module '@tanstack/react-router' {
       path: '/docs/webhooks'
       fullPath: '/docs/webhooks'
       preLoaderRoute: typeof DocsWebhooksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/integrations/': {
+      id: '/docs/integrations/'
+      path: '/docs/integrations'
+      fullPath: '/docs/integrations/'
+      preLoaderRoute: typeof DocsIntegrationsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/docs/integrations/mpesa': {
+      id: '/docs/integrations/mpesa'
+      path: '/docs/integrations/mpesa'
+      fullPath: '/docs/integrations/mpesa'
+      preLoaderRoute: typeof DocsIntegrationsMpesaRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/docs/inventory/archive-and-restore': {
@@ -591,7 +611,6 @@ const rootRouteChildren: RootRouteChildren = {
   DocsFaqRoute: DocsFaqRoute,
   DocsGettingStartedRoute: DocsGettingStartedRoute,
   DocsInstallationRoute: DocsInstallationRoute,
-  DocsIntegrationsRoute: DocsIntegrationsRoute,
   DocsInventoryLifecycleRoute: DocsInventoryLifecycleRoute,
   DocsMcpRoute: DocsMcpRoute,
   DocsRateLimitsRoute: DocsRateLimitsRoute,
@@ -599,6 +618,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsSupportRoute: DocsSupportRoute,
   DocsWebhooksRoute: DocsWebhooksRoute,
   ApiReferenceIndexRoute: ApiReferenceIndexRoute,
+  DocsIntegrationsMpesaRoute: DocsIntegrationsMpesaRoute,
   DocsInventoryArchiveAndRestoreRoute: DocsInventoryArchiveAndRestoreRoute,
   DocsInventoryCreateProductRoute: DocsInventoryCreateProductRoute,
   DocsInventoryManageVariantsRoute: DocsInventoryManageVariantsRoute,
@@ -607,6 +627,7 @@ const rootRouteChildren: RootRouteChildren = {
   DocsStockingReceptionRoute: DocsStockingReceptionRoute,
   DocsStockingReconciliationRoute: DocsStockingReconciliationRoute,
   DocsStockingTransfersRoute: DocsStockingTransfersRoute,
+  DocsIntegrationsIndexRoute: DocsIntegrationsIndexRoute,
   DocsStockingIndexRoute: DocsStockingIndexRoute,
 }
 export const routeTree = rootRouteImport
