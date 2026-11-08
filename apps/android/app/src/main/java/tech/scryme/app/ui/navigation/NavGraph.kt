@@ -8,6 +8,8 @@ import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import tech.scryme.app.ui.account.AccountScreen
+import tech.scryme.app.ui.account.AccountViewModel
 import tech.scryme.app.ui.admin.AdminScreen
 import tech.scryme.app.ui.admin.AdminViewModel
 import tech.scryme.app.ui.auth.AuthScreen
@@ -20,6 +22,10 @@ import tech.scryme.app.ui.customer.CustomerDetailsScreen
 import tech.scryme.app.ui.customer.CustomerDetailsViewModel
 import tech.scryme.app.ui.customer.CustomerScreen
 import tech.scryme.app.ui.customer.CustomerViewModel
+import tech.scryme.app.ui.notifications.NotificationSettingsScreen
+import tech.scryme.app.ui.notifications.NotificationSettingsViewModel
+import tech.scryme.app.ui.organization.OrganizationScreen
+import tech.scryme.app.ui.organization.OrganizationViewModel
 import tech.scryme.app.ui.overview.OverviewScreen
 import tech.scryme.app.ui.overview.OverviewViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
@@ -174,11 +180,35 @@ fun AppNavGraph(
             val viewModel: ProfileViewModel = hiltViewModel()
             ProfileScreen(
                 viewModel = viewModel,
+                onNavigateToAccount = { navController.navigate(Screen.Account.route) },
+                onNavigateToOrganization = { navController.navigate(Screen.Organization.route) },
+                onNavigateToNotifications = { navController.navigate(Screen.NotificationSettings.route) },
                 onNavigateToSettings = { navController.navigate(Screen.Settings.route) },
                 onLogout = {
                     authViewModel.logout()
                     onLogout()
                 }
+            )
+        }
+        composable(Screen.Account.route) {
+            val viewModel: AccountViewModel = hiltViewModel()
+            AccountScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.NotificationSettings.route) {
+            val viewModel: NotificationSettingsViewModel = hiltViewModel()
+            NotificationSettingsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Organization.route) {
+            val viewModel: OrganizationViewModel = hiltViewModel()
+            OrganizationScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.Settings.route) {

@@ -21,4 +21,7 @@ sealed class Screen(val route: String, val title: String) {
     }
     object Profile : Screen("profile", "Profile")
     object Settings : Screen("settings", "Settings")
+    object Account : Screen("account", "Account & Profile")
+    object NotificationSettings : Screen("notifications", "Notification Preferences")
+    object Organization : Screen("organization", "Organization & Hardware")
 }
