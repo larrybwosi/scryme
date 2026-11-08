@@ -35,24 +35,24 @@ export function DepartmentsClient({ initialDepartments, stats }: DepartmentsClie
   };
 
   return (
-    <div className="flex flex-col gap-6 p-8 bg-gray-50/50 min-h-screen">
+    <div className="flex flex-col gap-6 p-8 bg-background text-foreground min-h-screen">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 bg-[#34A853]/10 rounded-xl flex items-center justify-center text-[#34A853]">
+          <div className="w-10 h-10 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl flex items-center justify-center">
             <Building2 size={20} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-[#1D1D1F]">
+            <h1 className="text-2xl font-bold text-foreground">
               Departments
             </h1>
-            <p className="text-sm text-gray-500">
+            <p className="text-sm text-muted-foreground">
               Manage your organization&apos;s departments and department-specific controls.
             </p>
           </div>
         </div>
         <div className="flex items-center gap-3">
           <AddDepartmentDialog>
-            <Button className="gap-2 bg-[#1D1D1F] hover:bg-[#1D1D1F]/90 text-white">
+            <Button className="gap-2">
               <Plus size={16} />
               <span>Create Department</span>
             </Button>
@@ -63,44 +63,44 @@ export function DepartmentsClient({ initialDepartments, stats }: DepartmentsClie
       <div className="flex flex-col gap-4">
         {/* Stats Overview */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-2">
-          <div className="bg-white p-5 rounded-xl border shadow-sm">
+          <div className="bg-card text-card-foreground p-5 rounded-xl border border-border shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-blue-500/10 text-blue-600 dark:text-blue-400 flex items-center justify-center">
                 <Building2 size={16} />
               </div>
-              <p className="text-sm font-medium text-gray-500">Total Departments</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Departments</p>
             </div>
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold">{stats?.totalDepartments}</h3>
-              <Badge variant="secondary" className="bg-blue-50 text-blue-600 border-none">
+              <Badge variant="secondary" className="bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none">
                 Active
               </Badge>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border shadow-sm">
+          <div className="bg-card text-card-foreground p-5 rounded-xl border border-border shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-purple-500/10 text-purple-600 dark:text-purple-400 flex items-center justify-center">
                 <Users size={16} />
               </div>
-              <p className="text-sm font-medium text-gray-500">Total Members Assigned</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Members Assigned</p>
             </div>
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold">{stats?.totalMembers}</h3>
-              <Badge variant="secondary" className="bg-purple-50 text-purple-600 border-none">
+              <Badge variant="secondary" className="bg-purple-500/10 text-purple-600 dark:text-purple-400 border-none">
                 In Departments
               </Badge>
             </div>
           </div>
-          <div className="bg-white p-5 rounded-xl border shadow-sm">
+          <div className="bg-card text-card-foreground p-5 rounded-xl border border-border shadow-sm">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-8 h-8 rounded-lg bg-green-50 text-green-600 flex items-center justify-center">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center">
                 <Wallet size={16} />
               </div>
-              <p className="text-sm font-medium text-gray-500">Total Active Budgets</p>
+              <p className="text-sm font-medium text-muted-foreground">Total Active Budgets</p>
             </div>
             <div className="flex items-center justify-between">
               <h3 className="text-2xl font-bold">KES {stats?.totalBudget?.toLocaleString()}</h3>
-              <Badge variant="secondary" className="bg-green-50 text-green-600 border-none">
+              <Badge variant="secondary" className="bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-none">
                 Allocated
               </Badge>
             </div>
@@ -110,12 +110,12 @@ export function DepartmentsClient({ initialDepartments, stats }: DepartmentsClie
         <div className="flex items-center justify-between gap-4 py-2">
           <div className="relative flex-1 max-w-sm">
             <Search
-              className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
               size={16}
             />
             <Input
               placeholder="Search departments..."
-              className="pl-10 bg-white border-gray-200"
+              className="pl-10"
               value={searchTerm}
               onChange={(e) => handleSearch(e.target.value)}
             />
@@ -124,7 +124,7 @@ export function DepartmentsClient({ initialDepartments, stats }: DepartmentsClie
             <Button
               variant="outline"
               size="sm"
-              className="gap-2 border-gray-200">
+              className="gap-2">
               <Filter size={14} />
               <span>Filters</span>
             </Button>

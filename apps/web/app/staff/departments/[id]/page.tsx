@@ -38,9 +38,9 @@ export default async function DepartmentDetailPage({ params }: Props) {
   const dept = result.data;
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50/50">
+    <div className="flex flex-col min-h-screen bg-background text-foreground">
       {/* Header Banner */}
-      <div className="h-48 bg-[#1D1D1F] relative overflow-hidden">
+      <div className="h-48 bg-zinc-900 relative overflow-hidden">
         {dept.banner ? (
           <Image
             src={dept.banner}
@@ -49,10 +49,10 @@ export default async function DepartmentDetailPage({ params }: Props) {
             className="object-cover opacity-50"
           />
         ) : (
-          <div className="absolute inset-0 bg-linear-to-r from-[#1D1D1F] to-[#34A853]/20" />
+          <div className="absolute inset-0 bg-gradient-to-r from-zinc-900 to-emerald-500/20" />
         )}
         <div className="absolute bottom-6 left-8 right-0 flex items-end gap-6">
-          <div className="w-24 h-24 rounded-2xl bg-white border-4 border-white shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative">
+          <div className="w-24 h-24 rounded-2xl bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative">
             {dept.image ? (
               <Image
                 src={dept.image}
@@ -61,12 +61,12 @@ export default async function DepartmentDetailPage({ params }: Props) {
                 className="object-cover"
               />
             ) : (
-              <Building2 size={40} className="text-gray-400" />
+              <Building2 size={40} className="text-muted-foreground" />
             )}
           </div>
           <div className="mb-2 flex-1">
             <h1 className="text-3xl font-bold text-white">{dept.name}</h1>
-            <div className="flex items-center gap-2 text-gray-300 mt-1">
+            <div className="flex items-center gap-2 text-zinc-300 mt-1">
               <Building2 size={14} />
               <span className="text-sm">Department Overview</span>
             </div>
@@ -90,9 +90,9 @@ export default async function DepartmentDetailPage({ params }: Props) {
           {/* Left Column: Stats and Info */}
           <div className="lg:col-span-1 space-y-6">
             {/* Quick Info */}
-            <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-4">
-              <div className="flex items-center justify-between pb-4 border-b">
-                <h3 className="font-bold text-[#1D1D1F] flex items-center gap-2">
+            <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <div className="flex items-center justify-between pb-4 border-b border-border">
+                <h3 className="font-bold text-foreground flex items-center gap-2">
                   <Info size={16} />
                   Department Details
                 </h3>
@@ -100,15 +100,15 @@ export default async function DepartmentDetailPage({ params }: Props) {
 
               <div className="space-y-4">
                 <div>
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-muted-foreground">Description</label>
-                  <p className="text-sm mt-1 text-gray-600 leading-relaxed">
+                  <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Description</label>
+                  <p className="text-sm mt-1 text-muted-foreground leading-relaxed">
                     {dept.description || "No description provided for this department."}
                   </p>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-muted-foreground">Department Head</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Department Head</label>
                     <div className="flex items-center gap-2 mt-1">
                       {dept.head ? (
                         <>
@@ -119,14 +119,14 @@ export default async function DepartmentDetailPage({ params }: Props) {
                           <span className="text-sm font-medium truncate">{dept.head.user.name ?? "Unknown"}</span>
                         </>
                       ) : (
-                        <span className="text-sm text-gray-400 italic">Not assigned</span>
+                        <span className="text-sm text-muted-foreground italic">Not assigned</span>
                       )}
                     </div>
                   </div>
                   <div>
-                    <label className="text-[10px] font-bold text-gray-400 uppercase tracking-wider text-muted-foreground">Created On</label>
+                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Created On</label>
                     <div className="flex items-center gap-2 mt-1 text-sm font-medium">
-                      <Calendar size={14} className="text-gray-400" />
+                      <Calendar size={14} className="text-muted-foreground" />
                       {format(new Date(dept.createdAt), "MMM dd, yyyy")}
                     </div>
                   </div>
@@ -135,47 +135,47 @@ export default async function DepartmentDetailPage({ params }: Props) {
             </div>
 
             {/* Financial Status */}
-            <div className="bg-white p-6 rounded-2xl border shadow-sm space-y-4">
-              <h3 className="font-bold text-[#1D1D1F] flex items-center gap-2">
+            <div className="bg-card text-card-foreground p-6 rounded-2xl border border-border shadow-sm space-y-4">
+              <h3 className="font-bold text-foreground flex items-center gap-2">
                 <Wallet size={16} />
                 Current Budget
               </h3>
 
               {dept.activeBudget ? (
                 <div className="space-y-4">
-                  <div className="p-4 bg-green-50/50 rounded-xl border border-green-100">
+                  <div className="p-4 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
                     <div className="flex items-center justify-between mb-1">
-                      <span className="text-xs font-medium text-green-600">Active: {dept.activeBudget.name}</span>
-                      <Badge className="bg-green-600 text-white border-none text-[10px]">IN PROGRESS</Badge>
+                      <span className="text-xs font-medium text-emerald-600 dark:text-emerald-400">Active: {dept.activeBudget.name}</span>
+                      <Badge className="bg-emerald-600 dark:bg-emerald-500 text-white border-none text-[10px]">IN PROGRESS</Badge>
                     </div>
-                    <div className="text-2xl font-bold text-green-700">
+                    <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400">
                       KES {Number(dept.activeBudget.amount).toLocaleString()}
                     </div>
-                    <div className="text-[10px] text-green-600 mt-1">
+                    <div className="text-[10px] text-emerald-600 dark:text-emerald-400 mt-1">
                       Ends on {format(new Date(dept.activeBudget.periodEnd), "MMM dd, yyyy")}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex justify-between text-xs">
-                      <span className="text-gray-500">Utilization</span>
+                      <span className="text-muted-foreground">Utilization</span>
                       <span className="font-bold">{Math.round((Number(dept.activeBudget.spentAmount) / Number(dept.activeBudget.amount)) * 100) || 0}%</span>
                     </div>
-                    <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                    <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                       <div
-                        className="h-full bg-green-500 transition-all"
+                        className="h-full bg-emerald-500 transition-all"
                         style={{ width: `${Math.min(Math.round((Number(dept.activeBudget.spentAmount) / Number(dept.activeBudget.amount)) * 100), 100) || 0}%` }}
                       />
                     </div>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[10px] text-muted-foreground">
                       Spent: KES {Number(dept.activeBudget.spentAmount).toLocaleString()} / Total: KES {Number(dept.activeBudget.amount).toLocaleString()}
                     </p>
                   </div>
                 </div>
               ) : (
-                <div className="p-8 text-center border-2 border-dashed rounded-xl">
-                  <Wallet size={24} className="mx-auto text-gray-300 mb-2" />
-                  <p className="text-xs text-gray-500">No active budget set</p>
+                <div className="p-8 text-center border-2 border-dashed border-border rounded-xl">
+                  <Wallet size={24} className="mx-auto text-muted-foreground mb-2" />
+                  <p className="text-xs text-muted-foreground">No active budget set</p>
                 </div>
               )}
             </div>
@@ -184,16 +184,16 @@ export default async function DepartmentDetailPage({ params }: Props) {
           {/* Right Column: Main Content Tabs */}
           <div className="lg:col-span-2">
             <Tabs defaultValue="members" className="w-full">
-              <TabsList className="bg-white border p-1 rounded-xl w-full justify-start h-auto mb-6 overflow-x-auto">
-                <TabsTrigger value="members" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+              <TabsList className="bg-card border border-border p-1 rounded-xl w-full justify-start h-auto mb-6 overflow-x-auto">
+                <TabsTrigger value="members" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground">
                   <Users size={16} />
                   <span>Members</span>
                 </TabsTrigger>
-                <TabsTrigger value="budgets" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+                <TabsTrigger value="budgets" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground">
                   <Wallet size={16} />
                   <span>Budgets</span>
                 </TabsTrigger>
-                <TabsTrigger value="approvals" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-gray-100 data-[state=active]:text-[#1D1D1F]">
+                <TabsTrigger value="approvals" className="gap-2 px-6 py-2.5 rounded-lg data-[state=active]:bg-muted data-[state=active]:text-foreground text-muted-foreground">
                   <ShieldCheck size={16} />
                   <span>Approval Chains</span>
                 </TabsTrigger>
