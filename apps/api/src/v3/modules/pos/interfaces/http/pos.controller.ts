@@ -21,10 +21,8 @@ import {
 import { V3AuthCoreService } from "../../../auth-core/infrastructure/services/v3-auth-core.service";
 import { V3AuthGuard } from "@/v3/common/guards/v3-auth.guard";
 import { v3Context } from "@/v3/common/decorators/v3-context.decorator";
-import { type V3ApiContext } from "@repo/shared/api/v3";
-import { getPosProducts, getPosProductsDelta } from "@repo/shared/api/v3";
-import { ProcessSaleDto,
-  BatchProcessSaleDto, BatchProcessSaleDto } from "../../application/dto/sale.dto";
+import { type V3ApiContext, getPosProducts, getPosProductsDelta  } from "@repo/shared/api/v3";
+import { ProcessSaleDto, BatchProcessSaleDto } from "../../application/dto/sale.dto";
 import { ProcessSaleUseCase } from "../../application/use-cases/process-sale.use-case";
 import { SyncUseCase } from "../../application/use-cases/sync.use-case";
 import { GetTransactionsUseCase } from "../../application/use-cases/get-transactions.use-case";
