@@ -19,7 +19,7 @@ import { McpService, McpAuthContext } from "./mcp.service";
 import { randomUUID } from "crypto";
 
 @ApiTags("v3-mcp")
-@Controller("mcp")
+@Controller(["mcp", "v3/mcp", "api/v3/mcp"])
 export class McpController {
   private readonly logger = new Logger(McpController.name);
 
@@ -48,15 +48,32 @@ export class McpController {
     return null;
   }
 
-  private getAuthChallengeHeaders(req: any): Record<string, string> {
+  private getAuthChallengeHeaders(
+    req: any,
+    options?: { error?: string; errorDescription?: string; scope?: string }
+  ): Record<string, string> {
     const host =
       req.headers?.["x-forwarded-host"] || req.headers?.host || req.hostname || "api.scryme.tech";
     const proto = req.headers?.["x-forwarded-proto"] || req.protocol || "https";
     const origin = `${proto}://${host}`;
     const resourceMetadataUrl = `${origin}/.well-known/oauth-protected-resource/v3/mcp`;
+    const scope = options?.scope || "mcp:read mcp:write";
+
+    const parts = [
+      `Bearer realm="mcp"`,
+      `resource_metadata="${resourceMetadataUrl}"`,
+      `scope="${scope}"`,
+    ];
+
+    if (options?.error) {
+      parts.push(`error="${options.error}"`);
+    }
+    if (options?.errorDescription) {
+      parts.push(`error_description="${options.errorDescription.replace(/"/g, "")}"`);
+    }
 
     return {
-      "WWW-Authenticate": `Bearer resource_metadata="${resourceMetadataUrl}"`,
+      "WWW-Authenticate": parts.join(", "),
     };
   }
 
@@ -92,7 +109,7 @@ export class McpController {
       try {
         auth = await this.mcpService.validateApiKey(rawKey);
       } catch (e: any) {
-        const challenge = this.getAuthChallengeHeaders(req);
+        const challenge = this.getAuthChallengeHeaders(req, { error: "invalid_token", errorDescription: e.message });
         Object.entries(challenge).forEach(([k, v]) => res.header(k, v));
         return res.status(HttpStatus.UNAUTHORIZED).send({
           error: "Unauthorized",
@@ -185,7 +202,7 @@ export class McpController {
           lastActiveAt: Date.now(),
         });
       } catch (err: any) {
-        const challenge = this.getAuthChallengeHeaders(req);
+        const challenge = this.getAuthChallengeHeaders(req, { error: "invalid_token", errorDescription: err.message });
         Object.entries(challenge).forEach(([k, v]) => res.header(k, v));
         return res.status(HttpStatus.UNAUTHORIZED).send({
           jsonrpc: "2.0",

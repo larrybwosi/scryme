@@ -78,7 +78,11 @@ async function bootstrap() {
       "x-device-id",
       "x-standalone-key",
       "x-scryme-signature",
+      "x-mcp-api-key",
+      "mcp-session-id",
+      "Mcp-Session-Id",
     ],
+    exposedHeaders: ["mcp-session-id", "Mcp-Session-Id", "WWW-Authenticate"],
   });
 
   // Request logging for debugging - only in non-production or if explicitly enabled
@@ -159,6 +163,10 @@ async function bootstrap() {
       { path: "public-invoices/transactions/:transactionId/download", method: RequestMethod.GET },
       { path: "public-invoices/receipts/:transactionId/download", method: RequestMethod.GET },
       { path: "public-invoices/transactions/:transactionId/generate-public-link", method: RequestMethod.POST },
+      { path: "v3/mcp", method: RequestMethod.ALL },
+      { path: "v3/mcp/*", method: RequestMethod.ALL },
+      { path: "mcp", method: RequestMethod.ALL },
+      { path: "mcp/*", method: RequestMethod.ALL },
     ],
   });
   app.useGlobalPipes(

@@ -3,14 +3,15 @@ import { structureTool } from 'sanity/structure'
 import { visionTool } from '@sanity/vision'
 import { schemaTypes } from './src/sanity/schemas'
 import { structure } from './src/sanity/structure'
-import { env } from '@repo/env'
 
 const rawProjectId =
-  env.SANITY_STUDIO_PROJECT_ID ||
-  env.VITE_SANITY_PROJECT_ID ||
-  env.SANITY_PROJECT_ID ||
-  env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
+  process.env.SANITY_STUDIO_PROJECT_ID ||
+  process.env.VITE_SANITY_PROJECT_ID ||
+  process.env.SANITY_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
   ''
+
 const projectId =
   rawProjectId &&
   rawProjectId !== 'placeholder-project-id' &&
@@ -18,16 +19,19 @@ const projectId =
     ? rawProjectId
     : 'unconfigured-project-id'
 
+const dataset =
+  process.env.SANITY_STUDIO_DATASET ||
+  process.env.VITE_SANITY_DATASET ||
+  process.env.SANITY_DATASET ||
+  process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+  process.env.NEXT_PUBLIC_SANITY_DATASET ||
+  'production'
+
 export default defineConfig({
   name: 'default',
   title: 'Scryme Site Studio',
   projectId,
-  dataset:
-    env.SANITY_STUDIO_DATASET ||
-    env.VITE_SANITY_DATASET ||
-    env.SANITY_DATASET ||
-    env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
-    'production',
+  dataset,
   basePath: '/studio',
   plugins: [
     structureTool({

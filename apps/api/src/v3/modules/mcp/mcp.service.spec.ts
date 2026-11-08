@@ -18,6 +18,9 @@ vi.mock("@repo/db", () => ({
     oauthAccessToken: {
       findFirst: vi.fn(),
     },
+    session: {
+      findUnique: vi.fn(),
+    },
     member: {
       findFirst: vi.fn(),
     },

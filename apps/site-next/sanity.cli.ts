@@ -1,18 +1,23 @@
 import { defineCliConfig } from 'sanity/cli'
-import { env } from '@repo/env'
+
+const projectId =
+  process.env.SANITY_STUDIO_PROJECT_ID ||
+  process.env.VITE_SANITY_PROJECT_ID ||
+  process.env.SANITY_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
+  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID
+
+const dataset =
+  process.env.SANITY_STUDIO_DATASET ||
+  process.env.VITE_SANITY_DATASET ||
+  process.env.SANITY_DATASET ||
+  process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
+  process.env.NEXT_PUBLIC_SANITY_DATASET ||
+  'production'
 
 export default defineCliConfig({
   api: {
-    projectId:
-      env.SANITY_STUDIO_PROJECT_ID ||
-      env.VITE_SANITY_PROJECT_ID ||
-      env.SANITY_PROJECT_ID ||
-      env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID,
-    dataset:
-      env.SANITY_STUDIO_DATASET ||
-      env.VITE_SANITY_DATASET ||
-      env.SANITY_DATASET ||
-      env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
-      'production',
+    projectId,
+    dataset,
   },
 })

@@ -127,6 +127,39 @@ export class McpService {
       };
     }
 
+    // 1c. Check if token is a direct BetterAuth session token
+    const directSession = await db.session.findUnique({
+      where: { token: keyToken },
+      include: { user: true },
+    });
+
+    if (directSession) {
+      if (directSession.expiresAt && new Date(directSession.expiresAt) < new Date()) {
+        throw new UnauthorizedException("Session token has expired");
+      }
+
+      let organizationId = directSession.activeOrganizationId || (directSession.user as any)?.activeOrganizationId;
+      if (!organizationId && directSession.userId) {
+        const member = await db.member.findFirst({
+          where: { userId: directSession.userId, deletedAt: null },
+          select: { organizationId: true },
+        });
+        organizationId = member?.organizationId;
+      }
+
+      if (!organizationId) {
+        throw new UnauthorizedException("No active organization found for authenticated session");
+      }
+
+      return {
+        keyId: directSession.id,
+        organizationId,
+        name: directSession.user?.name || directSession.user?.email || "Session User",
+        scopes: ["mcp:read", "mcp:write"],
+        userId: directSession.userId,
+      };
+    }
+
         // 2. Look up in McpApiKey table
     const hashedKey = createHash("sha256").update(keyToken).digest("hex");
 

@@ -1,8 +1,17 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type CSSProperties,
+  type ReactNode,
+} from "react";
 import { toast } from "sonner";
-import { Badge } from "@repo/ui/components/ui/badge";
 import { Button } from "@repo/ui/components/ui/button";
 import { Input } from "@repo/ui/components/ui/input";
 import {
@@ -29,6 +38,7 @@ import {
 import {
   Sheet,
   SheetContent,
+  SheetDescription,
   SheetHeader,
   SheetTitle,
 } from "@repo/ui/components/ui/sheet";
@@ -44,46 +54,228 @@ import {
 } from "@repo/ui/components/ui/alert-dialog";
 import { Separator } from "@repo/ui/components/ui/separator";
 import {
-  Bell,
-  ChefHat,
-  CheckCircle2,
-  Clock,
-  Keyboard,
-  Search,
-  Flame,
-  Snowflake,
-  GlassWater,
-  Cake,
-  Beef,
-  Layers,
-  X,
   AlertTriangle,
-  Undo2,
-  Play,
+  Beef,
+  Bell,
+  Cake,
+  Check,
   CheckCheck,
-  Trash2,
+  CheckCircle2,
+  ChefHat,
+  Circle,
+  Clock,
+  Flame,
+  GlassWater,
   Info,
+  Keyboard,
+  Layers,
+  Maximize,
+  Minimize,
+  Monitor,
+  Moon,
+  Play,
   Plus,
-  ShieldAlert,
-  RefreshCcw,
   Printer,
+  RefreshCcw,
+  Search,
+  ShieldAlert,
+  Snowflake,
+  Sun,
+  Trash2,
+  Undo2,
   Users,
   Volume2,
   VolumeX,
+  WifiOff,
+  X,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 // ─── Types and Store ────────────────────────────────────────────────────────
-import { useKdsStore, KdsOrder as Order, OrderStatus, OrderType, ItemStatus, Station } from '@/store/kds-store';
-import { usePosStore } from '@/store/store';
-import { updateOrderStatusInKitchen, sendOrderEtaResponse } from '@/lib/kds';
+import {
+  useKdsStore,
+  KdsOrder as Order,
+  OrderStatus,
+  OrderType,
+  ItemStatus,
+  Station,
+} from "@/store/kds-store";
+import { usePosStore } from "@/store/store";
+import { updateOrderStatusInKitchen, sendOrderEtaResponse } from "@/lib/kds";
+
+type Tone =
+  | "amber"
+  | "blue"
+  | "green"
+  | "red"
+  | "violet"
+  | "orange"
+  | "pink"
+  | "slate";
+type Filter = OrderStatus | "all" | "active";
+type SortKey = "time_asc" | "time_desc" | "priority" | "table";
+type ThemePref = "light" | "dark" | "system";
+type TimerLevel = "ok" | "warn" | "late" | "idle";
+
+// ─── Design tokens ──────────────────────────────────────────────────────────
+// Status colours are defined once, with separate light/dark values so every
+// tint keeps WCAG-friendly contrast in both themes. Surfaces, borders and text
+// come from the shared shadcn tokens (bg-card, border-border, text-foreground…)
+// so the page follows the app's theme automatically.
+
+const KDS_STYLES = `
+:root{
+  --kds-amber:#b45309; --kds-blue:#1d4ed8; --kds-green:#15803d; --kds-red:#dc2626;
+  --kds-violet:#6d28d9; --kds-orange:#c2410c; --kds-pink:#be185d; --kds-slate:#64748b;
+  --kds-on-tone:#ffffff;
+}
+.dark{
+  --kds-amber:#fbbf24; --kds-blue:#60a5fa; --kds-green:#4ade80; --kds-red:#f87171;
+  --kds-violet:#a78bfa; --kds-orange:#fb923c; --kds-pink:#f472b6; --kds-slate:#94a3b8;
+  --kds-on-tone:#0b0d10;
+}
+.tone-amber{--tone:var(--kds-amber)} .tone-blue{--tone:var(--kds-blue)}
+.tone-green{--tone:var(--kds-green)} .tone-red{--tone:var(--kds-red)}
+.tone-violet{--tone:var(--kds-violet)} .tone-orange{--tone:var(--kds-orange)}
+.tone-pink{--tone:var(--kds-pink)} .tone-slate{--tone:var(--kds-slate)}
+.kds-text{color:var(--tone)}
+.kds-bar{background:var(--tone)}
+.kds-accent{border-left:4px solid var(--tone)}
+.kds-chip{color:var(--tone);background:color-mix(in srgb,var(--tone) 12%,transparent);border:1px solid color-mix(in srgb,var(--tone) 32%,transparent)}
+.kds-chip-btn:hover{background:color-mix(in srgb,var(--tone) 22%,transparent)}
+.kds-solid{background:var(--tone);color:var(--kds-on-tone);border:1px solid var(--tone)}
+.kds-solid:hover{filter:brightness(1.08)}
+@keyframes kdsUrgent{0%,100%{box-shadow:0 0 0 0 transparent}50%{box-shadow:0 0 0 5px color-mix(in srgb,var(--kds-red) 22%,transparent)}}
+@keyframes kdsFlash{from{opacity:.65}to{opacity:1}}
+@keyframes kdsBlink{0%,90%,100%{opacity:1}95%{opacity:.25}}
+.kds-urgent{animation:kdsUrgent 1.6s ease-in-out infinite}
+.kds-late{animation:kdsFlash .9s ease-in-out infinite alternate}
+.kds-blink{animation:kdsBlink 2s ease-in-out infinite}
+@media (prefers-reduced-motion:reduce){.kds-urgent,.kds-late,.kds-blink{animation:none}}
+`;
+
+const tone = (t: Tone) => `tone-${t}`;
+
+const STATION_ORDER: Station[] = ["all", "hot", "cold", "grill", "dessert", "bar"];
+
+const STATION_CONFIG: Record<
+  Station,
+  { label: string; tone: Tone; icon: LucideIcon; desc: string }
+> = {
+  all: { label: "All Stations", tone: "amber", icon: Layers, desc: "View every active order" },
+  hot: { label: "Hot Line", tone: "orange", icon: Flame, desc: "Pasta, pizza, fried items" },
+  cold: { label: "Cold Station", tone: "blue", icon: Snowflake, desc: "Salads & cold starters" },
+  grill: { label: "Grill", tone: "amber", icon: Beef, desc: "Steaks, burgers & chops" },
+  dessert: { label: "Desserts", tone: "pink", icon: Cake, desc: "Sweet courses" },
+  bar: { label: "Bar", tone: "violet", icon: GlassWater, desc: "Drinks & cocktails" },
+};
+
+const STATUS_META: Record<OrderStatus, { label: string; tone: Tone }> = {
+  new: { label: "New", tone: "amber" },
+  in_progress: { label: "Cooking", tone: "blue" },
+  done: { label: "Done", tone: "green" },
+  urgent: { label: "Urgent", tone: "red" },
+  voided: { label: "Voided", tone: "slate" },
+};
+
+const TYPE_META: Record<OrderType, { label: string; tone: Tone }> = {
+  dine: { label: "Dine In", tone: "blue" },
+  takeout: { label: "Takeout", tone: "amber" },
+  delivery: { label: "Delivery", tone: "green" },
+  drive: { label: "Drive-Thru", tone: "violet" },
+};
+
+const TIMER_TONE: Record<TimerLevel, Tone> = {
+  ok: "green",
+  warn: "amber",
+  late: "red",
+  idle: "slate",
+};
+
+const ITEM_STATUS_META: Record<
+  ItemStatus,
+  { label: string; next: ItemStatus; nextLabel: string; tone: Tone; icon: LucideIcon }
+> = {
+  pending: { label: "Pending", next: "cooking", nextLabel: "cooking", tone: "slate", icon: Circle },
+  cooking: { label: "Cooking", next: "ready", nextLabel: "ready", tone: "amber", icon: Flame },
+  ready: { label: "Ready", next: "pending", nextLabel: "pending", tone: "green", icon: Check },
+};
+
+const FILTERS: { id: Filter; label: string; tone?: Tone }[] = [
+  { id: "active", label: "Active" },
+  { id: "new", label: "New" },
+  { id: "in_progress", label: "Cooking" },
+  { id: "urgent", label: "Urgent", tone: "red" },
+  { id: "done", label: "Done" },
+  { id: "all", label: "All" },
+];
+
+const SHORTCUTS: { keys: string[]; label: string }[] = [
+  { keys: ["Space", "Enter", "B"], label: "Bump selected order (mark done)" },
+  { keys: ["S"], label: "Start selected order" },
+  { keys: ["U"], label: "Toggle urgent on selected order" },
+  { keys: ["Del"], label: "Void selected order (asks to confirm)" },
+  { keys: ["R"], label: "Open recall tray" },
+  { keys: ["/", "F"], label: "Focus search" },
+  { keys: ["?"], label: "Show this help" },
+  { keys: ["↑", "↓", "←", "→"], label: "Move between orders" },
+  { keys: ["Esc"], label: "Deselect order / close panels" },
+];
+
+const LATE_AFTER_MIN = 15;
+const WARN_AFTER_MIN = 8;
+
+// ─── Helpers ────────────────────────────────────────────────────────────────
+
+function formatTimer(ms: number): string {
+  const total = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(total / 60);
+  return `${m}:${String(total % 60).padStart(2, "0")}`;
+}
+
+function timerLevel(ms: number): TimerLevel {
+  const m = ms / 60_000;
+  if (m < WARN_AFTER_MIN) return "ok";
+  if (m < LATE_AFTER_MIN) return "warn";
+  return "late";
+}
+
+const isActiveStatus = (s: OrderStatus) => s !== "done" && s !== "voided";
+
+function matchesFilter(status: OrderStatus, filter: Filter) {
+  if (filter === "all") return true;
+  if (filter === "active") return isActiveStatus(status);
+  return status === filter;
+}
+
+const getOrder = (id: string) =>
+  useKdsStore.getState().orders.find((o) => o.id === id);
+
+// ─── Audio (single shared context, unlocked on first interaction) ───────────
+
+let audioCtx: AudioContext | null = null;
+
+function getAudioCtx(): AudioContext | null {
+  if (typeof window === "undefined") return null;
+  if (!audioCtx) {
+    const Ctor =
+      window.AudioContext ||
+      (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!Ctor) return null;
+    audioCtx = new Ctor();
+  }
+  return audioCtx;
+}
 
 function playOrderChime() {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = getAudioCtx();
+    if (!ctx) return;
+    if (ctx.state === "suspended") void ctx.resume();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
-    osc.type = 'sine';
+    osc.type = "sine";
     osc.frequency.setValueAtTime(587.33, ctx.currentTime);
     osc.frequency.setValueAtTime(880, ctx.currentTime + 0.15);
     gain.gain.setValueAtTime(0.3, ctx.currentTime);
@@ -97,528 +289,627 @@ function playOrderChime() {
   }
 }
 
-type SortKey = "time_asc" | "time_desc" | "priority" | "table";
+// ─── Hooks ──────────────────────────────────────────────────────────────────
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────
+// One shared 1s ticker for every timer on screen.
+const tickListeners = new Set<() => void>();
+let tickValue = 0;
+let tickHandle: ReturnType<typeof setInterval> | null = null;
 
-function formatTimer(ms: number): string {
-  const s = Math.floor(ms / 1000);
-  const m = Math.floor(s / 60);
-  return `${m}:${String(s % 60).padStart(2, "0")}`;
-}
-
-function timerLevel(ms: number): "ok" | "warn" | "late" {
-  const m = ms / 60_000;
-  if (m < 8) return "ok";
-  if (m < 15) return "warn";
-  return "late";
-}
-
-// ─── Station Config ────────────────────────────────────────────────────────────
-
-const STATION_CONFIG: Record<
-  Station,
-  { label: string; color: string; icon: React.ReactNode; desc: string }
-> = {
-  all: {
-    label: "All Stations",
-    color: "#e8a020",
-    icon: <Layers className="w-3.5 h-3.5" />,
-    desc: "View every active order",
-  },
-  hot: {
-    label: "Hot Line",
-    color: "#ff6b35",
-    icon: <Flame className="w-3.5 h-3.5" />,
-    desc: "Pasta, pizza, fried items",
-  },
-  cold: {
-    label: "Cold Station",
-    color: "#3b9eff",
-    icon: <Snowflake className="w-3.5 h-3.5" />,
-    desc: "Salads & cold starters",
-  },
-  grill: {
-    label: "Grill",
-    color: "#ef9f27",
-    icon: <Beef className="w-3.5 h-3.5" />,
-    desc: "Steaks, burgers & chops",
-  },
-  dessert: {
-    label: "Desserts",
-    color: "#d4537e",
-    icon: <Cake className="w-3.5 h-3.5" />,
-    desc: "Sweet courses",
-  },
-  bar: {
-    label: "Bar",
-    color: "#a78bfa",
-    icon: <GlassWater className="w-3.5 h-3.5" />,
-    desc: "Drinks & cocktails",
-  },
-};
-
-// ─── Keyboard Shortcuts Guide ─────────────────────────────────────────────────
-
-const SHORTCUTS = [
-  { key: "Space / Enter", label: "Bump selected order (mark done)" },
-  { key: "S", label: "Start selected order (begin cooking)" },
-  { key: "U", label: "Mark selected order as URGENT" },
-  { key: "Del", label: "Void selected order" },
-  { key: "R", label: "Toggle recall tray" },
-  { key: "F", label: "Focus search box" },
-  { key: "↑ ↓ ← →", label: "Navigate between orders" },
-  { key: "Esc", label: "Deselect / close dialogs" },
-];
-
-// ─── Item Status Cycle Indicator ──────────────────────────────────────────────
-
-function ItemStatusDot({
-  status,
-  onClick,
-}: {
-  status: ItemStatus;
-  onClick: (e: React.MouseEvent) => void;
-}) {
-  const config = {
-    pending: {
-      label: "Pending",
-      next: "cooking",
-      cls: "bg-[#3a3f4a] hover:bg-[#555b68]",
-    },
-    cooking: {
-      label: "Cooking",
-      next: "ready",
-      cls: "bg-[#e8a020] shadow-[0_0_6px_rgba(232,160,32,0.6)] hover:bg-amber-400",
-    },
-    ready: {
-      label: "Ready",
-      next: "pending",
-      cls: "bg-[#2ecc71] shadow-[0_0_6px_rgba(46,204,113,0.6)] hover:bg-emerald-400",
-    },
+function subscribeNow(cb: () => void) {
+  tickListeners.add(cb);
+  if (!tickHandle) {
+    tickValue = Date.now();
+    tickHandle = setInterval(() => {
+      tickValue = Date.now();
+      tickListeners.forEach((l) => l());
+    }, 1000);
+  }
+  return () => {
+    tickListeners.delete(cb);
+    if (!tickListeners.size && tickHandle) {
+      clearInterval(tickHandle);
+      tickHandle = null;
+    }
   };
-  const c = config[status];
-  return (
-    <TooltipProvider delayDuration={200}>
-      <Tooltip>
-        <TooltipTrigger asChild>
-          <button
-            onClick={onClick}
-            className={cn(
-              "w-3 h-3 rounded-full flex-shrink-0 mt-0.5 transition-all duration-150 cursor-pointer hover:scale-150 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-1 focus:ring-offset-[#111318]",
-              c.cls
-            )}
-            aria-label={`Item is ${c.label}. Click to mark as ${c.next}`}
-          />
-        </TooltipTrigger>
-        <TooltipContent
-          side="left"
-          className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]"
-        >
-          <p>
-            <span className="font-bold">{c.label}</span> — click → {c.next}
-          </p>
-        </TooltipContent>
-      </Tooltip>
-    </TooltipProvider>
+}
+
+function useNow() {
+  return useSyncExternalStore(subscribeNow, () => tickValue || Date.now(), () => 0);
+}
+
+function useOnline() {
+  return useSyncExternalStore(
+    (cb) => {
+      window.addEventListener("online", cb);
+      window.addEventListener("offline", cb);
+      return () => {
+        window.removeEventListener("online", cb);
+        window.removeEventListener("offline", cb);
+      };
+    },
+    () => navigator.onLine,
+    () => true
   );
 }
 
-// ─── Order Card ───────────────────────────────────────────────────────────────
+/** localStorage-backed state that is safe for SSR / hydration. */
+function usePersistentState<T>(key: string, initial: T) {
+  const [value, setValue] = useState<T>(initial);
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(key);
+      if (raw !== null) setValue(JSON.parse(raw) as T);
+    } catch {
+      /* ignore */
+    }
+    setReady(true);
+  }, [key]);
+  useEffect(() => {
+    if (!ready) return;
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch {
+      /* ignore */
+    }
+  }, [key, value, ready]);
+  return [value, setValue, ready] as const;
+}
+
+/**
+ * Light / dark / system preference. Toggles the `dark` class on <html> and
+ * stores the choice under the same key next-themes uses ("theme"), so it stays
+ * compatible if your app already has a ThemeProvider.
+ */
+function useThemePreference() {
+  const [pref, setPref] = useState<ThemePref | null>(null);
+
+  useEffect(() => {
+    let stored: ThemePref = "system";
+    try {
+      const s = localStorage.getItem("theme");
+      if (s === "light" || s === "dark" || s === "system") stored = s;
+    } catch {
+      /* ignore */
+    }
+    setPref(stored);
+  }, []);
+
+  useEffect(() => {
+    if (pref === null) return;
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const apply = () => {
+      const dark = pref === "dark" || (pref === "system" && mq.matches);
+      document.documentElement.classList.toggle("dark", dark);
+      document.documentElement.style.colorScheme = dark ? "dark" : "light";
+    };
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, [pref]);
+
+  const update = useCallback((next: ThemePref) => {
+    setPref(next);
+    try {
+      localStorage.setItem("theme", next);
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  return [pref ?? "system", update] as const;
+}
+
+function useElapsed(order: Order) {
+  const now = useNow();
+  const terminal = order.status === "done" || order.status === "voided";
+  const end =
+    order.status === "done" && order.bumpedAt ? order.bumpedAt : now;
+  const elapsed = Math.max(0, end - order.createdAt);
+  const level: TimerLevel = terminal ? "idle" : timerLevel(elapsed);
+  return { elapsed, level };
+}
+
+// ─── Small building blocks ──────────────────────────────────────────────────
+
+function Tip({
+  label,
+  side = "bottom",
+  children,
+}: {
+  label: ReactNode;
+  side?: "top" | "bottom" | "left" | "right";
+  children: ReactNode;
+}) {
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>{children}</TooltipTrigger>
+      <TooltipContent side={side} className="text-xs">
+        {label}
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
+function Kbd({ children }: { children: ReactNode }) {
+  return (
+    <kbd className="rounded-md border border-border bg-muted px-1.5 py-0.5 font-mono text-[11px] font-medium text-muted-foreground">
+      {children}
+    </kbd>
+  );
+}
+
+function IconAction({
+  label,
+  onClick,
+  pressed,
+  active,
+  badge,
+  children,
+}: {
+  label: string;
+  onClick: () => void;
+  pressed?: boolean;
+  active?: boolean;
+  badge?: number;
+  children: ReactNode;
+}) {
+  return (
+    <Tip label={label}>
+      <Button
+        type="button"
+        size="icon"
+        variant="ghost"
+        onClick={onClick}
+        aria-label={label}
+        aria-pressed={pressed}
+        className={cn(
+          "relative size-9 text-muted-foreground hover:text-foreground",
+          active && "text-primary"
+        )}
+      >
+        {children}
+        {!!badge && (
+          <span className="absolute -right-0.5 -top-0.5 grid min-w-4 place-items-center rounded-full bg-primary px-1 text-[10px] font-bold leading-4 text-primary-foreground">
+            {badge > 99 ? "99+" : badge}
+          </span>
+        )}
+      </Button>
+    </Tip>
+  );
+}
+
+function StatPill({
+  count,
+  label,
+  tone: t,
+  pulse,
+}: {
+  count: number;
+  label: string;
+  tone: Tone;
+  pulse?: boolean;
+}) {
+  return (
+    <div
+      className={cn(
+        "kds-chip inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold",
+        tone(t)
+      )}
+      title={`${count} ${label}`}
+    >
+      <span
+        className={cn("kds-bar size-1.5 rounded-full", pulse && "animate-pulse")}
+        aria-hidden
+      />
+      <span className="font-mono text-sm font-bold tabular-nums">{count}</span>
+      <span className="hidden sm:inline">{label}</span>
+    </div>
+  );
+}
+
+function LiveClock() {
+  const now = useNow();
+  const ready = now > 0;
+  const d = new Date(now);
+  return (
+    <div className="flex items-baseline gap-2 font-mono">
+      <span className="text-xl font-bold tabular-nums tracking-tight">
+        {ready ? d.toLocaleTimeString("en-GB", { hour12: false }) : "--:--:--"}
+      </span>
+      <span className="hidden text-xs text-muted-foreground sm:inline">
+        {ready
+          ? d.toLocaleDateString("en-GB", { weekday: "short", day: "numeric", month: "short" })
+          : ""}
+      </span>
+    </div>
+  );
+}
+
+const THEME_META: Record<ThemePref, { icon: LucideIcon; label: string }> = {
+  system: { icon: Monitor, label: "System" },
+  light: { icon: Sun, label: "Light" },
+  dark: { icon: Moon, label: "Dark" },
+};
+const THEME_NEXT: Record<ThemePref, ThemePref> = {
+  system: "light",
+  light: "dark",
+  dark: "system",
+};
+
+function ThemeToggle({
+  pref,
+  onChange,
+}: {
+  pref: ThemePref;
+  onChange: (p: ThemePref) => void;
+}) {
+  const Icon = THEME_META[pref].icon;
+  const next = THEME_NEXT[pref];
+  return (
+    <IconAction
+      label={`Theme: ${THEME_META[pref].label}. Switch to ${THEME_META[next].label}`}
+      onClick={() => onChange(next)}
+    >
+      <Icon className="size-4" />
+    </IconAction>
+  );
+}
+
+// ─── Item status button ─────────────────────────────────────────────────────
+
+function ItemStatusButton({
+  name,
+  status,
+  onClick,
+}: {
+  name: string;
+  status: ItemStatus;
+  onClick: () => void;
+}) {
+  const c = ITEM_STATUS_META[status];
+  const Icon = c.icon;
+  return (
+    <Tip label={`${c.label} — tap to mark ${c.nextLabel}`} side="left">
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onClick();
+        }}
+        aria-label={`${name}: ${c.label}. Activate to mark ${c.nextLabel}`}
+        className={cn(
+          "kds-chip kds-chip-btn grid size-9 shrink-0 place-items-center rounded-full transition active:scale-90",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card",
+          tone(c.tone),
+          status === "ready" && "kds-solid"
+        )}
+      >
+        <Icon className="size-4" aria-hidden />
+      </button>
+    </Tip>
+  );
+}
+
+// ─── Order card ─────────────────────────────────────────────────────────────
 
 interface OrderCardProps {
   order: Order;
-  now: number;
   selected: boolean;
-  onSelect: () => void;
-  onStart: () => void;
-  onBump: () => void;
-  onVoid: () => void;
-  onRecall: () => void;
-  onCycleItem: (itemId: string) => void;
+  onSelect: (id: string) => void;
+  onStart: (id: string) => void;
+  onBump: (id: string) => void;
+  onVoid: (id: string) => void;
+  onRecall: (id: string) => void;
+  onToggleUrgent: (id: string) => void;
+  onToggleFire: (id: string) => void;
+  onCycleItem: (orderId: string, itemId: string) => void;
 }
 
-function OrderCard({
+const actionBase =
+  "inline-flex h-10 select-none items-center justify-center gap-1.5 rounded-lg px-3 text-xs font-bold uppercase tracking-wide transition active:scale-[0.97] " +
+  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 focus-visible:ring-offset-card";
+
+const OrderCard = memo(function OrderCard({
   order,
-  now,
   selected,
   onSelect,
   onStart,
   onBump,
   onVoid,
   onRecall,
+  onToggleUrgent,
+  onToggleFire,
   onCycleItem,
 }: OrderCardProps) {
-  const elapsed = now - order.createdAt;
-  const level = timerLevel(elapsed);
-
-  const typeLabels: Record<OrderType, string> = {
-    dine: "Dine In",
-    takeout: "Takeout",
-    delivery: "Delivery",
-    drive: "Drive-Thru",
-  };
-  const typeColors: Record<OrderType, string> = {
-    dine: "text-[#3b9eff] border-[#3b9eff]/40 bg-[#3b9eff]/10",
-    takeout: "text-[#e8a020] border-[#e8a020]/40 bg-[#e8a020]/10",
-    delivery: "text-[#2ecc71] border-[#2ecc71]/40 bg-[#2ecc71]/10",
-    drive: "text-[#a78bfa] border-[#a78bfa]/40 bg-[#a78bfa]/10",
-  };
-
-  const statusBorderColor: Record<OrderStatus, string> = {
-    new: "border-l-[#e8a020]",
-    in_progress: "border-l-[#3b9eff]",
-    done: "border-l-[#2ecc71]",
-    urgent: "border-l-[#ff4757]",
-    voided: "border-l-[#555b68]",
-  };
-
-  const statusBadge: Record<
-    OrderStatus,
-    { label: string; cls: string }
-  > = {
-    new: { label: "NEW", cls: "bg-[#e8a020]/15 text-[#e8a020] border-[#e8a020]/40" },
-    in_progress: {
-      label: "COOKING",
-      cls: "bg-[#3b9eff]/15 text-[#3b9eff] border-[#3b9eff]/40",
-    },
-    done: { label: "DONE", cls: "bg-[#2ecc71]/15 text-[#2ecc71] border-[#2ecc71]/40" },
-    urgent: {
-      label: "URGENT",
-      cls: "bg-[#ff4757]/15 text-[#ff4757] border-[#ff4757]/40",
-    },
-    voided: { label: "VOIDED", cls: "bg-[#555b68]/15 text-[#555b68] border-[#555b68]/40" },
-  };
-
-  const timerColors = {
-    ok: "text-[#2ecc71] border-[#2ecc71]/30 bg-[#2ecc71]/8",
-    warn: "text-[#e8a020] border-[#e8a020]/40 bg-[#e8a020]/10",
-    late: "text-[#ff4757] border-[#ff4757]/40 bg-[#ff4757]/10",
-  };
-
-  const isUrgentPulse = order.status === "urgent";
+  const { elapsed, level } = useElapsed(order);
+  const status = STATUS_META[order.status];
+  const type = TYPE_META[order.type];
+  const terminal = order.status === "done" || order.status === "voided";
   const canStart = order.status === "new" || order.status === "urgent";
-  const canBump =
-    order.status === "in_progress" ||
-    order.status === "new" ||
-    order.status === "urgent";
-  const isDoneOrVoided =
-    order.status === "done" || order.status === "voided";
-
-  const allItemsReady = order.items.every((i) => i.status === "ready");
+  const canBump = !terminal;
+  const readyCount = order.items.filter((i) => i.status === "ready").length;
+  const allReady = order.items.length > 0 && readyCount === order.items.length;
+  const progress = terminal ? 0 : Math.min(elapsed / (LATE_AFTER_MIN * 60_000), 1) * 100;
 
   return (
-    <div
+    <li
       id={`card-${order.id}`}
-      onClick={onSelect}
-      role="button"
       tabIndex={0}
-      aria-label={`Order ${order.num}, ${order.table}, ${order.status}`}
-      onKeyDown={(e) => e.key === "Enter" && onSelect()}
+      aria-current={selected ? "true" : undefined}
+      aria-label={`Order ${order.num}, ${order.table || type.label}, ${status.label}`}
+      onClick={() => onSelect(order.id)}
+      onFocus={() => !selected && onSelect(order.id)}
       className={cn(
-        "flex flex-col rounded-xl border border-[#252830] bg-[#111318] overflow-hidden cursor-pointer",
-        "border-l-4",
-        statusBorderColor[order.status],
-        "hover:-translate-y-0.5 hover:border-[#353a44] hover:shadow-lg hover:shadow-black/40",
-        "transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#3b9eff]",
-        selected &&
-          "!border-[#3b9eff] !border-l-4 shadow-[0_0_0_2px_rgba(59,158,255,0.25)] hover:!border-[#3b9eff]",
-        isUrgentPulse && "animate-[urgentPulse_1.5s_ease-in-out_infinite]",
-        isDoneOrVoided && "opacity-55"
+        "kds-accent relative flex select-none flex-col overflow-hidden rounded-xl border border-border bg-card shadow-sm transition-all",
+        "motion-safe:animate-in motion-safe:fade-in-0",
+        "focus-visible:outline-none",
+        tone(status.tone),
+        selected
+          ? "ring-2 ring-primary ring-offset-2 ring-offset-background"
+          : "hover:border-foreground/25 hover:shadow-md",
+        order.status === "urgent" && "kds-urgent",
+        terminal && "opacity-60"
       )}
     >
-      {/* ── Header ── */}
-      <div className="flex items-center gap-2 px-3 py-2.5 border-b border-[#1d2128]">
-        <span className="font-mono text-[17px] font-bold text-[#f0f2f5] leading-none tracking-tight">
-          {order.num}
-        </span>
+      {/* Ageing bar */}
+      <div className="absolute inset-x-0 top-0 h-1 bg-muted" aria-hidden>
+        <div
+          className={cn("kds-bar h-full transition-[width] duration-1000", tone(TIMER_TONE[level]))}
+          style={{ width: `${progress}%` }}
+        />
+      </div>
 
-        <span
-          className={cn(
-            "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border",
-            typeColors[order.type]
-          )}
-        >
-          {typeLabels[order.type]}
-        </span>
-
-        <span
-          className={cn(
-            "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border",
-            statusBadge[order.status].cls
-          )}
-        >
-          {statusBadge[order.status].label}
-        </span>
-
-        {order.status === "urgent" && (
-          <span
-            className="flex items-center gap-1 text-[#ff4757]"
-            title="URGENT ORDER"
+      {/* Header */}
+      <div className="flex flex-col gap-2 px-3 pb-2 pt-3.5">
+        <div className="flex items-start gap-2">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-baseline gap-x-2">
+              <span className="font-mono text-xl font-bold leading-none tracking-tight">
+                {order.num}
+              </span>
+              <span className="text-sm font-semibold">
+                {order.table || type.label}
+                {order.covers ? (
+                  <span className="font-normal text-muted-foreground"> · {order.covers} pax</span>
+                ) : null}
+              </span>
+            </div>
+          </div>
+          <Tip
+            label={
+              level === "ok"
+                ? "On time"
+                : level === "warn"
+                  ? "Getting slow — check on this order"
+                  : level === "late"
+                    ? "Very late — prioritise now"
+                    : "Timer stopped"
+            }
           >
-            <AlertTriangle className="w-3 h-3 fill-[#ff4757]" />
+            <span
+              className={cn(
+                "kds-chip inline-flex items-center gap-1 rounded-md px-2 py-1 font-mono text-sm font-bold tabular-nums",
+                tone(TIMER_TONE[level]),
+                level === "late" && "kds-late"
+              )}
+            >
+              <Clock className="size-3.5 opacity-70" aria-hidden />
+              {formatTimer(elapsed)}
+            </span>
+          </Tip>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-1.5">
+          <span
+            className={cn(
+              "kds-chip rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+              tone(type.tone)
+            )}
+          >
+            {type.label}
           </span>
-        )}
-
-        {allItemsReady && !isDoneOrVoided && (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <CheckCircle2 className="w-3.5 h-3.5 text-[#2ecc71]" />
-              </TooltipTrigger>
-              <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                All items ready — bump now!
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-
-        {/* Course Fire Indicator button */}
-        {!isDoneOrVoided && (
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    useKdsStore.getState().toggleCourseFire(order.id);
-                  }}
-                  className={cn(
-                    "text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-md border flex items-center gap-1 transition-all",
-                    order.isFired
-                      ? "bg-[#ff6b35]/25 text-[#ff6b35] border-[#ff6b35]/50 animate-pulse"
-                      : "bg-[#1a1d24] text-[#8b919e] border-[#353a44] hover:text-[#f0f2f5]"
-                  )}
-                >
-                  <Flame className="w-2.5 h-2.5" />
-                  {order.isFired ? "FIRED" : "FIRE"}
-                </button>
-              </TooltipTrigger>
-              <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                Toggle course fire pacing
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
-        )}
-
-        <div className="ml-auto flex items-center gap-2">
-          <span className="text-[11px] text-[#555b68] font-mono hidden sm:inline">
-            {order.table}
-            {order.covers ? ` · ${order.covers}pax` : ""}
+          <span
+            className={cn(
+              "kds-chip inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+              tone(status.tone)
+            )}
+          >
+            {order.status === "urgent" && <AlertTriangle className="size-3" aria-hidden />}
+            {status.label}
           </span>
-
-          {/* Timer */}
-          <TooltipProvider delayDuration={200}>
-            <Tooltip>
-              <TooltipTrigger>
-                <span
-                  className={cn(
-                    "font-mono text-[12px] font-bold px-2 py-0.5 rounded-md border flex items-center gap-1",
-                    timerColors[level],
-                    level === "late" &&
-                      "animate-[timerFlash_0.8s_ease-in-out_infinite_alternate]"
-                  )}
-                >
-                  <Clock className="w-3 h-3 opacity-70" />
-                  {formatTimer(elapsed)}
-                </span>
-              </TooltipTrigger>
-              <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                {level === "ok" && "On time"}
-                {level === "warn" && "Getting slow — check on this order"}
-                {level === "late" && "⚠️ Very late! Prioritize immediately"}
-              </TooltipContent>
-            </Tooltip>
-          </TooltipProvider>
+          {!terminal && (
+            <Tip label="Toggle course fire pacing">
+              <button
+                type="button"
+                aria-pressed={!!order.isFired}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleFire(order.id);
+                }}
+                className={cn(
+                  "kds-chip kds-chip-btn inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider transition",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                  order.isFired ? tone("orange") : tone("slate")
+                )}
+              >
+                <Flame className={cn("size-3", order.isFired && "animate-pulse")} aria-hidden />
+                {order.isFired ? "Fired" : "Fire"}
+              </button>
+            </Tip>
+          )}
+          {allReady && !terminal && (
+            <span
+              className={cn(
+                "kds-chip inline-flex items-center gap-1 rounded-md px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider",
+                tone("green")
+              )}
+            >
+              <CheckCircle2 className="size-3" aria-hidden />
+              All ready
+            </span>
+          )}
         </div>
       </div>
 
-      {/* ── Items ── */}
-      <div className="px-3 py-1 flex-1">
-        {order.items.map((item, i) => (
-          <div
-            key={item.id}
-            className={cn(
-              "flex items-start gap-2 py-[5px]",
-              i < order.items.length - 1 && "border-b border-[#1d2128]"
-            )}
-          >
-            <span className="font-mono text-[13px] font-bold text-[#e8a020] min-w-[20px] pt-px leading-tight">
+      {/* Items */}
+      <ul className="flex-1 divide-y divide-border border-t border-border px-3">
+        {order.items.map((item) => (
+          <li key={item.id} className="flex items-start gap-3 py-2.5">
+            <span className={cn("kds-text min-w-7 pt-px font-mono text-lg font-bold leading-tight", tone("amber"))}>
               ×{item.quantity}
             </span>
-            <div className="flex-1 min-w-0">
-              <div className="text-[13px] font-semibold text-[#f0f2f5] truncate leading-tight flex items-center gap-1.5">
-                {item.name}
+            <div className="min-w-0 flex-1">
+              <div
+                className={cn(
+                  "flex flex-wrap items-center gap-x-1.5 text-sm font-semibold leading-snug",
+                  item.status === "ready" && "text-muted-foreground"
+                )}
+              >
+                <span className="break-words">{item.name}</span>
                 {item.course && (
-                  <span className="text-[9px] font-mono px-1 rounded bg-[#1a1d24] border border-[#353a44] text-[#e8a020]">
+                  <span className="rounded border border-border bg-muted px-1 font-mono text-[10px] font-medium text-muted-foreground">
                     {item.course}
                   </span>
                 )}
               </div>
-              {item.modifiers && (
-                <div
-                  className={cn(
-                    "text-[10px] truncate leading-tight mt-0.5",
-                    item.isAllergy
-                      ? "text-[#ff4757] font-bold not-italic flex items-center gap-1"
-                      : "text-[#555b68] italic"
-                  )}
-                >
-                  {item.isAllergy && (
-                    <AlertTriangle className="w-2.5 h-2.5 inline flex-shrink-0" />
-                  )}
-                  {item.modifiers}
-                </div>
-              )}
+              {item.modifiers &&
+                (item.isAllergy ? (
+                  <div
+                    className={cn(
+                      "kds-chip mt-1 flex items-start gap-1.5 rounded-md px-2 py-1 text-xs font-semibold",
+                      tone("red")
+                    )}
+                  >
+                    <AlertTriangle className="mt-px size-3.5 shrink-0" aria-hidden />
+                    <span className="break-words">
+                      <span className="uppercase">Allergy: </span>
+                      {item.modifiers}
+                    </span>
+                  </div>
+                ) : (
+                  <div className="mt-0.5 break-words text-xs italic text-muted-foreground">
+                    {item.modifiers}
+                  </div>
+                ))}
             </div>
-            <TooltipProvider delayDuration={0}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <span>
-                    <ItemStatusDot
-                      status={item.status}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onCycleItem(item.id);
-                      }}
-                    />
-                  </span>
-                </TooltipTrigger>
-                <TooltipContent
-                  side="left"
-                  className="text-[10px] bg-[#1a1d24] border-[#353a44] text-[#8b919e]"
-                >
-                  Tap to advance item status
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          </div>
+            <ItemStatusButton
+              name={item.name}
+              status={item.status}
+              onClick={() => onCycleItem(order.id, item.id)}
+            />
+          </li>
         ))}
-      </div>
+      </ul>
 
-      {/* ── Note ── */}
+      {/* Note */}
       {order.note && (
-        <div className="mx-3 mb-2 mt-1 px-2 py-1.5 rounded-md bg-[#e8a020]/8 border border-[#e8a020]/20 flex items-center gap-1.5">
-          <Bell className="w-2.5 h-2.5 text-[#e8a020] flex-shrink-0" />
-          <span className="text-[10px] text-[#e8a020] italic truncate">
-            {order.note}
-          </span>
+        <div
+          className={cn(
+            "kds-chip mx-3 mb-2 flex items-start gap-1.5 rounded-md px-2 py-1.5 text-xs",
+            tone("amber")
+          )}
+        >
+          <Bell className="mt-px size-3.5 shrink-0" aria-hidden />
+          <span className="break-words italic">{order.note}</span>
         </div>
       )}
 
-      {/* ── Footer / Actions ── */}
-      <div className="flex items-center gap-1.5 px-3 py-2 border-t border-[#1d2128]">
-        <span className="text-[10px] text-[#3a3f4a] truncate flex-1 min-w-0">
-          {order.server}
-        </span>
-        <div className="flex gap-1.5 ml-auto flex-shrink-0">
-          {isDoneOrVoided ? (
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onRecall();
-                    }}
-                    className="h-7 px-2.5 text-[10px] font-bold uppercase tracking-wide border-[#353a44] text-[#8b919e] bg-transparent hover:bg-[#1a1d24] hover:text-[#f0f2f5]"
-                  >
-                    <Undo2 className="w-3 h-3 mr-1" />
-                    Recall
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Bring this order back to active
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          ) : (
-            <>
-              {canStart && (
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onStart();
-                        }}
-                        className="h-7 px-2.5 text-[10px] font-bold uppercase tracking-wide bg-[#3b9eff]/15 text-[#3b9eff] border border-[#3b9eff]/40 hover:bg-[#3b9eff]/25 shadow-none"
-                      >
-                        <Play className="w-3 h-3 mr-1" />
-                        Start
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                      Begin cooking this order
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              {canBump && (
-                <TooltipProvider delayDuration={200}>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onBump();
-                        }}
-                        className={cn(
-                          "h-7 px-2.5 text-[10px] font-bold uppercase tracking-wide border shadow-none",
-                          allItemsReady
-                            ? "bg-[#2ecc71]/25 text-[#2ecc71] border-[#2ecc71]/50 hover:bg-[#2ecc71]/35 ring-1 ring-[#2ecc71]/30"
-                            : "bg-[#2ecc71]/12 text-[#2ecc71] border-[#2ecc71]/30 hover:bg-[#2ecc71]/22"
-                        )}
-                      >
-                        <CheckCheck className="w-3 h-3 mr-1" />
-                        Bump
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                      Mark complete & remove from screen
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-              )}
-              <TooltipProvider delayDuration={200}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      size="sm"
-                      variant="ghost"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        onVoid();
-                      }}
-                      className="h-7 px-2 text-[10px] font-bold text-[#3a3f4a] hover:text-[#ff4757] hover:bg-[#ff4757]/10 border border-transparent hover:border-[#ff4757]/30"
-                    >
-                      <Trash2 className="w-3 h-3" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                    Void (cancel) this order
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            </>
+      {/* Footer */}
+      <div className="flex items-center gap-2 border-t border-border px-3 py-2">
+        <div className="min-w-0 flex-1 text-xs text-muted-foreground">
+          <div className="truncate">{order.server}</div>
+          {!terminal && order.items.length > 0 && (
+            <div className="font-mono tabular-nums">
+              {readyCount}/{order.items.length} ready
+            </div>
           )}
         </div>
+
+        {terminal ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              onRecall(order.id);
+            }}
+            className={cn(actionBase, "border border-border text-foreground hover:bg-muted")}
+          >
+            <Undo2 className="size-4" aria-hidden />
+            Recall
+          </button>
+        ) : (
+          <div className="flex items-center gap-1.5">
+            <Tip label={order.status === "urgent" ? "Remove urgent flag" : "Flag as urgent"}>
+              <button
+                type="button"
+                aria-pressed={order.status === "urgent"}
+                aria-label={order.status === "urgent" ? "Remove urgent flag" : "Flag as urgent"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleUrgent(order.id);
+                }}
+                className={cn(
+                  actionBase,
+                  "kds-chip kds-chip-btn w-10 px-0",
+                  order.status === "urgent" ? "tone-red kds-solid" : "tone-slate"
+                )}
+              >
+                <AlertTriangle className="size-4" aria-hidden />
+              </button>
+            </Tip>
+            <Tip label="Void (cancel) this order">
+              <button
+                type="button"
+                aria-label="Void order"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onVoid(order.id);
+                }}
+                className={cn(actionBase, "kds-chip kds-chip-btn tone-slate w-10 px-0 hover:tone-red")}
+              >
+                <Trash2 className="size-4" aria-hidden />
+              </button>
+            </Tip>
+            {canStart && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onStart(order.id);
+                }}
+                className={cn(actionBase, "kds-chip kds-chip-btn tone-blue")}
+              >
+                <Play className="size-4" aria-hidden />
+                Start
+              </button>
+            )}
+            {canBump && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBump(order.id);
+                }}
+                className={cn(
+                  actionBase,
+                  "tone-green",
+                  allReady ? "kds-solid shadow-sm" : "kds-chip kds-chip-btn"
+                )}
+              >
+                <CheckCheck className="size-4" aria-hidden />
+                Bump
+              </button>
+            )}
+          </div>
+        )}
       </div>
-
-      {/* Selected indicator */}
-      {selected && (
-        <div className="absolute inset-x-0 bottom-0 h-0.5 bg-[#3b9eff] rounded-b-xl" />
-      )}
-    </div>
+    </li>
   );
-}
+});
 
-// ─── Prep Summary Sheet (Aggregated Item View) ────────────────────────────────
+// ─── Panels & dialogs ───────────────────────────────────────────────────────
 
 function PrepSummarySheet({
   open,
@@ -629,50 +920,52 @@ function PrepSummarySheet({
   station: Station;
   onClose: () => void;
 }) {
-  const getAggregatedPrepItems = useKdsStore((state) => state.getAggregatedPrepItems);
-  const items = getAggregatedPrepItems(station);
+  const orders = useKdsStore((s) => s.orders);
+  const getAggregatedPrepItems = useKdsStore((s) => s.getAggregatedPrepItems);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const items = useMemo(() => getAggregatedPrepItems(station), [orders, station, getAggregatedPrepItems]);
 
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-[340px] bg-[#111318] border-l border-[#252830] text-[#f0f2f5] p-0 flex flex-col"
-      >
-        <SheetHeader className="px-4 py-3 border-b border-[#252830]">
-          <SheetTitle className="text-[12px] font-bold uppercase tracking-widest text-[#e8a020] flex items-center gap-2">
-            <ChefHat className="w-3.5 h-3.5" />
-            Kitchen Prep View — Item Totals
+      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-md">
+        <SheetHeader className="border-b border-border px-4 py-4">
+          <SheetTitle className="flex items-center gap-2">
+            <ChefHat className="size-4 text-primary" aria-hidden />
+            Prep view
+            <span className="text-sm font-normal text-muted-foreground">
+              · {STATION_CONFIG[station].label}
+            </span>
           </SheetTitle>
-          <p className="text-[11px] text-[#555b68]">
-            Aggregated pending & cooking quantities for fast prep during rushes.
-          </p>
+          <SheetDescription>
+            Pending and cooking quantities combined across active orders.
+          </SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           {items.length === 0 ? (
-            <div className="text-center py-12 text-[#555b68]">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-20" />
-              <p className="text-xs">No active items to prepare</p>
-            </div>
+            <EmptyPanel icon={CheckCircle2} text="No active items to prepare" />
           ) : (
             items.map((item) => (
               <div
                 key={item.name}
-                className="flex items-center justify-between p-3 rounded-lg border border-[#252830] bg-[#0d0f12]"
+                className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3"
               >
-                <div className="flex-1 min-w-0 pr-2">
-                  <div className="font-semibold text-sm text-[#f0f2f5] truncate">
-                    {item.name}
-                  </div>
-                  <div className="text-[10px] text-[#555b68] flex gap-2 mt-0.5">
+                <div className="min-w-0 flex-1">
+                  <div className="truncate text-sm font-semibold">{item.name}</div>
+                  <div className="mt-0.5 flex gap-3 font-mono text-xs">
                     {item.cookingCount > 0 && (
-                      <span className="text-[#e8a020] font-mono">{item.cookingCount} cooking</span>
+                      <span className={cn("kds-text", tone("amber"))}>{item.cookingCount} cooking</span>
                     )}
                     {item.pendingCount > 0 && (
-                      <span className="text-[#8b919e] font-mono">{item.pendingCount} pending</span>
+                      <span className="text-muted-foreground">{item.pendingCount} pending</span>
                     )}
                   </div>
                 </div>
-                <div className="font-mono font-bold text-lg text-[#e8a020] bg-[#e8a020]/10 border border-[#e8a020]/30 rounded-md px-2.5 py-0.5">
+                <div
+                  className={cn(
+                    "kds-chip rounded-lg px-3 py-1 font-mono text-xl font-bold tabular-nums",
+                    tone("amber")
+                  )}
+                >
                   ×{item.totalQuantity}
                 </div>
               </div>
@@ -684,7 +977,14 @@ function PrepSummarySheet({
   );
 }
 
-// ─── Recall Sheet ─────────────────────────────────────────────────────────────
+function EmptyPanel({ icon: Icon, text }: { icon: LucideIcon; text: string }) {
+  return (
+    <div className="py-16 text-center text-muted-foreground">
+      <Icon className="mx-auto mb-3 size-9 opacity-30" aria-hidden />
+      <p className="text-sm">{text}</p>
+    </div>
+  );
+}
 
 function RecallSheet({
   open,
@@ -699,51 +999,36 @@ function RecallSheet({
 }) {
   return (
     <Sheet open={open} onOpenChange={(v) => !v && onClose()}>
-      <SheetContent
-        side="right"
-        className="w-[300px] bg-[#111318] border-l border-[#252830] text-[#f0f2f5] p-0 flex flex-col"
-      >
-        <SheetHeader className="px-4 py-3 border-b border-[#252830]">
-          <SheetTitle className="text-[12px] font-bold uppercase tracking-widest text-[#8b919e] flex items-center gap-2">
-            <RefreshCcw className="w-3.5 h-3.5" />
-            Bumped Orders — Recall
+      <SheetContent side="right" className="flex w-full flex-col gap-0 p-0 sm:max-w-sm">
+        <SheetHeader className="border-b border-border px-4 py-4">
+          <SheetTitle className="flex items-center gap-2">
+            <RefreshCcw className="size-4 text-muted-foreground" aria-hidden />
+            Recall bumped orders
           </SheetTitle>
-          <p className="text-[11px] text-[#555b68]">
-            Recently completed orders. Tap Recall to reopen.
-          </p>
+          <SheetDescription>Recently completed orders. Recall to reopen one.</SheetDescription>
         </SheetHeader>
-        <div className="flex-1 overflow-y-auto p-3 space-y-2">
+        <div className="flex-1 space-y-2 overflow-y-auto p-3">
           {bumped.length === 0 ? (
-            <div className="text-center py-12 text-[#555b68]">
-              <CheckCircle2 className="w-8 h-8 mx-auto mb-2 opacity-20" />
-              <p className="text-xs">No bumped orders yet</p>
-            </div>
+            <EmptyPanel icon={CheckCircle2} text="No bumped orders yet" />
           ) : (
             bumped.map((o) => (
               <div
                 key={o.id}
-                className="flex items-center gap-3 p-3 rounded-lg border border-[#252830] bg-[#0d0f12] hover:border-[#353a44] transition-colors"
+                className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 transition-colors hover:border-foreground/25"
               >
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono font-bold text-sm text-[#2ecc71]">
-                    {o.num}
-                  </div>
-                  <div className="text-[11px] text-[#555b68]">
-                    {o.table} · {o.items.length} item
-                    {o.items.length !== 1 ? "s" : ""}
+                <div className="min-w-0 flex-1">
+                  <div className={cn("kds-text font-mono text-sm font-bold", tone("green"))}>{o.num}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {o.table} · {o.items.length} item{o.items.length !== 1 ? "s" : ""}
                   </div>
                   {o.bumpedAt && (
-                    <div className="text-[10px] text-[#3a3f4a]">
-                      Cook: {formatTimer(o.bumpedAt - o.createdAt)}
+                    <div className="font-mono text-[11px] text-muted-foreground">
+                      Cook time {formatTimer(o.bumpedAt - o.createdAt)}
                     </div>
                   )}
                 </div>
-                <Button
-                  size="sm"
-                  onClick={() => onRecall(o.id)}
-                  className="h-7 text-[10px] font-bold text-[#3b9eff] border border-[#3b9eff]/35 bg-[#3b9eff]/10 hover:bg-[#3b9eff]/20 shadow-none uppercase tracking-wide"
-                >
-                  <Undo2 className="w-3 h-3 mr-1" />
+                <Button size="sm" variant="outline" onClick={() => onRecall(o.id)} className="h-9 gap-1.5">
+                  <Undo2 className="size-4" aria-hidden />
                   Recall
                 </Button>
               </div>
@@ -755,47 +1040,33 @@ function RecallSheet({
   );
 }
 
-// ─── Keyboard Shortcuts Dialog ────────────────────────────────────────────────
-
-function ShortcutsDialog({
-  open,
-  onClose,
-}: {
-  open: boolean;
-  onClose: () => void;
-}) {
+function ShortcutsDialog({ open, onClose }: { open: boolean; onClose: () => void }) {
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="bg-[#111318] border border-[#252830] text-[#f0f2f5] max-w-md">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-[#f0f2f5]">
-            <Keyboard className="w-4 h-4 text-[#e8a020]" />
-            Keyboard Shortcuts
+          <DialogTitle className="flex items-center gap-2">
+            <Keyboard className="size-4 text-primary" aria-hidden />
+            Keyboard shortcuts
           </DialogTitle>
-          <DialogDescription className="text-[#555b68]">
-            Use these shortcuts to work faster. Select an order card first, then
-            use the shortcut.
+          <DialogDescription>
+            Select an order (click it or use the arrow keys), then use a shortcut.
           </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-2 mt-2">
-          {SHORTCUTS.map(({ key, label }) => (
-            <div
-              key={key}
-              className="flex items-center justify-between py-1.5 border-b border-[#1d2128] last:border-0"
-            >
-              <span className="text-[12px] text-[#8b919e]">{label}</span>
-              <kbd className="font-mono text-[11px] bg-[#1a1d24] border border-[#353a44] rounded px-2 py-0.5 text-[#e8a020]">
-                {key}
-              </kbd>
+        <div className="divide-y divide-border">
+          {SHORTCUTS.map(({ keys, label }) => (
+            <div key={label} className="flex items-center justify-between gap-4 py-2">
+              <span className="text-sm text-muted-foreground">{label}</span>
+              <span className="flex shrink-0 gap-1">
+                {keys.map((k) => (
+                  <Kbd key={k}>{k}</Kbd>
+                ))}
+              </span>
             </div>
           ))}
         </div>
         <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={onClose}
-            className="border-[#353a44] text-[#8b919e] bg-transparent hover:bg-[#1a1d24] hover:text-[#f0f2f5]"
-          >
+          <Button variant="outline" onClick={onClose}>
             Close
           </Button>
         </DialogFooter>
@@ -804,758 +1075,746 @@ function ShortcutsDialog({
   );
 }
 
-// ─── Onboarding Tip Banner ────────────────────────────────────────────────────
+function EtaForm({
+  orderNum,
+  onSend,
+  onCancel,
+}: {
+  orderNum?: string;
+  onSend: (minutes: number) => void;
+  onCancel: () => void;
+}) {
+  const [custom, setCustom] = useState("");
+  const [error, setError] = useState<string | null>(null);
+
+  const submitCustom = () => {
+    const n = Number(custom);
+    if (!Number.isInteger(n) || n < 1 || n > 180) {
+      setError("Enter a whole number between 1 and 180.");
+      return;
+    }
+    onSend(n);
+  };
+
+  return (
+    <>
+      <DialogHeader>
+        <DialogTitle>Send ETA to hub</DialogTitle>
+        <DialogDescription>
+          How many minutes until order {orderNum ? `#${orderNum}` : ""} is ready?
+        </DialogDescription>
+      </DialogHeader>
+      <div className="grid grid-cols-3 gap-2">
+        {[2, 5, 10, 15, 20, 30].map((m) => (
+          <Button key={m} variant="outline" className="h-12 text-base font-semibold" onClick={() => onSend(m)}>
+            {m} min
+          </Button>
+        ))}
+      </div>
+      <div className="space-y-1.5">
+        <div className="flex gap-2">
+          <Input
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={180}
+            value={custom}
+            onChange={(e) => {
+              setCustom(e.target.value);
+              setError(null);
+            }}
+            onKeyDown={(e) => e.key === "Enter" && submitCustom()}
+            placeholder="Custom minutes…"
+            aria-label="Custom ETA in minutes"
+            aria-invalid={!!error}
+            className="h-10"
+          />
+          <Button onClick={submitCustom} disabled={!custom} className="h-10">
+            Send
+          </Button>
+        </div>
+        {error && (
+          <p role="alert" className="text-xs text-destructive">
+            {error}
+          </p>
+        )}
+      </div>
+      <DialogFooter>
+        <Button variant="ghost" onClick={onCancel}>
+          Cancel
+        </Button>
+      </DialogFooter>
+    </>
+  );
+}
 
 function OnboardingBanner({ onDismiss }: { onDismiss: () => void }) {
   return (
-    <div className="flex items-center gap-3 px-4 py-2 bg-[#3b9eff]/10 border-b border-[#3b9eff]/25 text-[#3b9eff] shrink-0">
-      <Info className="w-4 h-4 flex-shrink-0" />
-      <p className="text-[11px] flex-1">
-        <strong>Quick start:</strong> Click any order to select it, then tap{" "}
-        <strong>Start</strong> → <strong>Bump ✓</strong> when ready. Dots on
-        each item track cooking progress. Green = ready, orange = cooking.
+    <div
+      className={cn(
+        "kds-chip flex shrink-0 items-center gap-3 rounded-none border-x-0 border-t-0 px-4 py-2 text-sm",
+        tone("blue")
+      )}
+    >
+      <Info className="size-4 shrink-0" aria-hidden />
+      <p className="flex-1">
+        <strong>Quick start:</strong> tap an order to select it, then <strong>Start</strong> and{" "}
+        <strong>Bump</strong> when it&apos;s ready. Tap the circle on each item to track progress. Bumped
+        by mistake? Use <strong>Undo</strong> in the notification.
       </p>
       <button
+        type="button"
         onClick={onDismiss}
-        className="text-[#3b9eff]/60 hover:text-[#3b9eff] transition-colors"
+        aria-label="Dismiss tip"
+        className="rounded p-1 opacity-70 transition hover:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       >
-        <X className="w-3.5 h-3.5" />
+        <X className="size-4" />
       </button>
     </div>
   );
 }
 
-// ─── Stat Pill ────────────────────────────────────────────────────────────────
-
-function StatPill({
-  count,
-  label,
-  color,
-  dotColor,
-  pulse,
-}: {
-  count: number;
-  label: string;
-  color: string;
-  dotColor: string;
-  pulse?: boolean;
-}) {
-  return (
-    <div
-      className={`flex items-center gap-1.5 text-[12px] font-semibold px-3 py-1 rounded-full border ${color}`}
-    >
-      <div
-        className={`w-1.5 h-1.5 rounded-full ${dotColor} ${pulse ? "animate-pulse" : ""}`}
-      />
-      <span className="font-mono font-bold">{count}</span>
-      <span className="hidden sm:inline">{label}</span>
-    </div>
-  );
-}
-
-// ─── Main KDS Page ────────────────────────────────────────────────────────────
+// ─── Main KDS page ──────────────────────────────────────────────────────────
 
 export default function KDSPage() {
-  const orders = useKdsStore(state => state.orders);
-  const [operator, setOperator] = useState<string>(localStorage.getItem('ASSIGNED_USER_NAME') || '');
-  const [etaQueryTarget, setEtaQueryTarget] = useState<string | null>(null);
+  const orders = useKdsStore((s) => s.orders);
+  const station = useKdsStore((s) => s.assignedStation);
+  const setStation = useKdsStore((s) => s.setAssignedStation);
+  const autoPrintKds = usePosStore((s) => s.settings.kitchenTicketConfig.autoPrintKds);
+
+  const [theme, setTheme] = useThemePreference();
+  const online = useOnline();
+
+  const [operator, setOperator] = useState("");
+  const [etaTarget, setEtaTarget] = useState<string | null>(null);
+  const [bumped, setBumped] = useState<Order[]>([]);
+  const bumpedRef = useRef<Order[]>([]);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<Filter>("active");
+  const [sort, setSort] = usePersistentState<SortKey>("kds:sort", "time_asc");
+  const [cols, setCols] = usePersistentState<number>("kds:cols", 3);
+  const [soundEnabled, setSoundEnabled] = usePersistentState<boolean>("kds:sound", true);
+  const [tipDismissed, setTipDismissed, prefsReady] = usePersistentState<boolean>("kds:tip-dismissed", false);
+  const [search, setSearch] = useState("");
+  const [recallOpen, setRecallOpen] = useState(false);
+  const [prepOpen, setPrepOpen] = useState(false);
+  const [shortcutsOpen, setShortcutsOpen] = useState(false);
+  const [voidTargetId, setVoidTargetId] = useState<string | null>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+  const [announcement, setAnnouncement] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  const voidTarget = voidTargetId ? orders.find((o) => o.id === voidTargetId) : undefined;
+  const overlayOpen = recallOpen || prepOpen || shortcutsOpen || !!voidTargetId || !!etaTarget;
 
   useEffect(() => {
-    const handler = (e: any) => {
-      setOperator(e.detail.userName || '');
-    };
-    window.addEventListener('assignment-updated', handler);
-    return () => window.removeEventListener('assignment-updated', handler);
+    bumpedRef.current = bumped;
+  }, [bumped]);
+
+  // Operator name (assigned from the hub)
+  useEffect(() => {
+    try {
+      setOperator(localStorage.getItem("ASSIGNED_USER_NAME") || "");
+    } catch {
+      /* ignore */
+    }
+    const handler = (e: Event) => setOperator((e as CustomEvent).detail?.userName || "");
+    window.addEventListener("assignment-updated", handler);
+    return () => window.removeEventListener("assignment-updated", handler);
   }, []);
 
+  // ETA queries from the hub
   useEffect(() => {
-    const handler = (e: any) => {
-      const { orderId } = e.detail;
-      setEtaQueryTarget(orderId);
-      toast.info(`ETA Query for Order #${orders.find(o => o.id === orderId)?.num}`, {
-        description: "Hub is asking for an ETA",
+    const handler = (e: Event) => {
+      const orderId = (e as CustomEvent).detail?.orderId as string | undefined;
+      if (!orderId) return;
+      setEtaTarget(orderId);
+      const o = getOrder(orderId);
+      toast.info(`ETA requested${o ? ` for #${o.num}` : ""}`, {
+        description: "The hub is asking for an ETA",
         duration: 5000,
       });
     };
-    window.addEventListener('order-eta-query', handler);
-    return () => window.removeEventListener('order-eta-query', handler);
-  }, [orders]);
-
-  const autoPrintKds = usePosStore(state => state.settings.kitchenTicketConfig.autoPrintKds);
-  const assignedStation = useKdsStore(state => state.assignedStation);
-  const setAssignedStation = useKdsStore(state => state.setAssignedStation);
-
-  const [bumped, setBumped] = useState<Order[]>([]);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-  const [station, setStationState] = useState<Station>(assignedStation);
-  const [filter, setFilter] = useState<OrderStatus | "all">("all");
-  const [sort, setSort] = useState<SortKey>("time_asc");
-  const [cols, setCols] = useState(3);
-  const [search, setSearch] = useState("");
-  const [now, setNow] = useState(Date.now());
-  const [recallOpen, setRecallOpen] = useState(false);
-  const [prepSummaryOpen, setPrepSummaryOpen] = useState(false);
-  const [shortcutsOpen, setShortcutsOpen] = useState(false);
-  const [soundEnabled, setSoundEnabled] = useState(true);
-  const [voidTarget, setVoidTarget] = useState<Order | null>(null);
-  const [showOnboarding, setShowOnboarding] = useState(true);
-  const searchRef = useRef<HTMLInputElement>(null);
-
-  const prevOrderCount = useRef(orders.length);
-
-  const setStation = useCallback((s: Station) => {
-    setStationState(s);
-    setAssignedStation(s);
-  }, [setAssignedStation]);
-
-  // Play sound on new incoming order
-  useEffect(() => {
-    if (orders.length > prevOrderCount.current) {
-      if (soundEnabled) {
-        playOrderChime();
-      }
-    }
-    prevOrderCount.current = orders.length;
-  }, [orders.length, soundEnabled]);
-
-  // Clock tick
-  useEffect(() => {
-    const id = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(id);
+    window.addEventListener("order-eta-query", handler);
+    return () => window.removeEventListener("order-eta-query", handler);
   }, []);
 
-  // Auto-incoming orders logic intentionally removed. WebSockets will handle this.
+  // Fullscreen state
+  useEffect(() => {
+    const h = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", h);
+    return () => document.removeEventListener("fullscreenchange", h);
+  }, []);
 
-  // Derived list
-  const visibleOrders = (() => {
-    const q = search.toLowerCase();
-    let list = orders.filter((o) => {
-      if (station !== "all" && o.station !== station) return false;
-      if (filter !== "all" && o.status !== filter) return false;
-      if (
-        q &&
-        !o.num.toLowerCase().includes(q) &&
-        !o.table.toLowerCase().includes(q) &&
-        !o.items.some((i) => i.name.toLowerCase().includes(q))
-      )
-        return false;
-      return true;
-    });
-    const priorityMap: Record<OrderStatus, number> = {
-      urgent: 0,
-      new: 1,
-      in_progress: 2,
-      done: 3,
-      voided: 4,
+  // Browsers block audio until a user gesture — unlock it on first interaction.
+  useEffect(() => {
+    const unlock = () => {
+      void getAudioCtx()?.resume();
     };
-    if (sort === "time_asc") list.sort((a, b) => a.createdAt - b.createdAt);
-    else if (sort === "time_desc")
-      list.sort((a, b) => b.createdAt - a.createdAt);
-    else if (sort === "priority")
-      list.sort((a, b) => priorityMap[a.status] - priorityMap[b.status]);
-    else list.sort((a, b) => a.table.localeCompare(b.table));
-    return list;
-  })();
+    window.addEventListener("pointerdown", unlock, { once: true });
+    window.addEventListener("keydown", unlock, { once: true });
+    return () => {
+      window.removeEventListener("pointerdown", unlock);
+      window.removeEventListener("keydown", unlock);
+    };
+  }, []);
 
-  // Stats
-  const countNew = orders.filter((o) => o.status === "new").length;
-  const countProg = orders.filter((o) => o.status === "in_progress").length;
-  const countDone = orders.filter((o) => o.status === "done").length;
-  const countUrgent = orders.filter((o) => o.status === "urgent").length;
-
-  const stationCount = (s: Station) =>
-    s === "all"
-      ? orders.filter((o) => o.status !== "done" && o.status !== "voided")
-          .length
-      : orders.filter(
-          (o) =>
-            o.station === s &&
-            o.status !== "done" &&
-            o.status !== "voided"
-        ).length;
-
-  const avgTime = (() => {
-    const recent = bumped.slice(0, 20);
-    if (!recent.length) return null;
-    return formatTimer(
-      recent.reduce((a, o) => a + (o.bumpedAt! - o.createdAt), 0) /
-        recent.length
+  // New-order detection by id (not by count) → chime + screen-reader announcement
+  const seenIds = useRef<Set<string> | null>(null);
+  useEffect(() => {
+    if (seenIds.current === null) {
+      seenIds.current = new Set(orders.map((o) => o.id));
+      return;
+    }
+    const seen = seenIds.current;
+    const fresh = orders.filter(
+      (o) => !seen.has(o.id) && (station === "all" || o.station === station)
     );
-  })();
+    orders.forEach((o) => seen.add(o.id));
+    if (fresh.length) {
+      if (soundEnabled) playOrderChime();
+      setAnnouncement(
+        `${fresh.length} new order${fresh.length > 1 ? "s" : ""}: ${fresh.map((o) => o.num).join(", ")}`
+      );
+    }
+  }, [orders, station, soundEnabled]);
 
-  // Actions
-  const startOrder = useCallback(
-    (id: string) => {
-      useKdsStore.getState().updateOrderStatus(id, "in_progress");
-      updateOrderStatusInKitchen(id, "in_progress");
-      const o = orders.find((x) => x.id === id);
-      if (o)
-        toast.info(`Order ${o.num} started`, {
-          description: `${o.table} · Begin cooking`,
-          duration: 2500,
-        });
-    },
-    [orders]
+  // ── Derived data ──
+  const stationOrders = useMemo(
+    () => (station === "all" ? orders : orders.filter((o) => o.station === station)),
+    [orders, station]
   );
+
+  const stats = useMemo(() => {
+    const s: Record<OrderStatus | "active", number> = {
+      new: 0,
+      in_progress: 0,
+      done: 0,
+      urgent: 0,
+      voided: 0,
+      active: 0,
+    };
+    for (const o of stationOrders) {
+      s[o.status]++;
+      if (isActiveStatus(o.status)) s.active++;
+    }
+    return s;
+  }, [stationOrders]);
+
+  const stationCounts = useMemo(() => {
+    const c: Record<Station, number> = { all: 0, hot: 0, cold: 0, grill: 0, dessert: 0, bar: 0 };
+    for (const o of orders) {
+      if (!isActiveStatus(o.status)) continue;
+      c.all++;
+      if (o.station in c) c[o.station]++;
+    }
+    return c;
+  }, [orders]);
+
+  const visibleOrders = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    const list = stationOrders.filter((o) => {
+      if (!matchesFilter(o.status, filter)) return false;
+      if (!q) return true;
+      return (
+        o.num.toLowerCase().includes(q) ||
+        o.table.toLowerCase().includes(q) ||
+        (o.server ?? "").toLowerCase().includes(q) ||
+        o.items.some((i) => i.name.toLowerCase().includes(q))
+      );
+    });
+    const priority: Record<OrderStatus, number> = { urgent: 0, new: 1, in_progress: 2, done: 3, voided: 4 };
+    list.sort((a, b) => {
+      if (sort === "time_desc") return b.createdAt - a.createdAt;
+      if (sort === "priority") return priority[a.status] - priority[b.status] || a.createdAt - b.createdAt;
+      if (sort === "table") return a.table.localeCompare(b.table, undefined, { numeric: true }) || a.createdAt - b.createdAt;
+      return a.createdAt - b.createdAt;
+    });
+    return list;
+  }, [stationOrders, filter, search, sort]);
+
+  const avgTime = useMemo(() => {
+    const recent = bumped.filter((o) => o.bumpedAt).slice(0, 20);
+    if (!recent.length) return null;
+    return formatTimer(recent.reduce((a, o) => a + (o.bumpedAt! - o.createdAt), 0) / recent.length);
+  }, [bumped]);
+
+  // Drop selection if the order is no longer visible
+  useEffect(() => {
+    if (selectedId && !visibleOrders.some((o) => o.id === selectedId)) setSelectedId(null);
+  }, [visibleOrders, selectedId]);
+
+  // ── Actions (all read fresh state, so their identity stays stable) ──
+  const startOrder = useCallback((id: string) => {
+    const o = getOrder(id);
+    if (!o) return;
+    useKdsStore.getState().updateOrderStatus(id, "in_progress");
+    updateOrderStatusInKitchen(id, "in_progress");
+    toast.info(`Order ${o.num} started`, { description: `${o.table} · Begin cooking`, duration: 2500 });
+  }, []);
+
+  const recallOrder = useCallback((id: string) => {
+    const store = useKdsStore.getState();
+    const stillInStore = store.orders.some((o) => o.id === id);
+    if (stillInStore) {
+      store.recallOrder(id);
+    } else {
+      const snapshot = bumpedRef.current.find((x) => x.id === id);
+      if (snapshot) store.addOrder({ ...snapshot, status: "in_progress", bumpedAt: undefined });
+    }
+    setBumped((prev) => prev.filter((x) => x.id !== id));
+    updateOrderStatusInKitchen(id, "in_progress");
+    toast("Order recalled", {
+      description: "Moved back to Cooking",
+      icon: <Undo2 className="size-4" />,
+      duration: 2500,
+    });
+  }, []);
 
   const bumpOrder = useCallback(
     (id: string) => {
-      const o = orders.find((x) => x.id === id);
+      const o = getOrder(id);
+      if (!o) return;
+      const bumpedAt = Date.now();
       useKdsStore.getState().bumpOrder(id);
       updateOrderStatusInKitchen(id, "done");
-      if (o) {
-        setBumped((prev) =>
-          [{ ...o, status: "done", bumpedAt: Date.now() } as Order, ...prev].slice(
-            0,
-            50
-          )
-        );
-        toast.success(`Order ${o.num} bumped`, {
-          description: `${o.table} · Ready for service`,
-          duration: 3000,
-        });
-      }
-    },
-    [orders]
-  );
-
-  const recallOrder = useCallback(
-    (id: string) => {
-      const fromBumped = bumped.find((x) => x.id === id);
-      if (fromBumped) {
-        setBumped((prev) => prev.filter((x) => x.id !== id));
-        useKdsStore.getState().addOrder({ ...fromBumped, status: "in_progress", bumpedAt: undefined });
-      }
-      useKdsStore.getState().recallOrder(id);
-      updateOrderStatusInKitchen(id, "in_progress");
-      
-      toast(`Order recalled`, {
-        description: "Moved back to In Progress",
-        icon: "↩️",
-        duration: 2500,
+      setBumped((prev) =>
+        [{ ...o, status: "done", bumpedAt } as Order, ...prev.filter((x) => x.id !== id)].slice(0, 50)
+      );
+      toast.success(`Order ${o.num} bumped`, {
+        description: `${o.table} · Ready for service`,
+        duration: 6000,
+        action: { label: "Undo", onClick: () => recallOrder(id) },
       });
     },
-    [bumped]
+    [recallOrder]
   );
 
-  const voidOrder = useCallback(
-    (id: string) => {
-      useKdsStore.getState().updateOrderStatus(id, "voided");
-      updateOrderStatusInKitchen(id, "voided");
-      const o = orders.find((x) => x.id === id);
-      if (o)
-        toast.error(`Order ${o.num} voided`, {
-          description: `${o.table} · Order cancelled`,
-          duration: 3000,
-        });
-      setVoidTarget(null);
-    },
-    [orders]
-  );
+  const voidOrder = useCallback((id: string) => {
+    const o = getOrder(id);
+    useKdsStore.getState().updateOrderStatus(id, "voided");
+    updateOrderStatusInKitchen(id, "voided");
+    if (o) toast.error(`Order ${o.num} voided`, { description: `${o.table} · Order cancelled`, duration: 3000 });
+    setVoidTargetId(null);
+    setSelectedId((cur) => (cur === id ? null : cur));
+  }, []);
 
-  const handleSendEta = (minutes: number) => {
-    if (etaQueryTarget) {
-      sendOrderEtaResponse(etaQueryTarget, minutes);
-      setEtaQueryTarget(null);
-      toast.success('ETA sent to hub');
+  const toggleUrgent = useCallback((id: string) => {
+    const o = getOrder(id);
+    if (!o || !isActiveStatus(o.status)) return;
+    const next: OrderStatus =
+      o.status === "urgent" ? (o.items.some((i) => i.status !== "pending") ? "in_progress" : "new") : "urgent";
+    useKdsStore.getState().updateOrderStatus(id, next);
+    updateOrderStatusInKitchen(id, next);
+    if (next === "urgent") {
+      toast.warning(`Order ${o.num} marked urgent`, { description: "Highlighted for the whole line", duration: 2500 });
+    } else {
+      toast(`Order ${o.num} urgent flag removed`, { duration: 2000 });
     }
-  };
+  }, []);
+
+  const toggleFire = useCallback((id: string) => useKdsStore.getState().toggleCourseFire(id), []);
 
   const cycleItemStatus = useCallback((orderId: string, itemId: string) => {
-    const o = useKdsStore.getState().orders.find(o => o.id === orderId);
-    if (!o) return;
-    const item = o.items.find(i => i.id === itemId);
-    if (!item) return;
-
-    const cycle: Record<ItemStatus, ItemStatus> = {
-      pending: "cooking",
-      cooking: "ready",
-      ready: "pending",
-    };
-    useKdsStore.getState().updateItemStatus(orderId, itemId, cycle[item.status]);
-    
+    const store = useKdsStore.getState();
+    const o = store.orders.find((x) => x.id === orderId);
+    const item = o?.items.find((i) => i.id === itemId);
+    if (!o || !item) return;
+    store.updateItemStatus(orderId, itemId, ITEM_STATUS_META[item.status].next);
     if (o.status === "new" || o.status === "urgent") {
-      useKdsStore.getState().updateOrderStatus(orderId, "in_progress");
+      store.updateOrderStatus(orderId, "in_progress");
       updateOrderStatusInKitchen(orderId, "in_progress");
     }
   }, []);
 
-  const addTestOrder = () => {};
+  const handleSendEta = (minutes: number) => {
+    if (!etaTarget) return;
+    sendOrderEtaResponse(etaTarget, minutes);
+    setEtaTarget(null);
+    toast.success(`ETA sent to hub: ${minutes} min`);
+  };
 
-  // Keyboard shortcuts
+  const toggleFullscreen = () => {
+    if (document.fullscreenElement) void document.exitFullscreen();
+    else
+      document.documentElement
+        .requestFullscreen?.()
+        .catch(() => toast.error("Fullscreen isn't available in this browser"));
+  };
+
+  const toggleAutoPrint = () => {
+    const next = !usePosStore.getState().settings.kitchenTicketConfig.autoPrintKds;
+    usePosStore.getState().updateKitchenTicketConfig({ autoPrintKds: next });
+    toast.info(`Auto-print ${next ? "enabled" : "disabled"}`, {
+      description: next ? "New tickets will print automatically" : "Tickets will no longer auto-print",
+      icon: <Printer className="size-4" />,
+    });
+  };
+
+  // Dev-only helper so the board can be exercised without the hub
+  const addTestOrder = () => {
+    const stamp = Date.now();
+    const pool = ["hot", "cold", "grill", "dessert", "bar"] as const;
+    const stationPick = station === "all" ? pool[Math.floor(Math.random() * pool.length)] : station;
+    const demo = {
+      id: `test-${stamp}`,
+      num: `T-${100 + Math.floor(Math.random() * 900)}`,
+      type: "dine",
+      status: "new",
+      table: `Table ${1 + Math.floor(Math.random() * 20)}`,
+      covers: 2,
+      server: "Demo",
+      station: stationPick,
+      createdAt: stamp,
+      isFired: false,
+      note: "Demo order",
+      items: [
+        { id: `i1-${stamp}`, name: "Margherita Pizza", quantity: 1, status: "pending", course: "C1" },
+        { id: `i2-${stamp}`, name: "Caesar Salad", quantity: 2, status: "pending", modifiers: "No croutons — nut allergy", isAllergy: true },
+      ],
+    } as unknown as Order;
+    useKdsStore.getState().addOrder(demo);
+  };
+
+  // ── Keyboard shortcuts ──
   useEffect(() => {
-    const handler = (e: KeyboardEvent) => {
-      if (
-        e.target instanceof HTMLInputElement ||
-        e.target instanceof HTMLSelectElement
-      )
-        return;
-      if (e.key === " " || e.key === "Enter") {
-        e.preventDefault();
-        if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
-          if (o && ["new", "in_progress", "urgent"].includes(o.status))
-            bumpOrder(selectedId);
+    const onKey = (e: KeyboardEvent) => {
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      const t = e.target as HTMLElement | null;
+      if (t && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName))) return;
+      if (t?.closest('[role="dialog"],[role="alertdialog"],[role="listbox"],[role="menu"]')) return;
+      if (overlayOpen) return;
+
+      const onControl = !!t?.closest("button,a,[role='button']");
+      const sel = selectedId ? visibleOrders.find((o) => o.id === selectedId) : undefined;
+
+      switch (e.key) {
+        case " ":
+        case "Enter":
+        case "b":
+        case "B": {
+          if (onControl && (e.key === " " || e.key === "Enter")) return;
+          if (!sel || !isActiveStatus(sel.status)) return;
+          e.preventDefault();
+          if (!matchesFilter("done", filter)) {
+            const idx = visibleOrders.findIndex((o) => o.id === sel.id);
+            const next = visibleOrders[idx + 1] ?? visibleOrders[idx - 1];
+            setSelectedId(next?.id ?? null);
+          }
+          bumpOrder(sel.id);
+          return;
         }
-      }
-      if (e.key === "s" || e.key === "S") {
-        if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
-          if (o && (o.status === "new" || o.status === "urgent"))
-            startOrder(selectedId);
+        case "s":
+        case "S":
+          if (sel && (sel.status === "new" || sel.status === "urgent")) startOrder(sel.id);
+          return;
+        case "u":
+        case "U":
+          if (sel) toggleUrgent(sel.id);
+          return;
+        case "Delete":
+          if (sel) setVoidTargetId(sel.id);
+          return;
+        case "r":
+        case "R":
+          setRecallOpen(true);
+          return;
+        case "/":
+        case "f":
+        case "F":
+          e.preventDefault();
+          searchRef.current?.focus();
+          return;
+        case "?":
+          setShortcutsOpen(true);
+          return;
+        case "Escape":
+          setSelectedId(null);
+          return;
+        case "ArrowRight":
+        case "ArrowLeft":
+        case "ArrowDown":
+        case "ArrowUp": {
+          if (!visibleOrders.length) return;
+          e.preventDefault();
+          const vertical = e.key === "ArrowDown" || e.key === "ArrowUp";
+          const perRow = window.matchMedia("(min-width:1024px)").matches
+            ? cols
+            : window.matchMedia("(min-width:640px)").matches
+              ? 2
+              : 1;
+          const step = vertical ? perRow : 1;
+          const dir = e.key === "ArrowRight" || e.key === "ArrowDown" ? 1 : -1;
+          const idx = visibleOrders.findIndex((o) => o.id === selectedId);
+          const target =
+            idx === -1
+              ? visibleOrders[0]
+              : visibleOrders[Math.min(Math.max(idx + dir * step, 0), visibleOrders.length - 1)];
+          setSelectedId(target.id);
+          const el = document.getElementById(`card-${target.id}`);
+          el?.focus({ preventScroll: true });
+          el?.scrollIntoView({ behavior: "smooth", block: "nearest" });
+          return;
         }
-      }
-      if (e.key === "u" || e.key === "U") {
-        if (selectedId) {
-          useKdsStore.getState().updateOrderStatus(selectedId, "urgent");
-          updateOrderStatusInKitchen(selectedId, "urgent");
-          toast.warning("Order marked urgent", {
-            description: "Will be highlighted immediately",
-            duration: 2500,
-          });
-        }
-      }
-      if (e.key === "Delete" || e.key === "Backspace") {
-        if (selectedId) {
-          const o = orders.find((x) => x.id === selectedId);
-          if (o) setVoidTarget(o);
-        }
-      }
-      if (e.key === "r" || e.key === "R") setRecallOpen((v) => !v);
-      if (e.key === "f" || e.key === "F") {
-        e.preventDefault();
-        searchRef.current?.focus();
-      }
-      if (e.key === "?" || e.key === "/") setShortcutsOpen((v) => !v);
-      if (e.key === "Escape") {
-        setSelectedId(null);
-        setVoidTarget(null);
-        setShortcutsOpen(false);
-      }
-      if (
-        ["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(e.key)
-      ) {
-        e.preventDefault();
-        if (!visibleOrders.length) return;
-        const idx = visibleOrders.findIndex((o) => o.id === selectedId);
-        const isNext = e.key === "ArrowRight" || e.key === "ArrowDown";
-        const next =
-          idx === -1
-            ? visibleOrders[0]
-            : visibleOrders[
-                isNext
-                  ? Math.min(idx + 1, visibleOrders.length - 1)
-                  : Math.max(idx - 1, 0)
-              ];
-        setSelectedId(next.id);
-        document
-          .getElementById(`card-${next.id}`)
-          ?.scrollIntoView({ behavior: "smooth", block: "nearest" });
       }
     };
-    window.addEventListener("keydown", handler);
-    return () => window.removeEventListener("keydown", handler);
-  }, [selectedId, orders, visibleOrders, bumpOrder, startOrder]);
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [overlayOpen, selectedId, visibleOrders, filter, cols, bumpOrder, startOrder, toggleUrgent]);
 
-  const clockStr = new Date(now).toTimeString().slice(0, 8);
-  const dateStr = new Date(now).toLocaleDateString("en-GB", {
-    weekday: "short",
-    day: "numeric",
-    month: "short",
-  });
-
-  const gridCols =
-    (
-      {
-        2: "grid-cols-2",
-        3: "grid-cols-3",
-        4: "grid-cols-4",
-        5: "grid-cols-5",
-      } as Record<number, string>
-    )[cols] ?? "grid-cols-3";
-
-
+  const filterCount = (f: Filter) => (f === "all" ? stationOrders.length : stats[f]);
+  const filtersActive = filter !== "active" || !!search;
+  const SelectedStationIcon = STATION_CONFIG[station].icon;
 
   return (
-    <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Syne:wght@400;600;700;800&display=swap');
-        @keyframes urgentPulse { 0%,100% { box-shadow:0 0 0 0 rgba(255,71,87,0); } 50% { box-shadow:0 0 0 4px rgba(255,71,87,0.12); } }
-        @keyframes timerFlash { from { opacity:0.6; } to { opacity:1; } }
-        @keyframes connBlink { 0%,90%,100% { opacity:1; } 95% { opacity:0.2; } }
-        @keyframes pulseAlert { from { opacity:0.75; } to { opacity:1; } }
-        * { font-family: 'Syne', sans-serif; box-sizing: border-box; }
-        .font-mono { font-family: 'JetBrains Mono', monospace !important; }
-        ::-webkit-scrollbar { width: 5px; height: 5px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: #353a44; border-radius: 3px; }
-      `}</style>
+    <TooltipProvider delayDuration={250}>
+      <style>{KDS_STYLES}</style>
 
-      <div className="flex flex-col h-screen w-screen bg-[#0a0b0d] text-[#f0f2f5] overflow-hidden select-none">
+      <div className="flex h-dvh w-screen flex-col overflow-hidden bg-background text-foreground">
+        {/* Screen-reader announcements for new orders */}
+        <div className="sr-only" role="status" aria-live="polite">
+          {announcement}
+        </div>
 
-        {/* ── TOP BAR ── */}
-        <div className="flex items-center gap-2 h-[52px] shrink-0 bg-[#111318] border-b border-[#252830] px-4 z-10">
-          <div className="flex items-center gap-2 mr-3">
-            <ChefHat className="w-5 h-5 text-[#e8a020]" />
-            <span className="text-[13px] font-bold tracking-[0.12em] uppercase text-[#e8a020]">
-              KDS
-            </span>
+        {/* ── Top bar ── */}
+        <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-card px-3 py-2 sm:px-4">
+          <div className="flex items-center gap-2.5">
+            <div className={cn("kds-chip grid size-9 place-items-center rounded-lg", tone("amber"))}>
+              <ChefHat className="size-5" aria-hidden />
+            </div>
+            <div className="leading-tight">
+              <h1 className="text-sm font-bold tracking-tight">Kitchen Display</h1>
+              <p className="hidden items-center gap-1 text-xs text-muted-foreground sm:flex">
+                <SelectedStationIcon className="size-3" aria-hidden />
+                {STATION_CONFIG[station].label}
+                {operator && (
+                  <>
+                    <span aria-hidden>·</span>
+                    <Users className="size-3" aria-hidden />
+                    {operator}
+                  </>
+                )}
+              </p>
+            </div>
           </div>
 
-          <Badge
-            variant="outline"
-            className="font-mono text-[10px] text-[#8b919e] bg-[#1a1d24] border-[#353a44] hidden sm:flex items-center gap-1 mr-2"
-          >
-            {STATION_CONFIG[station].icon}
-            {STATION_CONFIG[station].label}
-          </Badge>
+          <Separator orientation="vertical" className="hidden h-7 sm:block" />
+          <LiveClock />
+          <Separator orientation="vertical" className="hidden h-7 md:block" />
 
-          {operator && (
-            <Badge
-              variant="outline"
-              className="font-mono text-[10px] text-blue-400 bg-blue-500/10 border-blue-500/30 hidden md:flex items-center gap-1 mr-2"
-            >
-              <Users className="w-3 h-3" />
-              Op: {operator}
-            </Badge>
-          )}
-
-          <div className="flex items-center gap-1.5 font-mono mr-3">
-            <span className="text-[18px] font-bold text-[#f0f2f5] tracking-tight">
-              {clockStr}
-            </span>
-            <span className="text-[11px] text-[#555b68] hidden sm:inline">
-              {dateStr}
-            </span>
-          </div>
-
-          <Separator orientation="vertical" className="h-6 bg-[#252830] mx-1" />
-
-          {/* Stats */}
-          <div className="flex items-center gap-1.5 overflow-x-auto">
-            {countUrgent > 0 && (
-              <StatPill
-                count={countUrgent}
-                label="Urgent"
-                color="text-[#ff4757] border-[#ff4757]/40 bg-[#ff4757]/10"
-                dotColor="bg-[#ff4757]"
-                pulse
-              />
-            )}
-            <StatPill
-              count={countNew}
-              label="New"
-              color="text-[#e8a020] border-[#e8a020]/35 bg-[#e8a020]/10"
-              dotColor="bg-[#e8a020]"
-            />
-            <StatPill
-              count={countProg}
-              label="Cooking"
-              color="text-[#3b9eff] border-[#3b9eff]/35 bg-[#3b9eff]/10"
-              dotColor="bg-[#3b9eff]"
-            />
-            <StatPill
-              count={countDone}
-              label="Done"
-              color="text-[#2ecc71] border-[#2ecc71]/30 bg-[#2ecc71]/8"
-              dotColor="bg-[#2ecc71]"
-            />
+          <div className="flex items-center gap-1.5 overflow-x-auto" role="group" aria-label="Order counts">
+            {stats.urgent > 0 && <StatPill count={stats.urgent} label="Urgent" tone="red" pulse />}
+            <StatPill count={stats.new} label="New" tone="amber" />
+            <StatPill count={stats.in_progress} label="Cooking" tone="blue" />
+            <StatPill count={stats.done} label="Done" tone="green" />
           </div>
 
           <div className="flex-1" />
 
           {avgTime && (
-            <span className="text-[12px] text-[#555b68] hidden md:flex items-center gap-1 mr-2">
-              <Clock className="w-3 h-3" />
-              Avg:{" "}
-              <span className="font-mono font-bold text-[#f0f2f5]">
-                {avgTime}
-              </span>
+            <span className="hidden items-center gap-1.5 text-xs text-muted-foreground md:flex">
+              <Clock className="size-3.5" aria-hidden />
+              Avg cook time
+              <span className="font-mono text-sm font-bold tabular-nums text-foreground">{avgTime}</span>
             </span>
           )}
 
-          <Separator orientation="vertical" className="h-6 bg-[#252830] mx-1" />
+          <div className="flex items-center gap-0.5">
+            <IconAction
+              label={soundEnabled ? "Mute new-order chime" : "Unmute new-order chime"}
+              pressed={soundEnabled}
+              active={soundEnabled}
+              onClick={() => {
+                setSoundEnabled((v) => !v);
+                if (!soundEnabled) playOrderChime();
+              }}
+            >
+              {soundEnabled ? <Volume2 className="size-4" /> : <VolumeX className="size-4" />}
+            </IconAction>
 
-          <div className="flex items-center gap-1">
-            {/* Sound Chime Toggle */}
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setSoundEnabled((prev) => !prev)}
-                    className={cn(
-                      "w-8 h-8 border border-transparent hover:border-[#353a44]",
-                      soundEnabled ? "text-[#e8a020]" : "text-[#555b68]"
-                    )}
-                  >
-                    {soundEnabled ? <Volume2 className="w-4 h-4" /> : <VolumeX className="w-4 h-4" />}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Toggle order chime sound
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <Tip label="Aggregated item totals across active orders">
+              <Button
+                type="button"
+                size="sm"
+                variant="outline"
+                onClick={() => setPrepOpen(true)}
+                className="h-9 gap-1.5 px-2.5 text-xs font-semibold"
+              >
+                <ChefHat className="size-4" aria-hidden />
+                <span className="hidden lg:inline">Prep view</span>
+                <span className="sr-only lg:hidden">Prep view</span>
+              </Button>
+            </Tip>
 
-            {/* Prep View Summary Toggle */}
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => setPrepSummaryOpen((v) => !v)}
-                    className="h-8 px-2 text-[10px] font-bold uppercase tracking-wide gap-1.5 text-[#e8a020] bg-[#e8a020]/10 border border-[#e8a020]/30 hover:bg-[#e8a020]/20"
-                  >
-                    <ChefHat className="w-3.5 h-3.5" />
-                    <span className="hidden lg:inline">Prep View</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  View aggregated item totals across active orders
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <IconAction
+              label={autoPrintKds ? "Auto-print is on — turn off" : "Auto-print is off — turn on"}
+              pressed={autoPrintKds}
+              active={autoPrintKds}
+              onClick={toggleAutoPrint}
+            >
+              <Printer className="size-4" />
+            </IconAction>
 
-            {/* Auto-Print Settings Toggle */}
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    onClick={() => {
-                      const current = usePosStore.getState().settings.kitchenTicketConfig.autoPrintKds;
-                      usePosStore.getState().updateKitchenTicketConfig({ autoPrintKds: !current });
-                      toast.info(`Auto-print ${!current ? 'Enabled' : 'Disabled'}`, {
-                        description: "New tickets will be printed automatically",
-                        icon: <Printer className="w-4 h-4" />
-                      });
-                    }}
-                    className={cn(
-                      "h-8 px-2 text-[10px] font-bold uppercase tracking-wide gap-1.5",
-                      autoPrintKds
-                        ? "text-[#2ecc71] bg-[#2ecc71]/10 border-[#2ecc71]/30"
-                        : "text-[#555b68] hover:text-[#f0f2f5] hover:bg-[#1a1d24]"
-                    )}
-                  >
-                    <Printer className="w-3.5 h-3.5" />
-                    <span className="hidden lg:inline">Auto-Print</span>
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Toggle auto-printing for incoming tickets
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <IconAction label="Recall bumped orders (R)" onClick={() => setRecallOpen(true)} badge={bumped.length}>
+              <Undo2 className="size-4" />
+            </IconAction>
 
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setRecallOpen((v) => !v)}
-                    className="w-8 h-8 text-[#555b68] hover:text-[#f0f2f5] hover:bg-[#1a1d24] border border-transparent hover:border-[#353a44]"
-                  >
-                    <Undo2 className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Recall bumped orders (R)
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <IconAction label="Keyboard shortcuts (?)" onClick={() => setShortcutsOpen(true)}>
+              <Keyboard className="size-4" />
+            </IconAction>
 
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={addTestOrder}
-                    className="w-8 h-8 text-[#555b68] hover:text-[#f0f2f5] hover:bg-[#1a1d24] border border-transparent hover:border-[#353a44]"
-                  >
-                    <Plus className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Add test order
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <ThemeToggle pref={theme} onChange={setTheme} />
 
-            <TooltipProvider delayDuration={200}>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    size="icon"
-                    variant="ghost"
-                    onClick={() => setShortcutsOpen(true)}
-                    className="w-8 h-8 text-[#555b68] hover:text-[#f0f2f5] hover:bg-[#1a1d24] border border-transparent hover:border-[#353a44]"
-                  >
-                    <Keyboard className="w-4 h-4" />
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                  Keyboard shortcuts (?)
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+            <IconAction
+              label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+              onClick={toggleFullscreen}
+            >
+              {isFullscreen ? <Minimize className="size-4" /> : <Maximize className="size-4" />}
+            </IconAction>
+
+            {process.env.NODE_ENV !== "production" && (
+              <IconAction label="Add demo order (dev only)" onClick={addTestOrder}>
+                <Plus className="size-4" />
+              </IconAction>
+            )}
           </div>
-        </div>
+        </header>
 
-        {/* ── URGENT BANNER ── */}
-        {countUrgent > 0 && (
+        {/* ── Alerts ── */}
+        {!online && (
           <div
-            className="flex items-center justify-center gap-2 text-[11px] font-bold tracking-widest text-[#ff4757] bg-[#ff4757]/10 border-b border-[#ff4757]/40 py-1.5 shrink-0"
-            style={{ animation: "pulseAlert 1.2s ease-in-out infinite alternate" }}
+            role="alert"
+            className={cn(
+              "kds-chip flex shrink-0 items-center justify-center gap-2 rounded-none border-x-0 border-t-0 py-1.5 text-xs font-semibold",
+              tone("amber")
+            )}
           >
-            <ShieldAlert className="w-3.5 h-3.5" />
-            {countUrgent} URGENT ORDER{countUrgent > 1 ? "S" : ""} — IMMEDIATE
-            ATTENTION REQUIRED
+            <WifiOff className="size-3.5" aria-hidden />
+            You&apos;re offline — new orders won&apos;t arrive and changes may not sync until the connection returns.
           </div>
         )}
 
-        {/* ── ONBOARDING TIP ── */}
-        {showOnboarding && (
-          <OnboardingBanner onDismiss={() => setShowOnboarding(false)} />
+        {stats.urgent > 0 && (
+          <div
+            role="alert"
+            className={cn(
+              "kds-chip flex shrink-0 items-center justify-center gap-2 rounded-none border-x-0 border-t-0 py-1.5 text-xs font-bold uppercase tracking-wider",
+              tone("red")
+            )}
+          >
+            <ShieldAlert className="size-4" aria-hidden />
+            {stats.urgent} urgent order{stats.urgent > 1 ? "s" : ""} — immediate attention required
+          </div>
         )}
 
-        {/* ── STATION TABS ── */}
-        <div className="flex items-center h-11 shrink-0 bg-[#111318] border-b border-[#252830] px-3 gap-0.5 overflow-x-auto">
-          {(
-            ["all", "hot", "cold", "grill", "dessert", "bar"] as Station[]
-          ).map((s) => {
+        {prefsReady && !tipDismissed && <OnboardingBanner onDismiss={() => setTipDismissed(true)} />}
+
+        {/* ── Station switcher ── */}
+        <nav
+          aria-label="Stations"
+          className="flex shrink-0 items-center gap-1 overflow-x-auto border-b border-border bg-card px-3 py-1.5"
+        >
+          {STATION_ORDER.map((s) => {
             const cfg = STATION_CONFIG[s];
+            const Icon = cfg.icon;
             const active = station === s;
             return (
-              <TooltipProvider key={s} delayDuration={400}>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <button
-                      onClick={() => setStation(s)}
-                      className={cn(
-                        "relative flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-bold uppercase tracking-wider border transition-all whitespace-nowrap",
-                        active
-                          ? "text-[#f0f2f5] bg-[#1a1d24] border-[#353a44]"
-                          : "text-[#555b68] border-transparent hover:text-[#8b919e] hover:bg-[#1a1d24]"
-                      )}
-                    >
-                      <span
-                        style={{ color: active ? cfg.color : undefined }}
-                        className="transition-colors"
-                      >
-                        {cfg.icon}
-                      </span>
-                      <span className="hidden sm:inline">{cfg.label}</span>
-                      <Badge
-                        variant="outline"
-                        className={cn(
-                          "font-mono text-[9px] font-bold h-4 px-1 rounded-full border",
-                          active
-                            ? "bg-[#e8a020]/10 text-[#e8a020] border-[#e8a020]/35"
-                            : "bg-[#0a0b0d] text-[#555b68] border-[#252830]"
-                        )}
-                      >
-                        {stationCount(s)}
-                      </Badge>
-                      {active && (
-                        <span
-                          className="absolute bottom-0 left-3 right-3 h-0.5 rounded-t-sm"
-                          style={{ background: cfg.color }}
-                        />
-                      )}
-                    </button>
-                  </TooltipTrigger>
-                  <TooltipContent className="text-[11px] bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]">
-                    {cfg.desc}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+              <Tip key={s} label={cfg.desc}>
+                <button
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setStation(s)}
+                  className={cn(
+                    "relative flex h-10 shrink-0 items-center gap-2 rounded-lg px-3 text-xs font-bold uppercase tracking-wider transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    active
+                      ? "bg-muted text-foreground"
+                      : "text-muted-foreground hover:bg-muted/60 hover:text-foreground"
+                  )}
+                >
+                  <Icon className={cn("size-4", tone(cfg.tone), active && "kds-text")} aria-hidden />
+                  <span className="hidden sm:inline">{cfg.label}</span>
+                  <span
+                    className={cn(
+                      "min-w-5 rounded-full px-1.5 text-center font-mono text-[11px] font-bold tabular-nums",
+                      active ? "bg-background text-foreground" : "bg-muted text-muted-foreground"
+                    )}
+                  >
+                    {stationCounts[s]}
+                  </span>
+                  {active && (
+                    <span
+                      aria-hidden
+                      className={cn("kds-bar absolute inset-x-3 bottom-0 h-0.5 rounded-full", tone(cfg.tone))}
+                    />
+                  )}
+                </button>
+              </Tip>
             );
           })}
-          <div className="flex-1" />
-        </div>
+        </nav>
 
-        {/* ── FILTER / TOOLBAR ROW ── */}
-        <div className="flex items-center gap-1.5 px-3 py-1.5 bg-[#0a0b0d] border-b border-[#252830] shrink-0 overflow-x-auto">
-          {/* Status filters */}
-          <div className="flex items-center gap-1 mr-1">
-            {(
-              [
-                ["all", "All"],
-                ["new", "New"],
-                ["in_progress", "Cooking"],
-                ["done", "Done"],
-                ["urgent", "Urgent"],
-              ] as [string, string][]
-            ).map(([f, label]) => (
-              <button
-                key={f}
-                onClick={() => setFilter(f as OrderStatus | "all")}
-                className={cn(
-                  "text-[10px] font-bold uppercase tracking-wide px-2.5 py-1 rounded border transition-all whitespace-nowrap",
-                  filter === f
-                    ? "bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]"
-                    : "border-[#252830] text-[#3a3f4a] hover:text-[#8b919e] hover:border-[#353a44]",
-                  f === "urgent" && filter !== f
-                    ? "!text-[#ff4757]/50 !border-[#ff4757]/15 hover:!text-[#ff4757] hover:!border-[#ff4757]/40"
-                    : "",
-                  f === "urgent" && filter === f
-                    ? "!text-[#ff4757] !border-[#ff4757]/40 !bg-[#ff4757]/10"
-                    : ""
-                )}
-              >
-                {label}
-              </button>
-            ))}
+        {/* ── Filters / sort / layout / search ── */}
+        <div className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-background px-3 py-2">
+          <div className="flex items-center gap-1 overflow-x-auto" role="group" aria-label="Filter by status">
+            {FILTERS.map((f) => {
+              const active = filter === f.id;
+              const count = filterCount(f.id);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  aria-pressed={active}
+                  onClick={() => setFilter(f.id)}
+                  className={cn(
+                    "inline-flex h-9 shrink-0 items-center gap-1.5 rounded-full border px-3 text-xs font-semibold transition",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+                    f.tone && tone(f.tone),
+                    active
+                      ? f.tone
+                        ? "kds-chip"
+                        : "border-foreground bg-foreground text-background"
+                      : cn(
+                          "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground",
+                          f.tone && "kds-text"
+                        )
+                  )}
+                >
+                  {f.label}
+                  <span className="font-mono tabular-nums opacity-70">{count}</span>
+                </button>
+              );
+            })}
           </div>
 
-          <Separator orientation="vertical" className="h-5 bg-[#252830] mx-0.5" />
+          <Separator orientation="vertical" className="hidden h-6 sm:block" />
 
-          {/* Sort */}
-          <Select
-            value={sort}
-            onValueChange={(v) => setSort(v as SortKey)}
-          >
-            <SelectTrigger className="h-7 w-[130px] text-[11px] bg-[#111318] border-[#252830] text-[#8b919e] focus:ring-0 focus:border-[#353a44]">
+          <Select value={sort} onValueChange={(v) => setSort(v as SortKey)}>
+            <SelectTrigger aria-label="Sort orders" className="h-9 w-[150px] text-xs">
               <SelectValue />
             </SelectTrigger>
-            <SelectContent className="bg-[#111318] border-[#252830] text-[#f0f2f5]">
-              <SelectItem value="time_asc" className="text-[11px]">
-                Oldest First
-              </SelectItem>
-              <SelectItem value="time_desc" className="text-[11px]">
-                Newest First
-              </SelectItem>
-              <SelectItem value="priority" className="text-[11px]">
-                By Priority
-              </SelectItem>
-              <SelectItem value="table" className="text-[11px]">
-                By Table
-              </SelectItem>
+            <SelectContent>
+              <SelectItem value="time_asc">Oldest first</SelectItem>
+              <SelectItem value="time_desc">Newest first</SelectItem>
+              <SelectItem value="priority">By priority</SelectItem>
+              <SelectItem value="table">By table</SelectItem>
             </SelectContent>
           </Select>
 
-          <Separator orientation="vertical" className="h-5 bg-[#252830] mx-0.5" />
-
-          {/* Columns */}
-          <div className="flex items-center gap-1">
-            <span className="text-[10px] text-[#3a3f4a] hidden sm:inline">
-              Cols:
-            </span>
+          <div className="hidden items-center gap-1 lg:flex" role="group" aria-label="Columns">
+            <span className="mr-1 text-xs text-muted-foreground">Columns</span>
             {[2, 3, 4, 5].map((n) => (
               <button
                 key={n}
+                type="button"
+                aria-pressed={cols === n}
+                aria-label={`${n} columns`}
                 onClick={() => setCols(n)}
                 className={cn(
-                  "w-7 h-7 rounded border text-[11px] font-bold transition-all",
+                  "size-9 rounded-lg border text-xs font-bold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                   cols === n
-                    ? "bg-[#1a1d24] border-[#353a44] text-[#f0f2f5]"
-                    : "border-[#252830] text-[#3a3f4a] hover:text-[#8b919e] hover:border-[#353a44]"
+                    ? "border-foreground bg-foreground text-background"
+                    : "border-border text-muted-foreground hover:border-foreground/30 hover:text-foreground"
                 )}
               >
                 {n}
@@ -1563,78 +1822,101 @@ export default function KDSPage() {
             ))}
           </div>
 
-          {/* Search */}
-          <div className="relative ml-auto">
-            <Search className="absolute left-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[#555b68]" />
+          <div className="relative ml-auto w-full sm:w-[260px]">
+            <Search
+              className="pointer-events-none absolute left-2.5 top-1/2 size-4 -translate-y-1/2 text-muted-foreground"
+              aria-hidden
+            />
             <Input
               ref={searchRef}
+              type="search"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  if (search) setSearch("");
+                  else e.currentTarget.blur();
+                }
+              }}
               placeholder="Search order, table, item…"
-              className="h-7 w-[180px] pl-6 text-[12px] bg-[#111318] border-[#252830] text-[#f0f2f5] placeholder:text-[#3a3f4a] focus:border-[#353a44] focus-visible:ring-0"
+              aria-label="Search orders"
+              className="h-9 pl-8 pr-8 text-sm [&::-webkit-search-cancel-button]:hidden"
             />
             {search && (
               <button
-                onClick={() => setSearch("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-[#555b68] hover:text-[#f0f2f5]"
+                type="button"
+                onClick={() => {
+                  setSearch("");
+                  searchRef.current?.focus();
+                }}
+                aria-label="Clear search"
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <X className="w-3 h-3" />
+                <X className="size-3.5" />
               </button>
             )}
           </div>
         </div>
 
-        {/* ── ORDER GRID ── */}
-        <div
-          className={cn(
-            "flex-1 overflow-auto p-3 grid gap-3 content-start",
-            gridCols
-          )}
+        {/* ── Order grid ── */}
+        <main
+          className="flex-1 overflow-auto p-3 sm:p-4"
+          onClick={(e) => e.target === e.currentTarget && setSelectedId(null)}
         >
           {visibleOrders.length === 0 ? (
-            <div className="col-span-full flex flex-col items-center justify-center py-24 text-[#555b68]">
-              <ChefHat className="w-12 h-12 mb-3 opacity-15" />
-              <p className="text-base font-bold mb-1 text-[#3a3f4a]">
-                All Clear
+            <div className="flex h-full min-h-[40vh] flex-col items-center justify-center text-center">
+              <div className="mb-4 grid size-16 place-items-center rounded-full bg-muted text-muted-foreground">
+                <ChefHat className="size-8" aria-hidden />
+              </div>
+              <h2 className="text-lg font-bold">
+                {filtersActive && stationOrders.length > 0 ? "No orders match" : "All clear"}
+              </h2>
+              <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+                {filtersActive && stationOrders.length > 0
+                  ? "Nothing matches the current filter or search."
+                  : "No active orders right now. New tickets will appear here automatically."}
               </p>
-              <p className="text-xs">No orders match the current filters</p>
-              {(filter !== "all" || search) && (
+              {filtersActive && (
                 <Button
-                  size="sm"
                   variant="outline"
+                  className="mt-4"
                   onClick={() => {
-                    setFilter("all");
+                    setFilter("active");
                     setSearch("");
                   }}
-                  className="mt-3 h-7 text-[11px] border-[#353a44] text-[#8b919e] bg-transparent hover:bg-[#1a1d24]"
                 >
                   Clear filters
                 </Button>
               )}
             </div>
           ) : (
-            visibleOrders.map((order) => (
-              <OrderCard
-                key={order.id}
-                order={order}
-                now={now}
-                selected={order.id === selectedId}
-                onSelect={() =>
-                  setSelectedId(order.id === selectedId ? null : order.id)
-                }
-                onStart={() => startOrder(order.id)}
-                onBump={() => bumpOrder(order.id)}
-                onVoid={() => setVoidTarget(order)}
-                onRecall={() => recallOrder(order.id)}
-                onCycleItem={(itemId) => cycleItemStatus(order.id, itemId)}
-              />
-            ))
+            <ul
+              aria-label="Orders"
+              style={{ "--kds-cols": cols } as CSSProperties}
+              className="grid grid-cols-1 content-start gap-3 sm:grid-cols-2 lg:[grid-template-columns:repeat(var(--kds-cols),minmax(0,1fr))]"
+            >
+              {visibleOrders.map((order) => (
+                <OrderCard
+                  key={order.id}
+                  order={order}
+                  selected={order.id === selectedId}
+                  onSelect={setSelectedId}
+                  onStart={startOrder}
+                  onBump={bumpOrder}
+                  onVoid={setVoidTargetId}
+                  onRecall={recallOrder}
+                  onToggleUrgent={toggleUrgent}
+                  onToggleFire={toggleFire}
+                  onCycleItem={cycleItemStatus}
+                />
+              ))}
+            </ul>
           )}
-        </div>
+        </main>
 
-        {/* ── BOTTOM STATUS BAR ── */}
-        <div className="flex items-center gap-3 h-10 shrink-0 bg-[#111318] border-t border-[#252830] px-4 overflow-x-auto">
-          <div className="flex items-center gap-3">
+        {/* ── Status bar ── */}
+        <footer className="flex h-10 shrink-0 items-center gap-4 overflow-x-auto border-t border-border bg-card px-4 text-xs text-muted-foreground">
+          <div className="hidden items-center gap-4 md:flex">
             {[
               ["Space", "Bump"],
               ["S", "Start"],
@@ -1643,126 +1925,76 @@ export default function KDSPage() {
               ["R", "Recall"],
               ["?", "Help"],
             ].map(([key, label]) => (
-              <div
-                key={key}
-                className="flex items-center gap-1.5 text-[10px] text-[#3a3f4a] whitespace-nowrap"
-              >
-                <kbd className="font-mono text-[9px] bg-[#1a1d24] border border-[#2a2f38] rounded px-1.5 py-px text-[#555b68]">
-                  {key}
-                </kbd>
-                <span className="hidden md:inline">{label}</span>
-              </div>
+              <span key={key} className="flex items-center gap-1.5 whitespace-nowrap">
+                <Kbd>{key}</Kbd>
+                {label}
+              </span>
             ))}
           </div>
           <div className="flex-1" />
+          <span className="whitespace-nowrap font-mono tabular-nums">
+            {visibleOrders.length} of {stationOrders.length} orders
+          </span>
           {selectedId && (
-            <span className="text-[10px] text-[#3b9eff] font-mono hidden sm:inline">
+            <span className={cn("kds-text hidden font-mono font-semibold sm:inline", tone("blue"))}>
               {orders.find((o) => o.id === selectedId)?.num} selected
             </span>
           )}
-          <div className="flex items-center gap-1.5 text-[11px] font-mono text-[#2ecc71]">
-            <div
-              className="w-1.5 h-1.5 rounded-full bg-[#2ecc71]"
-              style={{ animation: "connBlink 2s ease-in-out infinite" }}
-            />
-            <span className="hidden sm:inline">LIVE</span>
-          </div>
-        </div>
+          <span
+            className={cn("flex items-center gap-1.5 font-mono font-semibold", tone(online ? "green" : "amber"), "kds-text")}
+            role="status"
+          >
+            <span className={cn("kds-bar size-2 rounded-full", online && "kds-blink")} aria-hidden />
+            {online ? "LIVE" : "OFFLINE"}
+          </span>
+        </footer>
       </div>
 
-      {/* ── PREP SUMMARY SHEET ── */}
-      <PrepSummarySheet
-        open={prepSummaryOpen}
-        station={station}
-        onClose={() => setPrepSummaryOpen(false)}
-      />
-
-      {/* ── RECALL SHEET ── */}
+      {/* ── Panels & dialogs ── */}
+      <PrepSummarySheet open={prepOpen} station={station} onClose={() => setPrepOpen(false)} />
       <RecallSheet
         open={recallOpen}
         bumped={bumped}
         onClose={() => setRecallOpen(false)}
         onRecall={recallOrder}
       />
+      <ShortcutsDialog open={shortcutsOpen} onClose={() => setShortcutsOpen(false)} />
 
-      {/* ── VOID CONFIRMATION ── */}
-      <AlertDialog
-        open={!!voidTarget}
-        onOpenChange={(v) => !v && setVoidTarget(null)}
-      >
-        <AlertDialogContent className="bg-[#111318] border border-[#252830] text-[#f0f2f5] max-w-sm">
+      <AlertDialog open={!!voidTargetId} onOpenChange={(v) => !v && setVoidTargetId(null)}>
+        <AlertDialogContent className="max-w-sm">
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2 text-[#f0f2f5]">
-              <Trash2 className="w-4 h-4 text-[#ff4757]" />
-              Void Order {voidTarget?.num}?
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Trash2 className="size-4 text-destructive" aria-hidden />
+              Void order {voidTarget?.num}?
             </AlertDialogTitle>
-            <AlertDialogDescription className="text-[#555b68]">
-              This will cancel order{" "}
-              <strong className="text-[#f0f2f5]">{voidTarget?.num}</strong> for{" "}
-              <strong className="text-[#f0f2f5]">{voidTarget?.table}</strong>{" "}
-              with {voidTarget?.items.length} item
-              {(voidTarget?.items.length ?? 0) > 1 ? "s" : ""}. This cannot be
-              undone from this screen.
+            <AlertDialogDescription>
+              This cancels order <strong className="text-foreground">{voidTarget?.num}</strong> for{" "}
+              <strong className="text-foreground">{voidTarget?.table}</strong> (
+              {voidTarget?.items.length ?? 0} item{(voidTarget?.items.length ?? 0) !== 1 ? "s" : ""}). You can
+              recall it afterwards, but the kitchen will be notified of the cancellation.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="border-[#353a44] text-[#8b919e] bg-transparent hover:bg-[#1a1d24] hover:text-[#f0f2f5]">
-              Cancel
-            </AlertDialogCancel>
+            <AlertDialogCancel>Keep order</AlertDialogCancel>
             <AlertDialogAction
-              onClick={() => voidTarget && voidOrder(voidTarget.id)}
-              className="bg-[#ff4757]/15 text-[#ff4757] border border-[#ff4757]/40 hover:bg-[#ff4757]/25 shadow-none"
+              onClick={() => voidTargetId && voidOrder(voidTargetId)}
+              className="bg-destructive text-white hover:bg-destructive/90"
             >
-              Void Order
+              Void order
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
 
-      {/* ── ETA QUERY DIALOG ── */}
-      <Dialog open={!!etaQueryTarget} onOpenChange={(v) => !v && setEtaQueryTarget(null)}>
-        <DialogContent className="bg-[#111318] border border-[#252830] text-[#f0f2f5] max-w-sm">
-          <DialogHeader>
-            <DialogTitle>Send ETA to Hub</DialogTitle>
-            <DialogDescription className="text-[#555b68]">
-              How many minutes until Order #{orders.find(o => o.id === etaQueryTarget)?.num} is ready?
-            </DialogDescription>
-          </DialogHeader>
-          <div className="grid grid-cols-2 gap-3 py-4">
-            {[2, 5, 10, 15, 20, 30].map(mins => (
-              <Button
-                key={mins}
-                variant="outline"
-                onClick={() => handleSendEta(mins)}
-                className="border-[#353a44] hover:bg-[#3b9eff]/20 hover:text-[#3b9eff]"
-              >
-                {mins} mins
-              </Button>
-            ))}
-          </div>
-          <div className="flex gap-2">
-            <Input
-              type="number"
-              placeholder="Custom mins..."
-              className="bg-[#0a0b0d] border-[#252830]"
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSendEta(parseInt((e.target as HTMLInputElement).value));
-                }
-              }}
-            />
-          </div>
-          <DialogFooter>
-            <Button variant="ghost" onClick={() => setEtaQueryTarget(null)}>Cancel</Button>
-          </DialogFooter>
+      <Dialog open={!!etaTarget} onOpenChange={(v) => !v && setEtaTarget(null)}>
+        <DialogContent className="max-w-sm">
+          <EtaForm
+            orderNum={etaTarget ? orders.find((o) => o.id === etaTarget)?.num : undefined}
+            onSend={handleSendEta}
+            onCancel={() => setEtaTarget(null)}
+          />
         </DialogContent>
       </Dialog>
-
-      {/* ── SHORTCUTS DIALOG ── */}
-      <ShortcutsDialog
-        open={shortcutsOpen}
-        onClose={() => setShortcutsOpen(false)}
-      />
-    </>
+    </TooltipProvider>
   );
 }

@@ -76,7 +76,11 @@ describe("McpController Streamable HTTP & Auth Discovery", () => {
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.header).toHaveBeenCalledWith(
       "WWW-Authenticate",
-      'Bearer resource_metadata="https://api.scryme.tech/.well-known/oauth-protected-resource/v3/mcp"'
+      expect.stringContaining('resource_metadata="https://api.scryme.tech/.well-known/oauth-protected-resource/v3/mcp"')
+    );
+    expect(res.header).toHaveBeenCalledWith(
+      "WWW-Authenticate",
+      expect.stringContaining('Bearer realm="mcp"')
     );
     expect(result.error.code).toBe(-32000);
   });

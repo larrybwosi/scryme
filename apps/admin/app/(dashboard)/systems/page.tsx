@@ -13,6 +13,10 @@ import { CustomerEnginePanel } from "@/components/systems/customer-engine-panel"
 import { PosReleasesPanel } from "@/components/systems/pos-releases-panel";
 import { DocumentTemplatesPanel } from "@/components/systems/document-templates-panel";
 import { SystemModulesPanel } from "@/components/systems/system-modules-panel";
+import {
+  SystemsCards,
+  type SystemCardItem,
+} from "@/components/systems/systems-cards";
 
 export default async function SystemsPage() {
   const [
@@ -31,6 +35,39 @@ export default async function SystemsPage() {
     getSystemModules(),
   ]);
 
+  const items: SystemCardItem[] = [
+    {
+      id: "modules",
+      title: "System Modules",
+      description: "Enable or disable global platform modules.",
+      panel: <SystemModulesPanel initialSystemModules={systemModules} />,
+    },
+    {
+      id: "workflow",
+      title: "Workflow Engine",
+      description: "Inspect execution metrics and health of the workflow engine.",
+      panel: <WorkflowEnginePanel metrics={workflowMetrics} />,
+    },
+    {
+      id: "customer",
+      title: "Customer Engine",
+      description: "Monitor customer engine metrics and activity.",
+      panel: <CustomerEnginePanel metrics={customerMetrics} />,
+    },
+    {
+      id: "pos",
+      title: "POS Releases",
+      description: "Manage POS app release settings and binaries.",
+      panel: <PosReleasesPanel settings={posSettings} binaries={posBinaries} />,
+    },
+    {
+      id: "documents",
+      title: "Document Templates",
+      description: "Configure system document templates and settings.",
+      panel: <DocumentTemplatesPanel initialData={documentSettings} />,
+    },
+  ];
+
   return (
     <div className="flex flex-col gap-8">
       <div>
@@ -44,27 +81,7 @@ export default async function SystemsPage() {
         </p>
       </div>
 
-      <div className="flex flex-col gap-8">
-        <section className="flex flex-col gap-3">
-          <SystemModulesPanel initialSystemModules={systemModules} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <WorkflowEnginePanel metrics={workflowMetrics} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <CustomerEnginePanel metrics={customerMetrics} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <PosReleasesPanel settings={posSettings} binaries={posBinaries} />
-        </section>
-
-        <section className="flex flex-col gap-3">
-          <DocumentTemplatesPanel initialData={documentSettings} />
-        </section>
-      </div>
+      <SystemsCards items={items} />
     </div>
   );
 }
