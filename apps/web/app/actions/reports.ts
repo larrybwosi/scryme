@@ -648,39 +648,69 @@ Provide a crisp, direct, highly insightful answer backed by the figures in the r
     }
   }
 
-  // Rule-based conversational fallback response
+  // Enhanced multi-domain intelligent rule-based advisory response
   const data: any = report.data;
   let answer = `💡 **AI Advisory Response:**\n\n`;
   const qLower = question.toLowerCase();
 
-  if (qLower.includes("revenue") || qLower.includes("sales") || qLower.includes("money")) {
-    const rev = data.sales?.totalRevenue || 0;
-    const count = data.sales?.transactionCount || 0;
-    answer += `Based on the active report data, total recorded revenue is **$${rev.toFixed(2)}** across **${count}** completed orders. `;
-    if (data.sales?.topProducts?.length) {
-      answer += `The highest-performing product was **${data.sales.topProducts[0].name}** generating **$${data.sales.topProducts[0].revenue.toFixed(2)}**.`;
+  const rev = Number(data.sales?.totalRevenue || 0);
+  const orders = Number(data.sales?.transactionCount || 0);
+  const totalIn = Number(data.inventory?.totalIn || 0);
+  const totalOut = Number(data.inventory?.totalOut || 0);
+  const batches = Number(data.production?.totalBatches || 0);
+  const waste = Number(data.production?.totalWaste || 0);
+  const yieldQty = Number(data.production?.totalYield || 0);
+  const exp = Number(data.finance?.totalExpenses || 0);
+  const vat = Number(data.tax?.netVatPayable || 0);
+  const avgOrder = orders > 0 ? (rev / orders).toFixed(2) : "0.00";
+
+  if (qLower.includes("revenue") || qLower.includes("sales") || qLower.includes("money") || qLower.includes("earn") || qLower.includes("income")) {
+    answer += `### 📈 Revenue & Sales Insights\n`;
+    answer += `Based on the active report metrics, total recorded revenue is **$${rev.toFixed(2)}** across **${orders}** completed orders (Average ticket: **$${avgOrder}**).\n\n`;
+    if (data.sales?.topProducts && data.sales.topProducts.length > 0) {
+      answer += `**Top revenue generators:**\n`;
+      data.sales.topProducts.slice(0, 3).forEach((p: any, idx: number) => {
+        answer += `* ${idx + 1}. **${p.name}**: ${p.quantity != null ? `${p.quantity} units sold ` : ''} ($${Number(p.revenue).toFixed(2)})\n`;
+      });
+      answer += `\n*Recommendation:* Reinforce inventory levels for ${data.sales.topProducts[0].name} during peak operational periods to prevent stockout loss.`;
     }
-  } else if (qLower.includes("stock") || qLower.includes("inventory") || qLower.includes("waste")) {
-    const totalIn = data.inventory?.totalIn || 0;
-    const totalOut = data.inventory?.totalOut || 0;
-    const waste = data.production?.totalWaste || 0;
-    answer += `Stock inflows totaled **${totalIn.toFixed(1)}** units against **${totalOut.toFixed(1)}** outgoing dispatches. `;
+  } else if (qLower.includes("stock") || qLower.includes("inventory") || qLower.includes("movement") || qLower.includes("item")) {
+    answer += `### 📦 Inventory Flow & Balance\n`;
+    answer += `Total stock received: **${totalIn.toFixed(1)}** units | Total stock dispatched: **${totalOut.toFixed(1)}** units.\n\n`;
+    if (totalOut > totalIn && totalIn > 0) {
+      answer += `⚠️ **Depletion Alert:** Dispatches exceeded replenishment by **${(totalOut - totalIn).toFixed(1)}** units. Recommend issuing purchase orders for fast-depleting lines.\n`;
+    } else {
+      answer += `✅ Inflow and outflow turnover remain well-balanced across active locations.\n`;
+    }
+    if (data.inventory?.topMovedItems && data.inventory.topMovedItems.length > 0) {
+      answer += `\n**Fastest-moving inventory items:**\n`;
+      data.inventory.topMovedItems.slice(0, 3).forEach((item: any) => {
+        answer += `* **${item.name}**: ${item.qty} units moved\n`;
+      });
+    }
+  } else if (qLower.includes("waste") || qLower.includes("scrap") || qLower.includes("production") || qLower.includes("batch") || qLower.includes("recipe")) {
+    answer += `### 👨‍🍳 Production & Wastage Analysis\n`;
+    answer += `Completed **${batches}** production batches with total yield of **${yieldQty.toFixed(1)}** units.\n\n`;
     if (waste > 0) {
-      answer += `Production waste was recorded at **${waste.toFixed(2)}** units. Recommended action is auditing high-waste recipe steps.`;
+      const wasteRatio = yieldQty > 0 ? ((waste / (yieldQty + waste)) * 100).toFixed(1) : "0.0";
+      answer += `⚠️ **Waste Detected:** Recorded **${waste.toFixed(2)}** units scrap/waste (${wasteRatio}% waste ratio).\n`;
+      answer += `*Action Step:* Review proofing timing and bake temperature controls on high-waste production runs.`;
     } else {
-      answer += `No high-severity wastage or abnormal shrinkage was detected in this period.`;
+      answer += `✅ Exceptional yield consistency: Zero scrap or discarded batches logged in this period.`;
     }
-  } else if (qLower.includes("tax") || qLower.includes("vat") || qLower.includes("expense")) {
-    const exp = data.finance?.totalExpenses || 0;
-    const vat = data.tax?.netVatPayable || 0;
-    answer += `Total operating expenses logged during this period: **$${exp.toFixed(2)}**. Net estimated VAT obligation stands at **$${vat.toFixed(2)}**. Ensure posted journal entries are finalized prior to filing.`;
+  } else if (qLower.includes("tax") || qLower.includes("vat") || qLower.includes("expense") || qLower.includes("cost") || qLower.includes("profit") || qLower.includes("margin")) {
+    answer += `### 💳 Financial & Compliance Overview\n`;
+    answer += `Operating expenditures logged: **$${exp.toFixed(2)}** across active cost centers.\n`;
+    answer += `Estimated net VAT payable stands at **$${vat.toFixed(2)}** (Output Tax: $${Number(data.tax?.outputTax || 0).toFixed(2)} - Input Tax: $${Number(data.tax?.inputTax || 0).toFixed(2)}).\n\n`;
+    const netProfit = rev - exp;
+    answer += `*Estimated Operating Margin:* **${rev > 0 ? ((netProfit / rev) * 100).toFixed(1) : "0.0"}%** (Net: $${netProfit.toFixed(2)}).`;
   } else {
-    answer += `Reviewing the report metrics: The overall performance indicates healthy operational throughput. `;
+    answer += `### 🎯 Operational Summary & Key Takeaways\n`;
+    answer += `Across this reporting interval, the organization processed **$${rev.toFixed(2)}** in sales, managed **${(totalIn + totalOut).toFixed(1)}** stock movements, and executed **${batches}** production runs.\n\n`;
     if (report.summary) {
-      answer += `Key executive takeaway: ${report.summary}`;
-    } else {
-      answer += `All tracked indicators (Sales, Stock movements, Production yields) are within normal baseline tolerances.`;
+      answer += `**Executive Advisory:**\n${report.summary}\n\n`;
     }
+    answer += `Feel free to ask specific questions about sales velocity, product margins, inventory turnover, or expense breakdowns!`;
   }
 
   return { success: true, answer };

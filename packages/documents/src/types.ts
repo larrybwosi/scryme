@@ -211,3 +211,43 @@ export interface DeliveryNoteData extends BaseDocumentData {
   items: DocumentItem[];
   otp?: string;
 }
+
+export interface BusinessReportKpi {
+  label: string;
+  value: string;
+  subtext?: string;
+}
+
+export interface BusinessReportData extends BaseDocumentData {
+  title: string;
+  category: "EXECUTIVE" | "SALES" | "STOCK" | "PRODUCTION" | "FINANCE" | string;
+  reportNumber?: string;
+  periodText: string;
+  generatedAtText?: string;
+  generatedByText?: string;
+  locationName?: string;
+  departmentName?: string;
+  currency?: string;
+  aiSummary?: string;
+  kpis?: BusinessReportKpi[];
+  salesBreakdown?: Array<{
+    name: string;
+    quantity: number;
+    revenue: number;
+  }>;
+  inventoryBreakdown?: Array<{
+    name: string;
+    qty: number;
+  }>;
+  productionBreakdown?: Array<{
+    name: string;
+    quantity: number;
+    unit: string;
+  }>;
+  financeSummary?: {
+    totalExpenses: number;
+    outputTax: number;
+    inputTax: number;
+    netVatPayable: number;
+  };
+}
