@@ -29,7 +29,7 @@ describe("ProcessSaleUseCase", () => {
         $transaction: vi.fn(cb => cb(prisma.client)),
         productVariant: { findMany: vi.fn() },
         customer: { findFirst: vi.fn(), findUnique: vi.fn(), create: vi.fn() },
-        transaction: { create: vi.fn() },
+        transaction: { create: vi.fn(), findFirst: vi.fn() },
         productVariantStock: { update: vi.fn(), upsert: vi.fn() },
         priceList: { findMany: vi.fn().mockResolvedValue([]) },
         stockMovement: { createMany: vi.fn() },
@@ -850,5 +850,64 @@ describe("ProcessSaleUseCase", () => {
         }),
       }),
     );
+  });
+
+  describe("Idempotency handling", () => {
+    it("returns existing transaction without re-processing when idempotencyKey matches", async () => {
+      const existingTxn = {
+        id: "existing_txn_123",
+        number: "SALE-EXISTS-01",
+        status: "COMPLETED",
+        paymentStatus: "PAID",
+        finalTotal: 100,
+        customerId: "cust_123",
+      };
+
+      prisma.client.transaction.findFirst.mockResolvedValueOnce(existingTxn);
+
+      const ctx = {
+        organizationId: "org_1",
+        memberId: "mem_1",
+        locationId: "loc_1",
+      };
+
+      const dto = {
+        saleId: "550e8400-e29b-41d4-a716-446655440000",
+        items: [{ variantId: "var_1", quantity: 2 }],
+      };
+
+      const result = await useCase.execute(ctx, dto);
+
+      expect(prisma.client.transaction.findFirst).toHaveBeenCalledWith({
+        where: {
+          organizationId: "org_1",
+          OR: [
+            { number: "550e8400-e29b-41d4-a716-446655440000" },
+            {
+              metadata: {
+                path: ["idempotencyKey"],
+                equals: "550e8400-e29b-41d4-a716-446655440000",
+              },
+            },
+          ],
+        },
+        select: {
+          id: true,
+          number: true,
+          status: true,
+          paymentStatus: true,
+          finalTotal: true,
+          customerId: true,
+        },
+      });
+
+      expect(result).toEqual({
+        ...existingTxn,
+        isDuplicate: true,
+      });
+
+      // Crucial: $transaction should NOT be called for a duplicate sale
+      expect(prisma.client.$transaction).not.toHaveBeenCalled();
+    });
   });
 });

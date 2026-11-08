@@ -181,6 +181,16 @@ export class ProcessSaleDto {
   @IsOptional()
   saleNumber?: string;
 
+  @ApiPropertyOptional({ example: "550e8400-e29b-41d4-a716-446655440000", description: "Client unique transaction UUID for idempotency" })
+  @IsString()
+  @IsOptional()
+  saleId?: string;
+
+  @ApiPropertyOptional({ example: "550e8400-e29b-41d4-a716-446655440000", description: "Explicit idempotency key" })
+  @IsString()
+  @IsOptional()
+  idempotencyKey?: string;
+
   @ApiPropertyOptional({ example: false, description: "Whether this is a wholesale sale" })
   @IsBoolean()
   @IsOptional()
@@ -295,4 +305,13 @@ export class ProcessSaleDto {
   @IsString()
   @IsOptional()
   doctorName?: string;
+}
+
+
+export class BatchProcessSaleDto {
+  @ApiProperty({ type: [ProcessSaleDto], description: "Batch of sales to process" })
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => ProcessSaleDto)
+  sales: ProcessSaleDto[];
 }

@@ -85,6 +85,10 @@ export interface OrderItem {
   price?: number;
   notes?: string;
 
+  // Restaurant specific
+  course?: 'STARTER' | 'MAIN' | 'DESSERT' | 'BEVERAGE';
+  station?: string;
+
   // Pharmacy specific
   requiresPrescription?: boolean;
   dosageInstructions?: string;
@@ -551,12 +555,13 @@ export interface Table {
   id: string;
   number: string;
   capacity: number;
-  status: 'available' | 'occupied' | 'reserved';
+  status: 'available' | 'occupied' | 'reserved' | 'order_placed' | 'check_printed' | 'dirty';
   currentOrderId?: string;
   guestsCount?: number;
   occupiedAt?: string;
   section?: string;
   notes?: string;
+  version?: number;
 }
 
 interface PosStore {

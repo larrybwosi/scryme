@@ -310,7 +310,9 @@ export function sendOrderToKitchen(fullOrder: any) {
       quantity: item.quantity,
       modifiers: '',
       isAllergy: false,
-      status: 'pending'
+      status: 'pending',
+      course: item.course || 'MAIN',
+      station: item.station || 'hot',
     })) || [],
     note: fullOrder.notes || '',
     server: fullOrder.customerName || 'Cashier',
