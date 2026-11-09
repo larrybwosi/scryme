@@ -16,7 +16,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/dialog";
+} from "@repo/ui/components/ui/dialog";
 
 export type SystemCardId =
   | "modules"
