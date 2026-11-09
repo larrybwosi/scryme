@@ -66,12 +66,31 @@ function LoginPageContent({
   const [nuqsRedirect] = useQueryState("redirect");
   const [nuqsReturnTo] = useQueryState("returnTo");
   const [nuqsEmail] = useQueryState("email");
+  const [nuqsPlan] = useQueryState("plan");
+  const [nuqsBilling] = useQueryState("billing");
+  const [nuqsCurrency] = useQueryState("currency");
+  const [nuqsTrial] = useQueryState("trial");
 
-  const callbackUrl = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
+  // Determine fallback target dashboard or create-org URL with preserved parameters
+  const targetRedirectUrl = (() => {
+    if (nuqsPlan || nuqsBilling || nuqsCurrency || nuqsTrial) {
+      const params = new URLSearchParams();
+      if (nuqsPlan) params.set("plan", nuqsPlan);
+      if (nuqsBilling) params.set("billing", nuqsBilling);
+      if (nuqsCurrency) params.set("currency", nuqsCurrency);
+      if (nuqsTrial) params.set("trial", nuqsTrial);
+      const queryString = params.toString();
+      return `/create-org?${queryString}`;
+    }
+    return "/dashboard";
+  })();
+
+  const rawCallback = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
+  const callbackUrl = rawCallback || targetRedirectUrl;
 
   useEffect(() => {
     if (session.data) {
-      router.push(callbackUrl || "/dashboard");
+      router.push(callbackUrl);
     }
   }, [session.data, router, callbackUrl]);
 
@@ -119,7 +138,7 @@ function LoginPageContent({
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackUrl || "/dashboard",
+        callbackURL: callbackUrl,
       });
     } catch (error: any) {
       console.error("Login failed:", error);
@@ -149,11 +168,7 @@ function LoginPageContent({
       });
 
       if (result.data) {
-        if (callbackUrl) {
-          router.push(callbackUrl);
-        } else {
-          router.push("/dashboard");
-        }
+        router.push(callbackUrl);
       } else if (result.error) {
         setLoginStatus("error");
         const isRateLimit =
@@ -439,6 +454,10 @@ function LoginPageContent({
                     if (callbackUrl) {
                       params.set("callbackUrl", callbackUrl);
                     }
+                    if (nuqsPlan) params.set("plan", nuqsPlan);
+                    if (nuqsBilling) params.set("billing", nuqsBilling);
+                    if (nuqsCurrency) params.set("currency", nuqsCurrency);
+                    if (nuqsTrial) params.set("trial", nuqsTrial);
                     const queryString = params.toString();
                     router.push(
                       `/sign-up${queryString ? `?${queryString}` : ""}`,

@@ -177,14 +177,29 @@ export function SignupPage() {
   const [nuqsRedirect] = useQueryState("redirect");
   const [nuqsReturnTo] = useQueryState("returnTo");
   const [nuqsEmail] = useQueryState("email");
+  const [nuqsPlan] = useQueryState("plan");
+  const [nuqsBilling] = useQueryState("billing");
+  const [nuqsCurrency] = useQueryState("currency");
+  const [nuqsTrial] = useQueryState("trial");
 
-  const callbackURL =
-    nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo || undefined;
+  // Construct target redirect destination while preserving marketing conversion attributes
+  const targetCreateOrgUrl = (() => {
+    const params = new URLSearchParams();
+    if (nuqsPlan) params.set("plan", nuqsPlan);
+    if (nuqsBilling) params.set("billing", nuqsBilling);
+    if (nuqsCurrency) params.set("currency", nuqsCurrency);
+    if (nuqsTrial) params.set("trial", nuqsTrial);
+    const queryString = params.toString();
+    return queryString ? `/create-org?${queryString}` : "/create-org";
+  })();
+
+  const rawCallback = nuqsCallbackUrl || nuqsRedirect || nuqsReturnTo;
+  const callbackURL = rawCallback || targetCreateOrgUrl;
 
   // Handle side effect navigation in useEffect
   useEffect(() => {
     if (session.data) {
-      router.push(callbackURL || "/create-org");
+      router.push(callbackURL);
     }
   }, [session.data, router, callbackURL]);
 
@@ -215,7 +230,7 @@ export function SignupPage() {
     try {
       await signIn.social({
         provider,
-        callbackURL: callbackURL || "/create-org",
+        callbackURL,
       });
     } catch (error) {
       console.error("Login failed:", error);
@@ -231,15 +246,11 @@ export function SignupPage() {
         email: data.email,
         password: data.password,
         name: `${data.firstName} ${data.lastName}`,
-        callbackURL: callbackURL || undefined,
+        callbackURL,
       });
 
       if (res.data?.user) {
-        if (callbackURL) {
-          router.push(callbackURL);
-        } else {
-          router.push("/create-org");
-        }
+        router.push(callbackURL);
       }
     } catch (error) {
       console.error("Signup failed:", error);
@@ -261,15 +272,19 @@ export function SignupPage() {
               <button
                 type="button"
                 onClick={() => {
-                  // Explicitly preserve the callbackURL search parameter when transitioning to login
+                  // Explicitly preserve the callbackURL and conversion search parameters when transitioning to login
                   const params = new URLSearchParams();
                   if (callbackURL) {
                     params.set("callbackUrl", callbackURL);
                   }
+                  if (nuqsPlan) params.set("plan", nuqsPlan);
+                  if (nuqsBilling) params.set("billing", nuqsBilling);
+                  if (nuqsCurrency) params.set("currency", nuqsCurrency);
+                  if (nuqsTrial) params.set("trial", nuqsTrial);
                   const queryString = params.toString();
                   router.push(`/login${queryString ? `?${queryString}` : ""}`);
                 }}
-                className="text-emerald-700 font-semibold hover:text-emerald-800 transition-colors">
+                className="text-emerald-700 font-semibold hover:text-emerald-800 transition-colors cursor-pointer">
                 Log in
               </button>
             </p>
