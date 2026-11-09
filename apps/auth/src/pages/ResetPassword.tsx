@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
+import { customerAuthClient } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
 import { Eye, EyeOff, XCircle, ArrowLeft, Loader2, AlertCircle, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,6 +13,10 @@ export function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
 
   const token = searchParams?.token;
 
@@ -25,17 +31,32 @@ export function ResetPasswordPage() {
     setError(null);
 
     try {
-      const res = await authClient.resetPassword({
-        newPassword,
-        token,
-      });
+      if (isCustomer) {
+        const res = await (customerAuthClient.resetPassword || customerAuthClient.changePassword)({
+          newPassword,
+          token,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to reset password. Token may have expired.");
-        toast.error("Password reset failed");
+        if (res?.error) {
+          setError(res.error.message || "Failed to reset customer password. Token may have expired.");
+          toast.error("Password reset failed");
+        } else {
+          toast.success("Password reset successfully!");
+          navigate({ to: "/sign-in", search: searchParams });
+        }
       } else {
-        toast.success("Password reset successfully!");
-        navigate({ to: "/sign-in" });
+        const res = await authClient.resetPassword({
+          newPassword,
+          token,
+        });
+
+        if (res?.error) {
+          setError(res.error.message || "Failed to reset password. Token may have expired.");
+          toast.error("Password reset failed");
+        } else {
+          toast.success("Password reset successfully!");
+          navigate({ to: "/sign-in", search: searchParams });
+        }
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -56,6 +77,7 @@ export function ResetPasswordPage() {
         </p>
         <Link
           to="/forgot-password"
+          search={searchParams}
           className="inline-flex items-center justify-center h-10 px-4 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all"
         >
           Request new link
@@ -68,6 +90,7 @@ export function ResetPasswordPage() {
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <Link
         to="/sign-in"
+        search={searchParams}
         className="inline-flex items-center gap-2 text-xs font-semibold text-[#5B6B7C] hover:text-[#0F1B2E] mb-6 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
@@ -78,7 +101,7 @@ export function ResetPasswordPage() {
           <KeyRound className="w-3 h-3 text-[#A9824C]" /> New Credentials
         </div>
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Set new password
+          {isCustomer ? `Set new ${orgSlug || "Customer"} password` : "Set new password"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
           Enter your new password below to update your security credentials.

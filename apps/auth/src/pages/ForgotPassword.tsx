@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { requestPasswordReset } from "@/lib/auth-client";
+import { customerAuthClient } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
+import { OrgSelector } from "@/components/OrgSelector";
 import { ArrowLeft, XCircle, CheckCircle2, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,23 +14,46 @@ export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
+
+  if (tenantContext.needsOrgSelection) {
+    return <OrgSelector />;
+  }
+
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const res = await requestPasswordReset(
-        email,
-        `${window.location.origin}/reset-password`
-      );
+      if (isCustomer) {
+        const res = await (customerAuthClient.requestPasswordReset || customerAuthClient.forgetPassword)({
+          email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to send reset email.");
-        toast.error("Request failed");
+        if (res?.error) {
+          setError(res.error.message || "Failed to send reset email.");
+          toast.error("Request failed");
+        } else {
+          setSubmitted(true);
+          toast.success("Password reset instructions sent!");
+        }
       } else {
-        setSubmitted(true);
-        toast.success("Password reset instructions sent!");
+        const res = await requestPasswordReset(
+          email,
+          `${window.location.origin}/reset-password`
+        );
+
+        if (res?.error) {
+          setError(res.error.message || "Failed to send reset email.");
+          toast.error("Request failed");
+        } else {
+          setSubmitted(true);
+          toast.success("Password reset instructions sent!");
+        }
       }
     } catch (err: any) {
       setError("An unexpected error occurred sending instructions.");
@@ -52,10 +78,12 @@ export function ForgotPasswordPage() {
           <KeyRound className="w-3 h-3 text-[#A9824C]" /> Account Recovery
         </div>
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Reset password
+          {isCustomer ? `Reset ${orgSlug || "Customer"} password` : "Reset password"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
-          Enter your work email address and we'll send you instructions to reset your password.
+          {isCustomer
+            ? "Enter your customer email address and we'll send you instructions to reset your password."
+            : "Enter your work email address and we'll send you instructions to reset your password."}
         </p>
       </div>
 
@@ -80,14 +108,14 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleResetRequest} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-              Work Email
+              {isCustomer ? "Customer Email" : "Work Email"}
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
+              placeholder="name@example.com"
               className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
           </div>
