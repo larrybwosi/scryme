@@ -37,7 +37,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.LeadingIconTab
+import androidx.compose.material3.Tab
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -203,24 +203,27 @@ private fun SalesTabRow(
     ) {
         SalesTab.values().forEach { tab ->
             val selected = selectedTab == tab
-            LeadingIconTab(
+            Tab(
                 selected = selected,
                 onClick = { onTabSelected(tab) },
                 selectedContentColor = MaterialTheme.colorScheme.primary,
                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                 text = {
-                    Text(
-                        text = tab.title,
-                        style = MaterialTheme.typography.labelLarge,
-                        fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
-                    )
-                },
-                icon = {
-                    Icon(
-                        imageVector = tab.icon(),
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = tab.icon(),
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Text(
+                            text = tab.title,
+                            style = MaterialTheme.typography.labelLarge,
+                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                        )
+                    }
                 }
             )
         }
