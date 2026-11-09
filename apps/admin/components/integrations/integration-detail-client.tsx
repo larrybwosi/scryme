@@ -45,6 +45,7 @@ import {
 } from "@/app/actions/integrations";
 import { OrganizationIntegrationsTable } from "./organization-integrations-table";
 import { SystemIntegrationsPanel } from "./system-integrations-panel";
+import { GitHubIntegrationCard } from "./github-integration-card";
 
 const queryClient = new QueryClient();
 
@@ -702,6 +703,8 @@ function IntegrationDetailContent({
                 </form>
               </CardContent>
             </Card>
+          ) : slug === "github" ? (
+            <GitHubIntegrationCard systemSettings={systemSettings} />
           ) : slug === "posthog" ? (
             <Card className="border-border bg-card">
               <CardHeader>

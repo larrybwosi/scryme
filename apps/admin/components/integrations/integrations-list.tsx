@@ -707,6 +707,117 @@ export function IntegrationsList({
                   />
                 </div>
               </>
+            ) : credentialsTarget?.slug === "github" ? (
+              <>
+                <div className="flex items-center justify-between rounded-lg border p-3">
+                  <div className="space-y-0.5">
+                    <Label className="text-sm font-medium">
+                      Enable GitHub Integration
+                    </Label>
+                    <p className="text-xs text-muted-foreground">
+                      Track repositories, releases, and automated webhooks
+                    </p>
+                  </div>
+                  <Switch
+                    checked={formData.githubEnabled ?? false}
+                    onCheckedChange={(checked) =>
+                      setFormData({ ...formData, githubEnabled: checked })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-app-id">GitHub App ID</Label>
+                    <Input
+                      id="gh-app-id"
+                      value={formData.githubAppId || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubAppId: e.target.value,
+                        })
+                      }
+                      placeholder="123456"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-app-slug">GitHub App Slug</Label>
+                    <Input
+                      id="gh-app-slug"
+                      value={formData.githubAppSlug || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubAppSlug: e.target.value,
+                        })
+                      }
+                      placeholder="scryme-pos-bot"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-owner">Owner / Org</Label>
+                    <Input
+                      id="gh-owner"
+                      value={formData.githubOwner || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubOwner: e.target.value,
+                        })
+                      }
+                      placeholder="dealio-org"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-repo">Repository</Label>
+                    <Input
+                      id="gh-repo"
+                      value={formData.githubRepo || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubRepo: e.target.value,
+                        })
+                      }
+                      placeholder="scryme"
+                    />
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-token">Personal Access Token</Label>
+                    <Input
+                      id="gh-token"
+                      type="password"
+                      value={formData.githubToken || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubToken: e.target.value,
+                        })
+                      }
+                      placeholder="ghp_..."
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="gh-whsec">Webhook Secret</Label>
+                    <Input
+                      id="gh-whsec"
+                      type="password"
+                      value={formData.githubWebhookSecret || ""}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          githubWebhookSecret: e.target.value,
+                        })
+                      }
+                      placeholder="whsec_..."
+                    />
+                  </div>
+                </div>
+              </>
             ) : credentialsTarget?.slug === "posthog" ? (
               <>
                 <div className="flex items-center justify-between rounded-lg border p-3">

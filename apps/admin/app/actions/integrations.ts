@@ -3,6 +3,7 @@
 import { db, IntegrationCategory, AuthType } from "@repo/db";
 import { revalidatePath } from "next/cache";
 import { requireSuperAdmin } from "./auth";
+import { generateGitHubAppJwt, getInstallationAccessToken } from "@/lib/github-app";
 
 const DEFAULT_INTEGRATIONS = [
   {
@@ -48,6 +49,15 @@ const DEFAULT_INTEGRATIONS = [
       "Product and usage analytics, user event tracking, and session telemetry.",
     category: IntegrationCategory.MONITORING,
     authType: AuthType.API_KEY,
+    isActive: true,
+  },
+  {
+    name: "GitHub",
+    slug: "github",
+    description:
+      "GitHub App integration for repository tracking, automated release webhooks, and POS release binary sync.",
+    category: IntegrationCategory.OTHER,
+    authType: AuthType.OAUTH2,
     isActive: true,
   },
   {
@@ -244,6 +254,17 @@ export async function listActiveOrganizationIntegrations() {
 // System Credentials & Admin Workspace Actions
 
 export type SystemIntegrationSettings = {
+  githubAppId?: string;
+  githubAppSlug?: string;
+  githubClientId?: string;
+  githubClientSecret?: string;
+  githubPrivateKey?: string;
+  githubWebhookSecret?: string;
+  githubInstallationId?: string;
+  githubOwner?: string;
+  githubRepo?: string;
+  githubToken?: string;
+  githubEnabled?: boolean;
   scrymeChatClientId?: string;
   scrymeChatClientSecret?: string;
   scrymeChatBaseUrl?: string;
@@ -328,6 +349,17 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
     "system:integration:posthog:apiKey",
     "system:integration:posthog:host",
     "system:integration:posthog:enabled",
+    "system:integration:github:appId",
+    "system:integration:github:appSlug",
+    "system:integration:github:clientId",
+    "system:integration:github:clientSecret",
+    "system:integration:github:privateKey",
+    "system:integration:github:webhookSecret",
+    "system:integration:github:installationId",
+    "system:integration:github:owner",
+    "system:integration:github:repo",
+    "system:integration:github:token",
+    "system:integration:github:enabled",
   ];
 
   const settings = await db.globalSetting.findMany({
@@ -476,6 +508,60 @@ export async function getSystemIntegrationSettings(): Promise<SystemIntegrationS
       process.env.POSTHOG_HOST ||
       process.env.NEXT_PUBLIC_POSTHOG_HOST ||
       "https://us.i.posthog.com",
+        githubAppId:
+      settingsMap.get("system:integration:github:appId") ||
+      settingsMap.get("github_app_id") ||
+      process.env.GITHUB_APP_ID ||
+      "",
+    githubAppSlug:
+      settingsMap.get("system:integration:github:appSlug") ||
+      process.env.GITHUB_APP_SLUG ||
+      "",
+    githubClientId:
+      settingsMap.get("system:integration:github:clientId") ||
+      settingsMap.get("github_client_id") ||
+      process.env.GITHUB_CLIENT_ID ||
+      "",
+    githubClientSecret:
+      settingsMap.get("system:integration:github:clientSecret") ||
+      settingsMap.get("github_client_secret") ||
+      process.env.GITHUB_CLIENT_SECRET ||
+      "",
+    githubPrivateKey:
+      settingsMap.get("system:integration:github:privateKey") ||
+      process.env.GITHUB_PRIVATE_KEY ||
+      "",
+    githubWebhookSecret:
+      settingsMap.get("system:integration:github:webhookSecret") ||
+      settingsMap.get("github_webhook_secret") ||
+      process.env.GITHUB_WEBHOOK_SECRET ||
+      "",
+    githubInstallationId:
+      settingsMap.get("system:integration:github:installationId") ||
+      process.env.GITHUB_INSTALLATION_ID ||
+      "",
+    githubOwner:
+      settingsMap.get("system:integration:github:owner") ||
+      settingsMap.get("github_owner") ||
+      process.env.GITHUB_OWNER ||
+      "dealio-org",
+    githubRepo:
+      settingsMap.get("system:integration:github:repo") ||
+      settingsMap.get("github_repo") ||
+      process.env.GITHUB_REPO ||
+      "scryme",
+    githubToken:
+      settingsMap.get("system:integration:github:token") ||
+      settingsMap.get("github_token") ||
+      process.env.GITHUB_TOKEN ||
+      "",
+    githubEnabled: settingsMap.has("system:integration:github:enabled")
+      ? settingsMap.get("system:integration:github:enabled") === "true"
+      : Boolean(
+          settingsMap.get("github_token") ||
+            settingsMap.get("system:integration:github:appId") ||
+            process.env.GITHUB_TOKEN,
+        ),
     posthogEnabled: settingsMap.has("system:integration:posthog:enabled")
       ? settingsMap.get("system:integration:posthog:enabled") === "true"
       : Boolean(
@@ -568,6 +654,29 @@ export async function updateSystemIntegrationSettings(
         ? String(input.openpanelEnabled)
         : undefined,
     ],
+        ["system:integration:github:appId", input.githubAppId],
+    ["system:integration:github:appSlug", input.githubAppSlug],
+    ["system:integration:github:clientId", input.githubClientId],
+    ["system:integration:github:clientSecret", input.githubClientSecret],
+    ["system:integration:github:privateKey", input.githubPrivateKey],
+    ["system:integration:github:webhookSecret", input.githubWebhookSecret],
+    ["system:integration:github:installationId", input.githubInstallationId],
+    ["system:integration:github:owner", input.githubOwner],
+    ["system:integration:github:repo", input.githubRepo],
+    ["system:integration:github:token", input.githubToken],
+    [
+      "system:integration:github:enabled",
+      input.githubEnabled !== undefined
+        ? String(input.githubEnabled)
+        : undefined,
+    ],
+    ["github_app_id", input.githubAppId],
+    ["github_client_id", input.githubClientId],
+    ["github_client_secret", input.githubClientSecret],
+    ["github_webhook_secret", input.githubWebhookSecret],
+    ["github_owner", input.githubOwner],
+    ["github_repo", input.githubRepo],
+    ["github_token", input.githubToken],
     ["system:integration:posthog:apiKey", input.posthogApiKey],
     ["system:integration:posthog:host", input.posthogHost],
     [
@@ -1216,4 +1325,263 @@ export async function testPostHogConnection() {
       message: `PostHog integration configured for endpoint ${settings.posthogHost || "https://us.i.posthog.com"}.`,
     };
   }
+}
+
+/**
+ * Resolve an authorization token for GitHub API calls:
+ * - If installationId, appId, and privateKey are available, generate installation access token
+ * - Else if token (PAT) is provided, use it
+ */
+async function resolveGitHubAuthToken(settings: any): Promise<string | null> {
+  if (
+    settings.githubAppId &&
+    settings.githubPrivateKey &&
+    settings.githubInstallationId
+  ) {
+    try {
+      const auth = await getInstallationAccessToken(
+        settings.githubAppId,
+        settings.githubPrivateKey,
+        settings.githubInstallationId,
+      );
+      return auth.token;
+    } catch (err: any) {
+      console.warn("Failed to generate installation token:", err.message);
+    }
+  }
+
+  if (settings.githubToken) {
+    return settings.githubToken;
+  }
+
+  return null;
+}
+
+export async function testGitHubConnection() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const owner = settings.githubOwner || "dealio-org";
+  const repo = settings.githubRepo || "scryme";
+  const token = await resolveGitHubAuthToken(settings);
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "Scryme-Admin-App",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  try {
+    const res = await fetch(`https://api.github.com/repos/${owner}/${repo}`, {
+      headers,
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        message:
+          err.message ||
+          `GitHub API responded with status ${res.status} (${res.statusText})`,
+      };
+    }
+
+    const data = await res.json();
+    return {
+      success: true,
+      message: `Successfully connected to GitHub repository ${data.full_name} (${data.private ? "Private" : "Public"})`,
+      repo: {
+        fullName: data.full_name,
+        description: data.description,
+        defaultBranch: data.default_branch,
+        openIssuesCount: data.open_issues_count,
+        stargazersCount: data.stargazers_count,
+      },
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Failed to reach GitHub API",
+    };
+  }
+}
+
+export async function fetchGitHubAccessibleRepositories() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  const token = await resolveGitHubAuthToken(settings);
+
+  const headers: Record<string, string> = {
+    Accept: "application/vnd.github.v3+json",
+    "User-Agent": "Scryme-Admin-App",
+  };
+
+  if (token) {
+    headers["Authorization"] = `Bearer ${token}`;
+  }
+
+  try {
+    let reposUrl = "https://api.github.com/installation/repositories";
+    let res = await fetch(reposUrl, { headers });
+
+    if (res.ok) {
+      const data = await res.json();
+      const repos = (data.repositories || []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        fullName: r.full_name,
+        owner: r.owner?.login || "",
+        private: r.private,
+        defaultBranch: r.default_branch,
+      }));
+      return { success: true, repositories: repos };
+    }
+
+    reposUrl = "https://api.github.com/user/repos?per_page=100&sort=updated";
+    res = await fetch(reposUrl, { headers });
+
+    if (res.ok) {
+      const data = await res.json();
+      const repos = (Array.isArray(data) ? data : []).map((r: any) => ({
+        id: r.id,
+        name: r.name,
+        fullName: r.full_name,
+        owner: r.owner?.login || "",
+        private: r.private,
+        defaultBranch: r.default_branch,
+      }));
+      return { success: true, repositories: repos };
+    }
+
+    const defaultOwner = settings.githubOwner || "dealio-org";
+    const defaultRepo = settings.githubRepo || "scryme";
+    return {
+      success: true,
+      repositories: [
+        {
+          id: 1,
+          name: defaultRepo,
+          fullName: `${defaultOwner}/${defaultRepo}`,
+          owner: defaultOwner,
+          private: true,
+          defaultBranch: "main",
+        },
+      ],
+    };
+  } catch (err: any) {
+    return {
+      success: false,
+      error: err.message,
+      repositories: [],
+    };
+  }
+}
+
+export async function fetchGitHubInstallations() {
+  await requireSuperAdmin();
+
+  const settings = await getSystemIntegrationSettings();
+  if (!settings.githubAppId || !settings.githubPrivateKey) {
+    return {
+      success: false,
+      message: "GitHub App ID and Private Key are required to list installations",
+      installations: [],
+    };
+  }
+
+  try {
+    const jwt = generateGitHubAppJwt(settings.githubAppId, settings.githubPrivateKey);
+    const res = await fetch("https://api.github.com/app/installations", {
+      headers: {
+        Accept: "application/vnd.github.v3+json",
+        Authorization: `Bearer ${jwt}`,
+        "User-Agent": "Scryme-Admin-App",
+      },
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      return {
+        success: false,
+        message: err.message || `GitHub returned ${res.status}`,
+        installations: [],
+      };
+    }
+
+    const installations = await res.json();
+    return {
+      success: true,
+      installations: installations.map((inst: any) => ({
+        id: String(inst.id),
+        account: inst.account?.login || "unknown",
+        accountType: inst.account?.type || "User",
+        avatarUrl: inst.account?.avatar_url || "",
+        targetType: inst.target_type,
+        permissions: inst.permissions,
+        appSlug: inst.app_slug,
+      })),
+    };
+  } catch (error: any) {
+    return {
+      success: false,
+      message: error.message || "Failed to fetch installations",
+      installations: [],
+    };
+  }
+}
+
+export async function triggerGitHubReleaseSyncAction(tagOrVersion?: string) {
+  await requireSuperAdmin();
+
+  const isDev = process.env.NODE_ENV === "development";
+  const defaultApiUrl = isDev
+    ? "http://localhost:3000"
+    : "https://api.scryme.tech";
+  const rawApiUrl = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL;
+  const apiUrl =
+    rawApiUrl &&
+    typeof rawApiUrl === "string" &&
+    !rawApiUrl.includes("PLACEHOLDER") &&
+    (rawApiUrl.startsWith("http://") || rawApiUrl.startsWith("https://"))
+      ? rawApiUrl
+      : defaultApiUrl;
+
+  const url = `${apiUrl}/v3/webhooks/github/sync-release${tagOrVersion ? `?tag=${tagOrVersion}` : ""}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+
+  if (!response.ok) {
+    const fallbackUrl = `${apiUrl}/public/sync-release${tagOrVersion ? `?tag=${tagOrVersion}` : ""}`;
+    const fallbackRes = await fetch(fallbackUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    if (!fallbackRes.ok) {
+      const errorData = await fallbackRes.json().catch(() => ({}));
+      throw new Error(
+        errorData.message || "Failed to trigger GitHub release sync",
+      );
+    }
+
+    revalidatePath("/integrations");
+    revalidatePath("/integrations/github");
+    revalidatePath("/systems");
+    return fallbackRes.json();
+  }
+
+  revalidatePath("/integrations");
+  revalidatePath("/integrations/github");
+  revalidatePath("/systems");
+  return response.json();
 }
