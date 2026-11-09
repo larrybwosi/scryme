@@ -36,14 +36,14 @@ export function MobileCallbackPage() {
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 text-center py-6">
       <div className="flex justify-center mb-6">
-        <div className="w-16 h-16 rounded-2xl bg-[#0F1B2E] flex items-center justify-center text-[#DDC49B] shadow-md">
+        <div className="w-16 h-16 rounded-none bg-[#0F1B2E] flex items-center justify-center text-[#DDC49B] shadow-md border border-[#E7E2D9]">
           <Smartphone className="w-8 h-8 text-[#A9824C]" />
         </div>
       </div>
 
       {error ? (
         <>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#B3352A]/10 border border-[#B3352A]/20 rounded-full text-xs font-mono text-[#B3352A] mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#B3352A]/10 border border-[#B3352A]/20 rounded-none text-xs font-mono text-[#B3352A] mb-4">
             <AlertCircle className="w-3.5 h-3.5" />
             <span>Authentication Error</span>
           </div>
@@ -56,7 +56,7 @@ export function MobileCallbackPage() {
         </>
       ) : (
         <>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#4FA871]/10 border border-[#4FA871]/20 rounded-full text-xs font-mono text-[#4FA871] mb-4">
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-[#4FA871]/10 border border-[#4FA871]/20 rounded-none text-xs font-mono text-[#4FA871] mb-4">
             <CheckCircle2 className="w-3.5 h-3.5 text-[#4FA871]" />
             <span>Authenticated Successfully</span>
           </div>
@@ -75,7 +75,7 @@ export function MobileCallbackPage() {
 
       <button
         onClick={handleOpenApp}
-        className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer max-w-xs mx-auto"
+        className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-none transition-all shadow-sm flex items-center justify-center gap-2 cursor-pointer max-w-xs mx-auto"
       >
         <span>Open Scryme App</span>
       </button>

@@ -48,7 +48,7 @@ export function ForgotPasswordPage() {
       </Link>
 
       <div className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
           <KeyRound className="w-3 h-3 text-[#A9824C]" /> Account Recovery
         </div>
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
@@ -60,14 +60,14 @@ export function ForgotPasswordPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-3.5 rounded-lg bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {submitted ? (
-        <div className="p-4 rounded-lg bg-[#4FA871]/10 border border-[#4FA871]/20 text-[#0F1B2E] space-y-3 animate-in fade-in duration-200">
+        <div className="p-4 rounded-none bg-[#4FA871]/10 border border-[#4FA871]/20 text-[#0F1B2E] space-y-3 animate-in fade-in duration-200">
           <div className="flex items-center gap-2 text-[#4FA871] font-semibold text-sm">
             <CheckCircle2 className="h-4 w-4" />
             <span>Instructions sent</span>
@@ -88,14 +88,14 @@ export function ForgotPasswordPage() {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="name@company.com"
-              className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+              className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
+            className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>
