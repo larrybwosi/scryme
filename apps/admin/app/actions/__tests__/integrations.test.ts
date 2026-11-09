@@ -54,8 +54,8 @@ describe("Admin Integrations Server Actions", () => {
 
       expect(db.integrationDefinition.findMany).toHaveBeenCalledTimes(1);
       // 5 default integrations were missing (out of 6 total)
-      expect(db.integrationDefinition.create).toHaveBeenCalledTimes(5);
-      expect(result.length).toBe(6);
+      expect(db.integrationDefinition.create).toHaveBeenCalledTimes(6);
+      expect(result.length).toBe(7);
     });
   });
 
