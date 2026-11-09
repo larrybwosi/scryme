@@ -405,6 +405,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+        NEXT_PUBLIC_AUTH_URL: https://${AUTH_DOMAIN:-auth.scryme.tech}
     image: scryme-crm:latest
     restart: always
     deploy:
@@ -457,6 +458,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+        NEXT_PUBLIC_AUTH_URL: https://${AUTH_DOMAIN:-auth.scryme.tech}
     image: scryme-web:latest
     restart: always
     deploy:
@@ -554,6 +556,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
+        NEXT_PUBLIC_AUTH_URL: https://${AUTH_DOMAIN:-auth.scryme.tech}
     image: scryme-admin:latest
     restart: always
     deploy:
@@ -605,6 +608,7 @@ services:
       args:
         NEXT_PUBLIC_API_URL: https://${API_DOMAIN:-api.scryme.tech}
         NEXT_PUBLIC_SOCKET_URL: https://${API_DOMAIN:-api.scryme.tech}
+        NEXT_PUBLIC_AUTH_URL: https://${AUTH_DOMAIN:-auth.scryme.tech}
         BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET}
     image: scryme-projects:latest
     restart: always
