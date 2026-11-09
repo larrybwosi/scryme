@@ -8,21 +8,26 @@ generator client {
 }
 
 model User {
-  id            String    @id @default(uuid())
-  email         String    @unique
-  name          String?
-  emailVerified Boolean   @default(false)
-  image         String?
-  role          String?   @default("customer")
-  banned        Boolean?  @default(false)
-  banReason     String?
-  banExpires    DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  sessions      Session[]
-  accounts      Account[]
-  twofactors    TwoFactor[]
+  id                   String      @id @default(uuid())
+  email                String      @unique
+  name                 String?
+  emailVerified        Boolean     @default(false)
+  image                String?
+  role                 String?     @default("customer")
+  organizationId       String?
+  orgSlug              String?
+  banned               Boolean?    @default(false)
+  banReason            String?
+  banExpires           DateTime?
+  createdAt            DateTime    @default(now())
+  updatedAt            DateTime    @updatedAt
+  sessions             Session[]
+  accounts             Account[]
+  twofactors           TwoFactor[]
+  passkeys             Passkey[]
 
+  @@index([orgSlug])
+  @@index([organizationId])
   @@map("user")
 }
 
@@ -37,8 +42,10 @@ model Session {
   userId               String
   user                 User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   activeOrganizationId String?
+  orgSlug              String?
   impersonatedBy       String?
 
+  @@index([orgSlug])
   @@map("session")
 }
 
@@ -91,4 +98,23 @@ model TwoFactor {
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@map("two_factor")
+}
+
+model Passkey {
+  id           String    @id
+  name         String?
+  publicKey    String
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  credentialID String
+  counter      Int
+  deviceType   String
+  backedUp     Boolean
+  transports   String?
+  createdAt    DateTime?
+  aaguid       String?
+
+  @@index([userId])
+  @@index([credentialID])
+  @@map("passkey")
 }

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { authClient, signInWithPasskey, signInWithSSO, DEFAULT_WEB_URL } from "@/lib/auth-client";
+import { customerAuthClient, signInCustomerWithPasskey } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
+import { OrgSelector } from "@/components/OrgSelector";
 import {
   Building2,
   KeyRound,
@@ -11,6 +14,8 @@ import {
   ArrowRight,
   Globe,
   Lock,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -54,54 +59,176 @@ export function SignInPage() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl =
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
+
+  const rawCallbackUrl =
     searchParams?.callbackUrl ||
     searchParams?.redirect_uri ||
-    DEFAULT_WEB_URL;
+    searchParams?.returnTo ||
+    (isCustomer ? "" : DEFAULT_WEB_URL);
+
+  const callbackUrl = rawCallbackUrl;
+  const isMissingCustomerRedirect = isCustomer && !callbackUrl;
 
   useEffect(() => {
-    let isMounted = true;
-    async function checkExistingSession() {
+    let mounted = true;
+    const checkActiveSession = async () => {
       try {
-        const sessionRes = await authClient.getSession();
-        if (sessionRes?.data?.session || sessionRes?.session) {
-          window.location.href = callbackUrl;
-          return;
+        if (isCustomer) {
+          // Check customer session
+          const session = await customerAuthClient.getSession();
+          if (session?.data && mounted && callbackUrl) {
+            window.location.href = callbackUrl;
+            return;
+          }
+        } else {
+          // Check internal session
+          const session = await authClient.getSession();
+          if (session?.data && mounted) {
+            if (searchParams?.client_id || searchParams?.response_type) {
+              const consentUrl = `/consent${window.location.search}`;
+              window.location.href = consentUrl;
+              return;
+            }
+            window.location.href = callbackUrl;
+            return;
+          }
         }
       } catch (err) {
-        // No active session; proceed
+        // No valid session
       } finally {
-        if (isMounted) setCheckingSession(false);
+        if (mounted) setCheckingSession(false);
       }
-    }
-    checkExistingSession();
-    return () => {
-      isMounted = false;
     };
-  }, [callbackUrl]);
+
+    checkActiveSession();
+    return () => {
+      mounted = false;
+    };
+  }, [callbackUrl, isCustomer, searchParams]);
+
+  if (tenantContext.needsOrgSelection) {
+    return <OrgSelector />;
+  }
 
   const handleSignIn = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer authentication.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const res = await authClient.signIn.email({
-        email,
-        password,
-      });
+      if (isCustomer) {
+        const res = await customerAuthClient.signIn.email({
+          email,
+          password,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to sign in. Please check your credentials.");
-        toast.error("Sign in failed");
+        if (res?.error) {
+          setError(res.error.message || "Invalid customer credentials. Please try again.");
+          toast.error("Authentication failed");
+        } else {
+          toast.success("Welcome back!");
+          window.location.href = callbackUrl;
+        }
       } else {
-        toast.success("Signed in successfully!");
-        window.location.href = callbackUrl;
+        const res = await authClient.signIn.email({
+          email,
+          password,
+        });
+
+        if (res?.error) {
+          setError(res.error.message || "Invalid credentials. Please verify your email and password.");
+          toast.error("Authentication failed");
+        } else {
+          toast.success("Welcome back!");
+          if (searchParams?.client_id || searchParams?.response_type) {
+            window.location.href = `/consent${window.location.search}`;
+          } else {
+            window.location.href = callbackUrl;
+          }
+        }
       }
     } catch (err: any) {
-      setError(err.message || "An unexpected error occurred.");
+      setError(err.message || "An unexpected error occurred during sign in.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer authentication.");
+      return;
+    }
+
+    setSocialLoading(provider);
+    setError(null);
+    try {
+      if (isCustomer) {
+        await customerAuthClient.signIn.social({
+          provider,
+          callbackURL: callbackUrl,
+        });
+      } else {
+        await authClient.signIn.social({
+          provider,
+          callbackURL: searchParams?.client_id ? `/consent${window.location.search}` : callbackUrl,
+        });
+      }
+    } catch (err: any) {
+      toast.error(`Failed to initiate ${provider} sign-in`);
+      setSocialLoading(null);
+    }
+  };
+
+  const handlePasskeySignIn = async () => {
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer authentication.");
+      return;
+    }
+
+    setPasskeyLoading(true);
+    setError(null);
+    try {
+      if (isCustomer) {
+        const res = await signInCustomerWithPasskey({
+          callbackURL: callbackUrl,
+        });
+        if (res?.error) {
+          setError(res.error.message || "Customer Passkey authentication failed.");
+        } else if (res?.data) {
+          toast.success("Signed in with Passkey!");
+          window.location.href = callbackUrl;
+        }
+      } else {
+        const targetCallback = searchParams?.client_id
+          ? `/consent${window.location.search}`
+          : callbackUrl;
+        const res = await signInWithPasskey({
+          callbackURL: targetCallback,
+        });
+
+        if (res?.error) {
+          setError(res.error.message || "Passkey authentication failed.");
+        } else if (res?.data) {
+          toast.success("Signed in with Passkey!");
+          window.location.href = targetCallback;
+        }
+      }
+    } catch (err: any) {
+      if (err?.name === "NotAllowedError" || err?.message?.includes("cancelled")) {
+        return;
+      }
+      setError(err?.message || "Passkey authentication failed.");
+    } finally {
+      setPasskeyLoading(false);
     }
   };
 
@@ -111,67 +238,31 @@ export function SignInPage() {
       setError("Please enter your organization domain or SSO slug.");
       return;
     }
-
     setLoading(true);
     setError(null);
-
     try {
-      const res = await signInWithSSO(domain.trim(), callbackUrl);
+      const targetCallback = searchParams?.client_id
+        ? `/consent${window.location.search}`
+        : callbackUrl;
+      const res = await signInWithSSO(domain.trim(), targetCallback);
       if (res?.error) {
-        setError(res.error.message || "Failed to initiate Enterprise SSO sign-in.");
-        toast.error("SSO sign in failed");
+        setError(res.error.message || "Failed to initiate Enterprise SSO.");
+        toast.error("SSO sign-in failed");
       }
     } catch (err: any) {
-      setError(err.message || "An error occurred during SSO authentication.");
+      setError(err.message || "An unexpected error occurred initiating SSO.");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSocialSignIn = async (provider: "github" | "google") => {
-    setSocialLoading(provider);
-    setError(null);
-    try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL: callbackUrl,
-      });
-    } catch (err: any) {
-      toast.error(`Failed to initiate ${provider} sign-in`);
-      setSocialLoading(null);
-    }
-  };
-
-  const handlePasskeySignIn = async () => {
-    setPasskeyLoading(true);
-    setError(null);
-    try {
-      const res = await signInWithPasskey({
-        callbackURL: callbackUrl,
-      });
-      if (res?.error) {
-        setError(res.error.message || "Passkey authentication failed.");
-        toast.error(res.error.message || "Passkey sign in failed");
-      } else if (res?.data) {
-        toast.success("Signed in with Passkey!");
-        window.location.href = callbackUrl;
-      }
-    } catch (err: any) {
-      if (err?.name === "NotAllowedError" || err?.message?.includes("cancelled")) {
-        return;
-      }
-      setError(err?.message || "Passkey authentication failed or was cancelled.");
-      toast.error("Passkey sign in failed");
-    } finally {
-      setPasskeyLoading(false);
-    }
-  };
-
   if (checkingSession) {
     return (
-      <div className="w-full flex flex-col items-center justify-center py-16 gap-3">
-        <Loader2 className="h-8 w-8 text-[#A9824C] animate-spin" />
-        <p className="text-xs text-[#5B6B7C] font-mono tracking-wide uppercase">Checking active session…</p>
+      <div className="w-full h-64 flex flex-col items-center justify-center gap-3">
+        <Loader2 className="h-6 w-6 text-[#A9824C] animate-spin" />
+        <span className="text-xs font-mono text-[#5B6B7C] uppercase tracking-wider">
+          Validating Security Session…
+        </span>
       </div>
     );
   }
@@ -188,24 +279,33 @@ export function SignInPage() {
               Scryme
             </span>
             <span className="text-[10px] font-mono text-[#A9824C] uppercase tracking-wider block mt-0.5">
-              Identity Portal
+              {isCustomer ? `${orgSlug?.toUpperCase() || "CUSTOMER"} PORTAL` : "Identity Portal"}
             </span>
           </div>
         </div>
         <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none text-[10px] font-mono text-[#8A6A3E]">
-          <Lock className="w-3 h-3 text-[#A9824C]" />
-          <span>OAuth2 & Passkeys</span>
+          {isCustomer ? <ShieldCheck className="w-3 h-3 text-[#A9824C]" /> : <Lock className="w-3 h-3 text-[#A9824C]" />}
+          <span>{isCustomer ? "Customer Auth" : "OAuth2 & Passkeys"}</span>
         </div>
       </div>
 
       <div className="mb-6">
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Sign in to your account
+          {isCustomer ? `Sign in to ${orgSlug || "Customer Portal"}` : "Sign in to your account"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
-          Access your Scryme workspace and enterprise integrations securely.
+          {isCustomer
+            ? "Sign in with your customer account to access your orders, bookings, and services."
+            : "Access your Scryme workspace and enterprise integrations securely."}
         </p>
       </div>
+
+      {isMissingCustomerRedirect && (
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Customer login requires a valid callbackUrl or redirect_uri parameter to return to your storefront.</span>
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
@@ -218,7 +318,7 @@ export function SignInPage() {
       <button
         type="button"
         onClick={handlePasskeySignIn}
-        disabled={passkeyLoading || loading}
+        disabled={passkeyLoading || loading || isMissingCustomerRedirect}
         className="w-full h-11 border border-[#A9824C]/40 hover:border-[#A9824C] bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2.5 mb-4 group cursor-pointer disabled:opacity-60"
       >
         {passkeyLoading ? (
@@ -230,11 +330,11 @@ export function SignInPage() {
       </button>
 
       {/* Social Provider Options */}
-      <div className="grid grid-cols-2 gap-3 mb-5">
+      <div className={`grid ${isCustomer ? "grid-cols-1" : "grid-cols-2"} gap-3 mb-5`}>
         <button
           type="button"
           onClick={() => handleSocialSignIn("google")}
-          disabled={socialLoading !== null || loading}
+          disabled={socialLoading !== null || loading || isMissingCustomerRedirect}
           className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
         >
           {socialLoading === "google" ? (
@@ -245,19 +345,21 @@ export function SignInPage() {
           <span>Google</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleSocialSignIn("github")}
-          disabled={socialLoading !== null || loading}
-          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-        >
-          {socialLoading === "github" ? (
-            <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
-          ) : (
-            <GithubIcon />
-          )}
-          <span>GitHub</span>
-        </button>
+        {!isCustomer && (
+          <button
+            type="button"
+            onClick={() => handleSocialSignIn("github")}
+            disabled={socialLoading !== null || loading || isMissingCustomerRedirect}
+            className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            {socialLoading === "github" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
+            ) : (
+              <GithubIcon />
+            )}
+            <span>GitHub</span>
+          </button>
+        )}
       </div>
 
       <div className="relative my-6 flex items-center gap-3">
@@ -271,14 +373,14 @@ export function SignInPage() {
       <form onSubmit={handleSignIn} className="space-y-4">
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-            Work Email
+            {isCustomer ? "Customer Email" : "Work Email"}
           </label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@company.com"
+            placeholder="name@example.com"
             className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
           />
         </div>
@@ -322,7 +424,7 @@ export function SignInPage() {
 
         <button
           type="submit"
-          disabled={loading}
+          disabled={loading || isMissingCustomerRedirect}
           className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 group mt-2 cursor-pointer disabled:opacity-50"
         >
           {loading ? (
@@ -339,70 +441,72 @@ export function SignInPage() {
         </button>
       </form>
 
-      <div className="mt-6 pt-4 border-t border-[#E7E2D9]">
-        {!showSsoForm ? (
-          <button
-            type="button"
-            onClick={() => {
-              setShowSsoForm(true);
-              setError(null);
-            }}
-            className="w-full text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors flex items-center justify-center gap-1.5 py-2 border border-dashed border-[#A9824C]/30 rounded-none hover:border-[#A9824C] hover:bg-[#A9824C]/5 cursor-pointer"
-          >
-            <Building2 className="w-3.5 h-3.5 text-[#A9824C]" />
-            Sign in with Enterprise SSO (SAML / Okta / Azure AD)
-          </button>
-        ) : (
-          <form onSubmit={handleSsoSignIn} className="space-y-3 animate-in fade-in duration-200 bg-[#E7E2D9]/20 p-3.5 rounded-none border border-[#E7E2D9]">
-            <div className="flex items-center justify-between mb-1">
-              <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
-                Organization Domain or SSO Slug
-              </label>
-              <button
-                type="button"
-                onClick={() => {
-                  setShowSsoForm(false);
-                  setError(null);
-                }}
-                className="text-[11px] text-[#5B6B7C] hover:text-[#0F1B2E] font-medium transition-colors cursor-pointer"
-              >
-                Cancel
-              </button>
-            </div>
-            <div className="relative">
-              <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9AA6B2]" />
-              <input
-                type="text"
-                required
-                value={domain}
-                onChange={(e) => setDomain(e.target.value)}
-                placeholder="company.com or org-slug"
-                className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
-              />
-            </div>
-            <p className="text-[11px] text-[#5B6B7C]">
-              Redirects to your enterprise identity provider for single sign-on authentication.
-            </p>
+      {!isCustomer && (
+        <div className="mt-6 pt-4 border-t border-[#E7E2D9]">
+          {!showSsoForm ? (
             <button
-              type="submit"
-              disabled={loading}
-              className="w-full h-10 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-none transition-all shadow-sm flex items-center justify-center gap-2 group disabled:opacity-50 cursor-pointer"
+              type="button"
+              onClick={() => {
+                setShowSsoForm(true);
+                setError(null);
+              }}
+              className="w-full text-xs text-[#8A6A3E] hover:text-[#0F1B2E] font-semibold transition-colors flex items-center justify-center gap-1.5 py-2 border border-dashed border-[#A9824C]/30 rounded-none hover:border-[#A9824C] hover:bg-[#A9824C]/5 cursor-pointer"
             >
-              {loading ? (
-                <>
-                  <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  Redirecting…
-                </>
-              ) : (
-                <>
-                  Continue with SSO
-                  <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
-                </>
-              )}
+              <Building2 className="w-3.5 h-3.5 text-[#A9824C]" />
+              Sign in with Enterprise SSO (SAML / Okta / Azure AD)
             </button>
-          </form>
-        )}
-      </div>
+          ) : (
+            <form onSubmit={handleSsoSignIn} className="space-y-3 animate-in fade-in duration-200 bg-[#E7E2D9]/20 p-3.5 rounded-none border border-[#E7E2D9]">
+              <div className="flex items-center justify-between mb-1">
+                <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D]">
+                  Organization Domain or SSO Slug
+                </label>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowSsoForm(false);
+                    setError(null);
+                  }}
+                  className="text-[11px] text-[#5B6B7C] hover:text-[#0F1B2E] font-medium transition-colors cursor-pointer"
+                >
+                  Cancel
+                </button>
+              </div>
+              <div className="relative">
+                <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-[#9AA6B2]" />
+                <input
+                  type="text"
+                  required
+                  value={domain}
+                  onChange={(e) => setDomain(e.target.value)}
+                  placeholder="company.com or org-slug"
+                  className="w-full h-10 pl-10 pr-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
+                />
+              </div>
+              <p className="text-[11px] text-[#5B6B7C]">
+                Redirects to your enterprise identity provider for single sign-on authentication.
+              </p>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full h-10 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-none transition-all shadow-sm flex items-center justify-center gap-2 group disabled:opacity-50 cursor-pointer"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    Redirecting…
+                  </>
+                ) : (
+                  <>
+                    Continue with SSO
+                    <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </>
+                )}
+              </button>
+            </form>
+          )}
+        </div>
+      )}
 
       <p className="mt-6 text-center text-sm text-[#5B6B7C]">
         Don't have an account?{" "}

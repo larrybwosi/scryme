@@ -8,6 +8,7 @@ import {
 } from "@nestjs/common";
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
+import { passkey } from "@better-auth/passkey";
 import { PrismaClient } from "./prisma/generated-client";
 import { PrismaPg } from "@prisma/adapter-pg";
 import amqp from "amqplib";
@@ -84,6 +85,8 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
 
   private initBetterAuth() {
     const isProd = env.NODE_ENV === "production";
+    const passkeyRpId = isProd ? "scryme.tech" : "localhost";
+    const passkeyOrigin = isProd ? "https://auth.scryme.tech" : "http://localhost:4444";
 
     this.auth = betterAuth({
       database: prismaAdapter(this.prisma, {
@@ -98,9 +101,12 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
         env.NEXT_PUBLIC_WEB_URL,
         env.NEXT_PUBLIC_CRM_URL,
         env.NEXT_PUBLIC_APP_URL,
+        env.NEXT_PUBLIC_AUTH_URL,
         "http://localhost:3000",
         "http://localhost:3001",
         "http://localhost:4000",
+        "http://localhost:4444",
+        "https://auth.scryme.tech",
       ].filter(Boolean),
       advanced: {
         cookiePrefix: "customer-auth",
@@ -115,6 +121,13 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
           secure: isProd,
         },
       },
+      plugins: [
+        passkey({
+          rpID: passkeyRpId,
+          rpName: "Scryme Customer Identity",
+          origin: passkeyOrigin,
+        }),
+      ],
       session: {
         expiresIn: 30 * 24 * 60 * 60, // 30 days
         updateAge: 24 * 60 * 60, // 24 hours
@@ -177,6 +190,18 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
       user: {
         changeEmail: {
           enabled: true,
+        },
+        additionalFields: {
+          orgSlug: {
+            type: "string",
+            required: false,
+            input: true,
+          },
+          organizationId: {
+            type: "string",
+            required: false,
+            input: true,
+          },
         },
       },
       socialProviders: {
@@ -274,6 +299,8 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
                 email: user.email,
                 name: user.name,
                 image: user.image,
+                orgSlug: (user as any).orgSlug,
+                organizationId: (user as any).organizationId,
                 role: (user as any).role || "customer",
               });
             },

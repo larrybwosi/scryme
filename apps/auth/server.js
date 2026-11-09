@@ -52,8 +52,13 @@ const server = http.createServer(async (req, res) => {
     return;
   }
 
-  // 2. Proxy /api/auth/* to NestJS auth endpoints with Set-Cookie preservation
-  if (pathname.startsWith('/api/auth') || pathname.startsWith('/oauth2') || pathname.startsWith('/.well-known')) {
+  // 2. Proxy /api/auth/*, /api/customer-auth/*, /oauth2/* to NestJS auth endpoints with Set-Cookie preservation
+  if (
+    pathname.startsWith('/api/auth') ||
+    pathname.startsWith('/api/customer-auth') ||
+    pathname.startsWith('/oauth2') ||
+    pathname.startsWith('/.well-known')
+  ) {
     const targetPath = pathname.startsWith('/oauth2') ? `/api/auth${pathname}` : pathname;
     const targetApi = getTargetApiUrl();
     const targetUrl = new URL(`${targetApi}${targetPath}${parsedUrl.search}`);
