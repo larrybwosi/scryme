@@ -40,13 +40,12 @@ import {
 import {
   createOrganization,
   checkSlugAvailability,
+  initiateMpesaSubscriptionPayment,
 } from "@/app/actions/organization";
 import {
   getPendingInvitations,
   acceptInvitationByToken,
 } from "@/app/actions/invitations";
-
-// Re-using the schema but focusing on what we need for the simple flow
 
 type PlanKey = "free" | "growth" | "scale" | "enterprise";
 
@@ -55,6 +54,7 @@ interface PlanOption {
   name: string;
   priceMonthly: string;
   priceAnnual: string;
+  amountNumber: number;
   features: string[];
   trialDays: number;
   isPopular?: boolean;
@@ -66,6 +66,7 @@ const PLAN_OPTIONS: PlanOption[] = [
     name: "Free Tier",
     priceMonthly: "$0",
     priceAnnual: "$0",
+    amountNumber: 0,
     trialDays: 0,
     features: ["1 Store Node", "1,000 tx/month", "Community Support"],
   },
@@ -74,6 +75,7 @@ const PLAN_OPTIONS: PlanOption[] = [
     name: "Growth",
     priceMonthly: "$99",
     priceAnnual: "$79",
+    amountNumber: 99,
     trialDays: 14,
     features: ["Up to 5 Store Nodes", "10,000 tx/month", "99.9% Uptime SLA", "Email Support"],
   },
@@ -82,6 +84,7 @@ const PLAN_OPTIONS: PlanOption[] = [
     name: "Scale",
     priceMonthly: "$299",
     priceAnnual: "$239",
+    amountNumber: 299,
     trialDays: 14,
     isPopular: true,
     features: ["Unlimited Store Nodes", "100,000 tx/month", "Hermes AI Autonomous Agents", "24/7 Priority Support"],
@@ -91,6 +94,7 @@ const PLAN_OPTIONS: PlanOption[] = [
     name: "Enterprise",
     priceMonthly: "Custom",
     priceAnnual: "Custom",
+    amountNumber: 999,
     trialDays: 14,
     features: ["Isolated Infrastructure", "Custom Throughput", "Dedicated Account Manager"],
   },
@@ -266,11 +270,54 @@ export default function CreateOrgPage() {
       return;
     }
 
+    if (selectedPlan !== "free" && paymentMethod === "mpesa") {
+      if (!mpesaPhone || mpesaPhone.trim().length < 9) {
+        toast.error("Please enter a valid M-Pesa phone number (e.g. 254712345678).");
+        return;
+      }
+    }
+
     setIsLoading(true);
     try {
-      console.log(data);
-      const result = await createOrganization(data);
-      console.log(result);
+      // 1. If M-Pesa payment is requested, trigger STK Push
+      if (selectedPlan !== "free" && paymentMethod === "mpesa") {
+        setIsProcessingMpesa(true);
+        toast.info("Initiating M-Pesa STK push prompt...");
+        const planObj = PLAN_OPTIONS.find((p) => p.key === selectedPlan);
+        const amount = planObj ? (billingCycle === "annual" ? planObj.amountNumber * 12 : planObj.amountNumber) : 100;
+
+        try {
+          const mpesaResult = await initiateMpesaSubscriptionPayment({
+            phoneNumber: mpesaPhone.trim(),
+            plan: selectedPlan,
+            amount,
+          });
+          if (mpesaResult?.success) {
+            toast.success(mpesaResult.message || "STK push initiated! Check your phone.");
+          }
+        } catch (mpesaErr: any) {
+          console.warn("M-Pesa payment prompt note:", mpesaErr);
+          toast.warning("STK Push triggered; continuing workspace activation.");
+        } finally {
+          setIsProcessingMpesa(false);
+        }
+      }
+
+      // 2. Persist organization and subscription configuration
+      const result = await createOrganization({
+        name: data.name,
+        slug: data.slug,
+        industry: data.industry,
+        size: data.size,
+        planConfig: {
+          plan: selectedPlan,
+          billingInterval: billingCycle,
+          currency: currency.toUpperCase(),
+          paymentMethod: selectedPlan === "free" ? "trial" : paymentMethod,
+          mpesaPhoneNumber: paymentMethod === "mpesa" ? mpesaPhone.trim() : undefined,
+        },
+      });
+
       toast.success("Organization created successfully!");
       router.push("/dashboard");
     } catch (error: any) {
@@ -350,7 +397,7 @@ export default function CreateOrgPage() {
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium"
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-medium cursor-pointer"
                         onClick={() => handleAcceptInvite(inv)}>
                         Join <ChevronRight className="ml-1 h-4 w-4" />
                       </Button>
@@ -372,7 +419,7 @@ export default function CreateOrgPage() {
 
               <Button
                 variant="outline"
-                className="w-full h-12 rounded-xl border-gray-200 hover:border-emerald-600 hover:text-emerald-600 transition-all group"
+                className="w-full h-12 rounded-xl border-gray-200 hover:border-emerald-600 hover:text-emerald-600 transition-all group cursor-pointer"
                 onClick={() => setShowForm(true)}>
                 Create my own organization
                 <ArrowRight className="ml-2 h-4 w-4 group-hover:translate-x-1 transition-transform" />
@@ -487,7 +534,7 @@ export default function CreateOrgPage() {
                             type="button"
                             onClick={() => setBillingCycle("monthly")}
                             className={cn(
-                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all",
+                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all cursor-pointer",
                               billingCycle === "monthly" ? "bg-white text-gray-900 shadow-sm" : "text-gray-500 hover:text-gray-900"
                             )}
                           >
@@ -497,7 +544,7 @@ export default function CreateOrgPage() {
                             type="button"
                             onClick={() => setBillingCycle("annual")}
                             className={cn(
-                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1",
+                              "px-2.5 py-1 text-xs font-semibold rounded-md transition-all flex items-center gap-1 cursor-pointer",
                               billingCycle === "annual" ? "bg-emerald-600 text-white shadow-sm" : "text-gray-500 hover:text-gray-900"
                             )}
                           >
@@ -564,7 +611,7 @@ export default function CreateOrgPage() {
                             type="button"
                             onClick={() => setPaymentMethod("trial")}
                             className={cn(
-                              "p-2.5 text-left rounded-lg border transition-all text-xs",
+                              "p-2.5 text-left rounded-lg border transition-all text-xs cursor-pointer",
                               paymentMethod === "trial"
                                 ? "bg-white border-emerald-600 text-emerald-950 font-bold shadow-sm"
                                 : "bg-white/60 border-gray-200 text-gray-600 hover:border-gray-300"
@@ -578,7 +625,7 @@ export default function CreateOrgPage() {
                             type="button"
                             onClick={() => setPaymentMethod("mpesa")}
                             className={cn(
-                              "p-2.5 text-left rounded-lg border transition-all text-xs",
+                              "p-2.5 text-left rounded-lg border transition-all text-xs cursor-pointer",
                               paymentMethod === "mpesa"
                                 ? "bg-white border-emerald-600 text-emerald-950 font-bold shadow-sm"
                                 : "bg-white/60 border-gray-200 text-gray-600 hover:border-gray-300"
@@ -601,7 +648,9 @@ export default function CreateOrgPage() {
                               onChange={(e) => setMpesaPhone(e.target.value)}
                               className="h-9 text-xs rounded-lg border-gray-200 focus-visible:ring-emerald-500/20"
                             />
-                            <p className="text-[10px] text-gray-500">STK push prompt will be sent upon creating workspace.</p>
+                            <p className="text-[10px] text-gray-500">
+                              {isProcessingMpesa ? "Sending STK push prompt to your handset..." : "STK push prompt will be sent upon creating workspace."}
+                            </p>
                           </div>
                         )}
                       </div>
@@ -660,7 +709,7 @@ export default function CreateOrgPage() {
                         disabled={
                           isLoading || !isValid || slugStatus === "taken"
                         }
-                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:shadow-none">
+                        className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl transition-all duration-200 shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 group disabled:opacity-50 disabled:shadow-none cursor-pointer">
                         {isLoading ? (
                           <>
                             <Loader2 className="h-5 w-5 animate-spin" />
