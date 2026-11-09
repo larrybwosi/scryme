@@ -16,7 +16,7 @@ import {
   DialogDescription,
   DialogHeader,
   DialogTitle,
-} from "@repo/ui/components/dialog";
+} from "@repo/ui/components/ui/dialog";
 
 export type SystemCardId =
   | "modules"
@@ -86,7 +86,7 @@ export function SystemsCards({ items }: { items: SystemCardItem[] }) {
 
       <Dialog
         open={active !== null}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setOpenId(null);
         }}
       >
