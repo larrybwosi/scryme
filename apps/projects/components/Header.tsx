@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ChevronDown,
   PlayCircle,
@@ -13,12 +13,18 @@ import {
   LogOut,
 } from "lucide-react";
 import { env } from "@repo/env";
+import { getResolvedAuthUrl } from "@/lib/urls";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 import { useTimerStore } from "@/lib/timer-store";
 
 export function Header() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
   const { data: session } = useSession();
   const { data: workspace } = useWorkspaceContext();
   const { state: timerState, startTimer, pauseTimer } = useTimerStore();
@@ -29,9 +35,7 @@ export function Header() {
     } catch {
       // Fallback
     }
-    const isDev = env.NODE_ENV === "development";
-    const defaultAuthUrl = isDev ? "http://localhost:4444" : "https://auth.scryme.tech";
-    const authUrl = env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl;
+    const authUrl = getResolvedAuthUrl(env.NEXT_PUBLIC_AUTH_URL, env.NODE_ENV);
     window.location.href = `${authUrl}/sign-in`;
   };
 
@@ -75,10 +79,10 @@ export function Header() {
             title={timerState.activeTaskTitle ? `Working on: ${timerState.activeTaskTitle}` : "Open Time Tracking"}
           >
             <span
-              className={`w-2 h-2 rounded-full ${timerState.isRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
+              className={`w-2 h-2 rounded-full ${isMounted && timerState.isRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
             ></span>
             <span className="font-label-code text-label-code text-primary">
-              {formatTimer(timerState.elapsedSeconds)}
+              {isMounted ? formatTimer(timerState.elapsedSeconds) : "00:00:00"}
             </span>
           </Link>
           <button

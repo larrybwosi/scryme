@@ -195,6 +195,13 @@ export class OpenObserveClient {
       return;
     }
 
+    if (!this.config.authToken || this.config.authToken.includes("PLACEHOLDER") || this.config.authToken === "your-openobserve-auth-token") {
+      // Avoid unauthorized 401 calls when authToken is not provided
+      this.queue = [];
+      this.persistQueue();
+      return;
+    }
+
     if (typeof navigator !== "undefined" && navigator.onLine === false) {
       return; // Keep queue and retry once online
     }
