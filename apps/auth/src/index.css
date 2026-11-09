@@ -21,7 +21,8 @@
     --border: 220 13% 91%;
     --input: 220 13% 91%;
     --ring: 224 71.4% 4.1%;
-    --radius: 0.75rem;
+    /* Strict 0px Corners across the enterprise design system */
+    --radius: 0px;
   }
 
   .dark {
@@ -44,6 +45,7 @@
     --border: 215 27.9% 16.9%;
     --input: 215 27.9% 16.9%;
     --ring: 216 12.2% 83.9%;
+    --radius: 0px;
   }
 }
 

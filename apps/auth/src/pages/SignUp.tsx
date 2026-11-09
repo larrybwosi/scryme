@@ -122,7 +122,7 @@ export function SignUpPage() {
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E7E2D9]">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
+          <div className="w-9 h-9 rounded-none bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
             S
           </div>
           <div>
@@ -134,7 +134,7 @@ export function SignUpPage() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full text-[10px] font-mono text-[#8A6A3E]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none text-[10px] font-mono text-[#8A6A3E]">
           <Lock className="w-3 h-3 text-[#A9824C]" />
           <span>Verified Account</span>
         </div>
@@ -150,7 +150,7 @@ export function SignUpPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-3.5 rounded-lg bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -162,7 +162,7 @@ export function SignUpPage() {
           type="button"
           onClick={() => handleSocialSignIn("google")}
           disabled={socialLoading !== null || loading}
-          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
         >
           {socialLoading === "google" ? (
             <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
@@ -176,7 +176,7 @@ export function SignUpPage() {
           type="button"
           onClick={() => handleSocialSignIn("github")}
           disabled={socialLoading !== null || loading}
-          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
         >
           {socialLoading === "github" ? (
             <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
@@ -192,7 +192,7 @@ export function SignUpPage() {
         type="button"
         onClick={handlePasskeySignIn}
         disabled={passkeyLoading || loading}
-        className="w-full h-10 border border-[#E7E2D9] hover:border-[#A9824C]/50 bg-white hover:bg-[#F2EFE9] text-[#5B6B7C] hover:text-[#0F1B2E] text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer shadow-sm"
+        className="w-full h-10 border border-[#E7E2D9] hover:border-[#A9824C]/50 bg-white hover:bg-[#F2EFE9] text-[#5B6B7C] hover:text-[#0F1B2E] text-xs font-medium rounded-none transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer shadow-sm"
       >
         {passkeyLoading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-[#A9824C]" />
@@ -221,7 +221,7 @@ export function SignUpPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
-            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
           />
         </div>
 
@@ -235,7 +235,7 @@ export function SignUpPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             placeholder="name@company.com"
-            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
           />
         </div>
 
@@ -251,7 +251,7 @@ export function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
-              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
             <button
               type="button"
@@ -271,7 +271,7 @@ export function SignUpPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer disabled:opacity-50"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 group mt-2 cursor-pointer disabled:opacity-50"
         >
           {loading ? (
             <>

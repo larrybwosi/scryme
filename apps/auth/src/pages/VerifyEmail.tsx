@@ -47,7 +47,7 @@ export function VerifyEmailPage() {
         </div>
       ) : verified ? (
         <div className="space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#4FA871]/10 text-[#4FA871] flex items-center justify-center mx-auto border border-[#4FA871]/20">
+          <div className="w-12 h-12 rounded-none bg-[#4FA871]/10 text-[#4FA871] flex items-center justify-center mx-auto border border-[#4FA871]/20">
             <CheckCircle2 className="h-6 w-6" />
           </div>
           <h1 className="font-serif text-2xl font-medium text-[#0F1B2E]">
@@ -58,7 +58,7 @@ export function VerifyEmailPage() {
           </p>
           <Link
             to="/sign-in"
-            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-lg hover:bg-[#16283F] transition-all gap-2 mt-2 cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all gap-2 mt-2 cursor-pointer shadow-sm"
           >
             Continue to Sign In
             <ArrowRight className="h-3.5 w-3.5" />
@@ -66,7 +66,7 @@ export function VerifyEmailPage() {
         </div>
       ) : (
         <div className="space-y-4">
-          <div className="w-12 h-12 rounded-full bg-[#B3352A]/10 text-[#B3352A] flex items-center justify-center mx-auto border border-[#B3352A]/20">
+          <div className="w-12 h-12 rounded-none bg-[#B3352A]/10 text-[#B3352A] flex items-center justify-center mx-auto border border-[#B3352A]/20">
             <XCircle className="h-6 w-6" />
           </div>
           <h1 className="font-serif text-2xl font-medium text-[#0F1B2E]">
@@ -77,7 +77,7 @@ export function VerifyEmailPage() {
           </p>
           <Link
             to="/sign-in"
-            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-lg hover:bg-[#16283F] transition-all cursor-pointer shadow-sm"
+            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all cursor-pointer shadow-sm"
           >
             Return to Sign In
           </Link>

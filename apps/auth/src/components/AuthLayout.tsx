@@ -7,13 +7,13 @@ const displayClass = "font-serif";
 function SealMark() {
   return (
     <div className="flex items-center gap-2.5 z-10">
-      <div className="w-8 h-8 rounded-lg bg-[#A9824C]/20 border border-[#A9824C]/40 flex items-center justify-center text-[#DDC49B] font-bold text-sm tracking-widest shadow-inner">
+      <div className="w-8 h-8 rounded-none bg-[#A9824C]/20 border border-[#A9824C]/40 flex items-center justify-center text-[#DDC49B] font-bold text-sm tracking-widest shadow-inner">
         S
       </div>
       <span className="text-[#E2D9CC] font-bold text-lg tracking-tight">
         Scryme
       </span>
-      <span className="text-[10px] font-mono tracking-widest text-[#A9824C] uppercase bg-[#A9824C]/10 px-2 py-0.5 rounded border border-[#A9824C]/20">
+      <span className="text-[10px] font-mono tracking-widest text-[#A9824C] uppercase bg-[#A9824C]/10 px-2 py-0.5 rounded-none border border-[#A9824C]/20">
         Auth
       </span>
     </div>
@@ -29,7 +29,7 @@ function ComplianceBadge({
 }) {
   return (
     <div
-      className={`absolute z-10 hidden xl:flex items-center gap-1.5 px-3 py-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-full text-[11px] font-mono text-[#C9A876] shadow-sm ${className}`}
+      className={`absolute z-10 hidden xl:flex items-center gap-1.5 px-3 py-1 bg-white/5 backdrop-blur-md border border-white/10 rounded-none text-[11px] font-mono text-[#C9A876] shadow-sm ${className}`}
     >
       <Shield className="w-3 h-3 text-[#A9824C]" />
       <span>{label}</span>
@@ -65,14 +65,14 @@ function VerificationLedger() {
       {entries.map((item, idx) => (
         <div
           key={idx}
-          className="flex items-center justify-between p-2.5 bg-white/5 border border-white/10 rounded-lg backdrop-blur-sm text-xs"
+          className="flex items-center justify-between p-2.5 bg-white/5 border border-white/10 rounded-none backdrop-blur-sm text-xs"
         >
           <div className="flex items-center gap-2">
             <CheckCircle2 className="w-3.5 h-3.5 text-[#4FA871]" />
             <span className="font-medium text-white/90">{item.vendor}</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] font-mono text-white/50 bg-white/5 px-1.5 py-0.5 rounded">
+            <span className="text-[10px] font-mono text-white/50 bg-white/5 px-1.5 py-0.5 rounded-none">
               {item.badge}
             </span>
             <span className="text-[10px] font-mono text-[#4FA871]">
@@ -98,13 +98,13 @@ export function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <div className="min-h-screen w-full flex bg-[#FBFAF7] text-[#0F1B2E]">
       {/* Left Panel */}
-      <div className="flex-1 flex flex-col justify-between p-6 sm:p-10 lg:max-w-[560px] xl:max-w-[620px] relative z-10 overflow-y-auto">
-        <div className="w-full max-w-md mx-auto my-auto py-6">
+      <div className="flex-1 flex flex-col justify-between p-4 sm:p-8 lg:p-10 lg:max-w-[560px] xl:max-w-[620px] relative z-10 overflow-y-auto">
+        <div className="w-full max-w-md mx-auto my-auto py-4 sm:py-6">
           {children}
 
           {/* Security & Compliance Footer */}
-          <div className="mt-8 pt-4 border-t border-[#E7E2D9]/60 flex items-center justify-center gap-2 text-[11px] text-[#9AA6B2]">
-            <Shield className="h-3.5 w-3.5 text-[#A9824C]" />
+          <div className="mt-8 pt-4 border-t border-[#E7E2D9]/60 flex items-center justify-center gap-2 text-[10px] sm:text-[11px] text-[#9AA6B2] text-center flex-wrap">
+            <Shield className="h-3.5 w-3.5 text-[#A9824C] shrink-0" />
             <span className={`${monoClass} tracking-wide uppercase`}>
               SOC 2 TYPE II · 256-BIT ENCRYPTION · GDPR COMPLIANT
             </span>
@@ -124,16 +124,16 @@ export function AuthLayout({ children }: { children: ReactNode }) {
         />
 
         {/* Glow effects */}
-        <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-full bg-[#A9824C]/10 blur-[80px] pointer-events-none" />
-        <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-full bg-[#2F5D8A]/15 blur-[70px] pointer-events-none" />
+        <div className="absolute top-[-80px] right-[-80px] w-[360px] h-[360px] rounded-none bg-[#A9824C]/10 blur-[80px] pointer-events-none" />
+        <div className="absolute bottom-[-60px] left-[-60px] w-[280px] h-[280px] rounded-none bg-[#2F5D8A]/15 blur-[70px] pointer-events-none" />
 
         {/* Top Header Bar */}
         <div className="relative z-10 flex items-center justify-between">
           <SealMark />
           <div
-            className={`${monoClass} flex items-center gap-2 text-[10px] tracking-wider text-white/50 uppercase bg-white/5 px-3 py-1.5 rounded-full border border-white/10`}
+            className={`${monoClass} flex items-center gap-2 text-[10px] tracking-wider text-white/50 uppercase bg-white/5 px-3 py-1.5 rounded-none border border-white/10`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-[#4FA871] animate-pulse" />
+            <span className="w-1.5 h-1.5 bg-[#4FA871] animate-pulse" />
             TLS 1.3 · Passkey Native
           </div>
         </div>
@@ -145,8 +145,8 @@ export function AuthLayout({ children }: { children: ReactNode }) {
 
         {/* Main hero panel content */}
         <div className="relative z-10 mt-auto">
-          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#A9824C]/15 border border-[#A9824C]/25 rounded-full mb-6">
-            <div className="w-1.5 h-1.5 rounded-full bg-[#C9A876] animate-pulse" />
+          <div className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#A9824C]/15 border border-[#A9824C]/25 rounded-none mb-6">
+            <div className="w-1.5 h-1.5 bg-[#C9A876] animate-pulse" />
             <span
               className={`${monoClass} text-[10px] tracking-wider uppercase text-[#DDC49B]`}
             >

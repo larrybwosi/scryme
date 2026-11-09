@@ -86,7 +86,7 @@ export function SystemsCards({ items }: { items: SystemCardItem[] }) {
 
       <Dialog
         open={active !== null}
-        onOpenChange={(open) => {
+        onOpenChange={(open: boolean) => {
           if (!open) setOpenId(null);
         }}
       >
