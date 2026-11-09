@@ -140,11 +140,42 @@ export class ShiftsUseCase {
   }
 
   async createStaffShift(organizationId: string, dto: CreateShiftDto) {
-    const member = await this.prisma.client.member.findFirst({
-      where: { id: dto.memberId, organizationId },
-    });
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational entity validation lookups (member, location, and department).
+     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+     * projections reduces validation latency from up to 3 sequential DB roundtrips to 1 concurrent roundtrip
+     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+     */
+    const [member, loc, dept] = await Promise.all([
+      this.prisma.client.member.findFirst({
+        where: { id: dto.memberId, organizationId },
+        select: { id: true },
+      }),
+      dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { id: dto.locationId, organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.departmentId
+        ? this.prisma.client.department.findFirst({
+            where: { id: dto.departmentId, organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
     if (!member) {
       throw new BadRequestException("Member not found in organization");
+    }
+
+    if (dto.locationId && !loc) {
+      throw new BadRequestException("Location not found or belongs to another organization");
+    }
+
+    if (dto.departmentId && !dept) {
+      throw new BadRequestException("Department not found or belongs to another organization");
     }
 
     if (dto.isActive !== false) {
@@ -155,24 +186,6 @@ export class ShiftsUseCase {
         dto.startTime,
         dto.endTime,
       );
-    }
-
-    if (dto.locationId) {
-      const loc = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: dto.locationId, organizationId },
-      });
-      if (!loc) {
-        throw new BadRequestException("Location not found or belongs to another organization");
-      }
-    }
-
-    if (dto.departmentId) {
-      const dept = await this.prisma.client.department.findFirst({
-        where: { id: dto.departmentId, organizationId },
-      });
-      if (!dept) {
-        throw new BadRequestException("Department not found or belongs to another organization");
-      }
     }
 
     const shift = await this.prisma.client.staffShift.create({
@@ -224,22 +237,34 @@ export class ShiftsUseCase {
     const mergedEndTime = dto.endTime !== undefined ? dto.endTime : shift.endTime;
     const mergedIsActive = dto.isActive !== undefined ? dto.isActive : shift.isActive;
 
-    if (dto.locationId) {
-      const loc = await this.prisma.client.inventoryLocation.findFirst({
-        where: { id: dto.locationId, organizationId },
-      });
-      if (!loc) {
-        throw new BadRequestException("Location not found or belongs to another organization");
-      }
+    /**
+     * ⚡ Bolt Performance Optimization:
+     * Parallelize relational entity validation lookups (location and department).
+     * Replacing sequential DB query roundtrips with Promise.all and using explicit select: { id: true }
+     * projections reduces validation latency from 2 sequential DB roundtrips to 1 concurrent roundtrip
+     * while eliminating over-fetching and guaranteeing BOLA multi-tenant isolation.
+     */
+    const [loc, dept] = await Promise.all([
+      dto.locationId
+        ? this.prisma.client.inventoryLocation.findFirst({
+            where: { id: dto.locationId, organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+      dto.departmentId
+        ? this.prisma.client.department.findFirst({
+            where: { id: dto.departmentId, organizationId },
+            select: { id: true },
+          })
+        : Promise.resolve(null),
+    ]);
+
+    if (dto.locationId && !loc) {
+      throw new BadRequestException("Location not found or belongs to another organization");
     }
 
-    if (dto.departmentId) {
-      const dept = await this.prisma.client.department.findFirst({
-        where: { id: dto.departmentId, organizationId },
-      });
-      if (!dept) {
-        throw new BadRequestException("Department not found or belongs to another organization");
-      }
+    if (dto.departmentId && !dept) {
+      throw new BadRequestException("Department not found or belongs to another organization");
     }
 
     if (mergedIsActive) {
