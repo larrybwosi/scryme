@@ -23,7 +23,15 @@ export class V2AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    if (context.getType() !== "http") {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest<any>();
+    if (!request) {
+      return true;
+    }
+
     const url = request.raw?.url || request.url || "";
     if (url.includes("/v3/")) {
       return true;
@@ -34,18 +42,18 @@ export class V2AuthGuard implements CanActivate {
       [context.getHandler(), context.getClass()],
     );
     const correlationId =
-      (request.headers["x-correlation-id"] as string) || "unknown";
+      (request.headers?.["x-correlation-id"] as string) || "unknown";
     const ipAddress = (
-      (request.headers["x-forwarded-for"] as string) ||
-      (request.headers["x-real-ip"] as string) ||
+      (request.headers?.["x-forwarded-for"] as string) ||
+      (request.headers?.["x-real-ip"] as string) ||
       "unknown"
     )
       .split(",")[0]
       .trim();
-    const userAgent = request.headers["user-agent"] || "unknown";
+    const userAgent = request.headers?.["user-agent"] || "unknown";
 
     // 1. Authenticate Device
-    let apiKey = request.headers["x-api-key"] as string;
+    let apiKey = request.headers?.["x-api-key"] as string;
     if (!apiKey) {
       apiKey = (request as any).cookies?.["dealio_device_key"];
     }
@@ -60,8 +68,8 @@ export class V2AuthGuard implements CanActivate {
     }
 
     // 2. Authenticate Member
-    let memberToken = request.headers["x-member-token"] as string;
-    if (!memberToken && request.headers["authorization"]) {
+    let memberToken = request.headers?.["x-member-token"] as string;
+    if (!memberToken && request.headers?.["authorization"]) {
       const authHeader = request.headers["authorization"] as string;
       if (authHeader.toLowerCase().startsWith("bearer ")) {
         memberToken = authHeader.substring(7).trim();
