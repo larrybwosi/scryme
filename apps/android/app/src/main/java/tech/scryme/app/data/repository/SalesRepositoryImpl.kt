@@ -17,11 +17,14 @@ class SalesRepositoryImpl @Inject constructor(
     private val sessionManager: SessionManager
 ) : SalesRepository {
 
-    override suspend fun getSalesAnalytics(): Result<SalesAnalytics> {
+    override suspend fun getSalesAnalytics(
+        startDate: String?,
+        endDate: String?
+    ): Result<SalesAnalytics> {
         return try {
             val currencyCode = sessionManager.getOrgCurrency()
             val currencySymbol = sessionManager.getOrgCurrencySymbol()
-            val response = salesApiService.getAnalytics()
+            val response = salesApiService.getAnalytics(startDate, endDate)
             val body = response.body()
             if (response.isSuccessful && body?.data != null) {
                 val dataDto = body.data
@@ -37,11 +40,15 @@ class SalesRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun getOrders(query: String?): Result<List<OrderItem>> {
+    override suspend fun getOrders(
+        query: String?,
+        startDate: String?,
+        endDate: String?
+    ): Result<List<OrderItem>> {
         return try {
             val currencyCode = sessionManager.getOrgCurrency()
             val currencySymbol = sessionManager.getOrgCurrencySymbol()
-            val response = salesApiService.getOrders(query)
+            val response = salesApiService.getOrders(query, startDate, endDate)
             val body = response.body()
             if (response.isSuccessful && body?.data != null) {
                 val orderDtos = body.data
@@ -83,7 +90,7 @@ class SalesRepositoryImpl @Inject constructor(
     }
 
     private fun ensurePopulatedOrder(order: OrderItem, currencyCode: String?, currencySymbol: String?): OrderItem {
-        val nonNullLineItems = order.lineItems ?: emptyList()
+        val nonNullLineItems = order.lineItems
         val formattedItems = if (nonNullLineItems.isNotEmpty()) {
             nonNullLineItems.map { item ->
                 item.copy(

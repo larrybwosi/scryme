@@ -64,7 +64,24 @@ describe("SalesService", () => {
     expect(analytics.recentTransactions[0].transactionCode).toBe("#TXN_10005");
   });
 
-  it("should retrieve and map sales orders", async () => {
+  it("should calculate sales analytics with custom date range", async () => {
+    mockPrisma.client.transaction.findMany.mockResolvedValue([]);
+
+    await service.getAnalytics("org_1", undefined, "2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z");
+
+    expect(mockPrisma.client.transaction.aggregate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          createdAt: {
+            gte: new Date("2025-01-01T00:00:00Z"),
+            lte: new Date("2025-01-31T23:59:59Z"),
+          },
+        }),
+      })
+    );
+  });
+
+  it("should retrieve and map sales orders with date range", async () => {
     mockPrisma.client.transaction.findMany.mockResolvedValue([
       {
         id: "ord_101",
@@ -78,7 +95,19 @@ describe("SalesService", () => {
       },
     ]);
 
-    const orders = await service.getOrders("org_1", "Watch");
+    const orders = await service.getOrders("org_1", "Watch", "2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z");
+
+    expect(mockPrisma.client.transaction.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({
+          organizationId: "org_1",
+          createdAt: {
+            gte: new Date("2025-01-01T00:00:00Z"),
+            lte: new Date("2025-01-31T23:59:59Z"),
+          },
+        }),
+      })
+    );
 
     expect(orders).toHaveLength(1);
     expect(orders[0].id).toBe("ord_101");
