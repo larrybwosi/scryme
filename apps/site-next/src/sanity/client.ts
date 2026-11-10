@@ -10,10 +10,10 @@ const hasValidProjectId =
   Boolean(rawProjectId) &&
   rawProjectId !== 'placeholder-project-id' &&
   rawProjectId !== 'placeholder_project_id'
-
+console.log({rawProjectId})
 export const sanityConfig = hasValidProjectId
   ? {
-      projectId: rawProjectId!,
+      projectId: rawProjectId || '25pbas6k',
       dataset:
         env.SANITY_DATASET ||
         env.SANITY_STUDIO_DATASET ||

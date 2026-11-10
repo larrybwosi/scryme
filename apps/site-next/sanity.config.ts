@@ -30,7 +30,7 @@ const dataset =
 export default defineConfig({
   name: 'default',
   title: 'Scryme Site Studio',
-  projectId,
+  projectId: '25pbas6k',
   dataset,
   basePath: '/studio',
   plugins: [

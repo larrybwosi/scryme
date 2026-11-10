@@ -17,7 +17,7 @@ const dataset =
 
 export default defineCliConfig({
   api: {
-    projectId,
+    projectId:'25pbas6k',
     dataset,
   },
 })
