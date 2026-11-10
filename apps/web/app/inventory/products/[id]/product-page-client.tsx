@@ -812,7 +812,7 @@ export function ProductPageClient({
           <Card className="border-border shadow-sm ring-1 ring-border dark:ring-zinc-800 overflow-hidden">
             <div className="aspect-square relative bg-muted">
               {product.imageUrls?.[0] ? (
-                <Image unoptimized
+                <Image
                   src={product.imageUrls[0]}
                   alt={product.name}
                   fill

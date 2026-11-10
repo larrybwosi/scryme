@@ -441,7 +441,7 @@ export function AuditStockModal({
               <div className="flex items-start gap-3">
                 <div className="w-12 h-12 rounded bg-white border flex items-center justify-center p-1 relative overflow-hidden shrink-0">
                   {product.image ? (
-                    <Image unoptimized
+                    <Image
                       src={product.image}
                       alt={product.name}
                       fill
@@ -487,7 +487,7 @@ export function AuditStockModal({
                     <div className="flex items-center gap-2 mt-2">
                       <div className="w-5 h-5 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                         {item.member?.user?.image ? (
-                          <Image unoptimized
+                          <Image
                             src={item.member.user.image}
                             alt={item.member?.user?.name || "User"}
                             fill

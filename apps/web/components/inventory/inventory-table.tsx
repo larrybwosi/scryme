@@ -145,7 +145,7 @@ export function InventoryTable({
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded bg-gray-100 flex items-center justify-center overflow-hidden relative">
                       {item.image ? (
-                        <Image unoptimized
+                        <Image
                           src={item.image}
                           alt={item.name}
                           fill

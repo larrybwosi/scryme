@@ -65,7 +65,7 @@ ARG VITE_POSTHOG_HOST
 ENV VITE_POSTHOG_HOST=${VITE_POSTHOG_HOST:-https://eu.i.posthog.com}
 
 # Generate Prisma Client / SDK TypeScript types
-RUN pnpm turbo run generate
+RUN pnpm turbo run generate && pnpm --filter @repo/env build
 
 # Build the site-next app
 ENV NODE_OPTIONS="--max-old-space-size=4096"

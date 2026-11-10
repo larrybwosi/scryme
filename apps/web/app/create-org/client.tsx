@@ -376,7 +376,7 @@ export default function CreateOrgPage() {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-emerald-600 font-bold shadow-sm group-hover:border-emerald-100 relative overflow-hidden">
                         {inv.organization.logo ? (
-                          <Image unoptimized
+                          <Image
                             src={inv.organization.logo}
                             alt={inv.organization.name}
                             fill

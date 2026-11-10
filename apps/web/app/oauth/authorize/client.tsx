@@ -150,7 +150,7 @@ function AuthorizeContent() {
         <CardHeader className="text-center">
           <div className="mx-auto w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mb-4">
             {clientInfo?.icon ? (
-              <Image unoptimized src={clientInfo.icon} alt={clientInfo.name || "App Icon"} width={48} height={48} className="rounded" />
+              <Image src={clientInfo.icon} alt={clientInfo.name || "App Icon"} width={48} height={48} className="rounded" />
             ) : (
               <CheckCircle2 className="h-10 w-10 text-primary" />
             )}

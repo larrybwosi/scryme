@@ -83,7 +83,7 @@ export function SupplierTable({ data, onEdit, onDelete }: SupplierTableProps) {
                   <div className="flex items-center gap-3">
                     <div className="w-9 h-9 rounded-sm border bg-muted flex items-center justify-center text-muted-foreground font-semibold relative overflow-hidden">
                       {supplier.logo ? (
-                        <Image unoptimized
+                        <Image
                           src={supplier.logo}
                           alt={supplier.name}
                           fill
