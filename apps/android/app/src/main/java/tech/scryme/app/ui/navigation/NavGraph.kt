@@ -28,6 +28,8 @@ import tech.scryme.app.ui.organization.OrganizationScreen
 import tech.scryme.app.ui.organization.OrganizationViewModel
 import tech.scryme.app.ui.overview.OverviewScreen
 import tech.scryme.app.ui.overview.OverviewViewModel
+import tech.scryme.app.ui.production.ProductionScreen
+import tech.scryme.app.ui.production.ProductionViewModel
 import tech.scryme.app.ui.profile.ProfileScreen
 import tech.scryme.app.ui.profile.ProfileViewModel
 import tech.scryme.app.ui.sales.SalesScreen
@@ -127,7 +129,15 @@ fun AppNavGraph(
                 viewModel = viewModel,
                 onNavigateToSales = { navController.navigate(Screen.Sales.route) },
                 onNavigateToBranches = { navController.navigate(Screen.Branch.route) },
-                onNavigateToCustomers = { navController.navigate(Screen.Customer.route) }
+                onNavigateToCustomers = { navController.navigate(Screen.Customer.route) },
+                onNavigateToProduction = { navController.navigate(Screen.Production.route) }
+            )
+        }
+        composable(Screen.Production.route) {
+            val viewModel: ProductionViewModel = hiltViewModel()
+            ProductionScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
             )
         }
         composable(Screen.Sales.route) {

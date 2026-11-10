@@ -11,6 +11,7 @@ import retrofit2.converter.gson.GsonConverterFactory
 import tech.scryme.app.BuildConfig
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.api.BranchApiService
+import tech.scryme.app.data.api.ProductionApiService
 import tech.scryme.app.data.api.CustomerApiService
 import tech.scryme.app.data.api.MemberApiService
 import tech.scryme.app.data.api.SalesApiService
@@ -121,5 +122,11 @@ object NetworkModule {
     @Singleton
     fun provideCustomerApiService(retrofit: Retrofit): CustomerApiService {
         return retrofit.create(CustomerApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideProductionApiService(retrofit: Retrofit): ProductionApiService {
+        return retrofit.create(ProductionApiService::class.java)
     }
 }
