@@ -233,7 +233,7 @@ fun MemberAvatar(
 ) {
     if (!avatarUrl.isNullOrBlank()) {
         AsyncImage(
-            model = avatarUrl,
+            model = tech.scryme.app.util.ImageUrlHelper.resolve(avatarUrl),
             contentDescription = name,
             modifier = modifier.clip(CircleShape),
             contentScale = ContentScale.Crop

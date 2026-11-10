@@ -84,7 +84,7 @@ export function StockHistoryDrawer({
                   <div className="flex items-center gap-2 mt-3">
                     <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center overflow-hidden relative">
                       {item.member?.user?.image ? (
-                        <Image
+                        <Image unoptimized
                           src={item.member.user.image}
                           alt={item.member?.user?.name || "User"}
                           fill

@@ -72,11 +72,10 @@ export function OrganizationProfileHeader({
           !banner && "border-dashed border-2 border-border",
         )}>
         {banner ? (
-          <Image
+          <Image unoptimized
             src={banner}
             alt="Organization Banner"
             fill
-            unoptimized
             className="object-cover"
           />
         ) : (
@@ -116,11 +115,10 @@ export function OrganizationProfileHeader({
         <div className="relative group">
           <div className="relative h-32 w-32 rounded-2xl overflow-hidden border-4 border-background bg-muted/30 shadow-lg">
             {logo ? (
-              <Image
+              <Image unoptimized
                 src={logo}
                 alt="Organization Logo"
                 fill
-                unoptimized
                 className="object-cover"
               />
             ) : (

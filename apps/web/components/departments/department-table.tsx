@@ -65,7 +65,7 @@ export function DepartmentTable({ data }: DepartmentTableProps) {
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center overflow-hidden border relative shrink-0">
                       {dept.image ? (
-                        <Image
+                        <Image unoptimized
                           src={dept.image}
                           alt={dept.name}
                           fill

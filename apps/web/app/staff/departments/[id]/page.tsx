@@ -42,7 +42,7 @@ export default async function DepartmentDetailPage({ params }: Props) {
       {/* Header Banner */}
       <div className="h-48 bg-zinc-900 relative overflow-hidden">
         {dept.banner ? (
-          <Image
+          <Image unoptimized
             src={dept.banner}
             alt="banner"
             fill
@@ -54,7 +54,7 @@ export default async function DepartmentDetailPage({ params }: Props) {
         <div className="absolute bottom-6 left-8 right-0 flex items-end gap-6">
           <div className="w-24 h-24 rounded-2xl bg-background border-4 border-background shadow-xl flex items-center justify-center overflow-hidden shrink-0 relative">
             {dept.image ? (
-              <Image
+              <Image unoptimized
                 src={dept.image}
                 alt="logo"
                 fill

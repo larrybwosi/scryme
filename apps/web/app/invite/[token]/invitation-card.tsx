@@ -81,7 +81,7 @@ export function InvitationCard({
         {/* Org Logo / Avatar */}
         <div className="relative w-16 h-16 rounded-2xl bg-gray-100 border border-gray-200/60 flex items-center justify-center text-2xl font-bold text-gray-700 shadow-sm mb-6 overflow-hidden">
           {invitation.organization.logo ? (
-            <Image
+            <Image unoptimized
               src={invitation.organization.logo}
               alt={invitation.organization.name}
               fill

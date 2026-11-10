@@ -283,7 +283,7 @@ export default async function LocationDetailPage({
             <Panel title="Overview">
               {settings.imageUrl ? (
                 <div className="relative h-40 w-full border-b border-border">
-                  <Image
+                  <Image unoptimized
                     src={settings.imageUrl}
                     alt={`${location.name} branch image`}
                     fill

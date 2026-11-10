@@ -139,7 +139,7 @@ export function ImageUpload({
           <div
             key={url}
             className="relative aspect-square rounded-md overflow-hidden border bg-gray-100 group">
-            <Image src={url} alt="Product" fill className="object-cover" />
+            <Image src={url} alt="Product" fill unoptimized className="object-cover" />
             <button
               onClick={() => removeImage(url)}
               type="button"

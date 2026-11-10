@@ -269,7 +269,7 @@ export function DocumentConfigForm({
                     <div className="space-y-4">
                       {field.value ? (
                         <div className="relative w-32 h-32 border rounded-lg overflow-hidden group">
-                          <Image
+                          <Image unoptimized
                             src={field.value}
                             alt={`${type} Logo`}
                             fill

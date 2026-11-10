@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com blob:; connect-src 'self' https://unpkg.com blob: https://asset.localhost; img-src 'self' asset: https://asset.localhost blob: data: https://*.unsplash.com; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'self' 'unsafe-inline'; font-src 'self' data:;",
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-eval' https://unpkg.com blob:; connect-src 'self' https://unpkg.com blob: https://asset.localhost; img-src 'self' asset: https://asset.localhost blob: data: https: http:; style-src 'self' 'unsafe-inline'; style-src-elem 'self' 'unsafe-inline'; style-src-attr 'self' 'unsafe-inline'; font-src 'self' data:;",
       "assetProtocol": {
         "enable": true,
         "scope": [
