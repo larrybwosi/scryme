@@ -1,9 +1,11 @@
 /**
- * Universal Fetch-Based HTTP Client with Enterprise Middleware Pipeline
+ * Universal Fetch-Based HTTP Client with Enterprise Middleware Pipeline,
+ * Circuit Breaker, In-Memory Caching, Sensitive Data Redaction, and Security Validation.
  */
 
 import {
   ScrymeError,
+  SecurityError,
   NetworkError,
   TimeoutError,
   createApiErrorFromResponse,
@@ -16,6 +18,14 @@ import {
   sleep,
 } from "./retry";
 import { Logger, noopLogger } from "./logger";
+import {
+  sanitizeSensitiveData,
+  sanitizeHeaderValue,
+  validateUrlSecurity,
+  generateUuidV4,
+} from "./security";
+import { CircuitBreaker, CircuitBreakerOptions } from "./circuit-breaker";
+import { MemoryCache, CacheOptions } from "./cache";
 
 export type HttpMethod = "GET" | "POST" | "PUT" | "PATCH" | "DELETE" | "HEAD" | "OPTIONS";
 
@@ -28,6 +38,7 @@ export interface RequestOptions {
   timeout?: number;
   idempotencyKey?: string;
   skipAuth?: boolean;
+  skipCache?: boolean;
   retries?: number | RetryOptions;
   responseType?: "json" | "text" | "blob" | "arraybuffer";
   [key: string]: any;
@@ -49,11 +60,19 @@ export interface HttpClientConfig {
   retry?: RetryOptions;
   logger?: Logger;
   fetch?: typeof fetch;
+  allowInsecureHttp?: boolean;
+  circuitBreaker?: CircuitBreakerOptions;
+  cache?: CacheOptions;
+  idempotency?: {
+    autoGenerate?: boolean;
+  };
   onRequest?: (url: string, init: RequestInit, options: RequestOptions) => void | Promise<void>;
   onResponse?: (response: HttpResponse) => void | Promise<void>;
   onError?: (error: Error, options: RequestOptions) => void | Promise<void>;
   tokenProvider?: () => string | null | undefined | Promise<string | null | undefined>;
 }
+
+export const SDK_VERSION = "10.2.45";
 
 export class HttpClient {
   public baseUrl: string;
@@ -61,6 +80,11 @@ export class HttpClient {
   public timeout: number;
   public retryConfig: Required<RetryOptions>;
   public logger: Logger;
+  public allowInsecureHttp: boolean;
+  public circuitBreaker: CircuitBreaker;
+  public cache: MemoryCache;
+  public autoGenerateIdempotencyKey: boolean;
+
   private customFetch?: typeof fetch;
   private onRequestHook?: HttpClientConfig["onRequest"];
   private onResponseHook?: HttpClientConfig["onResponse"];
@@ -68,16 +92,28 @@ export class HttpClient {
   private tokenProvider?: HttpClientConfig["tokenProvider"];
 
   constructor(config: HttpClientConfig = {}) {
-    this.baseUrl = (config.baseUrl || "https://api.scryme.tech").replace(/\/+$/, "");
+    const rawBaseUrl = (config.baseUrl || "https://api.scryme.tech").replace(/\/+$/, "");
+    this.allowInsecureHttp = config.allowInsecureHttp ?? false;
+
+    // Validate security of target base URL
+    validateUrlSecurity(rawBaseUrl, this.allowInsecureHttp);
+    this.baseUrl = rawBaseUrl;
+
     this.defaultHeaders = {
       "Accept": "application/json",
       "Content-Type": "application/json",
+      "X-Client-Info": `@scryme/sdk/${SDK_VERSION}`,
       ...config.defaultHeaders,
     };
+
     this.timeout = config.timeout ?? 30000;
     this.retryConfig = { ...DEFAULT_RETRY_OPTIONS, ...config.retry };
     this.logger = config.logger || noopLogger;
     this.customFetch = config.fetch;
+    this.circuitBreaker = new CircuitBreaker(config.circuitBreaker);
+    this.cache = new MemoryCache(config.cache);
+    this.autoGenerateIdempotencyKey = config.idempotency?.autoGenerate ?? true;
+
     this.onRequestHook = config.onRequest;
     this.onResponseHook = config.onResponse;
     this.onErrorHook = config.onError;
@@ -89,7 +125,7 @@ export class HttpClient {
   }
 
   public setHeader(key: string, value: string): void {
-    this.defaultHeaders[key] = value;
+    this.defaultHeaders[sanitizeHeaderValue(key)] = sanitizeHeaderValue(value);
   }
 
   public removeHeader(key: string): void {
@@ -109,6 +145,8 @@ export class HttpClient {
     const fullUrl = isAbsolute
       ? endpoint
       : `${this.baseUrl}/${endpoint.replace(/^\/+/, "")}`;
+
+    validateUrlSecurity(fullUrl, this.allowInsecureHttp);
 
     if (!params || Object.keys(params).length === 0) {
       return fullUrl;
@@ -138,6 +176,22 @@ export class HttpClient {
     const fetchFn = this.resolveFetch();
     const finalUrl = this.buildUrl(endpoint, options.params);
     const bodyContent = options.data !== undefined ? options.data : options.body;
+
+    // Check in-memory cache for GET requests
+    const cacheKey = `${method}:${finalUrl}`;
+    if (method === "GET" && !options.skipCache && this.cache.enabled) {
+      const cachedResponse = this.cache.get<HttpResponse<T>>(cacheKey);
+      if (cachedResponse) {
+        this.logger.debug(`[CACHE HIT] ${method} ${finalUrl}`);
+        return {
+          ...cachedResponse,
+          config: options,
+        };
+      }
+    }
+
+    // Fail-fast via Circuit Breaker
+    this.circuitBreaker.checkHealth();
 
     const retryOptions: Required<RetryOptions> =
       typeof options.retries === "number"
@@ -180,14 +234,18 @@ export class HttpClient {
         }
       }
 
+      // Auto-generate or set Idempotency Key for mutating requests
+      const isMutating = method === "POST" || method === "PUT" || method === "PATCH";
       if (options.idempotencyKey) {
-        headers["Idempotency-Key"] = options.idempotencyKey;
+        headers["Idempotency-Key"] = sanitizeHeaderValue(options.idempotencyKey);
+      } else if (isMutating && this.autoGenerateIdempotencyKey && !headers["Idempotency-Key"] && !headers["idempotency-key"]) {
+        headers["Idempotency-Key"] = generateUuidV4();
       }
 
       if (options.headers) {
         for (const [k, v] of Object.entries(options.headers)) {
           if (v !== undefined) {
-            headers[k] = v;
+            headers[sanitizeHeaderValue(k)] = sanitizeHeaderValue(String(v));
           }
         }
       }
@@ -196,13 +254,13 @@ export class HttpClient {
       if (bodyContent !== undefined && method !== "GET" && method !== "HEAD") {
         if (
           typeof bodyContent === "string" ||
-          bodyContent instanceof FormData ||
-          bodyContent instanceof Blob ||
-          bodyContent instanceof ArrayBuffer ||
+          (typeof FormData !== "undefined" && bodyContent instanceof FormData) ||
+          (typeof Blob !== "undefined" && bodyContent instanceof Blob) ||
+          (typeof ArrayBuffer !== "undefined" && bodyContent instanceof ArrayBuffer) ||
           (typeof URLSearchParams !== "undefined" && bodyContent instanceof URLSearchParams)
         ) {
           formattedBody = bodyContent;
-          if (bodyContent instanceof FormData) {
+          if (typeof FormData !== "undefined" && bodyContent instanceof FormData) {
             delete headers["Content-Type"];
             delete headers["content-type"];
           }
@@ -224,7 +282,11 @@ export class HttpClient {
       }
 
       try {
-        this.logger.debug(`[${method}] ${finalUrl} (attempt ${attempt + 1}/${retryOptions.maxRetries + 1})`);
+        const safeHeaders = sanitizeSensitiveData(headers);
+        this.logger.debug(
+          `[${method}] ${finalUrl} (attempt ${attempt + 1}/${retryOptions.maxRetries + 1})`,
+          safeHeaders
+        );
         const res = await fetchFn(finalUrl, requestInit);
 
         clearTimeout(timeoutId);
@@ -270,6 +332,14 @@ export class HttpClient {
         };
 
         if (res.ok) {
+          // Record success on circuit breaker
+          this.circuitBreaker.recordSuccess();
+
+          // Store in cache if enabled for GET
+          if (method === "GET" && !options.skipCache && this.cache.enabled) {
+            this.cache.set(cacheKey, httpResponse);
+          }
+
           if (this.onResponseHook) {
             await this.onResponseHook(httpResponse);
           }
@@ -277,6 +347,9 @@ export class HttpClient {
         }
 
         // Response status is 4xx or 5xx
+        const isServerErr = res.status >= 500;
+        this.circuitBreaker.recordFailure(isServerErr);
+
         const apiError = createApiErrorFromResponse(res.status, parsedData, res.headers);
 
         if (attempt < retryOptions.maxRetries && isRetryableStatus(res.status)) {
@@ -302,10 +375,12 @@ export class HttpClient {
         let finalError = err;
         if (isTimedOut) {
           finalError = new TimeoutError(`Request timed out after ${timeoutMs}ms`, timeoutMs);
+          this.circuitBreaker.recordFailure(true);
         } else if (err.name === "AbortError" && options.signal?.aborted) {
           finalError = new NetworkError("Request was cancelled by user signal", err);
         } else if (!(err instanceof ScrymeError)) {
           finalError = new NetworkError(err.message || "Network request failed", err);
+          this.circuitBreaker.recordFailure(true);
         }
 
         if (

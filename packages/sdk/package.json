@@ -1,6 +1,7 @@
 {
   "name": "@scryme/sdk",
   "version": "10.2.45",
+  "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
