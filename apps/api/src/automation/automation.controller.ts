@@ -11,7 +11,13 @@ import {
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { AutomationService } from "./automation.service";
-import type { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
+import type {
+  CreateWorkflowDefinitionDto,
+  TriggerWorkflowDto,
+  CreateWebhookDto,
+  SimulateWorkflowDto,
+  ReplayWorkflowDto,
+} from "./dto/automation.dto";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { v3Context } from "../v3/common/decorators/v3-context.decorator";
 import type { V3ApiContext } from "@repo/shared/api/v3";
@@ -92,6 +98,26 @@ export class AutomationController {
     return this.automationService.triggerWorkflow(ctx.organizationId, body);
   }
 
+  @Post("simulate")
+  @Permissions("workflow:view")
+  @ApiOperation({ summary: "Simulate a dry-run execution of a workflow DAG without side effects" })
+  async simulateWorkflow(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: SimulateWorkflowDto,
+  ) {
+    return this.automationService.simulateWorkflow(ctx.organizationId, body);
+  }
+
+  @Post("replay")
+  @Permissions("workflow:execute")
+  @ApiOperation({ summary: "Replay a past execution with optional payload overrides" })
+  async replayExecution(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: ReplayWorkflowDto,
+  ) {
+    return this.automationService.replayExecution(ctx.organizationId, body);
+  }
+
   @Post("cancel")
   @Permissions("workflow:execute")
   @ApiOperation({ summary: "Cancel a running workflow job instance" })
@@ -120,6 +146,16 @@ export class AutomationController {
     @Query("jobId") jobId: string,
   ) {
     return this.automationService.getLogs(ctx.organizationId, jobId);
+  }
+
+  @Get("executions/:executionId/steps")
+  @Permissions("workflow:view")
+  @ApiOperation({ summary: "Get structured step execution history for a run" })
+  async getExecutionSteps(
+    @v3Context() ctx: V3ApiContext,
+    @Param("executionId") executionId: string,
+  ) {
+    return this.automationService.getExecutionSteps(ctx.organizationId, executionId);
   }
 
   @Get("executions")
@@ -236,5 +272,4 @@ export class AutomationController {
       actionData,
     };
   }
-
 }
