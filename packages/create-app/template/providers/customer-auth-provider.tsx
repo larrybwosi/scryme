@@ -67,7 +67,12 @@ export const CustomerAuthProvider: React.FC<{ children: React.ReactNode }> = ({ 
   const login = async (credentials: { email: string; password?: string; otp?: string }) => {
     setIsLoading(true);
     try {
-      if (typeof scrymeClient.customer.auth.login === 'function') {
+      if (typeof scrymeClient.customer.auth.signIn === 'function') {
+        await scrymeClient.customer.auth.signIn({
+          email: credentials.email,
+          password: credentials.password,
+        });
+      } else if (typeof scrymeClient.customer.auth.login === 'function') {
         await scrymeClient.customer.auth.login(credentials as any);
       }
       await fetchSession();
