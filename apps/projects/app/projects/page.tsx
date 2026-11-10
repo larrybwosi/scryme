@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
 import { LayoutGrid, Rows, Plus, Search, X, FolderOpen, Sparkles, ListTodo, Pencil, ArrowRight, Trash2 } from "lucide-react";
@@ -229,12 +231,12 @@ export default function ProjectsPage() {
             <div className="flex items-center gap-2">
               <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-outline focus-within:text-on-surface focus-within:bg-surface-container-low transition-all">
                 <Search className="h-3.5 w-3.5" />
-                <input
+                <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search projects, keys, tags..."
-                  className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-44 md:w-60"
+                  className="h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 font-body-sm text-body-sm text-on-surface placeholder:text-outline w-44 md:w-60"
                 />
                 {searchQuery && (
                   <button
@@ -267,33 +269,33 @@ export default function ProjectsPage() {
               <form onSubmit={handleCreateProject} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                  <input
+                  <Input
                     type="text"
                     required
                     placeholder="e.g. Kinetic Engine 3.0"
                     value={newProjectName}
                     onChange={(e) => setNewProjectName(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Project Key (Optional)</label>
-                  <input
+                  <Input
                     type="text"
                     placeholder="e.g. KINETIC"
                     value={newProjectKey}
                     onChange={(e) => setNewProjectKey(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm uppercase focus:outline-none focus:border-primary-container"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm uppercase focus-visible:border-primary-container"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                  <input
+                  <Input
                     type="text"
                     placeholder="Brief objective"
                     value={newProjectDesc}
                     onChange={(e) => setNewProjectDesc(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -336,35 +338,36 @@ export default function ProjectsPage() {
               <form onSubmit={handleSaveEdit} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                  <input
+                  <Input
                     type="text"
                     required
                     value={editName}
                     onChange={(e) => setEditName(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                  <input
+                  <Input
                     type="text"
                     value={editDesc}
                     onChange={(e) => setEditDesc(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Status</label>
-                  <select
-                    value={editStatus}
-                    onChange={(e) => setEditStatus(e.target.value as Project["status"])}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none"
-                  >
-                    <option value="ACTIVE">ACTIVE</option>
-                    <option value="ON_HOLD">ON_HOLD</option>
-                    <option value="COMPLETED">COMPLETED</option>
-                    <option value="ARCHIVED">ARCHIVED</option>
-                  </select>
+                  <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                      <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
+                      <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                      <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
                   <button

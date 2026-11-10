@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useEffect } from "react";
 import { LifecycleActions, BookingStatus } from "@/components/bookings/LifecycleActions";
 import { ConflictBadge } from "@/components/bookings/ConflictBadge";
@@ -369,31 +371,32 @@ export default function BookingsManagementPage() {
         <div className="flex items-center gap-3">
           <div className="relative">
             <Search className="w-3.5 h-3.5 absolute left-3 top-2.5 text-outline pointer-events-none" />
-            <input
+            <Input
               type="text"
               placeholder="Search bookings..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-8 pr-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/40 text-xs text-on-surface placeholder:text-outline focus:outline-none focus:border-primary"
+              className="pl-8 pr-3 h-8 bg-surface-container border-outline-variant/40 text-xs text-on-surface placeholder:text-outline focus-visible:border-primary"
             />
           </div>
 
           <div className="flex items-center gap-1.5">
             <Filter className="w-3.5 h-3.5 text-outline" />
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="px-3 py-1.5 rounded-lg bg-surface-container border border-outline-variant/40 text-xs text-on-surface focus:outline-none focus:border-primary"
-            >
-              <option value="ALL">All Statuses</option>
-              <option value="REQUESTED">Requested</option>
-              <option value="PENDING">Pending</option>
-              <option value="CONFIRMED">Confirmed</option>
-              <option value="ASSIGNED">Assigned</option>
-              <option value="IN_PROGRESS">In Progress</option>
-              <option value="COMPLETED">Completed</option>
-              <option value="CANCELLED">Cancelled</option>
-            </select>
+            <Select value={statusFilter} onValueChange={(val) => setStatusFilter(val)}>
+              <SelectTrigger className="h-8 bg-surface-container border-outline-variant/40 text-xs text-on-surface">
+                <SelectValue placeholder="All Statuses" />
+              </SelectTrigger>
+              <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                <SelectItem value="ALL">All Statuses</SelectItem>
+                <SelectItem value="REQUESTED">Requested</SelectItem>
+                <SelectItem value="PENDING">Pending</SelectItem>
+                <SelectItem value="CONFIRMED">Confirmed</SelectItem>
+                <SelectItem value="ASSIGNED">Assigned</SelectItem>
+                <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                <SelectItem value="COMPLETED">Completed</SelectItem>
+                <SelectItem value="CANCELLED">Cancelled</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <button

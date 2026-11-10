@@ -1,5 +1,10 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
+import { format } from "date-fns";
 import Link from "next/link";
 import { Suspense, useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -345,13 +350,13 @@ function NewProjectOrTaskForm() {
                 <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   Project Name *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   value={projectName}
                   onChange={(e) => setProjectName(e.target.value)}
                   placeholder="e.g. Nexus 2.0 Redesign"
-                  className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
+                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
                 />
               </div>
 
@@ -359,13 +364,13 @@ function NewProjectOrTaskForm() {
                 <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   Project Key (Optional)
                 </label>
-                <input
+                <Input
                   type="text"
                   value={projectKey}
                   onChange={(e) => setProjectKey(e.target.value.toUpperCase())}
                   placeholder="e.g. NEX"
                   maxLength={6}
-                  className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2] uppercase font-mono"
+                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2] uppercase font-mono"
                 />
               </div>
             </div>
@@ -374,12 +379,12 @@ function NewProjectOrTaskForm() {
               <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                 Description / Purpose
               </label>
-              <textarea
+              <Textarea
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
                 rows={4}
                 placeholder="High level initiative goals and roadmap milestones..."
-                className="w-full bg-[#171922] border border-[#2E3039] rounded-md p-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
+                className="w-full bg-[#171922] border-[#2E3039] p-3 text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
               />
             </div>
 
@@ -388,16 +393,17 @@ function NewProjectOrTaskForm() {
                 <Flame className="h-3.5 w-3.5 text-amber-400" />
                 <span>Priority</span>
               </label>
-              <select
-                value={projectPriority}
-                onChange={(e) => setProjectPriority(e.target.value as any)}
-                className="w-full sm:w-60 bg-[#171922] border border-[#2E3039] rounded-md px-3 py-2 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-              >
-                <option value="URGENT">Urgent</option>
-                <option value="HIGH">High</option>
-                <option value="MEDIUM">Medium</option>
-                <option value="LOW">Low</option>
-              </select>
+              <Select value={projectPriority} onValueChange={(val) => setProjectPriority(val as any)}>
+                <SelectTrigger className="w-full sm:w-60 bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                  <SelectValue placeholder="Select priority" />
+                </SelectTrigger>
+                <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                  <SelectItem value="URGENT">Urgent</SelectItem>
+                  <SelectItem value="HIGH">High</SelectItem>
+                  <SelectItem value="MEDIUM">Medium</SelectItem>
+                  <SelectItem value="LOW">Low</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
         ) : (
@@ -408,13 +414,13 @@ function NewProjectOrTaskForm() {
                 <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   Task Title *
                 </label>
-                <input
+                <Input
                   type="text"
                   required
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   placeholder="e.g. Implement WebGL streaming buffer"
-                  className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-2 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
+                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
                 />
               </div>
 
@@ -422,12 +428,12 @@ function NewProjectOrTaskForm() {
                 <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   Description / Technical Scope
                 </label>
-                <textarea
+                <Textarea
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   placeholder="Technical details, acceptance criteria, or specification links..."
-                  className="w-full bg-[#171922] border border-[#2E3039] rounded-md p-3 text-xs text-slate-200 placeholder:text-slate-500 focus:outline-none focus:border-[#5E6AD2]"
+                  className="w-full bg-[#171922] border-[#2E3039] p-3 text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
                 />
               </div>
 
@@ -437,35 +443,37 @@ function NewProjectOrTaskForm() {
                     <Folder className="h-3.5 w-3.5 text-primary" />
                     <span>Project *</span>
                   </label>
-                  <select
-                    value={projectId}
-                    onChange={(e) => setProjectId(e.target.value)}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>
-                        {p.name} ({p.key})
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={projectId} onValueChange={(val) => setProjectId(val)}>
+                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="Select project" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>
+                          {p.name} ({p.key})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
                   <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                     Status
                   </label>
-                  <select
-                    value={status}
-                    onChange={(e) => setStatus(e.target.value as Task["status"])}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="BACKLOG">Backlog</option>
-                    <option value="TODO">Todo</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="IN_REVIEW">In Review</option>
-                    <option value="DONE">Done</option>
-                    <option value="CANCELED">Canceled</option>
-                  </select>
+                  <Select value={status} onValueChange={(val) => setStatus(val as Task["status"])}>
+                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                      <SelectItem value="BACKLOG">Backlog</SelectItem>
+                      <SelectItem value="TODO">Todo</SelectItem>
+                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                      <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                      <SelectItem value="DONE">Done</SelectItem>
+                      <SelectItem value="CANCELED">Canceled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -473,16 +481,17 @@ function NewProjectOrTaskForm() {
                     <Flame className="h-3.5 w-3.5 text-amber-400" />
                     <span>Priority</span>
                   </label>
-                  <select
-                    value={priority}
-                    onChange={(e) => setPriority(e.target.value as Task["priority"])}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="URGENT">Urgent</option>
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                  </select>
+                  <Select value={priority} onValueChange={(val) => setPriority(val as Task["priority"])}>
+                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                      <SelectItem value="URGENT">Urgent</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="LOW">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
@@ -492,11 +501,11 @@ function NewProjectOrTaskForm() {
                     <Calendar className="h-3.5 w-3.5 text-slate-400" />
                     <span>Start Date</span>
                   </label>
-                  <input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
+                  <DatePicker
+                    value={startDate ? new Date(startDate) : undefined}
+                    onChange={(d) => setStartDate(d ? format(d, "yyyy-MM-dd") : "")}
+                    placeholder="Select start date"
+                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200"
                   />
                 </div>
 
@@ -505,11 +514,11 @@ function NewProjectOrTaskForm() {
                     <Calendar className="h-3.5 w-3.5 text-primary" />
                     <span>Due Date</span>
                   </label>
-                  <input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
+                  <DatePicker
+                    value={dueDate ? new Date(dueDate) : undefined}
+                    onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
+                    placeholder="Select due date"
+                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200"
                   />
                 </div>
 
@@ -518,13 +527,13 @@ function NewProjectOrTaskForm() {
                     <Clock className="h-3.5 w-3.5 text-secondary" />
                     <span>Estimated Hours</span>
                   </label>
-                  <input
+                  <Input
                     type="number"
                     step="0.5"
                     min="0.5"
                     value={estimatedHours}
                     onChange={(e) => setEstimatedHours(e.target.value)}
-                    className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
+                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 focus-visible:border-[#5E6AD2]"
                   />
                 </div>
               </div>
@@ -534,20 +543,21 @@ function NewProjectOrTaskForm() {
                 <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
                   Parent Task Link (Optional)
                 </label>
-                <select
-                  value={parentTaskId}
-                  onChange={(e) => setParentTaskId(e.target.value)}
-                  className="w-full bg-[#171922] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                >
-                  <option value="">No Parent (Root Issue)</option>
-                  {allTasks
-                    .filter((t) => t.projectId === projectId)
-                    .map((t) => (
-                      <option key={t.id} value={t.id}>
-                        [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
-                      </option>
-                    ))}
-                </select>
+                <Select value={parentTaskId || "NONE"} onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}>
+                  <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                    <SelectValue placeholder="No Parent (Root Issue)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                    <SelectItem value="NONE">No Parent (Root Issue)</SelectItem>
+                    {allTasks
+                      .filter((t) => t.projectId === projectId)
+                      .map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
+                        </SelectItem>
+                      ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -566,18 +576,19 @@ function NewProjectOrTaskForm() {
                     <CalendarDays className="h-3.5 w-3.5 text-primary" />
                     <span>Customer Service Booking</span>
                   </label>
-                  <select
-                    value={bookingId}
-                    onChange={(e) => setBookingId(e.target.value)}
-                    className="w-full bg-[#12141A] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="">No Booking Linked</option>
-                    {serviceBookings.map((b) => (
-                      <option key={b.id} value={b.id}>
-                        {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="No Booking Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
+                      <SelectItem value="NONE">No Booking Linked</SelectItem>
+                      {serviceBookings.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -585,18 +596,19 @@ function NewProjectOrTaskForm() {
                     <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
                     <span>Production Batch Link</span>
                   </label>
-                  <select
-                    value={batchId}
-                    onChange={(e) => setBatchId(e.target.value)}
-                    className="w-full bg-[#12141A] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="">No Batch Linked</option>
-                    {batches.map((batch) => (
-                      <option key={batch.id} value={batch.id}>
-                        {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="No Batch Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
+                      <SelectItem value="NONE">No Batch Linked</SelectItem>
+                      {batches.map((batch) => (
+                        <SelectItem key={batch.id} value={batch.id}>
+                          {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -604,18 +616,19 @@ function NewProjectOrTaskForm() {
                     <Flag className="h-3.5 w-3.5 text-purple-400" />
                     <span>Project Milestone</span>
                   </label>
-                  <select
-                    value={milestoneId}
-                    onChange={(e) => setMilestoneId(e.target.value)}
-                    className="w-full bg-[#12141A] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="">No Milestone Linked</option>
-                    {milestones.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.title} ({m.status})
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="No Milestone Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
+                      <SelectItem value="NONE">No Milestone Linked</SelectItem>
+                      {milestones.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.title} ({m.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="space-y-1.5">
@@ -623,18 +636,19 @@ function NewProjectOrTaskForm() {
                     <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
                     <span>Sprint / Iteration Cycle</span>
                   </label>
-                  <select
-                    value={sprintId}
-                    onChange={(e) => setSprintId(e.target.value)}
-                    className="w-full bg-[#12141A] border border-[#2E3039] rounded-md px-3 py-1.5 text-xs text-slate-200 focus:outline-none focus:border-[#5E6AD2]"
-                  >
-                    <option value="">No Sprint Linked</option>
-                    {sprints.map((s) => (
-                      <option key={s.id} value={s.id}>
-                        {s.name} ({s.status})
-                      </option>
-                    ))}
-                  </select>
+                  <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
+                      <SelectValue placeholder="No Sprint Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
+                      <SelectItem value="NONE">No Sprint Linked</SelectItem>
+                      {sprints.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} ({s.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
             </div>
@@ -770,7 +784,7 @@ function NewProjectOrTaskForm() {
                           </button>
 
                           <div className="w-28 flex items-center justify-end gap-1">
-                            <input
+                            <Input
                               type="number"
                               step="0.5"
                               min="0.5"
@@ -782,7 +796,7 @@ function NewProjectOrTaskForm() {
                                 )
                               }
                               placeholder="Hours"
-                              className="w-16 h-7 px-2 text-right rounded bg-[#171922] border border-[#2E3039] text-slate-200 text-xs focus:outline-none focus:border-[#5E6AD2]"
+                              className="w-16 h-7 px-2 text-right bg-[#171922] border-[#2E3039] text-slate-200 text-xs focus-visible:border-[#5E6AD2]"
                             />
                             <span className="text-[11px] text-slate-400">hrs</span>
                           </div>

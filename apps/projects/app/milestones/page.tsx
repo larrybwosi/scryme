@@ -1,5 +1,6 @@
 "use client";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState } from "react";
 import { useProjects } from "@/lib/hooks/use-projects";
 import { MilestonesTab } from "@/components/project-tabs/MilestonesTab";
@@ -30,15 +31,16 @@ export default function StandaloneMilestonesPage() {
     <div className="flex flex-col w-full pb-16">
       <div className="mb-4">
         <label className="block text-[11px] text-outline font-label-badge uppercase mb-1">Select Project</label>
-        <select
-          value={currentProjectId}
-          onChange={(e) => setSelectedProjectId(e.target.value)}
-          className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm max-w-xs"
-        >
-          {projects.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+        <Select value={currentProjectId} onValueChange={(val) => setSelectedProjectId(val)}>
+          <SelectTrigger className="h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm max-w-xs">
+            <SelectValue placeholder="Select Project" />
+          </SelectTrigger>
+          <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+            {projects.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
       <MilestonesTab projectId={currentProjectId} />
     </div>

@@ -1,5 +1,6 @@
 "use client";
 
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState, useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
@@ -215,18 +216,19 @@ export default function CalendarPage() {
             </h1>
 
             {projects.length > 0 && (
-              <select
-                value={selectedProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="bg-surface-container-high border border-outline-variant/30 text-on-surface text-body-sm rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-primary"
-              >
-                <option value="">All Projects & Workspaces</option>
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id}>
-                    {p.name} ({p.key})
-                  </option>
-                ))}
-              </select>
+              <Select value={selectedProjectId || "ALL"} onValueChange={(val) => setSelectedProjectId(val === "ALL" ? "" : val)}>
+                <SelectTrigger className="h-8 bg-surface-container-high border-outline-variant/30 text-on-surface text-body-sm">
+                  <SelectValue placeholder="All Projects & Workspaces" />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-container-high border-outline-variant text-on-surface">
+                  <SelectItem value="ALL">All Projects & Workspaces</SelectItem>
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name} ({p.key})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             )}
           </div>
 
