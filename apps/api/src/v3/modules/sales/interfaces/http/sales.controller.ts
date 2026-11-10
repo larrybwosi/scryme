@@ -39,13 +39,24 @@ export class SalesController {
     summary: "Get sales analytics",
     operationId: "Sales_GetAnalytics",
   })
+  @ApiQuery({ name: "startDate", required: false, type: String })
+  @ApiQuery({ name: "endDate", required: false, type: String })
   @ApiResponse({
     status: 200,
     type: SalesAnalyticsDto,
     description: "Sales analytics data",
   })
-  async getAnalytics(@v3Context() ctx: V3ApiContext) {
-    return this.salesService.getAnalytics(ctx.organizationId, ctx.memberId);
+  async getAnalytics(
+    @v3Context() ctx: V3ApiContext,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
+  ) {
+    return this.salesService.getAnalytics(
+      ctx.organizationId,
+      ctx.memberId,
+      startDate,
+      endDate,
+    );
   }
 
   @Get("orders")
@@ -55,6 +66,8 @@ export class SalesController {
     operationId: "Sales_GetOrders",
   })
   @ApiQuery({ name: "query", required: false, type: String })
+  @ApiQuery({ name: "startDate", required: false, type: String })
+  @ApiQuery({ name: "endDate", required: false, type: String })
   @ApiResponse({
     status: 200,
     type: [OrderItemDto],
@@ -63,8 +76,15 @@ export class SalesController {
   async getOrders(
     @v3Context() ctx: V3ApiContext,
     @Query("query") query?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ) {
-    return this.salesService.getOrders(ctx.organizationId, query);
+    return this.salesService.getOrders(
+      ctx.organizationId,
+      query,
+      startDate,
+      endDate,
+    );
   }
 
   @Get("orders/:id")

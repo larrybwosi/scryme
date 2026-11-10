@@ -2,17 +2,18 @@ package tech.scryme.app.ui.sales
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.ShoppingBag
-import androidx.compose.material.icons.filled.SwapVert
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,16 +23,26 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.OrderItem
 import tech.scryme.app.domain.model.OrderStatus
+import tech.scryme.app.ui.finance.DateRangePreset
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun OrdersScreen(
     orders: List<OrderItem>,
     searchQuery: String,
+    selectedDatePreset: DateRangePreset,
+    customStartDate: String?,
+    customEndDate: String?,
+    onDatePresetSelect: (DateRangePreset) -> Unit,
+    onCustomDateRangeSelect: (String?, String?) -> Unit,
     onSearchQueryChange: (String) -> Unit,
     onOrderClick: (OrderItem) -> Unit,
     modifier: Modifier = Modifier
 ) {
+    var showCustomDateDialog by remember { mutableStateOf(false) }
+    var customStartInput by remember(customStartDate) { mutableStateOf(customStartDate ?: "") }
+    var customEndInput by remember(customEndDate) { mutableStateOf(customEndDate ?: "") }
+
     val groupedOrders = orders.groupBy { it.groupDate }
 
     Column(
@@ -39,33 +50,62 @@ fun OrdersScreen(
             .fillMaxSize()
             .padding(horizontal = 16.dp)
     ) {
-        // Search & Filter Row
+        // Date Range Presets Row
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 16.dp),
+                .padding(top = 12.dp, bottom = 4.dp)
+                .horizontalScroll(rememberScrollState()),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(
-                onClick = { },
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.SwapVert,
-                    contentDescription = "Sort",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
+            DateRangePreset.values().forEach { preset ->
+                FilterChip(
+                    selected = selectedDatePreset == preset,
+                    onClick = {
+                        if (preset == DateRangePreset.CUSTOM) {
+                            showCustomDateDialog = true
+                        } else {
+                            onDatePresetSelect(preset)
+                        }
+                    },
+                    label = {
+                        Text(
+                            text = if (preset == DateRangePreset.CUSTOM && customStartDate != null && customEndDate != null) {
+                                "$customStartDate - $customEndDate"
+                            } else {
+                                preset.label
+                            },
+                            fontSize = 12.sp
+                        )
+                    },
+                    leadingIcon = if (selectedDatePreset == preset) {
+                        {
+                            Icon(
+                                imageVector = Icons.Default.CalendarMonth,
+                                contentDescription = null,
+                                modifier = Modifier.size(14.dp)
+                            )
+                        }
+                    } else null,
+                    shape = RoundedCornerShape(8.dp)
                 )
             }
+        }
 
+        // Search Row
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(vertical = 12.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically
+        ) {
             OutlinedTextField(
                 value = searchQuery,
                 onValueChange = onSearchQueryChange,
                 modifier = Modifier
-                    .weight(1f)
+                    .fillMaxWidth()
                     .height(50.dp),
                 placeholder = { Text("Search orders...", fontSize = 14.sp) },
                 leadingIcon = {
@@ -84,20 +124,6 @@ fun OrdersScreen(
                     focusedBorderColor = MaterialTheme.colorScheme.primary
                 )
             )
-
-            IconButton(
-                onClick = { },
-                modifier = Modifier
-                    .size(44.dp)
-                    .clip(RoundedCornerShape(8.dp))
-                    .background(MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f))
-            ) {
-                Icon(
-                    imageVector = Icons.Default.FilterList,
-                    contentDescription = "Filter",
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant
-                )
-            }
         }
 
         // Orders List Grouped by Date
@@ -109,7 +135,7 @@ fun OrdersScreen(
                 contentAlignment = Alignment.Center
             ) {
                 Text(
-                    text = "No sales orders found",
+                    text = "No sales orders found for this period",
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     fontSize = 14.sp
                 )
@@ -138,6 +164,61 @@ fun OrdersScreen(
                 }
             }
         }
+    }
+
+    if (showCustomDateDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomDateDialog = false },
+            title = {
+                Text(
+                    text = "Select Custom Date Range",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Specify start and end dates (YYYY-MM-DD):",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = customStartInput,
+                        onValueChange = { customStartInput = it },
+                        label = { Text("Start Date") },
+                        placeholder = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = customEndInput,
+                        onValueChange = { customEndInput = it },
+                        label = { Text("End Date") },
+                        placeholder = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val s = customStartInput.trim().ifBlank { null }
+                        val e = customEndInput.trim().ifBlank { null }
+                        onCustomDateRangeSelect(s, e)
+                        showCustomDateDialog = false
+                    }
+                ) {
+                    Text("Apply Range")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomDateDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

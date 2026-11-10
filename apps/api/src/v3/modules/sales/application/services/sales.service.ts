@@ -15,6 +15,8 @@ export class SalesService {
   async getAnalytics(
     organizationId: string,
     memberId?: string,
+    startDate?: string,
+    endDate?: string,
   ): Promise<SalesAnalyticsDto> {
     let userName = "Admin";
     if (memberId) {
@@ -27,8 +29,42 @@ export class SalesService {
       }
     }
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const dateFilter: any = {};
+    if (startDate || endDate) {
+      if (startDate) {
+        dateFilter.gte = new Date(startDate);
+      }
+      if (endDate) {
+        dateFilter.lte = new Date(endDate);
+      }
+    } else {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+      dateFilter.gte = todayStart;
+    }
+
+    const pettyCashDateFilter: any = {};
+    if (startDate) {
+      pettyCashDateFilter.gte = new Date(startDate);
+    }
+    if (endDate) {
+      pettyCashDateFilter.lte = new Date(endDate);
+    }
+
+    const txnWhere: any = {
+      organizationId,
+      status: { notIn: ["CANCELLED", "FAILED", "DRAFT"] },
+    };
+    if (Object.keys(dateFilter).length > 0) {
+      txnWhere.createdAt = dateFilter;
+    }
+
+    const pettyCashWhere: any = {
+      fund: { organizationId },
+    };
+    if (Object.keys(pettyCashDateFilter).length > 0) {
+      pettyCashWhere.createdAt = pettyCashDateFilter;
+    }
 
     const [
       aggregateResult,
@@ -38,11 +74,7 @@ export class SalesService {
       recentTxns,
     ] = await Promise.all([
       this.prisma.client.transaction.aggregate({
-        where: {
-          organizationId,
-          createdAt: { gte: todayStart },
-          status: { notIn: ["CANCELLED", "FAILED", "DRAFT"] },
-        },
+        where: txnWhere,
         _sum: { finalTotal: true },
       }),
       this.prisma.client.customer.count({
@@ -52,11 +84,14 @@ export class SalesService {
         where: { product: { organizationId, isArchived: false } },
       }),
       this.prisma.client.pettyCashTransaction.aggregate({
-        where: { fund: { organizationId } },
+        where: pettyCashWhere,
         _sum: { amount: true },
       }),
       this.prisma.client.transaction.findMany({
-        where: { organizationId },
+        where: {
+          organizationId,
+          ...(Object.keys(dateFilter).length > 0 ? { createdAt: dateFilter } : {}),
+        },
         orderBy: { createdAt: "desc" },
         take: 5,
         include: {
@@ -130,6 +165,8 @@ export class SalesService {
   async getOrders(
     organizationId: string,
     query?: string,
+    startDate?: string,
+    endDate?: string,
   ): Promise<OrderItemDto[]> {
     const whereCondition: any = {
       organizationId,
@@ -148,6 +185,16 @@ export class SalesService {
           },
         },
       ];
+    }
+
+    if (startDate || endDate) {
+      whereCondition.createdAt = {};
+      if (startDate) {
+        whereCondition.createdAt.gte = new Date(startDate);
+      }
+      if (endDate) {
+        whereCondition.createdAt.lte = new Date(endDate);
+      }
     }
 
     const [transactions, org] = await Promise.all([

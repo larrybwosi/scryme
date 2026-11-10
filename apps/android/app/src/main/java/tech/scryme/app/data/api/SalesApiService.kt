@@ -10,11 +10,16 @@ import tech.scryme.app.data.dto.V3ApiResponse
 
 interface SalesApiService {
     @GET("sales/analytics")
-    suspend fun getAnalytics(): Response<V3ApiResponse<SalesAnalyticsDto>>
+    suspend fun getAnalytics(
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
+    ): Response<V3ApiResponse<SalesAnalyticsDto>>
 
     @GET("sales/orders")
     suspend fun getOrders(
-        @Query("query") query: String? = null
+        @Query("query") query: String? = null,
+        @Query("startDate") startDate: String? = null,
+        @Query("endDate") endDate: String? = null
     ): Response<V3ApiResponse<List<OrderItemDto>>>
 
     @GET("sales/orders/{id}")
