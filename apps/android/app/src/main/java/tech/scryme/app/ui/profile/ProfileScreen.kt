@@ -272,7 +272,7 @@ private fun ProfileHeroCard(
             ) {
                 if (!state.profile.avatarUrl.isNullOrBlank()) {
                     AsyncImage(
-                        model = state.profile.avatarUrl,
+                        model = tech.scryme.app.util.ImageUrlHelper.resolve(state.profile.avatarUrl),
                         contentDescription = "Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop

@@ -281,7 +281,7 @@ private fun OrganizationHeroCard(
                 Box(contentAlignment = Alignment.Center) {
                     if (!orgLogo.isNullOrBlank()) {
                         AsyncImage(
-                            model = orgLogo,
+                            model = tech.scryme.app.util.ImageUrlHelper.resolve(orgLogo),
                             contentDescription = orgName,
                             modifier = Modifier.fillMaxSize(),
                             contentScale = ContentScale.Crop

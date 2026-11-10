@@ -332,7 +332,7 @@ private fun AccountHeaderCard(
             ) {
                 if (!profile.avatarUrl.isNullOrBlank()) {
                     AsyncImage(
-                        model = profile.avatarUrl,
+                        model = tech.scryme.app.util.ImageUrlHelper.resolve(profile.avatarUrl),
                         contentDescription = "Avatar",
                         modifier = Modifier.fillMaxSize(),
                         contentScale = ContentScale.Crop
