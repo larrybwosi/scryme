@@ -1,5 +1,11 @@
 # @scryme/sdk
 
+## 10.2.47
+
+### Patch Changes
+
+- 99206c1: Prepare release v10.2.8
+
 ## 10.2.46
 
 ### Patch Changes
