@@ -11,6 +11,7 @@ sealed class Screen(val route: String, val title: String) {
     }
     object Admin : Screen("admin", "Admin Hub")
     object Sales : Screen("sales", "Sales & Analytics")
+    object Finance : Screen("finance", "Finance & Expenses")
     object Branch : Screen("branch", "Branches")
     object BranchDetails : Screen("branch/{branchId}", "Branch Details") {
         fun createRoute(branchId: String) = "branch/$branchId"

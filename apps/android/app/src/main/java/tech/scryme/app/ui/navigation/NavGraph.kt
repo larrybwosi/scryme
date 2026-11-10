@@ -22,6 +22,8 @@ import tech.scryme.app.ui.customer.CustomerDetailsScreen
 import tech.scryme.app.ui.customer.CustomerDetailsViewModel
 import tech.scryme.app.ui.customer.CustomerScreen
 import tech.scryme.app.ui.customer.CustomerViewModel
+import tech.scryme.app.ui.finance.FinanceScreen
+import tech.scryme.app.ui.finance.FinanceViewModel
 import tech.scryme.app.ui.notifications.NotificationSettingsScreen
 import tech.scryme.app.ui.notifications.NotificationSettingsViewModel
 import tech.scryme.app.ui.organization.OrganizationScreen
@@ -128,6 +130,7 @@ fun AppNavGraph(
             AdminScreen(
                 viewModel = viewModel,
                 onNavigateToSales = { navController.navigate(Screen.Sales.route) },
+                onNavigateToFinance = { navController.navigate(Screen.Finance.route) },
                 onNavigateToBranches = { navController.navigate(Screen.Branch.route) },
                 onNavigateToCustomers = { navController.navigate(Screen.Customer.route) },
                 onNavigateToProduction = { navController.navigate(Screen.Production.route) }
@@ -143,6 +146,13 @@ fun AppNavGraph(
         composable(Screen.Sales.route) {
             val viewModel: SalesViewModel = hiltViewModel()
             SalesScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(Screen.Finance.route) {
+            val viewModel: FinanceViewModel = hiltViewModel()
+            FinanceScreen(
                 viewModel = viewModel,
                 onNavigateBack = { navController.popBackStack() }
             )
