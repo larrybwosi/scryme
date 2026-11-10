@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Link, useNavigate, useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
+import { customerAuthClient } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
 import { Eye, EyeOff, XCircle, ArrowLeft, Loader2, AlertCircle, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,6 +13,10 @@ export function ResetPasswordPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
 
   const token = searchParams?.token;
 
@@ -25,17 +31,32 @@ export function ResetPasswordPage() {
     setError(null);
 
     try {
-      const res = await authClient.resetPassword({
-        newPassword,
-        token,
-      });
+      if (isCustomer) {
+        const res = await (customerAuthClient.resetPassword || customerAuthClient.changePassword)({
+          newPassword,
+          token,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to reset password. Token may have expired.");
-        toast.error("Password reset failed");
+        if (res?.error) {
+          setError(res.error.message || "Failed to reset customer password. Token may have expired.");
+          toast.error("Password reset failed");
+        } else {
+          toast.success("Password reset successfully!");
+          navigate({ to: "/sign-in", search: searchParams });
+        }
       } else {
-        toast.success("Password reset successfully!");
-        navigate({ to: "/sign-in" });
+        const res = await authClient.resetPassword({
+          newPassword,
+          token,
+        });
+
+        if (res?.error) {
+          setError(res.error.message || "Failed to reset password. Token may have expired.");
+          toast.error("Password reset failed");
+        } else {
+          toast.success("Password reset successfully!");
+          navigate({ to: "/sign-in", search: searchParams });
+        }
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -56,7 +77,8 @@ export function ResetPasswordPage() {
         </p>
         <Link
           to="/forgot-password"
-          className="inline-flex items-center justify-center h-10 px-4 bg-[#0F1B2E] text-white text-xs font-semibold rounded-lg hover:bg-[#16283F] transition-all"
+          search={searchParams}
+          className="inline-flex items-center justify-center h-10 px-4 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all"
         >
           Request new link
         </Link>
@@ -68,17 +90,18 @@ export function ResetPasswordPage() {
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <Link
         to="/sign-in"
+        search={searchParams}
         className="inline-flex items-center gap-2 text-xs font-semibold text-[#5B6B7C] hover:text-[#0F1B2E] mb-6 transition-colors"
       >
         <ArrowLeft className="w-3.5 h-3.5" /> Back to sign in
       </Link>
 
       <div className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
           <KeyRound className="w-3 h-3 text-[#A9824C]" /> New Credentials
         </div>
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Set new password
+          {isCustomer ? `Set new ${orgSlug || "Customer"} password` : "Set new password"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
           Enter your new password below to update your security credentials.
@@ -86,7 +109,7 @@ export function ResetPasswordPage() {
       </div>
 
       {error && (
-        <div className="mb-6 p-3.5 rounded-lg bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
@@ -105,7 +128,7 @@ export function ResetPasswordPage() {
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
               placeholder="Minimum 8 characters"
-              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
             <button
               type="button"
@@ -125,7 +148,7 @@ export function ResetPasswordPage() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <>

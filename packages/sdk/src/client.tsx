@@ -1,9 +1,13 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
 import type { AxiosInstance, AxiosResponse, AxiosRequestConfig } from "axios";
-import { HttpClient } from "./http";
+import { HttpClient, HttpClientConfig } from "./http";
 import { createAxiosCompatibleInstance } from "./fetch-adapter";
 import { autoPaging, autoPagingToArray } from "./pagination";
 import { getScrymeV3API } from "./proxy";
+import type { CircuitBreakerOptions } from "./circuit-breaker";
+import type { CacheOptions } from "./cache";
+import type { RetryOptions } from "./retry";
+import type { Logger } from "./logger";
 import type {
   CartControllerGetCartParams,
   CartResponseDto,
@@ -74,7 +78,6 @@ export interface StorageProvider {
   /**
    * Stores an item in storage.
    * @param key Unique storage key.
-   * @param value Stringified value to store.
    */
   setItem(key: string, value: string): void | Promise<void>;
   /**
@@ -124,6 +127,43 @@ export interface ClientSDKConfig {
    * Custom storage provider to persist session tokens. Defaults to localStorage where available.
    */
   storage?: StorageProvider;
+  /**
+   * Request timeout in milliseconds (default: 30000).
+   */
+  timeout?: number;
+  /**
+   * Retry configuration for transient errors and 429 rate limits.
+   */
+  retry?: RetryOptions;
+  /**
+   * Circuit breaker configuration for failing fast during sustained downstream outages.
+   */
+  circuitBreaker?: CircuitBreakerOptions;
+  /**
+   * In-memory TTL/LRU response caching options for GET requests.
+   */
+  cache?: CacheOptions;
+  /**
+   * Custom logger implementation.
+   */
+  logger?: Logger;
+  /**
+   * Custom fetch implementation override.
+   */
+  fetch?: typeof fetch;
+  /**
+   * Allow unencrypted http:// for non-loopback domains (for internal dev only).
+   */
+  allowInsecureHttp?: boolean;
+  /**
+   * Automatic Idempotency-Key header generation configuration.
+   */
+  idempotency?: {
+    autoGenerate?: boolean;
+  };
+  onRequest?: HttpClientConfig["onRequest"];
+  onResponse?: HttpClientConfig["onResponse"];
+  onError?: HttpClientConfig["onError"];
 }
 
 /**
@@ -204,6 +244,10 @@ export class ScrymeClientSDK<
    * Underlying Axios instance initialized with the customized baseUrl and automatic interceptors.
    */
   public axiosInstance: AxiosInstance;
+  /**
+   * Underlying universal HttpClient instance.
+   */
+  public httpClient: HttpClient;
   /**
    * Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug.
    */
@@ -725,14 +769,19 @@ export class ScrymeClientSDK<
 
     const clientHttp = new HttpClient({
       baseUrl: finalBaseURL,
-      timeout: (config as any).timeout,
-      retry: (config as any).retry,
-      logger: (config as any).logger,
-      fetch: (config as any).fetch,
-      onRequest: (config as any).onRequest,
-      onResponse: (config as any).onResponse,
-      onError: (config as any).onError,
+      timeout: config.timeout,
+      retry: config.retry,
+      circuitBreaker: config.circuitBreaker,
+      cache: config.cache,
+      logger: config.logger,
+      fetch: config.fetch,
+      allowInsecureHttp: config.allowInsecureHttp,
+      idempotency: config.idempotency,
+      onRequest: config.onRequest,
+      onResponse: config.onResponse,
+      onError: config.onError,
     });
+    this.httpClient = clientHttp;
     this.axiosInstance = createAxiosCompatibleInstance(clientHttp) as any;
 
     // Determine storage provider

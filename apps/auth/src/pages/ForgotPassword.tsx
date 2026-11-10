@@ -1,6 +1,9 @@
 import React, { useState } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { requestPasswordReset } from "@/lib/auth-client";
+import { customerAuthClient } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
+import { OrgSelector } from "@/components/OrgSelector";
 import { ArrowLeft, XCircle, CheckCircle2, Loader2, KeyRound } from "lucide-react";
 import { toast } from "sonner";
 
@@ -11,23 +14,46 @@ export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
+
+  if (tenantContext.needsOrgSelection) {
+    return <OrgSelector />;
+  }
+
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
     try {
-      const res = await requestPasswordReset(
-        email,
-        `${window.location.origin}/reset-password`
-      );
+      if (isCustomer) {
+        const res = await (customerAuthClient.requestPasswordReset || customerAuthClient.forgetPassword)({
+          email,
+          redirectTo: `${window.location.origin}/reset-password`,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to send reset email.");
-        toast.error("Request failed");
+        if (res?.error) {
+          setError(res.error.message || "Failed to send reset email.");
+          toast.error("Request failed");
+        } else {
+          setSubmitted(true);
+          toast.success("Password reset instructions sent!");
+        }
       } else {
-        setSubmitted(true);
-        toast.success("Password reset instructions sent!");
+        const res = await requestPasswordReset(
+          email,
+          `${window.location.origin}/reset-password`
+        );
+
+        if (res?.error) {
+          setError(res.error.message || "Failed to send reset email.");
+          toast.error("Request failed");
+        } else {
+          setSubmitted(true);
+          toast.success("Password reset instructions sent!");
+        }
       }
     } catch (err: any) {
       setError("An unexpected error occurred sending instructions.");
@@ -48,26 +74,28 @@ export function ForgotPasswordPage() {
       </Link>
 
       <div className="mb-6">
-        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
+        <div className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none mb-3 text-[10px] font-mono font-semibold text-[#8A6A3E] uppercase tracking-wider">
           <KeyRound className="w-3 h-3 text-[#A9824C]" /> Account Recovery
         </div>
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Reset password
+          {isCustomer ? `Reset ${orgSlug || "Customer"} password` : "Reset password"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
-          Enter your work email address and we'll send you instructions to reset your password.
+          {isCustomer
+            ? "Enter your customer email address and we'll send you instructions to reset your password."
+            : "Enter your work email address and we'll send you instructions to reset your password."}
         </p>
       </div>
 
       {error && (
-        <div className="mb-6 p-3.5 rounded-lg bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {submitted ? (
-        <div className="p-4 rounded-lg bg-[#4FA871]/10 border border-[#4FA871]/20 text-[#0F1B2E] space-y-3 animate-in fade-in duration-200">
+        <div className="p-4 rounded-none bg-[#4FA871]/10 border border-[#4FA871]/20 text-[#0F1B2E] space-y-3 animate-in fade-in duration-200">
           <div className="flex items-center gap-2 text-[#4FA871] font-semibold text-sm">
             <CheckCircle2 className="h-4 w-4" />
             <span>Instructions sent</span>
@@ -80,22 +108,22 @@ export function ForgotPasswordPage() {
         <form onSubmit={handleResetRequest} className="space-y-4">
           <div>
             <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-              Work Email
+              {isCustomer ? "Customer Email" : "Work Email"}
             </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="name@company.com"
-              className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+              placeholder="name@example.com"
+              className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
+            className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 mt-2 disabled:opacity-50 cursor-pointer"
           >
             {loading ? (
               <>

@@ -1,14 +1,19 @@
 import React, { useState } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { authClient, signInWithPasskey, DEFAULT_WEB_URL } from "@/lib/auth-client";
+import { customerAuthClient, signInCustomerWithPasskey } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
+import { OrgSelector } from "@/components/OrgSelector";
 import {
+  KeyRound,
   Eye,
   EyeOff,
   XCircle,
   Loader2,
   ArrowRight,
   Lock,
-  KeyRound,
+  ShieldCheck,
+  AlertTriangle,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -50,29 +55,63 @@ export function SignUpPage() {
   const [passkeyLoading, setPasskeyLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const callbackUrl =
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+  const orgSlug = tenantContext.orgSlug;
+
+  const rawCallbackUrl =
     searchParams?.callbackUrl ||
     searchParams?.redirect_uri ||
-    DEFAULT_WEB_URL;
+    searchParams?.returnTo ||
+    (isCustomer ? "" : DEFAULT_WEB_URL);
+
+  const callbackUrl = rawCallbackUrl;
+  const isMissingCustomerRedirect = isCustomer && !callbackUrl;
+
+  if (tenantContext.needsOrgSelection) {
+    return <OrgSelector />;
+  }
 
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer registration.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
-      const res = await authClient.signUp.email({
-        email,
-        password,
-        name,
-      });
+      if (isCustomer) {
+        const res = await customerAuthClient.signUp.email({
+          email,
+          password,
+          name,
+          orgSlug,
+        });
 
-      if (res?.error) {
-        setError(res.error.message || "Failed to create account. Please try again.");
-        toast.error("Sign up failed");
+        if (res?.error) {
+          setError(res.error.message || "Failed to create customer account. Please try again.");
+          toast.error("Sign up failed");
+        } else {
+          toast.success("Account created successfully!");
+          window.location.href = callbackUrl;
+        }
       } else {
-        toast.success("Account created successfully!");
-        window.location.href = callbackUrl;
+        const res = await authClient.signUp.email({
+          email,
+          password,
+          name,
+        });
+
+        if (res?.error) {
+          setError(res.error.message || "Failed to create account. Please try again.");
+          toast.error("Sign up failed");
+        } else {
+          toast.success("Account created successfully!");
+          window.location.href = callbackUrl;
+        }
       }
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
@@ -82,13 +121,25 @@ export function SignUpPage() {
   };
 
   const handleSocialSignIn = async (provider: "github" | "google") => {
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer authentication.");
+      return;
+    }
+
     setSocialLoading(provider);
     setError(null);
     try {
-      await authClient.signIn.social({
-        provider,
-        callbackURL: callbackUrl,
-      });
+      if (isCustomer) {
+        await customerAuthClient.signIn.social({
+          provider,
+          callbackURL: callbackUrl,
+        });
+      } else {
+        await authClient.signIn.social({
+          provider,
+          callbackURL: callbackUrl,
+        });
+      }
     } catch (err: any) {
       toast.error(`Failed to initiate ${provider} sign-up`);
       setSocialLoading(null);
@@ -96,17 +147,34 @@ export function SignUpPage() {
   };
 
   const handlePasskeySignIn = async () => {
+    if (isMissingCustomerRedirect) {
+      setError("A redirect URL (callbackUrl or redirect_uri) is required for customer authentication.");
+      return;
+    }
+
     setPasskeyLoading(true);
     setError(null);
     try {
-      const res = await signInWithPasskey({
-        callbackURL: callbackUrl,
-      });
-      if (res?.error) {
-        setError(res.error.message || "Passkey authentication failed.");
-      } else if (res?.data) {
-        toast.success("Signed in with Passkey!");
-        window.location.href = callbackUrl;
+      if (isCustomer) {
+        const res = await signInCustomerWithPasskey({
+          callbackURL: callbackUrl,
+        });
+        if (res?.error) {
+          setError(res.error.message || "Customer Passkey authentication failed.");
+        } else if (res?.data) {
+          toast.success("Signed in with Passkey!");
+          window.location.href = callbackUrl;
+        }
+      } else {
+        const res = await signInWithPasskey({
+          callbackURL: callbackUrl,
+        });
+        if (res?.error) {
+          setError(res.error.message || "Passkey authentication failed.");
+        } else if (res?.data) {
+          toast.success("Signed in with Passkey!");
+          window.location.href = callbackUrl;
+        }
       }
     } catch (err: any) {
       if (err?.name === "NotAllowedError" || err?.message?.includes("cancelled")) {
@@ -122,7 +190,7 @@ export function SignUpPage() {
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-center justify-between mb-8 pb-4 border-b border-[#E7E2D9]">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
+          <div className="w-9 h-9 rounded-none bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
             S
           </div>
           <div>
@@ -130,39 +198,48 @@ export function SignUpPage() {
               Scryme
             </span>
             <span className="text-[10px] font-mono text-[#A9824C] uppercase tracking-wider block mt-0.5">
-              Registration Portal
+              {isCustomer ? `${orgSlug?.toUpperCase() || "CUSTOMER"} REGISTRATION` : "Registration Portal"}
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full text-[10px] font-mono text-[#8A6A3E]">
-          <Lock className="w-3 h-3 text-[#A9824C]" />
-          <span>Verified Account</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none text-[10px] font-mono text-[#8A6A3E]">
+          {isCustomer ? <ShieldCheck className="w-3 h-3 text-[#A9824C]" /> : <Lock className="w-3 h-3 text-[#A9824C]" />}
+          <span>{isCustomer ? "Customer Account" : "Verified Account"}</span>
         </div>
       </div>
 
       <div className="mb-6">
         <h1 className="font-serif text-[1.9rem] font-medium text-[#0F1B2E] leading-tight tracking-tight">
-          Create your account
+          {isCustomer ? `Create ${orgSlug || "Customer"} account` : "Create your account"}
         </h1>
         <p className="text-[#5B6B7C] text-sm mt-1.5 leading-relaxed">
-          Get started with Scryme unified authentication and enterprise tools.
+          {isCustomer
+            ? "Create an account to manage your orders, deliveries, and service bookings."
+            : "Get started with Scryme unified authentication and enterprise tools."}
         </p>
       </div>
 
+      {isMissingCustomerRedirect && (
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium">
+          <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+          <span>Customer registration requires a valid callbackUrl or redirect_uri parameter to return to your storefront.</span>
+        </div>
+      )}
+
       {error && (
-        <div className="mb-6 p-3.5 rounded-lg bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
+        <div className="mb-6 p-3.5 rounded-none bg-[#B3352A]/10 border border-[#B3352A]/20 flex items-start gap-2.5 text-[#B3352A] text-xs font-medium animate-in fade-in duration-150">
           <XCircle className="h-4 w-4 shrink-0 mt-0.5" />
           <span>{error}</span>
         </div>
       )}
 
       {/* Social Registration */}
-      <div className="grid grid-cols-2 gap-3 mb-4">
+      <div className={`grid ${isCustomer ? "grid-cols-1" : "grid-cols-2"} gap-3 mb-4`}>
         <button
           type="button"
           onClick={() => handleSocialSignIn("google")}
-          disabled={socialLoading !== null || loading}
-          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          disabled={socialLoading !== null || loading || isMissingCustomerRedirect}
+          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
         >
           {socialLoading === "google" ? (
             <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
@@ -172,27 +249,29 @@ export function SignUpPage() {
           <span>Google</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => handleSocialSignIn("github")}
-          disabled={socialLoading !== null || loading}
-          className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-lg transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
-        >
-          {socialLoading === "github" ? (
-            <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
-          ) : (
-            <GithubIcon />
-          )}
-          <span>GitHub</span>
-        </button>
+        {!isCustomer && (
+          <button
+            type="button"
+            onClick={() => handleSocialSignIn("github")}
+            disabled={socialLoading !== null || loading || isMissingCustomerRedirect}
+            className="h-10 border border-[#E7E2D9] hover:border-[#0F1B2E]/30 bg-white hover:bg-[#FBFAF7] text-[#0F1B2E] text-xs font-semibold rounded-none transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            {socialLoading === "github" ? (
+              <Loader2 className="h-4 w-4 animate-spin text-[#A9824C]" />
+            ) : (
+              <GithubIcon />
+            )}
+            <span>GitHub</span>
+          </button>
+        )}
       </div>
 
       {/* Existing Passkey Shortcut */}
       <button
         type="button"
         onClick={handlePasskeySignIn}
-        disabled={passkeyLoading || loading}
-        className="w-full h-10 border border-[#E7E2D9] hover:border-[#A9824C]/50 bg-white hover:bg-[#F2EFE9] text-[#5B6B7C] hover:text-[#0F1B2E] text-xs font-medium rounded-lg transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer shadow-sm"
+        disabled={passkeyLoading || loading || isMissingCustomerRedirect}
+        className="w-full h-10 border border-[#E7E2D9] hover:border-[#A9824C]/50 bg-white hover:bg-[#F2EFE9] text-[#5B6B7C] hover:text-[#0F1B2E] text-xs font-medium rounded-none transition-all flex items-center justify-center gap-2 mb-4 cursor-pointer shadow-sm disabled:opacity-60"
       >
         {passkeyLoading ? (
           <Loader2 className="h-3.5 w-3.5 animate-spin text-[#A9824C]" />
@@ -205,7 +284,7 @@ export function SignUpPage() {
       <div className="relative my-6 flex items-center gap-3">
         <div className="flex-1 h-px bg-[#E7E2D9]" />
         <span className="text-[10px] font-mono text-[#9AA6B2] uppercase tracking-wider bg-[#FBFAF7] px-1">
-          or sign up with email
+          {isCustomer ? "or sign up with customer email" : "or sign up with email"}
         </span>
         <div className="flex-1 h-px bg-[#E7E2D9]" />
       </div>
@@ -221,21 +300,21 @@ export function SignUpPage() {
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="John Doe"
-            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
           />
         </div>
 
         <div>
           <label className="block text-xs font-semibold uppercase tracking-wider text-[#33404D] mb-1.5">
-            Work Email
+            {isCustomer ? "Customer Email" : "Work Email"}
           </label>
           <input
             type="email"
             required
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="name@company.com"
-            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+            placeholder="name@example.com"
+            className="w-full h-10 px-3.5 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
           />
         </div>
 
@@ -251,7 +330,7 @@ export function SignUpPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimum 8 characters"
-              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-lg text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-2 focus:ring-[#A9824C]/25 focus:border-[#A9824C] transition-all"
+              className="w-full h-10 pl-3.5 pr-10 bg-white border border-[#E7E2D9] rounded-none text-sm text-[#0F1B2E] placeholder-[#9AA6B2] focus:outline-none focus:ring-1 focus:ring-[#A9824C] focus:border-[#A9824C] transition-all"
             />
             <button
               type="button"
@@ -270,8 +349,8 @@ export function SignUpPage() {
 
         <button
           type="submit"
-          disabled={loading}
-          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-lg transition-all duration-150 shadow-sm hover:shadow-md flex items-center justify-center gap-2 group mt-2 cursor-pointer disabled:opacity-50"
+          disabled={loading || isMissingCustomerRedirect}
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold rounded-none transition-all duration-150 shadow-sm flex items-center justify-center gap-2 group mt-2 cursor-pointer disabled:opacity-50"
         >
           {loading ? (
             <>

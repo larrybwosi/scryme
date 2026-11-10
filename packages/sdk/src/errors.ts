@@ -19,6 +19,25 @@ export class ScrymeError extends Error {
   }
 }
 
+export class SecurityError extends ScrymeError {
+  constructor(message: string) {
+    super(message);
+    this.name = "SecurityError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+export class CircuitBreakerError extends ScrymeError {
+  public readonly cooldownMs: number;
+
+  constructor(message: string, cooldownMs: number) {
+    super(message);
+    this.name = "CircuitBreakerError";
+    this.cooldownMs = cooldownMs;
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
 export class ScrymeApiError extends ScrymeError {
   public readonly status: number;
   public readonly code?: string;

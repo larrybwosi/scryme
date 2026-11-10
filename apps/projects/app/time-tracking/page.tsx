@@ -46,6 +46,11 @@ function TimeTrackingContent() {
 
   // Active stopwatch state via hook
   const { state: timerState, startTimer, pauseTimer, resetTimer } = useTimerStore();
+  const [isMounted, setIsMounted] = useState(false);
+
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   // Manual Entry Form State
   const [isManualModalOpen, setIsManualModalOpen] = useState(false);
@@ -278,7 +283,7 @@ function TimeTrackingContent() {
                   Live Work Session
                 </span>
                 <div className="font-label-code text-[42px] tracking-tight font-semibold text-primary">
-                  {timerState.activeTaskId === activeTaskId ? formatStopwatch(timerState.elapsedSeconds) : "00:00:00"}
+                  {(isMounted && timerState.activeTaskId === activeTaskId) ? formatStopwatch(timerState.elapsedSeconds) : "00:00:00"}
                 </div>
                 <div className="text-body-sm text-on-surface font-medium truncate max-w-md">
                   {activeTask?.title || "No task selected"}

@@ -165,7 +165,7 @@ export function ConsentPage() {
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300">
       <div className="flex items-center justify-between mb-6 pb-4 border-b border-[#E7E2D9]">
         <div className="flex items-center gap-2.5">
-          <div className="w-9 h-9 rounded-xl bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
+          <div className="w-9 h-9 rounded-none bg-[#0F1B2E] flex items-center justify-center text-white font-bold text-[#DDC49B] shadow-sm">
             S
           </div>
           <div>
@@ -177,7 +177,7 @@ export function ConsentPage() {
             </span>
           </div>
         </div>
-        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-full text-[10px] font-mono text-[#8A6A3E]">
+        <div className="flex items-center gap-1.5 px-2.5 py-1 bg-[#A9824C]/10 border border-[#A9824C]/20 rounded-none text-[10px] font-mono text-[#8A6A3E]">
           <Shield className="w-3 h-3 text-[#A9824C]" />
           <span>Delegated Access</span>
         </div>
@@ -196,7 +196,7 @@ export function ConsentPage() {
       </div>
 
       {/* Target Organization Selector */}
-      <div className="mb-6 bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-xl p-4 space-y-2">
+      <div className="mb-6 bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-none p-4 space-y-2">
         <div className="flex items-center justify-between">
           <label className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5B6B7C] flex items-center gap-1.5">
             <Building2 className="w-3.5 h-3.5 text-[#0F1B2E]" /> Target Workspace / Organization
@@ -208,7 +208,7 @@ export function ConsentPage() {
           <select
             value={selectedOrgId}
             onChange={(e) => setSelectedOrgId(e.target.value)}
-            className="w-full h-10 px-3 bg-white border border-[#E7E2D9] text-[#0F1B2E] font-medium text-xs rounded-lg focus:outline-none focus:border-[#0F1B2E]"
+            className="w-full h-10 px-3 bg-white border border-[#E7E2D9] text-[#0F1B2E] font-medium text-xs rounded-none focus:outline-none focus:border-[#0F1B2E]"
           >
             {organizations.map((org) => (
               <option key={org.id} value={org.id}>
@@ -217,7 +217,7 @@ export function ConsentPage() {
             ))}
           </select>
         ) : (
-          <div className="text-xs text-[#0F1B2E] font-medium p-2 bg-white rounded border border-[#E7E2D9]">
+          <div className="text-xs text-[#0F1B2E] font-medium p-2 bg-white rounded-none border border-[#E7E2D9]">
             {(session?.session as any)?.activeOrganizationId || (session?.user as any)?.activeOrganizationId ? (
               <span className="font-mono text-[11px]">
                 Current Active Organization ID: {(session?.session as any)?.activeOrganizationId || (session?.user as any)?.activeOrganizationId}
@@ -230,7 +230,7 @@ export function ConsentPage() {
       </div>
 
       {/* Scope Toggles */}
-      <div className="bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-xl p-4 mb-6 space-y-3">
+      <div className="bg-[#E7E2D9]/30 border border-[#E7E2D9] rounded-none p-4 mb-6 space-y-3">
         <p className="text-[10px] font-mono font-semibold uppercase tracking-wider text-[#5B6B7C] flex items-center gap-1.5">
           <Key className="w-3.5 h-3.5 text-[#0F1B2E]" /> Requested Permissions
         </p>
@@ -246,14 +246,14 @@ export function ConsentPage() {
               <div
                 key={scope}
                 onClick={() => toggleScope(scope)}
-                className={`p-3 rounded-lg border transition-all cursor-pointer flex items-start gap-3 ${
+                className={`p-3 rounded-none border transition-all cursor-pointer flex items-start gap-3 ${
                   isChecked
                     ? "bg-white border-[#0F1B2E]/30 shadow-xs"
                     : "bg-white/50 border-transparent opacity-60 hover:opacity-100"
                 }`}
               >
                 <div
-                  className={`mt-0.5 h-4 w-4 rounded border flex items-center justify-center shrink-0 transition-colors ${
+                  className={`mt-0.5 h-4 w-4 rounded-none border flex items-center justify-center shrink-0 transition-colors ${
                     isChecked
                       ? "bg-[#0F1B2E] border-[#0F1B2E] text-white"
                       : "border-[#9AA6B2] bg-white"
@@ -280,7 +280,7 @@ export function ConsentPage() {
         <button
           onClick={() => handleConsentResponse(true)}
           disabled={loading || selectedScopes.length === 0}
-          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-lg transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          className="w-full h-11 bg-[#0F1B2E] hover:bg-[#16283F] text-white font-semibold text-xs rounded-none transition-all shadow-sm flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {loading ? (
             <>
@@ -298,7 +298,7 @@ export function ConsentPage() {
         <button
           onClick={() => handleConsentResponse(false)}
           disabled={loading}
-          className="w-full h-10 border border-[#E7E2D9] bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] font-semibold text-xs rounded-lg transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
+          className="w-full h-10 border border-[#E7E2D9] bg-white hover:bg-[#F2EFE9] text-[#0F1B2E] font-semibold text-xs rounded-none transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           <X className="h-4 w-4 text-[#B3352A]" />
           Deny Request

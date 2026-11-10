@@ -1,34 +1,16 @@
 import { createAuthClient } from "better-auth/react";
 import { passkeyClient } from "@better-auth/passkey/client";
 import { env } from "@repo/env";
+import { getResolvedAuthUrl } from "./urls";
 
-function getValidAuthUrl(
-  urls: (string | undefined)[],
-  defaultUrl: string,
-): string {
-  for (const url of urls) {
-    if (
-      url &&
-      typeof url === "string" &&
-      !url.includes("PLACEHOLDER") &&
-      (url.startsWith("http://") || url.startsWith("https://"))
-    ) {
-      return url;
-    }
-  }
-  return defaultUrl;
-}
-
-const isDev = env.NODE_ENV === "development";
-const defaultCentralAuthUrl = isDev
-  ? "http://localhost:4444"
-  : "https://auth.scryme.tech";
+export const getAuthUrl = () =>
+  getResolvedAuthUrl(
+    env.NEXT_PUBLIC_AUTH_URL || (typeof process !== "undefined" ? process.env.NEXT_PUBLIC_AUTH_URL : undefined),
+    env.NODE_ENV
+  );
 
 export const authClient: any = createAuthClient({
-  baseURL: getValidAuthUrl(
-    [env.NEXT_PUBLIC_AUTH_URL],
-    defaultCentralAuthUrl,
-  ),
+  baseURL: getAuthUrl(),
   fetchOptions: {
     credentials: "include",
   },

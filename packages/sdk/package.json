@@ -1,6 +1,7 @@
 {
   "name": "@scryme/sdk",
-  "version": "10.2.45",
+  "version": "10.2.46",
+  "sideEffects": false,
   "publishConfig": {
     "access": "public"
   },
@@ -48,7 +49,7 @@
   "scripts": {
     "generate": "echo 'SDK already generated'",
     "generate:ts": "orval",
-    "generate:rust": "openapi-generator-cli generate --skip-validate-spec -i ./openapi.json -g rust -o ./rust --additional-properties=packageName=scryme-sdk,packageVersion=10.2.45 --global-property apiDocs=false,modelDocs=false",
+    "generate:rust": "openapi-generator-cli generate --skip-validate-spec -i ./openapi.json -g rust -o ./rust --additional-properties=packageName=scryme-sdk,packageVersion=10.2.46 --global-property apiDocs=false,modelDocs=false",
     "build": "tsup",
     "dev": "tsup --watch",
     "test": "vitest run",
