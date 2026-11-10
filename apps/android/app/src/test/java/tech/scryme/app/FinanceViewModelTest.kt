@@ -105,10 +105,75 @@ class FinanceViewModelTest {
         val state = viewModel.uiState.value
         assertTrue(state.isAuthorized)
         assertEquals(FinanceTab.EXPENSES, state.selectedTab)
+        assertEquals(DateRangePreset.THIS_MONTH, state.selectedDatePreset)
         assertNotNull(state.expenseSummary)
         assertEquals(1, state.expenses.size)
         assertEquals(1, state.pettyCashFunds.size)
         assertEquals(1, state.utilityAccounts.size)
+        coVerify { financeRepository.getExpenses(any(), any(), any(), any()) }
+    }
+
+    @Test
+    fun selectDatePreset_switchesPresetsCorrectly() = runTest {
+        viewModel = FinanceViewModel(financeRepository, authRepository)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.selectDatePreset(DateRangePreset.TODAY)
+        testScheduler.advanceUntilIdle()
+        assertEquals(DateRangePreset.TODAY, viewModel.uiState.value.selectedDatePreset)
+
+        viewModel.selectDatePreset(DateRangePreset.THIS_WEEK)
+        testScheduler.advanceUntilIdle()
+        assertEquals(DateRangePreset.THIS_WEEK, viewModel.uiState.value.selectedDatePreset)
+
+        viewModel.selectDatePreset(DateRangePreset.LAST_30_DAYS)
+        testScheduler.advanceUntilIdle()
+        assertEquals(DateRangePreset.LAST_30_DAYS, viewModel.uiState.value.selectedDatePreset)
+
+        viewModel.selectDatePreset(DateRangePreset.ALL)
+        testScheduler.advanceUntilIdle()
+        assertEquals(DateRangePreset.ALL, viewModel.uiState.value.selectedDatePreset)
+    }
+
+    @Test
+    fun setCustomDateRange_setsCustomRangeAndReloads() = runTest {
+        viewModel = FinanceViewModel(financeRepository, authRepository)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.setCustomDateRange("2025-01-01", "2025-01-31")
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertEquals(DateRangePreset.CUSTOM, state.selectedDatePreset)
+        assertEquals("2025-01-01", state.customStartDate)
+        assertEquals("2025-01-31", state.customEndDate)
+        coVerify { financeRepository.getExpenses(any(), any(), "2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z") }
+    }
+
+    @Test
+    fun setSearchQuery_updatesSearchQueryInState() = runTest {
+        viewModel = FinanceViewModel(financeRepository, authRepository)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.setSearchQuery("Internet")
+        assertEquals("Internet", viewModel.uiState.value.searchQuery)
+    }
+
+    @Test
+    fun rejectExpense_withReason_updatesStateAndReloads() = runTest {
+        val rejectedExpense = sampleExpense.copy(status = ExpenseStatusDomain.REJECTED)
+        coEvery { financeRepository.rejectExpense("exp_1", "Out of budget") } returns Result.success(rejectedExpense)
+
+        viewModel = FinanceViewModel(financeRepository, authRepository)
+        testScheduler.advanceUntilIdle()
+
+        viewModel.rejectExpense("exp_1", "Out of budget")
+        testScheduler.advanceUntilIdle()
+
+        val state = viewModel.uiState.value
+        assertNotNull(state.actionMessage)
+        assertTrue(state.actionMessage!!.contains("rejected"))
+        coVerify { financeRepository.rejectExpense("exp_1", "Out of budget") }
     }
 
     @Test

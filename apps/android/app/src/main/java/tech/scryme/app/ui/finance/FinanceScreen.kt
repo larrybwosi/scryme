@@ -118,6 +118,7 @@ fun FinanceScreen(
                     FinanceTab.EXPENSES -> ExpensesTabContent(
                         uiState = uiState,
                         onDatePresetSelected = viewModel::selectDatePreset,
+                        onCustomDateRangeSelected = viewModel::setCustomDateRange,
                         onStatusSelected = viewModel::setStatusFilter,
                         onSearchChanged = viewModel::setSearchQuery,
                         onExpenseClick = viewModel::selectExpenseForDetails,
@@ -280,20 +281,28 @@ private fun FinanceTab.icon(): ImageVector = when (this) {
 private fun ExpensesTabContent(
     uiState: FinanceUiState,
     onDatePresetSelected: (DateRangePreset) -> Unit,
+    onCustomDateRangeSelected: (String?, String?) -> Unit,
     onStatusSelected: (String?) -> Unit,
     onSearchChanged: (String) -> Unit,
     onExpenseClick: (ExpenseItem) -> Unit,
     onRefresh: () -> Unit
 ) {
-    val filteredExpenses = remember(uiState.expenses, uiState.searchQuery) {
-        if (uiState.searchQuery.isBlank()) {
+    var showCustomDateDialog by remember { mutableStateOf(false) }
+    var customStartInput by remember(uiState.customStartDate) { mutableStateOf(uiState.customStartDate ?: "") }
+    var customEndInput by remember(uiState.customEndDate) { mutableStateOf(uiState.customEndDate ?: "") }
+    val query = uiState.searchQuery.trim()
+    val filteredExpenses = remember(uiState.expenses, query) {
+        if (query.isBlank()) {
             uiState.expenses
         } else {
             uiState.expenses.filter {
-                it.description.contains(uiState.searchQuery, ignoreCase = true) ||
-                it.expenseNumber.contains(uiState.searchQuery, ignoreCase = true) ||
-                it.categoryName.contains(uiState.searchQuery, ignoreCase = true) ||
-                (it.requesterName != null && it.requesterName.contains(uiState.searchQuery, ignoreCase = true))
+                it.description.contains(query, ignoreCase = true) ||
+                it.expenseNumber.contains(query, ignoreCase = true) ||
+                it.categoryName.contains(query, ignoreCase = true) ||
+                (it.requesterName != null && it.requesterName.contains(query, ignoreCase = true)) ||
+                (it.notes != null && it.notes.contains(query, ignoreCase = true)) ||
+                (it.locationName != null && it.locationName.contains(query, ignoreCase = true)) ||
+                it.amount.contains(query, ignoreCase = true)
             }
         }
     }
@@ -314,8 +323,23 @@ private fun ExpensesTabContent(
                 DateRangePreset.values().forEach { preset ->
                     FilterChip(
                         selected = uiState.selectedDatePreset == preset,
-                        onClick = { onDatePresetSelected(preset) },
-                        label = { Text(preset.label, fontSize = 12.sp) },
+                        onClick = {
+                            if (preset == DateRangePreset.CUSTOM) {
+                                showCustomDateDialog = true
+                            } else {
+                                onDatePresetSelected(preset)
+                            }
+                        },
+                        label = {
+                            Text(
+                                text = if (preset == DateRangePreset.CUSTOM && uiState.customStartDate != null && uiState.customEndDate != null) {
+                                    "${uiState.customStartDate} - ${uiState.customEndDate}"
+                                } else {
+                                    preset.label
+                                },
+                                fontSize = 12.sp
+                            )
+                        },
                         shape = RoundedCornerShape(8.dp)
                     )
                 }
@@ -420,17 +444,47 @@ private fun ExpensesTabContent(
             OutlinedTextField(
                 value = uiState.searchQuery,
                 onValueChange = onSearchChanged,
-                placeholder = { Text("Search expenses by description, number or category…", fontSize = 13.sp) },
-                leadingIcon = { Icon(Icons.Default.Search, contentDescription = null, modifier = Modifier.size(18.dp)) },
+                placeholder = {
+                    Text(
+                        text = "Search expenses by description, number, category, notes…",
+                        fontSize = 13.sp,
+                        maxLines = 1
+                    )
+                },
+                leadingIcon = {
+                    Icon(
+                        imageVector = Icons.Default.Search,
+                        contentDescription = "Search",
+                        modifier = Modifier.size(18.dp),
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                },
                 trailingIcon = {
                     if (uiState.searchQuery.isNotBlank()) {
-                        IconButton(onClick = { onSearchChanged("") }) {
-                            Icon(Icons.Default.Clear, contentDescription = null, modifier = Modifier.size(16.dp))
+                        IconButton(
+                            onClick = { onSearchChanged("") },
+                            modifier = Modifier.size(32.dp)
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Clear,
+                                contentDescription = "Clear search",
+                                modifier = Modifier.size(16.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
                         }
                     }
                 },
-                shape = RoundedCornerShape(8.dp),
-                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(10.dp),
+                colors = OutlinedTextFieldDefaults.colors(
+                    focusedContainerColor = MaterialTheme.colorScheme.surface,
+                    unfocusedContainerColor = MaterialTheme.colorScheme.surface,
+                    focusedBorderColor = MaterialTheme.colorScheme.primary,
+                    unfocusedBorderColor = MaterialTheme.colorScheme.outlineVariant
+                ),
+                textStyle = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 44.dp, max = 50.dp),
                 singleLine = true
             )
         }
@@ -472,6 +526,61 @@ private fun ExpensesTabContent(
                 ExpenseCardItem(expense = expense, onClick = { onExpenseClick(expense) })
             }
         }
+    }
+
+    if (showCustomDateDialog) {
+        AlertDialog(
+            onDismissRequest = { showCustomDateDialog = false },
+            title = {
+                Text(
+                    text = "Select Custom Date Range",
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold
+                )
+            },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(10.dp)) {
+                    Text(
+                        text = "Specify start and end dates (YYYY-MM-DD):",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                    OutlinedTextField(
+                        value = customStartInput,
+                        onValueChange = { customStartInput = it },
+                        label = { Text("Start Date") },
+                        placeholder = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    OutlinedTextField(
+                        value = customEndInput,
+                        onValueChange = { customEndInput = it },
+                        label = { Text("End Date") },
+                        placeholder = { Text("YYYY-MM-DD") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        val s = customStartInput.trim().ifBlank { null }
+                        val e = customEndInput.trim().ifBlank { null }
+                        onCustomDateRangeSelected(s, e)
+                        showCustomDateDialog = false
+                    }
+                ) {
+                    Text("Apply Range")
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showCustomDateDialog = false }) {
+                    Text("Cancel")
+                }
+            }
+        )
     }
 }
 

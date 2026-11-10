@@ -27,9 +27,12 @@ enum class FinanceTab(val title: String) {
 }
 
 enum class DateRangePreset(val label: String) {
-    ALL("All Time"),
+    TODAY("Today"),
+    THIS_WEEK("This Week"),
     THIS_MONTH("This Month"),
-    LAST_30_DAYS("Last 30 Days")
+    LAST_30_DAYS("Last 30 Days"),
+    ALL("All Time"),
+    CUSTOM("Custom Range")
 }
 
 data class FinanceUiState(
@@ -37,7 +40,9 @@ data class FinanceUiState(
     val isRefreshing: Boolean = false,
     val isAuthorized: Boolean = true,
     val selectedTab: FinanceTab = FinanceTab.EXPENSES,
-    val selectedDatePreset: DateRangePreset = DateRangePreset.ALL,
+    val selectedDatePreset: DateRangePreset = DateRangePreset.THIS_MONTH,
+    val customStartDate: String? = null,
+    val customEndDate: String? = null,
     val statusFilter: String? = null,
     val searchQuery: String = "",
     val error: String? = null,
@@ -103,6 +108,17 @@ class FinanceViewModel @Inject constructor(
 
     fun selectDatePreset(preset: DateRangePreset) {
         _uiState.update { it.copy(selectedDatePreset = preset) }
+        loadExpenses()
+    }
+
+    fun setCustomDateRange(startDate: String?, endDate: String?) {
+        _uiState.update {
+            it.copy(
+                selectedDatePreset = DateRangePreset.CUSTOM,
+                customStartDate = startDate,
+                customEndDate = endDate
+            )
+        }
         loadExpenses()
     }
 
@@ -334,11 +350,49 @@ class FinanceViewModel @Inject constructor(
 
         return when (preset) {
             DateRangePreset.ALL -> Pair(null, null)
+            DateRangePreset.TODAY -> {
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                val start = sdf.format(cal.time)
+
+                val endCal = Calendar.getInstance()
+                endCal.set(Calendar.HOUR_OF_DAY, 23)
+                endCal.set(Calendar.MINUTE, 59)
+                endCal.set(Calendar.SECOND, 59)
+                endCal.set(Calendar.MILLISECOND, 999)
+                val end = sdf.format(endCal.time)
+                Pair(start, end)
+            }
+            DateRangePreset.THIS_WEEK -> {
+                cal.firstDayOfWeek = Calendar.MONDAY
+                cal.set(Calendar.DAY_OF_WEEK, Calendar.MONDAY)
+                cal.set(Calendar.HOUR_OF_DAY, 0)
+                cal.set(Calendar.MINUTE, 0)
+                cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
+                val start = sdf.format(cal.time)
+
+                val endCal = Calendar.getInstance()
+                endCal.firstDayOfWeek = Calendar.MONDAY
+                endCal.set(Calendar.DAY_OF_WEEK, Calendar.SUNDAY)
+                if (endCal.before(cal)) {
+                    endCal.add(Calendar.WEEK_OF_YEAR, 1)
+                }
+                endCal.set(Calendar.HOUR_OF_DAY, 23)
+                endCal.set(Calendar.MINUTE, 59)
+                endCal.set(Calendar.SECOND, 59)
+                endCal.set(Calendar.MILLISECOND, 999)
+                val end = sdf.format(endCal.time)
+                Pair(start, end)
+            }
             DateRangePreset.THIS_MONTH -> {
                 cal.set(Calendar.DAY_OF_MONTH, 1)
                 cal.set(Calendar.HOUR_OF_DAY, 0)
                 cal.set(Calendar.MINUTE, 0)
                 cal.set(Calendar.SECOND, 0)
+                cal.set(Calendar.MILLISECOND, 0)
                 val start = sdf.format(cal.time)
 
                 val endCal = Calendar.getInstance()
@@ -346,6 +400,7 @@ class FinanceViewModel @Inject constructor(
                 endCal.set(Calendar.HOUR_OF_DAY, 23)
                 endCal.set(Calendar.MINUTE, 59)
                 endCal.set(Calendar.SECOND, 59)
+                endCal.set(Calendar.MILLISECOND, 999)
                 val end = sdf.format(endCal.time)
                 Pair(start, end)
             }
@@ -353,6 +408,15 @@ class FinanceViewModel @Inject constructor(
                 val end = sdf.format(cal.time)
                 cal.add(Calendar.DAY_OF_YEAR, -30)
                 val start = sdf.format(cal.time)
+                Pair(start, end)
+            }
+            DateRangePreset.CUSTOM -> {
+                val start = _uiState.value.customStartDate?.let {
+                    if (it.contains("T")) it else it + "T00:00:00Z"
+                }
+                val end = _uiState.value.customEndDate?.let {
+                    if (it.contains("T")) it else it + "T23:59:59Z"
+                }
                 Pair(start, end)
             }
         }

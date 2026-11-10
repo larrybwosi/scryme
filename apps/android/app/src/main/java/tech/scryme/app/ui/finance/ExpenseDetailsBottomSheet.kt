@@ -188,7 +188,7 @@ fun ExpenseDetailsBottomSheet(
             text = {
                 Column {
                     Text(
-                        "Please provide an optional reason for rejecting this expense:",
+                        "Please provide a reason for rejecting this expense:",
                         style = MaterialTheme.typography.bodyMedium
                     )
                     Spacer(modifier = Modifier.height(12.dp))
@@ -196,7 +196,9 @@ fun ExpenseDetailsBottomSheet(
                         value = rejectReason,
                         onValueChange = { rejectReason = it },
                         label = { Text("Rejection Reason") },
-                        placeholder = { Text("e.g. Missing receipt or over budget") },
+                        placeholder = { Text("e.g. Missing receipt, out of policy, or over budget") },
+                        singleLine = false,
+                        maxLines = 3,
                         modifier = Modifier.fillMaxWidth()
                     )
                 }
