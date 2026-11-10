@@ -1,5 +1,10 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
+import { format } from "date-fns";
 import React, { useState, useEffect, useMemo } from "react";
 import {
   X,
@@ -335,13 +340,13 @@ export function CreateTaskModal({
               <label className="block text-[11px] font-label-badge uppercase tracking-wider text-on-surface mb-1 font-semibold">
                 Task Title *
               </label>
-              <input
+              <Input
                 type="text"
                 required
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Implement STOMP WebSocket sync buffer"
-                className="w-full h-9 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                className="w-full h-9 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
               />
             </div>
 
@@ -349,12 +354,12 @@ export function CreateTaskModal({
               <label className="block text-[11px] font-label-badge uppercase tracking-wider text-outline mb-1 font-semibold">
                 Scope / Detailed Description
               </label>
-              <textarea
+              <Textarea
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Technical specifications, acceptance criteria, reproduction steps..."
-                className="w-full p-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                className="w-full p-3 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
               />
             </div>
 
@@ -364,35 +369,37 @@ export function CreateTaskModal({
                   <Folder className="h-3 w-3 text-primary" />
                   <span>Project *</span>
                 </label>
-                <select
-                  value={projectId}
-                  onChange={(e) => setProjectId(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  {projects.map((p) => (
-                    <option key={p.id} value={p.id}>
-                      {p.name} ({p.key})
-                    </option>
-                  ))}
-                </select>
+                <Select value={projectId} onValueChange={(val) => setProjectId(val)}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="Select project" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    {projects.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.name} ({p.key})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
                 <label className="block text-[11px] font-label-badge uppercase text-outline mb-1">
                   Status
                 </label>
-                <select
-                  value={status}
-                  onChange={(e) => setStatus(e.target.value as Task["status"])}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="BACKLOG">Backlog</option>
-                  <option value="TODO">Todo</option>
-                  <option value="IN_PROGRESS">In Progress</option>
-                  <option value="IN_REVIEW">In Review</option>
-                  <option value="DONE">Done</option>
-                  <option value="CANCELED">Canceled</option>
-                </select>
+                <Select value={status} onValueChange={(val) => setStatus(val as Task["status"])}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="BACKLOG">Backlog</SelectItem>
+                    <SelectItem value="TODO">Todo</SelectItem>
+                    <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                    <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                    <SelectItem value="DONE">Done</SelectItem>
+                    <SelectItem value="CANCELED">Canceled</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
@@ -400,16 +407,17 @@ export function CreateTaskModal({
                   <Flame className="h-3 w-3 text-amber-400" />
                   <span>Priority</span>
                 </label>
-                <select
-                  value={priority}
-                  onChange={(e) => setPriority(e.target.value as Task["priority"])}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="URGENT">Urgent</option>
-                  <option value="HIGH">High</option>
-                  <option value="MEDIUM">Medium</option>
-                  <option value="LOW">Low</option>
-                </select>
+                <Select value={priority} onValueChange={(val) => setPriority(val as Task["priority"])}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="Select priority" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="URGENT">Urgent</SelectItem>
+                    <SelectItem value="HIGH">High</SelectItem>
+                    <SelectItem value="MEDIUM">Medium</SelectItem>
+                    <SelectItem value="LOW">Low</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -419,11 +427,11 @@ export function CreateTaskModal({
                   <Calendar className="h-3 w-3 text-outline" />
                   <span>Start Date</span>
                 </label>
-                <input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
+                <DatePicker
+                  value={startDate ? new Date(startDate) : undefined}
+                  onChange={(d) => setStartDate(d ? format(d, "yyyy-MM-dd") : "")}
+                  placeholder="Select start date"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                 />
               </div>
 
@@ -432,11 +440,11 @@ export function CreateTaskModal({
                   <Calendar className="h-3 w-3 text-primary" />
                   <span>Due Date</span>
                 </label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
+                <DatePicker
+                  value={dueDate ? new Date(dueDate) : undefined}
+                  onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
+                  placeholder="Select due date"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                 />
               </div>
 
@@ -445,13 +453,13 @@ export function CreateTaskModal({
                   <Clock className="h-3 w-3 text-secondary" />
                   <span>Estimated Hours</span>
                 </label>
-                <input
+                <Input
                   type="number"
                   step="0.5"
                   min="0.5"
                   value={estimatedHours}
                   onChange={(e) => setEstimatedHours(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary"
                 />
               </div>
             </div>
@@ -461,18 +469,19 @@ export function CreateTaskModal({
               <label className="block text-[11px] font-label-badge uppercase text-outline mb-1">
                 Parent Task / Hierarchy Link (Optional)
               </label>
-              <select
-                value={parentTaskId}
-                onChange={(e) => setParentTaskId(e.target.value)}
-                className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-              >
-                <option value="">No Parent Task (Root Issue)</option>
-                {candidateParentTasks.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
-                  </option>
-                ))}
-              </select>
+              <Select value={parentTaskId || "NONE"} onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}>
+                <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                  <SelectValue placeholder="No Parent Task (Root Issue)" />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                  <SelectItem value="NONE">No Parent Task (Root Issue)</SelectItem>
+                  {candidateParentTasks.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -492,18 +501,19 @@ export function CreateTaskModal({
                   <CalendarDays className="h-3.5 w-3.5 text-primary" />
                   <span>Customer Service Booking</span>
                 </label>
-                <select
-                  value={bookingId}
-                  onChange={(e) => setBookingId(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="">No Booking Linked</option>
-                  {serviceBookings.map((b) => (
-                    <option key={b.id} value={b.id}>
-                      {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
-                    </option>
-                  ))}
-                </select>
+                <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="No Booking Linked" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="NONE">No Booking Linked</SelectItem>
+                    {serviceBookings.map((b) => (
+                      <SelectItem key={b.id} value={b.id}>
+                        {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Manufacturing / Production Batch Link */}
@@ -512,18 +522,19 @@ export function CreateTaskModal({
                   <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
                   <span>Production Batch Link</span>
                 </label>
-                <select
-                  value={batchId}
-                  onChange={(e) => setBatchId(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="">No Batch Linked</option>
-                  {batches.map((batch) => (
-                    <option key={batch.id} value={batch.id}>
-                      {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
-                    </option>
-                  ))}
-                </select>
+                <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="No Batch Linked" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="NONE">No Batch Linked</SelectItem>
+                    {batches.map((batch) => (
+                      <SelectItem key={batch.id} value={batch.id}>
+                        {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Milestone Link */}
@@ -532,18 +543,19 @@ export function CreateTaskModal({
                   <Flag className="h-3.5 w-3.5 text-purple-400" />
                   <span>Project Milestone</span>
                 </label>
-                <select
-                  value={milestoneId}
-                  onChange={(e) => setMilestoneId(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="">No Milestone Linked</option>
-                  {milestones.map((m) => (
-                    <option key={m.id} value={m.id}>
-                      {m.title} ({m.status})
-                    </option>
-                  ))}
-                </select>
+                <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="No Milestone Linked" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="NONE">No Milestone Linked</SelectItem>
+                    {milestones.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.title} ({m.status})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               {/* Sprint / Cycle Link */}
@@ -552,18 +564,19 @@ export function CreateTaskModal({
                   <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
                   <span>Sprint / Iteration Cycle</span>
                 </label>
-                <select
-                  value={sprintId}
-                  onChange={(e) => setSprintId(e.target.value)}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary"
-                >
-                  <option value="">No Sprint Linked</option>
-                  {sprints.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} ({s.status})
-                    </option>
-                  ))}
-                </select>
+                <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="No Sprint Linked" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="NONE">No Sprint Linked</SelectItem>
+                    {sprints.map((s) => (
+                      <SelectItem key={s.id} value={s.id}>
+                        {s.name} ({s.status})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
           </div>
@@ -697,7 +710,7 @@ export function CreateTaskModal({
                         </button>
 
                         <div className="w-28 flex items-center justify-end gap-1">
-                          <input
+                          <Input
                             type="number"
                             step="0.5"
                             min="0.5"
@@ -709,7 +722,7 @@ export function CreateTaskModal({
                               )
                             }
                             placeholder="Hours"
-                            className="w-16 h-7 px-2 text-right rounded bg-surface-container-low border border-outline-variant text-on-surface text-xs focus:outline-none focus:border-primary"
+                            className="w-16 h-7 px-2 text-right bg-surface-container-low border-outline-variant text-on-surface text-xs focus-visible:border-primary"
                           />
                           <span className="text-[11px] text-outline">hrs</span>
                         </div>

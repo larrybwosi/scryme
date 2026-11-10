@@ -1,5 +1,8 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState } from "react";
 import { Search, Plus, X } from "lucide-react";
 import {
@@ -68,12 +71,12 @@ export function DocsTab({ projectId }: { projectId: string }) {
         <div className="flex items-center gap-2">
           <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30 text-outline focus-within:text-on-surface">
             <Search className="h-3.5 w-3.5" />
-            <input
+            <Input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search specifications..."
-              className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-44 md:w-56"
+              className="h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 font-body-sm text-body-sm text-on-surface placeholder:text-outline w-44 md:w-56"
             />
           </div>
 
@@ -104,46 +107,47 @@ export function DocsTab({ projectId }: { projectId: string }) {
             <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Document Title</label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="e.g. Distributed Telemetry Multiplexing Protocol"
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Type</label>
-                <select
-                  value={newType}
-                  onChange={(e) => setNewType(e.target.value as ProjectDocument["type"])}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                >
-                  <option value="RFC">RFC</option>
-                  <option value="SPEC">Architecture Spec</option>
-                  <option value="PLAN">Release Plan</option>
-                  <option value="GUIDE">Guide</option>
-                </select>
+                <Select value={newType} onValueChange={(val) => setNewType(val as ProjectDocument["type"])}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="Select type" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="RFC">RFC</SelectItem>
+                    <SelectItem value="SPEC">Architecture Spec</SelectItem>
+                    <SelectItem value="PLAN">Release Plan</SelectItem>
+                    <SelectItem value="GUIDE">Guide</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Summary</label>
-                <input
+                <Input
                   type="text"
                   placeholder="Brief abstract"
                   value={newSummary}
                   onChange={(e) => setNewSummary(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Content</label>
-                <textarea
+                <Textarea
                   rows={4}
                   placeholder="Full document body (Markdown)..."
                   value={newContent}
                   onChange={(e) => setNewContent(e.target.value)}
-                  className="w-full p-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full p-2 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">

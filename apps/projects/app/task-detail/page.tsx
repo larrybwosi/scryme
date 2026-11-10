@@ -1,5 +1,8 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
 import { ListTodo, Check, History as HistoryIcon } from "lucide-react";
@@ -279,12 +282,12 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
 
                 {/* Add Subtask Input */}
                 <form onSubmit={addSubtask} className="flex gap-2">
-                  <input
+                  <Input
                     type="text"
                     value={newSubtaskTitle}
                     onChange={(e) => setNewSubtaskTitle(e.target.value)}
                     placeholder="Add new subtask item..."
-                    className="flex-1 h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="flex-1 h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                   <button
                     type="submit"
@@ -317,12 +320,12 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                 </div>
 
                 <form onSubmit={addComment} className="flex flex-col gap-2 pt-2">
-                  <textarea
+                  <Textarea
                     rows={2}
                     value={commentText}
                     onChange={(e) => setCommentText(e.target.value)}
                     placeholder="Add comment or technical update..."
-                    className="w-full p-2.5 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full p-2.5 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                   <div className="flex justify-end">
                     <button
@@ -348,32 +351,34 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
               <div className="flex flex-col gap-3 text-body-sm">
                 <div>
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Status</label>
-                  <select
-                    value={task.status}
-                    onChange={(e) => updateTaskStatusMutation.mutate({ taskId: task.id, status: e.target.value as Task["status"] })}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    <option value="BACKLOG">Backlog</option>
-                    <option value="TODO">Todo</option>
-                    <option value="IN_PROGRESS">In Progress</option>
-                    <option value="IN_REVIEW">In Review</option>
-                    <option value="DONE">Done</option>
-                    <option value="CANCELED">Canceled</option>
-                  </select>
+                  <Select value={task.status} onValueChange={(val) => updateTaskStatusMutation.mutate({ taskId: task.id, status: val as Task["status"] })}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="BACKLOG">Backlog</SelectItem>
+                      <SelectItem value="TODO">Todo</SelectItem>
+                      <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
+                      <SelectItem value="IN_REVIEW">In Review</SelectItem>
+                      <SelectItem value="DONE">Done</SelectItem>
+                      <SelectItem value="CANCELED">Canceled</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
                   <label className="block text-outline text-[11px] font-label-badge uppercase mb-1">Priority</label>
-                  <select
-                    value={task.priority}
-                    onChange={(e) => updateTaskMutation.mutate({ taskId: task.id, data: { priority: e.target.value as Task["priority"] } })}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    <option value="URGENT">Urgent</option>
-                    <option value="HIGH">High</option>
-                    <option value="MEDIUM">Medium</option>
-                    <option value="LOW">Low</option>
-                  </select>
+                  <Select value={task.priority} onValueChange={(val) => updateTaskMutation.mutate({ taskId: task.id, data: { priority: val as Task["priority"] } })}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select priority" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="URGENT">Urgent</SelectItem>
+                      <SelectItem value="HIGH">High</SelectItem>
+                      <SelectItem value="MEDIUM">Medium</SelectItem>
+                      <SelectItem value="LOW">Low</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div className="flex flex-col gap-2">
@@ -387,10 +392,10 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                   {/* Primary Owner Dropdown */}
                   <div>
                     <label className="block text-outline text-[10px] mb-1">Primary Owner (Lead)</label>
-                    <select
-                      value={task.assignees?.find((a) => a.isPrimary)?.member?.id || task.assignees?.[0]?.member?.id || ""}
-                      onChange={(e) => {
-                        const newPrimaryId = e.target.value;
+                    <Select
+                      value={task.assignees?.find((a) => a.isPrimary)?.member?.id || task.assignees?.[0]?.member?.id || "UNASSIGNED"}
+                      onValueChange={(val) => {
+                        const newPrimaryId = val === "UNASSIGNED" ? "" : val;
                         if (!newPrimaryId) {
                           handleAssigneeChange([]);
                           return;
@@ -403,13 +408,17 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                           ...existingContributors,
                         ]);
                       }}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
                     >
-                      <option value="">Unassigned</option>
-                      {members.map((m) => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                      ))}
-                    </select>
+                      <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                        <SelectValue placeholder="Unassigned" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                        <SelectItem value="UNASSIGNED">Unassigned</SelectItem>
+                        {members.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name} ({m.role})</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
                   {/* Contributors Multi-Pill Selector */}

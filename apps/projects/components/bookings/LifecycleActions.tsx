@@ -1,5 +1,6 @@
 "use client";
 
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import React, { useState } from "react";
 import { CheckCircle2, UserPlus, Play, CheckSquare, XCircle, AlertTriangle } from "lucide-react";
 
@@ -103,8 +104,8 @@ export function LifecycleActions({
             <p className="text-xs text-on-surface-variant mb-4">
               Are you sure you want to cancel this booking? Please provide an optional cancellation reason.
             </p>
-            <textarea
-              className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-2.5 text-xs text-on-surface placeholder:text-outline focus:outline-none focus:border-primary resize-none h-20 mb-4"
+            <Textarea
+              className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-2.5 text-xs text-on-surface placeholder:text-outline focus-visible:border-primary resize-none h-20 mb-4"
               placeholder="e.g., Customer requested rescheduling, sickness, etc."
               value={cancelReason}
               onChange={(e) => setCancelReason(e.target.value)}

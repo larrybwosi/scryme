@@ -1,5 +1,6 @@
 "use client";
 
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import React from "react";
 import { CheckSquare, Sparkles, User, FileText, CheckCircle2 } from "lucide-react";
 
@@ -130,11 +131,10 @@ export function ChecklistInspector({
                         key={item.id}
                         className="flex items-start gap-2.5 py-2 cursor-pointer hover:bg-surface-container/40 px-1 rounded transition-colors group"
                       >
-                        <input
-                          type="checkbox"
+                        <Checkbox
                           checked={item.isCompleted}
-                          onChange={() => onToggleItem(item.id, item.isCompleted)}
-                          className="mt-0.5 rounded border-outline-variant/60 text-primary focus:ring-primary h-3.5 w-3.5 bg-surface-container-high"
+                          onCheckedChange={() => onToggleItem(item.id, item.isCompleted)}
+                          className="mt-0.5"
                         />
                         <div className="flex-1 min-w-0">
                           <p

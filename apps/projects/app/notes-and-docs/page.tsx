@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
 import Link from "next/link";
 import React, { useState } from "react";
 import { Check, Link2, MessageSquare, User, Clock, Hash, CheckSquare, Square } from "lucide-react";
@@ -115,11 +117,11 @@ export default function NotesAndDocsPage() {
           {/* Main Document Content Canvas */}
           <div className={`${showComments ? "lg:col-span-8" : "lg:col-span-12"} flex flex-col gap-6`}>
             <div className="p-6 rounded-lg bg-surface-container-low border border-outline-variant/30 shadow-sm flex flex-col gap-6">
-              <input
+              <Input
                 type="text"
                 value={docTitle}
                 onChange={(e) => setDocTitle(e.target.value)}
-                className="font-display-lg text-display-lg text-on-surface tracking-tight bg-transparent focus:outline-none border-b border-transparent focus:border-outline-variant/50 pb-1"
+                className="font-display-lg text-display-lg text-on-surface tracking-tight bg-transparent h-auto border-0 border-b border-transparent rounded-none px-0 shadow-none focus-visible:ring-0 focus-visible:border-outline-variant/50 pb-1"
               />
 
               {/* Document Meta Row */}
@@ -212,12 +214,12 @@ export default function NotesAndDocsPage() {
 
                 {/* New Comment Input */}
                 <form onSubmit={handleAddComment} className="flex flex-col gap-2 pt-2 border-t border-outline-variant/30">
-                  <textarea
+                  <Textarea
                     rows={2}
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                     placeholder="Leave feedback or RFC note..."
-                    className="w-full p-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                    className="w-full p-2 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                   />
                   <div className="flex justify-end">
                     <button

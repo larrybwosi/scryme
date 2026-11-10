@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
 import { Plus, Search, CheckSquare, Check } from "lucide-react";
@@ -121,38 +123,40 @@ export default function TasksPage() {
               </button>
             </div>
 
-            <select
-              value={selectedProjectId}
-              onChange={(e) => setSelectedProjectId(e.target.value)}
-              className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-            >
-              <option value="all">All Projects</option>
-              {projects.map((p) => (
-                <option key={p.id} value={p.id}>{p.name}</option>
-              ))}
-            </select>
+            <Select value={selectedProjectId} onValueChange={(val) => setSelectedProjectId(val)}>
+              <SelectTrigger className="h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                <SelectValue placeholder="All Projects" />
+              </SelectTrigger>
+              <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                <SelectItem value="all">All Projects</SelectItem>
+                {projects.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-            <select
-              value={priorityFilter}
-              onChange={(e) => setPriorityFilter(e.target.value)}
-              className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-            >
-              <option value="all">All Priorities</option>
-              <option value="URGENT">Urgent</option>
-              <option value="HIGH">High</option>
-              <option value="MEDIUM">Medium</option>
-              <option value="LOW">Low</option>
-            </select>
+            <Select value={priorityFilter} onValueChange={(val) => setPriorityFilter(val)}>
+              <SelectTrigger className="h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                <SelectValue placeholder="All Priorities" />
+              </SelectTrigger>
+              <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                <SelectItem value="all">All Priorities</SelectItem>
+                <SelectItem value="URGENT">Urgent</SelectItem>
+                <SelectItem value="HIGH">High</SelectItem>
+                <SelectItem value="MEDIUM">Medium</SelectItem>
+                <SelectItem value="LOW">Low</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
 
           <div className="relative w-full sm:w-64">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 text-outline h-4 w-4" />
-            <input
+            <Input
               type="text"
               placeholder="Search issues..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-8 pl-8 pr-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm placeholder:text-outline focus:outline-none focus:border-primary-container"
+              className="w-full h-8 pl-8 pr-3 bg-surface-container border-outline-variant text-on-surface text-body-sm placeholder:text-outline focus-visible:border-primary-container"
             />
           </div>
         </div>

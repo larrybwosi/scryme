@@ -1,5 +1,7 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
 import { Kanban, Rows, Plus, Search } from "lucide-react";
@@ -93,17 +95,18 @@ export default function BoardPage() {
         <div className="flex flex-wrap items-center justify-between gap-4 py-4 mb-2">
           <div className="flex items-center gap-3">
             {projects.length > 0 ? (
-              <select
-                value={currentProjectId}
-                onChange={(e) => setSelectedProjectId(e.target.value)}
-                className="font-headline-lg text-headline-lg text-on-surface bg-transparent border-0 tracking-tight font-semibold focus:outline-none cursor-pointer"
-              >
-                {projects.map((p) => (
-                  <option key={p.id} value={p.id} className="bg-surface-container-high text-on-surface">
-                    {p.name}
-                  </option>
-                ))}
-              </select>
+              <Select value={currentProjectId} onValueChange={(val) => setSelectedProjectId(val)}>
+                <SelectTrigger className="font-headline-lg text-headline-lg text-on-surface bg-transparent border-0 tracking-tight font-semibold shadow-none focus-visible:ring-0 cursor-pointer h-auto py-0 px-1">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-container-high border-outline-variant text-on-surface">
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>
+                      {p.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             ) : (
               <h1 className="font-headline-lg text-headline-lg text-on-surface tracking-tight">
                 Workspace Board
@@ -153,12 +156,12 @@ export default function BoardPage() {
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-surface-container-low border border-outline-variant/30 text-outline focus-within:text-on-surface">
               <Search className="h-3.5 w-3.5" />
-              <input
+              <Input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search board issues..."
-                className="bg-transparent font-body-sm text-body-sm text-on-surface focus:outline-none placeholder:text-outline w-44 md:w-56"
+                className="h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 font-body-sm text-body-sm text-on-surface placeholder:text-outline w-44 md:w-56"
               />
             </div>
             <div className="flex items-center gap-1 bg-surface-container-lowest p-1 rounded-lg border border-outline-variant/30 text-body-sm">
@@ -319,17 +322,18 @@ export default function BoardPage() {
 
                           {/* Move status dropdown */}
                           {canManageTasks ? (
-                            <select
-                              value={task.status}
-                              onChange={(e) => moveTaskStatus(task.id, e.target.value as Task["status"])}
-                              className="bg-surface-container-lowest text-outline text-[10px] rounded px-1 py-0.5 border border-outline-variant/20 focus:outline-none"
-                            >
-                              {COLUMNS.map((c) => (
-                                <option key={c.id} value={c.id}>
-                                  {c.label}
-                                </option>
-                              ))}
-                            </select>
+                            <Select value={task.status} onValueChange={(val) => moveTaskStatus(task.id, val as Task["status"])}>
+                              <SelectTrigger className="h-6 text-[10px] bg-surface-container-lowest text-outline border-outline-variant/20 py-0 px-1.5 shadow-none">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent className="bg-surface-container-high border-outline-variant text-on-surface">
+                                {COLUMNS.map((c) => (
+                                  <SelectItem key={c.id} value={c.id} className="text-xs">
+                                    {c.label}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           ) : (
                             <span className="text-[10px] text-outline font-label-code">{task.status}</span>
                           )}

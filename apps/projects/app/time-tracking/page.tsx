@@ -1,5 +1,9 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Checkbox } from "@repo/ui/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useEffect, useMemo } from "react";
 import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, X } from "lucide-react";
 import { useSearchParams } from "next/navigation";
@@ -341,17 +345,18 @@ function TimeTrackingContent() {
             <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-wrap items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="text-body-sm font-medium text-outline">Active Task:</span>
-                <select
-                  value={activeTaskId}
-                  onChange={(e) => setActiveTaskId(e.target.value)}
-                  className="h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm max-w-sm truncate"
-                >
-                  {tasks.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.taskKey || t.id.slice(-6)} - {t.title}
-                    </option>
-                  ))}
-                </select>
+                <Select value={activeTaskId} onValueChange={(val) => setActiveTaskId(val)}>
+                  <SelectTrigger className="h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm max-w-sm">
+                    <SelectValue placeholder="Select task" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    {tasks.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        {t.taskKey || t.id.slice(-6)} - {t.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div className="flex items-center gap-2">
@@ -590,15 +595,16 @@ function TimeTrackingContent() {
               <form onSubmit={handleManualLog} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Target Task</label>
-                  <select
-                    value={activeTaskId}
-                    onChange={(e) => setActiveTaskId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                  >
-                    {tasks.map((t) => (
-                      <option key={t.id} value={t.id}>{t.taskKey || t.id.slice(-6)} - {t.title}</option>
-                    ))}
-                  </select>
+                  <Select value={activeTaskId} onValueChange={(val) => setActiveTaskId(val)}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select task" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {tasks.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>{t.taskKey || t.id.slice(-6)} - {t.title}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Log Type</label>
@@ -631,47 +637,46 @@ function TimeTrackingContent() {
                 {isOperational && (
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Operation Category</label>
-                    <select
-                      value={operationalCategory}
-                      onChange={(e) => setOperationalCategory(e.target.value)}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
-                    >
-                      <option value="OPERATION">General Operations & Production</option>
-                      <option value="MEETING">Team Sync & Architecture Meeting</option>
-                      <option value="SUPPORT">Customer Issue & SLA Support</option>
-                      <option value="TRAINING">Skill Development & Onboarding</option>
-                    </select>
+                    <Select value={operationalCategory} onValueChange={(val) => setOperationalCategory(val)}>
+                      <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                        <SelectValue placeholder="Select category" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                        <SelectItem value="OPERATION">General Operations & Production</SelectItem>
+                        <SelectItem value="MEETING">Team Sync & Architecture Meeting</SelectItem>
+                        <SelectItem value="SUPPORT">Customer Issue & SLA Support</SelectItem>
+                        <SelectItem value="TRAINING">Skill Development & Onboarding</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
 
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Hours</label>
-                  <input
+                  <Input
                     type="number"
                     step="0.25"
                     min="0.25"
                     value={manualHours}
                     onChange={(e) => setManualHours(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Notes</label>
-                  <input
+                  <Input
                     type="text"
                     placeholder="Summary of work completed"
                     value={manualNote}
                     onChange={(e) => setManualNote(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div className="flex items-center gap-2 pt-1">
-                  <input
-                    type="checkbox"
+                  <Checkbox
                     id="billableCheck"
                     checked={isBillable}
-                    onChange={(e) => setIsBillable(e.target.checked)}
-                    className="rounded border-outline-variant text-primary"
+                    onCheckedChange={(checked) => setIsBillable(!!checked)}
                   />
                   <label htmlFor="billableCheck" className="text-body-sm text-on-surface cursor-pointer">
                     Classify as Billable Project Work
@@ -722,12 +727,12 @@ function TimeTrackingContent() {
                   <label className="block text-body-sm font-medium text-on-surface mb-1">
                     Notes / Comments for Reviewer
                   </label>
-                  <textarea
+                  <Textarea
                     rows={3}
                     placeholder="e.g. Completed all sprint objectives and client review sessions"
                     value={submitNotes}
                     onChange={(e) => setSubmitNotes(e.target.value)}
-                    className="w-full p-2.5 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full p-2.5 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -798,12 +803,12 @@ function TimeTrackingContent() {
                   <label className="block text-body-sm font-medium text-on-surface mb-1">
                     Reviewer Notes / Feedback
                   </label>
-                  <input
+                  <Input
                     type="text"
                     placeholder="Optional feedback note"
                     value={reviewNotes}
                     onChange={(e) => setReviewNotes(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
 
