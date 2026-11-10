@@ -7,12 +7,14 @@ import dagger.hilt.components.SingletonComponent
 import tech.scryme.app.data.repository.AuthRepositoryImpl
 import tech.scryme.app.data.repository.BranchRepositoryImpl
 import tech.scryme.app.data.repository.CustomerRepositoryImpl
+import tech.scryme.app.data.repository.FinanceRepositoryImpl
 import tech.scryme.app.data.repository.ProfileRepositoryImpl
 import tech.scryme.app.data.repository.SalesRepositoryImpl
 import tech.scryme.app.data.repository.ScheduleRepositoryImpl
 import tech.scryme.app.domain.repository.AuthRepository
 import tech.scryme.app.domain.repository.BranchRepository
 import tech.scryme.app.domain.repository.CustomerRepository
+import tech.scryme.app.domain.repository.FinanceRepository
 import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.SalesRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
@@ -57,4 +59,10 @@ abstract class RepositoryModule {
     abstract fun bindCustomerRepository(
         customerRepositoryImpl: CustomerRepositoryImpl
     ): CustomerRepository
+
+    @Binds
+    @Singleton
+    abstract fun bindFinanceRepository(
+        financeRepositoryImpl: FinanceRepositoryImpl
+    ): FinanceRepository
 }

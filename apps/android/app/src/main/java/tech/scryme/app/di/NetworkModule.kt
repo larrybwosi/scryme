@@ -12,6 +12,7 @@ import tech.scryme.app.BuildConfig
 import tech.scryme.app.data.api.AuthApiService
 import tech.scryme.app.data.api.BranchApiService
 import tech.scryme.app.data.api.CustomerApiService
+import tech.scryme.app.data.api.FinanceApiService
 import tech.scryme.app.data.api.MemberApiService
 import tech.scryme.app.data.api.SalesApiService
 import tech.scryme.app.data.api.ScheduleApiService
@@ -121,5 +122,11 @@ object NetworkModule {
     @Singleton
     fun provideCustomerApiService(retrofit: Retrofit): CustomerApiService {
         return retrofit.create(CustomerApiService::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideFinanceApiService(retrofit: Retrofit): FinanceApiService {
+        return retrofit.create(FinanceApiService::class.java)
     }
 }
