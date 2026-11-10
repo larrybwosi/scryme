@@ -45,10 +45,14 @@ export class ExpenseController {
     @Req() req: any,
     @Query("status") status?: ExpenseStatus,
     @Query("categoryId") categoryId?: string,
+    @Query("startDate") startDate?: string,
+    @Query("endDate") endDate?: string,
   ) {
     return this.expenseUseCase.getExpenses(req.organization.id, {
       status,
       categoryId,
+      startDate,
+      endDate,
     });
   }
 
