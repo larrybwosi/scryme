@@ -58,6 +58,145 @@ export class TaskController {
     return this.taskUseCase.listTasks(ctx.organizationId, filter);
   }
 
+  @Post('labels')
+  @Permissions('tasks:manage')
+  @ApiOperation({ summary: 'Create a custom task label' })
+  async createLabel(
+    @v3Context() ctx: V3ApiContext,
+    @Body() dto: CreateTaskLabelDto,
+  ) {
+    return this.taskUseCase.createLabel(ctx.organizationId, dto);
+  }
+
+  @Get(['labels', 'labels/list'])
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'List custom task labels' })
+  async listLabels(
+    @v3Context() ctx: V3ApiContext,
+    @Query('projectId') projectId?: string,
+  ) {
+    return this.taskUseCase.listLabels(ctx.organizationId, projectId);
+  }
+
+  @Get('workspace')
+  @Permissions('tasks:read')
+  @ApiOperation({
+    summary: 'Get current workspace context',
+    description: 'Resolves the authenticated session into its organization id, slug, and member id, so clients can build org-scoped requests to other v3 modules without hardcoding the slug.',
+  })
+  async getWorkspaceContext(@v3Context() ctx: V3ApiContext) {
+    return {
+      organizationId: ctx.organizationId,
+      orgSlug: ctx.orgSlug,
+      memberId: ctx.memberId || null,
+    };
+  }
+
+  @Post("time-entries")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Log operational non-task or task time entry" })
+  async addOperationalTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Body() dto: CreateTaskTimeEntryDto,
+  ) {
+    if (!ctx.memberId) {
+      throw new Error("Member ID required to log time entries");
+    }
+    return this.taskUseCase.addTimeEntry(ctx.organizationId, dto.taskId, dto, ctx.memberId);
+  }
+
+  @Get("time-entries")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "List all time entries across tasks & operations" })
+  async listAllTimeEntries(
+    @v3Context() ctx: V3ApiContext,
+    @Query("taskId") taskId?: string,
+  ) {
+    return this.taskUseCase.listTimeEntries(ctx.organizationId, taskId);
+  }
+
+  @Delete("time-entries/:entryId")
+  @Permissions("tasks:manage")
+  @ApiOperation({ summary: "Delete any time entry (rejects if locked)" })
+  async deleteAnyTimeEntry(
+    @v3Context() ctx: V3ApiContext,
+    @Param("entryId") entryId: string,
+  ) {
+    return this.taskUseCase.deleteTimeEntry(ctx.organizationId, undefined, entryId);
+  }
+
+  @Get("calendar/events")
+  @Permissions("tasks:read")
+  @ApiOperation({ summary: "Get aggregated calendar events (tasks, milestones, sprints)" })
+  async getCalendarEvents(
+    @v3Context() ctx: V3ApiContext,
+    @Query("projectId") projectId?: string,
+  ) {
+    return this.taskUseCase.getCalendarEvents(ctx.organizationId, projectId);
+  }
+
+  @Get('team/performance')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get squad-wide performance metrics and leaderboard' })
+  async getTeamPerformance(
+    @v3Context() ctx: V3ApiContext,
+    @Query() filter: MemberPerformanceFilterDto,
+  ) {
+    return this.taskUseCase.getTeamPerformance(ctx.organizationId, filter);
+  }
+
+  @Get('members/:memberId/performance')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get user performance metrics and throughput' })
+  async getMemberPerformance(
+    @v3Context() ctx: V3ApiContext,
+    @Param('memberId') memberId: string,
+    @Query() filter: MemberPerformanceFilterDto,
+  ) {
+    return this.taskUseCase.getMemberPerformance(ctx.organizationId, memberId, filter);
+  }
+
+  @Get('timesheets/weekly')
+  @Permissions('tasks:read')
+  @ApiOperation({ summary: 'Get aggregated weekly timesheets' })
+  async getWeeklyTimesheets(
+    @v3Context() ctx: V3ApiContext,
+    @Query('memberId') memberId?: string,
+    @Query('weekStartDate') weekStartDate?: string,
+  ) {
+    const date = weekStartDate ? new Date(weekStartDate) : undefined;
+    return this.taskUseCase.getWeeklyTimesheets(ctx.organizationId, memberId, date);
+  }
+
+  @Post('timesheets/submit')
+  @Permissions('tasks:manage')
+  @ApiOperation({ summary: 'Submit weekly timesheet for review' })
+  async submitWeeklyTimesheet(
+    @v3Context() ctx: V3ApiContext,
+    @Body() dto: SubmitTimesheetDto,
+  ) {
+    if (!ctx.memberId) {
+      throw new Error('Member ID required to submit timesheet');
+    }
+    return this.taskUseCase.submitWeeklyTimesheet(ctx.organizationId, ctx.memberId, dto);
+  }
+
+  @Post('timesheets/:id/process')
+  @Permissions('tasks:manage')
+  @ApiOperation({ summary: 'Approve or reject a submitted timesheet' })
+  async processWeeklyTimesheet(
+    @v3Context() ctx: V3ApiContext,
+    @Param('id') timesheetId: string,
+    @Body() dto: ProcessTimesheetDto,
+  ) {
+    return this.taskUseCase.processWeeklyTimesheet(
+      ctx.organizationId,
+      timesheetId,
+      ctx.memberId || null,
+      dto,
+    );
+  }
+
   @Get(':id')
   @Permissions('tasks:read')
   @ApiOperation({ summary: 'Get task details' })
@@ -136,71 +275,6 @@ export class TaskController {
     return this.taskUseCase.addComment(ctx.organizationId, id, dto, ctx.memberId);
   }
 
-  @Post('labels')
-  @Permissions('tasks:manage')
-  @ApiOperation({ summary: 'Create a custom task label' })
-  async createLabel(
-    @v3Context() ctx: V3ApiContext,
-    @Body() dto: CreateTaskLabelDto,
-  ) {
-    return this.taskUseCase.createLabel(ctx.organizationId, dto);
-  }
-
-  @Get('labels/list')
-  @Permissions('tasks:read')
-  @ApiOperation({ summary: 'List custom task labels' })
-  async listLabels(
-    @v3Context() ctx: V3ApiContext,
-    @Query('projectId') projectId?: string,
-  ) {
-    return this.taskUseCase.listLabels(ctx.organizationId, projectId);
-  }
-
-  @Get('workspace')
-  @Permissions('tasks:read')
-  @ApiOperation({
-    summary: 'Get current workspace context',
-    description: 'Resolves the authenticated session into its organization id, slug, and member id, so clients can build org-scoped requests to other v3 modules without hardcoding the slug.',
-  })
-  async getWorkspaceContext(@v3Context() ctx: V3ApiContext) {
-    return {
-      organizationId: ctx.organizationId,
-      orgSlug: ctx.orgSlug,
-      memberId: ctx.memberId || null,
-    };
-  }
-  @Post("time-entries")
-  @Permissions("tasks:manage")
-  @ApiOperation({ summary: "Log operational non-task or task time entry" })
-  async addOperationalTimeEntry(
-    @v3Context() ctx: V3ApiContext,
-    @Body() dto: CreateTaskTimeEntryDto,
-  ) {
-    if (!ctx.memberId) {
-      throw new Error("Member ID required to log time entries");
-    }
-    return this.taskUseCase.addTimeEntry(ctx.organizationId, dto.taskId, dto, ctx.memberId);
-  }
-
-  @Get("time-entries")
-  @Permissions("tasks:read")
-  @ApiOperation({ summary: "List all time entries across tasks & operations" })
-  async listAllTimeEntries(
-    @v3Context() ctx: V3ApiContext,
-    @Query("taskId") taskId?: string,
-  ) {
-    return this.taskUseCase.listTimeEntries(ctx.organizationId, taskId);
-  }
-
-  @Delete("time-entries/:entryId")
-  @Permissions("tasks:manage")
-  @ApiOperation({ summary: "Delete any time entry (rejects if locked)" })
-  async deleteAnyTimeEntry(
-    @v3Context() ctx: V3ApiContext,
-    @Param("entryId") entryId: string,
-  ) {
-    return this.taskUseCase.deleteTimeEntry(ctx.organizationId, undefined, entryId);
-  }
   @Post(":id/time-entries")
   @Permissions("tasks:manage")
   @ApiOperation({ summary: "Log time entry / hours on task" })
@@ -244,77 +318,5 @@ export class TaskController {
     @Param("id") id: string,
   ) {
     return this.taskUseCase.getSubtasks(ctx.organizationId, id);
-  }
-
-  @Get("calendar/events")
-  @Permissions("tasks:read")
-  @ApiOperation({ summary: "Get aggregated calendar events (tasks, milestones, sprints)" })
-  async getCalendarEvents(
-    @v3Context() ctx: V3ApiContext,
-    @Query("projectId") projectId?: string,
-  ) {
-    return this.taskUseCase.getCalendarEvents(ctx.organizationId, projectId);
-  }
-
-  @Get('team/performance')
-  @Permissions('tasks:read')
-  @ApiOperation({ summary: 'Get squad-wide performance metrics and leaderboard' })
-  async getTeamPerformance(
-    @v3Context() ctx: V3ApiContext,
-    @Query() filter: MemberPerformanceFilterDto,
-  ) {
-    return this.taskUseCase.getTeamPerformance(ctx.organizationId, filter);
-  }
-
-  @Get('members/:memberId/performance')
-  @Permissions('tasks:read')
-  @ApiOperation({ summary: 'Get user performance metrics and throughput' })
-  async getMemberPerformance(
-    @v3Context() ctx: V3ApiContext,
-    @Param('memberId') memberId: string,
-    @Query() filter: MemberPerformanceFilterDto,
-  ) {
-    return this.taskUseCase.getMemberPerformance(ctx.organizationId, memberId, filter);
-  }
-
-  @Get('timesheets/weekly')
-  @Permissions('tasks:read')
-  @ApiOperation({ summary: 'Get aggregated weekly timesheets' })
-  async getWeeklyTimesheets(
-    @v3Context() ctx: V3ApiContext,
-    @Query('memberId') memberId?: string,
-    @Query('weekStartDate') weekStartDate?: string,
-  ) {
-    const date = weekStartDate ? new Date(weekStartDate) : undefined;
-    return this.taskUseCase.getWeeklyTimesheets(ctx.organizationId, memberId, date);
-  }
-
-  @Post('timesheets/submit')
-  @Permissions('tasks:manage')
-  @ApiOperation({ summary: 'Submit weekly timesheet for review' })
-  async submitWeeklyTimesheet(
-    @v3Context() ctx: V3ApiContext,
-    @Body() dto: SubmitTimesheetDto,
-  ) {
-    if (!ctx.memberId) {
-      throw new Error('Member ID required to submit timesheet');
-    }
-    return this.taskUseCase.submitWeeklyTimesheet(ctx.organizationId, ctx.memberId, dto);
-  }
-
-  @Post('timesheets/:id/process')
-  @Permissions('tasks:manage')
-  @ApiOperation({ summary: 'Approve or reject a submitted timesheet' })
-  async processWeeklyTimesheet(
-    @v3Context() ctx: V3ApiContext,
-    @Param('id') timesheetId: string,
-    @Body() dto: ProcessTimesheetDto,
-  ) {
-    return this.taskUseCase.processWeeklyTimesheet(
-      ctx.organizationId,
-      timesheetId,
-      ctx.memberId || null,
-      dto,
-    );
   }
 }
