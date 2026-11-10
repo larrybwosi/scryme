@@ -6,6 +6,7 @@ import { AutomationWorkerService } from "./automation-worker.service";
 import { AutomationScheduler } from "./automation.scheduler";
 import { WebhookDispatcherService } from "./webhook-dispatcher.service";
 import { WorkflowHandlers } from "./handlers/workflow-handlers";
+import { WorkflowDagRunnerService } from "./workflow-dag-runner.service";
 import { PrismaModule } from "../prisma/prisma.module";
 import { ServicesModule } from "../v3/modules/services/services.module";
 
@@ -22,12 +23,14 @@ import { ServicesModule } from "../v3/modules/services/services.module";
     AutomationScheduler,
     WebhookDispatcherService,
     WorkflowHandlers,
+    WorkflowDagRunnerService,
   ],
   exports: [
     AutomationService,
     AutomationWorkerService,
     AutomationScheduler,
     WebhookDispatcherService,
+    WorkflowDagRunnerService,
   ],
 })
 export class AutomationModule {}

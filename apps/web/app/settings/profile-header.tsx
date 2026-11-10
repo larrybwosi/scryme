@@ -76,7 +76,6 @@ export function OrganizationProfileHeader({
             src={banner}
             alt="Organization Banner"
             fill
-            unoptimized
             className="object-cover"
           />
         ) : (
@@ -120,7 +119,6 @@ export function OrganizationProfileHeader({
                 src={logo}
                 alt="Organization Logo"
                 fill
-                unoptimized
                 className="object-cover"
               />
             ) : (

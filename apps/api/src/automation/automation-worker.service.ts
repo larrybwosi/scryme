@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit, OnModuleDestroy } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
 import { WorkflowHandlers } from "./handlers/workflow-handlers";
+import { WorkflowDagRunnerService } from "./workflow-dag-runner.service";
 
 @Injectable()
 export class AutomationWorkerService implements OnModuleInit, OnModuleDestroy {
@@ -14,6 +15,7 @@ export class AutomationWorkerService implements OnModuleInit, OnModuleDestroy {
   constructor(
     private readonly prisma: PrismaService,
     private readonly workflowHandlers: WorkflowHandlers,
+    private readonly dagRunner?: WorkflowDagRunnerService,
   ) {}
 
   onModuleInit() {
@@ -115,14 +117,29 @@ export class AutomationWorkerService implements OnModuleInit, OnModuleDestroy {
         },
       });
 
-      // Execute handler
-      const result = await this.workflowHandlers.executeHandler(job.handler, {
-        organizationId: job.organizationId,
-        executionId: job.executionId,
-        jobId: job.id,
-        definitionConfig: definition?.config || {},
-        payload: job.payload,
-      });
+      // Execute handler or DAG steps if visual canvas nodes are configured
+      const studioNodes = (definition?.config as any)?.studio?.nodes;
+      let result: any;
+      if (this.dagRunner && Array.isArray(studioNodes) && studioNodes.length > 0) {
+        this.logger.log(`Executing DAG steps (${studioNodes.length} nodes) for job ${job.id}`);
+        result = await this.dagRunner.executeDag({
+          organizationId: job.organizationId,
+          executionId: job.executionId,
+          jobId: job.id,
+          definitionId: definition?.id,
+          definitionConfig: (definition?.config as any) || {},
+          payload: job.payload || {},
+          isSimulation: false,
+        });
+      } else {
+        result = await this.workflowHandlers.executeHandler(job.handler, {
+          organizationId: job.organizationId,
+          executionId: job.executionId,
+          jobId: job.id,
+          definitionConfig: definition?.config || {},
+          payload: job.payload,
+        });
+      }
 
       // Mark job as COMPLETED
       await (this.prisma.client as any).workflowEngineJob.update({

@@ -69,8 +69,12 @@ export class ImageService {
         contentType = response.headers["content-type"] as string;
       } else {
         // RustFS / S3
+        let storageKey = id;
+        if (providerType === "rustfs" && !storageKey.startsWith("dealio-")) {
+          storageKey = `dealio-${storageKey}`;
+        }
         const url = await storageService.getSignedUrl(
-          id,
+          storageKey,
           60,
           options.organizationId,
         );

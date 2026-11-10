@@ -1,6 +1,7 @@
 import { Injectable, NotFoundException, Logger, BadRequestException, Inject, forwardRef } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto } from "./dto/automation.dto";
+import { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto, SimulateWorkflowDto, ReplayWorkflowDto } from "./dto/automation.dto";
+import { WorkflowDagRunnerService, DagExecutionSummary } from "./workflow-dag-runner.service";
 import * as crypto from "crypto";
 import { WebhookDispatcherService } from "./webhook-dispatcher.service";
 import { StockMovementReportService } from "../v3/modules/inventory/application/services/stock-movement-report.service";
@@ -27,6 +28,7 @@ export class AutomationService {
     private readonly webhookDispatcher: WebhookDispatcherService,
     @Inject(forwardRef(() => StockMovementReportService))
     private readonly stockReportService?: StockMovementReportService,
+    private readonly dagRunner?: WorkflowDagRunnerService,
   ) {}
 
   public readonly builtInTemplates: WorkflowTemplate[] = [
@@ -457,6 +459,75 @@ export class AutomationService {
       job,
       data: execution,
     };
+  }
+
+
+  /**
+   * Executes a dry-run simulation of workflow steps without executing real mutations or side effects.
+   */
+  async simulateWorkflow(organizationId: string, dto: SimulateWorkflowDto): Promise<DagExecutionSummary> {
+    const rawKey = dto.key || dto.path;
+    let config = dto.config;
+
+    if (!config && rawKey) {
+      const def = await (this.prisma.client as any).workflowEngineDefinition.findFirst({
+        where: {
+          organizationId,
+          OR: [{ key: rawKey }, { key: rawKey.replace(/^f\/dealio\//, "") }],
+        },
+      });
+      config = def?.config;
+    }
+
+    const payload = dto.payload || dto.inputs || {};
+
+    if (!this.dagRunner) {
+      throw new BadRequestException("Workflow DAG Runner is not initialized.");
+    }
+
+    return this.dagRunner.executeDag({
+      organizationId,
+      definitionConfig: config || {},
+      payload,
+      isSimulation: true,
+    });
+  }
+
+  /**
+   * Replays an existing execution using its historical payload.
+   */
+  async replayExecution(organizationId: string, dto: ReplayWorkflowDto) {
+    const existingExecution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+      where: {
+        id: dto.executionId,
+        organizationId,
+      },
+      include: {
+        definition: true,
+      },
+    });
+
+    if (!existingExecution) {
+      throw new NotFoundException(`Execution ${dto.executionId} not found.`);
+    }
+
+    const payload = dto.overridePayload || (existingExecution.payload as Record<string, any>) || {};
+
+    return this.triggerWorkflow(organizationId, {
+      key: existingExecution.triggerEvent,
+      payload,
+      correlationId: `replay_${existingExecution.id}_${Date.now()}`,
+    });
+  }
+
+  async getExecutionSteps(organizationId: string, executionId: string) {
+    return (this.prisma.client as any).workflowEngineAuditLog.findMany({
+      where: {
+        organizationId,
+        executionId,
+      },
+      orderBy: { createdAt: "asc" },
+    });
   }
 
   async cancelJob(organizationId: string, jobId: string) {

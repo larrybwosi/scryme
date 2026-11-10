@@ -8,9 +8,24 @@ export interface CreateWorkflowDefinitionDto {
 }
 
 export interface TriggerWorkflowDto {
-  key: string;
+  key?: string;
+  path?: string;
   payload?: Record<string, any>;
+  inputs?: Record<string, any>;
   correlationId?: string;
+}
+
+export interface SimulateWorkflowDto {
+  key?: string;
+  path?: string;
+  config?: Record<string, any>;
+  payload?: Record<string, any>;
+  inputs?: Record<string, any>;
+}
+
+export interface ReplayWorkflowDto {
+  executionId: string;
+  overridePayload?: Record<string, any>;
 }
 
 export interface CreateWebhookDto {
