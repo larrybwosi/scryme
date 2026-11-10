@@ -627,6 +627,12 @@ export default function WorkflowsPage() {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>("action");
   const [testMode, setTestMode] = useState(false);
+  const [isSimulateOpen, setIsSimulateOpen] = useState(false);
+  const [simulationPayload, setSimulationPayload] = useState('{\n  "amount": 250,\n  "customer": {\n    "email": "demo@scryme.com",\n    "name": "Jane Doe"\n  },\n  "status": "active"\n}');
+  const [isSimulating, setIsSimulating] = useState(false);
+  const [simulationResult, setSimulationResult] = useState<any>(null);
+  const [isReplaying, setIsReplaying] = useState<string | null>(null);
+
   const [selectedJobId, setSelectedJobId] = useState<string | null>(null);
 
   // New Enterprise Workflow Dialog state
@@ -784,6 +790,73 @@ export default function WorkflowsPage() {
       toast.error("Unable to create new workflow definition");
     } finally {
       setIsCreatingWorkflow(false);
+    }
+  };
+
+  const runSimulation = async () => {
+    if (!selectedWorkflow) return;
+    setIsSimulating(true);
+    setSimulationResult(null);
+    try {
+      let parsedPayload = {};
+      try {
+        parsedPayload = JSON.parse(simulationPayload);
+      } catch {
+        toast.error("Invalid JSON payload for simulation");
+        setIsSimulating(false);
+        return;
+      }
+
+      const response = await fetch("/api/workflows/simulate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          path: selectedWorkflow.path,
+          key: selectedWorkflow.path,
+          inputs: parsedPayload,
+          config: {
+            ...workflowSettings,
+            studio: { nodes, edges },
+          },
+        }),
+      });
+
+      const resData = await response.json();
+      if (response.ok && resData.success) {
+        setSimulationResult(resData.data);
+        toast.success("Simulation finished without side-effects!");
+      } else {
+        toast.error(resData.error || "Simulation run encountered errors");
+      }
+    } catch {
+      toast.error("Error executing workflow simulation");
+    } finally {
+      setIsSimulating(false);
+    }
+  };
+
+  const replayExecution = async (executionId: string) => {
+    setIsReplaying(executionId);
+    try {
+      const response = await fetch("/api/workflows/replay", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ executionId }),
+      });
+      const data = await response.json();
+      if (response.ok && (data.success || data.data)) {
+        toast.success(`Execution ${executionId} replayed successfully!`);
+        mutateHistory();
+        if (data.data?.id || data.execution?.id) {
+          setSelectedJobId(data.data?.id || data.execution?.id);
+        }
+      } else {
+        toast.error(data.error || "Failed to replay execution");
+      }
+    } catch {
+      toast.error("Error replaying workflow execution");
+    } finally {
+      setIsReplaying(null);
     }
   };
 
@@ -1199,6 +1272,15 @@ export default function WorkflowsPage() {
                 </span>
                 <Separator orientation="vertical" className="h-4" />
                 <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsSimulateOpen(true)}
+                  className="h-7 text-xs gap-1.5 border-dashed"
+                >
+                  <Sparkles size={13} className="text-primary" />
+                  Simulate (Dry-Run)
+                </Button>
+                <Button
                   variant={testMode ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTestMode(!testMode)}
@@ -1302,6 +1384,16 @@ export default function WorkflowsPage() {
                               >
                                 {item.status}
                               </Badge>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                className="h-7 text-[11px] gap-1"
+                                disabled={isReplaying === item.id}
+                                onClick={() => replayExecution(item.id)}
+                              >
+                                <RefreshCw size={11} className={cn(isReplaying === item.id && "animate-spin")} />
+                                Replay
+                              </Button>
                               <Button
                                 variant="outline"
                                 size="sm"
@@ -2068,6 +2160,85 @@ export default function WorkflowsPage() {
           </aside>
         </div>
       </main>
+
+      {/* Dry Run Simulation Dialog */}
+      <Dialog open={isSimulateOpen} onOpenChange={setIsSimulateOpen}>
+        <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <Sparkles className="text-primary" size={18} /> Dry-Run Workflow Simulation
+            </DialogTitle>
+            <DialogDescription className="text-xs">
+              Simulate DAG step execution and condition branch evaluations with custom input payloads without triggering side effects.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="grid grid-cols-2 gap-4 py-2 flex-1 overflow-y-auto">
+            <div className="space-y-2 flex flex-col">
+              <Label className="text-xs font-semibold">Test Input Payload (JSON)</Label>
+              <Textarea
+                className="font-mono text-xs flex-1 min-h-[220px] bg-muted/30"
+                value={simulationPayload}
+                onChange={(e) => setSimulationPayload(e.target.value)}
+              />
+            </div>
+
+            <div className="space-y-2 flex flex-col">
+              <Label className="text-xs font-semibold">Step Trace Results</Label>
+              <div className="rounded-lg border bg-muted/20 p-3 flex-1 min-h-[220px] overflow-y-auto font-mono text-[11px] space-y-2">
+                {isSimulating ? (
+                  <div className="flex items-center justify-center h-full text-muted-foreground gap-2">
+                    <Activity size={14} className="animate-spin text-primary" />
+                    <span>Evaluating graph steps...</span>
+                  </div>
+                ) : simulationResult ? (
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between pb-1 border-b">
+                      <span className="font-semibold text-foreground">
+                        {simulationResult.success ? "✅ SUCCESS" : "❌ FAILED"}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground">
+                        {simulationResult.executedSteps}/{simulationResult.totalSteps} steps
+                      </span>
+                    </div>
+                    {simulationResult.steps?.map((step: any, idx: number) => (
+                      <div key={idx} className="p-2 rounded bg-background border text-[10px] space-y-1">
+                        <div className="flex items-center justify-between font-semibold">
+                          <span>{step.nodeLabel || step.nodeId}</span>
+                          <Badge variant={step.status === "COMPLETED" ? "default" : step.status === "SKIPPED" ? "secondary" : "destructive"} className="text-[9px] h-4">
+                            {step.status}
+                          </Badge>
+                        </div>
+                        <div className="text-muted-foreground">Kind: {step.kind} • {step.durationMs}ms</div>
+                        {step.output && (
+                          <pre className="text-[9px] text-emerald-600 dark:text-emerald-400 bg-muted/40 p-1 rounded overflow-x-auto">
+                            {JSON.stringify(step.output, null, 2)}
+                          </pre>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="flex items-center justify-center h-full text-muted-foreground text-center">
+                    Enter payload on the left and click "Run Simulation"
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setIsSimulateOpen(false)}>
+              Close
+            </Button>
+            <Button size="sm" onClick={runSimulation} disabled={isSimulating} className="gap-1.5">
+              <Play size={13} />
+              {isSimulating ? "Simulating..." : "Run Simulation"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </ReactFlowProvider>
+
   );
 }
