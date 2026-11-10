@@ -1,9 +1,13 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
-import { HttpClient } from "./http";
+import { HttpClient, HttpClientConfig } from "./http";
 import { createAxiosCompatibleInstance } from "./fetch-adapter";
 import { autoPaging, autoPagingToArray } from "./pagination";
 import type { AxiosRequestConfig } from "axios";
 import { getScrymeV3API } from "./proxy";
+import type { CircuitBreakerOptions } from "./circuit-breaker";
+import type { CacheOptions } from "./cache";
+import type { RetryOptions } from "./retry";
+import type { Logger } from "./logger";
 import type {
   CartControllerGetCartParams,
   CartResponseDto,
@@ -87,6 +91,43 @@ export interface ServerSDKConfig {
    * Optional organization API key for system-level integrations.
    */
   apiKey?: string;
+  /**
+   * Request timeout in milliseconds (default: 30000).
+   */
+  timeout?: number;
+  /**
+   * Retry configuration for transient errors and 429 rate limits.
+   */
+  retry?: RetryOptions;
+  /**
+   * Circuit breaker configuration for failing fast during sustained downstream outages.
+   */
+  circuitBreaker?: CircuitBreakerOptions;
+  /**
+   * In-memory TTL/LRU response caching options for GET requests.
+   */
+  cache?: CacheOptions;
+  /**
+   * Custom logger implementation.
+   */
+  logger?: Logger;
+  /**
+   * Custom fetch implementation override.
+   */
+  fetch?: typeof fetch;
+  /**
+   * Allow unencrypted http:// for non-loopback domains (for internal dev only).
+   */
+  allowInsecureHttp?: boolean;
+  /**
+   * Automatic Idempotency-Key header generation configuration.
+   */
+  idempotency?: {
+    autoGenerate?: boolean;
+  };
+  onRequest?: HttpClientConfig["onRequest"];
+  onResponse?: HttpClientConfig["onResponse"];
+  onError?: HttpClientConfig["onError"];
 }
 
 /**
@@ -112,6 +153,8 @@ export class ScrymeServerSDK<
 > {
   /** Underlying Axios instance allocated exclusively to this server instance. */
   public axiosInstance: AxiosInstance;
+  /** Underlying universal HttpClient instance. */
+  public httpClient: HttpClient;
   /** Raw proxy API client exposing all standard endpoints auto-bound with the configured orgSlug. */
   public api: RawAPI;
 
@@ -413,8 +456,8 @@ export class ScrymeServerSDK<
     verifyEmail(dto: { token: string; callbackURL?: string }): Promise<AxiosResponse<any>>;
   };
 
-  private token: string | null = null;
-  private expiresAt: number | null = null;
+  public token: string | null = null;
+  public expiresAt: number | null = null;
   private activeAuthPromise: Promise<any> | null = null;
 
   constructor(config: ServerSDKConfig) {
@@ -440,14 +483,19 @@ export class ScrymeServerSDK<
 
     const serverHttp = new HttpClient({
       baseUrl: finalBaseURL,
-      timeout: (config as any).timeout,
-      retry: (config as any).retry,
-      logger: (config as any).logger,
-      fetch: (config as any).fetch,
-      onRequest: (config as any).onRequest,
-      onResponse: (config as any).onResponse,
-      onError: (config as any).onError,
+      timeout: config.timeout,
+      retry: config.retry,
+      circuitBreaker: config.circuitBreaker,
+      cache: config.cache,
+      logger: config.logger,
+      fetch: config.fetch,
+      allowInsecureHttp: config.allowInsecureHttp,
+      idempotency: config.idempotency,
+      onRequest: config.onRequest,
+      onResponse: config.onResponse,
+      onError: config.onError,
     });
+    this.httpClient = serverHttp;
     this.axiosInstance = createAxiosCompatibleInstance(serverHttp) as any;
 
     // Attach token or apiKey if present
