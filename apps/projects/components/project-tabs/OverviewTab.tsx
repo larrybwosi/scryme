@@ -1,5 +1,8 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Textarea } from "@repo/ui/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
 import { Check, Link2, Settings, PlusCircle, X } from "lucide-react";
@@ -166,35 +169,36 @@ export function OverviewTab({ projectId }: { projectId: string }) {
             <form onSubmit={handleSaveProject} className="flex flex-col gap-4 mt-4">
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                <input
+                <Input
                   type="text"
                   required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Description / Objective</label>
-                <textarea
+                <Textarea
                   rows={3}
                   value={editDesc}
                   onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full p-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full p-2 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Lifecycle Status</label>
-                <select
-                  value={editStatus}
-                  onChange={(e) => setEditStatus(e.target.value as Project["status"])}
-                  className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none"
-                >
-                  <option value="ACTIVE">ACTIVE</option>
-                  <option value="ON_HOLD">ON_HOLD</option>
-                  <option value="COMPLETED">COMPLETED</option>
-                  <option value="ARCHIVED">ARCHIVED</option>
-                </select>
+                <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
+                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                    <SelectValue placeholder="Select status" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                    <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                    <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
+                    <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                    <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
               <div className="flex justify-end gap-2 pt-2">
                 <button

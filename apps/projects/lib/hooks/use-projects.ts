@@ -389,6 +389,7 @@ export function useDeleteSprint(projectId: string) {
   });
 }
 
+export type { ProjectDocument };
 export function useProjectDocuments(projectId?: string) {
   return useQuery<ProjectDocument[]>({
     queryKey: QUERY_KEYS.projectDocuments(projectId),

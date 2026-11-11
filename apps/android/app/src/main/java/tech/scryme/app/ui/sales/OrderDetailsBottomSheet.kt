@@ -6,21 +6,17 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Notes
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Email
-import androidx.compose.material.icons.filled.LocalShipping
-import androidx.compose.material.icons.filled.Notes
-import androidx.compose.material.icons.filled.Payment
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Place
 import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.ShoppingBag
 import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -33,6 +29,7 @@ import tech.scryme.app.domain.model.OrderStatus
 @Composable
 fun OrderDetailsBottomSheet(
     order: OrderItem,
+    isLoadingDetails: Boolean = false,
     onDismiss: () -> Unit
 ) {
     ModalBottomSheet(
@@ -51,13 +48,13 @@ fun OrderDetailsBottomSheet(
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(bottom = 16.dp),
+                    .padding(bottom = 12.dp),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Column {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
-                        text = "Order Details",
+                        text = "Sale Details",
                         style = MaterialTheme.typography.titleLarge,
                         fontWeight = FontWeight.Bold
                     )
@@ -79,7 +76,15 @@ fun OrderDetailsBottomSheet(
                 }
             }
 
-            HorizontalDivider(modifier = Modifier.padding(bottom = 16.dp))
+            if (isLoadingDetails) {
+                LinearProgressIndicator(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(bottom = 12.dp)
+                )
+            } else {
+                HorizontalDivider(modifier = Modifier.padding(bottom = 12.dp))
+            }
 
             LazyColumn(
                 verticalArrangement = Arrangement.spacedBy(16.dp),
@@ -119,10 +124,10 @@ fun OrderDetailsBottomSheet(
                     }
                 }
 
-                // Order Line Items Section
+                // Order Line Items Section with Pricing
                 item {
                     Text(
-                        text = "Order Items (${order.lineItems.size})",
+                        text = "Sale Items (${order.lineItems.size})",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier.padding(vertical = 4.dp)
@@ -136,7 +141,7 @@ fun OrderDetailsBottomSheet(
                 // Custom Order Notes / Instructions Section
                 if (!order.customOrderNotes.isNullOrEmpty()) {
                     item {
-                        SectionCard(title = "Custom Order Notes", icon = Icons.Default.Notes) {
+                        SectionCard(title = "Order Notes", icon = Icons.AutoMirrored.Filled.Notes) {
                             Text(
                                 text = order.customOrderNotes,
                                 style = MaterialTheme.typography.bodyMedium,
@@ -146,9 +151,9 @@ fun OrderDetailsBottomSheet(
                     }
                 }
 
-                // Payment & Fulfillment Summary Section
+                // Pricing, Payment & Fulfillment Summary Section
                 item {
-                    SectionCard(title = "Payment & Fulfillment Summary", icon = Icons.Default.Receipt) {
+                    SectionCard(title = "Pricing & Payment Summary", icon = Icons.Default.Receipt) {
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
                             DetailRow(label = "Payment Method", value = order.paymentMethod ?: "N/A")
                             DetailRow(label = "Payment Status", value = order.paymentStatus ?: "PAID")

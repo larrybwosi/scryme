@@ -1,5 +1,6 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
 import React, { useState } from "react";
 import { Plus, X, Trash2 } from "lucide-react";
 import {
@@ -72,33 +73,33 @@ export function CyclesTab({ projectId }: { projectId: string }) {
             <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Cycle Name</label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="e.g. Sprint 15: Core UI Architecture"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Sprint Goal</label>
-                <input
+                <Input
                   type="text"
                   placeholder="Deliverable objective"
                   value={goal}
                   onChange={(e) => setGoal(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Story Points Scope</label>
-                <input
+                <Input
                   type="number"
                   min="0"
                   value={scopePoints}
                   onChange={(e) => setScopePoints(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">

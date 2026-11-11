@@ -1,7 +1,10 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X, CalendarPlus } from "lucide-react";
+import { AddScheduleModal, ScheduleModalType } from "@/components/AddScheduleModal";
 import {
   useMembers,
   useProjects,
@@ -46,6 +49,10 @@ export default function SchedulePage() {
   const processTradeMutation = useProcessShiftTrade();
 
   const { canManageTasks, memberId: currentMemberId } = usePermissions();
+
+  // Unified Schedule Modal State
+  const [isUnifiedModalOpen, setIsUnifiedModalOpen] = useState(false);
+  const [unifiedModalType, setUnifiedModalType] = useState<ScheduleModalType>("shift");
 
   // Booking Capacity Modal State
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
@@ -306,7 +313,20 @@ export default function SchedulePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUnifiedModalType("shift");
+                  setIsUnifiedModalOpen(true);
+                }}
+                className="h-8 px-3.5 bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                <span>Add Schedule</span>
+              </button>
+            )}
             <div className="flex rounded-lg bg-surface-container-low p-1 border border-outline-variant/30">
               <button
                 type="button"
@@ -748,6 +768,19 @@ export default function SchedulePage() {
           </div>
         )}
 
+        {/* Unified Add Schedule Modal */}
+        <AddScheduleModal
+          isOpen={isUnifiedModalOpen}
+          onClose={() => setIsUnifiedModalOpen(false)}
+          members={members}
+          projects={projects}
+          existingShifts={staffShifts}
+          defaultType={unifiedModalType}
+          onSuccess={() => {
+            // refresh shift and workload data
+          }}
+        />
+
         {/* Modal: Book Capacity */}
         {isBookModalOpen && (
           <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
@@ -765,51 +798,57 @@ export default function SchedulePage() {
               <form onSubmit={handleBooking} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
-                  <select
+                  <Select
                     value={bookingProjectId || (projects[0]?.id || "")}
-                    onChange={(e) => setBookingProjectId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    onValueChange={(val) => setBookingProjectId(val)}
                   >
-                    {projects.map((p) => (
-                      <option key={p.id} value={p.id}>{p.name}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select Project" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {projects.map((p) => (
+                        <SelectItem key={p.id} value={p.id}>{p.name}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Squad Member</label>
-                  <select
+                  <Select
                     value={bookingMemberId || (members[0]?.id || "")}
-                    onChange={(e) => setBookingMemberId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    onValueChange={(val) => setBookingMemberId(val)}
                   >
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.role})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select Member" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {members.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>{m.name} ({m.role})</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Hours to Reserve</label>
-                  <input
+                  <Input
                     type="number"
                     step="1"
                     min="1"
                     max="40"
                     value={bookingHours}
                     onChange={(e) => setBookingHours(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Task / Objective</label>
-                  <input
+                  <Input
                     type="text"
                     required
                     placeholder="e.g. Production staging or code review"
                     value={bookingTask}
                     onChange={(e) => setBookingTask(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">
@@ -852,50 +891,58 @@ export default function SchedulePage() {
               <form onSubmit={handleSaveShift} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Squad Member</label>
-                  <select
+                  <Select
                     disabled={!!editingShiftId}
                     value={shiftMemberId || (members[0]?.id || "")}
-                    onChange={(e) => setShiftMemberId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm disabled:opacity-50"
+                    onValueChange={(val) => setShiftMemberId(val)}
                   >
-                    {members.map((m) => (
-                      <option key={m.id} value={m.id}>
-                        {m.name} ({m.role})
-                      </option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm disabled:opacity-50">
+                      <SelectValue placeholder="Select Member" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {members.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name} ({m.role})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Day of Week</label>
-                  <select
-                    value={shiftDayOfWeek}
-                    onChange={(e) => setShiftDayOfWeek(parseInt(e.target.value, 10))}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                  <Select
+                    value={shiftDayOfWeek.toString()}
+                    onValueChange={(val) => setShiftDayOfWeek(parseInt(val, 10))}
                   >
-                    {DAYS_OF_WEEK.map((d) => (
-                      <option key={d.value} value={d.value}>{d.label}</option>
-                    ))}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select Day" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {DAYS_OF_WEEK.map((d) => (
+                        <SelectItem key={d.value} value={d.value.toString()}>{d.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">Start Time</label>
-                    <input
+                    <Input
                       type="time"
                       required
                       value={shiftStartTime}
                       onChange={(e) => setShiftStartTime(e.target.value)}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                      className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                     />
                   </div>
                   <div>
                     <label className="block text-body-sm font-medium text-on-surface mb-1">End Time</label>
-                    <input
+                    <Input
                       type="time"
                       required
                       value={shiftEndTime}
                       onChange={(e) => setShiftEndTime(e.target.value)}
-                      className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                      className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                     />
                   </div>
                 </div>
@@ -939,44 +986,52 @@ export default function SchedulePage() {
               <form onSubmit={handleCreateTrade} className="flex flex-col gap-4 mt-4">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">My Shift to Trade</label>
-                  <select
+                  <Select
                     value={tradeShiftId || (myShifts[0]?.id || staffShifts[0]?.id || "")}
-                    onChange={(e) => setTradeShiftId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    onValueChange={(val) => setTradeShiftId(val)}
                   >
-                    {(myShifts.length > 0 ? myShifts : staffShifts).map((s) => {
-                      const d = DAYS_OF_WEEK.find((day) => day.value === s.dayOfWeek)?.label;
-                      return (
-                        <option key={s.id} value={s.id}>
-                          {d} ({s.startTime} - {s.endTime})
-                        </option>
-                      );
-                    })}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Select shift" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      {(myShifts.length > 0 ? myShifts : staffShifts).map((s) => {
+                        const d = DAYS_OF_WEEK.find((day) => day.value === s.dayOfWeek)?.label;
+                        return (
+                          <SelectItem key={s.id} value={s.id}>
+                            {d} ({s.startTime} - {s.endTime})
+                          </SelectItem>
+                        );
+                      })}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Target Teammate (Optional)</label>
-                  <select
-                    value={tradeTargetMemberId}
-                    onChange={(e) => setTradeTargetMemberId(e.target.value)}
-                    className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                  <Select
+                    value={tradeTargetMemberId || "OPEN"}
+                    onValueChange={(val) => setTradeTargetMemberId(val === "OPEN" ? "" : val)}
                   >
-                    <option value="">Open to anyone</option>
-                    {members
-                      .filter((m) => m.id !== currentMemberId)
-                      .map((m) => (
-                        <option key={m.id} value={m.id}>{m.name} ({m.role})</option>
-                      ))}
-                  </select>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="Open to anyone" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="OPEN">Open to anyone</SelectItem>
+                      {members
+                        .filter((m) => m.id !== currentMemberId)
+                        .map((m) => (
+                          <SelectItem key={m.id} value={m.id}>{m.name} ({m.role})</SelectItem>
+                        ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Reason / Notes</label>
-                  <input
+                  <Input
                     type="text"
                     placeholder="e.g. Personal appointment or doctor visit"
                     value={tradeReason}
                     onChange={(e) => setTradeReason(e.target.value)}
-                    className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
+                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
                 <div className="flex justify-end gap-2 pt-2">

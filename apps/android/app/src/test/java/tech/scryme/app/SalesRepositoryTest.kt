@@ -39,9 +39,9 @@ class SalesRepositoryTest {
             recentTransactions = emptyList()
         )
         val apiResponse = V3ApiResponse(success = true, data = mockAnalyticsDto)
-        coEvery { apiService.getAnalytics() } returns Response.success(apiResponse)
+        coEvery { apiService.getAnalytics(any(), any()) } returns Response.success(apiResponse)
 
-        val result = repository.getSalesAnalytics()
+        val result = repository.getSalesAnalytics("2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z")
 
         assertTrue(result.isSuccess)
         val analytics = result.getOrNull()
@@ -52,7 +52,7 @@ class SalesRepositoryTest {
 
     @Test
     fun getSalesAnalytics_error_returnsFailure() = runTest {
-        coEvery { apiService.getAnalytics() } returns Response.error(500, okhttp3.ResponseBody.create(null, "Server error"))
+        coEvery { apiService.getAnalytics(any(), any()) } returns Response.error(500, okhttp3.ResponseBody.create(null, "Server error"))
 
         val result = repository.getSalesAnalytics()
 
@@ -73,9 +73,9 @@ class SalesRepositoryTest {
             )
         )
         val apiResponse = V3ApiResponse(success = true, data = mockOrders)
-        coEvery { apiService.getOrders(any()) } returns Response.success(apiResponse)
+        coEvery { apiService.getOrders(any(), any(), any()) } returns Response.success(apiResponse)
 
-        val result = repository.getOrders()
+        val result = repository.getOrders("Watch", "2025-01-01T00:00:00Z", "2025-01-31T23:59:59Z")
 
         assertTrue(result.isSuccess)
         val orders = result.getOrNull()

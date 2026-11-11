@@ -1,5 +1,8 @@
 "use client";
 
+import { Input } from "@repo/ui/components/ui/input";
+import { DatePicker } from "@repo/ui/components/ui/date-picker";
+import { format } from "date-fns";
 import React, { useState } from "react";
 import { Plus, X, Check, Trash2 } from "lucide-react";
 import {
@@ -81,32 +84,32 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
             <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Title</label>
-                <input
+                <Input
                   type="text"
                   required
                   placeholder="e.g. Beta Release Candidate"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                <input
+                <Input
                   type="text"
                   placeholder="Target scope or deliverable"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
                 />
               </div>
               <div>
                 <label className="block text-body-sm font-medium text-on-surface mb-1">Target Due Date</label>
-                <input
-                  type="date"
-                  value={dueDate}
-                  onChange={(e) => setDueDate(e.target.value)}
-                  className="w-full h-8 px-3 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm focus:outline-none focus:border-primary-container"
+                <DatePicker
+                  value={dueDate ? new Date(dueDate) : undefined}
+                  onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
+                  placeholder="Select due date"
+                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                 />
               </div>
               <div className="flex justify-end gap-2 pt-2">
