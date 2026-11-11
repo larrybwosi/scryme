@@ -9,10 +9,12 @@ import {
   Briefcase,
   Users,
   X,
+  Flag,
 } from "lucide-react";
 import {
   useCreateStaffShift,
   useCreateTask,
+  useCreateMilestone,
 } from "@/lib/hooks/use-projects";
 import {
   OrganizationMember,
@@ -32,7 +34,7 @@ export const DAYS_OF_WEEK = [
   { value: 7, label: "Sunday" },
 ];
 
-export type ScheduleModalType = "shift" | "booking" | "service";
+export type ScheduleModalType = "shift" | "booking" | "service" | "milestone";
 
 interface AddScheduleModalProps {
   isOpen: boolean;
@@ -41,6 +43,8 @@ interface AddScheduleModalProps {
   projects: Project[];
   existingShifts?: StaffShiftItem[];
   defaultType?: ScheduleModalType;
+  initialDate?: Date | string;
+  defaultProjectId?: string;
   onSuccess?: () => void;
 }
 
@@ -51,40 +55,84 @@ export function AddScheduleModal({
   projects,
   existingShifts = [],
   defaultType = "shift",
+  initialDate,
+  defaultProjectId,
   onSuccess,
 }: AddScheduleModalProps) {
   const [modalType, setModalType] = useState<ScheduleModalType>(defaultType);
 
+  // Helper to resolve formatted date string (YYYY-MM-DD)
+  const resolvedDateStr = React.useMemo(() => {
+    if (!initialDate) return new Date().toISOString().split("T")[0];
+    const d = typeof initialDate === "string" ? new Date(initialDate) : initialDate;
+    return d.toISOString().split("T")[0];
+  }, [initialDate]);
+
+  // Helper to resolve ISO day of week (1=Mon ... 7=Sun)
+  const resolvedDayOfWeek = React.useMemo(() => {
+    if (!initialDate) return 1;
+    const d = typeof initialDate === "string" ? new Date(initialDate) : initialDate;
+    const day = d.getDay();
+    return day === 0 ? 7 : day;
+  }, [initialDate]);
+
   // Shift Form State
   const [shiftMemberId, setShiftMemberId] = useState<string>("");
-  const [shiftDayOfWeek, setShiftDayOfWeek] = useState<number>(1);
+  const [shiftDayOfWeek, setShiftDayOfWeek] = useState<number>(resolvedDayOfWeek);
   const [shiftStartTime, setShiftStartTime] = useState<string>("09:00");
   const [shiftEndTime, setShiftEndTime] = useState<string>("17:00");
 
   // Capacity Reservation Form State
-  const [bookProjectId, setBookProjectId] = useState<string>("");
+  const [bookProjectId, setBookProjectId] = useState<string>(defaultProjectId || "");
   const [bookMemberId, setBookMemberId] = useState<string>("");
   const [bookHours, setBookHours] = useState<string>("4");
   const [bookTaskTitle, setBookTaskTitle] = useState<string>("");
-  const [bookDueDate, setBookDueDate] = useState<string>(() => {
-    const d = new Date();
-    d.setDate(d.getDate() + 1);
-    return d.toISOString().split("T")[0];
-  });
+  const [bookDueDate, setBookDueDate] = useState<string>(resolvedDateStr);
 
   // Scheduled Service Booking State
   const [serviceCustomerName, setServiceCustomerName] = useState<string>("");
   const [serviceCustomerPhone, setServiceCustomerPhone] = useState<string>("");
   const [serviceCustomerEmail, setServiceCustomerEmail] = useState<string>("");
   const [serviceMemberId, setServiceMemberId] = useState<string>("");
-  const [serviceDate, setServiceDate] = useState<string>(() => new Date().toISOString().split("T")[0]);
+  const [serviceDate, setServiceDate] = useState<string>(resolvedDateStr);
   const [serviceStartTime, setServiceStartTime] = useState<string>("10:00");
   const [serviceNotes, setServiceNotes] = useState<string>("");
+
+  // Milestone Creation State
+  const [milestoneProjectId, setMilestoneProjectId] = useState<string>(defaultProjectId || "");
+  const [milestoneTitle, setMilestoneTitle] = useState<string>("");
+  const [milestoneDescription, setMilestoneDescription] = useState<string>("");
+  const [milestoneDueDate, setMilestoneDueDate] = useState<string>(resolvedDateStr);
+
+  // Re-sync states when initialDate, defaultType, or defaultProjectId change
+  React.useEffect(() => {
+    if (defaultType) setModalType(defaultType);
+  }, [defaultType]);
+
+  React.useEffect(() => {
+    if (initialDate) {
+      setShiftDayOfWeek(resolvedDayOfWeek);
+      setBookDueDate(resolvedDateStr);
+      setServiceDate(resolvedDateStr);
+      setMilestoneDueDate(resolvedDateStr);
+    }
+  }, [initialDate, resolvedDayOfWeek, resolvedDateStr]);
+
+  React.useEffect(() => {
+    if (defaultProjectId) {
+      setBookProjectId(defaultProjectId);
+      setMilestoneProjectId(defaultProjectId);
+    } else if (projects.length > 0) {
+      if (!bookProjectId) setBookProjectId(projects[0].id);
+      if (!milestoneProjectId) setMilestoneProjectId(projects[0].id);
+    }
+  }, [defaultProjectId, projects]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const createShiftMutation = useCreateStaffShift();
   const createTaskMutation = useCreateTask();
+  const createMilestoneMutation = useCreateMilestone(milestoneProjectId || projects[0]?.id || "");
 
   if (!isOpen) return null;
 
@@ -213,6 +261,38 @@ export function AddScheduleModal({
     }
   };
 
+  const handleSaveMilestone = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const targetProject = milestoneProjectId || projects[0]?.id;
+    if (!targetProject) {
+      toast.error("Please select a project for the milestone");
+      return;
+    }
+    if (!milestoneTitle.trim()) {
+      toast.error("Please enter a milestone title");
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      await createMilestoneMutation.mutateAsync({
+        projectId: targetProject,
+        title: milestoneTitle.trim(),
+        description: milestoneDescription.trim() || undefined,
+        dueDate: milestoneDueDate ? new Date(milestoneDueDate).toISOString() : undefined,
+        status: "OPEN",
+      });
+
+      toast.success("Project milestone scheduled successfully");
+      onSuccess?.();
+      onClose();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to create milestone");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
       <div className="w-full max-w-lg rounded-xl bg-surface-container border border-outline-variant/50 p-6 shadow-2xl flex flex-col gap-4">
@@ -241,7 +321,7 @@ export function AddScheduleModal({
         </div>
 
         {/* Schedule Type Segmented Tabs */}
-        <div className="grid grid-cols-3 gap-1 bg-surface-container-lowest p-1 rounded-xl border border-outline-variant/30">
+        <div className="grid grid-cols-4 gap-1 bg-surface-container-lowest p-1 rounded-xl border border-outline-variant/30">
           <button
             type="button"
             onClick={() => setModalType("shift")}
@@ -264,7 +344,19 @@ export function AddScheduleModal({
             }`}
           >
             <Briefcase className="h-3.5 w-3.5" />
-            <span>Book Capacity</span>
+            <span>Capacity</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setModalType("milestone")}
+            className={`py-1.5 px-2 rounded-lg text-xs font-medium flex items-center justify-center gap-1.5 transition-all ${
+              modalType === "milestone"
+                ? "bg-primary-container text-on-primary-container shadow-xs"
+                : "text-outline hover:text-on-surface"
+            }`}
+          >
+            <Flag className="h-3.5 w-3.5" />
+            <span>Milestone</span>
           </button>
           <button
             type="button"
@@ -276,7 +368,7 @@ export function AddScheduleModal({
             }`}
           >
             <Users className="h-3.5 w-3.5" />
-            <span>Service Booking</span>
+            <span>Booking</span>
           </button>
         </div>
 
@@ -559,6 +651,79 @@ export function AddScheduleModal({
             </div>
           </form>
         )}
+        {/* Tab 4: Milestone Form */}
+        {modalType === "milestone" && (
+          <form onSubmit={handleSaveMilestone} className="flex flex-col gap-3.5">
+            <div>
+              <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
+              <Select
+                value={milestoneProjectId || (projects[0]?.id || "")}
+                onValueChange={(val) => setMilestoneProjectId(val)}
+              >
+                <SelectTrigger className="w-full h-8 bg-surface-container-high border-outline-variant text-on-surface text-body-sm">
+                  <SelectValue placeholder="Select Project" />
+                </SelectTrigger>
+                <SelectContent className="bg-surface-container-high border-outline-variant text-on-surface">
+                  {projects.map((p) => (
+                    <SelectItem key={p.id} value={p.id}>{p.name} ({p.key})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-body-sm font-medium text-on-surface mb-1">Milestone Title *</label>
+              <Input
+                type="text"
+                required
+                placeholder="e.g. Beta Launch, Customer Pilot Release"
+                value={milestoneTitle}
+                onChange={(e) => setMilestoneTitle(e.target.value)}
+                className="w-full h-8 bg-surface-container-high border-outline-variant text-on-surface text-body-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-body-sm font-medium text-on-surface mb-1">Target / Due Date</label>
+              <Input
+                type="date"
+                required
+                value={milestoneDueDate}
+                onChange={(e) => setMilestoneDueDate(e.target.value)}
+                className="w-full h-8 bg-surface-container-high border-outline-variant text-on-surface text-body-sm"
+              />
+            </div>
+
+            <div>
+              <label className="block text-body-sm font-medium text-on-surface mb-1">Description / Deliverables</label>
+              <Input
+                type="text"
+                placeholder="Key delivery requirements or criteria"
+                value={milestoneDescription}
+                onChange={(e) => setMilestoneDescription(e.target.value)}
+                className="w-full h-8 bg-surface-container-high border-outline-variant text-on-surface text-body-sm"
+              />
+            </div>
+
+            <div className="flex justify-end gap-2 pt-3 border-t border-outline-variant/30">
+              <button
+                type="button"
+                onClick={onClose}
+                className="px-3.5 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={isSubmitting || createMilestoneMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {isSubmitting || createMilestoneMutation.isPending ? "Creating..." : "Create Milestone"}
+              </button>
+            </div>
+          </form>
+        )}
+
       </div>
     </div>
   );
