@@ -1,6 +1,6 @@
 # Scryme V3 Public Service Booking Integration Guide
 
-This guide details how developers can integrate the unauthenticated, storefront-safe public service booking flow of the Scryme V3 API. This feature separates security controls cleanly between Client-side (Storefront/SPA) apps and Server-side (Administrative/Staff) platforms.
+This guide details how developers can integrate the unauthenticated, storefront-safe public service booking flow of the Scryme V3 API. This feature separates security controls cleanly between Client-side apps and Server-side (Administrative/Staff) platforms.
 
 ---
 

@@ -109,7 +109,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: "developer-tools",
-    title: "Developer Tools",
+    title: "Apps & API",
     description: "API clients, webhooks, and device provisioning for developers.",
     icon: <Terminal className="w-5 h-5 text-slate-600 dark:text-slate-300" />,
     tone: "bg-slate-500/10",
@@ -965,7 +965,7 @@ function IntegrationsPageContent() {
       <div className="flex flex-col sm:flex-row sm:justify-between sm:items-end gap-4 mb-6 mt-6">
         <PageHeader
           title="Integrations & Apps"
-          subtitle="Connect messaging, project management, developer tools, and operational webhooks."
+          subtitle="Connect messaging, project management, apps, and operational webhooks."
           icon={<Boxes className="w-8 h-8 text-primary" />}
         />
         <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-border bg-card w-fit">

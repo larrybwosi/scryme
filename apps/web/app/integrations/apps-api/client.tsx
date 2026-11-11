@@ -436,7 +436,7 @@ function AppsApiContent() {
     { id: "v3", label: "API Clients", icon: Key },
     { id: "webhooks", label: "Webhooks", icon: Webhook },
     { id: "devices", label: "Devices", icon: Monitor },
-    { id: "storefront", label: "Storefront / SPA", icon: Globe },
+    { id: "storefront", label: "Client Apps", icon: Globe },
   ];
 
   const availableEvents = [
@@ -457,13 +457,13 @@ function AppsApiContent() {
       <Breadcrumbs
         items={[
           { label: "Integrations", href: "/integrations" },
-          { label: "Developer Tools" },
+          { label: "Apps & API" },
         ]}
       />
 
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 border-b border-border pb-6">
         <PageHeader
-          title="Developer Tools"
+          title="Apps & API"
           subtitle="Manage API credentials, webhooks, and hardware provisioning for your organization."
           icon={<Terminal className="w-6 h-6 text-foreground" />}
         />
