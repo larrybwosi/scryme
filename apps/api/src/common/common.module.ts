@@ -1,12 +1,12 @@
 import { Global, Module } from "@nestjs/common";
 import { ApiRealtimeService } from "./services/realtime.service";
-import { RealtimeModule } from "../v2/realtime/realtime.module";
 import { RabbitMQConsumerService } from "./rabbitmq-consumer.service";
 import { FirebaseModule } from "./firebase/firebase.module";
+import { V3CommonModule } from "../v3/common/v3-common.module";
 
 @Global()
 @Module({
-  imports: [RealtimeModule, FirebaseModule],
+  imports: [V3CommonModule, FirebaseModule],
   providers: [ApiRealtimeService, RabbitMQConsumerService],
   exports: [ApiRealtimeService, RabbitMQConsumerService, FirebaseModule],
 })

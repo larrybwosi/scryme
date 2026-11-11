@@ -80,6 +80,7 @@ const serverSchema = z.object({
   UPSTASH_REDIS_REST_URL: z.string().optional(),
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
   USE_IOREDIS_IN_PROD: z.coerce.boolean().default(false),
+  ENABLE_V2_API: z.coerce.boolean().default(true),
 
   // RabbitMQ
   RABBITMQ_HOST: z.string().optional(),
@@ -371,6 +372,7 @@ function getRawEnv() {
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     USE_IOREDIS_IN_PROD: process.env.USE_IOREDIS_IN_PROD,
+    ENABLE_V2_API: process.env.ENABLE_V2_API,
     JWT_SECRET: process.env.JWT_SECRET,
     INTERNAL_ADMIN_SECRET: process.env.INTERNAL_ADMIN_SECRET,
     APP_VERSION: process.env.APP_VERSION,

@@ -156,9 +156,9 @@ export class ShortUrlController {
       const isPrivate = orgSettings?.forcePrivateAttachments || !isPublic;
 
       if (isPrivate) {
-        const v2Context = req.v2Context;
+        const tenantOrgId = req.v3Context?.organizationId || req.v2Context?.organizationId || req.organization?.id;
         // In production, we might want to be stricter, but for now, we allow access if the organization matches
-        if (!v2Context || v2Context.organizationId !== organizationId) {
+        if (!tenantOrgId || tenantOrgId !== organizationId) {
           return res
             .status(HttpStatus.UNAUTHORIZED)
             .send("Unauthorized: Private document");
