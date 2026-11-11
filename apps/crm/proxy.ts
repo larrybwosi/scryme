@@ -1,8 +1,37 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
+import { env } from "@repo/env";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-const authRoutes = ["/login", "/sign-up"];
+const authRoutes = ["/login", "/sign-up", "/reset-password", "/verify-email"];
 const publicRoutes = ["/api/auth", "/health", "/api/health", "/monitoring"];
+
+function getAuthRouteRedirect(authUrl: string, pathname: string, request: NextRequest): URL {
+  const targetPath =
+    pathname === "/sign-up"
+      ? "/sign-up"
+      : pathname === "/reset-password"
+        ? "/reset-password"
+        : pathname === "/verify-email"
+          ? "/verify-email"
+          : "/sign-in";
+
+  const redirectUrl = new URL(targetPath, authUrl);
+  request.nextUrl.searchParams.forEach((value, key) => {
+    redirectUrl.searchParams.set(key, value);
+  });
+
+  if (!redirectUrl.searchParams.has("callbackURL") && !redirectUrl.searchParams.has("callbackUrl")) {
+    const callback =
+      request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("redirect") ||
+      request.nextUrl.searchParams.get("returnTo") ||
+      request.url;
+    redirectUrl.searchParams.set("callbackURL", callback);
+  }
+
+  return redirectUrl;
+}
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -12,28 +41,27 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip proxy processing for reset password
-  if (pathname === "/reset-password") {
-    return NextResponse.next();
-  }
+  const authUrl = getResolvedAuthUrl(env.NEXT_PUBLIC_AUTH_URL, env.NODE_ENV);
+  const isAuthRoute = authRoutes.includes(pathname);
 
   const session = await auth.api.getSession({
     headers: request.headers,
   });
 
-  const isAuthRoute = authRoutes.includes(pathname);
-
   if (!session) {
     if (isAuthRoute) {
-      return NextResponse.next();
+      return NextResponse.redirect(getAuthRouteRedirect(authUrl, pathname, request));
     }
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/sign-in", authUrl);
+    loginUrl.searchParams.set("callbackURL", request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   // If authenticated and on an auth route, redirect to home or callbackUrl
   if (isAuthRoute) {
     const callbackUrl =
       request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("callbackURL") ||
       request.nextUrl.searchParams.get("redirect") ||
       request.nextUrl.searchParams.get("returnTo");
 

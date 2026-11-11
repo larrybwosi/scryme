@@ -1,9 +1,39 @@
 // proxy.ts
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
+import { env } from "@repo/env";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-const authRoutes = ["/login", "/sign-up", "/reset-password","/.well-known/:"];
-const publicRoutes = ["/api/auth", "/health", "/api/health","/.well-known/:"];
+const authRoutes = ["/login", "/sign-up", "/reset-password", "/verify-email"];
+const publicRoutes = ["/api/auth", "/health", "/api/health", "/.well-known/:"];
+
+function getAuthRouteRedirect(authUrl: string, pathname: string, request: NextRequest): URL {
+  const targetPath =
+    pathname === "/sign-up"
+      ? "/sign-up"
+      : pathname === "/reset-password"
+        ? "/reset-password"
+        : pathname === "/verify-email"
+          ? "/verify-email"
+          : "/sign-in";
+
+  const redirectUrl = new URL(targetPath, authUrl);
+  // Forward search parameters (e.g. token, callbackURL)
+  request.nextUrl.searchParams.forEach((value, key) => {
+    redirectUrl.searchParams.set(key, value);
+  });
+
+  // Ensure callbackURL is present if not already specified
+  if (!redirectUrl.searchParams.has("callbackURL") && !redirectUrl.searchParams.has("callbackUrl")) {
+    const callback = request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("redirect") ||
+      request.nextUrl.searchParams.get("returnTo") ||
+      request.url;
+    redirectUrl.searchParams.set("callbackURL", callback);
+  }
+
+  return redirectUrl;
+}
 
 async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const { pathname } = request.nextUrl;
@@ -13,26 +43,30 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
-  // Skip proxy processing for invitation and reset-password routes
-  if (pathname.startsWith("/invite") || pathname === "/reset-password") {
+  // Skip proxy processing for invitation routes
+  if (pathname.startsWith("/invite")) {
     return NextResponse.next();
   }
+
+  const authUrl = getResolvedAuthUrl(env.NEXT_PUBLIC_AUTH_URL, env.NODE_ENV);
+  const isAuthRoute = authRoutes.includes(pathname);
 
   // Natively fetch the session using the direct auth API via incoming request headers
   const session = await auth.api.getSession({
     headers: request.headers,
   });
 
-  const isAuthRoute = authRoutes.includes(pathname);
   const isBypassedFromLoginCheck = ["/unauthorized"].includes(pathname);
 
   if (!session) {
-    if (isAuthRoute || isBypassedFromLoginCheck) {
+    if (isAuthRoute) {
+      return NextResponse.redirect(getAuthRouteRedirect(authUrl, pathname, request));
+    }
+    if (isBypassedFromLoginCheck) {
       return NextResponse.next();
     }
-    const loginUrl = new URL("/login", request.url);
-    const targetPath = pathname + request.nextUrl.search;
-    loginUrl.searchParams.set("callbackUrl", targetPath);
+    const loginUrl = new URL("/sign-in", authUrl);
+    loginUrl.searchParams.set("callbackURL", request.url);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -40,6 +74,7 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   if (isAuthRoute) {
     const callbackUrl =
       request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("callbackURL") ||
       request.nextUrl.searchParams.get("redirect") ||
       request.nextUrl.searchParams.get("returnTo");
 
@@ -71,8 +106,7 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   // Check for organization (except on /create-org and error pages)
   const organizationId =
     (session.session as any).activeOrganizationId ||
-      (session.user as any).activeOrganizationId;
-
+    (session.user as any).activeOrganizationId;
 
   const isExcludedFromOrgCheck = [
     "/create-org",

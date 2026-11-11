@@ -22,16 +22,25 @@ export function ForgotPasswordPage() {
     return <OrgSelector />;
   }
 
+  const callbackUrl =
+    searchParams?.callbackURL ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect_uri ||
+    searchParams?.returnTo;
+
   const handleResetRequest = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
 
+    const callbackParam = callbackUrl ? `?callbackURL=${encodeURIComponent(callbackUrl)}` : "";
+    const resetRedirectTo = `${window.location.origin}/reset-password${callbackParam}`;
+
     try {
       if (isCustomer) {
         const res = await (customerAuthClient.requestPasswordReset || customerAuthClient.forgetPassword)({
           email,
-          redirectTo: `${window.location.origin}/reset-password`,
+          redirectTo: resetRedirectTo,
         });
 
         if (res?.error) {
@@ -44,7 +53,7 @@ export function ForgotPasswordPage() {
       } else {
         const res = await requestPasswordReset(
           email,
-          `${window.location.origin}/reset-password`
+          resetRedirectTo
         );
 
         if (res?.error) {

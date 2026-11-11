@@ -1,7 +1,9 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { auth } from "@repo/auth/server";
+import { env } from "@repo/env";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-const authRoutes = ["/login"];
+const authRoutes = ["/login", "/sign-in"];
 const publicRoutes = ["/api/auth", "/health", "/api/health"];
 const exemptFromRoleCheck = ["/forbidden"];
 
@@ -13,6 +15,7 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
     return NextResponse.next();
   }
 
+  const authUrl = getResolvedAuthUrl(env.NEXT_PUBLIC_AUTH_URL, env.NODE_ENV);
   const session = await auth.api.getSession({
     headers: request.headers,
   });
@@ -20,10 +23,13 @@ async function handleProxy(request: NextRequest): Promise<NextResponse> {
   const isAuthRoute = authRoutes.includes(pathname);
 
   if (!session) {
-    if (isAuthRoute) {
-      return NextResponse.next();
-    }
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/sign-in", authUrl);
+    const callback =
+      request.nextUrl.searchParams.get("callbackUrl") ||
+      request.nextUrl.searchParams.get("callbackURL") ||
+      request.url;
+    loginUrl.searchParams.set("callbackURL", callback);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Authenticated but on the login page - send to the dashboard

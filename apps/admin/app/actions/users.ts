@@ -301,11 +301,14 @@ export async function resetUserPassword(
     try {
       const { auth } = await import("@repo/auth/server");
       const { headers } = await import("next/headers");
+      const defaultAuthUrl = process.env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444";
+      const authOrigin = (process.env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl).replace(/\/+$/, "");
+      const adminUrl = process.env.NEXT_PUBLIC_ADMIN_URL || "https://admin.scryme.tech";
       await auth.api.requestPasswordReset({
         headers: await headers(),
         body: {
           email: user.email,
-          redirectTo: `${process.env.NEXT_PUBLIC_ADMIN_URL || process.env.NEXT_PUBLIC_APP_URL || "https://admin.scryme.tech"}/reset-password`,
+          redirectTo: `${authOrigin}/reset-password?callbackURL=${encodeURIComponent(adminUrl)}`,
         },
       });
       return {

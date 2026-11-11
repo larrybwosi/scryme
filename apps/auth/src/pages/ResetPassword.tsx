@@ -19,6 +19,11 @@ export function ResetPasswordPage() {
   const orgSlug = tenantContext.orgSlug;
 
   const token = searchParams?.token;
+  const callbackUrl =
+    searchParams?.callbackURL ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect_uri ||
+    searchParams?.returnTo;
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +47,11 @@ export function ResetPasswordPage() {
           toast.error("Password reset failed");
         } else {
           toast.success("Password reset successfully!");
-          navigate({ to: "/sign-in", search: searchParams });
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
+          } else {
+            navigate({ to: "/sign-in", search: searchParams });
+          }
         }
       } else {
         const res = await authClient.resetPassword({
@@ -55,7 +64,11 @@ export function ResetPasswordPage() {
           toast.error("Password reset failed");
         } else {
           toast.success("Password reset successfully!");
-          navigate({ to: "/sign-in", search: searchParams });
+          if (callbackUrl) {
+            window.location.href = callbackUrl;
+          } else {
+            navigate({ to: "/sign-in", search: searchParams });
+          }
         }
       }
     } catch (err: any) {
