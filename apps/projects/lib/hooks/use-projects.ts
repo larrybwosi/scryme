@@ -10,6 +10,8 @@ import {
   Milestone,
   Sprint,
   ProjectDocument,
+  FileUploadResponse,
+  ProjectMemberRecord,
   TimeEntry,
   OrganizationMember,
   WorkspaceContext,
@@ -406,6 +408,85 @@ export function useCreateProjectDocument(projectId: string) {
       });
       queryClient.invalidateQueries({
         queryKey: QUERY_KEYS.projectDocuments(undefined),
+      });
+    },
+  });
+}
+
+export function useUploadFile() {
+  return useMutation<FileUploadResponse, Error, File>({
+    mutationFn: (file: File) => ProjectsAPI.uploadFile(file),
+  });
+}
+
+export function useUpdateProjectDocument(projectId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({
+      documentId,
+      data,
+    }: {
+      documentId: string;
+      data: Partial<ProjectDocument>;
+    }) => ProjectsAPI.updateProjectDocument(documentId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(undefined),
+      });
+    },
+  });
+}
+
+export function useDeleteProjectDocument(projectId?: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (documentId: string) =>
+      ProjectsAPI.deleteProjectDocument(documentId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projectDocuments(undefined),
+      });
+    },
+  });
+}
+
+export function useManageProjectMember(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: { memberId: string; role?: "ADMIN" | "MEMBER" | "VIEWER" }) =>
+      ProjectsAPI.manageProjectMember(projectId, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.project(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projects,
+      });
+    },
+  });
+}
+
+export function useRemoveProjectMember(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: string) =>
+      ProjectsAPI.removeProjectMember(projectId, memberId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.project(projectId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: QUERY_KEYS.projects,
       });
     },
   });

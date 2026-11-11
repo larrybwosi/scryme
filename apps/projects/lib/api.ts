@@ -317,6 +317,30 @@ export interface Project {
   updatedAt: string;
 }
 
+export interface FileUploadResponse {
+  id: string;
+  url: string;
+  shortUrl: string;
+  fileName?: string;
+}
+
+export interface ProjectMemberRecord {
+  id: string;
+  projectId: string;
+  memberId: string;
+  role: "ADMIN" | "MEMBER" | "VIEWER";
+  member?: {
+    id: string;
+    role: string;
+    user?: {
+      id: string;
+      name: string;
+      email: string;
+      image?: string | null;
+    };
+  };
+}
+
 export interface OrganizationMember {
   id: string;
   name: string;
@@ -590,6 +614,32 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
+  async uploadFile(file: File): Promise<FileUploadResponse> {
+    const formData = new FormData();
+    formData.append("file", file);
+    const res = await apiClient.post("/v3/upload", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data",
+      },
+    });
+    return res.data?.data || res.data;
+  },
+
+  async manageProjectMember(
+    projectId: string,
+    data: { memberId: string; role?: "ADMIN" | "MEMBER" | "VIEWER" }
+  ): Promise<ProjectMemberRecord> {
+    const res = await apiClient.post(`/v3/projects/${projectId}/members`, data);
+    return res.data?.data || res.data;
+  },
+
+  async removeProjectMember(
+    projectId: string,
+    memberId: string
+  ): Promise<{ success: boolean; id: string }> {
+    const res = await apiClient.delete(`/v3/projects/${projectId}/members/${memberId}`);
+    return res.data?.data || res.data;
+  },
   async deleteProjectDocument(documentId: string): Promise<{ success: boolean; id: string }> {
     const res = await apiClient.delete(`/v3/projects/documents/${documentId}`);
     return res.data?.data || res.data;
