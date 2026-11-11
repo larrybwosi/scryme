@@ -1,8 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ApiRealtimeService } from '../realtime.service';
-import { RealtimeGateway } from '../../../v2/realtime/realtime.gateway';
 import { V3RealtimeGateway } from '../../../v3/common/realtime/v3-realtime.gateway';
-import { RealtimeRedisService } from '../../../v2/realtime/realtime-redis.service';
+import { RealtimeRedisService } from '../../../v3/common/realtime/realtime-redis.service';
 import { createDelta } from '@repo/shared/realtime';
 import { vi, describe, beforeEach, it, expect } from 'vitest';
 
@@ -12,7 +11,6 @@ vi.mock('@repo/shared/realtime', () => ({
 
 describe('ApiRealtimeService', () => {
   let service: ApiRealtimeService;
-  let v2Gateway: RealtimeGateway;
   let v3Gateway: V3RealtimeGateway;
   let redis: RealtimeRedisService;
 
@@ -20,15 +18,6 @@ describe('ApiRealtimeService', () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         ApiRealtimeService,
-        {
-          provide: RealtimeGateway,
-          useValue: {
-            server: {
-              to: vi.fn().mockReturnThis(),
-              emit: vi.fn(),
-            },
-          },
-        },
         {
           provide: V3RealtimeGateway,
           useValue: {
@@ -49,28 +38,23 @@ describe('ApiRealtimeService', () => {
     }).compile();
 
     service = module.get<ApiRealtimeService>(ApiRealtimeService);
-    v2Gateway = module.get<RealtimeGateway>(RealtimeGateway);
     v3Gateway = module.get<V3RealtimeGateway>(V3RealtimeGateway);
     redis = module.get<RealtimeRedisService>(RealtimeRedisService);
   });
 
-  it('should publish to both v3 and v2 Socket.io gateways', async () => {
+  it('should publish to v3 Socket.io gateway', async () => {
     await service.publish('organization:org1:inventory', 'stock-update', { data: 123 });
 
     expect(redis.saveMessage).toHaveBeenCalledWith('organization:org1:inventory', 'stock-update', { data: 123 });
     expect(v3Gateway.server.to).toHaveBeenCalledWith('organization:org1:inventory');
     expect(v3Gateway.server.emit).toHaveBeenCalledWith('stock-update', { data: 123 });
-    expect(v2Gateway.server.to).toHaveBeenCalledWith('organization:org1:inventory');
-    expect(v2Gateway.server.emit).toHaveBeenCalledWith('stock-update', { data: 123 });
   });
 
-  it('should route v3 channels to both gateways', async () => {
+  it('should route channels cleanly to v3 gateway', async () => {
     await service.publish('v3:orders', 'test-event', { data: 123 });
 
     expect(v3Gateway.server.to).toHaveBeenCalledWith('v3:orders');
     expect(v3Gateway.server.emit).toHaveBeenCalledWith('test-event', { data: 123 });
-    expect(v2Gateway.server.to).toHaveBeenCalledWith('v3:orders');
-    expect(v2Gateway.server.emit).toHaveBeenCalledWith('test-event', { data: 123 });
   });
 
   it('should handle deltas when requested in Socket.io', async () => {
@@ -81,11 +65,10 @@ describe('ApiRealtimeService', () => {
     vi.mocked(redis.getLastState).mockResolvedValue(oldState);
     vi.mocked(createDelta).mockReturnValue(delta);
 
-    await service.publish('v2:test', 'update', newState, { delta: true });
+    await service.publish('test-channel', 'update', newState, { delta: true });
 
-    expect(redis.getLastState).toHaveBeenCalledWith('v2:test', 'update');
+    expect(redis.getLastState).toHaveBeenCalledWith('test-channel', 'update');
     expect(createDelta).toHaveBeenCalledWith(oldState, newState);
     expect(v3Gateway.server.emit).toHaveBeenCalledWith('update:delta', delta);
-    expect(v2Gateway.server.emit).toHaveBeenCalledWith('update:delta', delta);
   });
 });

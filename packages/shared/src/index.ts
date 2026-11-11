@@ -1,6 +1,7 @@
 export * from "./utils";
 export * from "./constants";
 export * from "./integrations";
+export * from "./errors";
 export * from "./api/v2/errors";
 export * from "./api/v2/types";
 export * from "./api/v2/utils/client/formatting";

@@ -1,13 +1,11 @@
 import { Injectable } from "@nestjs/common";
-import { RealtimeGateway } from "../../v2/realtime/realtime.gateway";
 import { V3RealtimeGateway } from "../../v3/common/realtime/v3-realtime.gateway";
-import { RealtimeRedisService } from "../../v2/realtime/realtime-redis.service";
+import { RealtimeRedisService } from "../../v3/common/realtime/realtime-redis.service";
 import { createDelta } from "@repo/shared/realtime";
 
 @Injectable()
 export class ApiRealtimeService {
   constructor(
-    private readonly v2Gateway: RealtimeGateway,
     private readonly v3Gateway: V3RealtimeGateway,
     private readonly redis: RealtimeRedisService,
   ) {}
@@ -37,9 +35,6 @@ export class ApiRealtimeService {
 
     if (this.v3Gateway?.server) {
       this.v3Gateway.server.to(channel).emit(finalEvent, finalData);
-    }
-    if (this.v2Gateway?.server) {
-      this.v2Gateway.server.to(channel).emit(finalEvent, finalData);
     }
   }
 }

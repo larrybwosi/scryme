@@ -137,7 +137,7 @@ services:
           "--tries=1",
           "--timeout=3",
           "--spider",
-          "http://localhost:${API_PORT:-4000}/api/v2/health",
+          "http://localhost:${API_PORT:-4000}/api/v3/health",
         ]
       interval: 60s
       timeout: 10s

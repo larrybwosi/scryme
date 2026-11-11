@@ -78,6 +78,7 @@ export default defineConfig([
       "services/email/index": "src/services/email/index.ts",
       "kra/index": "src/kra/index.ts",
       "telemetry/index": "src/telemetry/index.ts",
+      errors: "src/errors/index.ts",
     },
   },
   {

@@ -300,7 +300,7 @@ services:
           "--no-verbose",
           "--tries=1",
           "--spider",
-          "http://localhost:${API_PORT:-4000}/api/v2/health",
+          "http://localhost:${API_PORT:-4000}/api/v3/health",
         ]
       interval: 60s
       timeout: 10s

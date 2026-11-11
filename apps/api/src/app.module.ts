@@ -36,6 +36,30 @@ import { RedisService } from "./redis/redis.service";
 import { RedisThrottlerStorage } from "./common/throttling/redis-throttler-storage";
 import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-throttler.guard";
 
+const isV2Enabled = env.ENABLE_V2_API !== false;
+
+const v2Imports = isV2Enabled ? [V2Module] : [];
+
+const routerModules = [
+  ...(isV2Enabled
+    ? [
+        {
+          path: "v2",
+          module: V2Module,
+          children: [
+            ...V2_SUB_MODULES.map((m) => ({ path: "/", module: m })),
+            { path: "/", module: UploadModule },
+          ],
+        },
+      ]
+    : []),
+  {
+    path: "v3",
+    module: V3Module,
+    children: V3_SUB_MODULES.map((m) => ({ path: "/", module: m })),
+  },
+];
+
 @Module({
   imports: [
     ScheduleModule.forRoot(),
@@ -69,28 +93,14 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
     AuthModule,
     CustomerAuthModule,
     AutomationModule,
-    V2Module,
+    ...v2Imports,
     V3Module,
     UploadModule,
     ImageModule,
     MpesaModule,
     CommonModule,
     OpenPanelModule,
-    RouterModule.register([
-      {
-        path: "v2",
-        module: V2Module,
-        children: [
-          ...V2_SUB_MODULES.map(m => ({ path: "/", module: m })),
-          { path: "/", module: UploadModule },
-        ],
-      },
-      {
-        path: "v3",
-        module: V3Module,
-        children: V3_SUB_MODULES.map(m => ({ path: "/", module: m })),
-      },
-    ]),
+    RouterModule.register(routerModules),
   ],
   controllers: [AppController],
   providers: [
@@ -103,10 +113,14 @@ import { MultiTenantThrottlerGuard } from "./common/throttling/multi-tenant-thro
       provide: APP_GUARD,
       useClass: MultiTenantThrottlerGuard,
     },
-    {
-      provide: APP_GUARD,
-      useClass: V2AuthGuard,
-    },
+    ...(isV2Enabled
+      ? [
+          {
+            provide: APP_GUARD,
+            useClass: V2AuthGuard,
+          },
+        ]
+      : []),
     {
       provide: APP_GUARD,
       useClass: AuthorizationGuard,

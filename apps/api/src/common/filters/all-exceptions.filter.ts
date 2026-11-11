@@ -5,7 +5,7 @@ import {
   HttpException,
   HttpStatus,
 } from "@nestjs/common";
-import { ApiError } from "@repo/shared/api/v2";
+import { ApiError } from "@repo/shared/errors";
 import { env } from "@repo/env";
 import { redactSensitiveData } from "../utils/redaction";
 import * as Sentry from "@sentry/nestjs";

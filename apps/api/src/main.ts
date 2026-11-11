@@ -180,22 +180,24 @@ async function bootstrap() {
   app.useGlobalInterceptors(new StandardResponseInterceptor());
   app.useGlobalInterceptors(new TimeoutInterceptor());
 
-  // Swagger V2
-  const configV2 = new DocumentBuilder()
-    .setTitle("Scryme V2 API")
-    .setDescription("The Scryme V2 API documentation")
-    .setVersion("2.0")
-    .addApiKey({ type: "apiKey", name: "x-api-key", in: "header" }, "x-api-key")
-    .addApiKey(
-      { type: "apiKey", name: "x-member-token", in: "header" },
-      "x-member-token",
-    )
-    .addBearerAuth()
-    .build();
-  const documentV2 = SwaggerModule.createDocument(app, configV2, {
-    include: [V2Module, ...V2_SUB_MODULES],
-  });
-  SwaggerModule.setup("api/v2/docs", app, documentV2);
+  // Swagger V2 (Legacy, Optional)
+  if (env.ENABLE_V2_API !== false) {
+    const configV2 = new DocumentBuilder()
+      .setTitle("Scryme V2 API")
+      .setDescription("The Scryme V2 API documentation (Legacy)")
+      .setVersion("2.0")
+      .addApiKey({ type: "apiKey", name: "x-api-key", in: "header" }, "x-api-key")
+      .addApiKey(
+        { type: "apiKey", name: "x-member-token", in: "header" },
+        "x-member-token",
+      )
+      .addBearerAuth()
+      .build();
+    const documentV2 = SwaggerModule.createDocument(app, configV2, {
+      include: [V2Module, ...V2_SUB_MODULES],
+    });
+    SwaggerModule.setup("api/v2/docs", app, documentV2);
+  }
 
   // Swagger V3
   const configV3 = new DocumentBuilder()
@@ -250,7 +252,7 @@ async function bootstrap() {
     <h1>Scryme API</h1>
     <p>Welcome to the Scryme API service.</p>
     <div class="links">
-      <a href="/api/v2/docs">V2 API Docs</a>
+      ${env.ENABLE_V2_API !== false ? `<a href="/api/v2/docs">V2 API Docs (Legacy)</a>` : ""}
       <a href="/api/v3/docs">V3 API Docs</a>
     </div>
     <div class="status">Scryme API &middot; Running</div>

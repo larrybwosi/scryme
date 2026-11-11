@@ -154,6 +154,11 @@
       "types": "./src/telemetry/provider.tsx",
       "import": "./dist/telemetry/client.js",
       "require": "./dist/telemetry/client.cjs"
+    },
+    "./errors": {
+      "types": "./src/errors/index.ts",
+      "import": "./dist/errors.js",
+      "require": "./dist/errors.cjs"
     }
   },
   "scripts": {

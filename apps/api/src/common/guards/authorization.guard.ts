@@ -6,7 +6,6 @@ import {
 } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import { PERMISSIONS_KEY, SCOPES_KEY, ALLOW_PUBLIC_KEY } from "../decorators/auth.decorator";
-import { V2ApiContext } from "@repo/shared/api/v2";
 
 @Injectable()
 export class AuthorizationGuard implements CanActivate {
@@ -42,15 +41,19 @@ export class AuthorizationGuard implements CanActivate {
       throw new ForbiddenException("Default deny: no permissions or scopes defined for this endpoint");
     }
 
-    const { v2Context } = context.switchToHttp().getRequest<any>();
+    const req = context.switchToHttp().getRequest<any>();
+    const authContext = req.v3Context || req.v2Context || req.user;
 
-    if (!v2Context) {
+    if (!authContext) {
       throw new ForbiddenException("Security context is missing");
     }
 
+    const permissions: string[] = authContext.permissions || [];
+    const scopes: string[] = authContext.scopes || [];
+
     if (requiredPermissions) {
       const hasPermission = requiredPermissions.every((permission) =>
-        this.hasPermission(v2Context.permissions, permission),
+        this.hasPermission(permissions, permission),
       );
       if (!hasPermission) {
         throw new ForbiddenException("Insufficient permissions");
@@ -59,7 +62,7 @@ export class AuthorizationGuard implements CanActivate {
 
     if (requiredScopes) {
       const hasScope = requiredScopes.every((scope) =>
-        this.hasScope(v2Context.scopes, scope),
+        this.hasScope(scopes, scope),
       );
       if (!hasScope) {
         throw new ForbiddenException("Insufficient scopes");

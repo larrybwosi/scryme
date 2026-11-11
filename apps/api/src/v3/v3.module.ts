@@ -1,3 +1,4 @@
+import { V3HealthModule } from "./modules/health/health.module";
 import { SchedulingModule } from "./modules/scheduling/scheduling.module";
 import { McpModule } from "./modules/mcp/mcp.module";
 import { ReportsModule } from "./modules/reports/reports.module";
@@ -65,6 +66,7 @@ export const V3_SUB_MODULES = [
   SalesModule,
   ReportsModule,
   McpModule,
+  V3HealthModule,
 ];
 
 @Module({

@@ -178,7 +178,8 @@ const SetupTokenStep = ({
     const setupSocket = async () => {
       try {
         const { io } = await import('socket.io-client');
-        socket = io(apiUrl, {
+        const cleanSocketBaseUrl = (apiUrl || "").replace(/\/+$/, "").replace(/\/(api|v3)+$/g, "");
+        socket = io(`${cleanSocketBaseUrl}/v3`, {
           transports: ['websocket', 'polling'],
           autoConnect: true,
           reconnection: true,
