@@ -11,19 +11,22 @@ import {
   User,
   MapPin,
   Clock,
-  CheckCircle2,
-  AlertTriangle,
-  UserPlus,
   RefreshCw,
   Search,
   Filter,
-  Sparkles,
+  UserPlus,
+  AlertCircle,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
+import { toast } from "sonner";
 
 interface BookingRecord {
   id: string;
-  serviceName: string;
+  serviceName?: string;
+  service?: {
+    id: string;
+    name: string;
+  } | null;
   status: BookingStatus;
   scheduledStartTime: string;
   scheduledEndTime?: string | null;
@@ -44,6 +47,7 @@ interface BookingRecord {
       } | null;
     } | null;
   }[];
+  bookingTasks?: BookingTaskItem[];
   tasks?: BookingTaskItem[];
   conflicts?: { type: string; message: string }[];
 }
@@ -55,152 +59,35 @@ export default function BookingsManagementPage() {
   const [isGenerating, setIsGenerating] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("ALL");
-
-  const sampleBookings: BookingRecord[] = [
-    {
-      id: "bkg-101",
-      serviceName: "Full Vehicle Detail & Ceramic Coat",
-      status: "CONFIRMED",
-      scheduledStartTime: new Date(Date.now() + 3600000).toISOString(),
-      scheduledEndTime: new Date(Date.now() + 10800000).toISOString(),
-      customer: {
-        name: "John Miller",
-        email: "john@example.com",
-        phoneNumber: "+254712345678",
-      },
-      location: {
-        id: "loc-1",
-        name: "Main Workshop - Bay 2",
-      },
-      staff: [{ member: { id: "mem-1", user: { name: "David Kim" } } }],
-      conflicts: [],
-      tasks: [
-        {
-          id: "task-1",
-          title: "Pre-Service Vehicle Inspection",
-          status: "IN_PROGRESS",
-          stage: "PRE_SERVICE",
-          assignedTo: { user: { name: "David Kim" } },
-          checklistItems: [
-            {
-              id: "chk-1",
-              title: "Inspect vehicle exterior for preexisting dents & scratches",
-              stage: "PRE_SERVICE",
-              isRequired: true,
-              isCompleted: true,
-              completedBy: { user: { name: "David Kim" } },
-            },
-            {
-              id: "chk-2",
-              title: "Measure paint thickness with gauge",
-              stage: "PRE_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-        {
-          id: "task-2",
-          title: "Decontamination & Ceramic Application",
-          status: "TODO",
-          stage: "IN_SERVICE",
-          assignedTo: { user: { name: "David Kim" } },
-          checklistItems: [
-            {
-              id: "chk-3",
-              title: "Apply iron remover & clay bar treatment",
-              stage: "IN_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-            {
-              id: "chk-4",
-              title: "Apply 2 coats of ceramic protection",
-              stage: "IN_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-        {
-          id: "task-3",
-          title: "Curing & Final Handover Inspection",
-          status: "TODO",
-          stage: "POST_SERVICE",
-          assignedTo: { user: { name: "David Kim" } },
-          checklistItems: [
-            {
-              id: "chk-5",
-              title: "IR lamp cure for 30 minutes",
-              stage: "POST_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-      ],
-    },
-    {
-      id: "bkg-102",
-      serviceName: "Executive Barber Grooming",
-      status: "ASSIGNED",
-      scheduledStartTime: new Date(Date.now() + 7200000).toISOString(),
-      scheduledEndTime: new Date(Date.now() + 10800000).toISOString(),
-      customer: {
-        name: "Sarah Jenkins",
-        email: "sarah@example.com",
-        phoneNumber: "+254799887766",
-      },
-      location: {
-        id: "loc-2",
-        name: "VIP Suite 1",
-      },
-      staff: [{ member: { id: "mem-2", user: { name: "Alex Turner" } } }],
-      conflicts: [
-        {
-          type: "STAFF_CAPACITY_OVERLOAD",
-          message: "Alex Turner projected at 105% capacity for this week (override permitted)",
-        },
-      ],
-      tasks: [],
-    },
-    {
-      id: "bkg-103",
-      serviceName: "Interior Steam & Sanitization",
-      status: "REQUESTED",
-      scheduledStartTime: new Date(Date.now() + 18000000).toISOString(),
-      scheduledEndTime: new Date(Date.now() + 21600000).toISOString(),
-      customer: {
-        name: "Michael Chang",
-        email: "mchang@example.com",
-        phoneNumber: "+254700112233",
-      },
-      location: {
-        id: "loc-1",
-        name: "Main Workshop - Bay 2",
-      },
-      staff: [],
-      conflicts: [],
-      tasks: [],
-    },
-  ];
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fetchBookings = async () => {
     setIsLoading(true);
+    setErrorMessage(null);
     try {
       const response = await apiClient.get("/v3/bookings", {
         params: { status: statusFilter !== "ALL" ? statusFilter : undefined },
       });
-      if (response.data && Array.isArray(response.data) && response.data.length > 0) {
-        setBookings(response.data);
-        if (!selectedBooking) setSelectedBooking(response.data[0]);
+      const data = response.data?.data || response.data;
+      if (Array.isArray(data)) {
+        const normalized = data.map((b: any) => ({
+          ...b,
+          serviceName: b.serviceName || b.service?.name || "Service Booking",
+          tasks: b.bookingTasks || b.tasks || [],
+        }));
+        setBookings(normalized);
+        setSelectedBooking((prev) => {
+          if (!prev) return normalized[0] || null;
+          return normalized.find((item: any) => item.id === prev.id) || normalized[0] || null;
+        });
       } else {
-        setBookings(sampleBookings);
-        if (!selectedBooking) setSelectedBooking(sampleBookings[0]);
+        setBookings([]);
+        setSelectedBooking(null);
       }
-    } catch {
-      setBookings(sampleBookings);
-      if (!selectedBooking) setSelectedBooking(sampleBookings[0]);
+    } catch (err: any) {
+      setErrorMessage(err?.response?.data?.message || "Failed to load bookings");
+      setBookings([]);
+      setSelectedBooking(null);
     } finally {
       setIsLoading(false);
     }
@@ -219,12 +106,15 @@ export default function BookingsManagementPage() {
         reason,
         overrideConflict,
       });
-    } catch {
-      // Optimistic update fallback for UI testing and decoupled execution
-    } finally {
+      toast.success(`Booking transitioned to ${targetStatus}`);
+      await fetchBookings();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to transition status");
+      // Local optimistic reflection if disconnected
       const updatedBooking = { ...selectedBooking, status: targetStatus };
       setSelectedBooking(updatedBooking);
       setBookings((prev) => prev.map((b) => (b.id === selectedBooking.id ? updatedBooking : b)));
+    } finally {
       setIsLoading(false);
     }
   };
@@ -236,14 +126,14 @@ export default function BookingsManagementPage() {
         isCompleted: !currentVal,
       });
     } catch {
-      // Optimistic fallback
+      // Allow seamless UI toggling
     }
 
     // Update in-memory state
     if (selectedBooking.tasks) {
       const updatedTasks = selectedBooking.tasks.map((task) => ({
         ...task,
-        checklistItems: task.checklistItems.map((chk) =>
+        checklistItems: (task.checklistItems || []).map((chk) =>
           chk.id === itemId
             ? {
                 ...chk,
@@ -254,7 +144,7 @@ export default function BookingsManagementPage() {
         ),
       }));
 
-      const allItems = updatedTasks.flatMap((t) => t.checklistItems);
+      const allItems = updatedTasks.flatMap((t) => t.checklistItems || []);
       const isAllDone = allItems.length > 0 && allItems.every((i) => i.isCompleted);
 
       const nextStatus = isAllDone ? ("COMPLETED" as BookingStatus) : selectedBooking.status;
@@ -274,90 +164,32 @@ export default function BookingsManagementPage() {
     setIsGenerating(true);
     try {
       await apiClient.post(`/v3/bookings/${selectedBooking.id}/tasks/generate`, {});
-    } catch {
-      // Fallback generation for mock
+      toast.success("Tasks and checklists generated from service templates");
+      await fetchBookings();
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to generate tasks for booking");
     } finally {
-      const mockGeneratedTasks: BookingTaskItem[] = [
-        {
-          id: `task-gen-1`,
-          title: `Pre-Service Setup: ${selectedBooking.serviceName}`,
-          status: "TODO",
-          stage: "PRE_SERVICE",
-          assignedTo: selectedBooking.staff?.[0]?.member
-            ? { user: { name: selectedBooking.staff[0].member.user?.name || "Assigned Staff" } }
-            : null,
-          checklistItems: [
-            {
-              id: `chk-gen-1`,
-              title: "Verify customer appointment details & vehicle intake",
-              stage: "PRE_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-            {
-              id: `chk-gen-2`,
-              title: "Prepare work bay and sanitize primary equipment",
-              stage: "PRE_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-        {
-          id: `task-gen-2`,
-          title: `Service Execution: ${selectedBooking.serviceName}`,
-          status: "TODO",
-          stage: "IN_SERVICE",
-          checklistItems: [
-            {
-              id: `chk-gen-3`,
-              title: "Execute service procedures per customer requirements",
-              stage: "IN_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-        {
-          id: `task-gen-3`,
-          title: `Post-Service & Handover: ${selectedBooking.serviceName}`,
-          status: "TODO",
-          stage: "POST_SERVICE",
-          checklistItems: [
-            {
-              id: `chk-gen-4`,
-              title: "Final quality audit and customer handover check",
-              stage: "POST_SERVICE",
-              isRequired: true,
-              isCompleted: false,
-            },
-          ],
-        },
-      ];
-
-      const updated = {
-        ...selectedBooking,
-        tasks: mockGeneratedTasks,
-      };
-      setSelectedBooking(updated);
-      setBookings((prev) => prev.map((b) => (b.id === selectedBooking.id ? updated : b)));
       setIsGenerating(false);
     }
   };
 
   const filteredBookings = bookings.filter((b) => {
     const matchesStatus = statusFilter === "ALL" || b.status === statusFilter;
+    const sName = b.serviceName || b.service?.name || "";
+    const cName = b.customer?.name || "";
+    const q = searchQuery.toLowerCase();
     const matchesSearch =
-      b.serviceName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.customer?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      b.id.toLowerCase().includes(searchQuery.toLowerCase());
+      sName.toLowerCase().includes(q) ||
+      cName.toLowerCase().includes(q) ||
+      b.id.toLowerCase().includes(q);
+
     return matchesStatus && matchesSearch;
   });
 
   return (
-    <div className="flex-1 flex flex-col h-full overflow-hidden bg-background">
-      {/* Top Header */}
-      <div className="border-b border-outline-variant/30 px-6 py-4 flex items-center justify-between">
+    <div className="flex flex-col h-[calc(100vh-5rem)]">
+      {/* Header Controls */}
+      <div className="flex flex-wrap items-center justify-between gap-4 p-4 border-b border-outline-variant/30 bg-surface-container-low">
         <div>
           <h1 className="text-xl font-bold text-on-surface flex items-center gap-2">
             <CalendarDays className="w-5 h-5 text-primary" />
@@ -410,12 +242,23 @@ export default function BookingsManagementPage() {
         </div>
       </div>
 
+      {errorMessage && (
+        <div className="p-3 mx-4 mt-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{errorMessage}</span>
+        </div>
+      )}
+
       {/* Main Dual-pane View */}
       <div className="flex-1 flex overflow-hidden">
         {/* Left pane: Bookings list */}
         <div className="w-1/2 border-r border-outline-variant/30 overflow-y-auto p-4 space-y-3">
-          {filteredBookings.length === 0 ? (
-            <div className="p-8 text-center text-xs text-outline">No bookings found.</div>
+          {isLoading && bookings.length === 0 ? (
+            <div className="p-8 text-center text-xs text-outline">Loading bookings...</div>
+          ) : filteredBookings.length === 0 ? (
+            <div className="p-12 text-center text-xs text-outline border border-dashed border-outline-variant/30 rounded-xl">
+              No scheduled service bookings recorded.
+            </div>
           ) : (
             filteredBookings.map((b) => {
               const isSelected = selectedBooking?.id === b.id;
@@ -439,7 +282,7 @@ export default function BookingsManagementPage() {
                   <div className="flex items-start justify-between mb-2">
                     <div>
                       <span className="text-[10px] text-outline uppercase font-mono">{b.id}</span>
-                      <h3 className="text-sm font-semibold text-on-surface">{b.serviceName}</h3>
+                      <h3 className="text-sm font-semibold text-on-surface">{b.serviceName || b.service?.name}</h3>
                     </div>
                     <span className="text-[11px] text-on-surface-variant font-medium flex items-center gap-1">
                       <Clock className="w-3 h-3 text-outline" />
@@ -482,7 +325,7 @@ export default function BookingsManagementPage() {
                 <div className="flex items-start justify-between">
                   <div>
                     <span className="text-xs font-mono text-outline uppercase">{selectedBooking.id}</span>
-                    <h2 className="text-lg font-bold text-on-surface">{selectedBooking.serviceName}</h2>
+                    <h2 className="text-lg font-bold text-on-surface">{selectedBooking.serviceName || selectedBooking.service?.name}</h2>
                   </div>
                   <LifecycleActions
                     currentStatus={selectedBooking.status}

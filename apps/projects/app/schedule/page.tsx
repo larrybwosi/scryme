@@ -3,7 +3,8 @@
 import { Input } from "@repo/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X, CalendarPlus } from "lucide-react";
+import { AddScheduleModal, ScheduleModalType } from "@/components/AddScheduleModal";
 import {
   useMembers,
   useProjects,
@@ -48,6 +49,10 @@ export default function SchedulePage() {
   const processTradeMutation = useProcessShiftTrade();
 
   const { canManageTasks, memberId: currentMemberId } = usePermissions();
+
+  // Unified Schedule Modal State
+  const [isUnifiedModalOpen, setIsUnifiedModalOpen] = useState(false);
+  const [unifiedModalType, setUnifiedModalType] = useState<ScheduleModalType>("shift");
 
   // Booking Capacity Modal State
   const [isBookModalOpen, setIsBookModalOpen] = useState(false);
@@ -308,7 +313,20 @@ export default function SchedulePage() {
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => {
+                  setUnifiedModalType("shift");
+                  setIsUnifiedModalOpen(true);
+                }}
+                className="h-8 px-3.5 bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm rounded-lg flex items-center gap-1.5 shadow-sm transition-all"
+              >
+                <CalendarPlus className="h-4 w-4" />
+                <span>Add Schedule</span>
+              </button>
+            )}
             <div className="flex rounded-lg bg-surface-container-low p-1 border border-outline-variant/30">
               <button
                 type="button"
@@ -749,6 +767,19 @@ export default function SchedulePage() {
             )}
           </div>
         )}
+
+        {/* Unified Add Schedule Modal */}
+        <AddScheduleModal
+          isOpen={isUnifiedModalOpen}
+          onClose={() => setIsUnifiedModalOpen(false)}
+          members={members}
+          projects={projects}
+          existingShifts={staffShifts}
+          defaultType={unifiedModalType}
+          onSuccess={() => {
+            // refresh shift and workload data
+          }}
+        />
 
         {/* Modal: Book Capacity */}
         {isBookModalOpen && (
