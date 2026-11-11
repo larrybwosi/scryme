@@ -531,18 +531,29 @@ export async function createUnit(data: {
   const context = await getOrganizationContext();
   if (!context?.organizationId) throw new Error("Unauthorized");
 
+  // ⚡ Bolt Performance Optimization:
+  // Parallelize location and zone validation queries concurrently using Promise.all
+  // and use explicit select: { id: true } projections to eliminate over-fetching.
+  // This collapses database latency from 2 sequential blocking roundtrips down to 1 concurrent roundtrip (~50% latency reduction).
+  const [location, zone] = await Promise.all([
+    db.inventoryLocation.findFirst({
+      where: { id: data.locationId, organizationId: context.organizationId },
+      select: { id: true },
+    }),
+    data.zoneId
+      ? db.storageZone.findFirst({
+          where: { id: data.zoneId, locationId: data.locationId, organizationId: context.organizationId },
+          select: { id: true },
+        })
+      : Promise.resolve(null),
+  ]);
+
   // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate target location belongs to current tenant
-  const location = await db.inventoryLocation.findFirst({
-    where: { id: data.locationId, organizationId: context.organizationId },
-  });
   if (!location) throw new Error("Invalid location ID or unauthorized");
 
-  if (data.zoneId) {
-    // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and location
-    const zone = await db.storageZone.findFirst({
-      where: { id: data.zoneId, locationId: data.locationId, organizationId: context.organizationId },
-    });
-    if (!zone) throw new Error("Invalid zone ID or unauthorized");
+  // SECURITY (Shield/Sentinel): BOLA/IDOR Prevention - Validate zone belongs to current tenant and location
+  if (data.zoneId && !zone) {
+    throw new Error("Invalid zone ID or unauthorized");
   }
 
   const unit = await db.storageUnit.create({

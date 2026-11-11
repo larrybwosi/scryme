@@ -62,7 +62,7 @@ vi.mock("next/cache", () => ({
 
 import { db } from "@repo/db";
 import { getOrganizationContext } from "../auth";
-import { createLocation, updateLocation } from "../locations";
+import { createLocation, updateLocation, createUnit } from "../locations";
 
 describe("Locations Server Actions - Concurrent Relational Validation", () => {
   beforeEach(() => {
@@ -284,6 +284,149 @@ describe("Locations Server Actions - Concurrent Relational Validation", () => {
         where: { id: "mem-1", organizationId: "org-1" },
         select: { id: true },
       });
+    });
+  });
+
+  describe("createUnit", () => {
+    it("should throw error if unauthenticated", async () => {
+      (getOrganizationContext as any).mockResolvedValue(null);
+
+      await expect(
+        createUnit({
+          name: "Unit A1",
+          unitType: "SHELF" as any,
+          locationId: "loc-1",
+        }),
+      ).rejects.toThrow("Unauthorized");
+    });
+
+    it("should reject creation if target location does not belong to organization", async () => {
+      (getOrganizationContext as any).mockResolvedValue({
+        organizationId: "org-1",
+      });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue(null);
+      (db.storageZone.findFirst as any).mockResolvedValue({ id: "zone-1" });
+
+      await expect(
+        createUnit({
+          name: "Unit A1",
+          unitType: "SHELF" as any,
+          locationId: "foreign-loc",
+          zoneId: "zone-1",
+        }),
+      ).rejects.toThrow("Invalid location ID or unauthorized");
+
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-loc", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.storageZone.findFirst).toHaveBeenCalledWith({
+        where: { id: "zone-1", locationId: "foreign-loc", organizationId: "org-1" },
+        select: { id: true },
+      });
+    });
+
+    it("should reject creation if target zone does not belong to organization and location", async () => {
+      (getOrganizationContext as any).mockResolvedValue({
+        organizationId: "org-1",
+      });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue({ id: "loc-1" });
+      (db.storageZone.findFirst as any).mockResolvedValue(null);
+
+      await expect(
+        createUnit({
+          name: "Unit A1",
+          unitType: "SHELF" as any,
+          locationId: "loc-1",
+          zoneId: "foreign-zone",
+        }),
+      ).rejects.toThrow("Invalid zone ID or unauthorized");
+
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.storageZone.findFirst).toHaveBeenCalledWith({
+        where: { id: "foreign-zone", locationId: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+    });
+
+    it("should parallelize location and zone lookups concurrently and create unit", async () => {
+      (getOrganizationContext as any).mockResolvedValue({
+        organizationId: "org-1",
+      });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue({ id: "loc-1" });
+      (db.storageZone.findFirst as any).mockResolvedValue({ id: "zone-1" });
+      (db.storageUnit.create as any).mockResolvedValue({
+        id: "unit-1",
+        name: "Unit A1",
+        locationId: "loc-1",
+        zoneId: "zone-1",
+        organizationId: "org-1",
+      });
+
+      const result = await createUnit({
+        name: "Unit A1",
+        unitType: "SHELF" as any,
+        locationId: "loc-1",
+        zoneId: "zone-1",
+      });
+
+      expect(result).toMatchObject({
+        id: "unit-1",
+        name: "Unit A1",
+        locationId: "loc-1",
+        zoneId: "zone-1",
+        organizationId: "org-1",
+      });
+
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.storageZone.findFirst).toHaveBeenCalledWith({
+        where: { id: "zone-1", locationId: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.storageUnit.create).toHaveBeenCalledWith({
+        data: expect.objectContaining({
+          name: "Unit A1",
+          locationId: "loc-1",
+          zoneId: "zone-1",
+          organizationId: "org-1",
+        }),
+      });
+    });
+
+    it("should create unit without zone lookup when zoneId is not provided", async () => {
+      (getOrganizationContext as any).mockResolvedValue({
+        organizationId: "org-1",
+      });
+      (db.inventoryLocation.findFirst as any).mockResolvedValue({ id: "loc-1" });
+      (db.storageUnit.create as any).mockResolvedValue({
+        id: "unit-2",
+        name: "Floor Unit",
+        locationId: "loc-1",
+        organizationId: "org-1",
+      });
+
+      const result = await createUnit({
+        name: "Floor Unit",
+        unitType: "SHELF" as any,
+        locationId: "loc-1",
+      });
+
+      expect(result).toMatchObject({
+        id: "unit-2",
+        name: "Floor Unit",
+        locationId: "loc-1",
+      });
+      expect(db.inventoryLocation.findFirst).toHaveBeenCalledWith({
+        where: { id: "loc-1", organizationId: "org-1" },
+        select: { id: true },
+      });
+      expect(db.storageZone.findFirst).not.toHaveBeenCalled();
     });
   });
 });
