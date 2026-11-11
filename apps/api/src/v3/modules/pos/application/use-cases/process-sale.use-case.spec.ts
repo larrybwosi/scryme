@@ -1,3 +1,4 @@
+import { ProductionService } from "../../../production/application/services/production.service";
 import { CrmSyncService } from "../../../crm/infrastructure/services/crm-sync.service";
 import { AutomationService } from "../../../../../automation/automation.service";
 import { Test, TestingModule } from "@nestjs/testing";
@@ -65,6 +66,12 @@ describe("ProcessSaleUseCase", () => {
           provide: AutomationService,
           useValue: {
             triggerWorkflow: vi.fn().mockResolvedValue({ success: true }),
+          },
+        },
+        {
+          provide: ProductionService,
+          useValue: {
+            createBatch: vi.fn().mockResolvedValue({ id: 'batch-auto-1' }),
           },
         },
         {
@@ -909,5 +916,112 @@ describe("ProcessSaleUseCase", () => {
       // Crucial: $transaction should NOT be called for a duplicate sale
       expect(prisma.client.$transaction).not.toHaveBeenCalled();
     });
+  });
+
+  it("should auto-schedule on-demand batch respecting workflow lead time buffer and operator", async () => {
+    invoiceUseCase.createInvoiceFromOrder.mockResolvedValue(null);
+    const productionService = moduleRef.get(ProductionService);
+
+    prisma.client.workflowEngineDefinition = {
+      findFirst: vi.fn().mockResolvedValue({
+        config: {
+          autoScheduleBatch: true,
+          batchLeadTimeHours: 6,
+          autoCreateTask: true,
+          defaultLeadBakerId: "baker-chief",
+        },
+      }),
+    };
+
+    prisma.client.productVariant.findMany.mockResolvedValue([
+      {
+        id: "var-custom-cake",
+        retailPrice: 50,
+        buyingPrice: 20,
+        name: "Custom Cake",
+        sku: "CK-1",
+        product: { name: "Custom Cake" },
+      },
+    ]);
+
+    prisma.client.recipe = {
+      findMany: vi.fn().mockResolvedValue([
+        {
+          id: "recipe-cake-1",
+          producesVariantId: "var-custom-cake",
+          systemUnitId: "sys-unit-pcs",
+        },
+      ]),
+    };
+
+    prisma.client.$transaction = vi.fn().mockImplementation(async (cb) => {
+      const txPrisma = {
+        productVariant: {
+          findMany: vi.fn().mockResolvedValue([
+            {
+              id: "var-custom-cake",
+              retailPrice: 50,
+              buyingPrice: 20,
+              name: "Custom Cake",
+              sku: "CK-1",
+              product: { name: "Custom Cake" },
+            },
+          ]),
+        },
+        priceList: {
+          findMany: vi.fn().mockResolvedValue([]),
+        },
+        transaction: {
+          create: vi.fn().mockResolvedValue({
+            id: "t_preorder_batch_1",
+            number: "ORD-BATCH-001",
+            status: "PREORDER",
+            paymentStatus: "PARTIALLY_PAID",
+            finalTotal: 50,
+          }),
+        },
+        productVariantStock: {
+          update: vi.fn().mockResolvedValue({}),
+        },
+        stockMovement: {
+          createMany: vi.fn().mockResolvedValue({ count: 1 }),
+        },
+      };
+      return cb(txPrisma);
+    });
+
+    const ctx = {
+      organizationId: "org_1",
+      memberId: "mem_1",
+      locationId: "loc_1",
+    };
+
+    const dto = {
+      status: "PREORDER",
+      number: "ORD-BATCH-001",
+      items: [{ variantId: "var-custom-cake", quantity: 2, unitPrice: 50 }],
+      payments: [{ method: "CASH", amount: 20 }],
+      metadata: {
+        dueDate: "2026-11-20",
+        dueTime: "16:00",
+        inscription: "Happy 10th Birthday",
+      },
+    };
+
+    const result = await useCase.execute(ctx, dto);
+
+    expect(result.status).toBe("PREORDER");
+    expect(productionService.createBatch).toHaveBeenCalledWith(
+      "org_1",
+      expect.objectContaining({
+        recipeId: "recipe-cake-1",
+        plannedQuantity: 2,
+        leadBakerId: "baker-chief",
+        orderReference: "ORD-BATCH-001",
+        autoCreateTask: true,
+        // 16:00 - 6 hours buffer = 10:00
+        scheduledStartAt: expect.stringContaining("2026-11-20T10:00:00"),
+      }),
+    );
   });
 });
