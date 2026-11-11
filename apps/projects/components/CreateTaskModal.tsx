@@ -23,6 +23,10 @@ import {
   Folder,
   Check,
   Crown,
+  Sparkles,
+  ExternalLink,
+  ShieldCheck,
+  Info,
 } from "lucide-react";
 import {
   useProjects,
@@ -50,6 +54,8 @@ export interface CreateTaskModalProps {
   defaultParentTaskId?: string;
   defaultSprintId?: string;
   defaultMilestoneId?: string;
+  defaultStartDate?: string;
+  defaultDueDate?: string;
   onTaskCreated?: (task: Task) => void;
 }
 
@@ -63,6 +69,8 @@ export function CreateTaskModal({
   defaultParentTaskId,
   defaultSprintId,
   defaultMilestoneId,
+  defaultStartDate,
+  defaultDueDate,
   onTaskCreated,
 }: CreateTaskModalProps) {
   const { data: projects = [] } = useProjects();
@@ -78,12 +86,13 @@ export function CreateTaskModal({
   const [description, setDescription] = useState("");
   const [status, setStatus] = useState<Task["status"]>(defaultStatus);
   const [priority, setPriority] = useState<Task["priority"]>("MEDIUM");
-  const [startDate, setStartDate] = useState("");
-  const [dueDate, setDueDate] = useState("");
+  const [startDate, setStartDate] = useState(defaultStartDate || "");
+  const [dueDate, setDueDate] = useState(defaultDueDate || "");
   const [estimatedHours, setEstimatedHours] = useState("4");
   const [parentTaskId, setParentTaskId] = useState("");
 
   // Integrations & Iteration
+  const [integrationMode, setIntegrationMode] = useState<"all" | "crm" | "manufacturing" | "milestone" | "sprint">("all");
   const [milestoneId, setMilestoneId] = useState("");
   const [sprintId, setSprintId] = useState("");
   const [bookingId, setBookingId] = useState("");
@@ -132,12 +141,74 @@ export function CreateTaskModal({
     if (defaultMilestoneId) setMilestoneId(defaultMilestoneId);
   }, [defaultMilestoneId]);
 
+  useEffect(() => {
+    if (defaultStartDate) setStartDate(defaultStartDate);
+  }, [defaultStartDate]);
+
+  useEffect(() => {
+    if (defaultDueDate) setDueDate(defaultDueDate);
+  }, [defaultDueDate]);
+
   // Project-dependent data
   const { data: milestones = [] } = useMilestones(projectId);
   const { data: sprints = [] } = useSprints(projectId);
   const { data: labels = [] } = useTaskLabels(projectId);
 
   const createTaskMutation = useCreateTask(projectId);
+
+  // Selected cross-system item details for live previews
+  const selectedBooking = useMemo(
+    () => serviceBookings.find((b) => b.id === bookingId),
+    [serviceBookings, bookingId]
+  );
+
+  const selectedBatch = useMemo(
+    () => batches.find((b) => b.id === batchId),
+    [batches, batchId]
+  );
+
+  const selectedMilestone = useMemo(
+    () => milestones.find((m) => m.id === milestoneId),
+    [milestones, milestoneId]
+  );
+
+  const selectedSprint = useMemo(
+    () => sprints.find((s) => s.id === sprintId),
+    [sprints, sprintId]
+  );
+
+  const handleApplyCrossSystemAutofill = (type: "booking" | "batch" | "milestone") => {
+    if (type === "booking" && selectedBooking) {
+      if (!title) {
+        setTitle(`Execute: ${selectedBooking.serviceName} (${selectedBooking.customer?.name || "Client"})`);
+      }
+      if (!description && selectedBooking.scheduledStartTime) {
+        setDescription(`Linked to customer service booking #${selectedBooking.id.slice(-6).toUpperCase()}\nCustomer: ${selectedBooking.customer?.name || "Guest"}\nPhone: ${selectedBooking.customer?.phone || "N/A"}\nScheduled Start: ${selectedBooking.scheduledStartTime}`);
+      }
+      if (!dueDate && selectedBooking.scheduledStartTime) {
+        setDueDate(selectedBooking.scheduledStartTime.split("T")[0]);
+      }
+      toast.success("Task details populated from Service Booking");
+    } else if (type === "batch" && selectedBatch) {
+      if (!title) {
+        setTitle(`Production Run: ${selectedBatch.batchNumber} (${selectedBatch.recipeName || selectedBatch.runType})`);
+      }
+      if (!description) {
+        setDescription(`Linked to manufacturing batch ${selectedBatch.batchNumber}\nStatus: ${selectedBatch.status}\nRun Type: ${selectedBatch.runType}\nOrder Ref: ${selectedBatch.orderReference || "None"}`);
+      }
+      toast.success("Task details populated from Production Batch");
+    } else if (type === "milestone" && selectedMilestone) {
+      if (!title) {
+        setTitle(`Deliverable: ${selectedMilestone.title}`);
+      }
+      if (!dueDate && selectedMilestone.dueDate) {
+        setDueDate(selectedMilestone.dueDate.split("T")[0]);
+      }
+      toast.success("Task details populated from Milestone");
+    }
+  };
+
+
 
   // Capacity Warning Modal State
   const [warningModalOpen, setWarningModalOpen] = useState(false);
@@ -487,97 +558,239 @@ export function CreateTaskModal({
 
           {/* Section 2: Cross-System Integrations */}
           <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-            <div className="flex items-center gap-2 pb-2 border-b border-outline-variant/20">
-              <Link2 className="h-4 w-4 text-primary" />
-              <span className="font-headline-sm text-body-md text-on-surface font-semibold">
-                Enterprise & Lifecycle Integrations
-              </span>
+            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-outline-variant/20">
+              <div className="flex items-center gap-2">
+                <Link2 className="h-4 w-4 text-primary" />
+                <span className="font-headline-sm text-body-md text-on-surface font-semibold">
+                  Enterprise Cross-System Integrations
+                </span>
+                <span className="px-2 py-0.5 rounded text-[10px] font-label-code bg-primary-container text-on-primary-container">
+                  Live Sync
+                </span>
+              </div>
+              <div className="flex items-center gap-1 bg-surface-container p-0.5 rounded-lg border border-outline-variant/30 text-xs">
+                {(
+                  [
+                    { id: "all", label: "All" },
+                    { id: "crm", label: "CRM Booking" },
+                    { id: "manufacturing", label: "Production" },
+                    { id: "milestone", label: "Milestone" },
+                    { id: "sprint", label: "Sprint" },
+                  ] as const
+                ).map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    onClick={() => setIntegrationMode(tab.id)}
+                    className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${
+                      integrationMode === tab.id
+                        ? "bg-surface-container-highest text-primary shadow-xs"
+                        : "text-outline hover:text-on-surface"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {/* Customer Service Booking Link */}
-              <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1.5">
-                  <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                  <span>Customer Service Booking</span>
-                </label>
-                <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                    <SelectValue placeholder="No Booking Linked" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                    <SelectItem value="NONE">No Booking Linked</SelectItem>
-                    {serviceBookings.map((b) => (
-                      <SelectItem key={b.id} value={b.id}>
-                        {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(integrationMode === "all" || integrationMode === "crm") && (
+                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
+                      <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                      <span>Customer Service Booking</span>
+                    </label>
+                    {selectedBooking && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyCrossSystemAutofill("booking")}
+                        className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
+                        title="Auto-fill title and details from this booking"
+                      >
+                        <Sparkles className="h-2.5 w-2.5" />
+                        <span>Autofill</span>
+                      </button>
+                    )}
+                  </div>
+                  <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="No Booking Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="NONE">No Booking Linked</SelectItem>
+                      {serviceBookings.map((b) => (
+                        <SelectItem key={b.id} value={b.id}>
+                          {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Booking Preview Card */}
+                  {selectedBooking && (
+                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-primary/20 text-[11px] flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-on-surface">{selectedBooking.serviceName}</span>
+                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-primary/20 text-primary">
+                          {selectedBooking.status}
+                        </span>
+                      </div>
+                      <div className="text-outline flex items-center justify-between">
+                        <span>Client: {selectedBooking.customer?.name || "Guest"}</span>
+                        <span>
+                          {selectedBooking.scheduledStartTime
+                            ? new Date(selectedBooking.scheduledStartTime).toLocaleDateString()
+                            : "--"}
+                        </span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Manufacturing / Production Batch Link */}
-              <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1.5">
-                  <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
-                  <span>Production Batch Link</span>
-                </label>
-                <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                    <SelectValue placeholder="No Batch Linked" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                    <SelectItem value="NONE">No Batch Linked</SelectItem>
-                    {batches.map((batch) => (
-                      <SelectItem key={batch.id} value={batch.id}>
-                        {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(integrationMode === "all" || integrationMode === "manufacturing") && (
+                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
+                      <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
+                      <span>Production Batch Link</span>
+                    </label>
+                    {selectedBatch && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyCrossSystemAutofill("batch")}
+                        className="text-[10px] text-amber-400 hover:underline flex items-center gap-0.5"
+                        title="Auto-fill title and details from this batch"
+                      >
+                        <Sparkles className="h-2.5 w-2.5" />
+                        <span>Autofill</span>
+                      </button>
+                    )}
+                  </div>
+                  <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="No Batch Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="NONE">No Batch Linked</SelectItem>
+                      {batches.map((batch) => (
+                        <SelectItem key={batch.id} value={batch.id}>
+                          {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Batch Preview Card */}
+                  {selectedBatch && (
+                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-amber-500/20 text-[11px] flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-on-surface">{selectedBatch.batchNumber}</span>
+                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-amber-500/20 text-amber-300">
+                          {selectedBatch.status}
+                        </span>
+                      </div>
+                      <div className="text-outline flex items-center justify-between">
+                        <span>Run: {selectedBatch.runType}</span>
+                        <span>{selectedBatch.recipeName || selectedBatch.orderReference || "Standard Run"}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Milestone Link */}
-              <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1.5">
-                  <Flag className="h-3.5 w-3.5 text-purple-400" />
-                  <span>Project Milestone</span>
-                </label>
-                <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                    <SelectValue placeholder="No Milestone Linked" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                    <SelectItem value="NONE">No Milestone Linked</SelectItem>
-                    {milestones.map((m) => (
-                      <SelectItem key={m.id} value={m.id}>
-                        {m.title} ({m.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(integrationMode === "all" || integrationMode === "milestone") && (
+                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                  <div className="flex items-center justify-between">
+                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
+                      <Flag className="h-3.5 w-3.5 text-purple-400" />
+                      <span>Project Milestone</span>
+                    </label>
+                    {selectedMilestone && (
+                      <button
+                        type="button"
+                        onClick={() => handleApplyCrossSystemAutofill("milestone")}
+                        className="text-[10px] text-purple-400 hover:underline flex items-center gap-0.5"
+                        title="Auto-fill title and due date from milestone"
+                      >
+                        <Sparkles className="h-2.5 w-2.5" />
+                        <span>Autofill</span>
+                      </button>
+                    )}
+                  </div>
+                  <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="No Milestone Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="NONE">No Milestone Linked</SelectItem>
+                      {milestones.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.title} ({m.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Milestone Preview Card */}
+                  {selectedMilestone && (
+                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-purple-500/20 text-[11px] flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-on-surface">{selectedMilestone.title}</span>
+                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-purple-500/20 text-purple-300">
+                          {selectedMilestone.status}
+                        </span>
+                      </div>
+                      <div className="text-outline flex items-center justify-between">
+                        <span>Target: {selectedMilestone.dueDate ? new Date(selectedMilestone.dueDate).toLocaleDateString() : "No date"}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Sprint / Cycle Link */}
-              <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1.5">
-                  <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
-                  <span>Sprint / Iteration Cycle</span>
-                </label>
-                <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                    <SelectValue placeholder="No Sprint Linked" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                    <SelectItem value="NONE">No Sprint Linked</SelectItem>
-                    {sprints.map((s) => (
-                      <SelectItem key={s.id} value={s.id}>
-                        {s.name} ({s.status})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {(integrationMode === "all" || integrationMode === "sprint") && (
+                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                  <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
+                    <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
+                    <span>Sprint / Iteration Cycle</span>
+                  </label>
+                  <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
+                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                      <SelectValue placeholder="No Sprint Linked" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                      <SelectItem value="NONE">No Sprint Linked</SelectItem>
+                      {sprints.map((s) => (
+                        <SelectItem key={s.id} value={s.id}>
+                          {s.name} ({s.status})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {/* Sprint Preview Card */}
+                  {selectedSprint && (
+                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-cyan-500/20 text-[11px] flex flex-col gap-1">
+                      <div className="flex items-center justify-between">
+                        <span className="font-semibold text-on-surface">{selectedSprint.name}</span>
+                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-cyan-500/20 text-cyan-300">
+                          {selectedSprint.status}
+                        </span>
+                      </div>
+                      <div className="text-outline flex items-center justify-between">
+                        <span>{selectedSprint.startDate ? new Date(selectedSprint.startDate).toLocaleDateString() : ""} - {selectedSprint.endDate ? new Date(selectedSprint.endDate).toLocaleDateString() : ""}</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
 
