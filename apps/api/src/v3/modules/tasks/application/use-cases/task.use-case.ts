@@ -1026,7 +1026,12 @@ export class TaskUseCase {
       const record = memberMap.get(mId);
       const hoursNum = Number(entry.hours);
       record.totalHours += hoursNum;
-      record.billableHours += hoursNum;
+      if (entry.isBillable !== false) {
+        record.billableHours += hoursNum;
+      }
+      if (entry.isLocked) {
+        record.status = 'APPROVED';
+      }
       record.entries.push({
         id: entry.id,
         taskId: entry.taskId,

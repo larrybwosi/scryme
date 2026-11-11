@@ -64,3 +64,10 @@ Assign organization members to projects/tasks, filter by assignee, and handle re
 
 **The decision box:** Every feature carries `Design it (spec)`.
 **Workflow tier:** Beta.
+
+## Slice 4: Enterprise Operations, Advanced Scheduling and Time Tracking
+
+### 8. Enterprise Time Tracking, Scheduling, Tasks and Operations
+Advanced stopwatch persistence, locked timesheets, shift conflict engine, subtask rollups, and operational booking/batch links.
+**Done when:** All four pillars (time tracking, scheduling, tasks, operations) are modernized, connected to V3 APIs, and verified with tests.
+- [x] Design it (spec): `docs/specs/0042-projects-time-tracking-scheduling-tasks-and-operations.md`

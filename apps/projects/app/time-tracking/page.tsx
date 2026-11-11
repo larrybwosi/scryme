@@ -5,7 +5,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useEffect, useMemo } from "react";
-import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, X } from "lucide-react";
+import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, X, Lock } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   useTasks,
@@ -380,7 +380,7 @@ function TimeTrackingContent() {
             </div>
 
             {/* KPI Strip & Weekly Matrix */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-3.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-3.5">
               <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
                 <span className="text-outline text-body-sm">Total Logged on Task</span>
                 <span className="text-headline-lg font-headline-lg text-on-surface">{totalLoggedHours}h</span>
@@ -403,6 +403,18 @@ function TimeTrackingContent() {
                   }`}
                 >
                   {Math.round((totalLoggedHours - (activeTask?.estimatedHours || 0)) * 10) / 10}h
+                </span>
+              </div>
+              <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
+                <span className="text-outline text-body-sm">Billable Ratio</span>
+                <span className="text-headline-lg font-headline-lg text-primary">
+                  {totalLoggedHours > 0
+                    ? Math.round(
+                        (logs.filter((l) => l.isBillable !== false).reduce((a, c) => a + Number(c.hours), 0) /
+                          totalLoggedHours) *
+                          100
+                      )
+                    : 100}%
                 </span>
               </div>
             </div>
@@ -462,8 +474,13 @@ function TimeTrackingContent() {
                   <tbody className="divide-y divide-outline-variant/20">
                     {logs.map((log) => (
                       <tr key={log.id} className="hover:bg-surface-container transition-colors group">
-                        <td className="px-4 py-3 font-medium text-on-surface">
-                          {log.member?.user?.name || "Member"}
+                        <td className="px-4 py-3 font-medium text-on-surface flex items-center gap-1.5">
+                          <span>{log.member?.user?.name || "Member"}</span>
+                          {log.isLocked && (
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-label-badge uppercase bg-amber-500/20 text-amber-400" title="Locked timesheet entry">
+                              <Lock className="h-2.5 w-2.5" /> Locked
+                            </span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-on-surface">{log.description || "--"}</td>
                         <td className="px-4 py-3 font-label-code text-[12px] text-on-surface font-medium">
