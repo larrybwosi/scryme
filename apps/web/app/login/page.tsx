@@ -1,21 +1,30 @@
-import React from "react";
-import { Metadata } from "next";
-import { LoginPageClient } from "./login-client";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-export const metadata: Metadata = {
-  title: "Sign In",
-  description: "Sign in to your Scryme account to access your organization's dashboard, POS, inventory, and management tools.",
-};
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const headerList = await headers();
+  const host = headerList.get("host") || "localhost:3000";
+  const proto = headerList.get("x-forwarded-proto") || "http";
+  const defaultCallback = `${proto}://${host}/dashboard`;
 
-export default function LoginPage() {
-  return (
-    <LoginPageClient
-      displayClass="font-serif"
-      sansClass="font-sans"
-      monoClass="font-mono"
-      displayVar=""
-      sansVar=""
-      monoVar=""
-    />
-  );
+  const authUrl = getResolvedAuthUrl(process.env.NEXT_PUBLIC_AUTH_URL, process.env.NODE_ENV);
+  const target = new URL("/sign-in", authUrl);
+
+  for (const [key, val] of Object.entries(resolvedSearchParams)) {
+    if (typeof val === "string") {
+      target.searchParams.set(key, val);
+    }
+  }
+
+  if (!target.searchParams.has("callbackURL") && !target.searchParams.has("callbackUrl")) {
+    target.searchParams.set("callbackURL", defaultCallback);
+  }
+
+  redirect(target.toString());
 }

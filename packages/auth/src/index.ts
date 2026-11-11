@@ -20,7 +20,20 @@ export const authOptions: BetterAuthOptions = {
     sendOnSignUp: true,
     async sendVerificationEmail({ user, url, token }) {
       try {
-        const verifyUrl = url || `${env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/verify-email?token=${token}`;
+        const defaultAuthUrl = env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444";
+        const authOrigin = (env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl).replace(/\/+$/, "");
+        let callbackURL = "";
+        if (url) {
+          try {
+            const parsed = new URL(url);
+            callbackURL = parsed.searchParams.get("callbackURL") || "";
+          } catch {
+            // Ignore URL parse error
+          }
+        }
+        const callbackQuery = callbackURL ? `&callbackURL=${encodeURIComponent(callbackURL)}` : "";
+        const verifyUrl = `${authOrigin}/verify-email?token=${token}${callbackQuery}`;
+
         await sendVerificationEmail({
           email: user.email,
           url: verifyUrl,
@@ -35,28 +48,23 @@ export const authOptions: BetterAuthOptions = {
     enabled: true,
     async sendResetPassword({ user, url, token }) {
       try {
-        let targetOrigin = env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech";
+        const defaultAuthUrl = env.NODE_ENV === "production" ? "https://auth.scryme.tech" : "http://localhost:4444";
+        const authOrigin = (env.NEXT_PUBLIC_AUTH_URL || defaultAuthUrl).replace(/\/+$/, "");
+        let callbackURL = "";
         if (url) {
           try {
             const parsedUrl = new URL(url);
             const callbackParam = parsedUrl.searchParams.get("callbackURL");
             if (callbackParam) {
-              const decodedCallback = decodeURIComponent(callbackParam);
-              if (decodedCallback.startsWith("http://") || decodedCallback.startsWith("https://")) {
-                const parsedCallback = new URL(decodedCallback);
-                targetOrigin = parsedCallback.origin;
-              } else if (parsedUrl.origin) {
-                targetOrigin = parsedUrl.origin;
-              }
-            } else if (parsedUrl.origin) {
-              targetOrigin = parsedUrl.origin;
+              callbackURL = decodeURIComponent(callbackParam);
             }
           } catch (e) {
-            // Ignore URL parse error and fallback to default targetOrigin
+            // Ignore URL parse error
           }
         }
-        const cleanOrigin = targetOrigin.replace(/\/+$/, "");
-        const resetUrl = `${cleanOrigin}/reset-password?token=${token}`;
+        const callbackQuery = callbackURL ? `&callbackURL=${encodeURIComponent(callbackURL)}` : "";
+        const resetUrl = `${authOrigin}/reset-password?token=${token}${callbackQuery}`;
+
         await sendPasswordResetEmail({
           email: user.email,
           url: resetUrl,

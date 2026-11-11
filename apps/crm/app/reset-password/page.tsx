@@ -1,11 +1,30 @@
-import { Metadata } from "next";
-import ClientPage from "./client";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-export const metadata: Metadata = {
-  title: "Reset Password | Scryme CRM",
-  description: "Reset your Scryme CRM account password securely.",
-};
+export default async function ResetPasswordPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const headerList = await headers();
+  const host = headerList.get("host") || "localhost:3001";
+  const proto = headerList.get("x-forwarded-proto") || "http";
+  const defaultCallback = `${proto}://${host}/`;
 
-export default function Page() {
-  return <ClientPage />;
+  const authUrl = getResolvedAuthUrl(process.env.NEXT_PUBLIC_AUTH_URL, process.env.NODE_ENV);
+  const target = new URL("/reset-password", authUrl);
+
+  for (const [key, val] of Object.entries(resolvedSearchParams)) {
+    if (typeof val === "string") {
+      target.searchParams.set(key, val);
+    }
+  }
+
+  if (!target.searchParams.has("callbackURL") && !target.searchParams.has("callbackUrl")) {
+    target.searchParams.set("callbackURL", defaultCallback);
+  }
+
+  redirect(target.toString());
 }

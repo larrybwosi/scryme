@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import { Link, useSearch } from "@tanstack/react-router";
 import { authClient } from "@/lib/auth-client";
+import { customerAuthClient } from "@/lib/customer-auth-client";
+import { resolveTenantContext } from "@/lib/tenant";
 import { CheckCircle2, XCircle, Loader2, ArrowRight } from "lucide-react";
 
 export function VerifyEmailPage() {
@@ -9,7 +11,15 @@ export function VerifyEmailPage() {
   const [verified, setVerified] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const tenantContext = resolveTenantContext(undefined, searchParams);
+  const isCustomer = tenantContext.isCustomer;
+
   const token = searchParams?.token;
+  const callbackUrl =
+    searchParams?.callbackURL ||
+    searchParams?.callbackUrl ||
+    searchParams?.redirect_uri ||
+    searchParams?.returnTo;
 
   useEffect(() => {
     if (!token) {
@@ -18,23 +28,40 @@ export function VerifyEmailPage() {
       return;
     }
 
+    let isMounted = true;
     const verify = async () => {
       try {
-        const res = await authClient.verifyEmail({ query: { token } });
-        if (res?.error) {
-          setError(res.error.message || "Email verification failed.");
+        let res;
+        if (isCustomer) {
+          res = await customerAuthClient.verifyEmail({ query: { token } });
         } else {
-          setVerified(true);
+          res = await authClient.verifyEmail({ query: { token } });
+        }
+
+        if (res?.error) {
+          if (isMounted) setError(res.error.message || "Email verification failed.");
+        } else {
+          if (isMounted) {
+            setVerified(true);
+            if (callbackUrl) {
+              setTimeout(() => {
+                window.location.href = callbackUrl;
+              }, 2000);
+            }
+          }
         }
       } catch (err: any) {
-        setError(err.message || "An unexpected error occurred.");
+        if (isMounted) setError(err.message || "An unexpected error occurred.");
       } finally {
-        setLoading(false);
+        if (isMounted) setLoading(false);
       }
     };
 
     verify();
-  }, [token]);
+    return () => {
+      isMounted = false;
+    };
+  }, [token, isCustomer, callbackUrl]);
 
   return (
     <div className="w-full animate-in fade-in slide-in-from-bottom-2 duration-300 text-center py-4">
@@ -56,13 +83,24 @@ export function VerifyEmailPage() {
           <p className="text-xs text-[#5B6B7C] max-w-xs mx-auto leading-relaxed">
             Your email address has been verified successfully. You can now sign in to your workspace.
           </p>
-          <Link
-            to="/sign-in"
-            className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all gap-2 mt-2 cursor-pointer shadow-sm"
-          >
-            Continue to Sign In
-            <ArrowRight className="h-3.5 w-3.5" />
-          </Link>
+          {callbackUrl ? (
+            <a
+              href={callbackUrl}
+              className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all gap-2 mt-2 cursor-pointer shadow-sm"
+            >
+              Continue to Application
+              <ArrowRight className="h-3.5 w-3.5" />
+            </a>
+          ) : (
+            <Link
+              to="/sign-in"
+              search={searchParams}
+              className="inline-flex items-center justify-center h-10 px-5 bg-[#0F1B2E] text-white text-xs font-semibold rounded-none hover:bg-[#16283F] transition-all gap-2 mt-2 cursor-pointer shadow-sm"
+            >
+              Continue to Sign In
+              <ArrowRight className="h-3.5 w-3.5" />
+            </Link>
+          )}
         </div>
       ) : (
         <div className="space-y-4">

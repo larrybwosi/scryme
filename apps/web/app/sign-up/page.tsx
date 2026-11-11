@@ -1,11 +1,30 @@
-import { Metadata } from "next";
-import { SignupPageClient } from "./signup-client";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-export const metadata: Metadata = {
-  title: "Create Account",
-  description: "Create a Scryme account to register your organization and manage multi-branch operations, POS systems, and inventory.",
-};
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const headerList = await headers();
+  const host = headerList.get("host") || "localhost:3000";
+  const proto = headerList.get("x-forwarded-proto") || "http";
+  const defaultCallback = `${proto}://${host}/dashboard`;
 
-export default function Page() {
-  return <SignupPageClient />;
+  const authUrl = getResolvedAuthUrl(process.env.NEXT_PUBLIC_AUTH_URL, process.env.NODE_ENV);
+  const target = new URL("/sign-up", authUrl);
+
+  for (const [key, val] of Object.entries(resolvedSearchParams)) {
+    if (typeof val === "string") {
+      target.searchParams.set(key, val);
+    }
+  }
+
+  if (!target.searchParams.has("callbackURL") && !target.searchParams.has("callbackUrl")) {
+    target.searchParams.set("callbackURL", defaultCallback);
+  }
+
+  redirect(target.toString());
 }

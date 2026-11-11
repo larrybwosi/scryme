@@ -320,3 +320,4 @@ export function generateShortCode(): string {
   const nanoid = customAlphabet(alphabet, 8);
   return nanoid();
 }
+export * from './urls';
