@@ -277,5 +277,78 @@ describe("On-Demand Production Workflow & Projections", () => {
         }),
       );
     });
+
+    it("should support customized WhatsApp template and enable toggle from workflow configuration", async () => {
+      mockPrisma.client.batch.findUnique.mockResolvedValue({
+        id: "batch-102",
+        batchNumber: "BAT-12",
+        organizationId: "org-1",
+        runType: "ON_DEMAND",
+        orderReference: "POS-9002",
+        recipe: { id: "recipe-1", name: "Custom Sourdough", producesVariantId: "var-1" },
+      });
+
+      mockPrisma.client.workflowEngineDefinition = {
+        findFirst: vi.fn().mockResolvedValue({
+          config: {
+            enableCustomerWhatsapp: true,
+            customerWhatsappTemplate: "Hi {{customerName}}! Your order {{orderNumber}} ({{productName}}) is finished. Balance: {{currency}} {{remainingBalance}}.",
+          },
+        }),
+      };
+
+      mockPrisma.client.transaction.findFirst.mockResolvedValue({
+        id: "txn-2",
+        number: "POS-9002",
+        finalTotal: 4000,
+        totalPaid: 1500,
+        currencyCode: "KES",
+        customer: { id: "cust-2", name: "Sarah Connor", phone: "+254799887766" },
+      });
+
+      await productionService.completeBatch(
+        { organizationId: "org-1", memberId: "mem-1" } as any,
+        "batch-102",
+        { actualQuantity: 2 },
+      );
+
+      expect(mockWhatsappService.sendMessage).toHaveBeenCalledWith(
+        "org-1",
+        "mem-1",
+        expect.objectContaining({
+          recipientPhone: "+254799887766",
+          text: "Hi Sarah Connor! Your order POS-9002 (Custom Sourdough) is finished. Balance: KES 2500.",
+        }),
+      );
+    });
+
+    it("should bypass customer WhatsApp notification when disabled in workflow configuration", async () => {
+      mockPrisma.client.batch.findUnique.mockResolvedValue({
+        id: "batch-103",
+        batchNumber: "BAT-13",
+        organizationId: "org-1",
+        runType: "ON_DEMAND",
+        orderReference: "POS-9003",
+        recipe: { id: "recipe-1", name: "Bagels", producesVariantId: "var-1" },
+      });
+
+      mockPrisma.client.workflowEngineDefinition = {
+        findFirst: vi.fn().mockResolvedValue({
+          config: {
+            enableCustomerWhatsapp: false,
+          },
+        }),
+      };
+
+      vi.clearAllMocks();
+
+      await productionService.completeBatch(
+        { organizationId: "org-1", memberId: "mem-1" } as any,
+        "batch-103",
+        { actualQuantity: 5 },
+      );
+
+      expect(mockWhatsappService.sendMessage).not.toHaveBeenCalled();
+    });
   });
 });

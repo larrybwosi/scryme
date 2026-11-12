@@ -268,7 +268,7 @@ export class ProcessSaleUseCase {
 
     const isPreorder = dto.status === "PREORDER" || dto.metadata?.isCustomOrder === true;
     if (isPreorder) {
-      this.triggerPreorderWorkflow(orgId, {
+      await this.triggerPreorderWorkflow(orgId, {
         transactionId: transaction.id,
         transactionNumber: transaction.number,
         customerId: transaction.customerId || undefined,
@@ -715,14 +715,39 @@ export class ProcessSaleUseCase {
   }
 
   private async triggerPreorderWorkflow(orgId: string, params: { transactionId: string; transactionNumber: string; customerId?: string; dto: any; total: number }) {
+    // 1. Fetch active preorder workflow definition configuration to support custom options
+    let workflowConfig: any = {};
+    if (this.automationService) {
+      try {
+        const def = await (this.prisma.client as any).workflowEngineDefinition?.findFirst?.({
+          where: {
+            organizationId: orgId,
+            OR: [{ key: "preorder_notification" }, { key: "f/dealio/preorder_notification" }],
+            isActive: true,
+          },
+          select: { config: true },
+        });
+        if (def?.config) {
+          workflowConfig = def.config;
+        }
+      } catch (wfErr: any) {
+        // Fallback to default options if definition lookup fails
+      }
+    }
+
+    const autoScheduleBatch = workflowConfig.autoScheduleBatch !== false;
+    const batchLeadTimeHours = Number(workflowConfig.batchLeadTimeHours ?? 4);
+    const autoCreateTask = workflowConfig.autoCreateTask !== false;
+    const defaultLeadBakerId = workflowConfig.defaultLeadBakerId || undefined;
+
     // ⚡ On-Demand Production Integration: Check if preorder line items correspond to recipes, and auto-queue on-demand batches
     try {
-      if (this.productionService) {
+      if (this.productionService && autoScheduleBatch) {
         const productItems = (params.dto.items || []).filter((i: any) => !i.isService);
         const variantIds = productItems.map((i: any) => i.variantId).filter(Boolean);
 
         if (variantIds.length > 0) {
-          const recipes = await this.prisma.client.recipe.findMany({
+          const recipes = await this.prisma.client.recipe?.findMany?.({
             where: {
               organizationId: orgId,
               producesVariantId: { in: variantIds },
@@ -730,26 +755,41 @@ export class ProcessSaleUseCase {
             include: { systemUnit: true, orgUnit: true },
           });
 
-          for (const item of productItems) {
-            const recipe = recipes.find((r) => r.producesVariantId === item.variantId);
-            if (recipe) {
-              const metadata = params.dto.metadata || {};
-              const scheduledStartAt = metadata.scheduledAt || (metadata.dueDate ? `${metadata.dueDate}T${metadata.dueTime || '09:00'}:00` : undefined);
+          if (recipes && recipes.length > 0) {
+            for (const item of productItems) {
+              const recipe = recipes.find((r: any) => r.producesVariantId === item.variantId);
+              if (recipe) {
+                const metadata = params.dto.metadata || {};
+                let scheduledStartAt: string | undefined = typeof metadata.scheduledAt === "string" ? metadata.scheduledAt : (metadata.scheduledAt ? new Date(metadata.scheduledAt).toISOString() : undefined);
 
-              await this.productionService.createBatch(orgId, {
-                recipeId: recipe.id,
-                plannedQuantity: Number(item.quantity || 1),
-                systemUnitId: recipe.systemUnitId || undefined,
-                orgUnitId: recipe.orgUnitId || undefined,
-                runType: ProductionRunType.ON_DEMAND,
-                orderReference: params.transactionNumber,
-                scheduledStartAt,
-                notes: `Auto-queued from POS Custom Order #${params.transactionNumber}. ${metadata.inscription ? `Inscription: ${metadata.inscription}. ` : ''}${metadata.customizationNotes || ''}`,
-                tags: ['custom-order', `order:${params.transactionNumber}`],
-                autoCreateTask: true,
-              }).catch((bErr) => {
-                console.warn(`[ProcessSale] Failed to auto-queue production batch for item ${item.variantId}:`, bErr.message);
-              });
+                if (!scheduledStartAt && metadata.dueDate) {
+                  const dueDateTimeStr = `${metadata.dueDate}T${metadata.dueTime || '09:00'}:00`;
+                  const dueDateObj = new Date(dueDateTimeStr);
+                  if (!isNaN(dueDateObj.getTime())) {
+                    // Apply configured lead time buffer (e.g. 4 hours before completion due date)
+                    const startMs = dueDateObj.getTime() - batchLeadTimeHours * 3600 * 1000;
+                    scheduledStartAt = new Date(startMs).toISOString();
+                  } else {
+                    scheduledStartAt = dueDateTimeStr;
+                  }
+                }
+
+                await this.productionService.createBatch(orgId, {
+                  recipeId: recipe.id,
+                  plannedQuantity: Number(item.quantity || 1),
+                  systemUnitId: recipe.systemUnitId || undefined,
+                  orgUnitId: recipe.orgUnitId || undefined,
+                  runType: ProductionRunType.ON_DEMAND,
+                  orderReference: params.transactionNumber,
+                  leadBakerId: defaultLeadBakerId,
+                  scheduledStartAt,
+                  notes: `Auto-queued from POS Custom Order #${params.transactionNumber}. ${metadata.inscription ? `Inscription: ${metadata.inscription}. ` : ''}${metadata.customizationNotes || ''}`,
+                  tags: ['custom-order', `order:${params.transactionNumber}`],
+                  autoCreateTask,
+                }).catch((bErr) => {
+                  console.warn(`[ProcessSale] Failed to auto-queue production batch for item ${item.variantId}:`, bErr.message);
+                });
+              }
             }
           }
         }

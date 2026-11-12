@@ -1552,28 +1552,71 @@ export class ProductionService {
       // 4. Client Notification via WhatsApp if batch is linked to an order
       const orderRef = (batch as any).orderReference;
       if (orderRef && this.whatsappService) {
-        const transaction = await this.prisma.client.transaction.findFirst({
-          where: {
-            organizationId,
-            OR: [
-              { id: orderRef },
-              { number: orderRef },
-            ],
-          },
-          include: { customer: true },
-        });
+        // Query workflow configuration for customer WhatsApp customization
+        let enableCustomerWhatsapp = true;
+        let customTemplate = "Hello {{customerName}}! Great news: your order #{{orderNumber}} ({{productName}}) is freshly prepared and ready for pickup. Remaining balance: {{currency}} {{remainingBalance}}. Thank you!";
 
-        const targetPhone = transaction?.customer?.phone || (transaction?.metadata as any)?.customerPhone;
-        const targetName = transaction?.customer?.name || (transaction?.metadata as any)?.customerName || 'Valued Customer';
+        try {
+          const wfDef = await (this.prisma.client as any).workflowEngineDefinition?.findFirst?.({
+            where: {
+              organizationId,
+              OR: [{ key: "preorder_notification" }, { key: "f/dealio/preorder_notification" }],
+            },
+            select: { config: true },
+          });
 
-        if (targetPhone) {
-          const messageText = `Hello ${targetName}! Great news: your custom order #${transaction?.number || orderRef} (${batch.recipe?.name || 'Production Item'}) is freshly prepared and ready for pickup. Thank you!`;
-          this.whatsappService
-            .sendMessage(organizationId, ctx.memberId, {
-              recipientPhone: targetPhone,
-              text: messageText,
-            })
-            .catch((err) => this.logger.warn(`WhatsApp order completion notification failed: ${err.message}`));
+          if (wfDef?.config) {
+            if (wfDef.config.enableCustomerWhatsapp !== undefined) {
+              enableCustomerWhatsapp = Boolean(wfDef.config.enableCustomerWhatsapp);
+            }
+            if (wfDef.config.customerWhatsappTemplate) {
+              customTemplate = wfDef.config.customerWhatsappTemplate;
+            }
+          }
+        } catch (wfErr: any) {
+          // Fall back to default template if workflow definition query fails
+        }
+
+        if (enableCustomerWhatsapp) {
+          const transaction = await this.prisma.client.transaction.findFirst({
+            where: {
+              organizationId,
+              OR: [
+                { id: orderRef },
+                { number: orderRef },
+              ],
+            },
+            include: { customer: true },
+          });
+
+          const targetPhone = transaction?.customer?.phone || (transaction?.metadata as any)?.customerPhone;
+          const targetName = transaction?.customer?.name || (transaction?.metadata as any)?.customerName || 'Valued Customer';
+
+          if (targetPhone) {
+            const finalTotal = Number(transaction?.finalTotal ?? 0);
+            const totalPaid = Number(transaction?.totalPaid ?? 0);
+            const remainingBalance = Math.max(0, finalTotal - totalPaid);
+            const currency = transaction?.currencyCode || "KES";
+            const orderNumber = transaction?.number || orderRef;
+            const productName = batch.recipe?.name || 'Production Item';
+            const meta = (transaction?.metadata as any) || {};
+            const dueDate = meta.dueDate || (meta.scheduledAt ? String(meta.scheduledAt).split("T")[0] : "Today");
+
+            const messageText = customTemplate
+              .replace(/\{\{customerName\}\}/g, targetName)
+              .replace(/\{\{orderNumber\}\}/g, orderNumber)
+              .replace(/\{\{productName\}\}/g, productName)
+              .replace(/\{\{remainingBalance\}\}/g, String(remainingBalance))
+              .replace(/\{\{currency\}\}/g, currency)
+              .replace(/\{\{dueDate\}\}/g, dueDate);
+
+            this.whatsappService
+              .sendMessage(organizationId, ctx.memberId, {
+                recipientPhone: targetPhone,
+                text: messageText,
+              })
+              .catch((err) => this.logger.warn(`WhatsApp order completion notification failed: ${err.message}`));
+          }
         }
       }
     } catch (postErr: any) {

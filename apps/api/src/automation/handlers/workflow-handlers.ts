@@ -1,3 +1,5 @@
+import { ApiRealtimeService } from "@/common/services/realtime.service";
+import { Optional } from "@nestjs/common";
 import { Injectable, Logger } from "@nestjs/common";
 import { PrismaService } from "../../prisma/prisma.service";
 import { WebhookDispatcherService } from "../webhook-dispatcher.service";
@@ -22,6 +24,7 @@ export class WorkflowHandlers {
     private readonly prisma: PrismaService,
     private readonly webhookDispatcher: WebhookDispatcherService,
     private readonly firebaseMessagingService: FirebaseMessagingService,
+    @Optional() private readonly realtimeService?: ApiRealtimeService,
   ) {}
 
   private async dispatchScrymeChatReport(
@@ -156,6 +159,11 @@ export class WorkflowHandlers {
     const customerEmail = ctx.payload?.customerEmail || ctx.payload?.customer?.email || "";
     const notificationEmail = ctx.definitionConfig?.notificationEmail || ctx.payload?.notificationEmail || customerEmail;
 
+    const enableScrymeChat = ctx.definitionConfig?.enableScrymeChat ?? ctx.payload?.enableScrymeChat ?? true;
+    const enablePushNotifications = ctx.definitionConfig?.enablePushNotifications ?? ctx.payload?.enablePushNotifications ?? true;
+    const enableEmailNotifications = ctx.definitionConfig?.enableEmailNotifications ?? ctx.payload?.enableEmailNotifications ?? true;
+    const enableRealtimeAlerts = ctx.definitionConfig?.enableRealtimeAlerts ?? ctx.payload?.enableRealtimeAlerts ?? true;
+
     const metadata = ctx.payload?.metadata || {};
     const dueDate = ctx.payload?.dueDate || metadata.dueDate || (metadata.scheduledAt ? metadata.scheduledAt.split("T")[0] : "N/A");
     const dueTime = ctx.payload?.dueTime || metadata.dueTime || "";
@@ -218,36 +226,43 @@ export class WorkflowHandlers {
       theme: { accentColor: "#f59e0b", borderColor: "#fef3c7", backgroundColor: "#fffbeb" },
     });
 
-    const scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "preorder_alerts", reportMsg, {
-      actions,
-      customMessage: preorderReport,
-      metadata: {
-        transactionId,
-        transactionNumber,
-        depositAmount,
-        remainingBalance,
-        alertType: "PREORDER_NOTIFICATION",
-      },
-    });
-
-    // FCM Push Notification for Preorder
-    try {
-      await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
-        title: `Pre-Order Received: ${transactionNumber}`,
-        body: `Customer: ${customerName} - Schedule: ${dueDate}`,
-        data: {
-          eventType: "PREORDER_NOTIFICATION",
+    let scrymeSent = false;
+    if (enableScrymeChat) {
+      scrymeSent = await this.dispatchScrymeChatReport(ctx.organizationId, "preorder_alerts", reportMsg, {
+        actions,
+        customMessage: preorderReport,
+        metadata: {
           transactionId,
           transactionNumber,
-          organizationId: ctx.organizationId,
+          depositAmount,
+          remainingBalance,
+          alertType: "PREORDER_NOTIFICATION",
         },
       });
-    } catch (fcmError: any) {
-      this.logger.warn(`FCM push for preorder failed: ${fcmError.message}`);
+    }
+
+    // FCM Push Notification for Preorder
+    let fcmSent = false;
+    if (enablePushNotifications && this.firebaseMessagingService) {
+      try {
+        await this.firebaseMessagingService.sendToOrganization(ctx.organizationId, {
+          title: `Pre-Order Received: ${transactionNumber}`,
+          body: `Customer: ${customerName} - Schedule: ${dueDate}`,
+          data: {
+            eventType: "PREORDER_NOTIFICATION",
+            transactionId,
+            transactionNumber,
+            organizationId: ctx.organizationId,
+          },
+        });
+        fcmSent = true;
+      } catch (fcmError: any) {
+        this.logger.warn(`FCM push for preorder failed: ${fcmError.message}`);
+      }
     }
 
     let emailSent = false;
-    if (notificationEmail) {
+    if (enableEmailNotifications && notificationEmail) {
       const emailHtml = `
         200 OK - New Preorder
         <h2>New Pre-Order Notification</h2>
@@ -270,10 +285,34 @@ export class WorkflowHandlers {
       );
     }
 
+    let realtimeSent = false;
+    if (enableRealtimeAlerts && this.realtimeService) {
+      try {
+        const realtimePayload = {
+          eventType: "PREORDER_CREATED",
+          transactionId,
+          transactionNumber,
+          customerName,
+          dueDate,
+          dueTime,
+          depositAmount,
+          remainingBalance,
+          createdAt: new Date().toISOString(),
+        };
+        this.realtimeService.publish(`pos:org:${ctx.organizationId}`, "preorder:created", realtimePayload).catch(() => {});
+        this.realtimeService.publish(`sales:org:${ctx.organizationId}`, "preorder:created", realtimePayload).catch(() => {});
+        realtimeSent = true;
+      } catch (rtErr: any) {
+        this.logger.warn(`Realtime alert for preorder failed: ${rtErr.message}`);
+      }
+    }
+
     return {
       success: true,
       scrymeNotificationSent: scrymeSent,
+      fcmNotificationSent: fcmSent,
       emailSent,
+      realtimeNotificationSent: realtimeSent,
       details: {
         transactionId,
         transactionNumber,
