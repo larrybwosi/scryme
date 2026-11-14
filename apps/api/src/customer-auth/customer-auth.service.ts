@@ -140,7 +140,26 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
         sendOnSignUp: false,
         async sendVerificationEmail({ user, url, token }) {
           try {
-            const verifyUrl = url || `${env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech"}/verify-email?token=${token}`;
+            const orgSlug = (user as any).orgSlug;
+            let authOrigin = env.NEXT_PUBLIC_AUTH_URL || (isProd ? "https://auth.scryme.tech" : "http://localhost:4444");
+            if (orgSlug) {
+              authOrigin = isProd
+                ? `https://${orgSlug}.customers.auth.scryme.tech`
+                : `http://${orgSlug}.customers.localhost:4444`;
+            }
+            authOrigin = authOrigin.replace(/\/+$/, "");
+            let callbackURL = "";
+            if (url) {
+              try {
+                const parsed = new URL(url);
+                callbackURL = parsed.searchParams.get("callbackURL") || "";
+              } catch {
+                // Ignore URL parse error
+              }
+            }
+            const callbackQuery = callbackURL ? `&callbackURL=${encodeURIComponent(callbackURL)}` : "";
+            const verifyUrl = `${authOrigin}/verify-email?token=${token}${callbackQuery}`;
+
             await sendVerificationEmail({
               email: user.email,
               url: verifyUrl,
@@ -155,28 +174,29 @@ export class CustomerAuthService implements OnModuleInit, OnModuleDestroy {
         enabled: true,
         async sendResetPassword({ user, url, token }) {
           try {
-            let targetOrigin = env.NEXT_PUBLIC_APP_URL || "https://app.scryme.tech";
+            const orgSlug = (user as any).orgSlug;
+            let authOrigin = env.NEXT_PUBLIC_AUTH_URL || (isProd ? "https://auth.scryme.tech" : "http://localhost:4444");
+            if (orgSlug) {
+              authOrigin = isProd
+                ? `https://${orgSlug}.customers.auth.scryme.tech`
+                : `http://${orgSlug}.customers.localhost:4444`;
+            }
+            authOrigin = authOrigin.replace(/\/+$/, "");
+            let callbackURL = "";
             if (url) {
               try {
                 const parsedUrl = new URL(url);
                 const callbackParam = parsedUrl.searchParams.get("callbackURL");
                 if (callbackParam) {
-                  const decodedCallback = decodeURIComponent(callbackParam);
-                  if (decodedCallback.startsWith("http://") || decodedCallback.startsWith("https://")) {
-                    const parsedCallback = new URL(decodedCallback);
-                    targetOrigin = parsedCallback.origin;
-                  } else if (parsedUrl.origin) {
-                    targetOrigin = parsedUrl.origin;
-                  }
-                } else if (parsedUrl.origin) {
-                  targetOrigin = parsedUrl.origin;
+                  callbackURL = decodeURIComponent(callbackParam);
                 }
               } catch (e) {
                 // Ignore URL parse error
               }
             }
-            const cleanOrigin = targetOrigin.replace(/\/+$/, "");
-            const resetUrl = `${cleanOrigin}/reset-password?token=${token}`;
+            const callbackQuery = callbackURL ? `&callbackURL=${encodeURIComponent(callbackURL)}` : "";
+            const resetUrl = `${authOrigin}/reset-password?token=${token}${callbackQuery}`;
+
             await sendPasswordResetEmail({
               email: user.email,
               url: resetUrl,

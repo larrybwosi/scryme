@@ -302,5 +302,38 @@ describe("WorkflowHandlers", () => {
         }),
       );
     });
+
+    it("should respect channel toggles for preorder notification", async () => {
+      mockPrisma.client.scrymeConfiguration.findUnique.mockResolvedValue({
+        isActive: true,
+        workspaceSlug: "scryme-bakery",
+      });
+
+      const result = await handlers.executeHandler("preorder_notification", {
+        organizationId: "org_1",
+        executionId: "exec_5",
+        jobId: "job_5",
+        definitionConfig: {
+          enableScrymeChat: false,
+          enablePushNotifications: false,
+          enableEmailNotifications: false,
+          enableRealtimeAlerts: false,
+          notificationEmail: "orders@bakery.com",
+        },
+        payload: {
+          transactionId: "txn_1002",
+          transactionNumber: "TRX-2026-00102",
+          customerName: "Jane Doe",
+          finalTotal: 5000,
+        },
+      });
+
+      expect(result.success).toBe(true);
+      expect(result.scrymeNotificationSent).toBe(false);
+      expect(result.fcmNotificationSent).toBe(false);
+      expect(result.emailSent).toBe(false);
+      expect(result.realtimeNotificationSent).toBe(false);
+      expect(result.details.customerName).toBe("Jane Doe");
+    });
   });
 });

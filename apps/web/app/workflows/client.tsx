@@ -376,6 +376,96 @@ function initialGraph(workflow?: Workflow) {
 
   const key = (workflow?.path || workflow?.key || "").replace(/^f\/dealio\//, "");
 
+  // Built-in Template: Preorder Automation & Scheduling
+  if (key === "preorder_notification") {
+    const nodes: StudioNode[] = [
+      {
+        id: "trigger-preorder",
+        type: "studio",
+        position: { x: 50, y: 160 },
+        data: {
+          ...palette[0],
+          label: "Pre-Order Booked",
+          subtitle: "POS / Sales Event",
+          description: "Triggered whenever a preorder or custom sales order is processed.",
+          config: { eventType: "sales.preorder_created", source: "pos" },
+        },
+      },
+      {
+        id: "branch-recipe",
+        type: "studio",
+        position: { x: 340, y: 160 },
+        data: {
+          ...palette[5],
+          label: "Check Production Recipe",
+          subtitle: "Recipe & Schedule Verification",
+          description: "Verify if custom preorder items correspond to production recipes.",
+          conditions: {
+            matchMode: "ALL",
+            rules: [
+              { id: "r1", field: "payload.dueDate", operator: "is_not_empty", value: "" },
+            ],
+          },
+        },
+      },
+      {
+        id: "action-schedule-batch",
+        type: "studio",
+        position: { x: 650, y: 70 },
+        data: {
+          ...palette[8],
+          label: "Schedule Production Batch",
+          subtitle: "Bakery / Production Queue",
+          description: "Auto-creates on-demand batch with buffer lead time and linked task.",
+          config: {
+            leadTimeHours: workflow?.settings?.batchLeadTimeHours ?? 4,
+            autoTask: workflow?.settings?.autoCreateTask !== false,
+            runType: "ON_DEMAND",
+          },
+        },
+      },
+      {
+        id: "action-notify-staff",
+        type: "studio",
+        position: { x: 650, y: 240 },
+        data: {
+          ...palette[3],
+          label: "Multi-Channel Staff Alert",
+          subtitle: "Scryme Chat, FCM & Email",
+          description: "Broadcasts preorder alert card, mobile push, and management email.",
+          config: {
+            channel: "preorder_alerts",
+            scrymeChat: workflow?.settings?.enableScrymeChat !== false,
+            pushFCM: workflow?.settings?.enablePushNotifications !== false,
+            email: workflow?.settings?.notificationEmail || "",
+          },
+        },
+      },
+      {
+        id: "action-customer-whatsapp",
+        type: "studio",
+        position: { x: 960, y: 70 },
+        data: {
+          ...palette[2],
+          label: "Customer WhatsApp on Ready",
+          subtitle: "Customer Communication",
+          description: "Dispatches personalized WhatsApp pickup notification upon batch completion.",
+          config: {
+            enabled: workflow?.settings?.enableCustomerWhatsapp !== false,
+            template: workflow?.settings?.customerWhatsappTemplate || "Order ready for pickup",
+          },
+        },
+      },
+    ];
+    const edges: Edge[] = [
+      { id: "e1", source: "trigger-preorder", target: "branch-recipe", animated: true, style: { strokeWidth: 2, stroke: "#06b6d4" } },
+      { id: "e2", source: "branch-recipe", sourceHandle: "true", target: "action-schedule-batch", animated: true, style: { strokeWidth: 2, stroke: "#10b981" } },
+      { id: "e3", source: "branch-recipe", sourceHandle: "true", target: "action-notify-staff", animated: true, style: { strokeWidth: 2, stroke: "#6366f1" } },
+      { id: "e4", source: "action-schedule-batch", target: "action-customer-whatsapp", animated: true, style: { strokeWidth: 2, stroke: "#22c55e" } },
+    ];
+    return { nodes, edges };
+  }
+
   // Built-in Template: Customer Onboarding
   if (key === "customer_onboarding") {
     const nodes: StudioNode[] = [

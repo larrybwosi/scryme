@@ -1,29 +1,30 @@
-import { Metadata } from "next";
-import SignupPage from "./signup-client";
+import { redirect } from "next/navigation";
+import { headers } from "next/headers";
+import { getResolvedAuthUrl } from "@repo/shared/utils";
 
-export const metadata: Metadata = {
-  title: "Create an Account",
-  description:
-    "Create an enterprise CRM account with Scryme to collaborate with vetted agencies and streamline your client pipeline.",
-  alternates: {
-    canonical: "/sign-up",
-  },
-  openGraph: {
-    title: "Create an Account | Scryme CRM",
-    description:
-      "Create an enterprise CRM account with Scryme to collaborate with vetted agencies and streamline your client pipeline.",
-    url: "https://crm.scryme.tech/sign-up",
-  },
-};
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
+  const resolvedSearchParams = await searchParams;
+  const headerList = await headers();
+  const host = headerList.get("host") || "localhost:3001";
+  const proto = headerList.get("x-forwarded-proto") || "http";
+  const defaultCallback = `${proto}://${host}/`;
 
-type Params = Promise<{ slug: string }>;
-type SearchParams = Promise<{ [key: string]: string | string[] | undefined }>;
+  const authUrl = getResolvedAuthUrl(process.env.NEXT_PUBLIC_AUTH_URL, process.env.NODE_ENV);
+  const target = new URL("/sign-up", authUrl);
 
-interface PageProps {
-  params: Params;
-  searchParams: SearchParams;
-}
+  for (const [key, val] of Object.entries(resolvedSearchParams)) {
+    if (typeof val === "string") {
+      target.searchParams.set(key, val);
+    }
+  }
 
-export default function Page({ params, searchParams }: PageProps) {
-  return <SignupPage params={params} searchParams={searchParams} />;
+  if (!target.searchParams.has("callbackURL") && !target.searchParams.has("callbackUrl")) {
+    target.searchParams.set("callbackURL", defaultCallback);
+  }
+
+  redirect(target.toString());
 }

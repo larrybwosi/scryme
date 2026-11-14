@@ -16,12 +16,22 @@ import {
   Headphones,
   UserCheck,
   Flag,
+  Plus,
+  Calendar as CalendarIcon,
+  Clock,
+  Briefcase,
+  Eye,
+  Check,
 } from "lucide-react";
 import {
   useUnifiedCalendarEvents,
   useUpdateUnifiedEvent,
   useProjects,
+  useMembers,
+  useStaffShifts,
 } from "@/lib/hooks/use-projects";
+import { CreateTaskModal } from "@/components/CreateTaskModal";
+import { AddScheduleModal } from "@/components/AddScheduleModal";
 import { usePermissions } from "@/lib/permissions";
 import { UnifiedCalendarEvent } from "@/lib/api";
 
@@ -50,12 +60,84 @@ const CATEGORIES: CategoryConfig[] = [
 export default function CalendarPage() {
   const [selectedProjectId, setSelectedProjectId] = useState<string>("");
   const { data: projects = [] } = useProjects();
+  const { data: members = [] } = useMembers();
+  const { data: staffShifts = [] } = useStaffShifts();
   const { canManageTasks } = usePermissions();
 
   const [currentDate, setCurrentDate] = useState(() => new Date());
   const [viewMode, setViewMode] = useState<"month" | "week" | "day">("month");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedEvent, setSelectedEvent] = useState<UnifiedCalendarEvent | null>(null);
+
+  // Modals state for adding task or schedule items to a specific date
+  const [createTaskModalOpen, setCreateTaskModalOpen] = useState(false);
+  const [addScheduleModalOpen, setAddScheduleModalOpen] = useState(false);
+  const [contextTargetDate, setContextTargetDate] = useState<Date>(new Date());
+  const [contextScheduleDefaultType, setContextScheduleDefaultType] = useState<"shift" | "booking" | "service" | "milestone">("shift");
+
+  // Custom floating context menu state
+  const [contextMenu, setContextMenu] = useState<{
+    visible: boolean;
+    x: number;
+    y: number;
+    date: Date;
+    event?: UnifiedCalendarEvent | null;
+  } | null>(null);
+
+  // Close context menu on global click, escape key, or scroll
+  React.useEffect(() => {
+    const handleClose = () => {
+      if (contextMenu?.visible) setContextMenu(null);
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setContextMenu(null);
+    };
+
+    window.addEventListener("click", handleClose);
+    window.addEventListener("scroll", handleClose, true);
+    window.addEventListener("resize", handleClose);
+    window.addEventListener("keydown", handleKeyDown);
+
+    return () => {
+      window.removeEventListener("click", handleClose);
+      window.removeEventListener("scroll", handleClose, true);
+      window.removeEventListener("resize", handleClose);
+      window.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [contextMenu]);
+
+  // Context menu trigger handler
+  const handleOpenContextMenu = (e: React.MouseEvent, date: Date, event?: UnifiedCalendarEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    // Clamp coordinates to keep menu inside viewport
+    const menuWidth = 220;
+    const menuHeight = 240;
+    const posX = e.clientX + menuWidth > window.innerWidth ? window.innerWidth - menuWidth - 12 : e.clientX;
+    const posY = e.clientY + menuHeight > window.innerHeight ? window.innerHeight - menuHeight - 12 : e.clientY;
+
+    setContextMenu({
+      visible: true,
+      x: Math.max(8, posX),
+      y: Math.max(8, posY),
+      date,
+      event: event || null,
+    });
+  };
+
+  const handleOpenCreateTaskForDate = (date: Date) => {
+    setContextTargetDate(date);
+    setCreateTaskModalOpen(true);
+    setContextMenu(null);
+  };
+
+  const handleOpenAddScheduleForDate = (date: Date, type: "shift" | "booking" | "service" | "milestone" = "shift") => {
+    setContextTargetDate(date);
+    setContextScheduleDefaultType(type);
+    setAddScheduleModalOpen(true);
+    setContextMenu(null);
+  };
 
   // Compute date range for fetching unified calendar events
   const { rangeFrom, rangeTo } = useMemo(() => {
@@ -355,7 +437,8 @@ export default function CalendarPage() {
                 return (
                   <div
                     key={idx}
-                    className={`min-h-[110px] p-2 flex flex-col justify-between transition-colors ${
+                    onContextMenu={(e) => handleOpenContextMenu(e, day.date)}
+                    className={`min-h-[110px] p-2 flex flex-col justify-between transition-colors select-none ${
                       day.isCurrentMonth
                         ? "bg-surface-container-lowest hover:bg-surface-container-low/40"
                         : "bg-surface-container/30 text-outline-variant opacity-60"
@@ -387,10 +470,11 @@ export default function CalendarPage() {
                           key={ev.id}
                           type="button"
                           onClick={() => setSelectedEvent(ev)}
+                          onContextMenu={(e) => handleOpenContextMenu(e, day.date, ev)}
                           className={`flex items-center gap-1 px-1.5 py-0.5 rounded text-[11px] truncate border text-left transition-all hover:scale-[1.01] ${getEventBadgeClass(
                             ev
                           )}`}
-                          title={`${ev.title} (${ev.status})`}
+                          title={`${ev.title} (${ev.status}) - Right-click for options`}
                         >
                           {(() => {
                             const IconComp = getCategoryIcon(ev.category);
@@ -434,7 +518,8 @@ export default function CalendarPage() {
                   <div
                     key={ev.id}
                     onClick={() => setSelectedEvent(ev)}
-                    className="flex flex-wrap items-center justify-between gap-3 py-3 hover:bg-surface-container-low/40 px-2 rounded-lg cursor-pointer transition-colors"
+                    onContextMenu={(e) => handleOpenContextMenu(e, new Date(ev.startAt), ev)}
+                    className="flex flex-wrap items-center justify-between gap-3 py-3 hover:bg-surface-container-low/40 px-2 rounded-lg cursor-pointer transition-colors select-none"
                   >
                     <div className="flex items-center gap-3">
                       <div
@@ -711,6 +796,139 @@ export default function CalendarPage() {
             </div>
           </div>
         )}
+
+        {/* Custom Right-Click Context Menu */}
+        {contextMenu && contextMenu.visible && (
+          <div
+            style={{
+              position: "fixed",
+              top: `${contextMenu.y}px`,
+              left: `${contextMenu.x}px`,
+              zIndex: 100,
+            }}
+            onClick={(e) => e.stopPropagation()}
+            className="w-56 rounded-xl bg-surface-container-high border border-outline-variant/50 p-1.5 shadow-2xl backdrop-blur-md flex flex-col gap-0.5 animate-in fade-in-50 zoom-in-95 text-body-sm select-none"
+          >
+            <div className="px-2.5 py-1.5 border-b border-outline-variant/20 mb-1 text-[11px] font-label-badge text-outline flex items-center justify-between">
+              <span className="font-semibold text-on-surface">
+                {contextMenu.date.toLocaleDateString("en-US", {
+                  weekday: "short",
+                  month: "short",
+                  day: "numeric",
+                })}
+              </span>
+              <span className="font-label-code text-[10px] uppercase text-primary">Options</span>
+            </div>
+
+            {/* If clicked on an existing event */}
+            {contextMenu.event ? (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedEvent(contextMenu.event!);
+                    setContextMenu(null);
+                  }}
+                  className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+                >
+                  <Eye className="h-4 w-4 text-primary" />
+                  <span>Inspect Details</span>
+                </button>
+
+                {contextMenu.event.category === "task" && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      updateUnifiedEventMutation.mutate({
+                        eventId: contextMenu.event!.id,
+                        payload: {
+                          category: "task",
+                          status: contextMenu.event!.status === "DONE" ? "IN_PROGRESS" : "DONE",
+                        },
+                      });
+                      setContextMenu(null);
+                    }}
+                    className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+                  >
+                    <Check className="h-4 w-4 text-emerald-400" />
+                    <span>
+                      {contextMenu.event.status === "DONE" ? "Mark In Progress" : "Mark Done"}
+                    </span>
+                  </button>
+                )}
+
+                <div className="h-px bg-outline-variant/20 my-0.5" />
+              </>
+            ) : null}
+
+            {/* Core Creation Options for the selected Date */}
+            <button
+              type="button"
+              onClick={() => handleOpenCreateTaskForDate(contextMenu.date)}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors font-medium text-primary"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Add Task</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "milestone")}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+            >
+              <Flag className="h-4 w-4 text-purple-400" />
+              <span>Add Milestone</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "shift")}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+            >
+              <Clock className="h-4 w-4 text-teal-400" />
+              <span>Add Staff Shift</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "booking")}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+            >
+              <Briefcase className="h-4 w-4 text-amber-400" />
+              <span>Reserve Capacity</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "service")}
+              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
+            >
+              <CalendarIcon className="h-4 w-4 text-cyan-400" />
+              <span>Service Booking</span>
+            </button>
+          </div>
+        )}
+
+        {/* Modal: Create Task for Date */}
+        <CreateTaskModal
+          isOpen={createTaskModalOpen}
+          onClose={() => setCreateTaskModalOpen(false)}
+          defaultProjectId={selectedProjectId || undefined}
+          defaultStartDate={contextTargetDate ? contextTargetDate.toISOString().split("T")[0] : undefined}
+          defaultDueDate={contextTargetDate ? contextTargetDate.toISOString().split("T")[0] : undefined}
+        />
+
+        {/* Modal: Add Schedule Item for Date */}
+        <AddScheduleModal
+          isOpen={addScheduleModalOpen}
+          onClose={() => setAddScheduleModalOpen(false)}
+          members={members}
+          projects={projects}
+          existingShifts={staffShifts}
+          defaultType={contextScheduleDefaultType}
+          initialDate={contextTargetDate}
+          defaultProjectId={selectedProjectId || undefined}
+        />
       </div>
     </div>
   );
