@@ -76,7 +76,18 @@ describe("Android Controller Suite", () => {
         updateMember: vi.fn(),
         updateMemberStatus: vi.fn(),
       };
+      mockUseCase.getMemberOverview = vi.fn();
       controller = new AndroidMembersController(mockUseCase);
+    });
+
+    it("getMemberOverview should delegate to getMemberOverview", async () => {
+      const req = { v3Context: { organizationId: "org-1" } };
+      mockUseCase.getMemberOverview = vi.fn().mockResolvedValue({ member: { id: "mem-1" }, tasks: [], checkins: [], activity: [] });
+
+      const res = await controller.getMemberOverview(req, "mem-1");
+
+      expect(mockUseCase.getMemberOverview).toHaveBeenCalledWith(req.v3Context, "mem-1");
+      expect(res.member.id).toBe("mem-1");
     });
 
     it("getMembers should delegate to members use case", async () => {

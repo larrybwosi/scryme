@@ -102,6 +102,7 @@ data class UpdateStaffTaskDto(
     @SerializedName("dueTime") val dueTime: String? = null,
     @SerializedName("estimatedHours") val estimatedHours: Double? = null,
     @SerializedName("actualHours") val actualHours: Double? = null,
+    @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
     @SerializedName("subtaskGroups") val subtaskGroups: List<SubtaskGroupDto>? = null
 )
 
@@ -113,6 +114,7 @@ data class TaskAssessmentDto(
     @SerializedName("riskLevel") val riskLevel: String = "LOW",
     @SerializedName("estimatedHours") val estimatedHours: Double? = null,
     @SerializedName("actualHours") val actualHours: Double? = null,
+    @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
     @SerializedName("notes") val notes: String? = null,
     @SerializedName("createdAt") val createdAt: String? = null
 )
@@ -124,6 +126,7 @@ data class CreateTaskAssessmentDto(
     @SerializedName("riskLevel") val riskLevel: String,
     @SerializedName("estimatedHours") val estimatedHours: Double? = null,
     @SerializedName("actualHours") val actualHours: Double? = null,
+    @SerializedName("assignedMemberId") val assignedMemberId: String? = null,
     @SerializedName("notes") val notes: String? = null
 )
 

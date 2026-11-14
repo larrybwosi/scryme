@@ -102,6 +102,173 @@ export class AndroidMembersUseCase {
     };
   }
 
+
+  async getMemberOverview(v3Context: any, id: string) {
+    const { organizationId } = v3Context;
+
+    const member = await this.prisma.client.member.findFirst({
+      where: {
+        OR: [{ id }, { userId: id }],
+        organizationId,
+        deletedAt: null,
+      },
+      select: {
+        id: true,
+        organizationId: true,
+        role: true,
+        status: true,
+        cardId: true,
+        createdAt: true,
+        user: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            image: true,
+          },
+        },
+      },
+    });
+
+    if (!member) {
+      throw new NotFoundException(`Member with ID '${id}' not found`);
+    }
+
+    const memberId = member.id;
+    const userId = member.user?.id;
+
+    const [tasks, checkins, auditLogs] = await Promise.all([
+      this.prisma.client.staffTask.findMany({
+        where: {
+          organizationId,
+          memberId,
+        },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          status: true,
+          priority: true,
+          dueDate: true,
+          checklist: true,
+          notes: true,
+          createdAt: true,
+        },
+        orderBy: { createdAt: 'desc' },
+        take: 30,
+      }),
+      this.prisma.client.attendanceLog.findMany({
+        where: {
+          organizationId,
+          memberId,
+        },
+        select: {
+          id: true,
+          checkInTime: true,
+          checkOutTime: true,
+          durationMinutes: true,
+          shiftStatus: true,
+          verificationMethod: true,
+          isLocationVerified: true,
+          checkInLocation: {
+            select: {
+              id: true,
+              name: true,
+              branchCode: true,
+            },
+          },
+        },
+        orderBy: { checkInTime: 'desc' },
+        take: 20,
+      }),
+      this.prisma.client.auditLog.findMany({
+        where: {
+          organizationId,
+          OR: [
+            { memberId },
+            ...(userId ? [{ entityId: userId }] : []),
+            { entityId: memberId },
+          ],
+        },
+        select: {
+          id: true,
+          action: true,
+          entityType: true,
+          entityId: true,
+          description: true,
+          status: true,
+          performedAt: true,
+        },
+        orderBy: { id: 'desc' },
+        take: 25,
+      }),
+    ]);
+
+    const formattedTasks = tasks.map((t) => {
+      let subtaskGroups: any[] = [];
+      if (t.checklist && typeof t.checklist === 'object') {
+        if (Array.isArray(t.checklist)) {
+          subtaskGroups = t.checklist;
+        } else if (Array.isArray((t.checklist as any).groups)) {
+          subtaskGroups = (t.checklist as any).groups;
+        }
+      }
+      return {
+        id: t.id,
+        title: t.title,
+        description: t.description || null,
+        status: t.status,
+        priority: t.priority,
+        dueDate: t.dueDate ? t.dueDate.toISOString() : null,
+        subtaskGroups,
+        notes: t.notes || null,
+        createdAt: t.createdAt ? t.createdAt.toISOString() : null,
+      };
+    });
+
+    const formattedCheckins = checkins.map((c) => ({
+      id: c.id,
+      checkInTime: c.checkInTime ? c.checkInTime.toISOString() : '',
+      checkOutTime: c.checkOutTime ? c.checkOutTime.toISOString() : null,
+      durationMinutes: c.durationMinutes || null,
+      shiftStatus: c.shiftStatus || null,
+      verificationMethod: c.verificationMethod || null,
+      isLocationVerified: c.isLocationVerified || false,
+      locationName: c.checkInLocation?.name || null,
+      branchCode: c.checkInLocation?.branchCode || null,
+    }));
+
+    const formattedActivity = auditLogs.map((a) => ({
+      id: a.id,
+      action: a.action,
+      entityType: a.entityType,
+      entityId: a.entityId,
+      description: a.description || null,
+      status: a.status,
+      timestamp: a.performedAt ? a.performedAt.toISOString() : null,
+    }));
+
+    return {
+      member: {
+        id: member.id,
+        organizationId: member.organizationId,
+        userId: member.user?.id || null,
+        name: member.user?.name || 'Staff Member',
+        email: member.user?.email || '',
+        phone: null,
+        role: member.role,
+        status: member.status || 'OFFLINE',
+        dutyStatus: member.status || 'OFFLINE',
+        avatarUrl: member.user?.image || null,
+        cardId: member.cardId || null,
+        createdAt: member.createdAt ? member.createdAt.toISOString() : null,
+      },
+      tasks: formattedTasks,
+      checkins: formattedCheckins,
+      activity: formattedActivity,
+    };
+  }
+
   async updateMember(v3Context: any, id: string, dto: AndroidUpdateMemberDto) {
     const { organizationId } = v3Context;
 

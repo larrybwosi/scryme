@@ -44,6 +44,14 @@ export class AndroidMembersController {
     return this.androidMembersUseCase.getMembers(req.v3Context, search, role);
   }
 
+
+  @Get(":id/overview")
+  @ApiOperation({ summary: "Get member overview including tasks, checkins, and activity for Android" })
+  @ApiResponse({ status: 200, description: "Member overview retrieved successfully" })
+  async getMemberOverview(@Req() req: any, @Param("id") id: string) {
+    return this.androidMembersUseCase.getMemberOverview(req.v3Context, id);
+  }
+
   @Get(":id")
   @ApiOperation({ summary: "Get member details by ID for Android" })
   @ApiResponse({ status: 200, description: "Member retrieved successfully" })

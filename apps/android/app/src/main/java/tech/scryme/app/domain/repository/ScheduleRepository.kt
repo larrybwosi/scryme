@@ -41,7 +41,8 @@ interface ScheduleRepository {
         category: String? = null,
         dueDate: String? = null,
         dueTime: String? = null,
-        subtaskGroups: List<SubtaskGroup>? = null
+        subtaskGroups: List<SubtaskGroup>? = null,
+        assignedMemberId: String? = null
     ): Result<StaffTask>
 
     suspend fun saveTaskAssessment(

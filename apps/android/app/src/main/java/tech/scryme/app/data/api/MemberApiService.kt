@@ -17,6 +17,11 @@ interface MemberApiService {
         @Path("id") id: String
     ): Response<V3ApiResponse<MemberDto>>
 
+    @GET("android/members/{id}/overview")
+    suspend fun getMemberOverview(
+        @Path("id") id: String
+    ): Response<V3ApiResponse<StaffOverviewDto>>
+
     @PATCH("android/members/{id}")
     suspend fun updateMember(
         @Path("id") id: String,

@@ -242,7 +242,8 @@ class ScheduleRepositoryImpl @Inject constructor(
         category: String?,
         dueDate: String?,
         dueTime: String?,
-        subtaskGroups: List<SubtaskGroup>?
+        subtaskGroups: List<SubtaskGroup>?,
+        assignedMemberId: String?
     ): Result<StaffTask> {
         return try {
             val dto = UpdateStaffTaskDto(
@@ -253,6 +254,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                 category = category,
                 dueDate = dueDate,
                 dueTime = dueTime,
+                assignedMemberId = assignedMemberId,
                 subtaskGroups = subtaskGroups?.map { g ->
                     SubtaskGroupDto(
                         id = g.id,
@@ -266,6 +268,7 @@ class ScheduleRepositoryImpl @Inject constructor(
                 val task = res.body()?.data?.toDomain() ?: return Result.failure(Exception("Null response"))
                 val enrichedTask = task.copy(
                     status = status ?: task.status,
+                    assignedMemberId = assignedMemberId ?: task.assignedMemberId,
                     title = title ?: task.title,
                     description = description ?: task.description,
                     priority = priority ?: task.priority,

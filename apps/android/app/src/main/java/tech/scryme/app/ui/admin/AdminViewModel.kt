@@ -11,7 +11,6 @@ import tech.scryme.app.data.interceptor.SessionManager
 import tech.scryme.app.domain.model.ShiftBreak
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
-import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.domain.model.UserProfile
 import tech.scryme.app.domain.repository.ProfileRepository
 import tech.scryme.app.domain.repository.ScheduleRepository
@@ -22,7 +21,6 @@ sealed interface AdminUiState {
     data class Success(
         val allShifts: List<StaffShift>,
         val pendingTrades: List<ShiftTrade>,
-        val allTasks: List<StaffTask>,
         val members: List<UserProfile> = emptyList()
     ) : AdminUiState
     data class Error(val message: String) : AdminUiState
@@ -49,14 +47,12 @@ class AdminViewModel @Inject constructor(
 
             val shiftsRes = scheduleRepository.getOrganizationShifts(orgSlug)
             val tradesRes = scheduleRepository.getShiftTrades(orgSlug, status = "PENDING")
-            val tasksRes = scheduleRepository.getStaffTasks(orgSlug)
             val membersRes = profileRepository.getMembers(orgSlug)
 
             if (shiftsRes.isSuccess) {
                 _uiState.value = AdminUiState.Success(
                     allShifts = shiftsRes.getOrDefault(emptyList()),
                     pendingTrades = tradesRes.getOrDefault(emptyList()),
-                    allTasks = tasksRes.getOrDefault(emptyList()),
                     members = membersRes.getOrDefault(emptyList())
                 )
             } else {
@@ -87,26 +83,6 @@ class AdminViewModel @Inject constructor(
                 onSuccess = { loadAdminData() },
                 onFailure = { error ->
                     _uiState.value = AdminUiState.Error(error.message ?: "Failed to add shift break")
-                }
-            )
-        }
-    }
-
-    fun createTask(title: String, description: String?, assignedMemberId: String?, priority: String, dueDate: String?) {
-        viewModelScope.launch {
-            val orgSlug = sessionManager.getOrgSlug() ?: return@launch
-            val res = scheduleRepository.createStaffTask(
-                orgSlug = orgSlug,
-                title = title,
-                description = description,
-                assignedMemberId = assignedMemberId,
-                priority = priority,
-                dueDate = dueDate
-            )
-            res.fold(
-                onSuccess = { loadAdminData() },
-                onFailure = { error ->
-                    _uiState.value = AdminUiState.Error(error.message ?: "Failed to create task")
                 }
             )
         }

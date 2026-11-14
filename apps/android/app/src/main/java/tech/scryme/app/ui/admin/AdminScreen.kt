@@ -17,15 +17,16 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.AccountBalanceWallet
+import androidx.compose.material.icons.automirrored.filled.Assignment
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Badge
 import androidx.compose.material.icons.filled.BarChart
 import androidx.compose.material.icons.filled.ChevronRight
-import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Receipt
-import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material.icons.filled.PrecisionManufacturing
+import androidx.compose.material.icons.filled.Receipt
+import androidx.compose.material.icons.filled.Schedule
+import androidx.compose.material.icons.filled.Storefront
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -36,7 +37,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.domain.model.ShiftTrade
 import tech.scryme.app.domain.model.StaffShift
-import tech.scryme.app.domain.model.StaffTask
 import tech.scryme.app.ui.theme.Amber500
 import tech.scryme.app.ui.theme.Emerald500
 import tech.scryme.app.ui.theme.Rose500
@@ -51,13 +51,6 @@ private val TileShape = RoundedCornerShape(6.dp)
 private val ChipShape = RoundedCornerShape(4.dp)
 private val CompactButtonPadding = PaddingValues(horizontal = 12.dp, vertical = 6.dp)
 
-@Composable
-private fun fieldColors() = OutlinedTextFieldDefaults.colors(
-    focusedBorderColor = MaterialTheme.colorScheme.primary,
-    unfocusedBorderColor = MaterialTheme.colorScheme.outline
-)
-
-/** Flat, bordered container. Pass [onClick] to make the whole surface tappable. */
 @Composable
 private fun OutlinedSurface(
     modifier: Modifier = Modifier,
@@ -124,6 +117,8 @@ private fun StatusChip(text: String, color: Color) {
 @Composable
 fun AdminScreen(
     viewModel: AdminViewModel,
+    onNavigateToTasks: (() -> Unit)? = null,
+    onNavigateToStaff: (() -> Unit)? = null,
     onNavigateToSales: (() -> Unit)? = null,
     onNavigateToFinance: (() -> Unit)? = null,
     onNavigateToBranches: (() -> Unit)? = null,
@@ -133,7 +128,6 @@ fun AdminScreen(
     val uiState by viewModel.uiState.collectAsState()
 
     var showCreateShiftDialog by remember { mutableStateOf(false) }
-    var showCreateTaskDialog by remember { mutableStateOf(false) }
     var selectedShiftForBreak by remember { mutableStateOf<StaffShift?>(null) }
 
     LaunchedEffect(Unit) {
@@ -155,6 +149,116 @@ fun AdminScreen(
         )
 
         Spacer(modifier = Modifier.height(12.dp))
+
+        // Staff & Team entry point
+        OutlinedSurface(onClick = { onNavigateToStaff?.invoke() }) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.7f),
+                                TileShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Badge,
+                            contentDescription = "Staff & Team",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Staff & Team Management",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Staff profiles, check-in history, and assigned tasks",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        // Admin Task Management entry point
+        OutlinedSurface(onClick = { onNavigateToTasks?.invoke() }) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(14.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Box(
+                        modifier = Modifier
+                            .size(36.dp)
+                            .background(
+                                MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.7f),
+                                TileShape
+                            ),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Assignment,
+                            contentDescription = "Task Management",
+                            tint = MaterialTheme.colorScheme.secondary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                    Column {
+                        Text(
+                            text = "Operational Task Management",
+                            style = MaterialTheme.typography.bodyMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Assign tasks, update status, and manage team workload",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                Icon(
+                    imageVector = Icons.Default.ChevronRight,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(20.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
 
         // Sales & analytics entry point
         OutlinedSurface(onClick = { onNavigateToSales?.invoke() }) {
@@ -429,40 +533,20 @@ fun AdminScreen(
             }
         }
 
-
         Spacer(modifier = Modifier.height(12.dp))
 
-        Row(
+        Button(
+            onClick = { showCreateShiftDialog = true },
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(8.dp)
+            shape = ControlShape
         ) {
-            Button(
-                onClick = { showCreateShiftDialog = true },
-                modifier = Modifier.weight(1f),
-                shape = ControlShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Create Shift",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
-
-            OutlinedButton(
-                onClick = { showCreateTaskDialog = true },
-                modifier = Modifier.weight(1f),
-                shape = ControlShape
-            ) {
-                Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = "Create Task",
-                    style = MaterialTheme.typography.labelLarge,
-                    fontWeight = FontWeight.SemiBold
-                )
-            }
+            Icon(Icons.Default.Add, contentDescription = null, modifier = Modifier.size(16.dp))
+            Spacer(modifier = Modifier.width(4.dp))
+            Text(
+                text = "Create Staff Shift",
+                style = MaterialTheme.typography.labelLarge,
+                fontWeight = FontWeight.SemiBold
+            )
         }
 
         Spacer(modifier = Modifier.height(16.dp))
@@ -529,17 +613,6 @@ fun AdminScreen(
         )
     }
 
-    if (showCreateTaskDialog) {
-        CreateTaskDialog(
-            members = (uiState as? AdminUiState.Success)?.members ?: emptyList(),
-            onDismiss = { showCreateTaskDialog = false },
-            onSubmit = { title, desc, memberId, priority, dueDate ->
-                viewModel.createTask(title, desc, memberId, priority, dueDate)
-                showCreateTaskDialog = false
-            }
-        )
-    }
-
     selectedShiftForBreak?.let { shift ->
         AddBreakDialog(
             shift = shift,
@@ -553,7 +626,7 @@ fun AdminScreen(
 }
 
 // ---------------------------------------------------------------------------
-// Cards
+// Items
 // ---------------------------------------------------------------------------
 
 @Composable
@@ -563,47 +636,58 @@ fun PendingTradeItem(
     onApprove: () -> Unit,
     onReject: () -> Unit
 ) {
-    val memberName = member?.name ?: trade.requestingMemberId
+    val requesterName = member?.name ?: trade.requestingMemberId
 
     OutlinedSurface {
-        Column(modifier = Modifier.padding(14.dp)) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(14.dp)
+        ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                Text(
-                    text = "Shift ${trade.shiftId}",
-                    style = MaterialTheme.typography.titleSmall,
-                    fontWeight = FontWeight.SemiBold,
-                    color = MaterialTheme.colorScheme.onSurface,
-                    maxLines = 1,
-                    modifier = Modifier.weight(1f)
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-                StatusChip(text = "PENDING", color = Amber500)
+                Row(
+                    modifier = Modifier.weight(1f),
+                    horizontalArrangement = Arrangement.spacedBy(10.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    MemberAvatar(
+                        avatarUrl = member?.avatarUrl,
+                        name = member?.name ?: "",
+                        modifier = Modifier.size(36.dp)
+                    )
+                    Column {
+                        Text(
+                            text = requesterName,
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Text(
+                            text = "Shift ID: ${trade.shiftId.take(8)}",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+                }
+                StatusChip(text = trade.status, color = Amber500)
             }
 
-            Spacer(modifier = Modifier.height(10.dp))
-
-            Row(
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically
-            ) {
-                MemberAvatar(
-                    avatarUrl = member?.avatarUrl,
-                    name = member?.name ?: "",
-                    modifier = Modifier.size(24.dp)
-                )
-                Column {
-                    Text(
-                        text = memberName,
-                        style = MaterialTheme.typography.bodyMedium,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurface
+            if (!trade.createdAt.isNullOrBlank()) {
+                Spacer(modifier = Modifier.height(6.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(12.dp)
                     )
+                    Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = "Requesting member",
+                        text = "Requested: ${trade.createdAt.take(10)}",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -766,80 +850,6 @@ fun CreateShiftDialog(
 }
 
 @Composable
-fun CreateTaskDialog(
-    members: List<UserProfile>,
-    onDismiss: () -> Unit,
-    onSubmit: (title: String, desc: String?, memberId: String?, priority: String, dueDate: String?) -> Unit
-) {
-    var title by remember { mutableStateOf("") }
-    var desc by remember { mutableStateOf("") }
-    var memberId by remember { mutableStateOf("") }
-    var priority by remember { mutableStateOf("MEDIUM") }
-    var dueDate by remember { mutableStateOf("") }
-
-    StyledFormDialog(
-        title = "Create Operational Task",
-        onDismissRequest = onDismiss,
-        confirmButtonText = "Assign Task",
-        onConfirm = {
-            onSubmit(
-                title,
-                desc.ifBlank { null },
-                memberId.ifBlank { null },
-                priority,
-                dueDate.ifBlank { null }
-            )
-        },
-        confirmEnabled = title.isNotBlank()
-    ) {
-        OutlinedTextField(
-            value = title,
-            onValueChange = { title = it },
-            label = { Text("Task Title *") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        OutlinedTextField(
-            value = desc,
-            onValueChange = { desc = it },
-            label = { Text("Description") },
-            shape = ControlShape,
-            colors = fieldColors(),
-            modifier = Modifier.fillMaxWidth()
-        )
-        MemberDropdown(
-            selectedMemberId = memberId,
-            onMemberSelected = { memberId = it },
-            members = members,
-            label = "Assign Member (Optional)",
-            allowUnassigned = true
-        )
-        Column {
-            SectionLabel("Priority")
-            Spacer(modifier = Modifier.height(6.dp))
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                listOf("LOW", "MEDIUM", "HIGH").forEach { p ->
-                    FilterChip(
-                        selected = priority == p,
-                        onClick = { priority = p },
-                        shape = ControlShape,
-                        label = { Text(p, fontSize = 11.sp) }
-                    )
-                }
-            }
-        }
-        DatePickerTextField(
-            value = dueDate,
-            onValueChange = { dueDate = it },
-            label = "Due Date",
-            placeholder = "Select due date",
-            modifier = Modifier.fillMaxWidth()
-        )
-    }
-}
-
-@Composable
 fun AddBreakDialog(
     shift: StaffShift,
     onDismiss: () -> Unit,
@@ -871,7 +881,6 @@ fun AddBreakDialog(
             onValueChange = { desc = it },
             label = { Text("Description") },
             shape = ControlShape,
-            colors = fieldColors(),
             modifier = Modifier.fillMaxWidth()
         )
     }

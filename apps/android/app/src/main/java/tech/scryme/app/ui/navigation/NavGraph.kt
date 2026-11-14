@@ -11,6 +11,8 @@ import androidx.navigation.navArgument
 import tech.scryme.app.ui.account.AccountScreen
 import tech.scryme.app.ui.account.AccountViewModel
 import tech.scryme.app.ui.admin.AdminScreen
+import tech.scryme.app.ui.admin.AdminTasksScreen
+import tech.scryme.app.ui.admin.AdminTasksViewModel
 import tech.scryme.app.ui.admin.AdminViewModel
 import tech.scryme.app.ui.auth.AuthScreen
 import tech.scryme.app.ui.auth.AuthViewModel
@@ -44,6 +46,10 @@ import tech.scryme.app.ui.settings.SettingsScreen
 import tech.scryme.app.ui.settings.SettingsViewModel
 import tech.scryme.app.ui.splash.SplashScreen
 import tech.scryme.app.ui.splash.SplashViewModel
+import tech.scryme.app.ui.staff.StaffDetailsScreen
+import tech.scryme.app.ui.staff.StaffDetailsViewModel
+import tech.scryme.app.ui.staff.StaffScreen
+import tech.scryme.app.ui.staff.StaffViewModel
 import tech.scryme.app.ui.tasks.TasksScreen
 import tech.scryme.app.ui.tasks.TasksViewModel
 
@@ -129,11 +135,46 @@ fun AppNavGraph(
             val viewModel: AdminViewModel = hiltViewModel()
             AdminScreen(
                 viewModel = viewModel,
+                onNavigateToTasks = { navController.navigate(Screen.AdminTasks.route) },
+                onNavigateToStaff = { navController.navigate(Screen.Staff.route) },
                 onNavigateToSales = { navController.navigate(Screen.Sales.route) },
                 onNavigateToFinance = { navController.navigate(Screen.Finance.route) },
                 onNavigateToBranches = { navController.navigate(Screen.Branch.route) },
                 onNavigateToCustomers = { navController.navigate(Screen.Customer.route) },
                 onNavigateToProduction = { navController.navigate(Screen.Production.route) }
+            )
+        }
+        composable(Screen.AdminTasks.route) {
+            val viewModel: AdminTasksViewModel = hiltViewModel()
+            AdminTasksScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTaskDetails = { taskId ->
+                    navController.navigate(Screen.TaskDetails.createRoute(taskId))
+                }
+            )
+        }
+        composable(Screen.Staff.route) {
+            val viewModel: StaffViewModel = hiltViewModel()
+            StaffScreen(
+                viewModel = viewModel,
+                onNavigateToStaffDetails = { staffId ->
+                    navController.navigate(Screen.StaffDetails.createRoute(staffId))
+                },
+                onNavigateBack = { navController.popBackStack() }
+            )
+        }
+        composable(
+            route = Screen.StaffDetails.route,
+            arguments = listOf(navArgument("staffId") { type = NavType.StringType })
+        ) {
+            val viewModel: StaffDetailsViewModel = hiltViewModel()
+            StaffDetailsScreen(
+                viewModel = viewModel,
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToTaskDetails = { taskId ->
+                    navController.navigate(Screen.TaskDetails.createRoute(taskId))
+                }
             )
         }
         composable(Screen.Production.route) {

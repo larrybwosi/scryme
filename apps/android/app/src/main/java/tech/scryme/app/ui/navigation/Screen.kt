@@ -10,6 +10,11 @@ sealed class Screen(val route: String, val title: String) {
         fun createRoute(taskId: String) = "tasks/details/$taskId"
     }
     object Admin : Screen("admin", "Admin Hub")
+    object AdminTasks : Screen("admin/tasks", "Task Management")
+    object Staff : Screen("staff", "Staff & Team")
+    object StaffDetails : Screen("staff/{staffId}", "Staff Details") {
+        fun createRoute(staffId: String) = "staff/$staffId"
+    }
     object Sales : Screen("sales", "Sales & Analytics")
     object Finance : Screen("finance", "Finance & Expenses")
     object Branch : Screen("branch", "Branches")
