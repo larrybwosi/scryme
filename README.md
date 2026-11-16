@@ -1,8 +1,8 @@
 <div align="center">
 
-#  SCRYME Enterprise ERP & Retail Operations Suite
+# Scryme Enterprise ERP and Retail Operations Suite
 
-**Next-Generation Multi-Tenant Retail, Production, Point of Sale & Supply Chain OS**
+**Multi-tenant retail, production, point of sale, and operations platform**
 
 <p align="center">
   <img src="apps/pos/public/logo.jpg" alt="Scryme Logo" width="160" style="border-radius: 24px; box-shadow: 0 10px 25px rgba(0,0,0,0.2);" />
@@ -10,169 +10,222 @@
 
 [![CI Build](https://img.shields.io/github/actions/workflow/status/larrybwosi/scryme/release.yml?style=for-the-badge&logo=github&label=Release%20Pipeline&color=059669)](https://github.com/larrybwosi/scryme/actions)
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL_v3-blue.svg?style=for-the-badge&logo=gnu&color=2563EB)](LICENSE)
-[![Next.js](https://img.shields.io/badge/Next.js-15-000000?style=for-the-badge&logo=next.js&logoColor=white)](https://nextjs.org/)
-[![NestJS](https://img.shields.io/badge/NestJS-10-E0234E?style=for-the-badge&logo=nestjs&logoColor=white)](https://nestjs.com/)
-[![Tauri v2](https://img.shields.io/badge/Tauri-v2-FFC131?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app/)
-[![Rust](https://img.shields.io/badge/Rust-1.77+-000000?style=for-the-badge&logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-24%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![pnpm](https://img.shields.io/badge/pnpm-10.34.1-F69220?style=for-the-badge&logo=pnpm&logoColor=white)](https://pnpm.io/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
-[![Prisma](https://img.shields.io/badge/Prisma-7.9-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
-[![Docker](https://img.shields.io/badge/Docker-Containerized-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://www.docker.com/)
+[![Turborepo](https://img.shields.io/badge/Turborepo-2.x-EF4444?style=for-the-badge&logo=turborepo&logoColor=white)](https://turbo.build/)
+[![Tauri v2](https://img.shields.io/badge/Tauri-v2-FFC131?style=for-the-badge&logo=tauri&logoColor=black)](https://tauri.app/)
 
 </div>
 
 ---
 
-## 🏛️ Executive Overview
+## Overview
 
-**Scryme** is a high-performance, enterprise-grade Enterprise Resource Planning (ERP) platform architected for modern retail chains, commercial bakeries, supermarkets, pharmacies, and multi-location enterprises. It combines cloud-native management, real-time sync engines, and offline-first desktop terminals into a unified, modular monorepo.
+Scryme is a TypeScript monorepo for retail and operations software. It includes web applications, backend services, desktop terminals, shared packages, and supporting tooling managed with pnpm workspaces and Turborepo.
 
----
-
-## 🚀 Ecosystem Architecture
-
-Scryme is structured as a high-efficiency monorepo managed via [Turborepo](https://turbo.build/) and [pnpm](https://pnpm.io/), ensuring type-safety from backend services down to native desktop and mobile terminals.
-
-```
-                                  ┌───────────────────────────┐
-                                  │   Scryme Cloud / Core API │
-                                  │    (NestJS V3 + Prisma)   │
-                                  └─────────────┬─────────────┘
-                                                │
-         ┌─────────────────────────┬────────────┴────────────┬─────────────────────────┐
-         ▼                         ▼                         ▼                         ▼
-┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐       ┌─────────────────┐
-│  Scryme Web ERP │       │ Scryme CRM Portal│       │ Scryme POS (v2) │       │ Scryme Bakery OS│
-│   (Next.js 15)  │       │   (Next.js 15)  │       │ (Tauri + Rust)  │       │ (Tauri + Rust)  │
-└─────────────────┘       └─────────────────┘       └─────────────────┘       └─────────────────┘
-```
-
-### 🖥️ Applications (`apps/`)
-
-* 🏢 **[Scryme Web](./apps/web)**: Central enterprise back-office management console for purchasing, multi-location stock movements, purchase order receptions, analytics, and staff scheduling.
-*  **[Scryme API](./apps/api)**: Core NestJS RESTful engine processing multi-tenancy, queueing (RabbitMQ), caching (Redis), transaction safety, and WebSockets/Ably events.
-* 👥 **[Scryme CRM](./apps/crm)**: Next.js multi-channel CRM for contact management, lead pipeline tracking, deal stages, loyalty, and automated messaging workflows.
-* 🛒 **[Scryme POS](./apps/pos)**: High-availability, offline-first Tauri v2 desktop checkout workstation. Includes native thermal printer drivers (ESC/POS), hardware barcode scanners, cash drawers, and second-screen customer displays.
-* 🥖 **[Scryme Bakery](./apps/bakery)**: Specialized Tauri v2 production management workstation for commercial bakeries, scaling recipe formulations, batch scheduling, ingredient tracking, and baker shift management.
-* 🌐 **[Scryme Storefront & Site](./apps/site)**: Enterprise web landing page, download directory for native POS binaries, and headlessly-managed CMS catalog.
-* ⚙️ **[Scryme Admin Web](./apps/admin)**: Master administrative console for multi-tenant provisioning, subscription billing, system health diagnostics, and binary release sync.
-* 🤖 **[Scryme MCP Server](./apps/mcp)**: Model Context Protocol server exposing catalog, inventory, and CRM commands securely to LLMs (Claude Desktop, Cursor).
+For contribution workflow and local development expectations, see [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ---
 
-### 📦 Modular Package Workspace (`packages/`)
+## Repository structure
 
-* 🗄️ **[`@repo/db`](./packages/db)**: Prisma schema models, PostgreSQL client singletons, and migration tooling.
-* 🔑 **[`@repo/auth`](./packages/auth)**: Multi-tenant identity, SSO, and V3 security helpers powered by Better Auth.
-* 🛠️ **[`@repo/shared`](./packages/shared)**: Core system utilities, URL sanitizers, multi-channel notifications (Emails, Handlebars, ScrymeChat, Discord, Webhooks), M-Pesa payments, and Socket.IO adapters.
-* 🎨 **[`@repo/ui`](./packages/ui)**: Radix UI accessible primitive components styled with Tailwind CSS v4 and custom hardware barcode listeners.
-* 📄 **[`@repo/documents`](./packages/documents)**: React-PDF renderers for thermal receipts, formal A4 invoices, stock transfer slips, and financial statements.
-* 💬 **[`@repo/chat`](./packages/scryme)**: M2M SDK for workspace provisioning, member onboarding, and channel messaging via ScrymeChat API.
-* 📦 **[`@scryme/sdk`](./packages/sdk)**: Auto-generated TypeScript SDK generated directly from NestJS OpenAPI specifications.
+### Applications (`apps/`)
+
+- **[admin](./apps/admin)**: Administrative web application for system level operations.
+- **[android](./apps/android)**: Android application workspace.
+- **[api](./apps/api)**: NestJS backend API service.
+- **[auth](./apps/auth)**: Authentication application workspace.
+- **[bakery](./apps/bakery)**: Tauri desktop application for bakery and production workflows.
+- **[cms](./apps/cms)**: Content management application workspace.
+- **[crm](./apps/crm)**: CRM web application.
+- **[docs](./apps/docs)**: Documentation application workspace.
+- **[pos](./apps/pos)**: Tauri desktop point of sale application.
+- **[projects](./apps/projects)**: Projects application workspace.
+- **[site-next](./apps/site-next)**: Public site built with TanStack Start, Vite, React 19, and Sanity integrations.
+- **[web](./apps/web)**: Main web back office application built with Next.js 16 and React 19.
+
+### Packages (`packages/`)
+
+- **[@repo/auth](./packages/auth)**: Shared authentication utilities and integrations.
+- **[@repo/chat](./packages/chat)**: Shared chat and messaging integration package.
+- **[@repo/config-eslint](./packages/config-eslint)**: Shared ESLint configuration.
+- **[@repo/config-prettier](./packages/config-prettier)**: Shared Prettier configuration.
+- **[@repo/config-typescript](./packages/config-typescript)**: Shared TypeScript configuration.
+- **[create-app](./packages/create-app)**: CLI for bootstrapping Scryme powered applications.
+- **[@repo/db](./packages/db)**: Prisma schema, migrations, and database tooling.
+- **[@repo/documents](./packages/documents)**: Document and PDF rendering utilities.
+- **[@repo/env](./packages/env)**: Shared environment variable handling.
+- **[@repo/mcp-server](./packages/mcp-server)**: MCP server package.
+- **[@scryme/sdk](./packages/sdk)**: TypeScript SDK package for Scryme APIs and clients.
+- **[@repo/shared](./packages/shared)**: Shared utilities and common modules.
+- **[@repo/ui](./packages/ui)**: Shared UI components and frontend primitives.
+
+### Other important areas
+
+- **[docs/specs](./docs/specs)**: Product and implementation specifications.
+- **[skills](./skills)**: Agent skills for workflows such as scope, architecture, development, testing, and audit.
+- **[CONTRIBUTING.md](CONTRIBUTING.md)**: Contribution and local development guide.
+- **[AGENTS.md](AGENTS.md)**: Repository guidance for coding agents and contributors.
 
 ---
 
-## 🛠️ Enterprise Tech Stack
+## Tech stack
 
-| Domain | Technology | Description |
-| :--- | :--- | :--- |
-| **Monorepo Engine** | [Turborepo](https://turbo.build/) & [pnpm](https://pnpm.io/) | High-speed caching build system and workspace management |
-| **Back-Office & Portals** | [Next.js 15](https://nextjs.org/) & [React 19](https://react.dev/) | SSR/SSG server actions with React Server Components |
-| **Native Terminals** | [Tauri v2](https://tauri.app/) (Rust + React) | Cross-platform, lightweight, memory-efficient native apps |
-| **Backend Engine** | [NestJS](https://nestjs.com/) | Enterprise modular Node.js REST API framework |
-| **Databases** | [PostgreSQL](https://www.postgresql.org/) & [SQLite](https://sqlite.org/) | Primary cloud relational storage and local desktop SQLite state |
-| **ORM & Seeding** | [Prisma ORM](https://prisma.io/) | Type-safe query building and schema migrations |
-| **Caching & Messaging** | [Redis](https://redis.io/) & [RabbitMQ](https://www.rabbitmq.com/) | Real-time rate-limiting, job queueing, and pub/sub messaging |
-| **Styling** | [Tailwind CSS v4](https://tailwindcss.com/) | Modern utility-first CSS styling engine |
+- **Language and runtime**: TypeScript, Node.js 24+
+- **Monorepo tooling**: pnpm workspaces, Turborepo
+- **Backend**: NestJS
+- **Web**: Next.js, TanStack Start, React 19, Tailwind CSS
+- **Desktop**: Tauri v2
+- **Data and integrations**: Prisma, PostgreSQL, Redis, RabbitMQ, Better Auth, Socket.io, RxJS
 
 ---
 
-## 🔐 Enterprise Guides & Security Architecture
-
-Explore our dedicated deployment and security guides:
-* 🔐 **[Customer Single Sign-On & Authentication Guide](./docs/customer-authentication.md)**
-* 📦 **[Connected Apps & V3 Catalog Architecture Guide](./docs/v3-connected-apps-catalog.md)**
-* 🚀 **[Admin App Deployment & Database Guide](./docs/admin-deployment.md)**
-* 🌐 **[Multi-Instance & Shared Infrastructure Deployment Guide](./docs/multi-instance-deployment.md)**
-* 🛡️ **[Secure Prisma Studio Containerization Guide](./docs/prisma-studio-deployment.md)**
-
----
-
-## ⚡ Quick Start for Developers
+## Getting started
 
 ### Prerequisites
 
-* **Node.js** (v22+) & **pnpm** (`v9+` or `v10+`)
-* **Docker** & **Docker Compose**
-* **Rust Toolchain** (v1.77+ for building POS & Bakery desktop binaries)
+- **Node.js** 24 or newer
+- **pnpm** 10.34.1
+- **Docker** and **Docker Compose**
+- **Rust toolchain** 1.77 or newer if you plan to build the Tauri desktop apps (`apps/pos`, `apps/bakery`)
 
-### Development Workflow
+### Local development
 
-1. **Clone Repository**
+1. **Clone the repository**
+
    ```bash
    git clone https://github.com/larrybwosi/scryme.git
    cd scryme
    ```
 
-2. **Install Workspace Dependencies**
+2. **Install dependencies**
+
    ```bash
    pnpm install
    ```
 
-3. **Spin Up Infrastructure Containers**
+3. **Start local infrastructure**
+
    ```bash
-   docker compose up -d
+   docker compose -f docker-compose.dev.yml up -d
    ```
 
-4. **Environment Setup**
+   (You can also run `pnpm run start:dev`.)
+
+4. **Configure environment variables**
+
    ```bash
    cp .env.example .env
    cp apps/api/.env.example apps/api/.env
-   # Copy additional .env files as required per package
    ```
 
-5. **Database Migration & Seeding**
+   Copy additional `.env` files as needed for the apps or packages you are working on.
+
+5. **Prepare the database** (when required for your work)
+
    ```bash
    pnpm run db:migrate:dev
    pnpm run db:seed
    ```
 
-6. **Launch Monorepo Development Servers**
+6. **Build all packages before starting the dev server**
+
    ```bash
-   pnpm run dev
+   pnpm build
    ```
+
+7. **Start development servers**
+
+   ```bash
+   pnpm dev
+   ```
+
+To run a specific workspace:
+
+```bash
+pnpm --filter web dev
+pnpm --filter api dev
+pnpm --filter pos dev
+```
 
 ---
 
-## 🚢 Production Deployment
+## Common commands
 
-### Containerized Web & API Deployment
+```bash
+# Install dependencies
+pnpm install
 
-Deploy production stack using Docker Compose:
+# Build all packages and apps
+pnpm build
+
+# Start development servers
+pnpm dev
+
+# Lint
+pnpm lint
+
+# Format
+pnpm format
+
+# Run tests
+pnpm test
+
+# Generate artifacts
+pnpm generate
+
+# Database tasks
+pnpm run db:migrate:dev
+pnpm run db:seed
+```
+
+---
+
+## Working with AI coding agents
+
+If you are using an AI coding agent in this repository, use the relevant skills in [`skills/`](./skills) for the task and follow their instructions. Also read [`AGENTS.md`](AGENTS.md), any applicable workspace `AGENTS.md` files, and related specs in [`docs/specs/`](./docs/specs).
+
+---
+
+## Deployment
+
+### Containerized deployment
+
+Use the provided Compose files for container based environments, for example:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d
 ```
 
-### Desktop Binary Compilation (Tauri v2)
+### Desktop builds
 
-To compile release desktop binaries for Scryme POS or Scryme Bakery:
+To build desktop binaries for Tauri apps:
 
 ```bash
-# Build POS desktop terminal
+# POS
 cd apps/pos
 pnpm tauri build
 
-# Build Bakery production terminal
+# Bakery
 cd ../bakery
 pnpm tauri build
 ```
 
 ---
 
-## 📄 License
+## Additional documentation
 
-This repository is licensed under the **GNU Affero General Public License version 3 (AGPL-3.0)**. Refer to the [LICENSE](LICENSE) file for complete details.
+The `docs/` directory contains additional guides and references, including:
 
-<div align="center">
-  <sub>Built with precision for enterprise scalability.</sub>
-</div>
+- [Customer Single Sign On and Authentication Guide](./docs/customer-authentication.md)
+- [Connected Apps and V3 Catalog Architecture Guide](./docs/v3-connected-apps-catalog.md)
+- [Admin App Deployment and Database Guide](./docs/admin-deployment.md)
+- [Multi Instance and Shared Infrastructure Deployment Guide](./docs/multi-instance-deployment.md)
+- [Secure Prisma Studio Containerization Guide](./docs/prisma-studio-deployment.md)
+
+---
+
+## License
+
+This repository is licensed under the **GNU Affero General Public License version 3 (AGPL-3.0)**. See [LICENSE](LICENSE) for details.
