@@ -15,8 +15,6 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -277,33 +275,16 @@ fun BranchDetailsScreen(
                         BranchDetailsTab.STOCK_MOVEMENTS to "Stock"
                     )
 
-                    val pagerState = rememberPagerState(
-                        initialPage = state.selectedTab.ordinal,
-                        pageCount = { tabs.size }
-                    )
-
-                    // Sync pager swipes back to the ViewModel state
-                    LaunchedEffect(pagerState.currentPage) {
-                        val activeTab = tabs[pagerState.currentPage].first
-                        if (state.selectedTab != activeTab) {
-                            viewModel.onTabSelected(activeTab)
-                        }
-                    }
-
                     TabRow(
-                        selectedTabIndex = pagerState.currentPage,
+                        selectedTabIndex = state.selectedTab.ordinal,
                         containerColor = MaterialTheme.colorScheme.background,
                         contentColor = MaterialTheme.colorScheme.primary,
                         divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
                     ) {
-                        tabs.forEachIndexed { index, (tab, label) ->
+                        tabs.forEach { (tab, label) ->
                             Tab(
-                                selected = pagerState.currentPage == index,
-                                onClick = {
-                                    coroutineScope.launch {
-                                        pagerState.animateScrollToPage(index)
-                                    }
-                                },
+                                selected = state.selectedTab == tab,
+                                onClick = { viewModel.onTabSelected(tab) },
                                 selectedContentColor = MaterialTheme.colorScheme.primary,
                                 unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
                                 text = {
@@ -317,11 +298,8 @@ fun BranchDetailsScreen(
                         }
                     }
 
-                    HorizontalPager(
-                        state = pagerState,
-                        modifier = Modifier.weight(1f).fillMaxWidth()
-                    ) { page ->
-                        when (tabs[page].first) {
+                    Box(modifier = Modifier.weight(1f).fillMaxWidth()) {
+                        when (state.selectedTab) {
                             BranchDetailsTab.OVERVIEW -> BranchOverviewTab(
                                 branch = state.branch,
                                 isActive = state.isActive,
@@ -790,7 +768,7 @@ fun BranchStockMovementsTab(
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                         Text(
-                            text = mov.createdAt.toDisplayTime(),
+                            text = mov.timestamp.toDisplayTime(),
                             style = MaterialTheme.typography.labelMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
