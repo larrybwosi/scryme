@@ -28,17 +28,18 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Tab
-import androidx.compose.material3.TabRow
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
+import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -56,6 +57,9 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 
+private val CardShape = RoundedCornerShape(8.dp)
+private val ControlShape = RoundedCornerShape(6.dp)
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SalesScreen(
@@ -72,10 +76,11 @@ fun SalesScreen(
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background, // Helps elevated cards pop
         topBar = {
             Surface(
                 color = MaterialTheme.colorScheme.surface,
-                shadowElevation = 2.dp
+                shadowElevation = 4.dp // Slightly stronger elevation for professional depth
             ) {
                 Column {
                     TopAppBar(
@@ -108,7 +113,7 @@ fun SalesScreen(
                         selectedTabIndex = uiState.selectedTab.ordinal,
                         containerColor = MaterialTheme.colorScheme.surface,
                         contentColor = MaterialTheme.colorScheme.primary,
-                        divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
+                        divider = { HorizontalDivider(color = MaterialTheme.colorScheme.surfaceVariant) }
                     ) {
                         SalesTab.values().forEach { tab ->
                             val selected = uiState.selectedTab == tab
@@ -134,7 +139,7 @@ fun SalesScreen(
                                         Text(
                                             text = tab.title,
                                             style = MaterialTheme.typography.labelLarge,
-                                            fontWeight = if (selected) FontWeight.SemiBold else FontWeight.Medium
+                                            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium
                                         )
                                     }
                                 }
@@ -144,7 +149,7 @@ fun SalesScreen(
 
                     val isRefreshing = uiState.isLoading &&
                         (uiState.analytics != null || uiState.orders.isNotEmpty())
-                    Box(modifier = Modifier.height(2.dp).fillMaxWidth()) {
+                    Box(modifier = Modifier.height(3.dp).fillMaxWidth()) {
                         if (isRefreshing) {
                             LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
                         }
@@ -184,13 +189,17 @@ fun SalesScreen(
                     ) {
                         Column(
                             horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp)
+                            verticalArrangement = Arrangement.spacedBy(16.dp)
                         ) {
-                            CircularProgressIndicator()
+                            CircularProgressIndicator(
+                                color = MaterialTheme.colorScheme.primary,
+                                strokeWidth = 3.dp
+                            )
                             Text(
                                 text = "Loading sales data…",
                                 style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                fontWeight = FontWeight.Medium
                             )
                         }
                     }
@@ -209,7 +218,7 @@ fun SalesScreen(
                                     StateMessage(
                                         icon = Icons.Default.BarChart,
                                         title = "No analytics yet",
-                                        message = "Load your sales analytics to see revenue and order trends.",
+                                        message = "Load your sales analytics to see your revenue and order trends at a glance.",
                                         actionLabel = "Load analytics",
                                         onAction = { viewModel.refresh() }
                                     )
@@ -251,13 +260,15 @@ private fun AccessRestricted(
     modifier: Modifier = Modifier
 ) {
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.background), // Softer background
         contentAlignment = Alignment.Center
     ) {
         StateMessage(
             icon = Icons.Default.Lock,
-            title = "Access restricted",
-            message = "Sales analytics and orders are only visible to Admins and Owners.",
+            title = "Access Restricted",
+            message = "Sales analytics and orders are strictly visible to workspace Admins and Owners.",
             actionLabel = if (onNavigateBack != null) "Go back" else null,
             onAction = onNavigateBack
         )
@@ -273,48 +284,84 @@ private fun StateMessage(
     onAction: (() -> Unit)? = null,
     modifier: Modifier = Modifier
 ) {
+    // Redesigned to be a professional, elevated Card
     Box(
-        modifier = modifier.fillMaxSize(),
+        modifier = modifier
+            .fillMaxSize()
+            .padding(24.dp),
         contentAlignment = Alignment.Center
     ) {
-        Column(
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(8.dp),
-            modifier = Modifier
-                .widthIn(max = 360.dp)
-                .padding(32.dp)
+        Card(
+            modifier = Modifier.widthIn(max = 400.dp),
+            shape = CardShape,
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surface,
+            ),
+            elevation = CardDefaults.cardElevation(defaultElevation = 2.dp) // Subtle professional shadow
         ) {
-            Box(
-                modifier = Modifier
-                    .size(64.dp)
-                    .background(MaterialTheme.colorScheme.surfaceVariant, CircleShape),
-                contentAlignment = Alignment.Center
+            Column(
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(16.dp),
+                modifier = Modifier.padding(32.dp)
             ) {
-                Icon(
-                    imageVector = icon,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.size(28.dp)
-                )
-            }
-            Spacer(Modifier.height(4.dp))
-            Text(
-                text = title,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.SemiBold,
-                color = MaterialTheme.colorScheme.onSurface,
-                textAlign = TextAlign.Center
-            )
-            Text(
-                text = message,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center
-            )
-            if (actionLabel != null && onAction != null) {
-                Spacer(Modifier.height(8.dp))
-                Button(onClick = onAction, shape = RoundedCornerShape(12.dp)) {
-                    Text(actionLabel)
+                // Modern nested circle icon design
+                Surface(
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
+                    modifier = Modifier.size(80.dp)
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Surface(
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.surfaceVariant,
+                            modifier = Modifier.size(56.dp)
+                        ) {
+                            Icon(
+                                imageVector = icon,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier
+                                    .size(28.dp)
+                                    .align(Alignment.Center)
+                            )
+                        }
+                    }
+                }
+                
+                Spacer(Modifier.height(4.dp))
+                
+                Column(
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        color = MaterialTheme.colorScheme.onSurface,
+                        textAlign = TextAlign.Center
+                    )
+                    Text(
+                        text = message,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center
+                    )
+                }
+
+                if (actionLabel != null && onAction != null) {
+                    Spacer(Modifier.height(8.dp))
+                    Button(
+                        onClick = onAction, 
+                        shape = ControlShape,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(
+                            text = actionLabel,
+                            modifier = Modifier.padding(vertical = 4.dp),
+                            fontWeight = FontWeight.SemiBold
+                        )
+                    }
                 }
             }
         }
@@ -327,39 +374,56 @@ private fun ErrorBanner(
     onRetry: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    Surface(
-        color = MaterialTheme.colorScheme.errorContainer,
-        contentColor = MaterialTheme.colorScheme.onErrorContainer,
-        shape = RoundedCornerShape(12.dp),
+    // Redesigned to act as a sleek floating alert card
+    Card(
         modifier = modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp, vertical = 12.dp)
-            .semantics { contentDescription = "Error: $message" }
+            .semantics { contentDescription = "Error: $message" },
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.errorContainer,
+            contentColor = MaterialTheme.colorScheme.onErrorContainer
+        ),
+        shape = CardShape,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(start = 14.dp, end = 6.dp, top = 6.dp, bottom = 6.dp),
+                .padding(horizontal = 16.dp, vertical = 12.dp),
             verticalAlignment = Alignment.CenterVertically,
-            horizontalArrangement = Arrangement.spacedBy(10.dp)
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Icon(
-                imageVector = Icons.Default.Warning,
-                contentDescription = null,
-                modifier = Modifier.size(18.dp)
-            )
+            Surface(
+                shape = CircleShape,
+                color = MaterialTheme.colorScheme.error.copy(alpha = 0.1f),
+                modifier = Modifier.size(36.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Warning,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.error,
+                    modifier = Modifier
+                        .padding(8.dp)
+                        .fillMaxSize()
+                )
+            }
+            
             Text(
                 text = message,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
+                fontWeight = FontWeight.Medium,
                 modifier = Modifier.weight(1f)
             )
+            
             TextButton(
                 onClick = onRetry,
+                shape = ControlShape,
                 colors = ButtonDefaults.textButtonColors(
-                    contentColor = MaterialTheme.colorScheme.onErrorContainer
+                    contentColor = MaterialTheme.colorScheme.error
                 )
             ) {
-                Text("Retry", fontWeight = FontWeight.SemiBold)
+                Text("Retry", fontWeight = FontWeight.Bold)
             }
         }
     }
