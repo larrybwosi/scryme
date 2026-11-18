@@ -24,6 +24,8 @@ describe("WebhookDispatcherService", () => {
   let mockPrisma: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     mockPrisma = {
       client: {
         workflowEngineAuditLog: {
