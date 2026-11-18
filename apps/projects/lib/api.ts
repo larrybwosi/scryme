@@ -721,7 +721,10 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
-  async processWeeklyTimesheet(timesheetId: string, payload: { action: 'APPROVE' | 'REJECT'; notes?: string }): Promise<any> {
+  async processWeeklyTimesheet(
+    timesheetId: string,
+    payload: { action: 'APPROVE' | 'REJECT'; weekStartDate: string; notes?: string },
+  ): Promise<any> {
     const res = await apiClient.post('/v3/tasks/timesheets/' + timesheetId + '/process', payload);
     return res.data?.data || res.data;
   },

@@ -13,6 +13,7 @@ import {
   useMembers,
   useStaffShifts,
   useSubtasks,
+  useCreateTask,
   useUpdateTaskStatus,
   useUpdateTask,
   useManageTaskAssignees,
@@ -20,6 +21,7 @@ import {
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
+import { effectiveWeeklyCapacity, estimateVariance, subtaskProgress } from "@/lib/metrics";
 import { CapacityWarningModal } from "@/components/CapacityWarningModal";
 import { toast } from "sonner";
 
@@ -39,6 +41,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   const { data: members = [] } = useMembers();
   const { data: staffShifts = [] } = useStaffShifts();
 
+  const createSubtaskMutation = useCreateTask(task?.projectId);
   const updateTaskStatusMutation = useUpdateTaskStatus();
   const updateTaskMutation = useUpdateTask();
   const manageAssigneesMutation = useManageTaskAssignees(activeId);
@@ -51,7 +54,9 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
 
   // Capacity Warning Modal State
   const [warningModalOpen, setWarningModalOpen] = useState(false);
-  const [pendingAssigneeId, setPendingAssigneeId] = useState<string | null>(null);
+  const [pendingAssignees, setPendingAssignees] = useState<
+    { memberId: string; isPrimary?: boolean; allocatedHours?: number }[] | null
+  >(null);
   const [warningMemberName, setWarningMemberName] = useState("");
   const [warningAssignedHours, setWarningAssignedHours] = useState(0);
   const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
@@ -67,14 +72,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
     const currentHours = memberTasks.reduce((acc, curr) => acc + (Number(curr.estimatedHours) || 2), 0);
 
     const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
-    let shiftHours = 0;
-    for (const s of memberShifts) {
-      const [h1, m1] = s.startTime.split(":").map(Number);
-      const [h2, m2] = s.endTime.split(":").map(Number);
-      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
-      if (diffM > 0) shiftHours += diffM / 60;
-    }
-    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
+    const totalCapacity = effectiveWeeklyCapacity(memberShifts);
 
     return {
       currentHours,
@@ -98,7 +96,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
     const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(primary.memberId, shareHours);
 
     if (isOverloaded) {
-      setPendingAssigneeId(primary.memberId);
+      setPendingAssignees(assignees);
       setWarningMemberName(targetMember?.name || "Lead Assignee");
       setWarningAssignedHours(currentHours);
       setWarningAdditionalHours(shareHours);
@@ -112,19 +110,30 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   };
 
   const confirmOverloadedAssignee = () => {
-    if (pendingAssigneeId) {
-      manageAssigneesMutation.mutate([pendingAssigneeId]);
-      toast.success("Assignee updated (capacity overridden)");
-      setWarningModalOpen(false);
-      setPendingAssigneeId(null);
-    }
+    if (!pendingAssignees) return;
+    manageAssigneesMutation.mutate(pendingAssignees);
+    toast.success("Assignees updated (capacity overridden)");
+    setWarningModalOpen(false);
+    setPendingAssignees(null);
   };
 
   const addSubtask = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newSubtaskTitle.trim() || !task) return;
-    toast.info("Subtask added");
-    setNewSubtaskTitle("");
+    const title = newSubtaskTitle.trim();
+    if (!title || !task) return;
+
+    try {
+      await createSubtaskMutation.mutateAsync({
+        title,
+        projectId: task.projectId,
+        parentTaskId: task.id,
+        status: "TODO",
+      });
+      toast.success("Subtask added");
+      setNewSubtaskTitle("");
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to add subtask");
+    }
   };
 
   const toggleSubtask = (st: Task) => {
@@ -149,6 +158,8 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   }
 
   const doneCount = subtasks.filter((st) => st.status === "DONE").length;
+  const progressPercent = subtaskProgress(subtasks);
+  const estimateDelta = estimateVariance(task.estimatedHours || 0, task.actualHours || 0);
 
   return (
     <div className="flex flex-col w-full min-h-screen bg-surface text-on-surface">
@@ -247,6 +258,15 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                       ({doneCount}/{subtasks.length} done)
                     </span>
                   </div>
+                  <span className="font-label-code text-[11px] text-primary font-semibold">
+                    {progressPercent}% complete
+                  </span>
+                </div>
+                <div className="w-full h-1.5 rounded-full bg-surface-container overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-primary-container transition-all duration-300"
+                    style={{ width: `${progressPercent}%` }}
+                  />
                 </div>
 
                 <div className="divide-y divide-outline-variant/20 rounded-lg bg-surface-container-lowest border border-outline-variant/20 overflow-hidden">
@@ -474,6 +494,12 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                     <span>Estimated</span>
                     <span className="text-on-surface font-medium">{task.estimatedHours || 0}h</span>
                   </div>
+                  <div className="flex justify-between text-[11px] text-outline font-label-code">
+                    <span>Variance</span>
+                    <span className={`font-medium ${estimateDelta > 0 ? "text-red-400" : "text-emerald-400"}`}>
+                      {estimateDelta > 0 ? "+" : ""}{estimateDelta}h
+                    </span>
+                  </div>
                   <Link
                     href={`/time-tracking?taskId=${task.id}`}
                     className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-body-sm font-medium border border-outline-variant/30 mt-2 transition-colors"
@@ -497,7 +523,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
         onConfirm={confirmOverloadedAssignee}
         onCancel={() => {
           setWarningModalOpen(false);
-          setPendingAssigneeId(null);
+          setPendingAssignees(null);
         }}
       />
     </div>

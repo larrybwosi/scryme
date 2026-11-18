@@ -188,9 +188,14 @@ describe("Projects App API Routing, Authorization, and Permissions Verification"
         notes: "All done",
       });
 
-      await ProjectsAPI.processWeeklyTimesheet("ts-100", { action: "APPROVE", notes: "Approved" });
+      await ProjectsAPI.processWeeklyTimesheet("ts-100", {
+        action: "APPROVE",
+        weekStartDate: "2026-11-02",
+        notes: "Approved",
+      });
       expect(postSpy).toHaveBeenLastCalledWith("/v3/tasks/timesheets/ts-100/process", {
         action: "APPROVE",
+        weekStartDate: "2026-11-02",
         notes: "Approved",
       });
     });

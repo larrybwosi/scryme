@@ -358,6 +358,11 @@ export class ProcessTimesheetDto {
   @IsNotEmpty()
   action!: 'APPROVE' | 'REJECT';
 
+  @ApiProperty({ example: '2026-10-12T00:00:00.000Z', description: 'Monday start date of the week being reviewed' })
+  @Type(() => Date)
+  @IsDate()
+  weekStartDate!: Date;
+
   @ApiPropertyOptional({ example: 'Approved for payroll processing' })
   @IsOptional()
   @IsString()

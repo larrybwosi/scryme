@@ -5,6 +5,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import React, { useState, useMemo } from "react";
 import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X, CalendarPlus } from "lucide-react";
 import { AddScheduleModal, ScheduleModalType } from "@/components/AddScheduleModal";
+import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { effectiveWeeklyCapacity, findConflictingShiftIds, shiftsOverlap, timeToMinutes } from "@/lib/metrics";
 import {
   useMembers,
   useProjects,
@@ -60,6 +62,12 @@ export default function SchedulePage() {
   const [bookingProjectId, setBookingProjectId] = useState("");
   const [bookingHours, setBookingHours] = useState("4");
   const [bookingTask, setBookingTask] = useState("");
+  const [pendingBooking, setPendingBooking] = useState<{
+    projectId: string;
+    hours: number;
+    title: string;
+    memberId?: string;
+  } | null>(null);
 
   // Shift Modal State (Create & Edit)
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
@@ -100,34 +108,7 @@ export default function SchedulePage() {
   });
 
   // Calculate shift conflicts (overlapping intervals for same member on same day)
-  const shiftConflicts = useMemo(() => {
-    const conflicts = new Set<string>();
-    for (let i = 0; i < staffShifts.length; i++) {
-      const s1 = staffShifts[i];
-      if (!s1.isActive) continue;
-      const [s1H1, s1M1] = s1.startTime.split(":").map(Number);
-      const [s1H2, s1M2] = s1.endTime.split(":").map(Number);
-      const start1 = s1H1 * 60 + s1M1;
-      const end1 = s1H2 * 60 + s1M2;
-
-      for (let j = i + 1; j < staffShifts.length; j++) {
-        const s2 = staffShifts[j];
-        if (!s2.isActive) continue;
-        if (s1.memberId === s2.memberId && s1.dayOfWeek === s2.dayOfWeek) {
-          const [s2H1, s2M1] = s2.startTime.split(":").map(Number);
-          const [s2H2, s2M2] = s2.endTime.split(":").map(Number);
-          const start2 = s2H1 * 60 + s2M1;
-          const end2 = s2H2 * 60 + s2M2;
-
-          if (Math.max(start1, start2) < Math.min(end1, end2)) {
-            conflicts.add(s1.id);
-            conflicts.add(s2.id);
-          }
-        }
-      }
-    }
-    return conflicts;
-  }, [staffShifts]);
+  const shiftConflicts = useMemo(() => new Set(findConflictingShiftIds(staffShifts)), [staffShifts]);
 
   // Capacity calculations combining shifts and tasks
   const memberAllocations = useMemo(() => {
@@ -141,20 +122,12 @@ export default function SchedulePage() {
       );
 
       const assignedHours = assignedTasks.reduce((acc, curr) => {
-        const hours = (curr.details as any)?.estimatedHours || 3;
-        return acc + Number(hours);
+        const hours = (curr.details as any)?.estimatedHours;
+        return acc + (Number(hours) || 0);
       }, 0);
 
       const memberShifts = staffShifts.filter((s) => s.memberId === member.id && s.isActive);
-      let calculatedCapacity = 0;
-      for (const s of memberShifts) {
-        const [h1, m1] = s.startTime.split(":").map(Number);
-        const [h2, m2] = s.endTime.split(":").map(Number);
-        const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
-        if (diffM > 0) calculatedCapacity += diffM / 60;
-      }
-
-      const totalCapacity = calculatedCapacity > 0 ? calculatedCapacity : 40;
+      const totalCapacity = effectiveWeeklyCapacity(memberShifts);
 
       return {
         member,
@@ -170,23 +143,52 @@ export default function SchedulePage() {
   const totalCapacity = memberAllocations.reduce((acc, m) => acc + m.totalCapacity, 0);
   const clusterPercentage = totalCapacity > 0 ? Math.round((totalAssigned / totalCapacity) * 100) : 0;
 
+  const executeBooking = async (booking: {
+    projectId: string;
+    hours: number;
+    title: string;
+    memberId?: string;
+  }) => {
+    try {
+      await createTaskMutation.mutateAsync({
+        title: booking.title,
+        projectId: booking.projectId,
+        estimatedHours: booking.hours,
+        dueDate: weekEnd.toISOString(),
+        assigneeIds: booking.memberId ? [booking.memberId] : undefined,
+      });
+
+      toast.success("Squad capacity booked successfully");
+      setIsBookModalOpen(false);
+      setBookingTask("");
+      setPendingBooking(null);
+    } catch (err: any) {
+      toast.error(err?.response?.data?.message || "Failed to book squad capacity");
+    }
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectId = bookingProjectId || (projects[0]?.id || "");
     if (!projectId || !bookingTask.trim() || !canManageTasks) return;
 
     const hours = parseFloat(bookingHours) || 2;
-    await createTaskMutation.mutateAsync({
-      title: bookingTask.trim(),
+    const booking = {
       projectId,
-      estimatedHours: hours,
-      dueDate: weekEnd.toISOString(),
-      assigneeIds: bookingMemberId ? [bookingMemberId] : undefined,
-    });
+      hours,
+      title: bookingTask.trim(),
+      memberId: bookingMemberId || undefined,
+    };
 
-    toast.success("Squad capacity booked successfully");
-    setIsBookModalOpen(false);
-    setBookingTask("");
+    if (booking.memberId) {
+      const allocation = memberAllocations.find((item) => item.member.id === booking.memberId);
+      if (allocation && allocation.assignedHours + hours > allocation.totalCapacity) {
+        setPendingBooking(booking);
+        return;
+      }
+    }
+
+    await executeBooking(booking);
   };
 
   const handleSaveShift = async (e: React.FormEvent) => {
@@ -194,32 +196,27 @@ export default function SchedulePage() {
     const targetMember = shiftMemberId || members[0]?.id;
     if (!targetMember) return;
 
-    // Check for overlapping intervals in local shifts
-    const [h1, m1] = shiftStartTime.split(":").map(Number);
-    const [h2, m2] = shiftEndTime.split(":").map(Number);
-    const newStart = h1 * 60 + m1;
-    const newEnd = h2 * 60 + m2;
-
-    if (newEnd <= newStart) {
+    if (timeToMinutes(shiftEndTime) <= timeToMinutes(shiftStartTime)) {
       toast.error("Shift end time must be after start time");
       return;
     }
 
-    const hasConflict = staffShifts.some((s) => {
-      if (!s.isActive || s.id === editingShiftId) return false;
-      if (s.memberId === targetMember && s.dayOfWeek === shiftDayOfWeek) {
-        const [s1, sm1] = s.startTime.split(":").map(Number);
-        const [s2, sm2] = s.endTime.split(":").map(Number);
-        return Math.max(newStart, s1 * 60 + sm1) < Math.min(newEnd, s2 * 60 + sm2);
-      }
-      return false;
+    const hasConflict = staffShifts.some((shift) => {
+      if (!shift.isActive || shift.id === editingShiftId) return false;
+      return shiftsOverlap(
+        {
+          memberId: targetMember,
+          dayOfWeek: shiftDayOfWeek,
+          startTime: shiftStartTime,
+          endTime: shiftEndTime,
+        },
+        shift,
+      );
     });
 
     if (hasConflict) {
-      const proceed = window.confirm(
-        "Warning: This shift overlaps with an existing shift for this member on that day. Save anyway?"
-      );
-      if (!proceed) return;
+      toast.error("This shift overlaps an existing shift for this member on that day");
+      return;
     }
 
     try {
@@ -779,6 +776,29 @@ export default function SchedulePage() {
           onSuccess={() => {
             // refresh shift and workload data
           }}
+        />
+
+        {/* Capacity confirmation for over allocated bookings */}
+        <CapacityWarningModal
+          isOpen={!!pendingBooking}
+          memberName={
+            members.find((m) => m.id === pendingBooking?.memberId)?.name || "Selected Member"
+          }
+          currentAssignedHours={
+            pendingBooking?.memberId
+              ? memberAllocations.find((item) => item.member.id === pendingBooking.memberId)?.assignedHours || 0
+              : 0
+          }
+          additionalHours={pendingBooking?.hours || 0}
+          totalCapacityHours={
+            pendingBooking?.memberId
+              ? memberAllocations.find((item) => item.member.id === pendingBooking.memberId)?.totalCapacity || 40
+              : 40
+          }
+          onConfirm={() => {
+            if (pendingBooking) void executeBooking(pendingBooking);
+          }}
+          onCancel={() => setPendingBooking(null)}
         />
 
         {/* Modal: Book Capacity */}

@@ -22,6 +22,7 @@ import {
   StaffShiftItem,
 } from "@/lib/api";
 import { apiClient } from "@/lib/api";
+import { shiftsOverlap, timeToMinutes } from "@/lib/metrics";
 import { toast } from "sonner";
 
 export const DAYS_OF_WEEK = [
@@ -144,25 +145,20 @@ export function AddScheduleModal({
       return;
     }
 
-    const [h1, m1] = shiftStartTime.split(":").map(Number);
-    const [h2, m2] = shiftEndTime.split(":").map(Number);
-    const newStart = h1 * 60 + m1;
-    const newEnd = h2 * 60 + m2;
-
-    if (newEnd <= newStart) {
+    if (timeToMinutes(shiftEndTime) <= timeToMinutes(shiftStartTime)) {
       toast.error("Shift end time must be later than start time");
       return;
     }
 
-    const hasConflict = existingShifts.some((s) => {
-      if (!s.isActive) return false;
-      if (s.memberId === targetMember && s.dayOfWeek === shiftDayOfWeek) {
-        const [s1, sm1] = s.startTime.split(":").map(Number);
-        const [s2, sm2] = s.endTime.split(":").map(Number);
-        return Math.max(newStart, s1 * 60 + sm1) < Math.min(newEnd, s2 * 60 + sm2);
-      }
-      return false;
-    });
+    const pendingShift = {
+      memberId: targetMember,
+      dayOfWeek: shiftDayOfWeek,
+      startTime: shiftStartTime,
+      endTime: shiftEndTime,
+    };
+    const hasConflict = existingShifts.some(
+      (shift) => shift.isActive !== false && shiftsOverlap(pendingShift, shift),
+    );
 
     if (hasConflict) {
       const proceed = window.confirm(

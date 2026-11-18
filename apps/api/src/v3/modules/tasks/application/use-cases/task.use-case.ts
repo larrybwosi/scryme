@@ -991,7 +991,7 @@ export class TaskUseCase {
 
     const where: any = {
       organizationId,
-      date: { gte: start, lte: end },
+      date: { gte: start, lt: end },
     };
     if (memberId) {
       where.memberId = memberId;
@@ -1040,6 +1040,9 @@ export class TaskUseCase {
         hours: hoursNum,
         description: entry.description,
         date: entry.date,
+        category: entry.category,
+        isBillable: entry.isBillable,
+        isLocked: entry.isLocked,
       });
     }
 
@@ -1066,7 +1069,7 @@ export class TaskUseCase {
       where: {
         organizationId,
         memberId,
-        date: { gte: weekStart, lte: weekEnd },
+        date: { gte: weekStart, lt: weekEnd },
       },
       _sum: { hours: true },
     });
@@ -1086,12 +1089,16 @@ export class TaskUseCase {
     organizationId: string,
     timesheetId: string,
     reviewerMemberId: string | null,
-    dto: { action: 'APPROVE' | 'REJECT'; notes?: string },
+    dto: { action: 'APPROVE' | 'REJECT'; weekStartDate: Date; notes?: string },
   ) {
+    const weekStart = new Date(dto.weekStartDate);
+    const weekEnd = new Date(weekStart.getTime() + 7 * 24 * 60 * 60 * 1000);
+
     if (dto.action === 'APPROVE') {
       await this.prisma.client.taskTimeEntry.updateMany({
         where: {
           organizationId,
+          date: { gte: weekStart, lt: weekEnd },
           OR: [
             { id: timesheetId },
             { memberId: timesheetId },
@@ -1106,6 +1113,7 @@ export class TaskUseCase {
     return {
       success: true,
       timesheetId,
+      weekStartDate: weekStart.toISOString(),
       status: dto.action === 'APPROVE' ? 'APPROVED' : 'REJECTED',
       reviewedById: reviewerMemberId,
       reviewedAt: new Date().toISOString(),
