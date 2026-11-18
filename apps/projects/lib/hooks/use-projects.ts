@@ -140,6 +140,7 @@ export function useCreateTask(projectId?: string) {
         queryKey: QUERY_KEYS.projectTasks(undefined),
       });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["subtasks"] });
     },
   });
 }
@@ -235,6 +236,7 @@ export function useUpdateTaskStatus(projectId?: string) {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.projectTasks(undefined) });
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.task(taskId) });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
+      queryClient.invalidateQueries({ queryKey: ["subtasks"] });
     },
   });
 }
@@ -646,8 +648,12 @@ export function useProcessWeeklyTimesheet() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ timesheetId, action, notes }: { timesheetId: string; action: 'APPROVE' | 'REJECT'; notes?: string }) =>
-      ProjectsAPI.processWeeklyTimesheet(timesheetId, { action, notes }),
+    mutationFn: ({ timesheetId, action, weekStartDate, notes }: {
+      timesheetId: string;
+      action: 'APPROVE' | 'REJECT';
+      weekStartDate: string;
+      notes?: string;
+    }) => ProjectsAPI.processWeeklyTimesheet(timesheetId, { action, weekStartDate, notes }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["weekly-timesheets"] });
     },

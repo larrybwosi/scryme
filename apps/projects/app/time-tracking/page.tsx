@@ -19,6 +19,8 @@ import {
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { useTimerStore } from "@/lib/timer-store";
+import { billableRatio, estimateVariance, formatStopwatch, startOfWeek } from "@/lib/metrics";
+import { TimeEntry } from "@/lib/api";
 import { toast } from "sonner";
 
 function TimeTrackingContent() {
@@ -42,11 +44,14 @@ function TimeTrackingContent() {
   const logTimeMutation = useLogTimeEntry(activeTask?.projectId);
   const deleteTimeMutation = useDeleteTimeEntry(activeTaskId);
 
-  const { data: timesheets = [], isLoading: isTimesheetsLoading } = useWeeklyTimesheets();
+  const { canManageTasks, memberId: currentMemberId } = usePermissions();
+  const currentWeekStart = useMemo(() => startOfWeek(new Date()).toISOString(), []);
+  const { data: timesheets = [], isLoading: isTimesheetsLoading } = useWeeklyTimesheets(
+    currentMemberId || undefined,
+    currentWeekStart,
+  );
   const submitTimesheetMutation = useSubmitWeeklyTimesheet();
   const processTimesheetMutation = useProcessWeeklyTimesheet();
-
-  const { canManageTasks, memberId: currentMemberId } = usePermissions();
 
   // Active stopwatch state via hook
   const { state: timerState, startTimer, pauseTimer, resetTimer } = useTimerStore();
@@ -61,6 +66,7 @@ function TimeTrackingContent() {
   const [manualHours, setManualHours] = useState("1.0");
   const [manualNote, setManualNote] = useState("");
   const [isBillable, setIsBillable] = useState(true);
+  const [isStopwatchBillable, setIsStopwatchBillable] = useState(true);
   const [isOperational, setIsOperational] = useState(false);
   const [operationalCategory, setOperationalCategory] = useState("OPERATION");
 
@@ -72,13 +78,6 @@ function TimeTrackingContent() {
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [selectedTimesheet, setSelectedTimesheet] = useState<WeeklyTimesheetRecord | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
-
-  const formatStopwatch = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
 
   const handleStartTimer = () => {
     if (!activeTaskId) return;
@@ -106,6 +105,7 @@ function TimeTrackingContent() {
         taskId,
         hours,
         description: `Stopwatch session: ${formatStopwatch(timerState.elapsedSeconds)}`,
+        isBillable: isStopwatchBillable,
       });
       resetTimer();
       toast.success(`Logged ${hours}h successfully`);
@@ -136,7 +136,7 @@ function TimeTrackingContent() {
     }
   };
 
-  const handleDeleteLog = async (entry: any) => {
+  const handleDeleteLog = async (entry: TimeEntry) => {
     if (entry.isLocked) {
       toast.error("Cannot delete an approved and locked time entry");
       return;
@@ -152,14 +152,10 @@ function TimeTrackingContent() {
 
   const handleSubmitTimesheet = async (e: React.FormEvent) => {
     e.preventDefault();
-    const monday = new Date();
-    const day = (monday.getDay() + 6) % 7;
-    monday.setDate(monday.getDate() - day);
-    monday.setHours(0, 0, 0, 0);
 
     try {
       await submitTimesheetMutation.mutateAsync({
-        weekStartDate: monday.toISOString(),
+        weekStartDate: currentWeekStart,
         notes: submitNotes || undefined,
       });
       toast.success("Weekly timesheet submitted for manager review");
@@ -176,6 +172,7 @@ function TimeTrackingContent() {
       await processTimesheetMutation.mutateAsync({
         timesheetId: selectedTimesheet.memberId,
         action,
+        weekStartDate: selectedTimesheet.weekStartDate,
         notes: reviewNotes || undefined,
       });
       toast.success(`Timesheet ${action.toLowerCase()}ed`);
@@ -292,6 +289,15 @@ function TimeTrackingContent() {
                 <div className="text-body-sm text-on-surface font-medium truncate max-w-md">
                   {activeTask?.title || "No task selected"}
                 </div>
+                <label className="flex items-center gap-1.5 text-body-sm text-outline mt-1">
+                  <input
+                    type="checkbox"
+                    checked={isStopwatchBillable}
+                    onChange={(event) => setIsStopwatchBillable(event.target.checked)}
+                    className="h-3.5 w-3.5 accent-primary-container"
+                  />
+                  Billable work session
+                </label>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
@@ -402,19 +408,13 @@ function TimeTrackingContent() {
                       : "text-emerald-400"
                   }`}
                 >
-                  {Math.round((totalLoggedHours - (activeTask?.estimatedHours || 0)) * 10) / 10}h
+                  {estimateVariance(activeTask?.estimatedHours || 0, totalLoggedHours)}h
                 </span>
               </div>
               <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
                 <span className="text-outline text-body-sm">Billable Ratio</span>
                 <span className="text-headline-lg font-headline-lg text-primary">
-                  {totalLoggedHours > 0
-                    ? Math.round(
-                        (logs.filter((l) => l.isBillable !== false).reduce((a, c) => a + Number(c.hours), 0) /
-                          totalLoggedHours) *
-                          100
-                      )
-                    : 100}%
+                  {billableRatio(logs)}%
                 </span>
               </div>
             </div>
@@ -466,6 +466,7 @@ function TimeTrackingContent() {
                     <tr>
                       <th className="px-4 py-2.5">Member</th>
                       <th className="px-4 py-2.5">Description</th>
+                      <th className="px-4 py-2.5">Type</th>
                       <th className="px-4 py-2.5">Duration</th>
                       <th className="px-4 py-2.5">Date</th>
                       <th className="px-4 py-2.5 text-right">Action</th>
@@ -483,6 +484,14 @@ function TimeTrackingContent() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-on-surface">{log.description || "--"}</td>
+                        <td className="px-4 py-3 text-body-sm text-outline">
+                          <span className={log.isBillable === false ? "text-amber-400" : "text-emerald-400"}>
+                            {log.isBillable === false ? "Non billable" : "Billable"}
+                          </span>
+                          {log.category && (
+                            <span className="block font-label-code text-[10px] text-outline">{log.category}</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 font-label-code text-[12px] text-on-surface font-medium">
                           {log.hours}h
                         </td>
@@ -493,9 +502,10 @@ function TimeTrackingContent() {
                           {canManageTasks && (
                             <button
                               type="button"
-                              onClick={() => handleDeleteLog(log.id)}
-                              className="text-outline hover:text-red-400 p-1 transition-colors"
-                              title="Delete Entry"
+                              onClick={() => handleDeleteLog(log)}
+                              disabled={log.isLocked}
+                              className="text-outline hover:text-red-400 p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                              title={log.isLocked ? "Locked entries cannot be deleted" : "Delete Entry"}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -547,7 +557,7 @@ function TimeTrackingContent() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
                     {timesheets.map((ts) => (
-                      <tr key={ts.memberId} className="hover:bg-surface-container transition-colors">
+                      <tr key={`${ts.memberId}-${ts.weekStartDate}`} className="hover:bg-surface-container transition-colors">
                         <td className="px-4 py-3 font-medium text-on-surface">
                           <div>{ts.memberName}</div>
                           <div className="text-[11px] text-outline">{ts.memberEmail}</div>

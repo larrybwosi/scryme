@@ -16,6 +16,7 @@ Dedicated project management, task tracking, scheduling, milestones, member assi
 | 5 | Milestone & Schedule Management | Slice 2 | done |
 | 6 | Gantt Chart & Time Tracking | Slice 2 | done |
 | 7 | Member Assignments & Sync | Slice 3 | done |
+| 8 | Enterprise Time Tracking, Scheduling, Tasks and Operations | Slice 4 | in-progress |
 
 ## Foundations
 
@@ -70,4 +71,8 @@ Assign organization members to projects/tasks, filter by assignee, and handle re
 ### 8. Enterprise Time Tracking, Scheduling, Tasks and Operations
 Advanced stopwatch persistence, locked timesheets, shift conflict engine, subtask rollups, and operational booking/batch links.
 **Done when:** All four pillars (time tracking, scheduling, tasks, operations) are modernized, connected to V3 APIs, and verified with tests.
-- [x] Design it (spec): `docs/specs/0042-projects-time-tracking-scheduling-tasks-and-operations.md`
+- [x] Design it (spec): `docs/specs/0042-projects-time-tracking-scheduling-tasks-and-operations/index.md`
+- [x] Build it: time tracking persistence, week scoped approvals, shift conflicts, capacity warnings, subtask rollups, and operational links
+- [x] Add unit tests for timer math, capacity checks, conflict detection, and API payloads
+- [ ] Check it (verify): run `/check verify` and save the emitted steps to `verify.md`
+- [ ] Confirm it (test): run `/test` after verification is saved

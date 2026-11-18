@@ -328,15 +328,94 @@ describe('TaskUseCase', () => {
       expect(result.totalHours).toBe(38.5);
     });
 
-    it('should process (approve/reject) weekly timesheet', async () => {
+    it('should include billable and lock metadata in weekly timesheet entries', async () => {
+      const weekStartDate = new Date('2026-10-12');
+      mockPrisma.client.taskTimeEntry.findMany.mockResolvedValue([
+        {
+          id: 'entry_1',
+          memberId: 'member_1',
+          member: { user: { name: 'Alice', email: 'alice@scryme.tech' } },
+          task: { taskKey: 'DEV-1', title: 'Feature A', projectId: 'prj_1' },
+          hours: 6,
+          date: weekStartDate,
+          category: 'SUPPORT',
+          isBillable: true,
+          isLocked: true,
+        },
+        {
+          id: 'entry_2',
+          memberId: 'member_1',
+          member: { user: { name: 'Alice', email: 'alice@scryme.tech' } },
+          task: null,
+          hours: 4,
+          date: weekStartDate,
+          category: 'MEETING',
+          isBillable: false,
+          isLocked: false,
+        },
+      ]);
+
+      const result = await useCase.getWeeklyTimesheets('org_1', undefined, weekStartDate);
+
+      expect(mockPrisma.client.taskTimeEntry.findMany).toHaveBeenCalledWith(
+        expect.objectContaining({
+          where: expect.objectContaining({
+            date: {
+              gte: weekStartDate,
+              lt: new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000),
+            },
+          }),
+        }),
+      );
+      expect(result).toHaveLength(1);
+      expect(result[0].totalHours).toBe(10);
+      expect(result[0].billableHours).toBe(6);
+      expect(result[0].status).toBe('APPROVED');
+      expect(result[0].entries[0]).toMatchObject({
+        category: 'SUPPORT',
+        isBillable: true,
+        isLocked: true,
+      });
+    });
+
+    it('should process (approve/reject) weekly timesheet and lock the reviewed week', async () => {
+      const weekStartDate = new Date('2026-10-12');
+      const weekEnd = new Date(weekStartDate.getTime() + 7 * 24 * 60 * 60 * 1000);
+
       const result = await useCase.processWeeklyTimesheet('org_1', 'ts_123', 'manager_1', {
         action: 'APPROVE',
+        weekStartDate,
         notes: 'Looks good',
       });
 
       expect(result.success).toBe(true);
       expect(result.status).toBe('APPROVED');
       expect(result.reviewedById).toBe('manager_1');
+      expect(mockPrisma.client.taskTimeEntry.updateMany).toHaveBeenCalledWith({
+        where: {
+          organizationId: 'org_1',
+          date: { gte: weekStartDate, lt: weekEnd },
+          OR: [
+            { id: 'ts_123' },
+            { memberId: 'ts_123' },
+          ],
+        },
+        data: { isLocked: true },
+      });
+    });
+
+    it('should reject deleting an approved and locked time entry', async () => {
+      mockPrisma.client.taskTimeEntry.findFirst.mockResolvedValue({
+        id: 'entry_1',
+        organizationId: 'org_1',
+        taskId: 'task_1',
+        isLocked: true,
+      });
+
+      await expect(
+        useCase.deleteTimeEntry('org_1', 'task_1', 'entry_1'),
+      ).rejects.toThrow(BadRequestException);
+      expect(mockPrisma.client.taskTimeEntry.deleteMany).not.toHaveBeenCalled();
     });
   });
 });

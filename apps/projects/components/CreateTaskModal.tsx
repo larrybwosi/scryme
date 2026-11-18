@@ -41,6 +41,7 @@ import {
   useCreateTask,
 } from "@/lib/hooks/use-projects";
 import { Task, CreateTaskInput } from "@/lib/api";
+import { effectiveWeeklyCapacity } from "@/lib/metrics";
 import { CapacityWarningModal } from "@/components/CapacityWarningModal";
 import { toast } from "sonner";
 
@@ -235,14 +236,7 @@ export function CreateTaskModal({
     );
 
     const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
-    let shiftHours = 0;
-    for (const s of memberShifts) {
-      const [h1, m1] = s.startTime.split(":").map(Number);
-      const [h2, m2] = s.endTime.split(":").map(Number);
-      const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
-      if (diffM > 0) shiftHours += diffM / 60;
-    }
-    const totalCapacity = shiftHours > 0 ? shiftHours : 40;
+    const totalCapacity = effectiveWeeklyCapacity(memberShifts);
 
     return {
       currentHours,

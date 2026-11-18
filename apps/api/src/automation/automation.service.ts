@@ -480,6 +480,7 @@ export class AutomationService {
           inputs?: any;
           payload?: any;
           correlationId?: string;
+          skipDuplicateCheck?: boolean;
         },
   ) {
     const pathOrKey = dto.key || (dto as any).path;
@@ -524,7 +525,7 @@ export class AutomationService {
       suppliedCorrelationId ||
       `manual_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
 
-    if (suppliedCorrelationId) {
+    if (suppliedCorrelationId && !(dto as any).skipDuplicateCheck) {
       const existingExecution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
         where: {
           organizationId,
@@ -678,6 +679,7 @@ export class AutomationService {
       key: existingExecution.triggerEvent,
       payload,
       correlationId: `replay_${existingExecution.id}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
+      skipDuplicateCheck: true,
     });
 
     await (this.prisma.client as any).workflowEngineAuditLog.create({
