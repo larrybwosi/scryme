@@ -8,6 +8,7 @@ import {
   Headers,
   UseGuards,
   UseInterceptors,
+  UsePipes,
 } from "@nestjs/common";
 import { ApiTags, ApiOperation, ApiBearerAuth, ApiParam } from "@nestjs/swagger";
 import { AutomationService } from "./automation.service";
@@ -17,7 +18,25 @@ import type {
   CreateWebhookDto,
   SimulateWorkflowDto,
   ReplayWorkflowDto,
+  ProvisionWorkflowDto,
+  ProvisionDefinitionsDto,
+  CancelWorkflowDto,
+  RetryJobDto,
+  HitlActionDto,
 } from "./dto/automation.dto";
+import {
+  CancelWorkflowSchema,
+  CreateWebhookSchema,
+  CreateWorkflowDefinitionSchema,
+  HitlActionSchema,
+  ProvisionDefinitionsSchema,
+  ProvisionWorkflowSchema,
+  ReplayWorkflowSchema,
+  RetryJobSchema,
+  SimulateWorkflowSchema,
+  TriggerWorkflowSchema,
+} from "./dto/automation.dto";
+import { V3ZodValidationPipe } from "../v3/common/pipes/v3-zod-validation.pipe";
 import { AllowPublic } from "../common/decorators/auth.decorator";
 import { v3Context } from "../v3/common/decorators/v3-context.decorator";
 import type { V3ApiContext } from "@repo/shared/api/v3";
@@ -27,6 +46,14 @@ import { PermissionsGuard } from "../v3/common/guards/permissions.guard";
 import { Permissions } from "../v3/common/decorators/permissions.decorator";
 import { AuditInterceptor } from "../v3/common/interceptors/audit.interceptor";
 import { StandardResponseInterceptor } from "../v3/common/interceptors/standard-response.interceptor";
+
+function readPagination(limit?: string, offset?: string) {
+  return {
+    limit: limit !== undefined ? Number(limit) : undefined,
+    offset: offset !== undefined ? Number(offset) : undefined,
+  };
+}
+
 
 @ApiTags("V3 Automation & Workflows")
 @ApiBearerAuth()
@@ -53,6 +80,7 @@ export class AutomationController {
 
   @Post("definitions")
   @Permissions("workflow:manage")
+  @UsePipes(new V3ZodValidationPipe(CreateWorkflowDefinitionSchema))
   @ApiOperation({ summary: "Create or update custom workflow definition" })
   async createDefinition(
     @v3Context() ctx: V3ApiContext,
@@ -63,10 +91,11 @@ export class AutomationController {
 
   @Post("provision")
   @Permissions("workflow:manage")
+  @UsePipes(new V3ZodValidationPipe(ProvisionWorkflowSchema))
   @ApiOperation({ summary: "Provision a workflow definition for organization" })
   async provisionWorkflow(
     @v3Context() ctx: V3ApiContext,
-    @Body() body: { path: string; settings: any },
+    @Body() body: ProvisionWorkflowDto,
   ) {
     return this.automationService.provisionWorkflow(
       ctx.organizationId,
@@ -77,29 +106,32 @@ export class AutomationController {
 
   @Post("definitions/provision")
   @Permissions("workflow:manage")
+  @UsePipes(new V3ZodValidationPipe(ProvisionDefinitionsSchema))
   @ApiOperation({ summary: "Batch provision definitions" })
   async provisionDefinitions(
     @v3Context() ctx: V3ApiContext,
-    @Body() body?: { customConfigs?: Record<string, any> },
+    @Body() body: ProvisionDefinitionsDto,
   ) {
     return this.automationService.provisionDefinitions(
       ctx.organizationId,
-      body?.customConfigs,
+      body.customConfigs,
     );
   }
 
   @Post("trigger")
   @Permissions("workflow:execute")
+  @UsePipes(new V3ZodValidationPipe(TriggerWorkflowSchema))
   @ApiOperation({ summary: "Manually trigger workflow execution" })
   async triggerWorkflow(
     @v3Context() ctx: V3ApiContext,
-    @Body() body: TriggerWorkflowDto | { path?: string; key?: string; inputs?: any; payload?: any },
+    @Body() body: TriggerWorkflowDto,
   ) {
     return this.automationService.triggerWorkflow(ctx.organizationId, body);
   }
 
   @Post("simulate")
   @Permissions("workflow:view")
+  @UsePipes(new V3ZodValidationPipe(SimulateWorkflowSchema))
   @ApiOperation({ summary: "Simulate a dry-run execution of a workflow DAG without side effects" })
   async simulateWorkflow(
     @v3Context() ctx: V3ApiContext,
@@ -110,6 +142,7 @@ export class AutomationController {
 
   @Post("replay")
   @Permissions("workflow:execute")
+  @UsePipes(new V3ZodValidationPipe(ReplayWorkflowSchema))
   @ApiOperation({ summary: "Replay a past execution with optional payload overrides" })
   async replayExecution(
     @v3Context() ctx: V3ApiContext,
@@ -120,10 +153,11 @@ export class AutomationController {
 
   @Post("cancel")
   @Permissions("workflow:execute")
-  @ApiOperation({ summary: "Cancel a running workflow job instance" })
+  @UsePipes(new V3ZodValidationPipe(CancelWorkflowSchema))
+  @ApiOperation({ summary: "Cancel a running workflow job or execution" })
   async cancelJob(
     @v3Context() ctx: V3ApiContext,
-    @Body() body: { jobId: string },
+    @Body() body: CancelWorkflowDto,
   ) {
     return this.automationService.cancelJob(ctx.organizationId, body.jobId);
   }
@@ -134,13 +168,19 @@ export class AutomationController {
   async getExecutionHistory(
     @v3Context() ctx: V3ApiContext,
     @Query("path") path?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
   ) {
-    return this.automationService.getExecutionHistory(ctx.organizationId, path);
+    return this.automationService.getExecutionHistory(
+      ctx.organizationId,
+      path,
+      readPagination(limit, offset),
+    );
   }
 
   @Get("logs")
   @Permissions("workflow:view")
-  @ApiOperation({ summary: "Get detailed logs for a workflow execution job" })
+  @ApiOperation({ summary: "Get detailed logs for a workflow job or execution" })
   async getLogs(
     @v3Context() ctx: V3ApiContext,
     @Query("jobId") jobId: string,
@@ -164,8 +204,14 @@ export class AutomationController {
   async getExecutions(
     @v3Context() ctx: V3ApiContext,
     @Query("key") key?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
   ) {
-    return this.automationService.getExecutions(ctx.organizationId, key);
+    return this.automationService.getExecutions(
+      ctx.organizationId,
+      key,
+      readPagination(limit, offset),
+    );
   }
 
   @Get("audit-logs")
@@ -174,8 +220,49 @@ export class AutomationController {
   async getAuditLogs(
     @v3Context() ctx: V3ApiContext,
     @Query("executionId") executionId?: string,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
   ) {
-    return this.automationService.getAuditLogs(ctx.organizationId, executionId);
+    return this.automationService.getAuditLogs(
+      ctx.organizationId,
+      executionId,
+      readPagination(limit, offset),
+    );
+  }
+
+  @Get("dead-letter")
+  @Permissions("workflow:view")
+  @ApiOperation({ summary: "List failed jobs waiting in the dead letter queue" })
+  async getDeadLetterJobs(
+    @v3Context() ctx: V3ApiContext,
+    @Query("limit") limit?: string,
+    @Query("offset") offset?: string,
+  ) {
+    return this.automationService.getDeadLetterJobs(
+      ctx.organizationId,
+      readPagination(limit, offset),
+    );
+  }
+
+  @Post("dead-letter/:jobId/retry")
+  @Permissions("workflow:execute")
+  @ApiOperation({ summary: "Retry a failed job from the dead letter queue" })
+  async retryDeadLetterJob(
+    @v3Context() ctx: V3ApiContext,
+    @Param("jobId") jobId: string,
+  ) {
+    return this.automationService.retryJob(ctx.organizationId, jobId);
+  }
+
+  @Post("jobs/retry")
+  @Permissions("workflow:execute")
+  @UsePipes(new V3ZodValidationPipe(RetryJobSchema))
+  @ApiOperation({ summary: "Retry a failed job by id" })
+  async retryJob(
+    @v3Context() ctx: V3ApiContext,
+    @Body() body: RetryJobDto,
+  ) {
+    return this.automationService.retryJob(ctx.organizationId, body.jobId);
   }
 
   @Get("webhooks")
@@ -187,6 +274,7 @@ export class AutomationController {
 
   @Post("webhooks")
   @Permissions("workflow:manage")
+  @UsePipes(new V3ZodValidationPipe(CreateWebhookSchema))
   @ApiOperation({ summary: "Create webhook endpoint" })
   async createWebhook(
     @v3Context() ctx: V3ApiContext,
@@ -214,10 +302,11 @@ export class AutomationController {
 
   @Post("actions/hitl")
   @Permissions("workflow:execute")
+  @UsePipes(new V3ZodValidationPipe(HitlActionSchema))
   @ApiOperation({ summary: "Execute Human-In-The-Loop (HITL) action button from ScrymeChat or UI" })
   async executeHitlAction(
     @v3Context() ctx: V3ApiContext,
-    @Body() body: { action: string; batchId?: string; [key: string]: any },
+    @Body() body: HitlActionDto,
   ) {
     if (body.action === "remove_expired_stock" && body.batchId) {
       return this.automationService.removeExpiredStock(ctx.organizationId, {
