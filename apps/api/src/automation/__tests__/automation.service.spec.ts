@@ -21,13 +21,18 @@ describe("AutomationService", () => {
           findMany: vi.fn().mockResolvedValue([]),
           findFirst: vi.fn(),
           update: vi.fn(),
+          updateMany: vi.fn().mockResolvedValue({ count: 1 }),
         },
         workflowEngineJob: {
           create: vi.fn(),
+          findFirst: vi.fn().mockResolvedValue(null),
+          findMany: vi.fn().mockResolvedValue([]),
+          update: vi.fn(),
           updateMany: vi.fn(),
         },
         workflowEngineAuditLog: {
           create: vi.fn(),
+          findFirst: vi.fn().mockResolvedValue(null),
           findMany: vi.fn().mockResolvedValue([]),
         },
         workflowEngineWebhook: {
@@ -128,14 +133,121 @@ describe("AutomationService", () => {
     mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue({
       id: "exec_100",
       organizationId: "org_1",
+      status: "RUNNING",
     });
 
     const res = await service.cancelJob("org_1", "exec_100");
     expect(res.success).toBe(true);
+    expect(res.executionId).toBe("exec_100");
     expect(mockPrisma.client.workflowEngineExecution.update).toHaveBeenCalledWith({
       where: { id: "exec_100" },
-      data: { status: "CANCELLED" },
+      data: expect.objectContaining({ status: "CANCELLED" }),
     });
+    expect(mockPrisma.client.workflowEngineJob.updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: expect.objectContaining({ executionId: "exec_100" }),
+        data: expect.objectContaining({ status: "CANCELLED" }),
+      }),
+    );
+  });
+
+  it("should resolve a job id to its execution before cancelling", async () => {
+    mockPrisma.client.workflowEngineJob.findFirst.mockResolvedValue({
+      id: "job_100",
+      executionId: "exec_100",
+      organizationId: "org_1",
+    });
+    mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue({
+      id: "exec_100",
+      organizationId: "org_1",
+      status: "RUNNING",
+    });
+
+    const res = await service.cancelJob("org_1", "job_100");
+
+    expect(res.executionId).toBe("exec_100");
+    expect(res.jobId).toBe("job_100");
+    expect(mockPrisma.client.workflowEngineExecution.update).toHaveBeenCalledWith(
+      expect.objectContaining({ where: { id: "exec_100" } }),
+    );
+  });
+
+  it("should read logs through the execution id that owns a job", async () => {
+    mockPrisma.client.workflowEngineJob.findFirst.mockResolvedValue({
+      id: "job_100",
+      executionId: "exec_100",
+      organizationId: "org_1",
+    });
+    mockPrisma.client.workflowEngineAuditLog.findMany.mockResolvedValue([
+      {
+        createdAt: new Date("2026-01-01T00:00:00.000Z"),
+        level: "INFO",
+        action: "JOB_STARTED",
+        details: { attempt: 1 },
+      },
+    ]);
+
+    const result = await service.getLogs("org_1", "job_100");
+
+    expect(result.executionId).toBe("exec_100");
+    expect(result.jobId).toBe("job_100");
+    expect(result.data).toContain("JOB_STARTED");
+    expect(mockPrisma.client.workflowEngineAuditLog.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1", executionId: "exec_100" },
+      }),
+    );
+  });
+
+  it("should map execution history to the real job id", async () => {
+    mockPrisma.client.workflowEngineExecution.findMany.mockResolvedValue([
+      {
+        id: "exec_100",
+        status: "RUNNING",
+        createdAt: new Date(),
+        correlationId: "corr_1",
+        triggerEvent: "f/dealio/customer_onboarding",
+        jobs: [{ id: "job_100", status: "QUEUED", nextRunAt: new Date() }],
+      },
+    ]);
+
+    const history = await service.getExecutionHistory("org_1");
+
+    expect(history[0].id).toBe("exec_100");
+    expect(history[0].jobId).toBe("job_100");
+    expect(history[0].jobStatus).toBe("QUEUED");
+  });
+
+  it("should request a retry for a failed job and reset its attempt budget", async () => {
+    mockPrisma.client.workflowEngineJob.findFirst.mockResolvedValue({
+      id: "job_100",
+      executionId: "exec_100",
+      organizationId: "org_1",
+      status: "FAILED",
+      attempts: 5,
+      lastError: "Permanent failure",
+    });
+    mockPrisma.client.workflowEngineJob.update.mockResolvedValue({
+      id: "job_100",
+      status: "QUEUED",
+    });
+
+    const result = await service.retryJob("org_1", "job_100");
+
+    expect(result.success).toBe(true);
+    expect(mockPrisma.client.workflowEngineJob.update).toHaveBeenCalledWith({
+      where: { id: "job_100" },
+      data: expect.objectContaining({
+        status: "QUEUED",
+        attempts: 0,
+        lastError: null,
+      }),
+    });
+    expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "JOB_REQUEUED" }),
+      }),
+    );
   });
 
   it("should process incoming webhooks", async () => {
@@ -160,6 +272,91 @@ describe("AutomationService", () => {
 
     expect(result.execution.id).toBe("exec_2");
     expect(mockWebhookDispatcher.verifyIncomingSignature).toHaveBeenCalled();
+  });
+
+  it("should return the original execution when an incoming webhook is delivered twice with the same idempotency key", async () => {
+    const mockWebhook = {
+      id: "wh_1",
+      organizationId: "org_1",
+      direction: "INCOMING",
+      isActive: true,
+      secret: null,
+      definitionId: "def_1",
+    };
+    const existingExecution = { id: "exec_existing", status: "RUNNING" };
+    const existingJob = { id: "job_existing", status: "QUEUED" };
+
+    mockPrisma.client.workflowEngineWebhook.findFirst.mockResolvedValue(mockWebhook);
+    mockPrisma.client.workflowEngineDefinition.findUnique.mockResolvedValue({
+      id: "def_1",
+      key: "event_trigger",
+      isActive: true,
+    });
+    mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue(existingExecution);
+    mockPrisma.client.workflowEngineJob.findFirst.mockResolvedValue(existingJob);
+
+    const result = await service.handleIncomingWebhook(
+      "org_1",
+      "wh_1",
+      { "x-idempotency-key": "delivery-42" },
+      { event: "test" },
+    );
+
+    expect(result.duplicate).toBe(true);
+    expect(result.execution.id).toBe("exec_existing");
+    expect(mockPrisma.client.workflowEngineExecution.create).not.toHaveBeenCalled();
+    expect(mockPrisma.client.workflowEngineJob.create).not.toHaveBeenCalled();
+    expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ action: "EXECUTION_DUPLICATE_IGNORED" }),
+      }),
+    );
+  });
+
+  it("should record an audit entry when replaying an execution", async () => {
+    mockPrisma.client.workflowEngineExecution.findFirst.mockResolvedValue({
+      id: "exec_old",
+      triggerEvent: "f/dealio/customer_onboarding",
+      payload: { source: "history" },
+    });
+    mockPrisma.client.workflowEngineDefinition.findUnique.mockResolvedValue({
+      id: "def_1",
+      key: "f/dealio/customer_onboarding",
+      isActive: true,
+    });
+    mockPrisma.client.workflowEngineExecution.create.mockResolvedValue({ id: "exec_new" });
+    mockPrisma.client.workflowEngineJob.create.mockResolvedValue({ id: "job_new" });
+
+    const result = await service.replayExecution("org_1", { executionId: "exec_old" });
+
+    expect(result.replayedFrom).toBe("exec_old");
+    expect(result.execution.id).toBe("exec_new");
+    expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({
+          action: "EXECUTION_REPLAYED",
+          executionId: "exec_old",
+          details: expect.objectContaining({ replayExecutionId: "exec_new" }),
+        }),
+      }),
+    );
+  });
+
+  it("should list dead letter jobs with pagination bounds", async () => {
+    mockPrisma.client.workflowEngineJob.findMany.mockResolvedValue([
+      { id: "job_failed", status: "FAILED" },
+    ]);
+
+    const jobs = await service.getDeadLetterJobs("org_1", { limit: 25, offset: 10 });
+
+    expect(jobs).toHaveLength(1);
+    expect(mockPrisma.client.workflowEngineJob.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { organizationId: "org_1", status: "FAILED" },
+        take: 25,
+        skip: 10,
+      }),
+    );
   });
 
   it("should remove expired stock and create adjustment, zero batch, and record movement", async () => {

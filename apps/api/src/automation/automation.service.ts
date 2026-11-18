@@ -1,7 +1,14 @@
 import { Injectable, NotFoundException, Logger, BadRequestException, Inject, forwardRef } from "@nestjs/common";
 import { PrismaService } from "../prisma/prisma.service";
-import { CreateWorkflowDefinitionDto, TriggerWorkflowDto, CreateWebhookDto, SimulateWorkflowDto, ReplayWorkflowDto } from "./dto/automation.dto";
-import { WorkflowDagRunnerService, DagExecutionSummary } from "./workflow-dag-runner.service";
+import type {
+  CreateWorkflowDefinitionDto,
+  TriggerWorkflowDto,
+  CreateWebhookDto,
+  SimulateWorkflowDto,
+  ReplayWorkflowDto,
+} from "./dto/automation.dto";
+import { WorkflowDagRunnerService } from "./workflow-dag-runner.service";
+import type { DagExecutionSummary } from "./workflow-dag-runner.service";
 import * as crypto from "crypto";
 import { WebhookDispatcherService } from "./webhook-dispatcher.service";
 import { StockMovementReportService } from "../v3/modules/inventory/application/services/stock-movement-report.service";
@@ -463,13 +470,26 @@ export class AutomationService {
     });
   }
 
-  async triggerWorkflow(organizationId: string, dto: TriggerWorkflowDto | { path?: string; key?: string; inputs?: any; payload?: any; correlationId?: string }) {
+  async triggerWorkflow(
+    organizationId: string,
+    dto:
+      | TriggerWorkflowDto
+      | {
+          path?: string;
+          key?: string;
+          inputs?: any;
+          payload?: any;
+          correlationId?: string;
+        },
+  ) {
     const pathOrKey = dto.key || (dto as any).path;
     if (!pathOrKey) {
       throw new BadRequestException("Workflow path or key is required.");
     }
 
-    const template = this.builtInTemplates.find((t) => t.path === pathOrKey || t.key === pathOrKey);
+    const template = this.builtInTemplates.find(
+      (t) => t.path === pathOrKey || t.key === pathOrKey,
+    );
     const resolvedKey = template?.path || pathOrKey;
     const inputs = (dto as any).inputs || (dto as any).payload || {};
 
@@ -499,7 +519,49 @@ export class AutomationService {
       throw new BadRequestException(`Workflow definition '${resolvedKey}' is inactive.`);
     }
 
-    const correlationId = (dto as any).correlationId || `manual_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+    const suppliedCorrelationId = (dto as any).correlationId;
+    const correlationId =
+      suppliedCorrelationId ||
+      `manual_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+
+    if (suppliedCorrelationId) {
+      const existingExecution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+        where: {
+          organizationId,
+          definitionId: definition.id,
+          correlationId: suppliedCorrelationId,
+        },
+      });
+
+      if (existingExecution) {
+        const existingJob = await (this.prisma.client as any).workflowEngineJob.findFirst({
+          where: { executionId: existingExecution.id },
+          orderBy: { createdAt: "asc" },
+        });
+
+        await (this.prisma.client as any).workflowEngineAuditLog.create({
+          data: {
+            organizationId,
+            executionId: existingExecution.id,
+            jobId: existingJob?.id,
+            action: "EXECUTION_DUPLICATE_IGNORED",
+            level: "WARN",
+            details: {
+              key: resolvedKey,
+              correlationId,
+            },
+          },
+        });
+
+        return {
+          success: true,
+          duplicate: true,
+          execution: existingExecution,
+          job: existingJob,
+          data: existingExecution,
+        };
+      }
+    }
 
     const execution = await (this.prisma.client as any).workflowEngineExecution.create({
       data: {
@@ -537,6 +599,7 @@ export class AutomationService {
 
     return {
       success: true,
+      duplicate: false,
       execution,
       job,
       data: execution,
@@ -550,15 +613,30 @@ export class AutomationService {
   async simulateWorkflow(organizationId: string, dto: SimulateWorkflowDto): Promise<DagExecutionSummary> {
     const rawKey = dto.key || dto.path;
     let config = dto.config;
+    let definition: any;
 
     if (!config && rawKey) {
-      const def = await (this.prisma.client as any).workflowEngineDefinition.findFirst({
+      const keyVariants = Array.from(
+        new Set([
+          rawKey,
+          rawKey.replace(/^f\/dealio\//, ""),
+          `f/dealio/${rawKey.replace(/^f\/dealio\//, "")}`,
+        ]),
+      );
+
+      definition = await (this.prisma.client as any).workflowEngineDefinition.findFirst({
         where: {
           organizationId,
-          OR: [{ key: rawKey }, { key: rawKey.replace(/^f\/dealio\//, "") }],
+          key: { in: keyVariants },
         },
       });
-      config = def?.config;
+      config = definition?.config;
+    }
+
+    if (!config) {
+      throw new BadRequestException(
+        "A workflow key, path, or inline config is required to run a simulation.",
+      );
     }
 
     const payload = dto.payload || dto.inputs || {};
@@ -569,6 +647,7 @@ export class AutomationService {
 
     return this.dagRunner.executeDag({
       organizationId,
+      definitionId: definition?.id,
       definitionConfig: config || {},
       payload,
       isSimulation: true,
@@ -595,11 +674,30 @@ export class AutomationService {
 
     const payload = dto.overridePayload || (existingExecution.payload as Record<string, any>) || {};
 
-    return this.triggerWorkflow(organizationId, {
+    const result = await this.triggerWorkflow(organizationId, {
       key: existingExecution.triggerEvent,
       payload,
-      correlationId: `replay_${existingExecution.id}_${Date.now()}`,
+      correlationId: `replay_${existingExecution.id}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`,
     });
+
+    await (this.prisma.client as any).workflowEngineAuditLog.create({
+      data: {
+        organizationId,
+        executionId: existingExecution.id,
+        action: "EXECUTION_REPLAYED",
+        level: "INFO",
+        details: {
+          replayExecutionId: result.execution?.id,
+          replayJobId: result.job?.id,
+          overridePayload: !!dto.overridePayload,
+        },
+      },
+    });
+
+    return {
+      ...result,
+      replayedFrom: existingExecution.id,
+    };
   }
 
   async getExecutionSteps(organizationId: string, executionId: string) {
@@ -612,54 +710,133 @@ export class AutomationService {
     });
   }
 
-  async cancelJob(organizationId: string, jobId: string) {
-    const execution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+  /**
+   * Cancels an execution. The identifier may be either a job id or an execution id,
+   * which keeps older Workflow Studio clients working while the API uses execution ids.
+   */
+  async cancelJob(organizationId: string, identifier: string) {
+    if (!identifier) {
+      throw new BadRequestException("A job or execution id is required.");
+    }
+
+    const job = await (this.prisma.client as any).workflowEngineJob.findFirst({
       where: {
+        id: identifier,
         organizationId,
-        id: jobId,
       },
     });
 
-    if (execution) {
+    const executionId = job?.executionId || identifier;
+
+    const execution = await (this.prisma.client as any).workflowEngineExecution.findFirst({
+      where: {
+        id: executionId,
+        organizationId,
+      },
+    });
+
+    if (!execution) {
+      throw new NotFoundException(`Job or execution ${identifier} was not found.`);
+    }
+
+    const alreadyFinished = ["COMPLETED", "FAILED", "CANCELLED"].includes(execution.status);
+
+    if (!alreadyFinished) {
       await (this.prisma.client as any).workflowEngineExecution.update({
         where: { id: execution.id },
-        data: { status: "CANCELLED" },
+        data: {
+          status: "CANCELLED",
+          completedAt: new Date(),
+        },
       });
+
       await (this.prisma.client as any).workflowEngineJob.updateMany({
-        where: { executionId: execution.id, organizationId },
-        data: { status: "CANCELLED" },
+        where: {
+          executionId: execution.id,
+          organizationId,
+          status: { notIn: ["COMPLETED", "CANCELLED"] },
+        },
+        data: {
+          status: "CANCELLED",
+          lockedBy: null,
+          lockedAt: null,
+        },
       });
+
       await (this.prisma.client as any).workflowEngineAuditLog.create({
         data: {
           organizationId,
           executionId: execution.id,
-          action: "JOB_CANCELLED",
+          jobId: job?.id,
+          action: "EXECUTION_CANCELLED",
           level: "WARN",
-          details: { cancelledBy: "user", jobId },
+          details: {
+            cancelledBy: "user",
+            requestedIdentifier: identifier,
+            previousStatus: execution.status,
+          },
         },
       });
     }
 
-    return { success: true };
+    return {
+      success: true,
+      alreadyFinished,
+      executionId: execution.id,
+      jobId: job?.id,
+      status: alreadyFinished ? execution.status : "CANCELLED",
+    };
   }
 
-  async getLogs(organizationId: string, jobId: string) {
+  async getLogs(organizationId: string, identifier: string) {
+    if (!identifier) {
+      throw new BadRequestException("A job or execution id is required.");
+    }
+
+    const job = await (this.prisma.client as any).workflowEngineJob.findFirst({
+      where: {
+        id: identifier,
+        organizationId,
+      },
+    });
+
+    const executionId = job?.executionId || identifier;
+
     const auditLogs = await (this.prisma.client as any).workflowEngineAuditLog.findMany({
       where: {
         organizationId,
-        executionId: jobId,
+        executionId,
       },
       orderBy: { createdAt: "asc" },
+      take: 1000,
     });
 
-    const logsText = auditLogs.length > 0
-      ? auditLogs.map((log: any) => `[${new Date(log.createdAt).toISOString()}] [${log.level}] ${log.action}: ${JSON.stringify(log.details || {})}`).join("\n")
-      : `[CUSTOM AUTOMATION ENGINE LOGS]\n[${new Date().toISOString()}] Job initialized under instance ${jobId}.\n[${new Date().toISOString()}] Executing workflow steps autonomously via NestJS API.`;
+    const logsText =
+      auditLogs.length > 0
+        ? auditLogs
+            .map(
+              (log: any) =>
+                `[${new Date(log.createdAt).toISOString()}] [${log.level}] ${log.action}: ${JSON.stringify(log.details || {})}`,
+            )
+            .join("\n")
+        : `[CUSTOM AUTOMATION ENGINE LOGS]\n[${new Date().toISOString()}] No audit records found for instance ${identifier}.`;
 
-    return { success: true, data: logsText };
+    return {
+      success: true,
+      data: logsText,
+      executionId,
+      jobId: job?.id,
+      entries: auditLogs.length,
+    };
   }
 
-  async getExecutions(organizationId: string, key?: string) {
+  async getExecutions(
+    organizationId: string,
+    key?: string,
+    options: { limit?: number; offset?: number } = {},
+  ) {
+    const { limit, offset } = this.normalizePagination(options.limit, options.offset, 50, 200);
+
     return (this.prisma.client as any).workflowEngineExecution.findMany({
       where: {
         organizationId,
@@ -670,39 +847,179 @@ export class AutomationService {
         definition: true,
       },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: limit,
+      skip: offset,
     });
   }
 
-  async getExecutionHistory(organizationId: string, scriptPath?: string) {
+  async getExecutionHistory(
+    organizationId: string,
+    scriptPath?: string,
+    options: { limit?: number; offset?: number } = {},
+  ) {
+    const { limit, offset } = this.normalizePagination(options.limit, options.offset, 50, 200);
+
     const executions = await (this.prisma.client as any).workflowEngineExecution.findMany({
       where: {
         organizationId,
         ...(scriptPath ? { triggerEvent: scriptPath } : {}),
       },
+      include: {
+        jobs: {
+          orderBy: { createdAt: "asc" },
+          select: {
+            id: true,
+            status: true,
+            attempts: true,
+            maxAttempts: true,
+            lastError: true,
+            nextRunAt: true,
+          },
+        },
+      },
       orderBy: { createdAt: "desc" },
-      take: 50,
+      take: limit,
+      skip: offset,
     });
 
-    return executions.map((e: any) => ({
-      id: e.id,
-      jobId: e.id,
-      status: e.status,
-      createdAt: e.createdAt,
-      result: e.result,
-      payload: e.payload,
-    }));
+    return executions.map((execution: any) => {
+      const primaryJob = execution.jobs?.[0];
+      return {
+        id: execution.id,
+        jobId: primaryJob?.id || null,
+        jobStatus: primaryJob?.status || null,
+        status: execution.status,
+        correlationId: execution.correlationId,
+        triggerEvent: execution.triggerEvent,
+        createdAt: execution.createdAt,
+        startedAt: execution.startedAt,
+        completedAt: execution.completedAt,
+        nextRunAt: primaryJob?.nextRunAt || null,
+        error: execution.error,
+        result: execution.result,
+        payload: execution.payload,
+        jobs: execution.jobs || [],
+      };
+    });
   }
 
-  async getAuditLogs(organizationId: string, executionId?: string) {
+  async getAuditLogs(
+    organizationId: string,
+    executionId?: string,
+    options: { limit?: number; offset?: number } = {},
+  ) {
+    const { limit, offset } = this.normalizePagination(options.limit, options.offset, 100, 500);
+
     return (this.prisma.client as any).workflowEngineAuditLog.findMany({
       where: {
         organizationId,
         ...(executionId ? { executionId } : {}),
       },
       orderBy: { createdAt: "desc" },
-      take: 100,
+      take: limit,
+      skip: offset,
     });
+  }
+
+  async getDeadLetterJobs(
+    organizationId: string,
+    options: { limit?: number; offset?: number } = {},
+  ) {
+    const { limit, offset } = this.normalizePagination(options.limit, options.offset, 50, 200);
+
+    return (this.prisma.client as any).workflowEngineJob.findMany({
+      where: {
+        organizationId,
+        status: "FAILED",
+      },
+      include: {
+        execution: {
+          select: {
+            id: true,
+            status: true,
+            triggerEvent: true,
+            correlationId: true,
+          },
+        },
+        definition: {
+          select: {
+            id: true,
+            key: true,
+            name: true,
+          },
+        },
+      },
+      orderBy: { updatedAt: "desc" },
+      take: limit,
+      skip: offset,
+    });
+  }
+
+  async retryJob(organizationId: string, jobId: string) {
+    if (!jobId) {
+      throw new BadRequestException("A job id is required.");
+    }
+
+    const job = await (this.prisma.client as any).workflowEngineJob.findFirst({
+      where: {
+        id: jobId,
+        organizationId,
+      },
+    });
+
+    if (!job) {
+      throw new NotFoundException(`Job ${jobId} was not found.`);
+    }
+
+    if (job.status !== "FAILED") {
+      throw new BadRequestException(
+        `Job ${jobId} is ${job.status}. Only failed jobs in the dead letter queue can be retried.`,
+      );
+    }
+
+    const requeued = await (this.prisma.client as any).workflowEngineJob.update({
+      where: { id: job.id },
+      data: {
+        status: "QUEUED",
+        attempts: 0,
+        nextRunAt: new Date(),
+        lastError: null,
+        processedAt: null,
+        lockedBy: null,
+        lockedAt: null,
+      },
+    });
+
+    await (this.prisma.client as any).workflowEngineExecution.updateMany({
+      where: {
+        id: job.executionId,
+        status: { notIn: ["CANCELLED"] },
+      },
+      data: {
+        status: "RUNNING",
+        error: null,
+        completedAt: null,
+      },
+    });
+
+    await (this.prisma.client as any).workflowEngineAuditLog.create({
+      data: {
+        organizationId,
+        executionId: job.executionId,
+        jobId: job.id,
+        action: "JOB_REQUEUED",
+        level: "WARN",
+        details: {
+          previousError: job.lastError,
+          previousAttempts: job.attempts,
+        },
+      },
+    });
+
+    return {
+      success: true,
+      job: requeued,
+    };
   }
 
   async createWebhook(organizationId: string, dto: CreateWebhookDto) {
@@ -749,17 +1066,96 @@ export class AutomationService {
       }
     }
 
-    const triggerKey = webhook.definitionId ? (await (this.prisma.client as any).workflowEngineDefinition.findUnique({ where: { id: webhook.definitionId } }))?.key || "event_trigger" : "event_trigger";
+    const definition = webhook.definitionId
+      ? await (this.prisma.client as any).workflowEngineDefinition.findUnique({
+          where: { id: webhook.definitionId },
+        })
+      : null;
 
-    return this.triggerWorkflow(organizationId, {
+    const triggerKey = definition?.key || "event_trigger";
+    const idempotencyKey = this.readHeader(
+      headers,
+      "x-idempotency-key",
+      "x-workflow-delivery",
+      "idempotency-key",
+    );
+    const correlationId = idempotencyKey
+      ? `webhook_${webhook.id}_${idempotencyKey}`.slice(0, 190)
+      : `webhook_${webhook.id}_${Date.now()}_${crypto.randomBytes(4).toString("hex")}`;
+
+    const result = await this.triggerWorkflow(organizationId, {
       key: triggerKey,
+      correlationId,
       payload: {
         source: "INCOMING_WEBHOOK",
         webhookId: webhook.id,
+        idempotencyKey,
         headers,
         body,
       },
     });
+
+    if (!result.duplicate) {
+      await (this.prisma.client as any).workflowEngineAuditLog.create({
+        data: {
+          organizationId,
+          executionId: result.execution?.id,
+          jobId: result.job?.id,
+          action: "INCOMING_WEBHOOK_ACCEPTED",
+          level: "INFO",
+          details: {
+            webhookId: webhook.id,
+            idempotencyKey,
+            correlationId,
+            triggerKey,
+          },
+        },
+      });
+    }
+
+    return {
+      ...result,
+      webhookId: webhook.id,
+      idempotencyKey,
+    };
+  }
+
+  private readHeader(headers: any, ...names: string[]): string | undefined {
+    if (!headers) return undefined;
+    for (const name of names) {
+      const direct = headers[name];
+      if (typeof direct === "string" && direct.trim() !== "") {
+        return direct.trim().slice(0, 120);
+      }
+      const match = Object.keys(headers).find(
+        (key) => key.toLowerCase() === name.toLowerCase(),
+      );
+      if (match) {
+        const value = headers[match];
+        if (typeof value === "string" && value.trim() !== "") {
+          return value.trim().slice(0, 120);
+        }
+      }
+    }
+    return undefined;
+  }
+
+  private normalizePagination(
+    limit: number | undefined,
+    offset: number | undefined,
+    defaultLimit: number,
+    maximumLimit: number,
+  ) {
+    const resolvedLimit =
+      typeof limit === "number" && Number.isFinite(limit) && limit > 0
+        ? Math.min(Math.floor(limit), maximumLimit)
+        : defaultLimit;
+    const resolvedOffset =
+      typeof offset === "number" && Number.isFinite(offset) && offset >= 0
+        ? Math.floor(offset)
+        : 0;
+
+    return { limit: resolvedLimit, offset: resolvedOffset };
   }
 
   private async ensureBuiltInDefinitions(organizationId: string) {
