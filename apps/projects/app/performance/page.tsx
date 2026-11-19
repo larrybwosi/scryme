@@ -96,7 +96,7 @@ function PerformanceContent() {
                 <span className="text-display-sm font-headline-lg font-bold text-on-surface">
                   {overview?.averageOnTimeCompletionRate ?? 100}%
                 </span>
-                <span className="text-emerald-400 text-body-sm font-medium">Delivery Reliability</span>
+                <span className="text-status-success text-body-sm font-medium">Delivery Reliability</span>
               </div>
               <span className="text-[11px] text-outline mt-1">Closed on or before target milestone date</span>
             </div>
@@ -138,9 +138,9 @@ function PerformanceContent() {
                 <span
                   className={`text-display-sm font-headline-lg font-bold ${
                     (overview?.averageCapacityUtilization || 0) > 100
-                      ? "text-red-400"
+                      ? "text-status-critical"
                       : (overview?.averageCapacityUtilization || 0) > 85
-                      ? "text-amber-400"
+                      ? "text-status-warning"
                       : "text-on-surface"
                   }`}
                 >
@@ -225,20 +225,20 @@ function PerformanceContent() {
                           </td>
                           <td className="py-3 px-3 text-center">
                             {kpis.overdueTaskCount > 0 ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-label-code bg-red-500/20 text-red-400 font-bold">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-label-code bg-status-critical/20 text-status-critical font-bold">
                                 {kpis.overdueTaskCount}
                               </span>
                             ) : (
-                              <span className="text-emerald-400 text-body-sm font-medium">0</span>
+                              <span className="text-status-success text-body-sm font-medium">0</span>
                             )}
                           </td>
                           <td className="py-3 px-3 text-center">
                             <span
                               className={`font-semibold ${
                                 kpis.capacityUtilizationRate > 100
-                                  ? "text-red-400"
+                                  ? "text-status-critical"
                                   : kpis.capacityUtilizationRate > 85
-                                  ? "text-amber-400"
+                                  ? "text-status-warning"
                                   : "text-on-surface"
                               }`}
                             >

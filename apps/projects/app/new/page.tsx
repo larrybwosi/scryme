@@ -24,6 +24,14 @@ import {
 import { Task, CreateTaskInput } from "@/lib/api";
 import { effectiveWeeklyCapacity } from "@/lib/metrics";
 import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { FieldError, PageLoading } from "@/components/PageState";
+import { fieldErrorsFrom, notifyError, notifySuccess } from "@/lib/feedback";
+import {
+  hasErrors,
+  validateTaskForm,
+  type TaskFormErrors,
+} from "@/lib/task-form";
+import { FOCUS_RING } from "@/lib/navigation";
 import {
   Folder,
   CheckSquare,
@@ -42,8 +50,35 @@ import {
   Tag,
   Check,
   Crown,
+  Sparkles,
 } from "lucide-react";
-import { toast } from "sonner";
+
+const FIELD_CLASS =
+  "w-full bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary";
+const LABEL_CLASS =
+  "mb-1 flex items-center gap-1 text-[11px] font-label-badge uppercase tracking-wider text-outline font-semibold";
+
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-4 rounded-md border border-outline-variant/60 bg-surface-container-low p-4">
+      <div className="flex items-center gap-2 border-b border-outline-variant/60 pb-2">
+        <Icon className="h-4 w-4 text-primary" aria-hidden />
+        <h2 className="font-headline-sm text-body-sm font-semibold text-on-surface">
+          {title}
+        </h2>
+      </div>
+      {children}
+    </section>
+  );
+}
 
 function NewProjectOrTaskForm() {
   const router = useRouter();
@@ -70,22 +105,23 @@ function NewProjectOrTaskForm() {
     }
   }, [searchParams]);
 
-  // Project state
   const [projectName, setProjectName] = useState("");
   const [projectKey, setProjectKey] = useState("");
   const [projectDescription, setProjectDescription] = useState("");
-  const [projectPriority, setProjectPriority] = useState<"LOW" | "MEDIUM" | "HIGH" | "URGENT">("MEDIUM");
+  const [projectPriority, setProjectPriority] = useState<
+    "LOW" | "MEDIUM" | "HIGH" | "URGENT"
+  >("MEDIUM");
+  const [projectError, setProjectError] = useState("");
 
-  // Task state
   const [projectId, setProjectId] = useState(
-    searchParams.get("projectId") || (projects.length > 0 ? projects[0].id : "")
+    searchParams.get("projectId") || "",
   );
 
   useEffect(() => {
     if (!projectId && projects.length > 0) {
-      setProjectId(projects[0].id);
+      setProjectId(searchParams.get("projectId") || projects[0].id);
     }
-  }, [projects, projectId]);
+  }, [projects, projectId, searchParams]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -96,28 +132,27 @@ function NewProjectOrTaskForm() {
   const [dueDate, setDueDate] = useState("");
   const [parentTaskId, setParentTaskId] = useState("");
 
-  // Integrations state
-  const [milestoneId, setMilestoneId] = useState(searchParams.get("milestoneId") || "");
+  const [integrationMode, setIntegrationMode] = useState<
+    "all" | "crm" | "manufacturing" | "milestone" | "sprint"
+  >("all");
+  const [milestoneId, setMilestoneId] = useState(
+    searchParams.get("milestoneId") || "",
+  );
   const [sprintId, setSprintId] = useState(searchParams.get("sprintId") || "");
   const [bookingId, setBookingId] = useState(searchParams.get("bookingId") || "");
   const [batchId, setBatchId] = useState(searchParams.get("batchId") || "");
 
-  // Labels
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
+  const [assignedMembers, setAssignedMembers] = useState<
+    { memberId: string; isPrimary: boolean; allocatedHours?: number }[]
+  >([]);
 
-  // Assignees: multi-member assignment
-  const [assignedMembers, setAssignedMembers] = useState<{
-    memberId: string;
-    isPrimary: boolean;
-    allocatedHours?: number;
-  }[]>([]);
+  const [errors, setErrors] = useState<TaskFormErrors>({});
 
-  // Project-dependent data
   const { data: milestones = [] } = useMilestones(projectId);
   const { data: sprints = [] } = useSprints(projectId);
   const { data: labels = [] } = useTaskLabels(projectId);
 
-  // Capacity Warning Modal State
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<CreateTaskInput | null>(null);
   const [warningMemberName, setWarningMemberName] = useState("");
@@ -125,15 +160,17 @@ function NewProjectOrTaskForm() {
   const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
   const [warningCapacityHours, setWarningCapacityHours] = useState(40);
 
+  const candidateParentTasks = allTasks.filter((t) => t.projectId === projectId);
+
   const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
     const memberTasks = allTasks.filter(
       (t) =>
         (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
-        t.assignees?.some((a) => a.member?.id === memberId)
+        t.assignees?.some((a) => a.member?.id === memberId),
     );
     const currentHours = memberTasks.reduce(
       (acc, curr) => acc + (Number(curr.estimatedHours) || 2),
-      0
+      0,
     );
 
     const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
@@ -155,243 +192,282 @@ function NewProjectOrTaskForm() {
           remaining[0].isPrimary = true;
         }
         return remaining;
-      } else {
-        const isFirst = prev.length === 0;
-        const totalEst = parseFloat(estimatedHours) || 4;
-        const newShare = Math.round((totalEst / (prev.length + 1)) * 10) / 10;
-        return [
-          ...prev,
-          {
-            memberId,
-            isPrimary: isFirst,
-            allocatedHours: newShare,
-          },
-        ];
       }
+      const isFirst = prev.length === 0;
+      const totalEst = parseFloat(estimatedHours) || 4;
+      const newShare = Math.round((totalEst / (prev.length + 1)) * 10) / 10;
+      return [...prev, { memberId, isPrimary: isFirst, allocatedHours: newShare }];
     });
   };
 
   const handleSetPrimary = (memberId: string) => {
     setAssignedMembers((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isPrimary: a.memberId === memberId,
-      }))
+      prev.map((a) => ({ ...a, isPrimary: a.memberId === memberId })),
     );
   };
 
   const handleUpdateAllocatedHours = (memberId: string, hours: number) => {
     setAssignedMembers((prev) =>
-      prev.map((a) => (a.memberId === memberId ? { ...a, allocatedHours: hours } : a))
+      prev.map((a) => (a.memberId === memberId ? { ...a, allocatedHours: hours } : a)),
     );
   };
 
   const handleToggleLabel = (labelId: string) => {
     setSelectedLabelIds((prev) =>
-      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]
+      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId],
     );
+  };
+
+  const handleCreateProject = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!projectName.trim()) {
+      setProjectError("Enter a project name");
+      return;
+    }
+
+    try {
+      await createProject.mutateAsync({
+        name: projectName.trim(),
+        key: projectKey.trim() || undefined,
+        description: projectDescription.trim() || undefined,
+        priority: projectPriority,
+      });
+      notifySuccess("Project created");
+      router.push("/projects");
+    } catch (err) {
+      const fieldErrors = fieldErrorsFrom(err);
+      setProjectError(fieldErrors.name || fieldErrors.projectName || "");
+      notifyError(err, "Could not create project");
+    }
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (type === "PROJECT") {
-      if (!projectName.trim()) return;
-      createProject.mutate(
-        {
-          name: projectName,
-          key: projectKey.trim() || undefined,
-          description: projectDescription,
-          priority: projectPriority,
-        },
-        {
-          onSuccess: () => {
-            toast.success("Project created successfully");
-            router.push("/projects");
-          },
-          onError: (err: any) => {
-            toast.error(err?.response?.data?.message || "Failed to create project");
-          },
-        }
+      await handleCreateProject(e);
+      return;
+    }
+
+    const validation = validateTaskForm({
+      title,
+      projectId,
+      startDate,
+      dueDate,
+      estimatedHours,
+      allocatedHours: assignedMembers.map((a) => a.allocatedHours ?? 0),
+    });
+
+    if (hasErrors(validation)) {
+      setErrors(validation);
+      return;
+    }
+    setErrors({});
+
+    const estHours = parseFloat(estimatedHours) || 4;
+
+    const payload: CreateTaskInput = {
+      title: title.trim(),
+      description: description.trim() || undefined,
+      projectId,
+      priority,
+      status,
+      startDate: startDate ? new Date(startDate).toISOString() : undefined,
+      dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
+      estimatedHours: estHours,
+      parentTaskId: parentTaskId || undefined,
+      milestoneId: milestoneId || undefined,
+      sprintId: sprintId || undefined,
+      bookingId: bookingId || undefined,
+      batchId: batchId || undefined,
+      labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
+      assignees:
+        assignedMembers.length > 0
+          ? assignedMembers.map((a) => ({
+              memberId: a.memberId,
+              isPrimary: a.isPrimary,
+              allocatedHours: a.allocatedHours || estHours / assignedMembers.length,
+            }))
+          : undefined,
+    };
+
+    if (assignedMembers.length > 0) {
+      const primary = assignedMembers.find((a) => a.isPrimary) || assignedMembers[0];
+      const member = members.find((m) => m.id === primary.memberId);
+      const share = primary.allocatedHours || estHours / assignedMembers.length;
+      const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(
+        primary.memberId,
+        share,
       );
-    } else {
-      if (!title.trim() || !projectId) {
-        toast.error("Please provide a title and select a project");
+
+      if (isOverloaded) {
+        setPendingPayload(payload);
+        setWarningMemberName(member?.name || "Assignee");
+        setWarningAssignedHours(currentHours);
+        setWarningAdditionalHours(share);
+        setWarningCapacityHours(totalCapacity);
+        setWarningModalOpen(true);
         return;
       }
-
-      const estHours = parseFloat(estimatedHours) || 4;
-
-      const payload: CreateTaskInput = {
-        title: title.trim(),
-        description: description.trim() || undefined,
-        projectId,
-        priority,
-        status,
-        startDate: startDate ? new Date(startDate).toISOString() : undefined,
-        dueDate: dueDate ? new Date(dueDate).toISOString() : undefined,
-        estimatedHours: estHours,
-        parentTaskId: parentTaskId || undefined,
-        milestoneId: milestoneId || undefined,
-        sprintId: sprintId || undefined,
-        bookingId: bookingId || undefined,
-        batchId: batchId || undefined,
-        labelIds: selectedLabelIds.length > 0 ? selectedLabelIds : undefined,
-        assignees:
-          assignedMembers.length > 0
-            ? assignedMembers.map((a) => ({
-                memberId: a.memberId,
-                isPrimary: a.isPrimary,
-                allocatedHours: a.allocatedHours || estHours / assignedMembers.length,
-              }))
-            : undefined,
-      };
-
-      if (assignedMembers.length > 0) {
-        const primary = assignedMembers.find((a) => a.isPrimary) || assignedMembers[0];
-        const member = members.find((m) => m.id === primary.memberId);
-        const share = primary.allocatedHours || estHours / assignedMembers.length;
-        const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(
-          primary.memberId,
-          share
-        );
-
-        if (isOverloaded) {
-          setPendingPayload(payload);
-          setWarningMemberName(member?.name || "Assignee");
-          setWarningAssignedHours(currentHours);
-          setWarningAdditionalHours(share);
-          setWarningCapacityHours(totalCapacity);
-          setWarningModalOpen(true);
-          return;
-        }
-      }
-
-      await executeCreateTask(payload);
     }
+
+    await executeCreateTask(payload);
   };
 
   const executeCreateTask = async (payload: CreateTaskInput) => {
     try {
       await createTask.mutateAsync(payload);
-      toast.success("Task created successfully");
+      notifySuccess("Task created");
       router.push("/tasks");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to create task");
+    } catch (err) {
+      const fieldErrors = fieldErrorsFrom(err);
+      if (hasErrors(fieldErrors)) setErrors(fieldErrors);
+      notifyError(err, "Could not create task");
     }
   };
 
+  const busy = createTask.isPending || createProject.isPending;
+
   return (
-    <div className="max-w-4xl mx-auto space-y-6 pt-4 pb-20">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-[#2E3039]/50 pb-4">
+    <div className="mx-auto w-full max-w-4xl space-y-6 pb-20 pt-4">
+      <div className="flex flex-col justify-between gap-4 border-b border-outline-variant/60 pb-4 sm:flex-row sm:items-center">
         <div>
           <Link
             href="/projects"
-            className="text-xs text-slate-400 hover:text-slate-200 transition-colors flex items-center gap-1 mb-1"
+            className={`mb-1 flex items-center gap-1 font-body-sm text-xs text-outline transition-colors hover:text-on-surface ${FOCUS_RING}`}
           >
-            <ArrowLeft className="h-3.5 w-3.5" />
-            <span>Back to Workspace</span>
+            <ArrowLeft className="h-3.5 w-3.5" aria-hidden />
+            <span>Back to workspace</span>
           </Link>
-          <h1 className="text-xl font-bold tracking-tight text-slate-100 flex items-center gap-2">
+          <h1
+            data-route-heading
+            tabIndex={-1}
+            className="flex items-center gap-2 font-headline-lg text-headline-lg font-semibold tracking-tight text-on-surface outline-none"
+          >
             {type === "PROJECT" ? (
-              <Folder className="h-5 w-5 text-primary" />
+              <Folder className="h-5 w-5 text-primary" aria-hidden />
             ) : (
-              <CheckSquare className="h-5 w-5 text-primary" />
+              <CheckSquare className="h-5 w-5 text-primary" aria-hidden />
             )}
-            <span>Create New {type === "PROJECT" ? "Project" : "Task / Work Item"}</span>
+            <span>
+              Create new {type === "PROJECT" ? "project" : "task / work item"}
+            </span>
           </h1>
-          <p className="text-xs text-slate-400 mt-0.5">
-            Add a new initiative or execution task to your Scryme workspace with all integrations.
+          <p className="mt-0.5 font-body-sm text-xs text-outline">
+            Add a new initiative or execution task to your workspace with all cross system links.
           </p>
         </div>
 
-        {/* Type Switcher */}
-        <div className="flex items-center gap-1 bg-[#12141A] p-1 rounded-md border border-[#2E3039] text-xs">
+        <div className="flex items-center gap-1 rounded-sm border border-outline-variant bg-surface-container p-1 text-xs">
           <button
             type="button"
-            onClick={() => setType("TASK")}
-            className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+            aria-pressed={type === "TASK"}
+            onClick={() => {
+              setType("TASK");
+              setErrors({});
+            }}
+            className={`flex items-center gap-1.5 rounded-sm px-3 py-1 transition-colors ${FOCUS_RING} ${
               type === "TASK"
-                ? "bg-[#5E6AD2] text-white font-semibold"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-primary-container font-semibold text-on-primary-container"
+                : "text-outline hover:text-on-surface"
             }`}
           >
-            <CheckSquare className="h-3.5 w-3.5" />
+            <CheckSquare className="h-3.5 w-3.5" aria-hidden />
             <span>Task</span>
           </button>
           <button
             type="button"
-            onClick={() => setType("PROJECT")}
-            className={`px-3 py-1 rounded transition-colors flex items-center gap-1.5 ${
+            aria-pressed={type === "PROJECT"}
+            onClick={() => {
+              setType("PROJECT");
+              setErrors({});
+            }}
+            className={`flex items-center gap-1.5 rounded-sm px-3 py-1 transition-colors ${FOCUS_RING} ${
               type === "PROJECT"
-                ? "bg-[#5E6AD2] text-white font-semibold"
-                : "text-slate-400 hover:text-slate-200"
+                ? "bg-primary-container font-semibold text-on-primary-container"
+                : "text-outline hover:text-on-surface"
             }`}
           >
-            <Folder className="h-3.5 w-3.5" />
+            <Folder className="h-3.5 w-3.5" aria-hidden />
             <span>Project</span>
           </button>
         </div>
       </div>
 
-      {/* Creation Form */}
-      <form onSubmit={handleSubmit} className="bg-[#12141A] border border-[#2E3039] rounded-xl p-6 space-y-6">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-4 rounded-md border border-outline-variant/60 bg-surface-container-low p-6"
+      >
         {type === "PROJECT" ? (
           <div className="space-y-4">
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="sm:col-span-2 space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Project Name *
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="space-y-1.5 sm:col-span-2">
+                <label htmlFor="project-name" className={LABEL_CLASS}>
+                  Project name *
                 </label>
                 <Input
+                  id="project-name"
                   type="text"
-                  required
                   value={projectName}
-                  onChange={(e) => setProjectName(e.target.value)}
+                  aria-invalid={Boolean(projectError)}
+                  onChange={(e) => {
+                    setProjectName(e.target.value);
+                    setProjectError("");
+                  }}
                   placeholder="e.g. Nexus 2.0 Redesign"
-                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
+                  className={`${FIELD_CLASS} text-xs`}
                 />
+                <FieldError message={projectError} />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Project Key (Optional)
+                <label htmlFor="project-key" className={LABEL_CLASS}>
+                  Project key (optional)
                 </label>
                 <Input
+                  id="project-key"
                   type="text"
                   value={projectKey}
                   onChange={(e) => setProjectKey(e.target.value.toUpperCase())}
                   placeholder="e.g. NEX"
                   maxLength={6}
-                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2] uppercase font-mono"
+                  className={`${FIELD_CLASS} font-mono text-xs uppercase`}
                 />
               </div>
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                Description / Purpose
+              <label htmlFor="project-description" className={LABEL_CLASS}>
+                Description / purpose
               </label>
               <Textarea
+                id="project-description"
                 value={projectDescription}
                 onChange={(e) => setProjectDescription(e.target.value)}
                 rows={4}
                 placeholder="High level initiative goals and roadmap milestones..."
-                className="w-full bg-[#171922] border-[#2E3039] p-3 text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
+                className={`${FIELD_CLASS} p-3 text-xs`}
               />
             </div>
 
             <div className="space-y-1.5">
-              <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                <Flame className="h-3.5 w-3.5 text-amber-400" />
+              <label htmlFor="project-priority" className={LABEL_CLASS}>
+                <Flame className="h-3.5 w-3.5 text-status-warning" aria-hidden />
                 <span>Priority</span>
               </label>
-              <Select value={projectPriority} onValueChange={(val) => setProjectPriority(val as any)}>
-                <SelectTrigger className="w-full sm:w-60 bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+              <Select
+                value={projectPriority}
+                onValueChange={(val) =>
+                  setProjectPriority(val as "LOW" | "MEDIUM" | "HIGH" | "URGENT")
+                }
+              >
+                <SelectTrigger
+                  id="project-priority"
+                  className={`${FIELD_CLASS} text-xs sm:w-60`}
+                >
                   <SelectValue placeholder="Select priority" />
                 </SelectTrigger>
-                <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
                   <SelectItem value="URGENT">Urgent</SelectItem>
                   <SelectItem value="HIGH">High</SelectItem>
                   <SelectItem value="MEDIUM">Medium</SelectItem>
@@ -401,47 +477,63 @@ function NewProjectOrTaskForm() {
             </div>
           </div>
         ) : (
-          <div className="space-y-6">
-            {/* Core Task Info */}
-            <div className="space-y-4">
+          <div className="space-y-4">
+            <Section title="Details" icon={Layers}>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Task Title *
+                <label htmlFor="task-title" className={LABEL_CLASS}>
+                  Task title *
                 </label>
                 <Input
+                  id="task-title"
                   type="text"
-                  required
                   value={title}
-                  onChange={(e) => setTitle(e.target.value)}
+                  maxLength={200}
+                  aria-invalid={Boolean(errors.title)}
+                  onChange={(e) => {
+                    setTitle(e.target.value);
+                    setErrors((prev) => ({ ...prev, title: "" }));
+                  }}
                   placeholder="e.g. Implement WebGL streaming buffer"
-                  className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
+                  className={`${FIELD_CLASS} text-xs`}
                 />
+                <FieldError message={errors.title} />
               </div>
 
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Description / Technical Scope
+                <label htmlFor="task-description" className={LABEL_CLASS}>
+                  Description / technical scope
                 </label>
                 <Textarea
+                  id="task-description"
                   value={description}
                   onChange={(e) => setDescription(e.target.value)}
                   rows={3}
                   placeholder="Technical details, acceptance criteria, or specification links..."
-                  className="w-full bg-[#171922] border-[#2E3039] p-3 text-xs text-slate-200 placeholder:text-slate-500 focus-visible:border-[#5E6AD2]"
+                  className={`${FIELD_CLASS} p-3 text-xs`}
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                    <Folder className="h-3.5 w-3.5 text-primary" />
+                  <label htmlFor="task-project" className={LABEL_CLASS}>
+                    <Folder className="h-3.5 w-3.5 text-primary" aria-hidden />
                     <span>Project *</span>
                   </label>
-                  <Select value={projectId} onValueChange={(val) => setProjectId(val)}>
-                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                  <Select
+                    value={projectId}
+                    onValueChange={(val) => {
+                      setProjectId(val);
+                      setErrors((prev) => ({ ...prev, projectId: "" }));
+                    }}
+                  >
+                    <SelectTrigger
+                      id="task-project"
+                      aria-invalid={Boolean(errors.projectId)}
+                      className={`${FIELD_CLASS} text-xs`}
+                    >
                       <SelectValue placeholder="Select project" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                    <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
                       {projects.map((p) => (
                         <SelectItem key={p.id} value={p.id}>
                           {p.name} ({p.key})
@@ -449,17 +541,21 @@ function NewProjectOrTaskForm() {
                       ))}
                     </SelectContent>
                   </Select>
+                  <FieldError message={errors.projectId} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
+                  <label htmlFor="task-status" className={LABEL_CLASS}>
                     Status
                   </label>
-                  <Select value={status} onValueChange={(val) => setStatus(val as Task["status"])}>
-                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                  <Select
+                    value={status}
+                    onValueChange={(val) => setStatus(val as Task["status"])}
+                  >
+                    <SelectTrigger id="task-status" className={`${FIELD_CLASS} text-xs`}>
                       <SelectValue placeholder="Select status" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                    <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
                       <SelectItem value="BACKLOG">Backlog</SelectItem>
                       <SelectItem value="TODO">Todo</SelectItem>
                       <SelectItem value="IN_PROGRESS">In Progress</SelectItem>
@@ -471,15 +567,18 @@ function NewProjectOrTaskForm() {
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                    <Flame className="h-3.5 w-3.5 text-amber-400" />
+                  <label htmlFor="task-priority" className={LABEL_CLASS}>
+                    <Flame className="h-3.5 w-3.5 text-status-warning" aria-hidden />
                     <span>Priority</span>
                   </label>
-                  <Select value={priority} onValueChange={(val) => setPriority(val as Task["priority"])}>
-                    <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
+                  <Select
+                    value={priority}
+                    onValueChange={(val) => setPriority(val as Task["priority"])}
+                  >
+                    <SelectTrigger id="task-priority" className={`${FIELD_CLASS} text-xs`}>
                       <SelectValue placeholder="Select priority" />
                     </SelectTrigger>
-                    <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
+                    <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
                       <SelectItem value="URGENT">Urgent</SelectItem>
                       <SelectItem value="HIGH">High</SelectItem>
                       <SelectItem value="MEDIUM">Medium</SelectItem>
@@ -489,213 +588,268 @@ function NewProjectOrTaskForm() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-slate-400" />
-                    <span>Start Date</span>
+                  <label className={LABEL_CLASS}>
+                    <Calendar className="h-3.5 w-3.5 text-outline" aria-hidden />
+                    <span>Start date</span>
                   </label>
                   <DatePicker
                     value={startDate ? new Date(startDate) : undefined}
                     onChange={(d) => setStartDate(d ? format(d, "yyyy-MM-dd") : "")}
                     placeholder="Select start date"
-                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200"
+                    className={`${FIELD_CLASS} text-xs`}
                   />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                    <Calendar className="h-3.5 w-3.5 text-primary" />
-                    <span>Due Date</span>
+                  <label className={LABEL_CLASS}>
+                    <Calendar className="h-3.5 w-3.5 text-primary" aria-hidden />
+                    <span>Due date</span>
                   </label>
                   <DatePicker
                     value={dueDate ? new Date(dueDate) : undefined}
-                    onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
+                    onChange={(d) => {
+                      setDueDate(d ? format(d, "yyyy-MM-dd") : "");
+                      setErrors((prev) => ({ ...prev, dueDate: "" }));
+                    }}
                     placeholder="Select due date"
-                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200"
+                    className={`${FIELD_CLASS} text-xs`}
                   />
+                  <FieldError message={errors.dueDate} />
                 </div>
 
                 <div className="space-y-1.5">
-                  <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1">
-                    <Clock className="h-3.5 w-3.5 text-secondary" />
-                    <span>Estimated Hours</span>
+                  <label htmlFor="task-estimated" className={LABEL_CLASS}>
+                    <Clock className="h-3.5 w-3.5 text-secondary" aria-hidden />
+                    <span>Estimated hours</span>
                   </label>
                   <Input
+                    id="task-estimated"
                     type="number"
                     step="0.5"
                     min="0.5"
                     value={estimatedHours}
-                    onChange={(e) => setEstimatedHours(e.target.value)}
-                    className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200 focus-visible:border-[#5E6AD2]"
+                    aria-invalid={Boolean(errors.estimatedHours)}
+                    onChange={(e) => {
+                      setEstimatedHours(e.target.value);
+                      setErrors((prev) => ({ ...prev, estimatedHours: "" }));
+                    }}
+                    className={`${FIELD_CLASS} text-xs`}
                   />
+                  <FieldError message={errors.estimatedHours} />
                 </div>
               </div>
 
-              {/* Parent Task Selector */}
+              {labels.length > 0 && (
+                <div className="space-y-2">
+                  <label className={LABEL_CLASS}>
+                    <Tag className="h-3.5 w-3.5" aria-hidden />
+                    <span>Task labels / tags</span>
+                  </label>
+                  <div className="flex flex-wrap gap-1.5">
+                    {labels.map((lbl) => {
+                      const isSelected = selectedLabelIds.includes(lbl.id);
+                      return (
+                        <button
+                          key={lbl.id}
+                          type="button"
+                          aria-pressed={isSelected}
+                          onClick={() => handleToggleLabel(lbl.id)}
+                          className={`flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-medium transition-all ${FOCUS_RING} ${
+                            isSelected
+                              ? "border-primary bg-primary-container text-on-primary-container"
+                              : "border-outline-variant/60 bg-surface-container text-outline hover:text-on-surface"
+                          }`}
+                        >
+                          <span
+                            className="h-2 w-2 rounded-full"
+                            style={{ backgroundColor: lbl.color || "var(--color-outline)" }}
+                          />
+                          <span>{lbl.name}</span>
+                          {isSelected && <Check className="h-3 w-3" aria-hidden />}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+            </Section>
+
+            <Section title="Hierarchy" icon={Layers}>
               <div className="space-y-1.5">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider">
-                  Parent Task Link (Optional)
+                <label htmlFor="task-parent" className={LABEL_CLASS}>
+                  Parent task link (optional)
                 </label>
-                <Select value={parentTaskId || "NONE"} onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}>
-                  <SelectTrigger className="w-full bg-[#171922] border-[#2E3039] text-xs text-slate-200">
-                    <SelectValue placeholder="No Parent (Root Issue)" />
+                <Select
+                  value={parentTaskId || "NONE"}
+                  onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}
+                >
+                  <SelectTrigger id="task-parent" className={`${FIELD_CLASS} text-xs`}>
+                    <SelectValue placeholder="No parent (root issue)" />
                   </SelectTrigger>
-                  <SelectContent className="bg-[#171922] border-[#2E3039] text-slate-200">
-                    <SelectItem value="NONE">No Parent (Root Issue)</SelectItem>
-                    {allTasks
-                      .filter((t) => t.projectId === projectId)
-                      .map((t) => (
-                        <SelectItem key={t.id} value={t.id}>
-                          [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
-                        </SelectItem>
-                      ))}
+                  <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                    <SelectItem value="NONE">No parent (root issue)</SelectItem>
+                    {candidateParentTasks.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
-            </div>
+            </Section>
 
-            {/* Integrations Section */}
-            <div className="p-4 rounded-lg bg-[#171922] border border-[#2E3039] space-y-4">
-              <div className="flex items-center gap-2 pb-2 border-b border-[#2E3039]">
-                <Link2 className="h-4 w-4 text-[#5E6AD2]" />
-                <span className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-                  Cross-System Integrations
+            <Section title="Cross system links" icon={Link2}>
+              <div className="flex flex-wrap items-center gap-1 rounded-sm border border-outline-variant/60 bg-surface-container p-0.5 text-xs">
+                {[
+                  { id: "all", label: "All" },
+                  { id: "crm", label: "CRM booking" },
+                  { id: "manufacturing", label: "Production" },
+                  { id: "milestone", label: "Milestone" },
+                  { id: "sprint", label: "Sprint" },
+                ].map((tab) => (
+                  <button
+                    key={tab.id}
+                    type="button"
+                    aria-pressed={integrationMode === tab.id}
+                    onClick={() =>
+                      setIntegrationMode(
+                        tab.id as
+                          | "all"
+                          | "crm"
+                          | "manufacturing"
+                          | "milestone"
+                          | "sprint",
+                      )
+                    }
+                    className={`rounded-sm px-2 py-1 text-[11px] font-medium transition-all ${FOCUS_RING} ${
+                      integrationMode === tab.id
+                        ? "bg-surface-container-highest text-primary shadow-xs"
+                        : "text-outline hover:text-on-surface"
+                    }`}
+                  >
+                    {tab.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                {(integrationMode === "all" || integrationMode === "crm") && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="task-booking" className={LABEL_CLASS}>
+                      <CalendarDays className="h-3.5 w-3.5 text-primary" aria-hidden />
+                      <span>Customer service booking</span>
+                    </label>
+                    <Select
+                      value={bookingId || "NONE"}
+                      onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}
+                    >
+                      <SelectTrigger id="task-booking" className={`${FIELD_CLASS} text-xs`}>
+                        <SelectValue placeholder="No booking linked" />
+                      </SelectTrigger>
+                      <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                        <SelectItem value="NONE">No booking linked</SelectItem>
+                        {serviceBookings.map((b) => (
+                          <SelectItem key={b.id} value={b.id}>
+                            {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {(integrationMode === "all" || integrationMode === "manufacturing") && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="task-batch" className={LABEL_CLASS}>
+                      <UtensilsCrossed className="h-3.5 w-3.5 text-status-warning" aria-hidden />
+                      <span>Production batch link</span>
+                    </label>
+                    <Select
+                      value={batchId || "NONE"}
+                      onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}
+                    >
+                      <SelectTrigger id="task-batch" className={`${FIELD_CLASS} text-xs`}>
+                        <SelectValue placeholder="No batch linked" />
+                      </SelectTrigger>
+                      <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                        <SelectItem value="NONE">No batch linked</SelectItem>
+                        {batches.map((batch) => (
+                          <SelectItem key={batch.id} value={batch.id}>
+                            {batch.batchNumber} - {batch.recipeName || batch.runType} (
+                            {batch.status})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {(integrationMode === "all" || integrationMode === "milestone") && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="task-milestone" className={LABEL_CLASS}>
+                      <Flag className="h-3.5 w-3.5 text-status-info" aria-hidden />
+                      <span>Project milestone</span>
+                    </label>
+                    <Select
+                      value={milestoneId || "NONE"}
+                      onValueChange={(val) =>
+                        setMilestoneId(val === "NONE" ? "" : val)
+                      }
+                    >
+                      <SelectTrigger id="task-milestone" className={`${FIELD_CLASS} text-xs`}>
+                        <SelectValue placeholder="No milestone linked" />
+                      </SelectTrigger>
+                      <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                        <SelectItem value="NONE">No milestone linked</SelectItem>
+                        {milestones.map((m) => (
+                          <SelectItem key={m.id} value={m.id}>
+                            {m.title} ({m.status})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {(integrationMode === "all" || integrationMode === "sprint") && (
+                  <div className="space-y-1.5">
+                    <label htmlFor="task-sprint" className={LABEL_CLASS}>
+                      <RotateCw className="h-3.5 w-3.5 text-secondary" aria-hidden />
+                      <span>Sprint / iteration cycle</span>
+                    </label>
+                    <Select
+                      value={sprintId || "NONE"}
+                      onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}
+                    >
+                      <SelectTrigger id="task-sprint" className={`${FIELD_CLASS} text-xs`}>
+                        <SelectValue placeholder="No sprint linked" />
+                      </SelectTrigger>
+                      <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                        <SelectItem value="NONE">No sprint linked</SelectItem>
+                        {sprints.map((s) => (
+                          <SelectItem key={s.id} value={s.id}>
+                            {s.name} ({s.status})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+              </div>
+            </Section>
+
+            <Section title="Assignments" icon={Users}>
+              <div className="flex items-center justify-between">
+                <p className="font-body-sm text-[11px] text-outline">
+                  Choose members, then set the lead role and allocated hours.
+                </p>
+                <span className="font-label-code text-xs text-outline">
+                  {assignedMembers.length} selected
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
-                    <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                    <span>Customer Service Booking</span>
-                  </label>
-                  <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
-                      <SelectValue placeholder="No Booking Linked" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
-                      <SelectItem value="NONE">No Booking Linked</SelectItem>
-                      {serviceBookings.map((b) => (
-                        <SelectItem key={b.id} value={b.id}>
-                          {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
-                    <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
-                    <span>Production Batch Link</span>
-                  </label>
-                  <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
-                      <SelectValue placeholder="No Batch Linked" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
-                      <SelectItem value="NONE">No Batch Linked</SelectItem>
-                      {batches.map((batch) => (
-                        <SelectItem key={batch.id} value={batch.id}>
-                          {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
-                    <Flag className="h-3.5 w-3.5 text-purple-400" />
-                    <span>Project Milestone</span>
-                  </label>
-                  <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
-                      <SelectValue placeholder="No Milestone Linked" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
-                      <SelectItem value="NONE">No Milestone Linked</SelectItem>
-                      {milestones.map((m) => (
-                        <SelectItem key={m.id} value={m.id}>
-                          {m.title} ({m.status})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <div className="space-y-1.5">
-                  <label className="text-xs text-slate-300 font-medium flex items-center gap-1.5">
-                    <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>Sprint / Iteration Cycle</span>
-                  </label>
-                  <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full bg-[#12141A] border-[#2E3039] text-xs text-slate-200">
-                      <SelectValue placeholder="No Sprint Linked" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-[#12141A] border-[#2E3039] text-slate-200">
-                      <SelectItem value="NONE">No Sprint Linked</SelectItem>
-                      {sprints.map((s) => (
-                        <SelectItem key={s.id} value={s.id}>
-                          {s.name} ({s.status})
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-            </div>
-
-            {/* Labels Section */}
-            {labels.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-semibold text-slate-200 uppercase tracking-wider flex items-center gap-1.5">
-                  <Tag className="h-3.5 w-3.5 text-slate-400" />
-                  <span>Task Labels / Tags</span>
-                </label>
-                <div className="flex flex-wrap gap-1.5">
-                  {labels.map((lbl) => {
-                    const isSelected = selectedLabelIds.includes(lbl.id);
-                    return (
-                      <button
-                        key={lbl.id}
-                        type="button"
-                        onClick={() => handleToggleLabel(lbl.id)}
-                        className={`px-2.5 py-1 rounded text-xs font-medium border flex items-center gap-1.5 transition-all ${
-                          isSelected
-                            ? "bg-[#5E6AD2] text-white border-[#5E6AD2]"
-                            : "bg-[#171922] text-slate-400 hover:text-slate-200 border-[#2E3039]"
-                        }`}
-                      >
-                        <span
-                          className="w-2 h-2 rounded-full"
-                          style={{ backgroundColor: lbl.color || "#6B7280" }}
-                        />
-                        <span>{lbl.name}</span>
-                        {isSelected && <Check className="h-3 w-3" />}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Member Assignments & Workload */}
-            <div className="p-4 rounded-lg bg-[#171922] border border-[#2E3039] space-y-4">
-              <div className="flex items-center justify-between pb-2 border-b border-[#2E3039]">
-                <div className="flex items-center gap-2">
-                  <Users className="h-4 w-4 text-[#5E6AD2]" />
-                  <span className="text-xs font-bold text-slate-100 uppercase tracking-wider">
-                    Member Assignments & Workload Allocation
-                  </span>
-                </div>
-                <span className="text-xs font-mono text-slate-400">
-                  {assignedMembers.length} Selected
-                </span>
-              </div>
-
-              {/* Members Pill Selector */}
               <div className="flex flex-wrap gap-2">
                 {members.map((m) => {
                   const assigned = assignedMembers.find((a) => a.memberId === m.id);
@@ -703,61 +857,61 @@ function NewProjectOrTaskForm() {
                     <button
                       key={m.id}
                       type="button"
+                      aria-pressed={Boolean(assigned)}
                       onClick={() => handleToggleMember(m.id)}
-                      className={`px-3 py-1.5 rounded-md border text-xs flex items-center gap-2 transition-all ${
+                      className={`flex items-center gap-2 rounded-sm border px-3 py-1.5 text-xs transition-all ${FOCUS_RING} ${
                         assigned
-                          ? "bg-[#1E212D] text-slate-100 border-[#5E6AD2]"
-                          : "bg-[#12141A] text-slate-400 hover:text-slate-200 border-[#2E3039]"
+                          ? "border-primary bg-surface-container-high text-on-surface"
+                          : "border-outline-variant/60 bg-surface-container text-outline hover:text-on-surface"
                       }`}
                     >
-                      <div className="w-5 h-5 rounded-full bg-[#5E6AD2]/20 text-[#5E6AD2] flex items-center justify-center text-[10px] font-bold">
+                      <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
                         {m.name.charAt(0)}
-                      </div>
+                      </span>
                       <span>{m.name}</span>
                       {assigned?.isPrimary && (
                         <span
-                          title="Primary Lead"
-                          className="px-1.5 py-0.2 rounded bg-[#5E6AD2] text-white text-[9px] font-bold flex items-center gap-0.5"
+                          title="Primary lead"
+                          className="flex items-center gap-0.5 rounded-sm bg-primary-container px-1.5 py-0.5 text-[9px] font-bold text-on-primary-container"
                         >
-                          <Crown className="h-2.5 w-2.5" />
+                          <Crown className="h-2.5 w-2.5" aria-hidden />
                           Lead
                         </span>
                       )}
                       {assigned && !assigned.isPrimary && (
-                        <Check className="h-3 w-3 text-[#5E6AD2]" />
+                        <Check className="h-3 w-3 text-primary" aria-hidden />
                       )}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Assignee Details Table */}
               {assignedMembers.length > 0 && (
-                <div className="divide-y divide-[#2E3039] rounded-md border border-[#2E3039] bg-[#12141A] overflow-hidden mt-3">
-                  <div className="px-3 py-2 bg-[#171922] flex items-center justify-between text-[11px] font-semibold text-slate-400 uppercase">
+                <div className="mt-3 divide-y divide-outline-variant/40 overflow-hidden rounded-sm border border-outline-variant/40 bg-surface-container">
+                  <div className="flex items-center justify-between bg-surface-container-high/50 px-3 py-2 font-label-badge text-[11px] uppercase text-outline">
                     <span>Assignee</span>
                     <div className="flex items-center gap-6">
                       <span className="w-24 text-center">Role</span>
-                      <span className="w-28 text-right">Allocated Hours</span>
+                      <span className="w-28 text-right">Allocated hours</span>
                     </div>
                   </div>
 
-                  {assignedMembers.map((assigned) => {
+                  {assignedMembers.map((assigned, index) => {
                     const member = members.find((m) => m.id === assigned.memberId);
                     return (
                       <div
                         key={assigned.memberId}
-                        className="px-3 py-2.5 flex items-center justify-between hover:bg-[#171922]/50 transition-colors"
+                        className="flex items-center justify-between px-3 py-2.5 transition-colors hover:bg-surface-container-high/30"
                       >
                         <div className="flex items-center gap-2">
-                          <div className="w-6 h-6 rounded-full bg-[#5E6AD2]/20 text-[#5E6AD2] flex items-center justify-center text-[11px] font-bold">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container/30 text-[11px] font-semibold text-primary">
                             {member?.name.charAt(0) || "U"}
-                          </div>
+                          </span>
                           <div>
-                            <span className="text-xs font-medium text-slate-200">
+                            <span className="block font-body-sm text-xs font-medium text-on-surface">
                               {member?.name}
                             </span>
-                            <span className="text-[10px] text-slate-400 block">
+                            <span className="block text-[10px] text-outline">
                               {member?.role}
                             </span>
                           </div>
@@ -767,32 +921,36 @@ function NewProjectOrTaskForm() {
                           <button
                             type="button"
                             onClick={() => handleSetPrimary(assigned.memberId)}
-                            className={`w-24 px-2 py-1 rounded text-[11px] font-medium transition-colors flex items-center justify-center gap-1 border ${
+                            className={`flex w-24 items-center justify-center gap-1 rounded-sm border px-2 py-1 text-[11px] font-medium transition-colors ${FOCUS_RING} ${
                               assigned.isPrimary
-                                ? "bg-[#5E6AD2] text-white border-[#5E6AD2]"
-                                : "bg-[#171922] text-slate-400 hover:text-slate-200 border-[#2E3039]"
+                                ? "border-primary bg-primary-container text-on-primary-container"
+                                : "border-outline-variant/60 bg-surface-container-high text-outline hover:text-on-surface"
                             }`}
                           >
-                            <Crown className="h-3 w-3" />
+                            <Crown className="h-3 w-3" aria-hidden />
                             <span>{assigned.isPrimary ? "Lead" : "Contributor"}</span>
                           </button>
 
-                          <div className="w-28 flex items-center justify-end gap-1">
+                          <div className="flex w-28 items-center justify-end gap-1">
                             <Input
                               type="number"
                               step="0.5"
                               min="0.5"
+                              aria-label={`Allocated hours for ${member?.name || "member"}`}
+                              aria-invalid={Boolean(
+                                errors[`assignees.${index}.allocatedHours`],
+                              )}
                               value={assigned.allocatedHours || ""}
                               onChange={(e) =>
                                 handleUpdateAllocatedHours(
                                   assigned.memberId,
-                                  parseFloat(e.target.value) || 0
+                                  parseFloat(e.target.value) || 0,
                                 )
                               }
                               placeholder="Hours"
-                              className="w-16 h-7 px-2 text-right bg-[#171922] border-[#2E3039] text-slate-200 text-xs focus-visible:border-[#5E6AD2]"
+                              className="h-7 w-16 border-outline-variant bg-surface-container-low px-2 text-right text-xs text-on-surface focus-visible:border-primary"
                             />
-                            <span className="text-[11px] text-slate-400">hrs</span>
+                            <span className="text-[11px] text-outline">hrs</span>
                           </div>
                         </div>
                       </div>
@@ -800,25 +958,26 @@ function NewProjectOrTaskForm() {
                   })}
                 </div>
               )}
-            </div>
+              <FieldError message={errors["assignees.0.allocatedHours"]} />
+            </Section>
           </div>
         )}
 
-        <div className="pt-4 border-t border-[#2E3039]/50 flex items-center justify-end gap-3">
+        <div className="flex items-center justify-end gap-3 border-t border-outline-variant/60 pt-4">
           <Link
             href="/projects"
-            className="px-4 py-2 bg-[#171922] hover:bg-[#1f1f23] border border-[#2E3039] text-slate-300 rounded-md text-xs font-medium transition-colors"
+            className={`rounded-sm border border-outline-variant bg-surface-container px-4 py-2 font-body-sm text-xs font-medium text-on-surface transition-colors hover:bg-surface-container-high ${FOCUS_RING}`}
           >
             Cancel
           </Link>
           <button
             type="submit"
-            disabled={createTask.isPending || createProject.isPending}
-            className="px-5 py-2 bg-[#5E6AD2] hover:bg-[#717DE3] text-white rounded-md text-xs font-semibold flex items-center gap-1.5 shadow-sm transition-colors disabled:opacity-50"
+            disabled={busy}
+            className={`flex items-center gap-1.5 rounded-sm bg-primary-container px-5 py-2 font-headline-sm text-xs font-semibold text-on-primary-container shadow-sm transition-colors hover:bg-primary-container/90 disabled:pointer-events-none disabled:opacity-50 ${FOCUS_RING}`}
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-4 w-4" aria-hidden />
             <span>
-              {createTask.isPending || createProject.isPending
+              {busy
                 ? "Creating..."
                 : `Create ${type === "PROJECT" ? "Project" : "Task"}`}
             </span>
@@ -826,7 +985,6 @@ function NewProjectOrTaskForm() {
         </div>
       </form>
 
-      {/* Capacity Warning Soft Modal */}
       <CapacityWarningModal
         isOpen={warningModalOpen}
         memberName={warningMemberName}
@@ -834,7 +992,7 @@ function NewProjectOrTaskForm() {
         additionalHours={warningAdditionalHours}
         totalCapacityHours={warningCapacityHours}
         onConfirm={() => {
-          if (pendingPayload) executeCreateTask(pendingPayload);
+          if (pendingPayload) void executeCreateTask(pendingPayload);
         }}
         onCancel={() => {
           setWarningModalOpen(false);
@@ -847,13 +1005,7 @@ function NewProjectOrTaskForm() {
 
 export default function NewProjectOrTaskPage() {
   return (
-    <Suspense
-      fallback={
-        <div className="max-w-2xl mx-auto pt-8 text-center text-xs text-slate-400">
-          Loading form...
-        </div>
-      }
-    >
+    <Suspense fallback={<PageLoading variant="detail" label="Loading form" />}>
       <NewProjectOrTaskForm />
     </Suspense>
   );

@@ -3,17 +3,171 @@
 import { Input } from "@repo/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
-import React, { useState } from "react";
-import { LayoutGrid, Rows, Plus, Search, X, FolderOpen, Sparkles, ListTodo, Pencil, ArrowRight, Trash2 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
+import React, { Suspense, useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  FolderKanban,
+  FolderOpen,
+  LayoutGrid,
+  ListTodo,
+  Pencil,
+  Plus,
+  Rows,
+  Search,
+  Sparkles,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useProjects, useCreateProject, useUpdateProject, useDeleteProject } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Project } from "@/lib/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Dialog } from "@/components/Dialog";
+import { PageEmpty, PageLoading } from "@/components/PageState";
+import { notifyError, notifySuccess } from "@/lib/feedback";
+import { FOCUS_RING } from "@/lib/navigation";
 
-export default function ProjectsPage() {
+type ProjectFilter = "all" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED";
+
+const STATUS_DOT: Record<Project["status"], string> = {
+  ACTIVE: "bg-status-success",
+  ON_HOLD: "bg-status-warning",
+  COMPLETED: "bg-primary",
+  ARCHIVED: "bg-outline",
+};
+
+function ProjectPicker({
+  open,
+  projects,
+  isLoading,
+  isError,
+  onCancel,
+  onCreate,
+  onChoose,
+}: {
+  open: boolean;
+  projects: Project[];
+  isLoading: boolean;
+  isError: boolean;
+  onCancel: () => void;
+  onCreate: () => void;
+  onChoose: (project: Project) => void;
+}) {
+  const [query, setQuery] = useState("");
+
+  useEffect(() => {
+    if (!open) setQuery("");
+  }, [open]);
+
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return projects;
+    return projects.filter(
+      (project) =>
+        project.name.toLowerCase().includes(q) ||
+        project.key.toLowerCase().includes(q) ||
+        (project.description || "").toLowerCase().includes(q),
+    );
+  }, [projects, query]);
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      title="Choose a project"
+      description="Pick the project workspace you want to open."
+      className="max-w-lg"
+    >
+      <div className="flex flex-col gap-3 px-5 py-4">
+        {isLoading && <PageLoading label="Loading projects" />}
+
+        {!isLoading && isError && (
+          <p className="rounded-sm border border-error/30 bg-error/5 px-3 py-2 font-body-sm text-body-sm text-error">
+            Could not load projects. Close this prompt and try again.
+          </p>
+        )}
+
+        {!isLoading && !isError && projects.length === 0 && (
+          <PageEmpty
+            icon={FolderOpen}
+            title="No projects yet"
+            description="Create your first project workspace to start organizing tasks, cycles, and milestones."
+            action={
+              <button
+                type="button"
+                onClick={onCreate}
+                className={`inline-flex h-8 items-center gap-1.5 rounded-sm bg-primary-container px-3 font-headline-sm text-body-sm text-on-primary-container transition-colors hover:bg-primary-container/90 ${FOCUS_RING}`}
+              >
+                <Plus className="h-4 w-4" aria-hidden />
+                New project
+              </button>
+            }
+          />
+        )}
+
+        {!isLoading && !isError && projects.length > 0 && (
+          <>
+            <div className="flex items-center gap-2 rounded-sm border border-outline-variant bg-surface-container px-2.5">
+              <Search className="h-4 w-4 text-outline" aria-hidden />
+              <Input
+                autoFocus
+                type="text"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Search projects"
+                className="h-8 w-full border-0 bg-transparent px-0 font-body-sm text-body-sm text-on-surface shadow-none placeholder:text-outline focus-visible:ring-0"
+              />
+            </div>
+
+            {filtered.length === 0 ? (
+              <p className="px-1 py-6 text-center font-body-sm text-body-sm text-outline">
+                No matches
+              </p>
+            ) : (
+              <ul className="flex max-h-80 flex-col gap-1 overflow-y-auto">
+                {filtered.map((project) => (
+                  <li key={project.id}>
+                    <button
+                      type="button"
+                      onClick={() => onChoose(project)}
+                      className={`flex w-full items-center justify-between gap-3 rounded-sm border border-transparent px-3 py-2 text-left transition-colors hover:border-outline-variant hover:bg-surface-container ${FOCUS_RING}`}
+                    >
+                      <span className="min-w-0">
+                        <span className="flex items-center gap-2">
+                          <span className="truncate font-headline-sm text-body-sm text-on-surface">
+                            {project.name}
+                          </span>
+                          <span className="shrink-0 rounded-sm bg-surface-container-high px-1.5 py-0.5 font-label-code text-[10px] uppercase tracking-wider text-primary">
+                            {project.key}
+                          </span>
+                        </span>
+                        <span className="mt-0.5 block truncate font-body-sm text-[11px] text-outline">
+                          {project.description || "Project workspace"}
+                        </span>
+                      </span>
+                      <ArrowRight className="h-4 w-4 shrink-0 text-outline" aria-hidden />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </>
+        )}
+      </div>
+    </Dialog>
+  );
+}
+
+function ProjectsPageContent() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const isPickerOpen = searchParams.get("choose") === "1";
+
   const [viewMode, setViewMode] = useState<"grid" | "table">("grid");
-  const [activeFilter, setActiveFilter] = useState<"all" | "ACTIVE" | "ON_HOLD" | "COMPLETED" | "ARCHIVED">("all");
+  const [activeFilter, setActiveFilter] = useState<ProjectFilter>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const { data: projects = [], isLoading } = useProjects();
+  const { data: projects = [], isLoading, isError, refetch } = useProjects();
   const createProjectMutation = useCreateProject();
   const updateProjectMutation = useUpdateProject();
   const deleteProjectMutation = useDeleteProject();
@@ -29,6 +183,29 @@ export default function ProjectsPage() {
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState<Project["status"]>("ACTIVE");
 
+  const [deletingProject, setDeletingProject] = useState<Project | null>(null);
+
+  const closePicker = () => {
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("choose");
+    const query = params.toString();
+    router.replace(query ? `/projects?${query}` : "/projects");
+  };
+
+  const openProject = (project: Project) => {
+    router.push(`/projects/${project.id}?tab=overview`);
+  };
+
+  useEffect(() => {
+    if (!isPickerOpen || isLoading || projects.length !== 1) return;
+    router.replace(`/projects/${projects[0].id}?tab=overview`);
+  }, [isPickerOpen, isLoading, projects, router]);
+
+  const startCreate = () => {
+    if (isPickerOpen) closePicker();
+    setIsNewProjectOpen(true);
+  };
+
   const filteredProjects = projects.filter((project) => {
     const matchesFilter =
       activeFilter === "all" ? true : project.status === activeFilter;
@@ -43,17 +220,21 @@ export default function ProjectsPage() {
     e.preventDefault();
     if (!newProjectName.trim() || !canManageTasks) return;
 
-    await createProjectMutation.mutateAsync({
-      name: newProjectName.trim(),
-      key: newProjectKey.trim().toUpperCase() || undefined,
-      description: newProjectDesc.trim() || undefined,
-      status: "ACTIVE",
-    });
-
-    setNewProjectName("");
-    setNewProjectKey("");
-    setNewProjectDesc("");
-    setIsNewProjectOpen(false);
+    try {
+      await createProjectMutation.mutateAsync({
+        name: newProjectName.trim(),
+        key: newProjectKey.trim().toUpperCase() || undefined,
+        description: newProjectDesc.trim() || undefined,
+        status: "ACTIVE",
+      });
+      notifySuccess("Project created");
+      setNewProjectName("");
+      setNewProjectKey("");
+      setNewProjectDesc("");
+      setIsNewProjectOpen(false);
+    } catch (err) {
+      notifyError(err, "Could not create project");
+    }
   };
 
   const handleEditClick = (e: React.MouseEvent, project: Project) => {
@@ -69,23 +250,31 @@ export default function ProjectsPage() {
     e.preventDefault();
     if (!editingProject || !editName.trim()) return;
 
-    await updateProjectMutation.mutateAsync({
-      id: editingProject.id,
-      data: {
-        name: editName.trim(),
-        description: editDesc.trim() || undefined,
-        status: editStatus,
-      },
-    });
-
-    setEditingProject(null);
+    try {
+      await updateProjectMutation.mutateAsync({
+        id: editingProject.id,
+        data: {
+          name: editName.trim(),
+          description: editDesc.trim() || undefined,
+          status: editStatus,
+        },
+      });
+      notifySuccess("Project updated");
+      setEditingProject(null);
+    } catch (err) {
+      notifyError(err, "Could not update project");
+    }
   };
 
-  const handleDelete = async (e: React.MouseEvent, projectId: string) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!confirm("Are you sure you want to delete this project workspace?")) return;
-    await deleteProjectMutation.mutateAsync(projectId);
+  const handleDelete = async () => {
+    if (!deletingProject) return;
+    try {
+      await deleteProjectMutation.mutateAsync(deletingProject.id);
+      notifySuccess("Project deleted");
+      setDeletingProject(null);
+    } catch (err) {
+      notifyError(err, "Could not delete project");
+    }
   };
 
   const activeCount = projects.filter((p) => p.status === "ACTIVE").length;
@@ -94,157 +283,125 @@ export default function ProjectsPage() {
   const archivedCount = projects.filter((p) => p.status === "ARCHIVED").length;
 
   return (
-    <div className="flex flex-col w-full pb-16">
-      <div className="flex flex-col w-full">
-        {/* Top Utility Bar: Title, Counters, Scope Filters, Actions */}
-        <div className="flex flex-col gap-4 py-4 mb-2">
+    <div className="flex w-full flex-col pb-16 text-on-surface">
+      <div className="flex w-full flex-col">
+        <div className="mb-2 flex flex-col gap-4 py-4">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2">
-                <span className="font-headline-lg text-headline-lg text-on-surface tracking-tight">Projects</span>
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-high text-outline text-label-badge font-label-badge">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
+                <h1
+                  data-route-heading
+                  tabIndex={-1}
+                  className="font-headline-lg text-headline-lg tracking-tight text-on-surface outline-none"
+                >
+                  Projects
+                </h1>
+                <span className="flex items-center gap-1.5 rounded-sm bg-surface-container-high px-2 py-0.5 font-label-badge text-label-badge text-outline">
+                  <span className="h-1.5 w-1.5 rounded-full bg-primary-container" />
                   {activeCount} Active
                 </span>
-                <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-low text-outline text-label-badge font-label-badge">
+                <span className="flex items-center gap-1.5 rounded-sm bg-surface-container-low px-2 py-0.5 font-label-badge text-label-badge text-outline">
                   {completedCount} Completed
                 </span>
               </div>
             </div>
             <div className="flex items-center gap-2.5">
-              {/* View Mode Switcher */}
-              <div className="flex items-center bg-surface-container-lowest p-0.5 rounded-lg shadow-sm border border-outline-variant/30">
+              <div className="flex items-center rounded-sm border border-outline-variant bg-surface-container-lowest p-0.5 shadow-sm">
                 <button
                   type="button"
                   onClick={() => setViewMode("grid")}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
+                  aria-pressed={viewMode === "grid"}
+                  className={`flex items-center gap-1 rounded-sm px-2.5 py-1 font-body-sm text-body-sm transition-all ${FOCUS_RING} ${
                     viewMode === "grid"
                       ? "bg-surface-container-high text-on-surface shadow-sm"
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
-                  <LayoutGrid className="h-4 w-4" />
+                  <LayoutGrid className="h-4 w-4" aria-hidden />
                   <span className="hidden sm:inline">Grid</span>
                 </button>
                 <button
                   type="button"
                   onClick={() => setViewMode("table")}
-                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-all ${
+                  aria-pressed={viewMode === "table"}
+                  className={`flex items-center gap-1 rounded-sm px-2.5 py-1 font-body-sm text-body-sm transition-all ${FOCUS_RING} ${
                     viewMode === "table"
                       ? "bg-surface-container-high text-on-surface shadow-sm"
                       : "text-outline hover:text-on-surface"
                   }`}
                 >
-                  <Rows className="h-4 w-4" />
+                  <Rows className="h-4 w-4" aria-hidden />
                   <span className="hidden sm:inline">Table</span>
                 </button>
               </div>
-              <div className="h-4 w-px bg-surface-container-highest"></div>
-              {/* New Project Action */}
+              <div className="h-4 w-px bg-surface-container-highest" />
               {canManageTasks ? (
                 <button
                   type="button"
-                  onClick={() => setIsNewProjectOpen(true)}
-                  className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm shadow-sm transition-all"
+                  onClick={startCreate}
+                  className={`flex items-center gap-1 rounded-sm bg-primary-container px-2.5 py-1 font-headline-sm text-body-sm text-on-primary-container shadow-sm transition-all hover:bg-primary-container/90 ${FOCUS_RING}`}
                 >
-                  <Plus className="h-4 w-4" />
+                  <Plus className="h-4 w-4" aria-hidden />
                   <span>New Project</span>
-                  <span className="ml-1 text-label-kbd font-label-kbd text-on-primary-container/70 bg-on-primary-fixed/20 px-1 py-0.2 rounded-lg">P</span>
+                  <span className="ml-1 rounded-sm bg-on-primary-fixed/20 px-1 py-0.5 font-label-kbd text-label-kbd text-on-primary-container/70">
+                    P
+                  </span>
                 </button>
               ) : (
-                <span className="text-outline text-body-sm text-[11px] px-2">Read-only Access</span>
+                <span className="px-2 font-body-sm text-[11px] text-outline">
+                  Read-only access
+                </span>
               )}
             </div>
           </div>
 
-          {/* Sub-navigation: Scope tabs & quick search */}
           <div className="flex flex-wrap items-center justify-between gap-3 pt-2">
             <div className="flex flex-wrap items-center gap-1">
-              <button
-                type="button"
-                onClick={() => setActiveFilter("all")}
-                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors ${
-                  activeFilter === "all"
-                    ? "bg-surface-container text-on-surface font-headline-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                All Projects
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("ACTIVE")}
-                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "ACTIVE"
-                    ? "bg-surface-container text-on-surface font-headline-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                <span>Active</span>
-                <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {activeCount}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("ON_HOLD")}
-                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "ON_HOLD"
-                    ? "bg-surface-container text-on-surface font-headline-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                <span>On Hold</span>
-                <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {onHoldCount}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("COMPLETED")}
-                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "COMPLETED"
-                    ? "bg-surface-container text-on-surface font-headline-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                <span>Completed</span>
-                <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {completedCount}
-                </span>
-              </button>
-              <button
-                type="button"
-                onClick={() => setActiveFilter("ARCHIVED")}
-                className={`px-2.5 py-1 rounded-lg font-body-sm text-body-sm transition-colors flex items-center gap-1.5 ${
-                  activeFilter === "ARCHIVED"
-                    ? "bg-surface-container text-on-surface font-headline-sm"
-                    : "text-outline hover:text-on-surface hover:bg-surface-container-low"
-                }`}
-              >
-                <span>Archived</span>
-                <span className="text-label-badge font-label-badge px-1 rounded-lg bg-surface-container-highest text-outline">
-                  {archivedCount}
-                </span>
-              </button>
+              {[
+                { key: "all", label: "All Projects", count: undefined },
+                { key: "ACTIVE", label: "Active", count: activeCount },
+                { key: "ON_HOLD", label: "On Hold", count: onHoldCount },
+                { key: "COMPLETED", label: "Completed", count: completedCount },
+                { key: "ARCHIVED", label: "Archived", count: archivedCount },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setActiveFilter(tab.key as ProjectFilter)}
+                  aria-pressed={activeFilter === tab.key}
+                  className={`flex items-center gap-1.5 rounded-sm px-2.5 py-1 font-body-sm text-body-sm transition-colors ${FOCUS_RING} ${
+                    activeFilter === tab.key
+                      ? "bg-surface-container font-headline-sm text-on-surface"
+                      : "text-outline hover:bg-surface-container-low hover:text-on-surface"
+                  }`}
+                >
+                  <span>{tab.label}</span>
+                  {tab.count !== undefined && (
+                    <span className="rounded-sm bg-surface-container-highest px-1 font-label-badge text-label-badge text-outline">
+                      {tab.count}
+                    </span>
+                  )}
+                </button>
+              ))}
             </div>
             <div className="flex items-center gap-2">
-              <div className="flex items-center gap-2 px-2.5 py-1 rounded-lg bg-surface-container-lowest border border-outline-variant/30 text-outline focus-within:text-on-surface focus-within:bg-surface-container-low transition-all">
-                <Search className="h-3.5 w-3.5" />
+              <div className="flex items-center gap-2 rounded-sm border border-outline-variant bg-surface-container-lowest px-2.5 py-1 text-outline transition-all focus-within:bg-surface-container-low focus-within:text-on-surface">
+                <Search className="h-3.5 w-3.5" aria-hidden />
                 <Input
                   type="text"
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search projects, keys, tags..."
-                  className="h-7 border-0 bg-transparent shadow-none focus-visible:ring-0 font-body-sm text-body-sm text-on-surface placeholder:text-outline w-44 md:w-60"
+                  className="h-7 w-44 border-0 bg-transparent font-body-sm text-body-sm text-on-surface shadow-none placeholder:text-outline focus-visible:ring-0 md:w-60"
                 />
                 {searchQuery && (
                   <button
                     type="button"
                     onClick={() => setSearchQuery("")}
-                    className="text-outline hover:text-on-surface"
+                    aria-label="Clear search"
+                    className={`rounded-sm text-outline hover:text-on-surface ${FOCUS_RING}`}
                   >
-                    <X className="h-3.5 w-3.5" />
+                    <X className="h-3.5 w-3.5" aria-hidden />
                   </button>
                 )}
               </div>
@@ -252,227 +409,99 @@ export default function ProjectsPage() {
           </div>
         </div>
 
-        {/* Modal: New Project */}
-        {isNewProjectOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl animate-in fade-in zoom-in-95 duration-150">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create New Project</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsNewProjectOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleCreateProject} className="flex flex-col gap-4 mt-4">
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                  <Input
-                    type="text"
-                    required
-                    placeholder="e.g. Kinetic Engine 3.0"
-                    value={newProjectName}
-                    onChange={(e) => setNewProjectName(e.target.value)}
-                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Project Key (Optional)</label>
-                  <Input
-                    type="text"
-                    placeholder="e.g. KINETIC"
-                    value={newProjectKey}
-                    onChange={(e) => setNewProjectKey(e.target.value)}
-                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm uppercase focus-visible:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                  <Input
-                    type="text"
-                    placeholder="Brief objective"
-                    value={newProjectDesc}
-                    onChange={(e) => setNewProjectDesc(e.target.value)}
-                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                  />
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsNewProjectOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createProjectMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {createProjectMutation.isPending ? "Creating..." : "Create Project"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
+        {isLoading && <PageLoading variant="grid" label="Loading projects" />}
 
-        {/* Modal: Edit Project */}
-        {editingProject && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Edit Project: {editingProject.key}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setEditingProject(null)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleSaveEdit} className="flex flex-col gap-4 mt-4">
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                  <Input
-                    type="text"
-                    required
-                    value={editName}
-                    onChange={(e) => setEditName(e.target.value)}
-                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                  <Input
-                    type="text"
-                    value={editDesc}
-                    onChange={(e) => setEditDesc(e.target.value)}
-                    className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                  />
-                </div>
-                <div>
-                  <label className="block text-body-sm font-medium text-on-surface mb-1">Status</label>
-                  <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
-                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                      <SelectValue placeholder="Select status" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                      <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                      <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
-                      <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                      <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setEditingProject(null)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updateProjectMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
-        )}
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/20 animate-pulse h-48 flex flex-col justify-between">
-                <div className="flex flex-col gap-2">
-                  <div className="w-24 h-4 bg-surface-container-highest rounded"></div>
-                  <div className="w-40 h-3 bg-surface-container rounded"></div>
-                </div>
-                <div className="w-full h-2 bg-surface-container rounded"></div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!isLoading && filteredProjects.length === 0 && (
-          <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/40 flex flex-col items-center justify-center text-center gap-3 my-6">
-            <FolderOpen className="h-9 w-9 text-outline" />
-            <div className="text-on-surface font-headline-sm text-body-md">No projects found</div>
-            <p className="text-outline text-body-sm max-w-sm">
-              Get started by creating your first project workspace to collaborate on tasks, cycles, and milestones.
-            </p>
-            {canManageTasks && (
+        {!isLoading && isError && (
+          <PageEmpty
+            icon={FolderOpen}
+            title="Could not load projects"
+            description="Check your connection and try again."
+            action={
               <button
                 type="button"
-                onClick={() => setIsNewProjectOpen(true)}
-                className="mt-2 px-4 py-1.5 rounded-lg bg-primary-container text-on-primary-container font-headline-sm text-body-sm"
+                onClick={() => refetch()}
+                className={`inline-flex h-8 items-center rounded-sm border border-outline-variant px-3 font-body-sm text-body-sm text-on-surface transition-colors hover:bg-surface-container ${FOCUS_RING}`}
               >
-                Create New Project
+                Try again
               </button>
-            )}
-          </div>
+            }
+          />
         )}
 
-        {/* View Layout: Grid vs Table */}
-        {!isLoading && filteredProjects.length > 0 && viewMode === "grid" && (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-3.5 mb-6">
+        {!isLoading && !isError && filteredProjects.length === 0 && (
+          <PageEmpty
+            icon={FolderOpen}
+            title={projects.length === 0 ? "No projects yet" : "No projects match these filters"}
+            description={
+              projects.length === 0
+                ? "Get started by creating your first project workspace to collaborate on tasks, cycles, and milestones."
+                : "Adjust the status filter or search to find a project."
+            }
+            action={
+              canManageTasks ? (
+                <button
+                  type="button"
+                  onClick={startCreate}
+                  className={`inline-flex h-8 items-center gap-1.5 rounded-sm bg-primary-container px-3 font-headline-sm text-body-sm text-on-primary-container transition-colors hover:bg-primary-container/90 ${FOCUS_RING}`}
+                >
+                  <Plus className="h-4 w-4" aria-hidden />
+                  Create New Project
+                </button>
+              ) : undefined
+            }
+          />
+        )}
+
+        {!isLoading && !isError && filteredProjects.length > 0 && viewMode === "grid" && (
+          <div className="mb-6 grid grid-cols-1 gap-3.5 md:grid-cols-2 xl:grid-cols-4">
             {filteredProjects.map((project) => (
               <Link
                 key={project.id}
                 href={`/projects/${project.id}?tab=overview`}
-                className="group relative flex flex-col justify-between p-4 rounded-lg bg-surface-container-low hover:bg-surface-container transition-all duration-150 shadow-sm border border-outline-variant/30 hover:border-outline-variant"
+                className={`group relative flex flex-col justify-between rounded-md border border-outline-variant/60 bg-surface-container-low p-4 shadow-sm transition-all duration-150 hover:border-outline-variant hover:bg-surface-container ${FOCUS_RING}`}
               >
                 <div className="flex flex-col gap-3">
                   <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-6 h-6 rounded-lg bg-primary-container/20 flex items-center justify-center text-primary text-[13px] font-label-code shrink-0">
-                        <Sparkles className="h-4 w-4 text-primary" />
+                    <div className="flex min-w-0 items-center gap-2">
+                      <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-sm bg-primary-container/20 font-label-code text-[13px] text-primary">
+                        <Sparkles className="h-4 w-4 text-primary" aria-hidden />
                       </div>
                       <div className="min-w-0">
-                        <h3 className="font-headline-sm text-headline-sm text-on-surface truncate group-hover:text-primary transition-colors">
+                        <h3 className="truncate font-headline-sm text-headline-sm text-on-surface transition-colors group-hover:text-primary">
                           {project.name}
                         </h3>
-                        <p className="font-body-sm text-body-sm text-outline truncate">{project.description || "Project Workspace"}</p>
+                        <p className="truncate font-body-sm text-body-sm text-outline">
+                          {project.description || "Project Workspace"}
+                        </p>
                       </div>
                     </div>
-                    <span className="shrink-0 px-1.5 py-0.5 rounded text-[10px] font-label-code uppercase tracking-wider bg-surface-container-highest text-primary">
+                    <span className="shrink-0 rounded-sm bg-surface-container-highest px-1.5 py-0.5 font-label-code text-[10px] uppercase tracking-wider text-primary">
                       {project.key}
                     </span>
                   </div>
 
-                  {/* Status Strip */}
                   <div className="flex flex-wrap items-center gap-2 pt-1">
-                    <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-surface-container-highest">
-                      <span className={`w-1.5 h-1.5 rounded-full ${
-                        project.status === "ACTIVE" ? "bg-emerald-400" : project.status === "COMPLETED" ? "bg-primary" : project.status === "ARCHIVED" ? "bg-outline" : "bg-amber-400"
-                      }`}></span>
-                      <span className="font-label-badge text-label-badge text-on-surface">{project.status}</span>
+                    <div className="flex items-center gap-1.5 rounded-sm bg-surface-container-highest px-2 py-0.5">
+                      <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[project.status]}`} />
+                      <span className="font-label-badge text-label-badge text-on-surface">
+                        {project.status}
+                      </span>
                     </div>
                     {project._count && (
-                      <div className="flex items-center gap-1 px-2 py-0.5 rounded-lg bg-surface-container-highest text-outline font-label-code text-label-code">
-                        <ListTodo className="h-3.5 w-3.5" />
+                      <div className="flex items-center gap-1 rounded-sm bg-surface-container-highest px-2 py-0.5 font-label-code text-label-code text-outline">
+                        <ListTodo className="h-3.5 w-3.5" aria-hidden />
                         <span>{project._count.tasks} Tasks</span>
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Footer strip */}
-                <div className="flex items-center justify-between pt-3 mt-3 border-t border-outline-variant/30 text-body-sm">
+                <div className="mt-3 flex items-center justify-between border-t border-outline-variant/60 pt-3 text-body-sm">
                   <span className="font-label-code text-[11px] text-outline">
-                    {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                    {new Date(project.updatedAt).toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                    })}
                   </span>
 
                   <div className="flex items-center gap-1">
@@ -480,13 +509,16 @@ export default function ProjectsPage() {
                       <button
                         type="button"
                         onClick={(e) => handleEditClick(e, project)}
-                        className="p-1 text-outline hover:text-on-surface transition-colors"
-                        title="Edit Project"
+                        aria-label={`Edit ${project.name}`}
+                        className={`rounded-sm p-1 text-outline transition-colors hover:text-on-surface ${FOCUS_RING}`}
                       >
-                        <Pencil className="h-3.5 w-3.5" />
+                        <Pencil className="h-3.5 w-3.5" aria-hidden />
                       </button>
                     )}
-<ArrowRight className="h-4 w-4 text-outline group-hover:text-primary transition-colors" />
+                    <ArrowRight
+                      className="h-4 w-4 text-outline transition-colors group-hover:text-primary"
+                      aria-hidden
+                    />
                   </div>
                 </div>
               </Link>
@@ -494,10 +526,10 @@ export default function ProjectsPage() {
           </div>
         )}
 
-        {!isLoading && filteredProjects.length > 0 && viewMode === "table" && (
-          <div className="w-full overflow-x-auto rounded-lg border border-outline-variant/30 bg-surface-container-low shadow-sm mb-6">
+        {!isLoading && !isError && filteredProjects.length > 0 && viewMode === "table" && (
+          <div className="mb-6 w-full overflow-x-auto rounded-md border border-outline-variant/60 bg-surface-container-low shadow-sm">
             <table className="w-full text-left font-body-sm">
-              <thead className="bg-surface-container-high/60 text-outline text-[11px] font-label-badge uppercase tracking-wider border-b border-outline-variant/30">
+              <thead className="border-b border-outline-variant/60 bg-surface-container-high/60 font-label-badge text-[11px] uppercase tracking-wider text-outline">
                 <tr>
                   <th className="px-4 py-2.5">Key</th>
                   <th className="px-4 py-2.5">Project</th>
@@ -507,34 +539,39 @@ export default function ProjectsPage() {
                   <th className="px-4 py-2.5 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-outline-variant/20">
+              <tbody className="divide-y divide-outline-variant/40">
                 {filteredProjects.map((project) => (
                   <tr
                     key={project.id}
-                    className="hover:bg-surface-container transition-colors group cursor-pointer"
+                    className="group cursor-pointer transition-colors hover:bg-surface-container"
                   >
-                    <td className="px-4 py-3 font-label-code text-primary text-[11px]">
+                    <td className="px-4 py-3 font-label-code text-[11px] text-primary">
                       {project.key}
                     </td>
                     <td className="px-4 py-3">
-                      <Link
-                        href={`/projects/${project.id}?tab=overview`}
-                        className="flex flex-col"
-                      >
-                        <span className="font-headline-sm text-body-sm text-on-surface group-hover:text-primary transition-colors">
+                      <Link href={`/projects/${project.id}?tab=overview`} className={`flex flex-col ${FOCUS_RING}`}>
+                        <span className="font-headline-sm text-body-sm text-on-surface transition-colors group-hover:text-primary">
                           {project.name}
                         </span>
-                        <span className="text-[11px] text-outline">{project.description || "--"}</span>
+                        <span className="text-[11px] text-outline">
+                          {project.description || "--"}
+                        </span>
                       </Link>
                     </td>
                     <td className="px-4 py-3">
-                      <span className="capitalize text-on-surface-variant font-label-code text-[11px]">{project.status}</span>
+                      <span className="flex items-center gap-1.5 font-label-code text-[11px] capitalize text-on-surface-variant">
+                        <span className={`h-1.5 w-1.5 rounded-full ${STATUS_DOT[project.status]}`} />
+                        {project.status}
+                      </span>
                     </td>
                     <td className="px-4 py-3 font-label-code text-[11px]">
                       {project._count?.tasks ?? 0}
                     </td>
                     <td className="px-4 py-3 font-label-code text-[11px] text-outline">
-                      {new Date(project.updatedAt).toLocaleDateString("en-US", { month: "short", day: "numeric" })}
+                      {new Date(project.updatedAt).toLocaleDateString("en-US", {
+                        month: "short",
+                        day: "numeric",
+                      })}
                     </td>
                     <td className="px-4 py-3 text-right">
                       {canManageTasks && (
@@ -542,18 +579,22 @@ export default function ProjectsPage() {
                           <button
                             type="button"
                             onClick={(e) => handleEditClick(e, project)}
-                            className="p-1 text-outline hover:text-on-surface"
-                            title="Edit Project"
+                            aria-label={`Edit ${project.name}`}
+                            className={`rounded-sm p-1 text-outline hover:text-on-surface ${FOCUS_RING}`}
                           >
-                            <Pencil className="h-3.5 w-3.5" />
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
                           </button>
                           <button
                             type="button"
-                            onClick={(e) => handleDelete(e, project.id)}
-                            className="p-1 text-outline hover:text-red-400"
-                            title="Delete Project"
+                            onClick={(e) => {
+                              e.preventDefault();
+                              e.stopPropagation();
+                              setDeletingProject(project);
+                            }}
+                            aria-label={`Delete ${project.name}`}
+                            className={`rounded-sm p-1 text-outline hover:text-error ${FOCUS_RING}`}
                           >
-                            <Trash2 className="h-3.5 w-3.5" />
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
                           </button>
                         </div>
                       )}
@@ -565,6 +606,178 @@ export default function ProjectsPage() {
           </div>
         )}
       </div>
+
+      <ProjectPicker
+        open={isPickerOpen}
+        projects={projects}
+        isLoading={isLoading}
+        isError={isError}
+        onCancel={closePicker}
+        onCreate={() => {
+          closePicker();
+          setIsNewProjectOpen(true);
+        }}
+        onChoose={openProject}
+      />
+
+      <Dialog
+        open={isNewProjectOpen}
+        onClose={() => setIsNewProjectOpen(false)}
+        title="Create New Project"
+        className="max-w-md"
+      >
+        <form onSubmit={handleCreateProject} className="flex flex-col gap-4 px-5 py-4">
+          <div>
+            <label htmlFor="new-project-name" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Project Name
+            </label>
+            <Input
+              id="new-project-name"
+              type="text"
+              required
+              placeholder="e.g. Kinetic Engine 3.0"
+              value={newProjectName}
+              onChange={(e) => setNewProjectName(e.target.value)}
+              className="h-8 w-full border-outline-variant bg-surface-container font-body-sm text-body-sm text-on-surface focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="new-project-key" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Project Key (Optional)
+            </label>
+            <Input
+              id="new-project-key"
+              type="text"
+              placeholder="e.g. KINETIC"
+              value={newProjectKey}
+              onChange={(e) => setNewProjectKey(e.target.value)}
+              className="h-8 w-full border-outline-variant bg-surface-container font-body-sm uppercase text-on-surface focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="new-project-desc" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Description
+            </label>
+            <Input
+              id="new-project-desc"
+              type="text"
+              placeholder="Brief objective"
+              value={newProjectDesc}
+              onChange={(e) => setNewProjectDesc(e.target.value)}
+              className="h-8 w-full border-outline-variant bg-surface-container font-body-sm text-on-surface focus-visible:border-primary-container"
+            />
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setIsNewProjectOpen(false)}
+              className={`rounded-sm px-3 py-1.5 font-body-sm text-body-sm text-outline hover:text-on-surface ${FOCUS_RING}`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createProjectMutation.isPending || !newProjectName.trim()}
+              className={`rounded-sm bg-primary-container px-4 py-1.5 font-headline-sm text-body-sm text-on-primary-container hover:bg-primary-container/90 disabled:pointer-events-none disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              {createProjectMutation.isPending ? "Creating..." : "Create Project"}
+            </button>
+          </div>
+        </form>
+      </Dialog>
+
+      <Dialog
+        open={Boolean(editingProject)}
+        onClose={() => setEditingProject(null)}
+        title={editingProject ? `Edit Project: ${editingProject.key}` : "Edit Project"}
+        className="max-w-md"
+      >
+        <form onSubmit={handleSaveEdit} className="flex flex-col gap-4 px-5 py-4">
+          <div>
+            <label htmlFor="edit-project-name" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Project Name
+            </label>
+            <Input
+              id="edit-project-name"
+              type="text"
+              required
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              className="h-8 w-full border-outline-variant bg-surface-container font-body-sm text-body-sm text-on-surface focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-project-desc" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Description
+            </label>
+            <Input
+              id="edit-project-desc"
+              type="text"
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              className="h-8 w-full border-outline-variant bg-surface-container font-body-sm text-body-sm text-on-surface focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="edit-project-status" className="mb-1 block font-body-sm font-medium text-on-surface">
+              Status
+            </label>
+            <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
+              <SelectTrigger
+                id="edit-project-status"
+                className="h-8 w-full border-outline-variant bg-surface-container font-body-sm text-body-sm text-on-surface"
+              >
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent className="border-outline-variant bg-surface-container text-on-surface">
+                <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
+                <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex justify-end gap-2 pt-2">
+            <button
+              type="button"
+              onClick={() => setEditingProject(null)}
+              className={`rounded-sm px-3 py-1.5 font-body-sm text-body-sm text-outline hover:text-on-surface ${FOCUS_RING}`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={updateProjectMutation.isPending || !editName.trim()}
+              className={`rounded-sm bg-primary-container px-4 py-1.5 font-headline-sm text-body-sm text-on-primary-container hover:bg-primary-container/90 disabled:pointer-events-none disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              {updateProjectMutation.isPending ? "Saving..." : "Save Changes"}
+            </button>
+          </div>
+        </form>
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(deletingProject)}
+        title="Delete this project?"
+        description={
+          deletingProject
+            ? `"${deletingProject.name}" will be permanently removed. This cannot be undone.`
+            : ""
+        }
+        confirmLabel="Delete project"
+        destructive
+        pending={deleteProjectMutation.isPending}
+        onCancel={() => setDeletingProject(null)}
+        onConfirm={() => void handleDelete()}
+      />
     </div>
+  );
+}
+
+export default function ProjectsPage() {
+  return (
+    <Suspense fallback={<PageLoading variant="grid" label="Loading projects" />}>
+      <ProjectsPageContent />
+    </Suspense>
   );
 }

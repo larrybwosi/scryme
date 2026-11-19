@@ -1,14 +1,14 @@
 import type { Metadata } from "next";
 import "./globals.css";
-import { Sidebar } from "@/components/Sidebar";
-import { Header } from "@/components/Header";
+import { AppShell } from "@/components/AppShell";
 import { QueryProvider } from "@/components/QueryProvider";
 import { OpenPanelProvider } from "@/components/openpanel-provider";
 import { TelemetryProvider } from "@repo/shared/telemetry/client";
 
 export const metadata: Metadata = {
   title: "Scryme Projects - Kinetic Precision Workspace",
-  description: "Enterprise project management, schedules, gantt timelines, and task tracking",
+  description:
+    "Enterprise project management, schedules, gantt timelines, and task tracking",
 };
 
 export default function RootLayout({
@@ -26,17 +26,14 @@ export default function RootLayout({
           rel="stylesheet"
         />
       </head>
-      <body className="bg-surface font-body-md text-body-md text-on-surface antialiased" suppressHydrationWarning>
+      <body
+        className="bg-surface font-body-md text-body-md text-on-surface antialiased"
+        suppressHydrationWarning
+      >
         <TelemetryProvider service="projects-app">
           <OpenPanelProvider />
           <QueryProvider>
-          <Sidebar />
-          <div className="pl-60 min-h-screen flex flex-col">
-            <Header />
-            <main className="relative pt-12 min-h-screen bg-surface w-full px-8 pb-16">
-              {children}
-            </main>
-          </div>
+            <AppShell>{children}</AppShell>
           </QueryProvider>
         </TelemetryProvider>
       </body>

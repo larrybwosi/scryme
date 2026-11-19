@@ -5,6 +5,14 @@ export interface CreateTaskInput extends Omit<Partial<Task>, "assignees"> {
   batchId?: string;
 }
 
+export interface BookingConflictItem {
+  id?: string;
+  type?: string;
+  message?: string;
+  description?: string;
+  severity?: string;
+}
+
 export interface ServiceBookingItem {
   id: string;
   serviceName: string;
@@ -13,6 +21,7 @@ export interface ServiceBookingItem {
   scheduledEndTime?: string;
   customer?: { id?: string; name?: string; phone?: string; phoneNumber?: string; email?: string };
   location?: { id?: string; name?: string };
+  conflicts?: BookingConflictItem[];
 }
 
 export interface ProductionBatchItem {

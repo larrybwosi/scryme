@@ -48,6 +48,11 @@ colors:
   background: '#121316'
   on-background: '#e3e2e6'
   surface-variant: '#343538'
+  status-critical: '#ffb4ab'
+  status-warning: '#e5a158'
+  status-success: '#7fd1a4'
+  status-info: '#bdc2ff'
+  status-neutral: '#908f9e'
 typography:
   display-lg:
     fontFamily: Inter
@@ -136,34 +141,20 @@ The visual narrative balances deep obsidian and carbon surfaces with surgical bo
 
 ## Colors
 
-The palette relies on absolute control over tonal depth, contrast ratios, and luminous accentuation.
+The color source of truth is the front matter token map at the top of this file, mirrored into `app/globals.css` as Tailwind theme tokens. Use those tokens directly; do not add a second palette or raw hex values to app screens.
 
-### Surface System
-- `canvas-default`: `#0D0E11` — The primary root viewport canvas.
-- `canvas-subtle`: `#12141A` — Inset sidebars, secondary panels, and navigation wells.
-- `surface-elevated`: `#171922` — Cards, floating menus, popovers, and dialogs.
-- `surface-hover`: `#1E212D` — Hover states on interactive rows and controls.
-- `surface-active`: `#262938` — Selected list items and pressed targets.
+Semantic mapping:
 
-### Borders & Structural Hairlines
-- `border-subtle`: `rgba(255, 255, 255, 0.06)` — Structural dividers and baseline table grids.
-- `border-contrast`: `#2E3039` — Card shells, split-views, inputs, and container perimeters.
-- `border-hover`: `rgba(255, 255, 255, 0.16)` — Focus boundaries and hover rings.
-- `border-accent`: `rgba(94, 106, 210, 0.5)` — Active keyboard focus outlines.
-
-### Brand & Accents
-- `accent-primary`: `#5E6AD2` — Signature action trigger, brand glyphs, primary selections.
-- `accent-hover`: `#717DE3` — Interactive hover target for primary triggers.
-- `accent-subtle`: `rgba(94, 106, 210, 0.12)` — Selected item backdrops and pill badges.
-- `accent-glow`: `rgba(94, 106, 210, 0.25)` — Ambient halo illumination for primary focal states.
-
-### Status Indicators
-- `status-backlog`: `#6B7280` — Backlog / Triage.
-- `status-unstarted`: `#94A3B8` — Todo / Unstarted.
-- `status-started`: `#E5A158` — In Progress / Active sprint.
-- `status-completed`: `#5E6AD2` — Completed / Merged.
-- `status-canceled`: `#4B5563` — Canceled / Archived.
-- `status-critical`: `#EF4444` — Blocker / Urgent priority.
+- `bg-surface` for the canvas.
+- `bg-surface-container` for panels and inputs.
+- `text-on-surface` for primary text.
+- `text-outline` for muted text.
+- `border-outline-variant` for dividers.
+- `bg-primary-container` with `text-on-primary-container` for primary actions.
+- `text-error` for errors.
+- `status-critical`, `status-warning`, `status-success`, `status-info`, and `status-neutral` for status indicators.
+- A 2px `primary` focus ring with a soft halo for focus.
+- Reduced opacity and no pointer events for disabled controls.
 
 ## Typography
 
