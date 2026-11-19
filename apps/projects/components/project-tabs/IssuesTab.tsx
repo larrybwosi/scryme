@@ -76,7 +76,7 @@ export function IssuesTab({ projectId }: { projectId: string }) {
                   </span>
                 )}
                 {task.batches && task.batches.length > 0 && (
-                  <span className="text-[10px] font-label-code px-1.5 py-0.2 rounded bg-amber-500/10 text-amber-400 border border-amber-500/20">
+                  <span className="text-[10px] font-label-code px-1.5 py-0.2 rounded bg-status-warning/10 text-status-warning border border-status-warning/20">
                     Batch
                   </span>
                 )}

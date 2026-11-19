@@ -4,7 +4,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { DatePicker } from "@repo/ui/components/ui/date-picker";
 import { format } from "date-fns";
 import React, { useState } from "react";
-import { Plus, X, Check, Trash2 } from "lucide-react";
+import { Plus, Check, Trash2, Target } from "lucide-react";
 import {
   useMilestones,
   useCreateMilestone,
@@ -12,6 +12,10 @@ import {
   useDeleteMilestone,
 } from "@/lib/hooks/use-projects";
 import { Milestone } from "@/lib/api";
+import { Dialog } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PageEmpty, PageLoading } from "@/components/PageState";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 export function MilestonesTab({ projectId }: { projectId: string }) {
   const { data: milestones = [], isLoading } = useMilestones(projectId);
@@ -23,27 +27,48 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; title: string } | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!title.trim() || !projectId) return;
 
-    await createMilestoneMutation.mutateAsync({
-      title: title.trim(),
-      description: description.trim() || undefined,
-      dueDate: dueDate || undefined,
-      status: "OPEN",
-    });
-
-    setTitle("");
-    setDescription("");
-    setDueDate("");
-    setIsCreateOpen(false);
+    try {
+      await createMilestoneMutation.mutateAsync({
+        title: title.trim(),
+        description: description.trim() || undefined,
+        dueDate: dueDate || undefined,
+        status: "OPEN",
+      });
+      notifySuccess("Milestone created");
+      setTitle("");
+      setDescription("");
+      setDueDate("");
+      setIsCreateOpen(false);
+    } catch (error) {
+      notifyError(error, "Could not create milestone");
+    }
   };
 
-  const handleToggleStatus = (m: Milestone) => {
+  const handleToggleStatus = async (m: Milestone) => {
     const nextStatus = m.status === "COMPLETED" ? "IN_PROGRESS" : "COMPLETED";
-    updateMilestoneMutation.mutate({ milestoneId: m.id, data: { status: nextStatus } });
+    try {
+      await updateMilestoneMutation.mutateAsync({ milestoneId: m.id, data: { status: nextStatus } });
+      notifySuccess("Status updated");
+    } catch (error) {
+      notifyError(error, "Could not change status");
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteMilestoneMutation.mutateAsync(deleteTarget.id);
+      notifySuccess("Milestone deleted");
+      setDeleteTarget(null);
+    } catch (error) {
+      notifyError(error, "Could not delete milestone");
+    }
   };
 
   return (
@@ -68,81 +93,91 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
         </button>
       </div>
 
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create Milestone</h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Title</label>
-                <Input
-                  type="text"
-                  required
-                  placeholder="e.g. Beta Release Candidate"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Description</label>
-                <Input
-                  type="text"
-                  placeholder="Target scope or deliverable"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Target Due Date</label>
-                <DatePicker
-                  value={dueDate ? new Date(dueDate) : undefined}
-                  onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
-                  placeholder="Select due date"
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createMilestoneMutation.isPending}
-                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                >
-                  {createMilestoneMutation.isPending ? "Creating..." : "Create Milestone"}
-                </button>
-              </div>
-            </form>
+      <Dialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Create Milestone"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="create-milestone-form"
+              disabled={createMilestoneMutation.isPending}
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+            >
+              {createMilestoneMutation.isPending ? "Creating..." : "Create Milestone"}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="create-milestone-form" onSubmit={handleCreate} className="flex flex-col gap-4 p-5">
+          <div>
+            <label htmlFor="milestone-title" className="block text-body-sm font-medium text-on-surface mb-1">
+              Title
+            </label>
+            <Input
+              id="milestone-title"
+              type="text"
+              required
+              placeholder="e.g. Beta Release Candidate"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="milestone-description" className="block text-body-sm font-medium text-on-surface mb-1">
+              Description
+            </label>
+            <Input
+              id="milestone-description"
+              type="text"
+              placeholder="Target scope or deliverable"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="milestone-due-date" className="block text-body-sm font-medium text-on-surface mb-1">
+              Target Due Date
+            </label>
+            <DatePicker
+              value={dueDate ? new Date(dueDate) : undefined}
+              onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
+              placeholder="Select due date"
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
+            />
+          </div>
+        </form>
+      </Dialog>
 
-      {isLoading && (
-        <div className="p-8 text-center text-outline text-body-sm">
-          Loading milestones...
-        </div>
-      )}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete milestone"
+        description={`Delete "${deleteTarget?.title ?? ""}"? This cannot be undone.`}
+        confirmLabel="Delete milestone"
+        destructive
+        pending={deleteMilestoneMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {isLoading && <PageLoading variant="list" rows={3} label="Loading milestones" />}
 
       {!isLoading && milestones.length === 0 && (
-        <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/30 text-center text-outline text-body-sm">
-          No milestones defined for this project yet.
-        </div>
+        <PageEmpty
+          icon={Target}
+          title="No milestones yet"
+          description="Add a milestone to track release targets and deliverables."
+        />
       )}
 
       {!isLoading && milestones.length > 0 && (
@@ -183,14 +218,15 @@ export function MilestonesTab({ projectId }: { projectId: string }) {
                     {m.dueDate ? new Date(m.dueDate).toLocaleDateString("en-US", { month: "short", day: "numeric" }) : "No date"}
                   </span>
                   <span className={`px-2 py-0.5 rounded text-[10px] font-label-code ${
-                    isCompleted ? "bg-emerald-500/20 text-emerald-400" : "bg-surface-container text-primary"
+                    isCompleted ? "bg-status-success/20 text-status-success" : "bg-surface-container text-primary"
                   }`}>
                     {m.status}
                   </span>
                   <button
                     type="button"
-                    onClick={() => deleteMilestoneMutation.mutate(m.id)}
-                    className="text-outline hover:text-red-400 p-1 transition-colors"
+                    onClick={() => setDeleteTarget({ id: m.id, title: m.title })}
+                    className="text-outline hover:text-status-critical p-1 transition-colors"
+                    aria-label={`Delete ${m.title}`}
                     title="Delete Milestone"
                   >
                     <Trash2 className="h-4 w-4" />

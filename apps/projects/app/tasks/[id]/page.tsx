@@ -1,7 +1,7 @@
 "use client";
 
 import React, { use } from "react";
-import TaskDetailPage from "../../task-detail/page";
+import TaskDetailPage from "@/components/TaskDetailView";
 
 export default function TaskParamDetailPage({
   params,

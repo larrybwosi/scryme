@@ -2,6 +2,8 @@
 
 import React from "react";
 import { AlertTriangle } from "lucide-react";
+import { Dialog } from "@/components/Dialog";
+import { FOCUS_RING } from "@/lib/navigation";
 
 interface CapacityWarningModalProps {
   isOpen: boolean;
@@ -22,59 +24,67 @@ export function CapacityWarningModal({
   onConfirm,
   onCancel,
 }: CapacityWarningModalProps) {
-  if (!isOpen) return null;
-
   const projectedTotal = currentAssignedHours + additionalHours;
-  const projectedPercent = Math.round((projectedTotal / Math.max(1, totalCapacityHours)) * 100);
+  const projectedPercent = Math.round(
+    (projectedTotal / Math.max(1, totalCapacityHours)) * 100,
+  );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-amber-500/30 p-6 shadow-2xl">
-        <div className="flex items-center gap-3 pb-3 border-b border-outline-variant/30">
-          <div className="w-8 h-8 rounded-full bg-amber-500/20 text-amber-400 flex items-center justify-center">
-            <AlertTriangle className="h-5 w-5" />
-          </div>
-          <div>
-            <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-              Workload Capacity Warning
-            </h3>
-            <p className="text-[12px] text-outline">Member allocation limit exceeded</p>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 py-4 text-body-sm text-on-surface-variant">
-          <p>
-            Assigning this task to <strong className="text-on-surface">{memberName}</strong> will increase their scheduled allocation to{" "}
-            <strong className="text-amber-400">{projectedTotal}h</strong> against a weekly capacity of{" "}
-            <strong className="text-on-surface">{totalCapacityHours}h</strong> ({projectedPercent}% capacity).
-          </p>
-          <div className="p-3 rounded-lg bg-surface-container border border-outline-variant/30 flex justify-between items-center text-[12px]">
-            <span>Current Hours: <strong>{currentAssignedHours}h</strong></span>
-            <span>+ Task: <strong>{additionalHours}h</strong></span>
-            <span>Projected: <strong className="text-amber-400">{projectedPercent}%</strong></span>
-          </div>
-          <p className="text-[11px] text-outline">
-            As a manager, you may proceed to override this threshold or cancel to assign to another squad member.
-          </p>
-        </div>
-
-        <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/30">
+    <Dialog
+      open={isOpen}
+      onClose={onCancel}
+      title="Workload capacity warning"
+      description="Member allocation limit exceeded"
+      className="max-w-md"
+      footer={
+        <div className="flex justify-end gap-2">
           <button
             type="button"
             onClick={onCancel}
-            className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface transition-colors"
+            className={`rounded-sm px-3 py-1.5 font-body-sm text-body-sm text-outline transition-colors hover:text-on-surface ${FOCUS_RING}`}
           >
             Cancel
           </button>
           <button
             type="button"
             onClick={onConfirm}
-            className="px-4 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-black font-medium text-body-sm transition-colors shadow-sm"
+            className={`rounded-sm bg-status-warning px-4 py-1.5 font-headline-sm text-body-sm font-medium text-surface shadow-sm transition-colors hover:bg-status-warning/90 ${FOCUS_RING}`}
           >
-            Proceed & Assign Anyway
+            Proceed and assign anyway
           </button>
         </div>
+      }
+    >
+      <div className="flex flex-col gap-3 px-5 py-4 font-body-sm text-body-sm text-on-surface-variant">
+        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-status-warning/20 text-status-warning">
+          <AlertTriangle className="h-5 w-5" aria-hidden />
+        </div>
+        <p>
+          Assigning this task to{" "}
+          <strong className="text-on-surface">{memberName}</strong> will increase
+          their scheduled allocation to{" "}
+          <strong className="text-status-warning">{projectedTotal}h</strong>{" "}
+          against a weekly capacity of{" "}
+          <strong className="text-on-surface">{totalCapacityHours}h</strong> (
+          {projectedPercent}% capacity).
+        </p>
+        <div className="flex items-center justify-between gap-2 rounded-sm border border-outline-variant bg-surface-container p-3 text-[12px]">
+          <span>
+            Current hours: <strong>{currentAssignedHours}h</strong>
+          </span>
+          <span>
+            + Task: <strong>{additionalHours}h</strong>
+          </span>
+          <span>
+            Projected:{" "}
+            <strong className="text-status-warning">{projectedPercent}%</strong>
+          </span>
+        </div>
+        <p className="text-[11px] text-outline">
+          As a manager, you may proceed to override this threshold or cancel to
+          assign another squad member.
+        </p>
       </div>
-    </div>
+    </Dialog>
   );
 }

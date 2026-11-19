@@ -237,6 +237,7 @@ export function useUpdateTaskStatus(projectId?: string) {
       queryClient.invalidateQueries({ queryKey: QUERY_KEYS.task(taskId) });
       queryClient.invalidateQueries({ queryKey: ["tasks"] });
       queryClient.invalidateQueries({ queryKey: ["subtasks"] });
+      queryClient.invalidateQueries({ queryKey: ["projects"] });
     },
   });
 }

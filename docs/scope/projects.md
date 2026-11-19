@@ -17,6 +17,7 @@ Dedicated project management, task tracking, scheduling, milestones, member assi
 | 6 | Gantt Chart & Time Tracking | Slice 2 | done |
 | 7 | Member Assignments & Sync | Slice 3 | done |
 | 8 | Enterprise Time Tracking, Scheduling, Tasks and Operations | Slice 4 | in-progress |
+| 9 | Projects App UI Redesign and Feedback Repair | Slice 5 | in-progress |
 
 ## Foundations
 
@@ -76,3 +77,15 @@ Advanced stopwatch persistence, locked timesheets, shift conflict engine, subtas
 - [x] Add unit tests for timer math, capacity checks, conflict detection, and API payloads
 - [ ] Check it (verify): run `/check verify` and save the emitted steps to `verify.md`
 - [ ] Confirm it (test): run `/test` after verification is saved
+
+### 9. Projects App UI Redesign and Feedback Repair
+Reorganize the projects app around one navigation, visible feedback, shared dialog and page state components, and a working task path.
+**Done when:** The task path, command palette, notifications, redirects, and responsive shell meet AC-1 through AC-13 in the spec, and verification and tests pass.
+- [x] Design it (spec): [0044](../specs/0044-projects-app-ui-redesign.md)
+- [ ] Build it: /develop Projects App UI Redesign and Feedback Repair
+  - [x] Shared components, feedback, and shell chrome, satisfies AC-1, AC-4, AC-6, AC-8, AC-10
+  - [x] Task path with rollback and command palette, satisfies AC-2, AC-3, AC-4, AC-7, AC-13
+  - [x] Notifications, redirects, task form, and responsive shell, satisfies AC-1, AC-5, AC-9, AC-11
+  - [x] Component tests for the first path, satisfies AC-12
+- [ ] Verify it: /check verify Projects App UI Redesign and Feedback Repair
+- [ ] Test it: /test Projects App UI Redesign and Feedback Repair

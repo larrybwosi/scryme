@@ -7,7 +7,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format } from "date-fns";
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  X,
   Plus,
   Flame,
   Clock,
@@ -24,9 +23,6 @@ import {
   Check,
   Crown,
   Sparkles,
-  ExternalLink,
-  ShieldCheck,
-  Info,
 } from "lucide-react";
 import {
   useProjects,
@@ -43,7 +39,15 @@ import {
 import { Task, CreateTaskInput } from "@/lib/api";
 import { effectiveWeeklyCapacity } from "@/lib/metrics";
 import { CapacityWarningModal } from "@/components/CapacityWarningModal";
-import { toast } from "sonner";
+import { Dialog } from "@/components/Dialog";
+import { FieldError } from "@/components/PageState";
+import { fieldErrorsFrom, notifyError, notifySuccess } from "@/lib/feedback";
+import {
+  hasErrors,
+  validateTaskForm,
+  type TaskFormErrors,
+} from "@/lib/task-form";
+import { FOCUS_RING } from "@/lib/navigation";
 
 export interface CreateTaskModalProps {
   isOpen: boolean;
@@ -58,6 +62,33 @@ export interface CreateTaskModalProps {
   defaultStartDate?: string;
   defaultDueDate?: string;
   onTaskCreated?: (task: Task) => void;
+}
+
+const FIELD_CLASS =
+  "w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary";
+const LABEL_CLASS =
+  "mb-1 flex items-center gap-1 text-[11px] font-label-badge uppercase tracking-wider text-outline font-semibold";
+
+function Section({
+  title,
+  icon: Icon,
+  children,
+}: {
+  title: string;
+  icon: React.ComponentType<{ className?: string }>;
+  children: React.ReactNode;
+}) {
+  return (
+    <section className="flex flex-col gap-3 rounded-md border border-outline-variant/60 bg-surface-container-lowest p-4">
+      <div className="flex items-center gap-2 border-b border-outline-variant/60 pb-2">
+        <Icon className="h-4 w-4 text-primary" aria-hidden />
+        <h3 className="font-headline-sm text-body-sm font-semibold text-on-surface">
+          {title}
+        </h3>
+      </div>
+      {children}
+    </section>
+  );
 }
 
 export function CreateTaskModal({
@@ -81,7 +112,6 @@ export function CreateTaskModal({
   const { data: serviceBookings = [] } = useServiceBookings();
   const { data: batches = [] } = useProductionBatches();
 
-  // Basic Details
   const [projectId, setProjectId] = useState<string>("");
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -92,31 +122,28 @@ export function CreateTaskModal({
   const [estimatedHours, setEstimatedHours] = useState("4");
   const [parentTaskId, setParentTaskId] = useState("");
 
-  // Integrations & Iteration
-  const [integrationMode, setIntegrationMode] = useState<"all" | "crm" | "manufacturing" | "milestone" | "sprint">("all");
+  const [integrationMode, setIntegrationMode] = useState<
+    "all" | "crm" | "manufacturing" | "milestone" | "sprint"
+  >("all");
   const [milestoneId, setMilestoneId] = useState("");
   const [sprintId, setSprintId] = useState("");
   const [bookingId, setBookingId] = useState("");
   const [batchId, setBatchId] = useState("");
 
-  // Labels
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([]);
+  const [assignedMembers, setAssignedMembers] = useState<
+    { memberId: string; isPrimary: boolean; allocatedHours?: number }[]
+  >([]);
 
-  // Assignees: multi-member assignment with primary lead & allocated hours
-  const [assignedMembers, setAssignedMembers] = useState<{
-    memberId: string;
-    isPrimary: boolean;
-    allocatedHours?: number;
-  }[]>([]);
+  const [errors, setErrors] = useState<TaskFormErrors>({});
 
-  // Active project selection defaults
   useEffect(() => {
     if (defaultProjectId) {
       setProjectId(defaultProjectId);
     } else if (projects.length > 0 && !projectId) {
       setProjectId(projects[0].id);
     }
-  }, [defaultProjectId, projects]);
+  }, [defaultProjectId, projects, projectId]);
 
   useEffect(() => {
     if (defaultStatus) setStatus(defaultStatus);
@@ -150,54 +177,62 @@ export function CreateTaskModal({
     if (defaultDueDate) setDueDate(defaultDueDate);
   }, [defaultDueDate]);
 
-  // Project-dependent data
   const { data: milestones = [] } = useMilestones(projectId);
   const { data: sprints = [] } = useSprints(projectId);
   const { data: labels = [] } = useTaskLabels(projectId);
 
   const createTaskMutation = useCreateTask(projectId);
 
-  // Selected cross-system item details for live previews
   const selectedBooking = useMemo(
     () => serviceBookings.find((b) => b.id === bookingId),
-    [serviceBookings, bookingId]
+    [serviceBookings, bookingId],
   );
 
   const selectedBatch = useMemo(
     () => batches.find((b) => b.id === batchId),
-    [batches, batchId]
+    [batches, batchId],
   );
 
   const selectedMilestone = useMemo(
     () => milestones.find((m) => m.id === milestoneId),
-    [milestones, milestoneId]
+    [milestones, milestoneId],
   );
 
   const selectedSprint = useMemo(
     () => sprints.find((s) => s.id === sprintId),
-    [sprints, sprintId]
+    [sprints, sprintId],
   );
 
-  const handleApplyCrossSystemAutofill = (type: "booking" | "batch" | "milestone") => {
+  const handleApplyCrossSystemAutofill = (
+    type: "booking" | "batch" | "milestone",
+  ) => {
     if (type === "booking" && selectedBooking) {
       if (!title) {
-        setTitle(`Execute: ${selectedBooking.serviceName} (${selectedBooking.customer?.name || "Client"})`);
+        setTitle(
+          `Execute: ${selectedBooking.serviceName} (${selectedBooking.customer?.name || "Client"})`,
+        );
       }
       if (!description && selectedBooking.scheduledStartTime) {
-        setDescription(`Linked to customer service booking #${selectedBooking.id.slice(-6).toUpperCase()}\nCustomer: ${selectedBooking.customer?.name || "Guest"}\nPhone: ${selectedBooking.customer?.phone || "N/A"}\nScheduled Start: ${selectedBooking.scheduledStartTime}`);
+        setDescription(
+          `Linked to customer service booking #${selectedBooking.id.slice(-6).toUpperCase()}\nCustomer: ${selectedBooking.customer?.name || "Guest"}\nPhone: ${selectedBooking.customer?.phone || "N/A"}\nScheduled Start: ${selectedBooking.scheduledStartTime}`,
+        );
       }
       if (!dueDate && selectedBooking.scheduledStartTime) {
         setDueDate(selectedBooking.scheduledStartTime.split("T")[0]);
       }
-      toast.success("Task details populated from Service Booking");
+      notifySuccess("Details filled from booking");
     } else if (type === "batch" && selectedBatch) {
       if (!title) {
-        setTitle(`Production Run: ${selectedBatch.batchNumber} (${selectedBatch.recipeName || selectedBatch.runType})`);
+        setTitle(
+          `Production Run: ${selectedBatch.batchNumber} (${selectedBatch.recipeName || selectedBatch.runType})`,
+        );
       }
       if (!description) {
-        setDescription(`Linked to manufacturing batch ${selectedBatch.batchNumber}\nStatus: ${selectedBatch.status}\nRun Type: ${selectedBatch.runType}\nOrder Ref: ${selectedBatch.orderReference || "None"}`);
+        setDescription(
+          `Linked to manufacturing batch ${selectedBatch.batchNumber}\nStatus: ${selectedBatch.status}\nRun Type: ${selectedBatch.runType}\nOrder Ref: ${selectedBatch.orderReference || "None"}`,
+        );
       }
-      toast.success("Task details populated from Production Batch");
+      notifySuccess("Details filled from batch");
     } else if (type === "milestone" && selectedMilestone) {
       if (!title) {
         setTitle(`Deliverable: ${selectedMilestone.title}`);
@@ -205,13 +240,10 @@ export function CreateTaskModal({
       if (!dueDate && selectedMilestone.dueDate) {
         setDueDate(selectedMilestone.dueDate.split("T")[0]);
       }
-      toast.success("Task details populated from Milestone");
+      notifySuccess("Details filled from milestone");
     }
   };
 
-
-
-  // Capacity Warning Modal State
   const [warningModalOpen, setWarningModalOpen] = useState(false);
   const [pendingPayload, setPendingPayload] = useState<CreateTaskInput | null>(null);
   const [warningMemberName, setWarningMemberName] = useState("");
@@ -219,20 +251,20 @@ export function CreateTaskModal({
   const [warningAdditionalHours, setWarningAdditionalHours] = useState(0);
   const [warningCapacityHours, setWarningCapacityHours] = useState(40);
 
-  // Filter possible parent tasks within project
-  const candidateParentTasks = useMemo(() => {
-    return allTasks.filter((t) => t.projectId === projectId);
-  }, [allTasks, projectId]);
+  const candidateParentTasks = useMemo(
+    () => allTasks.filter((t) => t.projectId === projectId),
+    [allTasks, projectId],
+  );
 
   const checkMemberCapacity = (memberId: string, hoursToAdd: number) => {
     const memberTasks = allTasks.filter(
       (t) =>
         (t.status === "TODO" || t.status === "IN_PROGRESS" || t.status === "IN_REVIEW") &&
-        t.assignees?.some((a) => a.member?.id === memberId)
+        t.assignees?.some((a) => a.member?.id === memberId),
     );
     const currentHours = memberTasks.reduce(
       (acc, curr) => acc + (Number(curr.estimatedHours) || 2),
-      0
+      0,
     );
 
     const memberShifts = staffShifts.filter((s) => s.memberId === memberId && s.isActive);
@@ -254,49 +286,49 @@ export function CreateTaskModal({
           remaining[0].isPrimary = true;
         }
         return remaining;
-      } else {
-        const isFirst = prev.length === 0;
-        const totalEst = parseFloat(estimatedHours) || 4;
-        const newShare = Math.round((totalEst / (prev.length + 1)) * 10) / 10;
-        return [
-          ...prev,
-          {
-            memberId,
-            isPrimary: isFirst,
-            allocatedHours: newShare,
-          },
-        ];
       }
+      const isFirst = prev.length === 0;
+      const totalEst = parseFloat(estimatedHours) || 4;
+      const newShare = Math.round((totalEst / (prev.length + 1)) * 10) / 10;
+      return [...prev, { memberId, isPrimary: isFirst, allocatedHours: newShare }];
     });
   };
 
   const handleSetPrimary = (memberId: string) => {
     setAssignedMembers((prev) =>
-      prev.map((a) => ({
-        ...a,
-        isPrimary: a.memberId === memberId,
-      }))
+      prev.map((a) => ({ ...a, isPrimary: a.memberId === memberId })),
     );
   };
 
   const handleUpdateAllocatedHours = (memberId: string, hours: number) => {
     setAssignedMembers((prev) =>
-      prev.map((a) => (a.memberId === memberId ? { ...a, allocatedHours: hours } : a))
+      prev.map((a) => (a.memberId === memberId ? { ...a, allocatedHours: hours } : a)),
     );
   };
 
   const handleToggleLabel = (labelId: string) => {
     setSelectedLabelIds((prev) =>
-      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId]
+      prev.includes(labelId) ? prev.filter((id) => id !== labelId) : [...prev, labelId],
     );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !projectId) {
-      toast.error("Please enter a task title and select a project");
+
+    const validation = validateTaskForm({
+      title,
+      projectId,
+      startDate,
+      dueDate,
+      estimatedHours,
+      allocatedHours: assignedMembers.map((a) => a.allocatedHours ?? 0),
+    });
+
+    if (hasErrors(validation)) {
+      setErrors(validation);
       return;
     }
+    setErrors({});
 
     const estHours = parseFloat(estimatedHours) || 4;
 
@@ -326,12 +358,13 @@ export function CreateTaskModal({
     };
 
     if (assignedMembers.length > 0) {
-      const primaryAssignee = assignedMembers.find((a) => a.isPrimary) || assignedMembers[0];
+      const primaryAssignee =
+        assignedMembers.find((a) => a.isPrimary) || assignedMembers[0];
       const member = members.find((m) => m.id === primaryAssignee.memberId);
       const share = primaryAssignee.allocatedHours || estHours / assignedMembers.length;
       const { currentHours, totalCapacity, isOverloaded } = checkMemberCapacity(
         primaryAssignee.memberId,
-        share
+        share,
       );
 
       if (isOverloaded) {
@@ -351,10 +384,9 @@ export function CreateTaskModal({
   const executeCreate = async (payload: CreateTaskInput) => {
     try {
       const created = await createTaskMutation.mutateAsync(payload);
-      toast.success(`Task ${created.taskKey || ""} created successfully`);
+      notifySuccess("Task created");
       if (onTaskCreated) onTaskCreated(created);
       onClose();
-      // Reset form
       setTitle("");
       setDescription("");
       setAssignedMembers([]);
@@ -366,76 +398,77 @@ export function CreateTaskModal({
       setParentTaskId("");
       setDueDate("");
       setStartDate("");
+      setErrors({});
       setWarningModalOpen(false);
       setPendingPayload(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to create task");
+    } catch (err) {
+      const fieldErrors = fieldErrorsFrom(err);
+      if (hasErrors(fieldErrors)) setErrors(fieldErrors);
+      notifyError(err, "Could not create task");
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-xs p-4 overflow-y-auto">
-      <div className="w-full max-w-3xl my-6 rounded-xl bg-surface-container-low border border-outline-variant/40 p-6 shadow-2xl flex flex-col gap-5 max-h-[90vh] overflow-y-auto">
-        {/* Modal Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/20">
-          <div>
-            <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold flex items-center gap-2">
-              <Layers className="h-5 w-5 text-primary" />
-              <span>Create Issue / Task</span>
-            </h2>
-            <p className="text-body-sm text-outline mt-0.5">
-              Configure cross-system work item, enterprise integrations, and team member assignments.
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-          {/* Section 1: Core Task Identity */}
-          <div className="flex flex-col gap-3">
+    <>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        title="Create Issue / Task"
+        description="Configure the work item, cross system links, and team assignments."
+        className="max-w-3xl"
+      >
+        <form onSubmit={handleSubmit} className="flex flex-col gap-4 px-5 py-4">
+          <Section title="Details" icon={Layers}>
             <div>
-              <label className="block text-[11px] font-label-badge uppercase tracking-wider text-on-surface mb-1 font-semibold">
-                Task Title *
+              <label htmlFor="task-title" className={LABEL_CLASS}>
+                Task title *
               </label>
               <Input
+                id="task-title"
                 type="text"
-                required
                 value={title}
+                maxLength={200}
+                aria-invalid={Boolean(errors.title)}
+                aria-describedby={errors.title ? "task-title-error" : undefined}
                 onChange={(e) => setTitle(e.target.value)}
                 placeholder="e.g. Implement STOMP WebSocket sync buffer"
-                className="w-full h-9 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+                className={FIELD_CLASS}
               />
+              <FieldError id="task-title-error" message={errors.title} />
             </div>
 
             <div>
-              <label className="block text-[11px] font-label-badge uppercase tracking-wider text-outline mb-1 font-semibold">
-                Scope / Detailed Description
+              <label htmlFor="task-description" className={LABEL_CLASS}>
+                Scope / detailed description
               </label>
               <Textarea
+                id="task-description"
                 rows={3}
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Technical specifications, acceptance criteria, reproduction steps..."
-                className="w-full p-3 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+                className="w-full bg-surface-container border-outline-variant p-3 text-body-sm text-on-surface focus-visible:border-primary"
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1">
-                  <Folder className="h-3 w-3 text-primary" />
+                <label htmlFor="task-project" className={LABEL_CLASS}>
+                  <Folder className="h-3 w-3 text-primary" aria-hidden />
                   <span>Project *</span>
                 </label>
-                <Select value={projectId} onValueChange={(val) => setProjectId(val)}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                <Select
+                  value={projectId}
+                  onValueChange={(val) => {
+                    setProjectId(val);
+                    setErrors((prev) => ({ ...prev, projectId: "" }));
+                  }}
+                >
+                  <SelectTrigger
+                    id="task-project"
+                    aria-invalid={Boolean(errors.projectId)}
+                    className={FIELD_CLASS}
+                  >
                     <SelectValue placeholder="Select project" />
                   </SelectTrigger>
                   <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
@@ -446,14 +479,18 @@ export function CreateTaskModal({
                     ))}
                   </SelectContent>
                 </Select>
+                <FieldError message={errors.projectId} />
               </div>
 
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1">
+                <label htmlFor="task-status" className={LABEL_CLASS}>
                   Status
                 </label>
-                <Select value={status} onValueChange={(val) => setStatus(val as Task["status"])}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                <Select
+                  value={status}
+                  onValueChange={(val) => setStatus(val as Task["status"])}
+                >
+                  <SelectTrigger id="task-status" className={FIELD_CLASS}>
                     <SelectValue placeholder="Select status" />
                   </SelectTrigger>
                   <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
@@ -468,12 +505,15 @@ export function CreateTaskModal({
               </div>
 
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1">
-                  <Flame className="h-3 w-3 text-amber-400" />
+                <label htmlFor="task-priority" className={LABEL_CLASS}>
+                  <Flame className="h-3 w-3 text-status-warning" aria-hidden />
                   <span>Priority</span>
                 </label>
-                <Select value={priority} onValueChange={(val) => setPriority(val as Task["priority"])}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                <Select
+                  value={priority}
+                  onValueChange={(val) => setPriority(val as Task["priority"])}
+                >
+                  <SelectTrigger id="task-priority" className={FIELD_CLASS}>
                     <SelectValue placeholder="Select priority" />
                   </SelectTrigger>
                   <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
@@ -486,60 +526,102 @@ export function CreateTaskModal({
               </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-outline" />
-                  <span>Start Date</span>
+                <label className={LABEL_CLASS}>
+                  <Calendar className="h-3 w-3 text-outline" aria-hidden />
+                  <span>Start date</span>
                 </label>
                 <DatePicker
                   value={startDate ? new Date(startDate) : undefined}
                   onChange={(d) => setStartDate(d ? format(d, "yyyy-MM-dd") : "")}
                   placeholder="Select start date"
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
+                  className={FIELD_CLASS}
                 />
               </div>
 
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1">
-                  <Calendar className="h-3 w-3 text-primary" />
-                  <span>Due Date</span>
+                <label className={LABEL_CLASS}>
+                  <Calendar className="h-3 w-3 text-primary" aria-hidden />
+                  <span>Due date</span>
                 </label>
                 <DatePicker
                   value={dueDate ? new Date(dueDate) : undefined}
                   onChange={(d) => setDueDate(d ? format(d, "yyyy-MM-dd") : "")}
                   placeholder="Select due date"
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
+                  className={FIELD_CLASS}
                 />
+                <FieldError message={errors.dueDate} />
               </div>
 
               <div>
-                <label className="block text-[11px] font-label-badge uppercase text-outline mb-1 flex items-center gap-1">
-                  <Clock className="h-3 w-3 text-secondary" />
-                  <span>Estimated Hours</span>
+                <label htmlFor="task-estimated" className={LABEL_CLASS}>
+                  <Clock className="h-3 w-3 text-secondary" aria-hidden />
+                  <span>Estimated hours</span>
                 </label>
                 <Input
+                  id="task-estimated"
                   type="number"
                   step="0.5"
                   min="0.5"
                   value={estimatedHours}
+                  aria-invalid={Boolean(errors.estimatedHours)}
                   onChange={(e) => setEstimatedHours(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary"
+                  className={FIELD_CLASS}
                 />
+                <FieldError message={errors.estimatedHours} />
               </div>
             </div>
 
-            {/* Parent Task Link */}
+            {labels.length > 0 && (
+              <div>
+                <label className={LABEL_CLASS}>
+                  <Tag className="h-3.5 w-3.5" aria-hidden />
+                  <span>Task labels / tags</span>
+                </label>
+                <div className="flex flex-wrap gap-1.5">
+                  {labels.map((lbl) => {
+                    const isSelected = selectedLabelIds.includes(lbl.id);
+                    return (
+                      <button
+                        key={lbl.id}
+                        type="button"
+                        aria-pressed={isSelected}
+                        onClick={() => handleToggleLabel(lbl.id)}
+                        className={`flex items-center gap-1.5 rounded-sm border px-2.5 py-1 text-xs font-medium transition-all ${FOCUS_RING} ${
+                          isSelected
+                            ? "border-primary bg-primary-container text-on-primary-container"
+                            : "border-outline-variant/60 bg-surface-container text-outline hover:text-on-surface"
+                        }`}
+                      >
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: lbl.color || "var(--color-outline)" }}
+                        />
+                        <span>{lbl.name}</span>
+                        {isSelected && <Check className="h-3 w-3" aria-hidden />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </Section>
+
+          <Section title="Hierarchy" icon={Layers}>
             <div>
-              <label className="block text-[11px] font-label-badge uppercase text-outline mb-1">
-                Parent Task / Hierarchy Link (Optional)
+              <label htmlFor="task-parent" className={LABEL_CLASS}>
+                Parent task / hierarchy link
               </label>
-              <Select value={parentTaskId || "NONE"} onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}>
-                <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                  <SelectValue placeholder="No Parent Task (Root Issue)" />
+              <Select
+                value={parentTaskId || "NONE"}
+                onValueChange={(val) => setParentTaskId(val === "NONE" ? "" : val)}
+              >
+                <SelectTrigger id="task-parent" className={FIELD_CLASS}>
+                  <SelectValue placeholder="No parent task (root issue)" />
                 </SelectTrigger>
                 <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                  <SelectItem value="NONE">No Parent Task (Root Issue)</SelectItem>
+                  <SelectItem value="NONE">No parent task (root issue)</SelectItem>
                   {candidateParentTasks.map((t) => (
                     <SelectItem key={t.id} value={t.id}>
                       [{t.taskKey || t.id.slice(-6).toUpperCase()}] {t.title}
@@ -548,73 +630,65 @@ export function CreateTaskModal({
                 </SelectContent>
               </Select>
             </div>
-          </div>
+          </Section>
 
-          {/* Section 2: Cross-System Integrations */}
-          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-2 border-b border-outline-variant/20">
-              <div className="flex items-center gap-2">
-                <Link2 className="h-4 w-4 text-primary" />
-                <span className="font-headline-sm text-body-md text-on-surface font-semibold">
-                  Enterprise Cross-System Integrations
-                </span>
-                <span className="px-2 py-0.5 rounded text-[10px] font-label-code bg-primary-container text-on-primary-container">
-                  Live Sync
-                </span>
-              </div>
-              <div className="flex items-center gap-1 bg-surface-container p-0.5 rounded-lg border border-outline-variant/30 text-xs">
-                {(
-                  [
-                    { id: "all", label: "All" },
-                    { id: "crm", label: "CRM Booking" },
-                    { id: "manufacturing", label: "Production" },
-                    { id: "milestone", label: "Milestone" },
-                    { id: "sprint", label: "Sprint" },
-                  ] as const
-                ).map((tab) => (
-                  <button
-                    key={tab.id}
-                    type="button"
-                    onClick={() => setIntegrationMode(tab.id)}
-                    className={`px-2 py-1 rounded text-[11px] font-medium transition-all ${
-                      integrationMode === tab.id
-                        ? "bg-surface-container-highest text-primary shadow-xs"
-                        : "text-outline hover:text-on-surface"
-                    }`}
-                  >
-                    {tab.label}
-                  </button>
-                ))}
-              </div>
+          <Section title="Cross system links" icon={Link2}>
+            <div className="flex flex-wrap items-center gap-1 rounded-sm border border-outline-variant/60 bg-surface-container p-0.5 text-xs">
+              {[
+                { id: "all", label: "All" },
+                { id: "crm", label: "CRM booking" },
+                { id: "manufacturing", label: "Production" },
+                { id: "milestone", label: "Milestone" },
+                { id: "sprint", label: "Sprint" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  type="button"
+                  aria-pressed={integrationMode === tab.id}
+                  onClick={() =>
+                    setIntegrationMode(
+                      tab.id as "all" | "crm" | "manufacturing" | "milestone" | "sprint",
+                    )
+                  }
+                  className={`rounded-sm px-2 py-1 text-[11px] font-medium transition-all ${FOCUS_RING} ${
+                    integrationMode === tab.id
+                      ? "bg-surface-container-highest text-primary shadow-xs"
+                      : "text-outline hover:text-on-surface"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {/* Customer Service Booking Link */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {(integrationMode === "all" || integrationMode === "crm") && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                <div className="flex flex-col gap-1.5 rounded-sm border border-outline-variant/40 bg-surface-container/40 p-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
-                      <CalendarDays className="h-3.5 w-3.5 text-primary" />
-                      <span>Customer Service Booking</span>
+                    <label className={LABEL_CLASS}>
+                      <CalendarDays className="h-3.5 w-3.5 text-primary" aria-hidden />
+                      <span>Customer service booking</span>
                     </label>
                     {selectedBooking && (
                       <button
                         type="button"
                         onClick={() => handleApplyCrossSystemAutofill("booking")}
-                        className="text-[10px] text-primary hover:underline flex items-center gap-0.5"
-                        title="Auto-fill title and details from this booking"
+                        className={`flex items-center gap-0.5 text-[10px] text-primary hover:underline ${FOCUS_RING}`}
                       >
-                        <Sparkles className="h-2.5 w-2.5" />
+                        <Sparkles className="h-2.5 w-2.5" aria-hidden />
                         <span>Autofill</span>
                       </button>
                     )}
                   </div>
-                  <Select value={bookingId || "NONE"} onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                      <SelectValue placeholder="No Booking Linked" />
+                  <Select
+                    value={bookingId || "NONE"}
+                    onValueChange={(val) => setBookingId(val === "NONE" ? "" : val)}
+                  >
+                    <SelectTrigger className={FIELD_CLASS}>
+                      <SelectValue placeholder="No booking linked" />
                     </SelectTrigger>
                     <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                      <SelectItem value="NONE">No Booking Linked</SelectItem>
+                      <SelectItem value="NONE">No booking linked</SelectItem>
                       {serviceBookings.map((b) => (
                         <SelectItem key={b.id} value={b.id}>
                           {b.serviceName} ({b.customer?.name || "Guest"}) - {b.status}
@@ -622,17 +696,17 @@ export function CreateTaskModal({
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/* Booking Preview Card */}
                   {selectedBooking && (
-                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-primary/20 text-[11px] flex flex-col gap-1">
+                    <div className="mt-1 flex flex-col gap-1 rounded-sm border border-primary/20 bg-surface-container-high/60 p-2 text-[11px]">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-on-surface">{selectedBooking.serviceName}</span>
-                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-primary/20 text-primary">
+                        <span className="font-semibold text-on-surface">
+                          {selectedBooking.serviceName}
+                        </span>
+                        <span className="rounded-sm bg-primary/20 px-1.5 py-0.5 font-label-code text-[10px] text-primary">
                           {selectedBooking.status}
                         </span>
                       </div>
-                      <div className="text-outline flex items-center justify-between">
+                      <div className="flex items-center justify-between text-outline">
                         <span>Client: {selectedBooking.customer?.name || "Guest"}</span>
                         <span>
                           {selectedBooking.scheduledStartTime
@@ -645,32 +719,33 @@ export function CreateTaskModal({
                 </div>
               )}
 
-              {/* Manufacturing / Production Batch Link */}
               {(integrationMode === "all" || integrationMode === "manufacturing") && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                <div className="flex flex-col gap-1.5 rounded-sm border border-outline-variant/40 bg-surface-container/40 p-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
-                      <UtensilsCrossed className="h-3.5 w-3.5 text-amber-400" />
-                      <span>Production Batch Link</span>
+                    <label className={LABEL_CLASS}>
+                      <UtensilsCrossed className="h-3.5 w-3.5 text-status-warning" aria-hidden />
+                      <span>Production batch link</span>
                     </label>
                     {selectedBatch && (
                       <button
                         type="button"
                         onClick={() => handleApplyCrossSystemAutofill("batch")}
-                        className="text-[10px] text-amber-400 hover:underline flex items-center gap-0.5"
-                        title="Auto-fill title and details from this batch"
+                        className={`flex items-center gap-0.5 text-[10px] text-status-warning hover:underline ${FOCUS_RING}`}
                       >
-                        <Sparkles className="h-2.5 w-2.5" />
+                        <Sparkles className="h-2.5 w-2.5" aria-hidden />
                         <span>Autofill</span>
                       </button>
                     )}
                   </div>
-                  <Select value={batchId || "NONE"} onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                      <SelectValue placeholder="No Batch Linked" />
+                  <Select
+                    value={batchId || "NONE"}
+                    onValueChange={(val) => setBatchId(val === "NONE" ? "" : val)}
+                  >
+                    <SelectTrigger className={FIELD_CLASS}>
+                      <SelectValue placeholder="No batch linked" />
                     </SelectTrigger>
                     <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                      <SelectItem value="NONE">No Batch Linked</SelectItem>
+                      <SelectItem value="NONE">No batch linked</SelectItem>
                       {batches.map((batch) => (
                         <SelectItem key={batch.id} value={batch.id}>
                           {batch.batchNumber} - {batch.recipeName || batch.runType} ({batch.status})
@@ -678,51 +753,56 @@ export function CreateTaskModal({
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/* Batch Preview Card */}
                   {selectedBatch && (
-                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-amber-500/20 text-[11px] flex flex-col gap-1">
+                    <div className="mt-1 flex flex-col gap-1 rounded-sm border border-status-warning/20 bg-surface-container-high/60 p-2 text-[11px]">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-on-surface">{selectedBatch.batchNumber}</span>
-                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-amber-500/20 text-amber-300">
+                        <span className="font-semibold text-on-surface">
+                          {selectedBatch.batchNumber}
+                        </span>
+                        <span className="rounded-sm bg-status-warning/20 px-1.5 py-0.5 font-label-code text-[10px] text-status-warning">
                           {selectedBatch.status}
                         </span>
                       </div>
-                      <div className="text-outline flex items-center justify-between">
+                      <div className="flex items-center justify-between text-outline">
                         <span>Run: {selectedBatch.runType}</span>
-                        <span>{selectedBatch.recipeName || selectedBatch.orderReference || "Standard Run"}</span>
+                        <span>
+                          {selectedBatch.recipeName ||
+                            selectedBatch.orderReference ||
+                            "Standard run"}
+                        </span>
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Milestone Link */}
               {(integrationMode === "all" || integrationMode === "milestone") && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
+                <div className="flex flex-col gap-1.5 rounded-sm border border-outline-variant/40 bg-surface-container/40 p-2.5">
                   <div className="flex items-center justify-between">
-                    <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
-                      <Flag className="h-3.5 w-3.5 text-purple-400" />
-                      <span>Project Milestone</span>
+                    <label className={LABEL_CLASS}>
+                      <Flag className="h-3.5 w-3.5 text-status-info" aria-hidden />
+                      <span>Project milestone</span>
                     </label>
                     {selectedMilestone && (
                       <button
                         type="button"
                         onClick={() => handleApplyCrossSystemAutofill("milestone")}
-                        className="text-[10px] text-purple-400 hover:underline flex items-center gap-0.5"
-                        title="Auto-fill title and due date from milestone"
+                        className={`flex items-center gap-0.5 text-[10px] text-status-info hover:underline ${FOCUS_RING}`}
                       >
-                        <Sparkles className="h-2.5 w-2.5" />
+                        <Sparkles className="h-2.5 w-2.5" aria-hidden />
                         <span>Autofill</span>
                       </button>
                     )}
                   </div>
-                  <Select value={milestoneId || "NONE"} onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                      <SelectValue placeholder="No Milestone Linked" />
+                  <Select
+                    value={milestoneId || "NONE"}
+                    onValueChange={(val) => setMilestoneId(val === "NONE" ? "" : val)}
+                  >
+                    <SelectTrigger className={FIELD_CLASS}>
+                      <SelectValue placeholder="No milestone linked" />
                     </SelectTrigger>
                     <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                      <SelectItem value="NONE">No Milestone Linked</SelectItem>
+                      <SelectItem value="NONE">No milestone linked</SelectItem>
                       {milestones.map((m) => (
                         <SelectItem key={m.id} value={m.id}>
                           {m.title} ({m.status})
@@ -730,37 +810,44 @@ export function CreateTaskModal({
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/* Milestone Preview Card */}
                   {selectedMilestone && (
-                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-purple-500/20 text-[11px] flex flex-col gap-1">
+                    <div className="mt-1 flex flex-col gap-1 rounded-sm border border-status-info/20 bg-surface-container-high/60 p-2 text-[11px]">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-on-surface">{selectedMilestone.title}</span>
-                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-purple-500/20 text-purple-300">
+                        <span className="font-semibold text-on-surface">
+                          {selectedMilestone.title}
+                        </span>
+                        <span className="rounded-sm bg-status-info/20 px-1.5 py-0.5 font-label-code text-[10px] text-status-info">
                           {selectedMilestone.status}
                         </span>
                       </div>
-                      <div className="text-outline flex items-center justify-between">
-                        <span>Target: {selectedMilestone.dueDate ? new Date(selectedMilestone.dueDate).toLocaleDateString() : "No date"}</span>
+                      <div className="flex items-center justify-between text-outline">
+                        <span>
+                          Target:{" "}
+                          {selectedMilestone.dueDate
+                            ? new Date(selectedMilestone.dueDate).toLocaleDateString()
+                            : "No date"}
+                        </span>
                       </div>
                     </div>
                   )}
                 </div>
               )}
 
-              {/* Sprint / Cycle Link */}
               {(integrationMode === "all" || integrationMode === "sprint") && (
-                <div className="flex flex-col gap-1.5 p-2.5 rounded-lg bg-surface-container/40 border border-outline-variant/20">
-                  <label className="block text-[11px] font-label-badge uppercase text-outline flex items-center gap-1.5 font-semibold">
-                    <RotateCw className="h-3.5 w-3.5 text-cyan-400" />
-                    <span>Sprint / Iteration Cycle</span>
+                <div className="flex flex-col gap-1.5 rounded-sm border border-outline-variant/40 bg-surface-container/40 p-2.5">
+                  <label className={LABEL_CLASS}>
+                    <RotateCw className="h-3.5 w-3.5 text-secondary" aria-hidden />
+                    <span>Sprint / iteration cycle</span>
                   </label>
-                  <Select value={sprintId || "NONE"} onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}>
-                    <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                      <SelectValue placeholder="No Sprint Linked" />
+                  <Select
+                    value={sprintId || "NONE"}
+                    onValueChange={(val) => setSprintId(val === "NONE" ? "" : val)}
+                  >
+                    <SelectTrigger className={FIELD_CLASS}>
+                      <SelectValue placeholder="No sprint linked" />
                     </SelectTrigger>
                     <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                      <SelectItem value="NONE">No Sprint Linked</SelectItem>
+                      <SelectItem value="NONE">No sprint linked</SelectItem>
                       {sprints.map((s) => (
                         <SelectItem key={s.id} value={s.id}>
                           {s.name} ({s.status})
@@ -768,75 +855,44 @@ export function CreateTaskModal({
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {/* Sprint Preview Card */}
                   {selectedSprint && (
-                    <div className="mt-1 p-2 rounded bg-surface-container-high/60 border border-cyan-500/20 text-[11px] flex flex-col gap-1">
+                    <div className="mt-1 flex flex-col gap-1 rounded-sm border border-secondary/20 bg-surface-container-high/60 p-2 text-[11px]">
                       <div className="flex items-center justify-between">
-                        <span className="font-semibold text-on-surface">{selectedSprint.name}</span>
-                        <span className="px-1.5 py-0.2 rounded font-label-code text-[10px] bg-cyan-500/20 text-cyan-300">
+                        <span className="font-semibold text-on-surface">
+                          {selectedSprint.name}
+                        </span>
+                        <span className="rounded-sm bg-secondary/20 px-1.5 py-0.5 font-label-code text-[10px] text-secondary">
                           {selectedSprint.status}
                         </span>
                       </div>
-                      <div className="text-outline flex items-center justify-between">
-                        <span>{selectedSprint.startDate ? new Date(selectedSprint.startDate).toLocaleDateString() : ""} - {selectedSprint.endDate ? new Date(selectedSprint.endDate).toLocaleDateString() : ""}</span>
+                      <div className="flex items-center justify-between text-outline">
+                        <span>
+                          {selectedSprint.startDate
+                            ? new Date(selectedSprint.startDate).toLocaleDateString()
+                            : ""}{" "}
+                          -{" "}
+                          {selectedSprint.endDate
+                            ? new Date(selectedSprint.endDate).toLocaleDateString()
+                            : ""}
+                        </span>
                       </div>
                     </div>
                   )}
                 </div>
               )}
             </div>
-          </div>
+          </Section>
 
-          {/* Section 3: Labels & Tags */}
-          {labels.length > 0 && (
-            <div>
-              <label className="block text-[11px] font-label-badge uppercase text-outline mb-1.5 flex items-center gap-1.5">
-                <Tag className="h-3.5 w-3.5 text-outline" />
-                <span>Task Labels / Tags</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {labels.map((lbl) => {
-                  const isSelected = selectedLabelIds.includes(lbl.id);
-                  return (
-                    <button
-                      key={lbl.id}
-                      type="button"
-                      onClick={() => handleToggleLabel(lbl.id)}
-                      className={`px-2.5 py-1 rounded-md text-xs font-medium border flex items-center gap-1.5 transition-all ${
-                        isSelected
-                          ? "bg-primary-container text-on-primary-container border-primary"
-                          : "bg-surface-container text-outline hover:text-on-surface border-outline-variant/30"
-                      }`}
-                    >
-                      <span
-                        className="w-2 h-2 rounded-full"
-                        style={{ backgroundColor: lbl.color || "#6B7280" }}
-                      />
-                      <span>{lbl.name}</span>
-                      {isSelected && <Check className="h-3 w-3" />}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Section 4: Squad & Member Assignment with Capacity Planning */}
-          <div className="p-4 rounded-xl bg-surface-container-lowest border border-outline-variant/30 flex flex-col gap-3">
-            <div className="flex items-center justify-between pb-2 border-b border-outline-variant/20">
-              <div className="flex items-center gap-2">
-                <Users className="h-4 w-4 text-primary" />
-                <span className="font-headline-sm text-body-md text-on-surface font-semibold">
-                  Member Assignments & Workload Allocation
-                </span>
-              </div>
-              <span className="text-[11px] font-label-code text-outline">
-                {assignedMembers.length} Selected
+          <Section title="Assignments" icon={Users}>
+            <div className="flex items-center justify-between">
+              <p className="font-body-sm text-[11px] text-outline">
+                Choose members, then set the lead role and allocated hours.
+              </p>
+              <span className="font-label-code text-[11px] text-outline">
+                {assignedMembers.length} selected
               </span>
             </div>
 
-            {/* Member Pill Selector */}
             <div className="flex flex-wrap gap-1.5">
               {members.map((m) => {
                 const assigned = assignedMembers.find((a) => a.memberId === m.id);
@@ -844,56 +900,56 @@ export function CreateTaskModal({
                   <button
                     key={m.id}
                     type="button"
+                    aria-pressed={Boolean(assigned)}
                     onClick={() => handleToggleMember(m.id)}
-                    className={`px-2.5 py-1.5 rounded-lg border text-xs flex items-center gap-2 transition-all ${
+                    className={`flex items-center gap-2 rounded-sm border px-2.5 py-1.5 text-xs transition-all ${FOCUS_RING} ${
                       assigned
-                        ? "bg-surface-container-high text-on-surface border-primary"
-                        : "bg-surface-container text-outline hover:text-on-surface border-outline-variant/30"
+                        ? "border-primary bg-surface-container-high text-on-surface"
+                        : "border-outline-variant/60 bg-surface-container text-outline hover:text-on-surface"
                     }`}
                   >
-                    <div className="w-5 h-5 rounded-full bg-primary/20 text-primary flex items-center justify-center text-[10px] font-bold">
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary/20 text-[10px] font-bold text-primary">
                       {m.name.charAt(0)}
-                    </div>
+                    </span>
                     <span>{m.name}</span>
                     {assigned?.isPrimary && (
                       <span
-                        title="Primary Lead"
-                        className="px-1 py-0.2 rounded bg-primary-container text-on-primary-container text-[9px] font-bold flex items-center gap-0.5"
+                        title="Primary lead"
+                        className="flex items-center gap-0.5 rounded-sm bg-primary-container px-1 py-0.5 text-[9px] font-bold text-on-primary-container"
                       >
-                        <Crown className="h-2.5 w-2.5" />
+                        <Crown className="h-2.5 w-2.5" aria-hidden />
                         Lead
                       </span>
                     )}
                     {assigned && !assigned.isPrimary && (
-                      <Check className="h-3 w-3 text-primary" />
+                      <Check className="h-3 w-3 text-primary" aria-hidden />
                     )}
                   </button>
                 );
               })}
             </div>
 
-            {/* Detailed Assignee Table: Lead selection & allocated hours */}
             {assignedMembers.length > 0 && (
-              <div className="mt-2 divide-y divide-outline-variant/20 rounded-lg border border-outline-variant/20 bg-surface-container overflow-hidden">
-                <div className="px-3 py-2 bg-surface-container-high/50 flex items-center justify-between text-[11px] font-label-badge uppercase text-outline">
+              <div className="mt-2 divide-y divide-outline-variant/40 overflow-hidden rounded-sm border border-outline-variant/40 bg-surface-container">
+                <div className="flex items-center justify-between bg-surface-container-high/50 px-3 py-2 font-label-badge text-[11px] uppercase text-outline">
                   <span>Assignee</span>
                   <div className="flex items-center gap-6">
                     <span className="w-24 text-center">Role</span>
-                    <span className="w-28 text-right">Allocated Hours</span>
+                    <span className="w-28 text-right">Allocated hours</span>
                   </div>
                 </div>
 
-                {assignedMembers.map((assigned) => {
+                {assignedMembers.map((assigned, index) => {
                   const member = members.find((m) => m.id === assigned.memberId);
                   return (
                     <div
                       key={assigned.memberId}
-                      className="px-3 py-2.5 flex items-center justify-between hover:bg-surface-container-high/30 transition-colors"
+                      className="flex items-center justify-between px-3 py-2.5 transition-colors hover:bg-surface-container-high/30"
                     >
                       <div className="flex items-center gap-2">
-                        <div className="w-6 h-6 rounded-full bg-primary-container/30 text-primary flex items-center justify-center text-[11px] font-semibold">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary-container/30 text-[11px] font-semibold text-primary">
                           {member?.name.charAt(0) || "U"}
-                        </div>
+                        </span>
                         <div className="flex flex-col">
                           <span className="text-xs font-medium text-on-surface">
                             {member?.name || "Member"}
@@ -906,30 +962,34 @@ export function CreateTaskModal({
                         <button
                           type="button"
                           onClick={() => handleSetPrimary(assigned.memberId)}
-                          className={`w-24 px-2 py-1 rounded text-[11px] font-medium transition-colors flex items-center justify-center gap-1 border ${
+                          className={`flex w-24 items-center justify-center gap-1 rounded-sm border px-2 py-1 text-[11px] font-medium transition-colors ${FOCUS_RING} ${
                             assigned.isPrimary
-                              ? "bg-primary-container text-on-primary-container border-primary"
-                              : "bg-surface-container-high text-outline hover:text-on-surface border-outline-variant/30"
+                              ? "border-primary bg-primary-container text-on-primary-container"
+                              : "border-outline-variant/60 bg-surface-container-high text-outline hover:text-on-surface"
                           }`}
                         >
-                          <Crown className="h-3 w-3" />
+                          <Crown className="h-3 w-3" aria-hidden />
                           <span>{assigned.isPrimary ? "Lead" : "Contributor"}</span>
                         </button>
 
-                        <div className="w-28 flex items-center justify-end gap-1">
+                        <div className="flex w-28 items-center justify-end gap-1">
                           <Input
                             type="number"
                             step="0.5"
                             min="0.5"
+                            aria-label={`Allocated hours for ${member?.name || "member"}`}
+                            aria-invalid={Boolean(
+                              errors[`assignees.${index}.allocatedHours`],
+                            )}
                             value={assigned.allocatedHours || ""}
                             onChange={(e) =>
                               handleUpdateAllocatedHours(
                                 assigned.memberId,
-                                parseFloat(e.target.value) || 0
+                                parseFloat(e.target.value) || 0,
                               )
                             }
                             placeholder="Hours"
-                            className="w-16 h-7 px-2 text-right bg-surface-container-low border-outline-variant text-on-surface text-xs focus-visible:border-primary"
+                            className="h-7 w-16 border-outline-variant bg-surface-container-low px-2 text-right text-xs text-on-surface focus-visible:border-primary"
                           />
                           <span className="text-[11px] text-outline">hrs</span>
                         </div>
@@ -939,35 +999,29 @@ export function CreateTaskModal({
                 })}
               </div>
             )}
-          </div>
+            <FieldError message={errors["assignees.0.allocatedHours"]} />
+          </Section>
 
-          {/* Action Buttons */}
-          <div className="pt-3 border-t border-outline-variant/20 flex items-center justify-between">
-            <span className="text-[11px] text-outline font-label-code">
-              Cross-system event synchronizer enabled
-            </span>
-            <div className="flex items-center gap-2">
-              <button
-                type="button"
-                onClick={onClose}
-                className="px-4 py-2 rounded-lg text-body-sm text-outline hover:text-on-surface hover:bg-surface-container transition-colors"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={createTaskMutation.isPending}
-                className="px-5 py-2 bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg font-headline-sm text-body-sm flex items-center gap-1.5 shadow-sm transition-all disabled:opacity-50"
-              >
-                <Plus className="h-4 w-4" />
-                <span>{createTaskMutation.isPending ? "Creating..." : "Create Task"}</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-end gap-2 border-t border-outline-variant/60 pt-3">
+            <button
+              type="button"
+              onClick={onClose}
+              className={`rounded-sm px-4 py-2 font-body-sm text-body-sm text-outline transition-colors hover:bg-surface-container hover:text-on-surface ${FOCUS_RING}`}
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={createTaskMutation.isPending}
+              className={`flex items-center gap-1.5 rounded-sm bg-primary-container px-5 py-2 font-headline-sm text-body-sm text-on-primary-container shadow-sm transition-all hover:bg-primary-container/90 disabled:pointer-events-none disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              <Plus className="h-4 w-4" aria-hidden />
+              <span>{createTaskMutation.isPending ? "Creating..." : "Create Task"}</span>
+            </button>
           </div>
         </form>
-      </div>
+      </Dialog>
 
-      {/* Capacity Warning Soft Modal */}
       <CapacityWarningModal
         isOpen={warningModalOpen}
         memberName={warningMemberName}
@@ -982,6 +1036,6 @@ export function CreateTaskModal({
           setPendingPayload(null);
         }}
       />
-    </div>
+    </>
   );
 }

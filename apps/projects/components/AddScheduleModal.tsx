@@ -4,11 +4,9 @@ import React, { useState } from "react";
 import { Input } from "@repo/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import {
-  CalendarDays,
   Clock,
   Briefcase,
   Users,
-  X,
   Flag,
 } from "lucide-react";
 import {
@@ -23,7 +21,9 @@ import {
 } from "@/lib/api";
 import { apiClient } from "@/lib/api";
 import { shiftsOverlap, timeToMinutes } from "@/lib/metrics";
-import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { Dialog } from "@/components/Dialog";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 export const DAYS_OF_WEEK = [
   { value: 1, label: "Monday" },
@@ -130,23 +130,50 @@ export function AddScheduleModal({
   }, [defaultProjectId, projects]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [confirmOverlap, setConfirmOverlap] = useState<{
+    memberId: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  } | null>(null);
 
   const createShiftMutation = useCreateStaffShift();
   const createTaskMutation = useCreateTask();
   const createMilestoneMutation = useCreateMilestone(milestoneProjectId || projects[0]?.id || "");
 
-  if (!isOpen) return null;
+  const persistShift = async (pendingShift: {
+    memberId: string;
+    dayOfWeek: number;
+    startTime: string;
+    endTime: string;
+  }) => {
+    setIsSubmitting(true);
+    try {
+      await createShiftMutation.mutateAsync({
+        ...pendingShift,
+        isActive: true,
+      });
+
+      notifySuccess("Staff shift scheduled");
+      onSuccess?.();
+      onClose();
+    } catch (err) {
+      notifyError(err, "Could not schedule shift");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const handleSaveShift = async (e: React.FormEvent) => {
     e.preventDefault();
     const targetMember = shiftMemberId || members[0]?.id;
     if (!targetMember) {
-      toast.error("Please select a squad member");
+      notifyError(new Error("No member"), "Select a squad member");
       return;
     }
 
     if (timeToMinutes(shiftEndTime) <= timeToMinutes(shiftStartTime)) {
-      toast.error("Shift end time must be later than start time");
+      notifyError(new Error("Invalid time"), "Shift end time must be later than start time");
       return;
     }
 
@@ -161,30 +188,11 @@ export function AddScheduleModal({
     );
 
     if (hasConflict) {
-      const proceed = window.confirm(
-        "Warning: This shift overlaps with an existing shift for this member on that day. Save anyway?"
-      );
-      if (!proceed) return;
+      setConfirmOverlap(pendingShift);
+      return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await createShiftMutation.mutateAsync({
-        memberId: targetMember,
-        dayOfWeek: shiftDayOfWeek,
-        startTime: shiftStartTime,
-        endTime: shiftEndTime,
-        isActive: true,
-      });
-
-      toast.success("Staff shift scheduled successfully");
-      onSuccess?.();
-      onClose();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to schedule shift");
-    } finally {
-      setIsSubmitting(false);
-    }
+    await persistShift(pendingShift);
   };
 
   const handleSaveCapacityBooking = async (e: React.FormEvent) => {
@@ -193,11 +201,11 @@ export function AddScheduleModal({
     const targetMember = bookMemberId || members[0]?.id;
 
     if (!targetProject) {
-      toast.error("Please select a project");
+      notifyError(new Error("Validation"), "Please select a project");
       return;
     }
     if (!bookTaskTitle.trim()) {
-      toast.error("Please specify a task or booking objective");
+      notifyError(new Error("Validation"), "Please specify a task or booking objective");
       return;
     }
 
@@ -214,11 +222,11 @@ export function AddScheduleModal({
         priority: "MEDIUM",
       });
 
-      toast.success("Capacity hours reserved and task scheduled");
+      notifySuccess("Capacity hours reserved and task scheduled");
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to reserve capacity");
+      notifyError(err, "Failed to reserve capacity");
     } finally {
       setIsSubmitting(false);
     }
@@ -229,7 +237,7 @@ export function AddScheduleModal({
     const targetMember = serviceMemberId || members[0]?.id;
 
     if (!targetMember) {
-      toast.error("Please select an assigned staff member");
+      notifyError(new Error("Validation"), "Please select an assigned staff member");
       return;
     }
 
@@ -247,11 +255,11 @@ export function AddScheduleModal({
         notes: serviceNotes.trim() || undefined,
       });
 
-      toast.success("Service appointment scheduled");
+      notifySuccess("Service appointment scheduled");
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to schedule service appointment");
+      notifyError(err, "Failed to schedule service appointment");
     } finally {
       setIsSubmitting(false);
     }
@@ -261,11 +269,11 @@ export function AddScheduleModal({
     e.preventDefault();
     const targetProject = milestoneProjectId || projects[0]?.id;
     if (!targetProject) {
-      toast.error("Please select a project for the milestone");
+      notifyError(new Error("Validation"), "Please select a project for the milestone");
       return;
     }
     if (!milestoneTitle.trim()) {
-      toast.error("Please enter a milestone title");
+      notifyError(new Error("Validation"), "Please enter a milestone title");
       return;
     }
 
@@ -279,45 +287,28 @@ export function AddScheduleModal({
         status: "OPEN",
       });
 
-      toast.success("Project milestone scheduled successfully");
+      notifySuccess("Project milestone scheduled successfully");
       onSuccess?.();
       onClose();
     } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to create milestone");
+      notifyError(err, "Failed to create milestone");
     } finally {
       setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-      <div className="w-full max-w-lg rounded-xl bg-surface-container border border-outline-variant/50 p-6 shadow-2xl flex flex-col gap-4">
-        {/* Header */}
-        <div className="flex items-center justify-between pb-3 border-b border-outline-variant/30">
-          <div className="flex items-center gap-2">
-            <div className="p-2 rounded-lg bg-surface-container-high text-primary">
-              <CalendarDays className="h-5 w-5" />
-            </div>
-            <div>
-              <h2 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                Add to Schedule
-              </h2>
-              <p className="text-xs text-outline">
-                Configure shifts, reserve squad hours, or schedule client service bookings
-              </p>
-            </div>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="w-7 h-7 rounded-lg flex items-center justify-center text-outline hover:text-on-surface hover:bg-surface-container-high transition-colors"
-          >
-            <X className="h-4 w-4" />
-          </button>
-        </div>
-
-        {/* Schedule Type Segmented Tabs */}
-        <div className="grid grid-cols-4 gap-1 bg-surface-container-lowest p-1 rounded-xl border border-outline-variant/30">
+    <>
+      <Dialog
+        open={isOpen}
+        onClose={onClose}
+        title="Add to schedule"
+        description="Configure shifts, reserve squad hours, or schedule client service bookings."
+        className="max-w-lg"
+      >
+        <div className="flex flex-col gap-4 px-5 py-4">
+          {/* Schedule Type Segmented Tabs */}
+          <div className="grid grid-cols-4 gap-1 rounded-sm border border-outline-variant/60 bg-surface-container-lowest p-1">
           <button
             type="button"
             onClick={() => setModalType("shift")}
@@ -720,7 +711,22 @@ export function AddScheduleModal({
           </form>
         )}
 
-      </div>
-    </div>
+        </div>
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(confirmOverlap)}
+        title="Shift overlaps an existing shift"
+        description="This shift overlaps with an existing shift for this member on that day. Save anyway?"
+        confirmLabel="Save shift"
+        pending={isSubmitting}
+        onCancel={() => setConfirmOverlap(null)}
+        onConfirm={() => {
+          const pending = confirmOverlap;
+          setConfirmOverlap(null);
+          if (pending) void persistShift(pending);
+        }}
+      />
+    </>
   );
 }

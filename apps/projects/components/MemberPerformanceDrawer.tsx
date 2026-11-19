@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { X, AlertCircle, CheckCircle2 } from "lucide-react";
 import { useMemberPerformance } from "@/lib/hooks/use-projects";
+import { Dialog } from "@/components/Dialog";
 
 interface MemberPerformanceDrawerProps {
   isOpen?: boolean;
@@ -23,8 +24,15 @@ export function MemberPerformanceDrawer({
   const kpis = performance?.kpis;
 
   return (
-    <div className="fixed inset-0 z-50 overflow-hidden bg-black/60 backdrop-blur-xs flex justify-end">
-      <div className="w-full max-w-xl bg-surface-container-lowest border-l border-outline-variant/30 h-full overflow-y-auto flex flex-col shadow-2xl">
+    <Dialog
+      open={Boolean(isOpen && memberId)}
+      onClose={onClose}
+      ariaLabel="Member performance"
+      showCloseButton={false}
+      align="right"
+      className="max-h-full h-full max-w-xl rounded-none"
+    >
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {/* Header */}
         <div className="p-6 border-b border-outline-variant/30 flex items-center justify-between bg-surface-container-low">
           <div className="flex items-center gap-3">
@@ -127,9 +135,9 @@ export function MemberPerformanceDrawer({
                   <span
                     className={`text-headline-lg font-headline-lg font-semibold ${
                       (kpis?.capacityUtilizationRate || 0) > 100
-                        ? "text-red-400"
+                        ? "text-status-critical"
                         : (kpis?.capacityUtilizationRate || 0) > 85
-                        ? "text-amber-400"
+                        ? "text-status-warning"
                         : "text-on-surface"
                     }`}
                   >
@@ -156,14 +164,14 @@ export function MemberPerformanceDrawer({
 
             {/* Overdue Task Alert Banner */}
             {(kpis?.overdueTaskCount || 0) > 0 ? (
-              <div className="p-3.5 rounded-lg bg-red-500/10 border border-red-500/30 flex items-center justify-between text-body-sm text-red-400">
+              <div className="p-3.5 rounded-lg bg-status-critical/10 border border-status-critical/30 flex items-center justify-between text-body-sm text-status-critical">
                 <div className="flex items-center gap-2">
                   <AlertCircle className="h-4 w-4" />
                   <span><strong>{kpis?.overdueTaskCount} Overdue Issue(s)</strong> currently pending resolution.</span>
                 </div>
               </div>
             ) : (
-              <div className="p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center gap-2 text-body-sm text-emerald-400">
+              <div className="p-3.5 rounded-lg bg-status-success/10 border border-status-success/30 flex items-center gap-2 text-body-sm text-status-success">
                 <CheckCircle2 className="h-4 w-4" />
                 <span>Zero overdue tasks in active backlog. Excellent SLA adherence!</span>
               </div>
@@ -232,6 +240,6 @@ export function MemberPerformanceDrawer({
           </div>
         )}
       </div>
-    </div>
+    </Dialog>
   );
 }

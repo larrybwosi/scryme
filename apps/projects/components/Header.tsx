@@ -1,45 +1,79 @@
 "use client";
 
 import Link from "next/link";
-import { useState, useEffect } from "react";
+import { usePathname } from "next/navigation";
+import { useEffect, useRef, useState } from "react";
 import {
-  ChevronDown,
-  PlayCircle,
-  PauseCircle,
-  Bell,
-  Plus,
-  User,
-  Users,
   LogOut,
+  Menu,
+  PauseCircle,
+  PlayCircle,
+  Plus,
+  Search,
+  User,
 } from "lucide-react";
 import { env } from "@repo/env";
 import { getResolvedAuthUrl } from "@/lib/urls";
 import { useSession, signOut } from "@/lib/auth-client";
 import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 import { useTimerStore } from "@/lib/timer-store";
+import { NotificationPanel } from "@/components/NotificationPanel";
+import { OPEN_COMMAND_PALETTE_EVENT } from "@/components/CommandPalette";
+import { FOCUS_RING } from "@/lib/navigation";
 
-export function Header() {
+interface HeaderProps {
+  collapsed: boolean;
+  onOpenMenu: () => void;
+}
+
+export function Header({ collapsed, onOpenMenu }: HeaderProps) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isMounted, setIsMounted] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
+  const pathname = usePathname();
+
+  const { data: session } = useSession();
+  const { data: workspace } = useWorkspaceContext();
+  const { state: timerState, startTimer, pauseTimer } = useTimerStore();
 
   useEffect(() => {
     setIsMounted(true);
   }, []);
-  const { data: session } = useSession();
-  const { data: workspace } = useWorkspaceContext();
-  const { state: timerState, startTimer, pauseTimer } = useTimerStore();
+
+  useEffect(() => {
+    setIsProfileOpen(false);
+  }, [pathname]);
+
+  useEffect(() => {
+    if (!isProfileOpen) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (!profileRef.current?.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setIsProfileOpen(false);
+    };
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [isProfileOpen]);
 
   const handleSignOut = async () => {
     try {
       await signOut();
     } catch {
-      // Fallback
+      // Best effort sign out.
     }
     const authUrl = getResolvedAuthUrl(env.NEXT_PUBLIC_AUTH_URL, env.NODE_ENV);
     window.location.href = `${authUrl}/sign-in`;
   };
 
-  const orgName = workspace?.orgName || session?.session?.activeOrganizationName || "Scryme Workspace";
+  const orgName =
+    workspace?.orgName || workspace?.orgSlug || (workspace ? "Workspace" : "Scryme Workspace");
   const user = session?.user;
 
   const formatTimer = (totalSeconds: number) => {
@@ -50,43 +84,73 @@ export function Header() {
   };
 
   return (
-    <header className="fixed top-0 left-60 right-0 h-12 bg-surface/90 backdrop-blur-md border-b border-outline-variant/30 z-40 flex items-center justify-between px-space-md">
-      {/* Workspace Breadcrumb Context */}
-      <div className="flex items-center gap-space-md">
-        <div className="flex items-center gap-1.5 text-body-sm font-body-sm text-outline">
-          <Link href="/projects" className="hover:text-on-surface transition-colors cursor-pointer font-medium text-on-surface">
-            {orgName}
-          </Link>
-          <span className="text-outline-variant">/</span>
+    <header
+      className={`fixed right-0 top-0 z-40 flex h-12 items-center justify-between border-b border-outline-variant/60 bg-surface/90 px-space-md backdrop-blur-md transition-[left] duration-200 motion-reduce:transition-none ${
+        collapsed ? "lg:left-14" : "lg:left-60"
+      } left-0`}
+    >
+      <div className="flex min-w-0 items-center gap-space-md">
+        <button
+          type="button"
+          onClick={onOpenMenu}
+          aria-label="Open navigation"
+          className={`flex h-8 w-8 items-center justify-center rounded-sm text-outline transition-colors hover:bg-surface-container hover:text-on-surface lg:hidden ${FOCUS_RING}`}
+        >
+          <Menu className="h-4 w-4" aria-hidden />
+        </button>
+
+        <div className="flex min-w-0 items-center gap-1.5 font-body-sm text-body-sm text-outline">
           <Link
             href="/projects"
-            className="flex items-center gap-1 px-1.5 py-0.5 rounded-lg bg-surface-container border border-outline-variant/40 text-on-surface hover:border-outline transition-colors cursor-pointer"
+            className={`max-w-40 truncate font-medium text-on-surface transition-colors hover:text-primary ${FOCUS_RING}`}
           >
-            <span className="w-1.5 h-1.5 rounded-full bg-primary-container"></span>
-            <span className="font-medium text-body-sm text-on-surface">Projects Hub</span>
-            <ChevronDown className="h-3.5 w-3.5 text-outline" />
+            {orgName}
+          </Link>
+          <span className="text-outline-variant" aria-hidden>
+            /
+          </span>
+          <Link
+            href="/projects"
+            className={`flex items-center gap-1.5 rounded-sm border border-outline-variant/60 bg-surface-container px-1.5 py-0.5 text-on-surface transition-colors hover:border-outline ${FOCUS_RING}`}
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-primary-container" aria-hidden />
+            <span className="font-medium text-body-sm">Projects Hub</span>
           </Link>
         </div>
       </div>
 
-      {/* Right Action Rail */}
-      <div className="flex items-center gap-space-md">
-        {/* Live Active Timer Pill */}
-        <div className="flex items-center gap-1.5 px-2 py-1 rounded-lg bg-surface-container border border-outline-variant/40">
+      <div className="flex shrink-0 items-center gap-2">
+        <button
+          type="button"
+          data-command-trigger="true"
+          onClick={() => window.dispatchEvent(new Event(OPEN_COMMAND_PALETTE_EVENT))}
+          aria-label="Open command palette"
+          title="Search pages and actions (Command K)"
+          className={`hidden h-8 items-center gap-1.5 rounded-sm border border-outline-variant bg-surface-container-low px-2 font-body-sm text-body-sm text-outline transition-colors hover:border-outline hover:text-on-surface sm:flex ${FOCUS_RING}`}
+        >
+          <Search className="h-3.5 w-3.5" aria-hidden />
+          <kbd className="font-label-kbd text-label-kbd">⌘K</kbd>
+        </button>
+
+        <div className="flex items-center gap-1.5 rounded-sm border border-outline-variant/60 bg-surface-container px-2 py-1">
           <Link
             href="/time-tracking"
-            className="flex items-center gap-1.5 hover:text-primary transition-colors cursor-pointer"
-            title={timerState.activeTaskTitle ? `Working on: ${timerState.activeTaskTitle}` : "Open Time Tracking"}
+            className={`flex items-center gap-1.5 transition-colors hover:text-primary ${FOCUS_RING}`}
+            title={
+              timerState.activeTaskTitle
+                ? `Working on: ${timerState.activeTaskTitle}`
+                : "Open Time Tracking"
+            }
           >
             <span
-              className={`w-2 h-2 rounded-full ${isMounted && timerState.isRunning ? "bg-primary-container animate-pulse" : "bg-outline"}`}
-            ></span>
+              className={`h-2 w-2 rounded-full ${isMounted && timerState.isRunning ? "animate-pulse bg-primary-container" : "bg-outline"}`}
+              aria-hidden
+            />
             <span className="font-label-code text-label-code text-primary">
               {isMounted ? formatTimer(timerState.elapsedSeconds) : "00:00:00"}
             </span>
           </Link>
           <button
-            className="text-outline hover:text-error transition-colors flex items-center cursor-pointer ml-1"
             type="button"
             onClick={() => {
               if (timerState.isRunning) {
@@ -95,74 +159,78 @@ export function Header() {
                 startTimer();
               }
             }}
-            title={timerState.isRunning ? "Pause Timer" : "Resume Timer"}
+            title={timerState.isRunning ? "Pause timer" : "Resume timer"}
+            aria-label={timerState.isRunning ? "Pause timer" : "Resume timer"}
+            className={`ml-1 flex items-center text-outline transition-colors hover:text-on-surface ${FOCUS_RING}`}
           >
             {timerState.isRunning ? (
-              <PauseCircle className="h-3.5 w-3.5" />
+              <PauseCircle className="h-3.5 w-3.5" aria-hidden />
             ) : (
-              <PlayCircle className="h-3.5 w-3.5" />
+              <PlayCircle className="h-3.5 w-3.5" aria-hidden />
             )}
           </button>
         </div>
 
-        {/* Notifications Button */}
-        <button
-          className="relative p-1 text-outline hover:text-on-surface hover:bg-surface-container rounded-lg transition-colors"
-          type="button"
-          title="Notifications"
-        >
-          <Bell className="h-4 w-4" />
-          <span className="absolute top-1 right-1 w-1.5 h-1.5 bg-primary-container rounded-full"></span>
-        </button>
+        <NotificationPanel />
 
-        {/* Quick New Task Action */}
         <Link
-          href="/new"
-          className="h-7 px-space-sm bg-primary-container hover:bg-primary-container/90 text-on-primary-container rounded-lg text-body-sm font-headline-sm flex items-center gap-1 shadow-sm transition-colors"
+          href="/new?type=TASK"
+          className={`flex h-8 items-center gap-1 rounded-sm bg-primary-container px-space-sm font-headline-sm text-body-sm text-on-primary-container shadow-sm transition-colors hover:bg-primary-container/90 ${FOCUS_RING}`}
         >
-          <Plus className="h-4 w-4" />
-          <span>New Task</span>
-          <span className="font-label-kbd text-label-kbd text-on-primary-container/70 ml-1">C</span>
+          <Plus className="h-4 w-4" aria-hidden />
+          <span className="hidden md:inline">New Task</span>
+          <kbd className="ml-1 hidden font-label-kbd text-label-kbd text-on-primary-container/70 md:inline">
+            C
+          </kbd>
         </Link>
 
-        <div className="h-4 w-px bg-outline-variant/40"></div>
+        <div className="h-4 w-px bg-outline-variant/60" aria-hidden />
 
-        {/* User Profile Avatar & Dropdown */}
-        <div className="relative">
+        <div className="relative" ref={profileRef}>
           <button
             type="button"
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-            className="w-8 h-8 rounded-full bg-primary flex items-center justify-center hover:opacity-90 transition-opacity focus:outline-none"
+            onClick={() => setIsProfileOpen((value) => !value)}
+            aria-label="Open user menu"
+            aria-expanded={isProfileOpen}
+            className={`flex h-8 w-8 items-center justify-center rounded-full bg-primary transition-opacity hover:opacity-90 ${FOCUS_RING}`}
             title={user?.name || "User profile"}
           >
             {user?.image ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={user.image} alt={user.name || "User"} className="w-8 h-8 rounded-full object-cover" />
+              <img
+                src={user.image}
+                alt={user.name || "User"}
+                className="h-8 w-8 rounded-full object-cover"
+              />
             ) : (
-              <User className="h-4 w-4 text-on-primary" />
+              <User className="h-4 w-4 text-on-primary" aria-hidden />
             )}
           </button>
 
           {isProfileOpen && (
-            <div className="absolute right-0 mt-2 w-56 rounded-lg bg-surface-container-high border border-outline-variant/40 shadow-xl py-1 z-50">
-              <div className="px-3 py-2 border-b border-outline-variant/30">
-                <p className="text-body-sm font-medium text-on-surface truncate">{user?.name || "Authenticated User"}</p>
-                <p className="text-[11px] text-outline truncate">{user?.email || "user@scryme.tech"}</p>
+            <div className="absolute right-0 z-50 mt-2 w-56 rounded-md border border-outline-variant bg-surface-container-high py-1 shadow-xl">
+              <div className="border-b border-outline-variant/60 px-3 py-2">
+                <p className="truncate font-body-sm text-body-sm font-medium text-on-surface">
+                  {user?.name || "Authenticated User"}
+                </p>
+                <p className="truncate text-[11px] text-outline">
+                  {user?.email || "user@scryme.tech"}
+                </p>
               </div>
               <Link
-                href="/team"
+                href="/projects"
                 onClick={() => setIsProfileOpen(false)}
-                className="flex items-center gap-2 px-3 py-2 text-body-sm text-on-surface hover:bg-surface-container transition-colors"
+                className={`flex items-center gap-2 px-3 py-2 font-body-sm text-body-sm text-on-surface transition-colors hover:bg-surface-container ${FOCUS_RING}`}
               >
-                <Users className="h-4 w-4 text-outline" />
-                <span>Team & Squad</span>
+                <Search className="h-4 w-4 text-outline" aria-hidden />
+                <span>Projects</span>
               </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2 px-3 py-2 text-body-sm text-error hover:bg-surface-container transition-colors text-left"
+                className={`flex w-full items-center gap-2 px-3 py-2 text-left font-body-sm text-body-sm text-error transition-colors hover:bg-surface-container ${FOCUS_RING}`}
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-4 w-4" aria-hidden />
                 <span>Sign Out</span>
               </button>
             </div>

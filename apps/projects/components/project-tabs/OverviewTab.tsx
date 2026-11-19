@@ -5,10 +5,13 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
-import { Check, Link2, Settings, PlusCircle, X } from "lucide-react";
+import { Check, Link2, Settings, PlusCircle } from "lucide-react";
 import { useProject, useTasks, useMilestones, useSprints, useProjectDocuments, useUpdateProject } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Project } from "@/lib/api";
+import { Dialog } from "@/components/Dialog";
+import { FieldError } from "@/components/PageState";
+import { notifyError, notifySuccess, fieldErrorsFrom } from "@/lib/feedback";
 
 export function OverviewTab({ projectId }: { projectId: string }) {
   const { data: project } = useProject(projectId);
@@ -20,13 +23,14 @@ export function OverviewTab({ projectId }: { projectId: string }) {
   const { canManageTasks, checkProjectRole } = usePermissions();
 
   const projectAuth = checkProjectRole(project?.members as any);
-  const canEdit = canManageTasks || projectAuth.canEditProject;
+  const canEdit = canManageTasks && projectAuth.canEditProject;
 
   const [copied, setCopied] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [editName, setEditName] = useState("");
   const [editDesc, setEditDesc] = useState("");
   const [editStatus, setEditStatus] = useState<Project["status"]>("ACTIVE");
+  const [errors, setErrors] = useState<Record<string, string>>({});
 
   const handleCopy = () => {
     if (typeof window !== "undefined") {
@@ -41,23 +45,33 @@ export function OverviewTab({ projectId }: { projectId: string }) {
     setEditName(project.name);
     setEditDesc(project.description || "");
     setEditStatus(project.status);
+    setErrors({});
     setIsEditModalOpen(true);
   };
 
   const handleSaveProject = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!editName.trim()) return;
+    setErrors({});
+    if (!editName.trim()) {
+      setErrors({ name: "Project name is required" });
+      return;
+    }
 
-    await updateProjectMutation.mutateAsync({
-      id: projectId,
-      data: {
-        name: editName.trim(),
-        description: editDesc.trim() || undefined,
-        status: editStatus,
-      },
-    });
-
-    setIsEditModalOpen(false);
+    try {
+      await updateProjectMutation.mutateAsync({
+        id: projectId,
+        data: {
+          name: editName.trim(),
+          description: editDesc.trim() || undefined,
+          status: editStatus,
+        },
+      });
+      notifySuccess("Project updated");
+      setIsEditModalOpen(false);
+    } catch (error) {
+      setErrors(fieldErrorsFrom(error));
+      notifyError(error, "Could not update project");
+    }
   };
 
   const closedTasks = tasks.filter((t) => t.status === "DONE").length;
@@ -126,7 +140,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
             </h1>
             <span className={`px-2 py-0.5 rounded text-[11px] font-label-badge uppercase ${
               project?.status === "ACTIVE"
-                ? "bg-emerald-500/20 text-emerald-300"
+                ? "bg-status-success/20 text-status-success"
                 : project?.status === "COMPLETED"
                 ? "bg-primary-container/20 text-primary"
                 : "bg-surface-container text-outline"
@@ -151,75 +165,79 @@ export function OverviewTab({ projectId }: { projectId: string }) {
       </div>
 
       {/* Edit Project Dialog */}
-      {isEditModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                Project Settings: {project?.key}
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsEditModalOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form onSubmit={handleSaveProject} className="flex flex-col gap-4 mt-4">
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Project Name</label>
-                <Input
-                  type="text"
-                  required
-                  value={editName}
-                  onChange={(e) => setEditName(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Description / Objective</label>
-                <Textarea
-                  rows={3}
-                  value={editDesc}
-                  onChange={(e) => setEditDesc(e.target.value)}
-                  className="w-full p-2 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Lifecycle Status</label>
-                <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
-                    <SelectValue placeholder="Select status" />
-                  </SelectTrigger>
-                  <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
-                    <SelectItem value="ACTIVE">ACTIVE</SelectItem>
-                    <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
-                    <SelectItem value="COMPLETED">COMPLETED</SelectItem>
-                    <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsEditModalOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={updateProjectMutation.isPending}
-                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                >
-                  {updateProjectMutation.isPending ? "Saving..." : "Save Settings"}
-                </button>
-              </div>
-            </form>
+      <Dialog
+        open={isEditModalOpen}
+        onClose={() => setIsEditModalOpen(false)}
+        title={`Project Settings: ${project?.key ?? ""}`}
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsEditModalOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="overview-project-form"
+              disabled={updateProjectMutation.isPending}
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+            >
+              {updateProjectMutation.isPending ? "Saving..." : "Save Settings"}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="overview-project-form" onSubmit={handleSaveProject} className="flex flex-col gap-4 p-5">
+          <div>
+            <label htmlFor="overview-project-name" className="block text-body-sm font-medium text-on-surface mb-1">
+              Project Name
+            </label>
+            <Input
+              id="overview-project-name"
+              type="text"
+              required
+              value={editName}
+              onChange={(e) => setEditName(e.target.value)}
+              aria-invalid={Boolean(errors.name)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+            <FieldError id="overview-project-name-error" message={errors.name} />
+          </div>
+          <div>
+            <label htmlFor="overview-project-description" className="block text-body-sm font-medium text-on-surface mb-1">
+              Description / Objective
+            </label>
+            <Textarea
+              id="overview-project-description"
+              rows={3}
+              value={editDesc}
+              onChange={(e) => setEditDesc(e.target.value)}
+              className="w-full p-2 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="overview-project-status" className="block text-body-sm font-medium text-on-surface mb-1">
+              Lifecycle Status
+            </label>
+            <Select value={editStatus} onValueChange={(val) => setEditStatus(val as Project["status"])}>
+              <SelectTrigger
+                id="overview-project-status"
+                className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
+              >
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
+                <SelectItem value="ACTIVE">ACTIVE</SelectItem>
+                <SelectItem value="ON_HOLD">ON_HOLD</SelectItem>
+                <SelectItem value="COMPLETED">COMPLETED</SelectItem>
+                <SelectItem value="ARCHIVED">ARCHIVED</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </form>
+      </Dialog>
 
       {/* KPI Strip */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3.5 mb-6">
@@ -228,7 +246,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
           <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
             {progressPct}%
           </span>
-          <span className="text-[11px] text-emerald-400 font-label-code">
+          <span className="text-[11px] text-status-success font-label-code">
             {closedTasks} / {tasks.length} issues closed ({inProgressTasks} active)
           </span>
         </div>
@@ -253,7 +271,7 @@ export function OverviewTab({ projectId }: { projectId: string }) {
           <span className="text-headline-lg font-headline-lg text-on-surface font-semibold">
             {milestones.filter((m) => m.status === "COMPLETED").length} / {milestones.length}
           </span>
-          <span className="text-[11px] text-emerald-400 font-label-code">Delivered Targets</span>
+          <span className="text-[11px] text-status-success font-label-code">Delivered Targets</span>
         </div>
       </div>
 
