@@ -11,7 +11,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -22,6 +21,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import tech.scryme.app.util.CurrencyUtils
 
+// Tighter shape values for a crisper, enterprise appearance
 private val CardShape = RoundedCornerShape(8.dp)
 private val TileShape = RoundedCornerShape(6.dp)
 private val ChipShape = RoundedCornerShape(4.dp)
@@ -30,8 +30,6 @@ private val StatusActive = Color(0xFF059669)
 private val StatusInactive = Color(0xFFDC2626)
 private val AccentSales = Color(0xFF059669)
 private val AccentTasks = Color(0xFF4F46E5)
-
-private val OverviewTabs = listOf("Summary", "Quick Actions")
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,7 +41,6 @@ fun OverviewScreen(
     modifier: Modifier = Modifier
 ) {
     val state by viewModel.uiState.collectAsState()
-    var selectedTab by rememberSaveable { mutableIntStateOf(0) }
 
     Scaffold(
         containerColor = MaterialTheme.colorScheme.background,
@@ -55,7 +52,7 @@ fun OverviewScreen(
                             Text(
                                 text = "${state.greeting}, ${state.userName}",
                                 style = MaterialTheme.typography.titleMedium,
-                                fontWeight = FontWeight.SemiBold,
+                                fontWeight = FontWeight.Bold,
                                 color = MaterialTheme.colorScheme.onSurface
                             )
                             Text(
@@ -75,10 +72,9 @@ fun OverviewScreen(
                         }
                     },
                     colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = MaterialTheme.colorScheme.surface
+                        containerColor = MaterialTheme.colorScheme.background
                     )
                 )
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
             }
         },
         modifier = modifier
@@ -88,7 +84,7 @@ fun OverviewScreen(
                 .fillMaxSize()
                 .padding(innerPadding)
                 .padding(horizontal = 16.dp),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
+            verticalArrangement = Arrangement.spacedBy(24.dp) // Consistent, breathable spacing between sections
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
@@ -101,83 +97,74 @@ fun OverviewScreen(
                 )
             }
 
-            // 2. Tabs
+            // 2. Key Metrics
             item {
-                OverviewTabRow(
-                    selectedTab = selectedTab,
-                    onTabSelected = { selectedTab = it }
-                )
-            }
-
-            // 3. Tab content
-            when (selectedTab) {
-                0 -> {
-                    item { SectionHeader(title = "Key Metrics") }
-                    item {
-                        Row(
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(title = "Key Metrics")
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(IntrinsicSize.Max),
+                        horizontalArrangement = Arrangement.spacedBy(12.dp)
+                    ) {
+                        MetricCard(
+                            title = "Today's Sales",
+                            value = CurrencyUtils.formatAmount(state.todaySalesAmount, state.currencySymbol),
+                            subtitle = "${state.totalOrdersCount} orders",
+                            icon = Icons.Default.PointOfSale,
+                            iconColor = AccentSales,
                             modifier = Modifier
-                                .fillMaxWidth()
-                                .height(IntrinsicSize.Max),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp)
-                        ) {
-                            MetricCard(
-                                title = "Today's Sales",
-                                value = CurrencyUtils.formatAmount(state.todaySalesAmount, state.currencySymbol),
-                                subtitle = "${state.totalOrdersCount} orders",
-                                icon = Icons.Default.PointOfSale,
-                                iconColor = AccentSales,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                            )
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
 
-                            MetricCard(
-                                title = "Tasks",
-                                value = "${state.pendingTasksCount} Pending",
-                                subtitle = "${state.completedTasksCount} completed",
-                                icon = Icons.Default.TaskAlt,
-                                iconColor = AccentTasks,
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .fillMaxHeight()
-                            )
-                        }
+                        MetricCard(
+                            title = "Tasks",
+                            value = "${state.pendingTasksCount} Pending",
+                            subtitle = "${state.completedTasksCount} completed",
+                            icon = Icons.Default.TaskAlt,
+                            iconColor = AccentTasks,
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight()
+                        )
                     }
                 }
+            }
 
-                else -> {
-                    item { SectionHeader(title = "Shortcuts") }
-                    item {
-                        OutlinedSurface {
-                            Column {
-                                ShortcutCard(
-                                    title = "Check-In / Out",
-                                    subtitle = "Manage shift attendance",
-                                    icon = Icons.Default.Fingerprint,
-                                    onClick = onNavigateToSchedule
-                                )
-                                RowDivider()
-                                ShortcutCard(
-                                    title = "View Schedule",
-                                    subtitle = "Shifts and rosters",
-                                    icon = Icons.Default.CalendarMonth,
-                                    onClick = onNavigateToSchedule
-                                )
-                                RowDivider()
-                                ShortcutCard(
-                                    title = "Staff Tasks",
-                                    subtitle = "My operational tasks",
-                                    icon = Icons.Default.TaskAlt,
-                                    onClick = onNavigateToTasks
-                                )
-                                RowDivider()
-                                ShortcutCard(
-                                    title = "Analytics",
-                                    subtitle = "Admin sales analytics",
-                                    icon = Icons.Default.QueryStats,
-                                    onClick = onNavigateToAdminAnalytics
-                                )
-                            }
+            // 3. Quick Actions
+            item {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    SectionHeader(title = "Quick Actions")
+                    OutlinedSurface {
+                        Column {
+                            ShortcutCard(
+                                title = "Check-In / Out",
+                                subtitle = "Manage shift attendance",
+                                icon = Icons.Default.Fingerprint,
+                                onClick = onNavigateToSchedule
+                            )
+                            RowDivider()
+                            ShortcutCard(
+                                title = "View Schedule",
+                                subtitle = "Shifts and rosters",
+                                icon = Icons.Default.CalendarMonth,
+                                onClick = onNavigateToSchedule
+                            )
+                            RowDivider()
+                            ShortcutCard(
+                                title = "Staff Tasks",
+                                subtitle = "My operational tasks",
+                                icon = Icons.Default.TaskAlt,
+                                onClick = onNavigateToTasks
+                            )
+                            RowDivider()
+                            ShortcutCard(
+                                title = "Analytics",
+                                subtitle = "Admin sales analytics",
+                                icon = Icons.Default.QueryStats,
+                                onClick = onNavigateToAdminAnalytics
+                            )
                         }
                     }
                 }
@@ -193,44 +180,12 @@ fun OverviewScreen(
 // ---------------------------------------------------------------------------
 
 @Composable
-private fun OverviewTabRow(
-    selectedTab: Int,
-    onTabSelected: (Int) -> Unit
-) {
-    Column {
-        TabRow(
-            selectedTabIndex = selectedTab,
-            containerColor = Color.Transparent,
-            contentColor = MaterialTheme.colorScheme.primary,
-            divider = { HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant) }
-        ) {
-            OverviewTabs.forEachIndexed { index, label ->
-                Tab(
-                    selected = selectedTab == index,
-                    onClick = { onTabSelected(index) },
-                    selectedContentColor = MaterialTheme.colorScheme.primary,
-                    unselectedContentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                    text = {
-                        Text(
-                            text = label,
-                            style = MaterialTheme.typography.labelLarge,
-                            fontWeight = if (selectedTab == index) FontWeight.SemiBold else FontWeight.Medium
-                        )
-                    }
-                )
-            }
-        }
-    }
-}
-
-@Composable
 private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
     Text(
-        text = title.uppercase(),
-        style = MaterialTheme.typography.labelMedium,
-        fontWeight = FontWeight.SemiBold,
-        letterSpacing = 0.8.sp,
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        text = title,
+        style = MaterialTheme.typography.titleSmall,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.onSurface,
         modifier = modifier
     )
 }
@@ -239,7 +194,7 @@ private fun SectionHeader(title: String, modifier: Modifier = Modifier) {
 private fun RowDivider() {
     HorizontalDivider(
         modifier = Modifier.padding(start = 64.dp),
-        color = MaterialTheme.colorScheme.outlineVariant
+        color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)
     )
 }
 
@@ -252,7 +207,7 @@ private fun OutlinedSurface(
     Surface(
         shape = CardShape,
         color = MaterialTheme.colorScheme.surface,
-        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
         tonalElevation = 0.dp,
         shadowElevation = 0.dp,
         modifier = modifier.fillMaxWidth(),
@@ -267,7 +222,7 @@ private fun StatusChip(text: String, color: Color) {
         color = color.copy(alpha = 0.12f)
     ) {
         Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp),
+            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp)
         ) {
@@ -278,10 +233,10 @@ private fun StatusChip(text: String, color: Color) {
                     .background(color)
             )
             Text(
-                text = text,
+                text = text.uppercase(),
                 style = MaterialTheme.typography.labelSmall,
-                fontWeight = FontWeight.SemiBold,
-                letterSpacing = 0.6.sp,
+                fontWeight = FontWeight.Bold,
+                letterSpacing = 0.5.sp,
                 color = color
             )
         }
@@ -318,7 +273,7 @@ fun AttendanceStatusOverviewCard(
                 modifier = Modifier
                     .weight(1f)
                     .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp)
+                verticalArrangement = Arrangement.spacedBy(16.dp)
             ) {
                 // Header: label + status chip
                 Row(
@@ -326,7 +281,13 @@ fun AttendanceStatusOverviewCard(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.SpaceBetween
                 ) {
-                    SectionHeader(title = "Attendance")
+                    Text(
+                        text = "ATTENDANCE",
+                        style = MaterialTheme.typography.labelMedium,
+                        fontWeight = FontWeight.SemiBold,
+                        letterSpacing = 0.8.sp,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                     StatusChip(
                         text = if (isShiftActive) "ON DUTY" else "OFF DUTY",
                         color = statusColor
@@ -334,25 +295,25 @@ fun AttendanceStatusOverviewCard(
                 }
 
                 // Headline + supporting text
-                Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
                     Text(
                         text = if (isShiftActive) "You're checked in" else "You're not checked in",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
                     )
                     Text(
                         text = if (isShiftActive) {
-                            "Your shift is in progress."
+                            "Your shift is currently in progress."
                         } else {
-                            "Check in to start your shift."
+                            "Check in to start your shift and begin tracking time."
                         },
-                        style = MaterialTheme.typography.bodySmall,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                 }
 
-                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant)
+                HorizontalDivider(color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f))
 
                 // Meta row: punctuality
                 Row(
@@ -368,11 +329,11 @@ fun AttendanceStatusOverviewCard(
                             imageVector = Icons.Default.Schedule,
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.size(14.dp)
+                            modifier = Modifier.size(16.dp)
                         )
                         Text(
                             text = "Punctuality",
-                            style = MaterialTheme.typography.bodySmall,
+                            style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
@@ -382,10 +343,10 @@ fun AttendanceStatusOverviewCard(
                     ) {
                         Text(
                             text = punctuality,
-                            style = MaterialTheme.typography.labelSmall,
+                            style = MaterialTheme.typography.labelMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 3.dp)
+                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
                         )
                     }
                 }
@@ -396,7 +357,7 @@ fun AttendanceStatusOverviewCard(
                         onClick = onManageAttendance,
                         shape = TileShape,
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Fingerprint,
@@ -415,7 +376,7 @@ fun AttendanceStatusOverviewCard(
                         onClick = onManageAttendance,
                         shape = TileShape,
                         modifier = Modifier.fillMaxWidth(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 10.dp)
+                        contentPadding = PaddingValues(vertical = 12.dp)
                     ) {
                         Icon(
                             imageVector = Icons.Default.Fingerprint,
@@ -450,8 +411,8 @@ fun MetricCard(
 ) {
     OutlinedSurface(modifier = modifier) {
         Column(
-            modifier = Modifier.padding(14.dp),
-            verticalArrangement = Arrangement.spacedBy(10.dp)
+            modifier = Modifier.padding(16.dp),
+            verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -468,7 +429,7 @@ fun MetricCard(
                 )
                 Box(
                     modifier = Modifier
-                        .size(28.dp)
+                        .size(32.dp)
                         .clip(TileShape)
                         .background(iconColor.copy(alpha = 0.12f)),
                     contentAlignment = Alignment.Center
@@ -477,7 +438,7 @@ fun MetricCard(
                         imageVector = icon,
                         contentDescription = title,
                         tint = iconColor,
-                        modifier = Modifier.size(16.dp)
+                        modifier = Modifier.size(18.dp)
                     )
                 }
             }
@@ -485,14 +446,14 @@ fun MetricCard(
             Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(
                     text = value,
-                    style = MaterialTheme.typography.titleLarge,
+                    style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 1
                 )
                 Text(
                     text = subtitle,
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
             }
@@ -513,21 +474,21 @@ fun ShortcutCard(
         modifier = modifier
             .fillMaxWidth()
             .clickable { onClick() }
-            .padding(horizontal = 14.dp, vertical = 12.dp),
+            .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(14.dp)
+        horizontalArrangement = Arrangement.spacedBy(16.dp)
     ) {
         Box(
             modifier = Modifier
-                .size(36.dp)
+                .size(40.dp)
                 .clip(TileShape)
-                .background(MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.5f)),
+                .background(MaterialTheme.colorScheme.secondaryContainer.copy(alpha = 0.5f)),
             contentAlignment = Alignment.Center
         ) {
             Icon(
                 imageVector = icon,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = MaterialTheme.colorScheme.onSecondaryContainer,
                 modifier = Modifier.size(20.dp)
             )
         }
@@ -535,13 +496,13 @@ fun ShortcutCard(
         Column(modifier = Modifier.weight(1f)) {
             Text(
                 text = title,
-                style = MaterialTheme.typography.bodyMedium,
-                fontWeight = FontWeight.SemiBold,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.Bold,
                 color = MaterialTheme.colorScheme.onSurface
             )
             Text(
                 text = subtitle,
-                style = MaterialTheme.typography.bodySmall,
+                style = MaterialTheme.typography.bodyMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 maxLines = 1
             )
@@ -550,8 +511,8 @@ fun ShortcutCard(
         Icon(
             imageVector = Icons.Default.ChevronRight,
             contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.size(20.dp)
+            tint = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.5f),
+            modifier = Modifier.size(24.dp)
         )
     }
 }

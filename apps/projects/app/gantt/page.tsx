@@ -20,10 +20,10 @@ import {
   ChevronRight,
   User,
   ExternalLink,
-  X,
   CircleDot,
 } from "lucide-react";
-import { toast } from "sonner";
+import { Dialog } from "@/components/Dialog";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 interface CategoryTabConfig {
   id: string;
@@ -102,22 +102,22 @@ export default function GanttPage() {
   const getEventBarClass = (event: UnifiedCalendarEvent) => {
     const s = (event.status || "").toUpperCase();
     if (s === "DONE" || s === "COMPLETED" || s === "DELIVERED") {
-      return "bg-gradient-to-r from-emerald-500/25 to-emerald-600/35 text-emerald-300 border border-emerald-500/40";
+      return "bg-gradient-to-r from-status-success/25 to-status-success/35 text-status-success border border-status-success/40";
     }
     if (s === "IN_PROGRESS" || s === "ACTIVE" || s === "DISPATCHED" || s === "RUNNING") {
       return "bg-gradient-to-r from-primary-container/40 to-primary-container/60 text-primary border border-primary/50 shadow-sm";
     }
     if (s === "BLOCKED" || s === "CRITICAL" || s === "OVERDUE") {
-      return "bg-gradient-to-r from-red-500/30 to-red-600/40 text-red-300 border border-red-500/50";
+      return "bg-gradient-to-r from-status-critical/30 to-status-critical/40 text-status-critical border border-status-critical/50";
     }
     if (event.category === "production") {
-      return "bg-gradient-to-r from-amber-500/25 to-amber-600/35 text-amber-300 border border-amber-500/40";
+      return "bg-gradient-to-r from-status-warning/25 to-status-warning/35 text-status-warning border border-status-warning/40";
     }
     if (event.category === "delivery") {
-      return "bg-gradient-to-r from-sky-500/25 to-sky-600/35 text-sky-300 border border-sky-500/40";
+      return "bg-gradient-to-r from-status-info/25 to-status-info/35 text-status-info border border-status-info/40";
     }
     if (event.category === "crm") {
-      return "bg-gradient-to-r from-purple-500/25 to-purple-600/35 text-purple-300 border border-purple-500/40";
+      return "bg-gradient-to-r from-status-info/25 to-status-info/35 text-status-info border border-status-info/40";
     }
     return "bg-gradient-to-r from-surface-container-high to-surface-container-highest text-on-surface border border-outline-variant/40";
   };
@@ -141,12 +141,12 @@ export default function GanttPage() {
           status: targetStatus,
         },
       });
-      toast.success(`Updated status to ${targetStatus}`);
+      notifySuccess("Status updated");
       if (selectedEvent && selectedEvent.id === eventId) {
         setSelectedEvent({ ...selectedEvent, status: targetStatus });
       }
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to update event status");
+    } catch (err) {
+      notifyError(err, "Could not change status");
     }
   };
 
@@ -315,7 +315,7 @@ export default function GanttPage() {
                             <span
                               className={`px-1.5 py-0.2 rounded text-[9px] font-label-badge uppercase ${
                                 ev.status === "DONE" || ev.status === "COMPLETED"
-                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  ? "bg-status-success/20 text-status-success"
                                   : ev.status === "IN_PROGRESS"
                                   ? "bg-primary-container text-on-primary-container"
                                   : "bg-surface-container text-outline"
@@ -375,8 +375,8 @@ export default function GanttPage() {
                     className="absolute top-0 bottom-0 z-20 pointer-events-none flex flex-col items-center"
                     style={{ left: `${todayPct}%` }}
                   >
-                    <div className="w-0.5 h-full bg-red-400/80 shadow-[0_0_8px_rgba(248,113,113,0.6)]"></div>
-                    <span className="absolute top-1 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-label-badge bg-red-500 text-white shadow-xs">
+                    <div className="h-full w-0.5 bg-status-critical/80 shadow-lg" />
+                    <span className="absolute top-1 -translate-x-1/2 px-1.5 py-0.5 rounded text-[9px] font-label-badge bg-status-critical text-on-primary-container shadow-xs">
                       Today
                     </span>
                   </div>
@@ -433,8 +433,14 @@ export default function GanttPage() {
 
         {/* Modal: Event Inspector Drawer */}
         {selectedEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-lg rounded-xl bg-surface-container border border-outline-variant/50 p-6 shadow-2xl flex flex-col gap-4">
+          <Dialog
+            open
+            onClose={() => setSelectedEvent(null)}
+            ariaLabel={`Event ${selectedEvent.title}`}
+            showCloseButton={false}
+            className="max-w-lg"
+          >
+            <div className="flex flex-col gap-4 p-5">
               <div className="flex items-start justify-between pb-3 border-b border-outline-variant/30">
                 <div className="flex items-center gap-2">
                   <div className="p-2 rounded-lg bg-surface-container-high">
@@ -452,13 +458,6 @@ export default function GanttPage() {
                     </h2>
                   </div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setSelectedEvent(null)}
-                  className="p-1 rounded text-outline hover:text-on-surface transition-colors"
-                >
-                  <X className="h-4 w-4" />
-                </button>
               </div>
 
               <div className="grid grid-cols-2 gap-3 text-xs">
@@ -511,7 +510,7 @@ export default function GanttPage() {
               <div className="flex items-center justify-between pt-3 border-t border-outline-variant/30">
                 {selectedEvent.category === "task" ? (
                   <Link
-                    href={`/task-detail?id=${selectedEvent.id}`}
+                    href={`/tasks/${selectedEvent.id}`}
                     className="text-xs text-primary hover:underline flex items-center gap-1 font-medium"
                   >
                     <span>Open Task Inspector</span>
@@ -529,7 +528,7 @@ export default function GanttPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </Dialog>
         )}
       </div>
     </div>

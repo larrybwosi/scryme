@@ -5,7 +5,7 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Checkbox } from "@repo/ui/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useEffect, useMemo } from "react";
-import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, X, Lock } from "lucide-react";
+import { Play, Pause, CheckCircle2, CalendarDays, Download, Send, History as HistoryIcon, Trash2, Lock } from "lucide-react";
 import { useSearchParams } from "next/navigation";
 import {
   useTasks,
@@ -19,13 +19,19 @@ import {
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { useTimerStore } from "@/lib/timer-store";
-import { toast } from "sonner";
+import { billableRatio, estimateVariance, formatStopwatch, startOfWeek } from "@/lib/metrics";
+import { TimeEntry } from "@/lib/api";
+import { Dialog } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { notifyError, notifySuccess, notifyWarning } from "@/lib/feedback";
 
 function TimeTrackingContent() {
   const searchParams = useSearchParams();
   const initialTaskId = searchParams.get("taskId") || "";
 
-  const [activeTab, setActiveTab] = useState<"my-timesheet" | "approvals">("my-timesheet");
+  const [activeTab, setActiveTab] = useState<"my-timesheet" | "approvals">(
+    searchParams.get("tab") === "approvals" ? "approvals" : "my-timesheet",
+  );
 
   const { data: tasks = [] } = useTasks();
   const [activeTaskId, setActiveTaskId] = useState<string>(initialTaskId);
@@ -42,11 +48,14 @@ function TimeTrackingContent() {
   const logTimeMutation = useLogTimeEntry(activeTask?.projectId);
   const deleteTimeMutation = useDeleteTimeEntry(activeTaskId);
 
-  const { data: timesheets = [], isLoading: isTimesheetsLoading } = useWeeklyTimesheets();
+  const { canManageTasks } = usePermissions();
+  const currentWeekStart = useMemo(() => startOfWeek(new Date()).toISOString(), []);
+  const { data: timesheets = [], isLoading: isTimesheetsLoading } = useWeeklyTimesheets(
+    undefined,
+    currentWeekStart,
+  );
   const submitTimesheetMutation = useSubmitWeeklyTimesheet();
   const processTimesheetMutation = useProcessWeeklyTimesheet();
-
-  const { canManageTasks, memberId: currentMemberId } = usePermissions();
 
   // Active stopwatch state via hook
   const { state: timerState, startTimer, pauseTimer, resetTimer } = useTimerStore();
@@ -61,6 +70,7 @@ function TimeTrackingContent() {
   const [manualHours, setManualHours] = useState("1.0");
   const [manualNote, setManualNote] = useState("");
   const [isBillable, setIsBillable] = useState(true);
+  const [isStopwatchBillable, setIsStopwatchBillable] = useState(true);
   const [isOperational, setIsOperational] = useState(false);
   const [operationalCategory, setOperationalCategory] = useState("OPERATION");
 
@@ -72,27 +82,21 @@ function TimeTrackingContent() {
   const [isApprovalModalOpen, setIsApprovalModalOpen] = useState(false);
   const [selectedTimesheet, setSelectedTimesheet] = useState<WeeklyTimesheetRecord | null>(null);
   const [reviewNotes, setReviewNotes] = useState("");
-
-  const formatStopwatch = (seconds: number) => {
-    const h = Math.floor(seconds / 3600);
-    const m = Math.floor((seconds % 3600) / 60);
-    const s = seconds % 60;
-    return `${h.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")}:${s.toString().padStart(2, "0")}`;
-  };
+  const [deleteTarget, setDeleteTarget] = useState<TimeEntry | null>(null);
 
   const handleStartTimer = () => {
     if (!activeTaskId) return;
     startTimer({ id: activeTaskId, title: activeTask?.title || "Task Execution", taskKey: activeTask?.taskKey });
-    toast.info("Timer started");
+    notifyWarning("Timer started");
   };
 
   const handlePauseResume = () => {
     if (timerState.isRunning) {
       pauseTimer();
-      toast.info("Timer paused");
+      notifyWarning("Timer paused");
     } else {
       startTimer();
-      toast.info("Timer resumed");
+      notifyWarning("Timer resumed");
     }
   };
 
@@ -106,11 +110,12 @@ function TimeTrackingContent() {
         taskId,
         hours,
         description: `Stopwatch session: ${formatStopwatch(timerState.elapsedSeconds)}`,
+        isBillable: isStopwatchBillable,
       });
       resetTimer();
-      toast.success(`Logged ${hours}h successfully`);
-    } catch (err: any) {
-      toast.error("Failed to log time entry");
+      notifySuccess(`Logged ${hours}h successfully`);
+    } catch (err) {
+      notifyError(err, "Could not log time entry");
     }
   };
 
@@ -127,46 +132,43 @@ function TimeTrackingContent() {
         category: isOperational ? operationalCategory : undefined,
         isBillable,
       });
-      toast.success(isOperational ? `Logged ${hours}h operational time` : `Logged ${hours}h on task`);
+      notifySuccess(isOperational ? `Logged ${hours}h operational time` : `Logged ${hours}h on task`);
       setManualHours("1.0");
       setManualNote("");
       setIsManualModalOpen(false);
-    } catch (err: any) {
-      toast.error("Failed to save log entry");
+    } catch (err) {
+      notifyError(err, "Could not save log entry");
     }
   };
 
-  const handleDeleteLog = async (entry: any) => {
-    if (entry.isLocked) {
-      toast.error("Cannot delete an approved and locked time entry");
+  const handleDeleteLog = async () => {
+    if (!deleteTarget) return;
+    if (deleteTarget.isLocked) {
+      notifyError(new Error("Cannot delete an approved and locked time entry"), "Cannot delete an approved and locked time entry");
       return;
     }
-    if (!window.confirm("Delete this time log entry?")) return;
     try {
-      await deleteTimeMutation.mutateAsync(entry.id);
-      toast.success("Time entry deleted");
-    } catch (err: any) {
-      toast.error("Failed to delete time entry");
+      await deleteTimeMutation.mutateAsync(deleteTarget.id);
+      notifySuccess("Time entry deleted");
+      setDeleteTarget(null);
+    } catch (err) {
+      notifyError(err, "Could not delete time entry");
     }
   };
 
   const handleSubmitTimesheet = async (e: React.FormEvent) => {
     e.preventDefault();
-    const monday = new Date();
-    const day = (monday.getDay() + 6) % 7;
-    monday.setDate(monday.getDate() - day);
-    monday.setHours(0, 0, 0, 0);
 
     try {
       await submitTimesheetMutation.mutateAsync({
-        weekStartDate: monday.toISOString(),
+        weekStartDate: currentWeekStart,
         notes: submitNotes || undefined,
       });
-      toast.success("Weekly timesheet submitted for manager review");
+      notifySuccess("Timesheet submitted");
       setIsSubmitModalOpen(false);
       setSubmitNotes("");
-    } catch (err: any) {
-      toast.error("Failed to submit timesheet");
+    } catch (err) {
+      notifyError(err, "Could not submit timesheet");
     }
   };
 
@@ -176,20 +178,21 @@ function TimeTrackingContent() {
       await processTimesheetMutation.mutateAsync({
         timesheetId: selectedTimesheet.memberId,
         action,
+        weekStartDate: selectedTimesheet.weekStartDate,
         notes: reviewNotes || undefined,
       });
-      toast.success(`Timesheet ${action.toLowerCase()}ed`);
+      notifySuccess(`Timesheet ${action.toLowerCase()}ed`);
       setIsApprovalModalOpen(false);
       setSelectedTimesheet(null);
       setReviewNotes("");
-    } catch (err: any) {
-      toast.error(`Failed to ${action.toLowerCase()} timesheet`);
+    } catch (err) {
+      notifyError(err, `Could not ${action.toLowerCase()} timesheet`);
     }
   };
 
   const exportTimesheetCSV = () => {
     if (!logs.length) {
-      toast.info("No time logs to export");
+      notifyWarning("No time logs to export");
       return;
     }
     const headers = ["Member", "Task", "Hours", "Date", "Description"];
@@ -208,7 +211,7 @@ function TimeTrackingContent() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
-    toast.success("Timesheet CSV exported");
+    notifySuccess("Timesheet CSV exported");
   };
 
   const totalLoggedHours = useMemo(() => {
@@ -292,6 +295,15 @@ function TimeTrackingContent() {
                 <div className="text-body-sm text-on-surface font-medium truncate max-w-md">
                   {activeTask?.title || "No task selected"}
                 </div>
+                <label className="flex items-center gap-1.5 text-body-sm text-outline mt-1">
+                  <input
+                    type="checkbox"
+                    checked={isStopwatchBillable}
+                    onChange={(event) => setIsStopwatchBillable(event.target.checked)}
+                    className="h-3.5 w-3.5 accent-primary-container"
+                  />
+                  Billable work session
+                </label>
               </div>
 
               <div className="flex flex-wrap items-center gap-2.5">
@@ -398,23 +410,17 @@ function TimeTrackingContent() {
                 <span
                   className={`text-headline-lg font-headline-lg ${
                     totalLoggedHours > (activeTask?.estimatedHours || 0) && (activeTask?.estimatedHours || 0) > 0
-                      ? "text-red-400"
-                      : "text-emerald-400"
+                      ? "text-status-critical"
+                      : "text-status-success"
                   }`}
                 >
-                  {Math.round((totalLoggedHours - (activeTask?.estimatedHours || 0)) * 10) / 10}h
+                  {estimateVariance(activeTask?.estimatedHours || 0, totalLoggedHours)}h
                 </span>
               </div>
               <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
                 <span className="text-outline text-body-sm">Billable Ratio</span>
                 <span className="text-headline-lg font-headline-lg text-primary">
-                  {totalLoggedHours > 0
-                    ? Math.round(
-                        (logs.filter((l) => l.isBillable !== false).reduce((a, c) => a + Number(c.hours), 0) /
-                          totalLoggedHours) *
-                          100
-                      )
-                    : 100}%
+                  {billableRatio(logs)}%
                 </span>
               </div>
             </div>
@@ -466,6 +472,7 @@ function TimeTrackingContent() {
                     <tr>
                       <th className="px-4 py-2.5">Member</th>
                       <th className="px-4 py-2.5">Description</th>
+                      <th className="px-4 py-2.5">Type</th>
                       <th className="px-4 py-2.5">Duration</th>
                       <th className="px-4 py-2.5">Date</th>
                       <th className="px-4 py-2.5 text-right">Action</th>
@@ -477,12 +484,20 @@ function TimeTrackingContent() {
                         <td className="px-4 py-3 font-medium text-on-surface flex items-center gap-1.5">
                           <span>{log.member?.user?.name || "Member"}</span>
                           {log.isLocked && (
-                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-label-badge uppercase bg-amber-500/20 text-amber-400" title="Locked timesheet entry">
+                            <span className="inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-label-badge uppercase bg-status-warning/20 text-status-warning" title="Locked timesheet entry">
                               <Lock className="h-2.5 w-2.5" /> Locked
                             </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-on-surface">{log.description || "--"}</td>
+                        <td className="px-4 py-3 text-body-sm text-outline">
+                          <span className={log.isBillable === false ? "text-status-warning" : "text-status-success"}>
+                            {log.isBillable === false ? "Non billable" : "Billable"}
+                          </span>
+                          {log.category && (
+                            <span className="block font-label-code text-[10px] text-outline">{log.category}</span>
+                          )}
+                        </td>
                         <td className="px-4 py-3 font-label-code text-[12px] text-on-surface font-medium">
                           {log.hours}h
                         </td>
@@ -493,9 +508,11 @@ function TimeTrackingContent() {
                           {canManageTasks && (
                             <button
                               type="button"
-                              onClick={() => handleDeleteLog(log.id)}
-                              className="text-outline hover:text-red-400 p-1 transition-colors"
-                              title="Delete Entry"
+                              onClick={() => setDeleteTarget(log)}
+                              disabled={log.isLocked}
+                              aria-label="Delete time entry"
+                              className="text-outline hover:text-status-critical p-1 transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                              title={log.isLocked ? "Locked entries cannot be deleted" : "Delete Entry"}
                             >
                               <Trash2 className="h-4 w-4" />
                             </button>
@@ -547,7 +564,7 @@ function TimeTrackingContent() {
                   </thead>
                   <tbody className="divide-y divide-outline-variant/20">
                     {timesheets.map((ts) => (
-                      <tr key={ts.memberId} className="hover:bg-surface-container transition-colors">
+                      <tr key={`${ts.memberId}-${ts.weekStartDate}`} className="hover:bg-surface-container transition-colors">
                         <td className="px-4 py-3 font-medium text-on-surface">
                           <div>{ts.memberName}</div>
                           <div className="text-[11px] text-outline">{ts.memberEmail}</div>
@@ -558,16 +575,16 @@ function TimeTrackingContent() {
                         <td className="px-4 py-3 font-label-code text-[12px] text-on-surface font-semibold">
                           {ts.totalHours}h
                         </td>
-                        <td className="px-4 py-3 font-label-code text-[12px] text-emerald-400">
+                        <td className="px-4 py-3 font-label-code text-[12px] text-status-success">
                           {ts.billableHours}h
                         </td>
                         <td className="px-4 py-3">
                           <span
                             className={`px-2 py-0.5 rounded text-[10px] font-label-badge uppercase ${
                               ts.status === "APPROVED"
-                                ? "bg-emerald-500/20 text-emerald-400"
+                                ? "bg-status-success/20 text-status-success"
                                 : ts.status === "REJECTED"
-                                ? "bg-red-500/20 text-red-400"
+                                ? "bg-status-critical/20 text-status-critical"
                                 : "bg-primary-container/20 text-primary"
                             }`}
                           >
@@ -596,20 +613,31 @@ function TimeTrackingContent() {
         )}
 
         {/* Modal: Manual Time Log */}
-        {isManualModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Log Time Entry</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsManualModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleManualLog} className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isManualModalOpen}
+          onClose={() => setIsManualModalOpen(false)}
+          title="Log Time Entry"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsManualModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="manual-time-form"
+                disabled={logTimeMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {logTimeMutation.isPending ? "Saving..." : "Save Log"}
+              </button>
+            </div>
+          }
+        >
+              <form id="manual-time-form" onSubmit={handleManualLog} className="flex flex-col gap-4 p-5">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Target Task</label>
                   <Select value={activeTaskId} onValueChange={(val) => setActiveTaskId(val)}>
@@ -699,44 +727,35 @@ function TimeTrackingContent() {
                     Classify as Billable Project Work
                   </label>
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsManualModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={logTimeMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {logTimeMutation.isPending ? "Saving..." : "Save Log"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Dialog>
 
         {/* Modal: Submit Timesheet */}
-        {isSubmitModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Submit Weekly Timesheet
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsSubmitModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleSubmitTimesheet} className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isSubmitModalOpen}
+          onClose={() => setIsSubmitModalOpen(false)}
+          title="Submit Weekly Timesheet"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsSubmitModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="submit-timesheet-form"
+                disabled={submitTimesheetMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {submitTimesheetMutation.isPending ? "Submitting..." : "Submit Timesheet"}
+              </button>
+            </div>
+          }
+        >
+              <form id="submit-timesheet-form" onSubmit={handleSubmitTimesheet} className="flex flex-col gap-4 p-5">
                 <p className="text-body-sm text-on-surface-variant">
                   This will finalize and submit your weekly hours for manager and project lead approval.
                 </p>
@@ -752,45 +771,38 @@ function TimeTrackingContent() {
                     className="w-full p-2.5 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsSubmitModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={submitTimesheetMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {submitTimesheetMutation.isPending ? "Submitting..." : "Submit Timesheet"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Dialog>
 
         {/* Modal: Process Timesheet Review */}
-        {isApprovalModalOpen && selectedTimesheet && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-lg rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Review Timesheet: {selectedTimesheet.memberName}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsApprovalModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-
-              <div className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isApprovalModalOpen && Boolean(selectedTimesheet)}
+          onClose={() => setIsApprovalModalOpen(false)}
+          title={`Review Timesheet: ${selectedTimesheet?.memberName ?? ""}`}
+          className="max-w-lg"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => handleProcessTimesheet("REJECT")}
+                disabled={processTimesheetMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-status-critical/20 hover:bg-status-critical/30 text-status-critical font-medium text-body-sm transition-colors"
+              >
+                Reject
+              </button>
+              <button
+                type="button"
+                onClick={() => handleProcessTimesheet("APPROVE")}
+                disabled={processTimesheetMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-status-success hover:bg-status-success text-surface font-medium text-body-sm transition-colors"
+              >
+                Approve
+              </button>
+            </div>
+          }
+        >
+          {selectedTimesheet && (
+            <>
                 <div className="grid grid-cols-2 gap-3 p-3 rounded-lg bg-surface-container text-body-sm">
                   <div>
                     <span className="text-outline text-[11px] block">Total Hours</span>
@@ -798,7 +810,7 @@ function TimeTrackingContent() {
                   </div>
                   <div>
                     <span className="text-outline text-[11px] block">Billable Hours</span>
-                    <strong className="text-emerald-400 font-semibold">{selectedTimesheet.billableHours}h</strong>
+                    <strong className="text-status-success font-semibold">{selectedTimesheet.billableHours}h</strong>
                   </div>
                 </div>
 
@@ -828,29 +840,20 @@ function TimeTrackingContent() {
                     className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
+            </>
+          )}
+        </Dialog>
 
-                <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/30">
-                  <button
-                    type="button"
-                    onClick={() => handleProcessTimesheet("REJECT")}
-                    disabled={processTimesheetMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 font-medium text-body-sm transition-colors"
-                  >
-                    Reject
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleProcessTimesheet("APPROVE")}
-                    disabled={processTimesheetMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-black font-medium text-body-sm transition-colors"
-                  >
-                    Approve
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
+        <ConfirmDialog
+          open={Boolean(deleteTarget)}
+          title="Delete time entry"
+          description="Delete this time log entry? This cannot be undone."
+          confirmLabel="Delete entry"
+          destructive
+          pending={deleteTimeMutation.isPending}
+          onConfirm={handleDeleteLog}
+          onCancel={() => setDeleteTarget(null)}
+        />
       </div>
     </div>
   );

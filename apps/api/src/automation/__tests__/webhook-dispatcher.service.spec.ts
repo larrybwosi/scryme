@@ -5,6 +5,7 @@ import axios from "axios";
 
 vi.mock("axios", () => {
   const mockAxios: any = {
+    request: vi.fn(),
     post: vi.fn(),
     create: vi.fn(),
     interceptors: {
@@ -23,6 +24,8 @@ describe("WebhookDispatcherService", () => {
   let mockPrisma: any;
 
   beforeEach(() => {
+    vi.clearAllMocks();
+
     mockPrisma = {
       client: {
         workflowEngineAuditLog: {
@@ -52,7 +55,7 @@ describe("WebhookDispatcherService", () => {
   });
 
   it("should dispatch outgoing webhook with HMAC signature header and log audit entry", async () => {
-    (axios.post as any).mockResolvedValue({
+    (axios.request as any).mockResolvedValue({
       status: 200,
       statusText: "OK",
       data: { received: true },
@@ -69,7 +72,15 @@ describe("WebhookDispatcherService", () => {
 
     expect(result.success).toBe(true);
     expect(result.status).toBe(200);
-    expect(axios.post).toHaveBeenCalled();
+    expect(axios.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://example.com/webhook",
+        method: "POST",
+        headers: expect.objectContaining({
+          "X-Workflow-Signature": expect.stringMatching(/^sha256=/),
+        }),
+      }),
+    );
     expect(mockPrisma.client.workflowEngineAuditLog.create).toHaveBeenCalledWith(
       expect.objectContaining({
         data: expect.objectContaining({
@@ -78,6 +89,57 @@ describe("WebhookDispatcherService", () => {
         }),
       }),
     );
+  });
+
+  it("should honour the requested method, headers, timeout, and idempotency key", async () => {
+    (axios.request as any).mockResolvedValue({
+      status: 204,
+      statusText: "No Content",
+      data: null,
+    });
+
+    await service.dispatchOutgoingWebhook({
+      organizationId: "org_1",
+      endpointUrl: "https://example.com/resources/1",
+      method: "patch",
+      headers: { "X-Custom": "value" },
+      payload: { name: "updated" },
+      timeoutMs: 2500,
+      idempotencyKey: "exec_1:node_2",
+    });
+
+    expect(axios.request).toHaveBeenCalledWith(
+      expect.objectContaining({
+        url: "https://example.com/resources/1",
+        method: "PATCH",
+        timeout: 2500,
+        headers: expect.objectContaining({
+          "X-Custom": "value",
+          "Idempotency-Key": "exec_1:node_2",
+          "X-Workflow-Delivery": "exec_1:node_2",
+        }),
+      }),
+    );
+  });
+
+  it("should send GET payloads as query parameters instead of a request body", async () => {
+    (axios.request as any).mockResolvedValue({
+      status: 200,
+      statusText: "OK",
+      data: { ok: true },
+    });
+
+    await service.dispatchOutgoingWebhook({
+      organizationId: "org_1",
+      endpointUrl: "https://example.com/search",
+      method: "GET",
+      payload: { query: "order 42" },
+    });
+
+    const request = (axios.request as any).mock.calls[0][0];
+    expect(request.method).toBe("GET");
+    expect(request.params).toEqual({ query: "order 42" });
+    expect(request.data).toBeUndefined();
   });
 
   it("should block dispatch and log audit error when endpointUrl fails SSRF validation", async () => {

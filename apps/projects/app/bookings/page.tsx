@@ -18,7 +18,7 @@ import {
   AlertCircle,
 } from "lucide-react";
 import { apiClient } from "@/lib/api";
-import { toast } from "sonner";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 interface BookingRecord {
   id: string;
@@ -76,7 +76,15 @@ export default function BookingsManagementPage() {
           tasks: b.bookingTasks || b.tasks || [],
         }));
         setBookings(normalized);
+        const requestedId =
+          typeof window !== "undefined"
+            ? new URLSearchParams(window.location.search).get("booking")
+            : null;
+        const requested = requestedId
+          ? normalized.find((item: any) => item.id === requestedId)
+          : null;
         setSelectedBooking((prev) => {
+          if (requested) return requested;
           if (!prev) return normalized[0] || null;
           return normalized.find((item: any) => item.id === prev.id) || normalized[0] || null;
         });
@@ -106,10 +114,10 @@ export default function BookingsManagementPage() {
         reason,
         overrideConflict,
       });
-      toast.success(`Booking transitioned to ${targetStatus}`);
+      notifySuccess(`Booking transitioned to ${targetStatus}`);
       await fetchBookings();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to transition status");
+    } catch (err) {
+      notifyError(err, "Could not transition status");
       // Local optimistic reflection if disconnected
       const updatedBooking = { ...selectedBooking, status: targetStatus };
       setSelectedBooking(updatedBooking);
@@ -164,10 +172,10 @@ export default function BookingsManagementPage() {
     setIsGenerating(true);
     try {
       await apiClient.post(`/v3/bookings/${selectedBooking.id}/tasks/generate`, {});
-      toast.success("Tasks and checklists generated from service templates");
+      notifySuccess("Tasks and checklists generated from service templates");
       await fetchBookings();
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to generate tasks for booking");
+    } catch (err) {
+      notifyError(err, "Could not generate tasks for booking");
     } finally {
       setIsGenerating(false);
     }
@@ -243,7 +251,7 @@ export default function BookingsManagementPage() {
       </div>
 
       {errorMessage && (
-        <div className="p-3 mx-4 mt-3 rounded-lg bg-red-500/10 border border-red-500/30 text-xs text-red-400 flex items-center gap-2">
+        <div className="p-3 mx-4 mt-3 rounded-lg bg-status-critical/10 border border-status-critical/30 text-xs text-status-critical flex items-center gap-2">
           <AlertCircle className="w-4 h-4 shrink-0" />
           <span>{errorMessage}</span>
         </div>

@@ -5,6 +5,14 @@ export interface CreateTaskInput extends Omit<Partial<Task>, "assignees"> {
   batchId?: string;
 }
 
+export interface BookingConflictItem {
+  id?: string;
+  type?: string;
+  message?: string;
+  description?: string;
+  severity?: string;
+}
+
 export interface ServiceBookingItem {
   id: string;
   serviceName: string;
@@ -13,6 +21,7 @@ export interface ServiceBookingItem {
   scheduledEndTime?: string;
   customer?: { id?: string; name?: string; phone?: string; phoneNumber?: string; email?: string };
   location?: { id?: string; name?: string };
+  conflicts?: BookingConflictItem[];
 }
 
 export interface ProductionBatchItem {
@@ -721,7 +730,10 @@ export const ProjectsAPI = {
     return res.data?.data || res.data;
   },
 
-  async processWeeklyTimesheet(timesheetId: string, payload: { action: 'APPROVE' | 'REJECT'; notes?: string }): Promise<any> {
+  async processWeeklyTimesheet(
+    timesheetId: string,
+    payload: { action: 'APPROVE' | 'REJECT'; weekStartDate: string; notes?: string },
+  ): Promise<any> {
     const res = await apiClient.post('/v3/tasks/timesheets/' + timesheetId + '/process', payload);
     return res.data?.data || res.data;
   },

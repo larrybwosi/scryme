@@ -4,7 +4,7 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
-import { Kanban, Rows, Plus, Search } from "lucide-react";
+import { CalendarCheck, CookingPot, Kanban, Rows, Plus, Search } from "lucide-react";
 import { useTasks, useProjects, useUpdateTaskStatus } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
@@ -262,9 +262,9 @@ export default function BoardPage() {
                           <span
                             className={`px-1.5 py-0.2 rounded text-[9px] font-label-badge uppercase ${
                               task.priority === "URGENT"
-                                ? "bg-red-500/20 text-red-400"
+                                ? "bg-status-critical/20 text-status-critical"
                                 : task.priority === "HIGH"
-                                ? "bg-amber-500/20 text-amber-400"
+                                ? "bg-status-warning/20 text-status-warning"
                                 : task.priority === "MEDIUM"
                                 ? "bg-primary-container/20 text-primary"
                                 : "bg-surface-container-highest text-outline"
@@ -285,13 +285,13 @@ export default function BoardPage() {
                         <div className="flex flex-wrap items-center gap-1">
                           {task.bookingId && (
                             <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-label-code bg-primary/10 text-primary border border-primary/20">
-                              <span className="material-symbols-outlined text-[10px]">event_available</span>
+                              <CalendarCheck className="h-3 w-3" aria-hidden />
                               Booking
                             </span>
                           )}
                           {task.batches && task.batches.length > 0 && (
-                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-label-code bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                              <span className="material-symbols-outlined text-[10px]">cookie</span>
+                            <span className="inline-flex items-center gap-0.5 px-1 py-0.2 rounded text-[9px] font-label-code bg-status-warning/10 text-status-warning border border-status-warning/20">
+                              <CookingPot className="h-3 w-3" aria-hidden />
                               Batch
                             </span>
                           )}
@@ -302,8 +302,8 @@ export default function BoardPage() {
                                   key={l.label?.id || idx}
                                   className="px-1 py-0.2 rounded text-[9px] font-medium"
                                   style={{
-                                    color: l.label?.color || "#6B7280",
-                                    backgroundColor: `${l.label?.color || "#6B7280"}15`,
+                                    color: l.label?.color || "var(--color-outline)",
+                                    backgroundColor: `color-mix(in srgb, ${l.label?.color || "var(--color-outline)"} 12%, transparent)`,
                                   }}
                                 >
                                   {l.label?.name}

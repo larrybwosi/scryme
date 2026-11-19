@@ -493,21 +493,43 @@ async function cancelWorkflow(
     }
   }
 
-  const execution = await db.workflowEngineExecution.findFirst({
+  const job = await db.workflowEngineJob.findFirst({
     where: {
       organizationId,
       id: jobId,
     },
   });
 
+  const executionId = job?.executionId || jobId;
+
+  const execution = await db.workflowEngineExecution.findFirst({
+    where: {
+      organizationId,
+      id: executionId,
+    },
+  });
+
   if (execution) {
     await db.workflowEngineExecution.update({
       where: { id: execution.id },
-      data: { status: "CANCELLED" },
+      data: { status: "CANCELLED", completedAt: new Date() },
+    });
+
+    await db.workflowEngineJob.updateMany({
+      where: {
+        organizationId,
+        executionId: execution.id,
+        status: { notIn: ["COMPLETED", "CANCELLED"] },
+      },
+      data: {
+        status: "CANCELLED",
+        lockedBy: null,
+        lockedAt: null,
+      },
     });
   }
 
-  return { success: true };
+  return { success: true, executionId, jobId: job?.id };
 }
 
 async function getWorkflowLogs(
@@ -530,19 +552,35 @@ async function getWorkflowLogs(
     }
   }
 
+  const job = await db.workflowEngineJob.findFirst({
+    where: {
+      organizationId,
+      id: jobId,
+    },
+  });
+
+  const executionId = job?.executionId || jobId;
+
   const auditLogs = await db.workflowEngineAuditLog.findMany({
     where: {
       organizationId,
-      executionId: jobId,
+      executionId,
     },
     orderBy: { createdAt: "asc" },
+    take: 1000,
   });
 
-  const logsText = auditLogs.length > 0
-    ? auditLogs.map((log) => `[${log.createdAt.toISOString()}] [${log.level}] ${log.action}: ${JSON.stringify(log.details || {})}`).join("\n")
-    : `[CUSTOM AUTOMATION ENGINE LOGS]\n[${new Date().toISOString()}] Job initialized under instance ${jobId}.\n[${new Date().toISOString()}] Executing workflow steps autonomously via NestJS API.`;
+  const logsText =
+    auditLogs.length > 0
+      ? auditLogs
+          .map(
+            (log) =>
+              `[${log.createdAt.toISOString()}] [${log.level}] ${log.action}: ${JSON.stringify(log.details || {})}`,
+          )
+          .join("\n")
+      : `[CUSTOM AUTOMATION ENGINE LOGS]\n[${new Date().toISOString()}] No audit records found for instance ${jobId}.`;
 
-  return { success: true, data: logsText };
+  return { success: true, data: logsText, executionId, jobId: job?.id };
 }
 
 async function getExecutionHistory(
@@ -571,10 +609,42 @@ async function getExecutionHistory(
       organizationId,
       ...(scriptPath ? { triggerEvent: scriptPath } : {}),
     },
+    include: {
+      jobs: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          status: true,
+          attempts: true,
+          maxAttempts: true,
+          lastError: true,
+          nextRunAt: true,
+        },
+      },
+    },
     orderBy: { createdAt: "desc" },
     take: 50,
   });
-  return history;
+
+  return history.map((execution) => {
+    const primaryJob = execution.jobs?.[0];
+    return {
+      id: execution.id,
+      jobId: primaryJob?.id || null,
+      jobStatus: primaryJob?.status || null,
+      status: execution.status,
+      correlationId: execution.correlationId,
+      triggerEvent: execution.triggerEvent,
+      createdAt: execution.createdAt,
+      startedAt: execution.startedAt,
+      completedAt: execution.completedAt,
+      nextRunAt: primaryJob?.nextRunAt || null,
+      error: execution.error,
+      result: execution.result,
+      payload: execution.payload,
+      jobs: execution.jobs || [],
+    };
+  });
 }
 
 
@@ -598,33 +668,18 @@ async function simulateWorkflow(
       authHeader,
       cookieHeader,
     );
-    if (v3Res?.data || v3Res?.steps || v3Res?.success !== undefined) {
+    if (v3Res?.steps || v3Res?.data?.steps) {
       return { success: true, data: v3Res.data || v3Res };
+    }
+
+    if (v3Res && (v3Res.message || v3Res.error)) {
+      throw new Error(v3Res.message || v3Res.error);
     }
   }
 
-  // Fallback direct mock simulation if v3 endpoint unreachable
-  return {
-    success: true,
-    data: {
-      success: true,
-      isSimulation: true,
-      totalSteps: config?.studio?.nodes?.length || 0,
-      executedSteps: config?.studio?.nodes?.length || 0,
-      skippedSteps: 0,
-      failedSteps: 0,
-      steps: (config?.studio?.nodes || []).map((n: any) => ({
-        nodeId: n.id,
-        nodeLabel: n.data?.label || n.id,
-        kind: n.data?.kind || "action",
-        status: "COMPLETED",
-        input: inputs,
-        output: { simulated: true, label: n.data?.label },
-        durationMs: 5,
-      })),
-      finalContext: { payload: inputs },
-    },
-  };
+  throw new Error(
+    "The workflow simulation API is unavailable. Start the API service and try again.",
+  );
 }
 
 async function replayWorkflow(
@@ -669,6 +724,111 @@ async function replayWorkflow(
     authHeader,
     cookieHeader,
   );
+}
+
+async function getDeadLetterJobs(
+  organizationId: string,
+  limit: number | undefined,
+  offset: number | undefined,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (orgSlug) {
+    const query = new URLSearchParams();
+    if (limit !== undefined) query.set("limit", String(limit));
+    if (offset !== undefined) query.set("offset", String(offset));
+    const suffix = query.toString() ? `?${query.toString()}` : "";
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      `dead-letter${suffix}`,
+      {},
+      authHeader,
+      cookieHeader,
+    );
+    if (Array.isArray(v3Res?.data)) {
+      return v3Res.data;
+    }
+  }
+
+  return db.workflowEngineJob.findMany({
+    where: {
+      organizationId,
+      status: "FAILED",
+    },
+    include: {
+      execution: true,
+      definition: true,
+    },
+    orderBy: { updatedAt: "desc" },
+    take: limit ?? 50,
+    skip: offset ?? 0,
+  });
+}
+
+async function retryWorkflowJob(
+  organizationId: string,
+  jobId: string,
+  orgSlug?: string,
+  authHeader?: string | null,
+  cookieHeader?: string | null,
+) {
+  if (!jobId) throw new Error("jobId is required");
+
+  if (orgSlug) {
+    const v3Res = await fetchFromV3Api(
+      orgSlug,
+      "jobs/retry",
+      {
+        method: "POST",
+        body: JSON.stringify({ jobId }),
+      },
+      authHeader,
+      cookieHeader,
+    );
+    if (v3Res?.success) {
+      return v3Res;
+    }
+  }
+
+  const job = await db.workflowEngineJob.findFirst({
+    where: { organizationId, id: jobId },
+  });
+
+  if (!job) {
+    throw new Error(`Job ${jobId} not found.`);
+  }
+
+  if (job.status !== "FAILED") {
+    throw new Error(`Job ${jobId} is ${job.status}. Only failed jobs can be retried.`);
+  }
+
+  const requeued = await db.workflowEngineJob.update({
+    where: { id: job.id },
+    data: {
+      status: "QUEUED",
+      attempts: 0,
+      nextRunAt: new Date(),
+      lastError: null,
+      processedAt: null,
+      lockedBy: null,
+      lockedAt: null,
+    },
+  });
+
+  await db.workflowEngineExecution.updateMany({
+    where: {
+      id: job.executionId,
+      status: { notIn: ["CANCELLED"] },
+    },
+    data: {
+      status: "RUNNING",
+      error: null,
+      completedAt: null,
+    },
+  });
+
+  return { success: true, job: requeued };
 }
 
 export async function GET(
@@ -722,6 +882,8 @@ export async function GET(
 
     if (action === "history") {
       const scriptPath = req.nextUrl.searchParams.get("path") || undefined;
+      const limitParam = req.nextUrl.searchParams.get("limit");
+      const offsetParam = req.nextUrl.searchParams.get("offset");
       const history = await getExecutionHistory(
         auth.organizationId,
         scriptPath,
@@ -729,7 +891,31 @@ export async function GET(
         authHeader,
         cookieHeader,
       );
-      return NextResponse.json({ success: true, data: history });
+      const limit = limitParam ? Number(limitParam) : undefined;
+      const offset = offsetParam ? Number(offsetParam) : undefined;
+      const sliced =
+        limit !== undefined || offset !== undefined
+          ? history.slice(
+              Number.isFinite(offset) && offset ? offset : 0,
+              (Number.isFinite(offset) && offset ? offset : 0) +
+                (Number.isFinite(limit) && limit ? limit : history.length),
+            )
+          : history;
+      return NextResponse.json({ success: true, data: sliced });
+    }
+
+    if (action === "dead-letter") {
+      const limit = Number(req.nextUrl.searchParams.get("limit") || "");
+      const offset = Number(req.nextUrl.searchParams.get("offset") || "");
+      const jobs = await getDeadLetterJobs(
+        auth.organizationId,
+        Number.isFinite(limit) && limit > 0 ? limit : undefined,
+        Number.isFinite(offset) && offset >= 0 ? offset : undefined,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
+      return NextResponse.json({ success: true, data: jobs });
     }
 
     if (action === "logs") {
@@ -858,6 +1044,17 @@ export async function POST(
 
     if (action === "cancel") {
       const result = await cancelWorkflow(
+        auth.organizationId,
+        body.jobId,
+        orgSlug,
+        authHeader,
+        cookieHeader,
+      );
+      return NextResponse.json(result);
+    }
+
+    if (action === "retry" || action === "jobs/retry") {
+      const result = await retryWorkflowJob(
         auth.organizationId,
         body.jobId,
         orgSlug,

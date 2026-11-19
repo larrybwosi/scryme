@@ -8,9 +8,7 @@ const rawProjectId =
   process.env.SANITY_STUDIO_PROJECT_ID ||
   process.env.VITE_SANITY_PROJECT_ID ||
   process.env.SANITY_PROJECT_ID ||
-  process.env.NEXT_PUBLIC_SITE_SANITY_PROJECT_ID ||
-  process.env.NEXT_PUBLIC_SANITY_PROJECT_ID ||
-  ''
+  '25pbas6k'
 
 const projectId =
   rawProjectId &&
@@ -23,14 +21,12 @@ const dataset =
   process.env.SANITY_STUDIO_DATASET ||
   process.env.VITE_SANITY_DATASET ||
   process.env.SANITY_DATASET ||
-  process.env.NEXT_PUBLIC_SITE_SANITY_DATASET ||
-  process.env.NEXT_PUBLIC_SANITY_DATASET ||
   'production'
 
 export default defineConfig({
   name: 'default',
   title: 'Scryme Site Studio',
-  projectId: '25pbas6k',
+  projectId,
   dataset,
   basePath: '/studio',
   plugins: [
