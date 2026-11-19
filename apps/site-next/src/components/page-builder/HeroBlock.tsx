@@ -25,7 +25,9 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({
   image,
   ratingText,
 }) => {
-  const imageUrl = image ? urlFor(image)?.width(1200).height(800).url() : null
+  const imageUrl = image
+    ? urlFor(image)?.width(1200).height(800).format('webp').fit('max').url()
+    : null
 
   return (
     <section className="relative overflow-hidden py-20 lg:py-28">
@@ -90,7 +92,12 @@ export const HeroBlock: React.FC<HeroBlockProps> = ({
                 <img
                   src={imageUrl}
                   alt={headline}
-                  className="w-full rounded-xl object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
+                  width={1200}
+                  height={800}
+                  loading="eager"
+                  decoding="async"
+                  fetchPriority="high"
+                  className="w-full h-auto rounded-xl object-cover shadow-2xl transition-transform duration-500 group-hover:scale-[1.02]"
                 />
               ) : (
                 <div className="aspect-[4/3] w-full rounded-xl bg-gradient-to-br from-zinc-800 to-zinc-900 p-8 flex flex-col justify-between border border-white/5">

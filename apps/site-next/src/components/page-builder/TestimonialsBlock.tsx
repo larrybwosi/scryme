@@ -46,7 +46,9 @@ export const TestimonialsBlock: React.FC<TestimonialsBlockProps> = ({
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {items.map((item, idx) => {
-            const avatarUrl = item.avatar ? urlFor(item.avatar)?.width(100).height(100).url() : null
+            const avatarUrl = item.avatar
+              ? urlFor(item.avatar)?.width(100).height(100).format('webp').fit('crop').url()
+              : null
             const ratingCount = item.rating || 5
 
             return (
@@ -79,6 +81,10 @@ export const TestimonialsBlock: React.FC<TestimonialsBlockProps> = ({
                     <img
                       src={avatarUrl}
                       alt={item.authorName}
+                      width={40}
+                      height={40}
+                      loading="lazy"
+                      decoding="async"
                       className="h-10 w-10 rounded-full object-cover border border-white/10"
                     />
                   ) : (

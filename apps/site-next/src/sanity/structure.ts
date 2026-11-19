@@ -77,7 +77,7 @@ export const structure: StructureResolver = (S) =>
         .title('Marketing Pages')
         .child(
           S.documentTypeList('page')
-            .title('Modular Landing Pages (/pages/*)')
+            .title('Modular Landing Pages (/blog/*)')
         ),
 
       S.listItem()

@@ -301,7 +301,7 @@ function PromiseSection() {
           src="/images/img1.png"
           alt="Account executive reviewing the unified account graph"
           className="h-[420px] w-full object-cover opacity-90"
-        />
+         decoding="async" />
         <div className="absolute inset-x-4 bottom-4 flex items-center justify-between gap-3 rounded-2xl glass-panel border-white/15 p-4 backdrop-blur-md">
           <div className="flex items-center gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#d2ff3a]/10 text-[#d2ff3a]">

@@ -310,7 +310,7 @@ export function DevelopersAppsPage() {
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/10 flex items-center justify-center overflow-hidden shrink-0">
                             {app.icon ? (
-                              <img src={app.icon} alt={app.name} className="w-full h-full object-cover" />
+                              <img src={app.icon} alt={app.name} className="w-full h-full object-cover"  decoding="async" />
                             ) : (
                               <Shield className="w-5 h-5 text-[#d2ff3a]" />
                             )}
