@@ -14,6 +14,7 @@ const nextConfig: NextConfig = {
     serverActions: {
       bodySizeLimit: "10mb",
     },
+    agentUpgrade: "security",
   },
   async rewrites() {
     const isDev = process.env.NODE_ENV === "development";
