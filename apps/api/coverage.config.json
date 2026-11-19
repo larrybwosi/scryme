@@ -1,0 +1,6 @@
+{
+  "line": 48,
+  "branch": 33,
+  "changedLine": 80,
+  "note": "Baseline floors recorded during the CI migration. Raise to 60 line and 50 branch as api test coverage grows."
+}

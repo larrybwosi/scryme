@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { WifiOff, RefreshCw } from 'lucide-react';
+import { RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useSyncEngineStore } from '@/store/syncEngineStore';
 
@@ -29,7 +29,6 @@ interface ConnectionStatus {
  */
 export function ConnectionStatusBanner() {
   const isSyncing = useSyncEngineStore((state) => state.isSyncing);
-  const isOnline = useSyncEngineStore((state) => state.isOnline);
 
   useEffect(() => {
     if (import.meta.env.MODE === 'default') return;

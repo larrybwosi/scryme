@@ -1,6 +1,6 @@
 import { useKdsStore } from '@/store/kds-store';
 import { Badge } from '@repo/ui/components/ui/badge';
-import { Wifi, WifiOff, Loader2, AlertCircle } from 'lucide-react';
+import { Wifi, Loader2, AlertCircle } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   Tooltip,
