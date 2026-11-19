@@ -4,13 +4,16 @@ import { Input } from "@repo/ui/components/ui/input";
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useRef } from "react";
-import { Search, Plus, X, UploadCloud, FileText, Paperclip, Check, Loader2 } from "lucide-react";
+import { Search, Plus, UploadCloud, FileText, Paperclip, Check, Loader2, BookOpen } from "lucide-react";
 import {
   useProjectDocuments,
   useCreateProjectDocument,
   useUploadFile,
 } from "@/lib/hooks/use-projects";
 import { ProjectDocument } from "@/lib/api";
+import { Dialog } from "@/components/Dialog";
+import { PageEmpty, PageLoading } from "@/components/PageState";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 export function DocsTab({ projectId }: { projectId: string }) {
   const { data: docs = [], isLoading } = useProjectDocuments(projectId);
@@ -80,7 +83,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
       const markdownLink = `\n\n[Attachment: ${file.name}](${fileUrl})`;
       setNewContent((prev) => prev + markdownLink);
     } catch (err) {
-      console.error("Failed to upload document attachment:", err);
+      notifyError(err, "Could not upload file");
     } finally {
       setIsUploading(false);
       e.target.value = "";
@@ -91,20 +94,25 @@ export function DocsTab({ projectId }: { projectId: string }) {
     e.preventDefault();
     if (!newTitle.trim() || !projectId) return;
 
-    const created = await createDocMutation.mutateAsync({
-      title: newTitle.trim(),
-      type: newType,
-      summary: newSummary.trim() || undefined,
-      content: newContent.trim() || undefined,
-      status: "DRAFT",
-    });
+    try {
+      const created = await createDocMutation.mutateAsync({
+        title: newTitle.trim(),
+        type: newType,
+        summary: newSummary.trim() || undefined,
+        content: newContent.trim() || undefined,
+        status: "DRAFT",
+      });
 
-    setSelectedDocId(created.id);
-    setNewTitle("");
-    setNewSummary("");
-    setNewContent("");
-    setAttachedFiles([]);
-    setIsCreateOpen(false);
+      notifySuccess("Document created");
+      setSelectedDocId(created.id);
+      setNewTitle("");
+      setNewSummary("");
+      setNewContent("");
+      setAttachedFiles([]);
+      setIsCreateOpen(false);
+    } catch (err) {
+      notifyError(err, "Could not create document");
+    }
   };
 
   return (
@@ -142,26 +150,36 @@ export function DocsTab({ projectId }: { projectId: string }) {
         </div>
       </div>
 
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-xl rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
-            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                Create Specification / RFC
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
+      <Dialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Create Specification / RFC"
+        className="max-w-xl"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="create-document-form"
+              disabled={createDocMutation.isPending || isUploading}
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+            >
+              {createDocMutation.isPending ? "Creating..." : "Save Document"}
+            </button>
+          </div>
+        }
+      >
+            <form id="create-document-form" onSubmit={handleCreate} className="flex flex-col gap-4 p-5">
               <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Document Title</label>
+                <label htmlFor="doc-title" className="block text-body-sm font-medium text-on-surface mb-1">Document Title</label>
                 <Input
+                  id="doc-title"
                   type="text"
                   required
                   placeholder="e.g. Distributed Telemetry Multiplexing Protocol"
@@ -172,9 +190,9 @@ export function DocsTab({ projectId }: { projectId: string }) {
               </div>
 
               <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Type</label>
+                <label htmlFor="doc-type" className="block text-body-sm font-medium text-on-surface mb-1">Type</label>
                 <Select value={newType} onValueChange={(val) => setNewType(val as ProjectDocument["type"])}>
-                  <SelectTrigger className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
+                  <SelectTrigger id="doc-type" className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm">
                     <SelectValue placeholder="Select type" />
                   </SelectTrigger>
                   <SelectContent className="bg-surface-container border-outline-variant text-on-surface">
@@ -187,8 +205,9 @@ export function DocsTab({ projectId }: { projectId: string }) {
               </div>
 
               <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Summary</label>
+                <label htmlFor="doc-summary" className="block text-body-sm font-medium text-on-surface mb-1">Summary</label>
                 <Input
+                  id="doc-summary"
                   type="text"
                   placeholder="Brief abstract"
                   value={newSummary}
@@ -199,7 +218,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
 
               <div>
                 <div className="flex items-center justify-between mb-1">
-                  <label className="block text-body-sm font-medium text-on-surface">Content (Markdown)</label>
+                  <label htmlFor="doc-content" className="block text-body-sm font-medium text-on-surface">Content (Markdown)</label>
                   <div className="flex items-center gap-2">
                     <input
                       ref={markdownInputRef}
@@ -240,6 +259,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
                 </div>
 
                 <Textarea
+                  id="doc-content"
                   rows={5}
                   placeholder="Full document body (Markdown)... Or import from a Markdown/text file."
                   value={newContent}
@@ -263,7 +283,7 @@ export function DocsTab({ projectId }: { projectId: string }) {
                         rel="noreferrer"
                         className="inline-flex items-center gap-1.5 px-2 py-1 rounded bg-surface-container-high text-[11px] text-on-surface hover:text-primary transition-colors border border-outline-variant/20"
                       >
-                        <Check className="h-3 w-3 text-emerald-400" />
+                        <Check className="h-3 w-3 text-status-success" />
                         <span className="truncate max-w-[200px]">{file.name}</span>
                       </a>
                     ))}
@@ -271,37 +291,17 @@ export function DocsTab({ projectId }: { projectId: string }) {
                 </div>
               )}
 
-              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/20">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createDocMutation.isPending || isUploading}
-                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                >
-                  {createDocMutation.isPending ? "Creating..." : "Save Document"}
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Dialog>
 
-      {isLoading && (
-        <div className="p-8 text-center text-outline text-body-sm">
-          Loading documents...
-        </div>
-      )}
+      {isLoading && <PageLoading variant="grid" rows={2} label="Loading documents" />}
 
       {!isLoading && docs.length === 0 && (
-        <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/30 text-center text-outline text-body-sm">
-          No technical documents or RFCs in this project yet.
-        </div>
+        <PageEmpty
+          icon={BookOpen}
+          title="No documents yet"
+          description="Add an RFC, spec, or guide to capture decisions for this project."
+        />
       )}
 
       {!isLoading && docs.length > 0 && (
@@ -326,9 +326,9 @@ export function DocsTab({ projectId }: { projectId: string }) {
                     <span
                       className={`px-1.5 py-0.2 rounded text-[10px] font-label-badge uppercase ${
                         doc.status === "APPROVED"
-                          ? "bg-emerald-500/20 text-emerald-400"
+                          ? "bg-status-success/20 text-status-success"
                           : doc.status === "REVIEW"
-                          ? "bg-amber-500/20 text-amber-400"
+                          ? "bg-status-warning/20 text-status-warning"
                           : "bg-surface-container text-outline"
                       }`}
                     >

@@ -32,7 +32,7 @@ export function AnalyticsTab({ projectId }: { projectId: string }) {
         </div>
         <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
           <span className="text-outline text-body-sm">Done</span>
-          <span className="text-headline-lg font-headline-lg text-emerald-400 font-semibold">{doneTasks}</span>
+          <span className="text-headline-lg font-headline-lg text-status-success font-semibold">{doneTasks}</span>
         </div>
         <div className="p-4 rounded-lg bg-surface-container-low border border-outline-variant/30 flex flex-col gap-1">
           <span className="text-outline text-body-sm">In Progress</span>

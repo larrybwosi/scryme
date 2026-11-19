@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { ChevronRight, UserPlus, X, Trash2, Shield, User, Loader2 } from "lucide-react";
+import { ChevronRight, UserPlus, Trash2, Loader2, Users } from "lucide-react";
 import {
   useMembers,
   useProject,
@@ -10,7 +10,10 @@ import {
 } from "@/lib/hooks/use-projects";
 import { MemberPerformanceDrawer } from "@/components/MemberPerformanceDrawer";
 import { usePermissions } from "@/lib/permissions";
-import { toast } from "sonner";
+import { Dialog } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PageEmpty, PageLoading } from "@/components/PageState";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 export function TeamTab({ projectId }: { projectId?: string } = {}) {
   const { data: members = [], isLoading: isMembersLoading } = useMembers();
@@ -24,13 +27,14 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
   const [isAddMemberOpen, setIsAddMemberOpen] = useState(false);
   const [selectedAddMemberId, setSelectedAddMemberId] = useState("");
   const [selectedRole, setSelectedRole] = useState<"ADMIN" | "MEMBER" | "VIEWER">("MEMBER");
+  const [removeTarget, setRemoveTarget] = useState<{ id: string; name: string } | null>(null);
 
   const projectMembers = project?.members || [];
 
   const handleAddMember = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedAddMemberId || !projectId) {
-      toast.error("Please select a team member");
+      notifyError(new Error("Please select a team member"), "Please select a team member");
       return;
     }
 
@@ -39,22 +43,23 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
         memberId: selectedAddMemberId,
         role: selectedRole,
       });
-      toast.success("Team member assigned to project");
+      notifySuccess("Team member assigned to project");
       setIsAddMemberOpen(false);
       setSelectedAddMemberId("");
       setSelectedRole("MEMBER");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to assign member to project");
+    } catch (err) {
+      notifyError(err, "Could not assign member to project");
     }
   };
 
-  const handleRemoveMember = async (memberId: string) => {
-    if (!projectId) return;
+  const handleRemoveMember = async () => {
+    if (!projectId || !removeTarget) return;
     try {
-      await removeMemberMutation.mutateAsync(memberId);
-      toast.success("Member removed from project");
-    } catch (err: any) {
-      toast.error(err?.message || "Failed to remove member");
+      await removeMemberMutation.mutateAsync(removeTarget.id);
+      notifySuccess("Member removed from project");
+      setRemoveTarget(null);
+    } catch (err) {
+      notifyError(err, "Could not remove member");
     }
   };
 
@@ -88,9 +93,7 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
         )}
       </div>
 
-      {isLoading && (
-        <div className="p-8 text-center text-outline text-body-sm">Loading team members...</div>
-      )}
+      {isLoading && <PageLoading variant="grid" rows={2} label="Loading team members" />}
 
       {projectId && !isLoading && projectMembers.length > 0 && (
         <div className="flex flex-col gap-3">
@@ -140,9 +143,10 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
                     {canManageTasks && (
                       <button
                         type="button"
-                        onClick={() => handleRemoveMember(pm.member?.id || pm.id)}
+                        onClick={() => setRemoveTarget({ id: pm.member?.id || pm.id, name: memberName })}
                         disabled={removeMemberMutation.isPending}
-                        className="p-1.5 text-outline hover:text-red-400 transition-colors"
+                        className="p-1.5 text-outline hover:text-status-critical transition-colors"
+                        aria-label={`Remove ${memberName} from project`}
                         title="Remove Member from Project"
                       >
                         <Trash2 className="h-3.5 w-3.5" />
@@ -165,9 +169,11 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
           )}
 
           {members.length === 0 ? (
-            <div className="p-8 text-center text-outline text-body-sm border border-dashed border-outline-variant/30 rounded-lg">
-              No members found in this organization.
-            </div>
+            <PageEmpty
+              icon={Users}
+              title="No members found"
+              description="Invite people to this organization before assigning them to a project."
+            />
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
               {members.map((m) => (
@@ -202,27 +208,38 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
         </div>
       )}
 
-      {isAddMemberOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold flex items-center gap-2">
-                <UserPlus className="h-4 w-4 text-primary" />
-                <span>Assign Team Member</span>
-              </h3>
-              <button
-                type="button"
-                onClick={() => setIsAddMemberOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-
-            <form onSubmit={handleAddMember} className="flex flex-col gap-4 mt-4">
+      <Dialog
+        open={isAddMemberOpen}
+        onClose={() => setIsAddMemberOpen(false)}
+        title="Assign Team Member"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsAddMemberOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="assign-member-form"
+              disabled={manageMemberMutation.isPending}
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50 flex items-center gap-1.5"
+            >
+              {manageMemberMutation.isPending ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : null}
+              <span>{manageMemberMutation.isPending ? "Assigning..." : "Assign Member"}</span>
+            </button>
+          </div>
+        }
+      >
+            <form id="assign-member-form" onSubmit={handleAddMember} className="flex flex-col gap-4 p-5">
               <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Select Member</label>
+                <label htmlFor="assign-member" className="block text-body-sm font-medium text-on-surface mb-1">Select Member</label>
                 <select
+                  id="assign-member"
                   required
                   value={selectedAddMemberId}
                   onChange={(e) => setSelectedAddMemberId(e.target.value)}
@@ -238,8 +255,9 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
               </div>
 
               <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Project Role</label>
+                <label htmlFor="assign-role" className="block text-body-sm font-medium text-on-surface mb-1">Project Role</label>
                 <select
+                  id="assign-role"
                   value={selectedRole}
                   onChange={(e) => setSelectedRole(e.target.value as "ADMIN" | "MEMBER" | "VIEWER")}
                   className="w-full h-8 px-2 rounded-lg bg-surface-container border border-outline-variant text-on-surface text-body-sm"
@@ -249,30 +267,19 @@ export function TeamTab({ projectId }: { projectId?: string } = {}) {
                   <option value="VIEWER">Viewer (Read Only)</option>
                 </select>
               </div>
-
-              <div className="flex justify-end gap-2 pt-2 border-t border-outline-variant/20">
-                <button
-                  type="button"
-                  onClick={() => setIsAddMemberOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={manageMemberMutation.isPending}
-                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50 flex items-center gap-1.5"
-                >
-                  {manageMemberMutation.isPending ? (
-                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                  ) : null}
-                  <span>{manageMemberMutation.isPending ? "Assigning..." : "Assign Member"}</span>
-                </button>
-              </div>
             </form>
-          </div>
-        </div>
-      )}
+      </Dialog>
+
+      <ConfirmDialog
+        open={Boolean(removeTarget)}
+        title="Remove team member"
+        description={`Remove ${removeTarget?.name ?? "this member"} from the project? They will lose project access.`}
+        confirmLabel="Remove member"
+        destructive
+        pending={removeMemberMutation.isPending}
+        onConfirm={handleRemoveMember}
+        onCancel={() => setRemoveTarget(null)}
+      />
 
       <MemberPerformanceDrawer
         isOpen={!!selectedMemberId}

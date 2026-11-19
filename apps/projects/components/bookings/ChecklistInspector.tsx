@@ -77,7 +77,7 @@ export function ChecklistInspector({
             type="button"
             disabled={isGenerating}
             onClick={onGenerateTasks}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-black hover:bg-primary/90 transition-colors disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium bg-primary text-surface hover:bg-primary/90 transition-colors disabled:opacity-50"
           >
             <Sparkles className="w-3.5 h-3.5" />
             Generate Tasks & Checklist
@@ -146,7 +146,7 @@ export function ChecklistInspector({
                           >
                             {item.title}
                             {item.isRequired && (
-                              <span className="text-amber-400 text-[10px] ml-1.5">*required</span>
+                              <span className="text-status-warning text-[10px] ml-1.5">*required</span>
                             )}
                           </p>
                           {item.description && (
@@ -155,7 +155,7 @@ export function ChecklistInspector({
                             </p>
                           )}
                           {item.isCompleted && item.completedBy?.user?.name && (
-                            <p className="text-[10px] text-emerald-400 mt-0.5">
+                            <p className="text-[10px] text-status-success mt-0.5">
                               Completed by {item.completedBy.user.name}
                             </p>
                           )}

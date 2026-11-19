@@ -32,6 +32,7 @@ import {
 } from "@/lib/hooks/use-projects";
 import { CreateTaskModal } from "@/components/CreateTaskModal";
 import { AddScheduleModal } from "@/components/AddScheduleModal";
+import { Dialog } from "@/components/Dialog";
 import { usePermissions } from "@/lib/permissions";
 import { UnifiedCalendarEvent } from "@/lib/api";
 
@@ -169,28 +170,28 @@ export default function CalendarPage() {
     switch (e.category) {
       case "production":
         return e.status === "COMPLETED"
-          ? "bg-emerald-950/70 text-emerald-300 border-emerald-500/30"
-          : "bg-amber-950/70 text-amber-300 border-amber-500/40";
+          ? "bg-status-success/70 text-status-success border-status-success/30"
+          : "bg-status-warning/70 text-status-warning border-status-warning/40";
       case "delivery":
         return e.status === "DELIVERED"
-          ? "bg-emerald-950/70 text-emerald-300 border-emerald-500/30"
+          ? "bg-status-success/70 text-status-success border-status-success/30"
           : e.status === "FAILED"
-          ? "bg-rose-950/70 text-rose-300 border-rose-500/50"
-          : "bg-cyan-950/70 text-cyan-300 border-cyan-500/40";
+          ? "bg-status-critical/70 text-status-critical border-status-critical/50"
+          : "bg-status-info/70 text-status-info border-status-info/40";
       case "crm":
         return e.status === "COMPLETED"
-          ? "bg-slate-800/80 text-slate-300 border-slate-600/30"
-          : "bg-indigo-950/80 text-indigo-300 border-indigo-500/40";
+          ? "bg-status-neutral/80 text-status-neutral border-status-neutral/30"
+          : "bg-status-info/80 text-status-info border-status-info/40";
       case "shift":
-        return "bg-teal-950/70 text-teal-300 border-teal-500/30";
+        return "bg-status-success/70 text-status-success border-status-success/30";
       case "milestone":
-        return "bg-purple-950/70 text-purple-300 border-purple-500/40";
+        return "bg-status-info/70 text-status-info border-status-info/40";
       case "task":
       default:
         return e.status === "DONE"
-          ? "bg-emerald-950/60 text-emerald-300 border-emerald-500/30"
+          ? "bg-status-success/60 text-status-success border-status-success/30"
           : e.priority === "URGENT"
-          ? "bg-rose-950/70 text-rose-300 border-rose-500/50"
+          ? "bg-status-critical/70 text-status-critical border-status-critical/50"
           : "bg-surface-container-high text-primary border-primary/30";
     }
   };
@@ -577,8 +578,14 @@ export default function CalendarPage() {
 
         {/* Detailed Event Inspection & Status Action Dialog */}
         {selectedEvent && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-            <div className="w-full max-w-lg bg-surface-container rounded-2xl border border-outline-variant/40 shadow-2xl p-6 flex flex-col gap-4 animate-in fade-in-50">
+          <Dialog
+            open
+            onClose={() => setSelectedEvent(null)}
+            ariaLabel={`Event ${selectedEvent.title}`}
+            showCloseButton={false}
+            className="max-w-lg"
+          >
+            <div className="flex flex-col gap-4 p-5">
               <div className="flex items-start justify-between border-b border-outline-variant/20 pb-3">
                 <div className="flex items-center gap-2">
                   <div
@@ -700,14 +707,14 @@ export default function CalendarPage() {
                         <button
                           type="button"
                           onClick={() => handleStatusTransition("IN_PROGRESS")}
-                          className="px-2.5 py-1 text-[11px] rounded bg-amber-500/20 text-amber-300 hover:bg-amber-500/30"
+                          className="px-2.5 py-1 text-[11px] rounded bg-status-warning/20 text-status-warning hover:bg-status-warning/30"
                         >
                           Start Batch
                         </button>
                         <button
                           type="button"
                           onClick={() => handleStatusTransition("COMPLETED")}
-                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                          className="px-2.5 py-1 text-[11px] rounded bg-status-success/20 text-status-success hover:bg-status-success/30"
                         >
                           Complete Batch
                         </button>
@@ -719,14 +726,14 @@ export default function CalendarPage() {
                         <button
                           type="button"
                           onClick={() => handleStatusTransition("IN_TRANSIT")}
-                          className="px-2.5 py-1 text-[11px] rounded bg-cyan-500/20 text-cyan-300 hover:bg-cyan-500/30"
+                          className="px-2.5 py-1 text-[11px] rounded bg-status-info/20 text-status-info hover:bg-status-info/30"
                         >
                           Mark In-Transit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleStatusTransition("DELIVERED")}
-                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                          className="px-2.5 py-1 text-[11px] rounded bg-status-success/20 text-status-success hover:bg-status-success/30"
                         >
                           Mark Delivered
                         </button>
@@ -737,7 +744,7 @@ export default function CalendarPage() {
                       <button
                         type="button"
                         onClick={() => handleStatusTransition("COMPLETED")}
-                        className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                        className="px-2.5 py-1 text-[11px] rounded bg-status-success/20 text-status-success hover:bg-status-success/30"
                       >
                         Complete Follow-up
                       </button>
@@ -755,7 +762,7 @@ export default function CalendarPage() {
                         <button
                           type="button"
                           onClick={() => handleStatusTransition("DONE")}
-                          className="px-2.5 py-1 text-[11px] rounded bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30"
+                          className="px-2.5 py-1 text-[11px] rounded bg-status-success/20 text-status-success hover:bg-status-success/30"
                         >
                           Mark Done
                         </button>
@@ -794,7 +801,7 @@ export default function CalendarPage() {
                 </button>
               </div>
             </div>
-          </div>
+          </Dialog>
         )}
 
         {/* Custom Right-Click Context Menu */}
@@ -850,7 +857,7 @@ export default function CalendarPage() {
                     }}
                     className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
                   >
-                    <Check className="h-4 w-4 text-emerald-400" />
+                    <Check className="h-4 w-4 text-status-success" />
                     <span>
                       {contextMenu.event.status === "DONE" ? "Mark In Progress" : "Mark Done"}
                     </span>
@@ -876,7 +883,7 @@ export default function CalendarPage() {
               onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "milestone")}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
             >
-              <Flag className="h-4 w-4 text-purple-400" />
+              <Flag className="h-4 w-4 text-status-info" />
               <span>Add Milestone</span>
             </button>
 
@@ -885,7 +892,7 @@ export default function CalendarPage() {
               onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "shift")}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
             >
-              <Clock className="h-4 w-4 text-teal-400" />
+              <Clock className="h-4 w-4 text-status-success" />
               <span>Add Staff Shift</span>
             </button>
 
@@ -894,7 +901,7 @@ export default function CalendarPage() {
               onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "booking")}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
             >
-              <Briefcase className="h-4 w-4 text-amber-400" />
+              <Briefcase className="h-4 w-4 text-status-warning" />
               <span>Reserve Capacity</span>
             </button>
 
@@ -903,7 +910,7 @@ export default function CalendarPage() {
               onClick={() => handleOpenAddScheduleForDate(contextMenu.date, "service")}
               className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded-lg text-left text-on-surface hover:bg-surface-container-highest transition-colors"
             >
-              <CalendarIcon className="h-4 w-4 text-cyan-400" />
+              <CalendarIcon className="h-4 w-4 text-status-info" />
               <span>Service Booking</span>
             </button>
           </div>

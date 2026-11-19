@@ -40,8 +40,8 @@ android {
         applicationId = "tech.scryme.app"
         minSdk = 26 // Android 8.0 (Oreo) or higher
         targetSdk = 34
-        versionCode = 100249
-        versionName = "10.2.49"
+        versionCode = 100250
+        versionName = "10.2.50"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {

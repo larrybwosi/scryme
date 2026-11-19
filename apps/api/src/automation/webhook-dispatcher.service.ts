@@ -4,6 +4,8 @@ import { isSafeUrl } from "@repo/shared/server";
 import axios from "axios";
 import * as crypto from "crypto";
 
+export type WebhookHttpMethod = "GET" | "HEAD" | "POST" | "PUT" | "PATCH" | "DELETE";
+
 export interface OutgoingWebhookOptions {
   organizationId: string;
   executionId?: string;
@@ -11,9 +13,14 @@ export interface OutgoingWebhookOptions {
   webhookId?: string;
   endpointUrl: string;
   secret?: string;
+  method?: WebhookHttpMethod | string;
   headers?: Record<string, string>;
   payload: any;
+  timeoutMs?: number;
+  idempotencyKey?: string;
 }
+
+const SUPPORTED_METHODS: WebhookHttpMethod[] = ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE"];
 
 @Injectable()
 export class WebhookDispatcherService {
@@ -22,8 +29,19 @@ export class WebhookDispatcherService {
   constructor(private readonly prisma: PrismaService) {}
 
   async dispatchOutgoingWebhook(options: OutgoingWebhookOptions): Promise<any> {
-    const { organizationId, executionId, jobId, endpointUrl, secret, headers = {}, payload } = options;
+    const {
+      organizationId,
+      executionId,
+      jobId,
+      endpointUrl,
+      secret,
+      headers = {},
+      payload,
+      timeoutMs,
+      idempotencyKey,
+    } = options;
 
+    const method = this.normalizeMethod(options.method);
     const requestHeaders: Record<string, string> = {
       "Content-Type": "application/json",
       "User-Agent": "Dealio-Automation-WorkflowEngine/1.0",
@@ -35,6 +53,11 @@ export class WebhookDispatcherService {
     if (secret) {
       const signature = crypto.createHmac("sha256", secret).update(payloadString).digest("hex");
       requestHeaders["X-Workflow-Signature"] = `sha256=${signature}`;
+    }
+
+    if (idempotencyKey) {
+      requestHeaders["Idempotency-Key"] = idempotencyKey;
+      requestHeaders["X-Workflow-Delivery"] = idempotencyKey;
     }
 
     if (!(await isSafeUrl(endpointUrl))) {
@@ -49,6 +72,8 @@ export class WebhookDispatcherService {
           level: "ERROR",
           details: {
             endpointUrl,
+            method,
+            idempotencyKey,
             error: errorMessage,
           },
         },
@@ -56,11 +81,25 @@ export class WebhookDispatcherService {
       throw new Error(errorMessage);
     }
 
+    const hasRequestBody = method !== "GET" && method !== "HEAD";
+    const effectiveTimeout =
+      typeof timeoutMs === "number" && timeoutMs > 0 ? timeoutMs : 10000;
+
     const startTime = Date.now();
     try {
-      const response = await axios.post(endpointUrl, payloadString, {
+      const response = await axios.request({
+        url: endpointUrl,
+        method,
         headers: requestHeaders,
-        timeout: 10000,
+        timeout: effectiveTimeout,
+        ...(hasRequestBody
+          ? { data: payloadString }
+          : {
+              params:
+                payload && typeof payload === "object" && !Array.isArray(payload)
+                  ? payload
+                  : undefined,
+            }),
       });
 
       const durationMs = Date.now() - startTime;
@@ -81,6 +120,8 @@ export class WebhookDispatcherService {
           level: "INFO",
           details: {
             endpointUrl,
+            method,
+            idempotencyKey,
             status: response.status,
             durationMs,
           },
@@ -89,6 +130,7 @@ export class WebhookDispatcherService {
 
       return {
         success: true,
+        method,
         ...result,
       };
     } catch (error: any) {
@@ -107,6 +149,8 @@ export class WebhookDispatcherService {
           level: "ERROR",
           details: {
             endpointUrl,
+            method,
+            idempotencyKey,
             error: errorMessage,
             durationMs,
           },
@@ -115,6 +159,11 @@ export class WebhookDispatcherService {
 
       throw new Error(`Webhook dispatch failed: ${errorMessage}`);
     }
+  }
+
+  private normalizeMethod(method?: string): WebhookHttpMethod {
+    const normalized = String(method || "POST").toUpperCase() as WebhookHttpMethod;
+    return SUPPORTED_METHODS.includes(normalized) ? normalized : "POST";
   }
 
   verifyIncomingSignature(secret: string, payload: string, signature: string): boolean {

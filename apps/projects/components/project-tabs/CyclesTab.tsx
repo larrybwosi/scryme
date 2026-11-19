@@ -2,12 +2,16 @@
 
 import { Input } from "@repo/ui/components/ui/input";
 import React, { useState } from "react";
-import { Plus, X, Trash2 } from "lucide-react";
+import { Plus, Repeat, Trash2 } from "lucide-react";
 import {
   useSprints,
   useCreateSprint,
   useDeleteSprint,
 } from "@/lib/hooks/use-projects";
+import { Dialog } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { PageEmpty, PageLoading } from "@/components/PageState";
+import { notifyError, notifySuccess } from "@/lib/feedback";
 
 export function CyclesTab({ projectId }: { projectId: string }) {
   const { data: sprints = [], isLoading } = useSprints(projectId);
@@ -18,21 +22,37 @@ export function CyclesTab({ projectId }: { projectId: string }) {
   const [name, setName] = useState("");
   const [goal, setGoal] = useState("");
   const [scopePoints, setScopePoints] = useState("20");
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; name: string } | null>(null);
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !projectId) return;
 
-    await createSprintMutation.mutateAsync({
-      name: name.trim(),
-      goal: goal.trim() || undefined,
-      scopePoints: parseInt(scopePoints, 10) || 0,
-      status: "PLANNED",
-    });
+    try {
+      await createSprintMutation.mutateAsync({
+        name: name.trim(),
+        goal: goal.trim() || undefined,
+        scopePoints: parseInt(scopePoints, 10) || 0,
+        status: "PLANNED",
+      });
+      notifySuccess("Cycle created");
+      setName("");
+      setGoal("");
+      setIsCreateOpen(false);
+    } catch (error) {
+      notifyError(error, "Could not create cycle");
+    }
+  };
 
-    setName("");
-    setGoal("");
-    setIsCreateOpen(false);
+  const handleDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      await deleteSprintMutation.mutateAsync(deleteTarget.id);
+      notifySuccess("Cycle deleted");
+      setDeleteTarget(null);
+    } catch (error) {
+      notifyError(error, "Could not delete cycle");
+    }
   };
 
   return (
@@ -57,82 +77,93 @@ export function CyclesTab({ projectId }: { projectId: string }) {
         </button>
       </div>
 
-      {isCreateOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-          <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-            <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-              <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Create Sprint Cycle</h3>
-              <button
-                type="button"
-                onClick={() => setIsCreateOpen(false)}
-                className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-              >
-                <X className="h-4 w-4" />
-              </button>
-            </div>
-            <form onSubmit={handleCreate} className="flex flex-col gap-4 mt-4">
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Cycle Name</label>
-                <Input
-                  type="text"
-                  required
-                  placeholder="e.g. Sprint 15: Core UI Architecture"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Sprint Goal</label>
-                <Input
-                  type="text"
-                  placeholder="Deliverable objective"
-                  value={goal}
-                  onChange={(e) => setGoal(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div>
-                <label className="block text-body-sm font-medium text-on-surface mb-1">Story Points Scope</label>
-                <Input
-                  type="number"
-                  min="0"
-                  value={scopePoints}
-                  onChange={(e) => setScopePoints(e.target.value)}
-                  className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
-                />
-              </div>
-              <div className="flex justify-end gap-2 pt-2">
-                <button
-                  type="button"
-                  onClick={() => setIsCreateOpen(false)}
-                  className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                >
-                  Cancel
-                </button>
-                <button
-                  type="submit"
-                  disabled={createSprintMutation.isPending}
-                  className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                >
-                  {createSprintMutation.isPending ? "Creating..." : "Create Cycle"}
-                </button>
-              </div>
-            </form>
+      <Dialog
+        open={isCreateOpen}
+        onClose={() => setIsCreateOpen(false)}
+        title="Create Sprint Cycle"
+        footer={
+          <div className="flex justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setIsCreateOpen(false)}
+              className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="create-cycle-form"
+              disabled={createSprintMutation.isPending}
+              className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+            >
+              {createSprintMutation.isPending ? "Creating..." : "Create Cycle"}
+            </button>
           </div>
-        </div>
-      )}
+        }
+      >
+        <form id="create-cycle-form" onSubmit={handleCreate} className="flex flex-col gap-4 p-5">
+          <div>
+            <label htmlFor="cycle-name" className="block text-body-sm font-medium text-on-surface mb-1">
+              Cycle Name
+            </label>
+            <Input
+              id="cycle-name"
+              type="text"
+              required
+              placeholder="e.g. Sprint 15: Core UI Architecture"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="cycle-goal" className="block text-body-sm font-medium text-on-surface mb-1">
+              Sprint Goal
+            </label>
+            <Input
+              id="cycle-goal"
+              type="text"
+              placeholder="Deliverable objective"
+              value={goal}
+              onChange={(e) => setGoal(e.target.value)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+          <div>
+            <label htmlFor="cycle-scope" className="block text-body-sm font-medium text-on-surface mb-1">
+              Story Points Scope
+            </label>
+            <Input
+              id="cycle-scope"
+              type="number"
+              min="0"
+              value={scopePoints}
+              onChange={(e) => setScopePoints(e.target.value)}
+              className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm focus-visible:border-primary-container"
+            />
+          </div>
+        </form>
+      </Dialog>
 
-      {isLoading && (
-        <div className="p-8 text-center text-outline text-body-sm">
-          Loading sprint cycles...
-        </div>
-      )}
+      <ConfirmDialog
+        open={Boolean(deleteTarget)}
+        title="Delete cycle"
+        description={`Delete "${deleteTarget?.name ?? ""}"? This cannot be undone.`}
+        confirmLabel="Delete cycle"
+        destructive
+        pending={deleteSprintMutation.isPending}
+        onConfirm={handleDelete}
+        onCancel={() => setDeleteTarget(null)}
+      />
+
+      {isLoading && <PageLoading variant="list" rows={3} label="Loading sprint cycles" />}
 
       {!isLoading && sprints.length === 0 && (
-        <div className="p-12 rounded-lg bg-surface-container-low border border-dashed border-outline-variant/30 text-center text-outline text-body-sm">
-          No sprint cycles created for this project yet.
-        </div>
+        <PageEmpty
+          icon={Repeat}
+          title="No cycles yet"
+          description="Create a sprint cycle to plan scope and track points for this project."
+        />
       )}
 
       {!isLoading && sprints.length > 0 && (
@@ -150,7 +181,7 @@ export function CyclesTab({ projectId }: { projectId: string }) {
                       sprint.status === "ACTIVE"
                         ? "bg-primary-container/20 text-primary"
                         : sprint.status === "COMPLETED"
-                        ? "bg-emerald-500/20 text-emerald-400"
+                        ? "bg-status-success/20 text-status-success"
                         : "bg-surface-container text-outline"
                     }`}
                   >
@@ -173,8 +204,9 @@ export function CyclesTab({ projectId }: { projectId: string }) {
                 </div>
                 <button
                   type="button"
-                  onClick={() => deleteSprintMutation.mutate(sprint.id)}
-                  className="text-outline hover:text-red-400 p-1 transition-colors"
+                  onClick={() => setDeleteTarget({ id: sprint.id, name: sprint.name })}
+                  className="text-outline hover:text-status-critical p-1 transition-colors"
+                  aria-label={`Delete ${sprint.name}`}
                   title="Delete Sprint"
                 >
                   <Trash2 className="h-4 w-4" />

@@ -3,6 +3,8 @@
 import { Textarea } from "@repo/ui/components/ui/textarea";
 import React, { useState } from "react";
 import { CheckCircle2, UserPlus, Play, CheckSquare, XCircle, AlertTriangle } from "lucide-react";
+import { Dialog } from "@/components/Dialog";
+import { FOCUS_RING } from "@/lib/navigation";
 
 export type BookingStatus =
   | "REQUESTED"
@@ -23,15 +25,15 @@ interface LifecycleActionsProps {
 }
 
 const statusColorMap: Record<BookingStatus, { bg: string; text: string; border: string }> = {
-  REQUESTED: { bg: "bg-amber-500/10", text: "text-amber-400", border: "border-amber-500/20" },
-  PENDING: { bg: "bg-blue-500/10", text: "text-blue-400", border: "border-blue-500/20" },
-  CONFIRMED: { bg: "bg-purple-500/10", text: "text-purple-400", border: "border-purple-500/20" },
-  ASSIGNED: { bg: "bg-indigo-500/10", text: "text-indigo-400", border: "border-indigo-500/20" },
-  SCHEDULED: { bg: "bg-cyan-500/10", text: "text-cyan-400", border: "border-cyan-500/20" },
-  IN_PROGRESS: { bg: "bg-orange-500/10", text: "text-orange-400", border: "border-orange-500/20" },
-  COMPLETED: { bg: "bg-emerald-500/10", text: "text-emerald-400", border: "border-emerald-500/20" },
-  CANCELLED: { bg: "bg-rose-500/10", text: "text-rose-400", border: "border-rose-500/20" },
-  NOSHOW: { bg: "bg-zinc-500/10", text: "text-zinc-400", border: "border-zinc-500/20" },
+  REQUESTED: { bg: "bg-status-warning/10", text: "text-status-warning", border: "border-status-warning/20" },
+  PENDING: { bg: "bg-status-info/10", text: "text-status-info", border: "border-status-info/20" },
+  CONFIRMED: { bg: "bg-status-info/10", text: "text-status-info", border: "border-status-info/20" },
+  ASSIGNED: { bg: "bg-status-info/10", text: "text-status-info", border: "border-status-info/20" },
+  SCHEDULED: { bg: "bg-status-info/10", text: "text-status-info", border: "border-status-info/20" },
+  IN_PROGRESS: { bg: "bg-status-warning/10", text: "text-status-warning", border: "border-status-warning/20" },
+  COMPLETED: { bg: "bg-status-success/10", text: "text-status-success", border: "border-status-success/20" },
+  CANCELLED: { bg: "bg-status-critical/10", text: "text-status-critical", border: "border-status-critical/20" },
+  NOSHOW: { bg: "bg-status-neutral/10", text: "text-status-neutral", border: "border-status-neutral/20" },
 };
 
 export function LifecycleActions({
@@ -73,7 +75,7 @@ export function LifecycleActions({
           type="button"
           disabled={isLoading}
           onClick={() => onTransition(nextAction.next, undefined, true)}
-          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary text-black hover:bg-primary/90 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg text-xs font-medium bg-primary text-surface hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           <NextIcon className="w-3.5 h-3.5" />
           {nextAction.label}
@@ -86,53 +88,55 @@ export function LifecycleActions({
           type="button"
           disabled={isLoading}
           onClick={() => setCancelModalOpen(true)}
-          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-container hover:bg-rose-500/20 text-rose-400 border border-outline-variant/30 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-medium bg-surface-container hover:bg-status-critical/20 text-status-critical border border-outline-variant/30 transition-colors disabled:opacity-50"
         >
           <XCircle className="w-3.5 h-3.5" />
           Cancel
         </button>
       )}
 
-      {/* Cancel Modal */}
-      {cancelModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-          <div className="bg-surface border border-outline-variant rounded-xl p-5 max-w-md w-full shadow-2xl">
-            <h3 className="text-base font-semibold text-on-surface mb-2 flex items-center gap-2">
-              <AlertTriangle className="w-4 h-4 text-rose-400" />
-              Cancel Booking
-            </h3>
-            <p className="text-xs text-on-surface-variant mb-4">
-              Are you sure you want to cancel this booking? Please provide an optional cancellation reason.
-            </p>
-            <Textarea
-              className="w-full bg-surface-container-low border border-outline-variant rounded-lg p-2.5 text-xs text-on-surface placeholder:text-outline focus-visible:border-primary resize-none h-20 mb-4"
-              placeholder="e.g., Customer requested rescheduling, sickness, etc."
-              value={cancelReason}
-              onChange={(e) => setCancelReason(e.target.value)}
-            />
-            <div className="flex items-center justify-end gap-2">
-              <button
-                type="button"
-                onClick={() => setCancelModalOpen(false)}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium text-on-surface-variant hover:bg-surface-container transition-colors"
-              >
-                Go Back
-              </button>
-              <button
-                type="button"
-                disabled={isLoading}
-                onClick={async () => {
-                  await onTransition("CANCELLED", cancelReason);
-                  setCancelModalOpen(false);
-                }}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium bg-rose-500 text-white hover:bg-rose-600 transition-colors disabled:opacity-50"
-              >
-                Confirm Cancellation
-              </button>
-            </div>
+      <Dialog
+        open={cancelModalOpen}
+        onClose={() => setCancelModalOpen(false)}
+        title="Cancel booking"
+        description="Are you sure you want to cancel this booking? You can add an optional cancellation reason."
+        className="max-w-md"
+        footer={
+          <div className="flex items-center justify-end gap-2">
+            <button
+              type="button"
+              onClick={() => setCancelModalOpen(false)}
+              className={`rounded-sm px-3 py-1.5 font-body-sm text-xs font-medium text-on-surface-variant transition-colors hover:bg-surface-container ${FOCUS_RING}`}
+            >
+              Go back
+            </button>
+            <button
+              type="button"
+              disabled={isLoading}
+              onClick={async () => {
+                await onTransition("CANCELLED", cancelReason);
+                setCancelModalOpen(false);
+              }}
+              className={`rounded-sm bg-status-critical px-3 py-1.5 font-headline-sm text-xs font-medium text-surface transition-colors hover:bg-status-critical/90 disabled:pointer-events-none disabled:opacity-50 ${FOCUS_RING}`}
+            >
+              Confirm cancellation
+            </button>
           </div>
+        }
+      >
+        <div className="flex flex-col gap-3 px-5 py-4">
+          <p className="flex items-center gap-2 font-body-sm text-xs text-on-surface-variant">
+            <AlertTriangle className="h-4 w-4 text-status-critical" aria-hidden />
+            This action updates the booking lifecycle.
+          </p>
+          <Textarea
+            className="h-20 w-full resize-none rounded-sm border border-outline-variant bg-surface-container-low p-2.5 text-xs text-on-surface placeholder:text-outline focus-visible:border-primary"
+            placeholder="e.g., Customer requested rescheduling, sickness, etc."
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+          />
         </div>
-      )}
+      </Dialog>
     </div>
   );
 }

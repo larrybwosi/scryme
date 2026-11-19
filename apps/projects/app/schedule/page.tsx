@@ -3,8 +3,13 @@
 import { Input } from "@repo/ui/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import React, { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, X, CalendarPlus } from "lucide-react";
+import { ChevronLeft, ChevronRight, PlusCircle, Plus, AlertTriangle, Pencil, Trash2, ArrowLeftRight, CalendarPlus } from "lucide-react";
 import { AddScheduleModal, ScheduleModalType } from "@/components/AddScheduleModal";
+import { CapacityWarningModal } from "@/components/CapacityWarningModal";
+import { Dialog } from "@/components/Dialog";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { notifyError, notifySuccess } from "@/lib/feedback";
+import { effectiveWeeklyCapacity, findConflictingShiftIds, shiftsOverlap, timeToMinutes } from "@/lib/metrics";
 import {
   useMembers,
   useProjects,
@@ -20,7 +25,6 @@ import {
   StaffShiftItem,
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
-import { toast } from "sonner";
 
 const DAYS_OF_WEEK = [
   { value: 1, label: "Monday" },
@@ -60,6 +64,12 @@ export default function SchedulePage() {
   const [bookingProjectId, setBookingProjectId] = useState("");
   const [bookingHours, setBookingHours] = useState("4");
   const [bookingTask, setBookingTask] = useState("");
+  const [pendingBooking, setPendingBooking] = useState<{
+    projectId: string;
+    hours: number;
+    title: string;
+    memberId?: string;
+  } | null>(null);
 
   // Shift Modal State (Create & Edit)
   const [isShiftModalOpen, setIsShiftModalOpen] = useState(false);
@@ -68,6 +78,7 @@ export default function SchedulePage() {
   const [shiftDayOfWeek, setShiftDayOfWeek] = useState<number>(1);
   const [shiftStartTime, setShiftStartTime] = useState("09:00");
   const [shiftEndTime, setShiftEndTime] = useState("17:00");
+  const [deleteShiftTarget, setDeleteShiftTarget] = useState<string | null>(null);
 
   // Trade Modal State
   const [isTradeModalOpen, setIsTradeModalOpen] = useState(false);
@@ -100,34 +111,7 @@ export default function SchedulePage() {
   });
 
   // Calculate shift conflicts (overlapping intervals for same member on same day)
-  const shiftConflicts = useMemo(() => {
-    const conflicts = new Set<string>();
-    for (let i = 0; i < staffShifts.length; i++) {
-      const s1 = staffShifts[i];
-      if (!s1.isActive) continue;
-      const [s1H1, s1M1] = s1.startTime.split(":").map(Number);
-      const [s1H2, s1M2] = s1.endTime.split(":").map(Number);
-      const start1 = s1H1 * 60 + s1M1;
-      const end1 = s1H2 * 60 + s1M2;
-
-      for (let j = i + 1; j < staffShifts.length; j++) {
-        const s2 = staffShifts[j];
-        if (!s2.isActive) continue;
-        if (s1.memberId === s2.memberId && s1.dayOfWeek === s2.dayOfWeek) {
-          const [s2H1, s2M1] = s2.startTime.split(":").map(Number);
-          const [s2H2, s2M2] = s2.endTime.split(":").map(Number);
-          const start2 = s2H1 * 60 + s2M1;
-          const end2 = s2H2 * 60 + s2M2;
-
-          if (Math.max(start1, start2) < Math.min(end1, end2)) {
-            conflicts.add(s1.id);
-            conflicts.add(s2.id);
-          }
-        }
-      }
-    }
-    return conflicts;
-  }, [staffShifts]);
+  const shiftConflicts = useMemo(() => new Set(findConflictingShiftIds(staffShifts)), [staffShifts]);
 
   // Capacity calculations combining shifts and tasks
   const memberAllocations = useMemo(() => {
@@ -141,20 +125,12 @@ export default function SchedulePage() {
       );
 
       const assignedHours = assignedTasks.reduce((acc, curr) => {
-        const hours = (curr.details as any)?.estimatedHours || 3;
-        return acc + Number(hours);
+        const hours = (curr.details as any)?.estimatedHours;
+        return acc + (Number(hours) || 0);
       }, 0);
 
       const memberShifts = staffShifts.filter((s) => s.memberId === member.id && s.isActive);
-      let calculatedCapacity = 0;
-      for (const s of memberShifts) {
-        const [h1, m1] = s.startTime.split(":").map(Number);
-        const [h2, m2] = s.endTime.split(":").map(Number);
-        const diffM = h2 * 60 + m2 - (h1 * 60 + m1);
-        if (diffM > 0) calculatedCapacity += diffM / 60;
-      }
-
-      const totalCapacity = calculatedCapacity > 0 ? calculatedCapacity : 40;
+      const totalCapacity = effectiveWeeklyCapacity(memberShifts);
 
       return {
         member,
@@ -170,23 +146,52 @@ export default function SchedulePage() {
   const totalCapacity = memberAllocations.reduce((acc, m) => acc + m.totalCapacity, 0);
   const clusterPercentage = totalCapacity > 0 ? Math.round((totalAssigned / totalCapacity) * 100) : 0;
 
+  const executeBooking = async (booking: {
+    projectId: string;
+    hours: number;
+    title: string;
+    memberId?: string;
+  }) => {
+    try {
+      await createTaskMutation.mutateAsync({
+        title: booking.title,
+        projectId: booking.projectId,
+        estimatedHours: booking.hours,
+        dueDate: weekEnd.toISOString(),
+        assigneeIds: booking.memberId ? [booking.memberId] : undefined,
+      });
+
+      notifySuccess("Squad capacity booked successfully");
+      setIsBookModalOpen(false);
+      setBookingTask("");
+      setPendingBooking(null);
+    } catch (err) {
+      notifyError(err, "Could not book squad capacity");
+    }
+  };
+
   const handleBooking = async (e: React.FormEvent) => {
     e.preventDefault();
     const projectId = bookingProjectId || (projects[0]?.id || "");
     if (!projectId || !bookingTask.trim() || !canManageTasks) return;
 
     const hours = parseFloat(bookingHours) || 2;
-    await createTaskMutation.mutateAsync({
-      title: bookingTask.trim(),
+    const booking = {
       projectId,
-      estimatedHours: hours,
-      dueDate: weekEnd.toISOString(),
-      assigneeIds: bookingMemberId ? [bookingMemberId] : undefined,
-    });
+      hours,
+      title: bookingTask.trim(),
+      memberId: bookingMemberId || undefined,
+    };
 
-    toast.success("Squad capacity booked successfully");
-    setIsBookModalOpen(false);
-    setBookingTask("");
+    if (booking.memberId) {
+      const allocation = memberAllocations.find((item) => item.member.id === booking.memberId);
+      if (allocation && allocation.assignedHours + hours > allocation.totalCapacity) {
+        setPendingBooking(booking);
+        return;
+      }
+    }
+
+    await executeBooking(booking);
   };
 
   const handleSaveShift = async (e: React.FormEvent) => {
@@ -194,32 +199,30 @@ export default function SchedulePage() {
     const targetMember = shiftMemberId || members[0]?.id;
     if (!targetMember) return;
 
-    // Check for overlapping intervals in local shifts
-    const [h1, m1] = shiftStartTime.split(":").map(Number);
-    const [h2, m2] = shiftEndTime.split(":").map(Number);
-    const newStart = h1 * 60 + m1;
-    const newEnd = h2 * 60 + m2;
-
-    if (newEnd <= newStart) {
-      toast.error("Shift end time must be after start time");
+    if (timeToMinutes(shiftEndTime) <= timeToMinutes(shiftStartTime)) {
+      notifyError(new Error("Shift end time must be after start time"), "Shift end time must be after start time");
       return;
     }
 
-    const hasConflict = staffShifts.some((s) => {
-      if (!s.isActive || s.id === editingShiftId) return false;
-      if (s.memberId === targetMember && s.dayOfWeek === shiftDayOfWeek) {
-        const [s1, sm1] = s.startTime.split(":").map(Number);
-        const [s2, sm2] = s.endTime.split(":").map(Number);
-        return Math.max(newStart, s1 * 60 + sm1) < Math.min(newEnd, s2 * 60 + sm2);
-      }
-      return false;
+    const hasConflict = staffShifts.some((shift) => {
+      if (!shift.isActive || shift.id === editingShiftId) return false;
+      return shiftsOverlap(
+        {
+          memberId: targetMember,
+          dayOfWeek: shiftDayOfWeek,
+          startTime: shiftStartTime,
+          endTime: shiftEndTime,
+        },
+        shift,
+      );
     });
 
     if (hasConflict) {
-      const proceed = window.confirm(
-        "Warning: This shift overlaps with an existing shift for this member on that day. Save anyway?"
+      notifyError(
+        new Error("This shift overlaps an existing shift for this member on that day"),
+        "This shift overlaps an existing shift for this member on that day",
       );
-      if (!proceed) return;
+      return;
     }
 
     try {
@@ -232,7 +235,7 @@ export default function SchedulePage() {
             endTime: shiftEndTime,
           },
         });
-        toast.success("Shift updated successfully");
+        notifySuccess("Shift updated successfully");
       } else {
         await createShiftMutation.mutateAsync({
           memberId: targetMember,
@@ -241,22 +244,23 @@ export default function SchedulePage() {
           endTime: shiftEndTime,
           isActive: true,
         });
-        toast.success("Shift created and scheduled");
+        notifySuccess("Shift created and scheduled");
       }
       setIsShiftModalOpen(false);
       setEditingShiftId(null);
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to save shift");
+    } catch (err) {
+      notifyError(err, "Could not save shift");
     }
   };
 
-  const handleDeleteShift = async (shiftId: string) => {
-    if (!window.confirm("Are you sure you want to delete this staff shift?")) return;
+  const handleDeleteShift = async () => {
+    if (!deleteShiftTarget) return;
     try {
-      await deleteShiftMutation.mutateAsync(shiftId);
-      toast.success("Shift deleted");
-    } catch (err: any) {
-      toast.error("Failed to delete shift");
+      await deleteShiftMutation.mutateAsync(deleteShiftTarget);
+      notifySuccess("Shift deleted");
+      setDeleteShiftTarget(null);
+    } catch (err) {
+      notifyError(err, "Could not delete shift");
     }
   };
 
@@ -279,21 +283,21 @@ export default function SchedulePage() {
         targetMemberId: tradeTargetMemberId || undefined,
         reason: tradeReason || undefined,
       });
-      toast.success("Shift trade request submitted");
+      notifySuccess("Shift trade request submitted");
       setIsTradeModalOpen(false);
       setTradeShiftId("");
       setTradeReason("");
-    } catch (err: any) {
-      toast.error(err?.response?.data?.message || "Failed to submit trade request");
+    } catch (err) {
+      notifyError(err, "Could not submit trade request");
     }
   };
 
   const handleProcessTrade = async (tradeId: string, action: "APPROVE" | "REJECT" | "CANCEL") => {
     try {
       await processTradeMutation.mutateAsync({ tradeId, action });
-      toast.success(`Trade request ${action.toLowerCase()}ed`);
-    } catch (err: any) {
-      toast.error(`Failed to ${action.toLowerCase()} trade request`);
+      notifySuccess(`Trade request ${action.toLowerCase()}ed`);
+    } catch (err) {
+      notifyError(err, `Could not ${action.toLowerCase()} trade request`);
     }
   };
 
@@ -361,7 +365,7 @@ export default function SchedulePage() {
               >
                 <span>Trades & Requests</span>
                 {shiftTrades.filter((t) => t.status === "PENDING").length > 0 && (
-                  <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+                  <span className="w-2 h-2 rounded-full bg-status-warning"></span>
                 )}
               </button>
             </div>
@@ -413,9 +417,9 @@ export default function SchedulePage() {
                   <span
                     className={`font-label-badge text-label-badge px-1.5 py-0.5 rounded ${
                       clusterPercentage > 100
-                        ? "bg-red-500/20 text-red-400"
+                        ? "bg-status-critical/20 text-status-critical"
                         : clusterPercentage > 85
-                        ? "bg-amber-500/20 text-amber-400"
+                        ? "bg-status-warning/20 text-status-warning"
                         : "bg-primary-container/20 text-primary"
                     }`}
                   >
@@ -478,9 +482,9 @@ export default function SchedulePage() {
                         <span
                           className={`px-2 py-0.5 rounded text-[10px] font-label-code ${
                             usagePercent > 100
-                              ? "bg-red-500/20 text-red-400 font-semibold"
+                              ? "bg-status-critical/20 text-status-critical font-semibold"
                               : usagePercent > 80
-                              ? "bg-amber-500/20 text-amber-400"
+                              ? "bg-status-warning/20 text-status-warning"
                               : "bg-surface-container text-on-surface"
                           }`}
                         >
@@ -493,7 +497,7 @@ export default function SchedulePage() {
                     <div className="w-full h-2 bg-surface-container-highest rounded-full overflow-hidden flex">
                       <div
                         className={`h-full rounded-full transition-all duration-300 ${
-                          usagePercent > 100 ? "bg-red-500" : "bg-primary-container"
+                          usagePercent > 100 ? "bg-status-critical" : "bg-primary-container"
                         }`}
                         style={{ width: `${Math.min(usagePercent, 100)}%` }}
                       ></div>
@@ -554,7 +558,7 @@ export default function SchedulePage() {
             </div>
 
             {shiftConflicts.size > 0 && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/30 text-red-400 text-body-sm flex items-center gap-2">
+              <div className="p-3 rounded-lg bg-status-critical/10 border border-status-critical/30 text-status-critical text-body-sm flex items-center gap-2">
                 <AlertTriangle className="h-4 w-4" />
                 <span>
                   <strong>Shift Conflicts Detected:</strong> {shiftConflicts.size} shift(s) have overlapping scheduled intervals on the same day. Please review highlighted rows below.
@@ -592,7 +596,7 @@ export default function SchedulePage() {
                         <tr
                           key={shift.id}
                           className={`hover:bg-surface-container transition-colors ${
-                            hasConflict ? "bg-red-500/5" : ""
+                            hasConflict ? "bg-status-critical/5" : ""
                           }`}
                         >
                           <td className="px-4 py-3 font-medium text-on-surface">
@@ -604,11 +608,11 @@ export default function SchedulePage() {
                           </td>
                           <td className="px-4 py-3">
                             {hasConflict ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-label-badge uppercase bg-red-500/20 text-red-400">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-label-badge uppercase bg-status-critical/20 text-status-critical">
                                 Conflict
                               </span>
                             ) : shift.isActive ? (
-                              <span className="px-2 py-0.5 rounded text-[10px] font-label-badge uppercase bg-emerald-500/20 text-emerald-400">
+                              <span className="px-2 py-0.5 rounded text-[10px] font-label-badge uppercase bg-status-success/20 text-status-success">
                                 Active
                               </span>
                             ) : (
@@ -630,8 +634,8 @@ export default function SchedulePage() {
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => handleDeleteShift(shift.id)}
-                                  className="text-outline hover:text-red-400 p-1 transition-colors"
+                                  onClick={() => setDeleteShiftTarget(shift.id)}
+                                  className="text-outline hover:text-status-critical p-1 transition-colors"
                                   title="Delete Shift"
                                 >
                                   <Trash2 className="h-4 w-4" />
@@ -718,12 +722,12 @@ export default function SchedulePage() {
                             <span
                               className={`px-2 py-0.5 rounded text-[10px] font-label-badge uppercase ${
                                 trade.status === "APPROVED"
-                                  ? "bg-emerald-500/20 text-emerald-400"
+                                  ? "bg-status-success/20 text-status-success"
                                   : trade.status === "REJECTED"
-                                  ? "bg-red-500/20 text-red-400"
+                                  ? "bg-status-critical/20 text-status-critical"
                                   : trade.status === "CANCELLED"
                                   ? "bg-surface-container text-outline"
-                                  : "bg-amber-500/20 text-amber-400"
+                                  : "bg-status-warning/20 text-status-warning"
                               }`}
                             >
                               {trade.status}
@@ -735,14 +739,14 @@ export default function SchedulePage() {
                                 <button
                                   type="button"
                                   onClick={() => handleProcessTrade(trade.id, "APPROVE")}
-                                  className="px-2 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-400 text-[11px] font-medium transition-colors"
+                                  className="px-2 py-1 rounded bg-status-success/20 hover:bg-status-success/30 text-status-success text-[11px] font-medium transition-colors"
                                 >
                                   Approve
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => handleProcessTrade(trade.id, "REJECT")}
-                                  className="px-2 py-1 rounded bg-red-500/20 hover:bg-red-500/30 text-red-400 text-[11px] font-medium transition-colors"
+                                  className="px-2 py-1 rounded bg-status-critical/20 hover:bg-status-critical/30 text-status-critical text-[11px] font-medium transition-colors"
                                 >
                                   Reject
                                 </button>
@@ -781,21 +785,55 @@ export default function SchedulePage() {
           }}
         />
 
+        {/* Capacity confirmation for over allocated bookings */}
+        <CapacityWarningModal
+          isOpen={!!pendingBooking}
+          memberName={
+            members.find((m) => m.id === pendingBooking?.memberId)?.name || "Selected Member"
+          }
+          currentAssignedHours={
+            pendingBooking?.memberId
+              ? memberAllocations.find((item) => item.member.id === pendingBooking.memberId)?.assignedHours || 0
+              : 0
+          }
+          additionalHours={pendingBooking?.hours || 0}
+          totalCapacityHours={
+            pendingBooking?.memberId
+              ? memberAllocations.find((item) => item.member.id === pendingBooking.memberId)?.totalCapacity || 40
+              : 40
+          }
+          onConfirm={() => {
+            if (pendingBooking) void executeBooking(pendingBooking);
+          }}
+          onCancel={() => setPendingBooking(null)}
+        />
+
         {/* Modal: Book Capacity */}
-        {isBookModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">Book Squad Capacity</h3>
-                <button
-                  type="button"
-                  onClick={() => setIsBookModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleBooking} className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isBookModalOpen}
+          onClose={() => setIsBookModalOpen(false)}
+          title="Book Squad Capacity"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsBookModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="book-capacity-form"
+                disabled={createTaskMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {createTaskMutation.isPending ? "Reserving..." : "Reserve Hours"}
+              </button>
+            </div>
+          }
+        >
+              <form id="book-capacity-form" onSubmit={handleBooking} className="flex flex-col gap-4 p-5">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Project</label>
                   <Select
@@ -851,44 +889,35 @@ export default function SchedulePage() {
                     className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsBookModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createTaskMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {createTaskMutation.isPending ? "Reserving..." : "Reserve Hours"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Dialog>
 
         {/* Modal: Create / Edit Staff Shift */}
-        {isShiftModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  {editingShiftId ? "Edit Staff Shift" : "Schedule Staff Shift"}
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsShiftModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleSaveShift} className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isShiftModalOpen}
+          onClose={() => setIsShiftModalOpen(false)}
+          title={editingShiftId ? "Edit Staff Shift" : "Schedule Staff Shift"}
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsShiftModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="staff-shift-form"
+                disabled={createShiftMutation.isPending || updateShiftMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {createShiftMutation.isPending || updateShiftMutation.isPending ? "Saving..." : "Save Shift"}
+              </button>
+            </div>
+          }
+        >
+              <form id="staff-shift-form" onSubmit={handleSaveShift} className="flex flex-col gap-4 p-5">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">Squad Member</label>
                   <Select
@@ -946,44 +975,35 @@ export default function SchedulePage() {
                     />
                   </div>
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsShiftModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={createShiftMutation.isPending || updateShiftMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {createShiftMutation.isPending || updateShiftMutation.isPending ? "Saving..." : "Save Shift"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Dialog>
 
         {/* Modal: Request Shift Trade */}
-        {isTradeModalOpen && (
-          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-xs p-4">
-            <div className="w-full max-w-md rounded-lg bg-surface-container-low border border-outline-variant/50 p-6 shadow-2xl">
-              <div className="flex items-center justify-between pb-4 border-b border-outline-variant/30">
-                <h3 className="font-headline-sm text-headline-sm text-on-surface font-semibold">
-                  Request Shift Trade / Cover
-                </h3>
-                <button
-                  type="button"
-                  onClick={() => setIsTradeModalOpen(false)}
-                  className="w-6 h-6 rounded flex items-center justify-center text-outline hover:text-on-surface"
-                >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-              <form onSubmit={handleCreateTrade} className="flex flex-col gap-4 mt-4">
+        <Dialog
+          open={isTradeModalOpen}
+          onClose={() => setIsTradeModalOpen(false)}
+          title="Request Shift Trade / Cover"
+          footer={
+            <div className="flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setIsTradeModalOpen(false)}
+                className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                form="shift-trade-form"
+                disabled={requestTradeMutation.isPending}
+                className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
+              >
+                {requestTradeMutation.isPending ? "Submitting..." : "Submit Request"}
+              </button>
+            </div>
+          }
+        >
+              <form id="shift-trade-form" onSubmit={handleCreateTrade} className="flex flex-col gap-4 p-5">
                 <div>
                   <label className="block text-body-sm font-medium text-on-surface mb-1">My Shift to Trade</label>
                   <Select
@@ -1034,26 +1054,19 @@ export default function SchedulePage() {
                     className="w-full h-8 bg-surface-container border-outline-variant text-on-surface text-body-sm"
                   />
                 </div>
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setIsTradeModalOpen(false)}
-                    className="px-3 py-1.5 rounded-lg text-body-sm text-outline hover:text-on-surface"
-                  >
-                    Cancel
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={requestTradeMutation.isPending}
-                    className="px-4 py-1.5 rounded-lg bg-primary-container hover:bg-primary-container/90 text-on-primary-container font-headline-sm text-body-sm disabled:opacity-50"
-                  >
-                    {requestTradeMutation.isPending ? "Submitting..." : "Submit Request"}
-                  </button>
-                </div>
               </form>
-            </div>
-          </div>
-        )}
+        </Dialog>
+
+        <ConfirmDialog
+          open={Boolean(deleteShiftTarget)}
+          title="Delete staff shift"
+          description="Are you sure you want to delete this staff shift? This cannot be undone."
+          confirmLabel="Delete shift"
+          destructive
+          pending={deleteShiftMutation.isPending}
+          onConfirm={handleDeleteShift}
+          onCancel={() => setDeleteShiftTarget(null)}
+        />
       </div>
     </div>
   );
