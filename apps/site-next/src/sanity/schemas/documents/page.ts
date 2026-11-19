@@ -20,7 +20,7 @@ export const pageDocument = defineType({
         maxLength: 96,
       },
       validation: (Rule) => Rule.required(),
-      description: 'URL path slug (e.g. enterprise-pos -> available at /pages/enterprise-pos)',
+      description: 'URL path slug (e.g. enterprise-pos -> available at /blog/enterprise-pos)',
     }),
     defineField({
       name: 'seo',
@@ -55,7 +55,7 @@ export const pageDocument = defineType({
     prepare({ title, slug }) {
       return {
         title: title || 'Untitled Page',
-        subtitle: slug ? `/pages/${slug}` : 'Missing slug',
+        subtitle: slug ? `/blog/${slug}` : 'Missing slug',
       }
     },
   },

@@ -37,7 +37,9 @@ export const ComparisonMatrixBlock: React.FC<ComparisonMatrixBlockProps> = ({
   verdictTitle,
   verdictText,
 }) => {
-  const competitorLogoUrl = competitorLogo ? urlFor(competitorLogo)?.width(160).url() : null
+  const competitorLogoUrl = competitorLogo
+    ? urlFor(competitorLogo)?.width(160).format('webp').fit('max').url()
+    : null
 
   const renderStatus = (support?: 'full' | 'partial' | 'none', note?: string, isScryme = false) => {
     if (support === 'full') {
@@ -116,6 +118,8 @@ export const ComparisonMatrixBlock: React.FC<ComparisonMatrixBlockProps> = ({
                   <img
                     src={competitorLogoUrl}
                     alt={competitorName}
+                    loading="lazy"
+                    decoding="async"
                     className="h-6 sm:h-8 object-contain mb-1"
                   />
                 ) : (

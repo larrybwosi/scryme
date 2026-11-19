@@ -25,7 +25,7 @@ import { Route as SalesRouteImport } from './routes/sales'
 import { Route as StockOpsRouteImport } from './routes/stock-ops'
 import { Route as CompareSlugRouteImport } from './routes/compare/$slug'
 import { Route as DevelopersAppsRouteImport } from './routes/developers/apps'
-import { Route as PagesSlugRouteImport } from './routes/pages/$slug'
+import { Route as BlogSlugRouteImport } from './routes/blog/$slug'
 import { Route as StudioSplatRouteImport } from './routes/studio/$'
 import { Route as VsSlugRouteImport } from './routes/vs/$slug'
 
@@ -110,9 +110,9 @@ const DevelopersAppsRoute = DevelopersAppsRouteImport.update({
   path: '/developers/apps',
   getParentRoute: () => rootRouteImport,
 } as any)
-const PagesSlugRoute = PagesSlugRouteImport.update({
-  id: '/pages/$slug',
-  path: '/pages/$slug',
+const BlogSlugRoute = BlogSlugRouteImport.update({
+  id: '/blog/$slug',
+  path: '/blog/$slug',
   getParentRoute: () => rootRouteImport,
 } as any)
 const StudioSplatRoute = StudioSplatRouteImport.update({
@@ -143,7 +143,7 @@ export interface FileRoutesByFullPath {
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
-  '/pages/$slug': typeof PagesSlugRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/studio/$': typeof StudioSplatRoute
   '/vs/$slug': typeof VsSlugRoute
 }
@@ -164,7 +164,7 @@ export interface FileRoutesByTo {
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
-  '/pages/$slug': typeof PagesSlugRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/studio/$': typeof StudioSplatRoute
   '/vs/$slug': typeof VsSlugRoute
 }
@@ -186,7 +186,7 @@ export interface FileRoutesById {
   '/stock-ops': typeof StockOpsRoute
   '/compare/$slug': typeof CompareSlugRoute
   '/developers/apps': typeof DevelopersAppsRoute
-  '/pages/$slug': typeof PagesSlugRoute
+  '/blog/$slug': typeof BlogSlugRoute
   '/studio/$': typeof StudioSplatRoute
   '/vs/$slug': typeof VsSlugRoute
 }
@@ -209,7 +209,7 @@ export interface FileRouteTypes {
     | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
-    | '/pages/$slug'
+    | '/blog/$slug'
     | '/studio/$'
     | '/vs/$slug'
   fileRoutesByTo: FileRoutesByTo
@@ -230,7 +230,7 @@ export interface FileRouteTypes {
     | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
-    | '/pages/$slug'
+    | '/blog/$slug'
     | '/studio/$'
     | '/vs/$slug'
   id:
@@ -251,7 +251,7 @@ export interface FileRouteTypes {
     | '/stock-ops'
     | '/compare/$slug'
     | '/developers/apps'
-    | '/pages/$slug'
+    | '/blog/$slug'
     | '/studio/$'
     | '/vs/$slug'
   fileRoutesById: FileRoutesById
@@ -273,7 +273,7 @@ export interface RootRouteChildren {
   StockOpsRoute: typeof StockOpsRoute
   CompareSlugRoute: typeof CompareSlugRoute
   DevelopersAppsRoute: typeof DevelopersAppsRoute
-  PagesSlugRoute: typeof PagesSlugRoute
+  BlogSlugRoute: typeof BlogSlugRoute
   StudioSplatRoute: typeof StudioSplatRoute
   VsSlugRoute: typeof VsSlugRoute
 }
@@ -392,11 +392,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DevelopersAppsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/pages/$slug': {
-      id: '/pages/$slug'
-      path: '/pages/$slug'
-      fullPath: '/pages/$slug'
-      preLoaderRoute: typeof PagesSlugRouteImport
+    '/blog/$slug': {
+      id: '/blog/$slug'
+      path: '/blog/$slug'
+      fullPath: '/blog/$slug'
+      preLoaderRoute: typeof BlogSlugRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/studio/$': {
@@ -433,7 +433,7 @@ const rootRouteChildren: RootRouteChildren = {
   StockOpsRoute: StockOpsRoute,
   CompareSlugRoute: CompareSlugRoute,
   DevelopersAppsRoute: DevelopersAppsRoute,
-  PagesSlugRoute: PagesSlugRoute,
+  BlogSlugRoute: BlogSlugRoute,
   StudioSplatRoute: StudioSplatRoute,
   VsSlugRoute: VsSlugRoute,
 }

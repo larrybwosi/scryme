@@ -80,7 +80,7 @@ export function createSiteSeo({
       resolvedImageUrl = rawImage.startsWith('http') ? rawImage : `${baseUrl}${rawImage.startsWith('/') ? rawImage : `/${rawImage}`}`
     } else {
       try {
-        const built = urlFor(rawImage)?.width(1200).height(630).fit('crop').auto('format').url()
+        const built = urlFor(rawImage)?.width(1200).height(630).fit('crop').format('webp').url()
         if (built) resolvedImageUrl = built
       } catch {
         resolvedImageUrl = DEFAULT_OG_IMAGE
@@ -153,7 +153,7 @@ export function createSiteSeo({
       url: baseUrl,
       potentialAction: {
         '@type': 'SearchAction',
-        target: `${baseUrl}/pages/{search_term_string}`,
+        target: `${baseUrl}/blog/{search_term_string}`,
         'query-input': 'required name=search_term_string',
       },
     },

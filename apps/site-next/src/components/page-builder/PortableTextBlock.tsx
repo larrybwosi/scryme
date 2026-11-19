@@ -10,11 +10,19 @@ export interface PortableTextBlockProps {
 const portableTextComponents = {
   types: {
     image: ({ value }: any) => {
-      const imgUrl = value ? urlFor(value)?.width(1000).url() : null
+      const imgUrl = value
+        ? urlFor(value)?.width(1200).format('webp').fit('max').url()
+        : null
       if (!imgUrl) return null
       return (
         <figure className="my-8 overflow-hidden rounded-2xl border border-[var(--card-border)]">
-          <img src={imgUrl} alt={value.alt || 'Article image'} className="w-full object-cover" />
+          <img
+            src={imgUrl}
+            alt={value.alt || 'Article image'}
+            loading="lazy"
+            decoding="async"
+            className="w-full h-auto object-cover"
+          />
           {value.caption && (
             <figcaption className="p-3 text-center text-xs text-[var(--text-muted)] bg-white/5 font-mono-label">
               {value.caption}

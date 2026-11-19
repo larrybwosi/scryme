@@ -169,7 +169,7 @@ function Hero() {
                 src={HERO_OPS_IMG}
                 alt="High-tech automated logistics fulfillment center with robotic arms and barcode throughput"
                 className="h-full w-full object-cover opacity-60"
-              />
+               decoding="async" />
               <div className="absolute inset-0 bg-gradient-to-t from-[#002116] via-[#002116]/30 to-transparent" />
               <div className="absolute bottom-4 left-4 right-4 flex items-center justify-between text-white">
                 <div>
@@ -651,7 +651,7 @@ function ExecutiveCaseBrief() {
             src={CASE_EXECUTIVE_IMG}
             alt="Executive logistics director examining stock telemetry on a tablet in a modern office"
             className="h-full w-full object-cover"
-          />
+           decoding="async" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#002116]/80 via-transparent to-transparent lg:hidden" />
         </div>
         <div className="flex flex-col justify-between p-8 lg:w-1/2 lg:p-12">

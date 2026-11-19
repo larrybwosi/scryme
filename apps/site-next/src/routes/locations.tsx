@@ -622,7 +622,7 @@ function CommandSpotlight() {
               src={COMMAND_CENTER_IMG}
               alt="Senior logistics directors analyzing real-time global supply chain telemetry inside an ultra-modern command center"
               className="h-[440px] w-full object-cover object-center"
-            />
+             decoding="async" />
             <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#002116]/95 via-[#002116]/40 to-transparent p-6 text-white">
               <div className="flex items-center gap-2">
                 <span className="rounded bg-[#bef529] px-2 py-0.5 font-mono text-[10px] font-bold text-[#151f00]">

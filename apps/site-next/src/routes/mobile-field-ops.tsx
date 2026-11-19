@@ -172,7 +172,7 @@ function Hero() {
                     src="https://lh3.googleusercontent.com/aida-public/AB6AXuABgLLL2UyHaBk6Fct5Li0UOsS433ZAhRPg-gps9FLlIJbNLuy4WcSr0IM3Ozp28YrDUzzIbrxpBP5cycJ-ra8iHykQo92klpZwiG_p_MB9eSU5QbURCGYEh2IIEXy3naOWpzFPPVyE995-LaJPFESPNoGbDIqamRPgb054VpLrRsnzfsVWLi71NXtnO_cBt3Fz_s5pbmZZ1Hmx8DNlIPlVhztsaVE2n3WhHc9gKA"
                     alt="Rugged industrial tablet handheld scanner deployed on an automated warehouse dock"
                     className="h-full w-full object-cover"
-                  />
+                   decoding="async" />
                   <div className="absolute inset-0 bg-gradient-to-t from-[#002116]/80 via-transparent to-transparent" />
                   <div className="absolute bottom-3 right-3 left-3 flex items-center justify-between text-white">
                     <div>
@@ -385,7 +385,7 @@ function SimulatorCockpit() {
                           src="https://lh3.googleusercontent.com/aida-public/AB6AXuCfzdrWM4VLQwVSVsOaHMHBbpfzzGRSJvHCGfh3Or9L3hE9Xc_2dAyO1Rx-TkRYk-KIY_uNWIp-iNc5ZURdDWs0nYTq9nlNimJUUrgSJSBEhXlbYK2jEFa3sDEA5NwfoIcs903LQuMQsppDHno-N-ltsVW4dIlTUhBNZFYX03gi3bQ8ed0ar9iCvYd_GYgetPCbV3qaQ5GOeFmBkmMFuNcppXe4v8SqGVFxExtqkw"
                           alt="Optical scanning targeting reticle on inventory pallets"
                           className="absolute inset-0 h-full w-full object-cover opacity-90"
-                        />
+                         decoding="async" />
                         <div className="relative z-10 flex items-center justify-between text-white">
                           <span className="rounded bg-[#002116]/80 px-2 py-0.5 font-mono text-[10px] backdrop-blur">
                             LiDAR ACTIVE • 60 FPS
@@ -1012,7 +1012,7 @@ function HardwareEcosystem() {
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuA1qgioNkJWmTJ1MEI2RPms7wuaXcxmeFOG2QvD28rI0qBtFRFfpRqqiGMJNOkn5Daqk1S5HS6aWUdM4_Z5_ZAnrNcK7LRtoNB_l3O0PtK41_cEUcNvZu3d4wYG7MqAi7tN2MB5S56SP1HRk4qXPgX2go1334YcDovgNwO0g7xNZw3u6zmyCgKnH2GFYZn0lKNVG4Bq_1S212OBAkPxfTMaLKD6-IJKzV4SlIz0og"
                   alt="Zebra TC52 TC57 TC77 Handheld"
                   className="h-full w-full object-cover"
-                />
+                 decoding="async" />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] font-bold text-[#4d6700] dark:text-[#d2ff3a]">
@@ -1042,7 +1042,7 @@ function HardwareEcosystem() {
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuDk0CwhEBy6lbzZJKHWhrcMBrcQBZ5A4yFsblEcz0-hvnnlBYw0pDQczjltgu8Vxn57Jss3GjmBFwrDtaWCwBC_NoIAGyUvFRQzZsSMctWezMdbrGz7pTNoRFGQPfKQ7z8WOeRb8354XMe-_fsq9nZKkxm4r4c-pg4Z1l3gm34GthfmtNe5GT_WvcMeKn_4BlZRPq-E1j-NMqVFW_Qjmt4iK7P_yPrJuzLCW3rohQ"
                   alt="Honeywell CT40 CT60 EDA52 Series"
                   className="h-full w-full object-cover"
-                />
+                 decoding="async" />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] font-bold text-[#4d6700] dark:text-[#d2ff3a]">
@@ -1072,7 +1072,7 @@ function HardwareEcosystem() {
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuDXDm78eBtcSg9_xhJlBLw4SzzfpJqGzVsuZGX16SutmI_KLHXXjttmlueKv92BTsN6N0iOscoG0ajzdXPh5ead9ApWyMOiuKnvDdzVQ5dgudoj2GdLpt34d_-Ba_6RD7rLcvSuXjgH3KLWHr--KJc51y706KfSi22gkgPU_uEbB5JsqcJnpWzQoMGsjaHCfN2OjJcZVwKAUuvuWBlJL5aLJmdOU5TZcwRm2LoQGQ"
                   alt="ProGlove Wearables MARK Display"
                   className="h-full w-full object-cover"
-                />
+                 decoding="async" />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] font-bold text-[#4d6700] dark:text-[#d2ff3a]">
@@ -1102,7 +1102,7 @@ function HardwareEcosystem() {
                   src="https://lh3.googleusercontent.com/aida-public/AB6AXuCOaOOi0_4eEiDe6idwPhagk1ZGFiUDk_Qzxao2dqhJu93PNUF2fktHpzR1Wxr-FO_QuIdOmhuG4zNmLpJGY0ngLhlo7u3Mo-x7JsMj-XPq3EQf_eVOHCA8rpXr1rsZzUwPJ5mkMObwcuZyVnOGmd0MWMBRpG8FkQI0Y09-UcMK31bVeuNjFL4WYE4sokbmNj_XXOw4VL4MdL-kp6de76NavLCN6GuNrgVmT9D-CQ"
                   alt="Apple iPad Pro & iPhone 15/16 Pro"
                   className="h-full w-full object-cover"
-                />
+                 decoding="async" />
               </div>
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] font-bold text-[#4d6700] dark:text-[#d2ff3a]">

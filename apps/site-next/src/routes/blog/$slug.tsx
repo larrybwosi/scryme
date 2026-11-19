@@ -6,7 +6,7 @@ import { PageBuilder } from '../../components/page-builder'
 import { fetchLandingPageBySlug } from '../../sanity/queries'
 import { ArrowRight, CheckCircle2, ShieldCheck, Zap } from 'lucide-react'
 
-export const Route = createFileRoute('/pages/$slug')({
+export const Route = createFileRoute('/blog/$slug')({
   loader: async ({ params }) => {
     const pageData = await fetchLandingPageBySlug(params.slug)
     return { pageData, slug: params.slug }
@@ -18,7 +18,7 @@ export const Route = createFileRoute('/pages/$slug')({
     return createSiteSeo({
       title: page?.seo?.metaTitle || page?.title || (displayTitle + ' | Scryme Enterprise ERP'),
       description: page?.seo?.metaDescription || ('Explore ' + displayTitle + ' solutions powered by Scryme single-kernel ERP architecture.'),
-      pathname: '/pages/' + (slug || ''),
+      pathname: '/blog/' + (slug || ''),
       seoData: page?.seo,
       ogType: 'website',
     })

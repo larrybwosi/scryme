@@ -118,7 +118,7 @@ function Hero({ data }: { data?: HomePageData['hero'] }) {
               alt="Autonomous Global Operations Command Headquarters"
               src={heroImageSrc}
               className="h-full w-full object-cover object-center transition-transform duration-700 ease-out group-hover:scale-[1.01]"
-            />
+             decoding="async" />
             <div className="absolute inset-0 bg-gradient-to-t from-[#002116]/90 via-[#002116]/20 to-transparent" />
             <div className="absolute inset-x-0 bottom-0 flex flex-col justify-between gap-4 p-6 sm:flex-row sm:items-end md:p-8">
               <div className="flex max-w-xl flex-col gap-1">
@@ -307,7 +307,7 @@ function Paradigm({ data }: { data?: HomePageData['paradigmSection'] }) {
                   alt="Senior enterprise leadership reviewing real-time global supply chain telemetry"
                   src={boardroomImg}
                   className="h-full w-full object-cover object-center"
-                />
+                 decoding="async" />
               </div>
               <div className="flex flex-col items-start justify-between gap-4 bg-[var(--card-bg)] border-t border-[var(--border-subtle)] p-6 sm:flex-row sm:items-center">
                 <div className="flex flex-col">
