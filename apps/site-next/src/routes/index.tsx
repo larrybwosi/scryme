@@ -8,7 +8,6 @@ import {
   ChevronDown,
   Gauge,
   MonitorSmartphone,
-  RefreshCw,
   Terminal,
   X,
 } from 'lucide-react'
@@ -87,12 +86,12 @@ function Hero({ data }: { data?: HomePageData['hero'] }) {
         <div className="grid grid-cols-1 items-end gap-8 lg:grid-cols-12">
           <div className="flex flex-col gap-4 lg:col-span-8">
             <h1 className="font-serif max-w-4xl text-4xl font-normal leading-[1.08] tracking-tight text-[var(--text-main)] sm:text-6xl md:text-7xl">
-              {heroData.headline || 'Can one smarter engine scale your entire enterprise?'}
+              {heroData.headline || 'Run your entire operation from one system.'}
             </h1>
           </div>
           <div className="flex flex-col gap-6 lg:col-span-4">
             <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
-              {heroData.subtitle || 'Sub-second ERP operating kernel coordinating sales velocity, multi-node inventories, 360° relationship intelligence, and decoupled catalog engines across an immutable sub-millisecond mesh. Zero fragmented connectors.'}
+              {heroData.subtitle || 'Manage sales, inventory, customers, and payments without disconnected tools.'}
             </p>
             <div className="flex flex-wrap items-center gap-3">
               <a
@@ -100,14 +99,14 @@ function Hero({ data }: { data?: HomePageData['hero'] }) {
                 className="group inline-flex items-center justify-center rounded-lg bg-[#002116] px-6 py-3.5 text-xs font-bold uppercase tracking-wider text-white shadow-md transition-all hover:bg-[#12372a] hover:shadow-lg"
               >
                 <span className="mr-2.5 h-2 w-2 rounded-full bg-[#bef529] transition-transform group-hover:scale-125" />
-                <span>{heroData.primaryCtaText || 'Start 14-Day Enterprise Trial'}</span>
+                <span>{heroData.primaryCtaText || 'Start 14-Day Trial'}</span>
               </a>
-              <Link
-                to={heroData.secondaryCtaLink || '/pricing'}
+              <a
+                href={heroData.secondaryCtaLink || 'mailto:enterprise@scryme.tech'}
                 className="inline-flex items-center justify-center rounded-lg bg-[var(--bg-tertiary)] px-5 py-3.5 text-xs font-semibold uppercase tracking-wider text-[var(--text-main)] transition-colors hover:bg-[#e3e2e0]"
               >
-                {heroData.secondaryCtaText || 'Schedule Enterprise Demo'}
-              </Link>
+                {heroData.secondaryCtaText || 'Book a Demo'}
+              </a>
             </div>
           </div>
         </div>
@@ -126,7 +125,7 @@ function Hero({ data }: { data?: HomePageData['hero'] }) {
                   Global Control Substrate
                 </span>
                 <p className="font-sans text-sm font-semibold text-white sm:text-base">
-                  {heroData.heroImageCaption || 'Autonomous Global Operations Command • Sub-12ms Telemetry Fabric across 180+ Enterprise Nodes'}
+                  {heroData.heroImageCaption || 'Manage operations across every location'}
                 </p>
               </div>
               <div className="flex items-center gap-3 self-start rounded-xl bg-white/90 dark:bg-[#1f2021]/90 border border-white/20 dark:border-white/10 px-4 py-2 text-[var(--text-main)] backdrop-blur-md shadow-sm backdrop-blur-md sm:self-auto">
@@ -136,7 +135,7 @@ function Hero({ data }: { data?: HomePageData['hero'] }) {
                     Sync State
                   </span>
                   <span className="font-mono text-xs font-bold text-[var(--text-main)]">
-                    {heroData.syncStateText || '0.008s Consensus'}
+                    {heroData.syncStateText || 'Live operations'}
                   </span>
                 </div>
               </div>
@@ -162,15 +161,15 @@ function Pillars({ data }: { data?: HomePageData['pillarsSection'] }) {
         <div className="flex flex-col justify-between gap-6 md:flex-row md:items-end">
           <div className="flex max-w-2xl flex-col gap-2">
             <div className="flex items-center gap-2">
-              <Eyebrow>{pillarsSection.eyebrow || '01 // Architectural Pillars'}</Eyebrow>
+              <Eyebrow>{pillarsSection.eyebrow || '01 // Platform'}</Eyebrow>
               <span className="h-px w-8 bg-[#c1c8c3]" />
             </div>
             <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
-              {pillarsSection.title || 'Four specialized engines. Zero operational friction.'}
+              {pillarsSection.title || 'One platform. Four connected capabilities.'}
             </h2>
           </div>
           <p className="font-sans max-w-md text-sm leading-relaxed text-[var(--text-muted)]">
-            {pillarsSection.description || 'Explore the modular, single-state systems powering multinational enterprises. Every action updates the kernel in sub-millisecond real time.'}
+            {pillarsSection.description || 'Sales, inventory, customer relationships, and content stay connected in real time.'}
           </p>
         </div>
 
@@ -254,8 +253,8 @@ function Pillars({ data }: { data?: HomePageData['pillarsSection'] }) {
               </div>
             </div>
             <Link
-              to="/payments"
-              aria-label="Payments Architecture"
+              to="/mobile-field-ops"
+              aria-label="Mobile Operations Hub"
               className="shrink-0 rounded-lg bg-white p-2.5 text-[var(--text-main)] transition-colors hover:bg-[#002116] hover:text-white"
             >
               <ArrowRight className="h-4 w-4" />
@@ -282,22 +281,11 @@ function Paradigm({ data }: { data?: HomePageData['paradigmSection'] }) {
           <div className="flex flex-col gap-6 lg:col-span-5">
             <Eyebrow>{paradigm.eyebrow || '02 // Paradigm Shift'}</Eyebrow>
             <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
-              {paradigm.title || 'Stop paying the middleware tax on broken operational data.'}
+              {paradigm.title || 'Stop losing time to disconnected systems.'}
             </h2>
             <p className="font-sans text-base leading-relaxed text-[var(--text-muted)]">
-              {paradigm.description || 'Enterprise systems failed because they bolted isolated SaaS point solutions together with duct-tape webhooks. When data is replicated across 9 different vendors, truth becomes obsolete within 15 minutes.'}
+              {paradigm.description || 'When sales, stock, finance, and customer tools do not share data, teams spend their time checking, correcting, and waiting.'}
             </p>
-            <div className="flex flex-col gap-3 rounded-xl bg-[var(--bg-secondary)] p-5">
-              <div className="flex items-center gap-2">
-                <RefreshCw className="h-[18px] w-[18px] text-[#ba1a1a]" />
-                <span className="font-sans text-sm font-semibold text-[var(--text-main)]">
-                  {paradigm.calloutTitle || 'The True Cost of Legacy SaaS Sprawl'}
-                </span>
-              </div>
-              <p className="font-sans text-xs text-[var(--text-muted)] leading-relaxed">
-                {paradigm.calloutDescription || 'The average $100M+ enterprise spends $184,000 annually maintaining API sync scripts, reconciling ledger mismatches, and investigating phantom inventory orders.'}
-              </p>
-            </div>
           </div>
 
           <div className="lg:col-span-7">
@@ -425,23 +413,12 @@ function MetricsAndCase({ data }: { data?: HomePageData['metricsSection'] }) {
             </div>
           </div>
 
-          <div className="flex w-full shrink-0 flex-col gap-4 rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-6 lg:w-80">
-            <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-[var(--text-muted)]">
-              Deployment Summary
-            </span>
-            <div className="flex flex-col gap-3">
-              {(spotlight.deploymentStats || []).map((stat, idx) => (
-                <div key={idx} className="flex items-center justify-between text-sm">
-                  <span className="text-[var(--text-muted)]">{stat.label}</span>
-                  <span className="font-mono font-semibold text-[var(--text-main)]">{stat.value}</span>
-                </div>
-              ))}
-            </div>
+          <div className="flex w-full shrink-0 flex-col rounded-2xl bg-[var(--bg-secondary)] border border-[var(--border-subtle)] p-6 lg:w-80">
             <Link
               to={spotlight.caseStudyLink || '/crm'}
-              className="mt-2 rounded-lg bg-[#002116] py-2.5 text-center text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#12372a]"
+              className="rounded-lg bg-[#002116] px-5 py-3 text-center text-xs font-bold uppercase tracking-wider text-white transition-colors hover:bg-[#12372a]"
             >
-              Read Full Case Study
+              Read Customer Story
             </Link>
           </div>
         </div>
@@ -461,9 +438,9 @@ function Faq({ data }: { data?: HomePageData['faqsSection'] }) {
     <section className="mx-auto max-w-4xl px-4 py-24 md:px-8" data-scroll-reveal="fade-in">
       <div className="flex flex-col gap-12">
         <div className="flex flex-col items-center gap-3 text-center">
-          <Eyebrow>{faqData.eyebrow || '03 // Architectural Inquiries'}</Eyebrow>
+          <Eyebrow>{faqData.eyebrow || '03 // Common Questions'}</Eyebrow>
           <h2 className="font-serif text-3xl font-normal leading-tight tracking-tight text-[var(--text-main)] sm:text-4xl md:text-5xl">
-            {faqData.title || 'Frequently asked questions by enterprise engineering & leadership'}
+            {faqData.title || 'Frequently asked questions'}
           </h2>
         </div>
 
@@ -512,27 +489,27 @@ function FinalCta({ data }: { data?: HomePageData['bottomCta'] }) {
     <section className="w-full bg-[#002116] dark:bg-[#090a0b] border-t border-[var(--border-subtle)] px-4 py-20 text-white md:px-8" data-scroll-reveal="fade-in">
       <div className="mx-auto flex max-w-6xl flex-col items-center gap-8 py-10 text-center">
         <div className="font-mono inline-flex items-center gap-2 rounded-full bg-[#12372a] px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-[#bef529]">
-          {cta.badge || 'Autonomous Enterprise Orchestration'}
+          {cta.badge || 'Get started'}
         </div>
         <h2 className="font-serif max-w-3xl text-3xl font-normal leading-[1.1] tracking-tight text-white md:text-5xl lg:text-6xl">
-          {cta.title || 'Reclaim command of your global operations today.'}
+          {cta.title || 'Start running your operation in sync.'}
         </h2>
         <p className="max-w-2xl text-base leading-relaxed text-[#7ba190]">
-          {cta.subtitle || 'Speak directly with a Principal Enterprise Solutions Architect or spin up an isolated staging sandbox loaded with your sample catalog and node taxonomy.'}
+          {cta.subtitle || 'Try Scryme free for 14 days, or speak with our team about your needs.'}
         </p>
         <div className="mt-2 flex flex-wrap items-center justify-center gap-4">
           <a
             href={cta.primaryCtaLink || 'https://app.scryme.tech/signup?plan=scale&billing=annual&trial=true'}
             className="inline-flex items-center justify-center rounded-xl bg-[#bef529] px-8 py-4 text-xs font-bold uppercase tracking-wider text-[#151f00] shadow-lg transition-all hover:bg-[#a4d700] hover:shadow-xl"
           >
-            {cta.primaryCtaText || 'Start 14-Day Enterprise Trial'}
+            {cta.primaryCtaText || 'Start 14-Day Trial'}
           </a>
-          <Link
-            to={cta.secondaryCtaLink || '/pricing'}
+          <a
+            href={cta.secondaryCtaLink || 'mailto:enterprise@scryme.tech'}
             className="inline-flex items-center justify-center rounded-xl bg-[#12372a] px-8 py-4 text-xs font-semibold uppercase tracking-wider text-white transition-colors hover:bg-[#003923]"
           >
-            {cta.secondaryCtaText || 'Schedule Architecture Review'}
-          </Link>
+            {cta.secondaryCtaText || 'Book a Demo'}
+          </a>
         </div>
         <div className="font-mono mt-6 flex flex-wrap items-center justify-center gap-6 text-xs text-[#7ba190]">
           {guarantees.map((t, i) => (
