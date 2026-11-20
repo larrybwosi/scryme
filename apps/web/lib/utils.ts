@@ -1,8 +1,35 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { format, isValid, parseISO } from "date-fns";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
+}
+
+export function parseDateInput(
+  value: Date | string | null | undefined,
+): Date | undefined {
+  if (!value) return undefined;
+
+  if (value instanceof Date) {
+    return isValid(value) ? value : undefined;
+  }
+
+  if (typeof value !== "string") return undefined;
+
+  const trimmed = value.trim();
+  if (!trimmed) return undefined;
+
+  const parsed = parseISO(trimmed);
+  if (isValid(parsed)) return parsed;
+
+  const fallback = new Date(trimmed);
+  return isValid(fallback) ? fallback : undefined;
+}
+
+export function formatDateInput(date: Date | null | undefined): string | undefined {
+  if (!date || !isValid(date)) return undefined;
+  return format(date, "yyyy-MM-dd");
 }
 
 export function getCurrencySymbol(currencyCode: string): string {
