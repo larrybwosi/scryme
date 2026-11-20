@@ -16,6 +16,7 @@ import { BusinessAccountController } from "./interfaces/http/business-account.co
 import { BusinessAccountService } from "./application/use-cases/business-account.service";
 import { CrmModule } from "../crm/crm.module";
 import { LoyaltyModule } from "../loyalty/loyalty.module";
+import { CrmIntegrationsModule } from "../crm-integrations/crm-integrations.module";
 
 @Module({
   imports: [
@@ -24,6 +25,7 @@ import { LoyaltyModule } from "../loyalty/loyalty.module";
     RedisModule,
     CrmModule,
     LoyaltyModule,
+    CrmIntegrationsModule,
   ],
   controllers: [CustomerController, BusinessAccountController],
   providers: [

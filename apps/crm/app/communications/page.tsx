@@ -10,6 +10,7 @@ import {
   AlertCircle,
   Phone,
   Settings,
+  PlugZap,
   Plus,
   Sparkles,
   FileText,
@@ -216,8 +217,13 @@ export default function CommunicationsPage() {
             </Dialog>
 
             <Link href="/settings/integrations/whatsapp">
-              <Button size="icon" variant="ghost" className="h-7 w-7">
+              <Button size="icon" variant="ghost" className="h-7 w-7" title="WhatsApp settings">
                 <Settings className="h-4 w-4" />
+              </Button>
+            </Link>
+            <Link href="/settings/integrations/customermates">
+              <Button size="icon" variant="ghost" className="h-7 w-7" title="Customermates settings">
+                <PlugZap className="h-4 w-4" />
               </Button>
             </Link>
           </div>

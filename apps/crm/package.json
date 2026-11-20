@@ -19,6 +19,7 @@
     "@openpanel/nextjs": "^1.5.1",
     "@repo/auth": "workspace:*",
     "@repo/chat": "workspace:*",
+    "@repo/customermates": "workspace:*",
     "@repo/db": "workspace:^",
     "@repo/shared": "workspace:*",
     "@repo/ui": "workspace:*",
