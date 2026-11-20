@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { getPOSImageUrl } from '../image-helper';
 
 describe('getPOSImageUrl', () => {

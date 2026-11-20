@@ -132,25 +132,6 @@ pnpm generate
 - Describe what changed, why it changed, and how it was verified.
 - Link related issues or specs when applicable.
 
-## Continuous integration
-
-Every pull request uses one shared pipeline. A small trigger file calls reusable workflows that derive affected workspaces from the Turbo graph, so no hand maintained path list decides what runs. The following checks are required before merge on pull requests targeting main, dev and nextgen.
-
-| Check | What it covers | Local command |
-|---|---|---|
-| lint | Lint and type checks | `pnpm lint` and `pnpm type-check` |
-| unit | Unit tests and coverage floors | `pnpm test` |
-| integration | Migration compatibility and tests that need Postgres or Redis | `node scripts/ci/check-migrations.js HEAD~1` and `pnpm test:integration` |
-| native checks | Gradle and Cargo tests | `./gradlew testDebugUnitTest` in `apps/android` and `cargo test` in each Tauri workspace |
-| docs metadata | Links in changed docs and skill files | `node scripts/ci/check-docs.js HEAD~1` |
-| verify build | Builds of affected workspaces | `pnpm build` |
-
-Browser tests run on main, on release candidates and on version tags, not on pull requests. You can run them with `pnpm test:e2e`.
-
-Coverage floors live in `coverage.config.json` in each workspace that has a `test` script. The unit check enforces each workspace floor and the changed line floor, then prints the result on the check summary. A flaky test goes into `.github/flaky-tests.yml` with a test id, an owner, an open issue and the date it was added. Quarantined tests are omitted from the required suite instead of being retried into a green result. Configuration for CI comes from `.env.ci.mock`, which contains mock values only. Pull requests never receive repository secrets.
-
-Releases start from a Changesets version commit on main after CI passes. Main builds each image once into GHCR, records its digest and provenance, promotes those digests into staging, and then waits for a named production approver. A rollback redeploys the previous deployment report behind a health gate and records the rollback on the release notes. Release checks carry a release prefix so they never collide with the required pull request checks.
-
 ## Questions and issues
 
 If you are reporting a bug or requesting a feature, open an issue with enough detail to reproduce the problem or understand the proposal, including affected apps or packages, steps to reproduce, and any relevant logs or screenshots.

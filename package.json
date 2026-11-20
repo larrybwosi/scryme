@@ -19,10 +19,6 @@
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "generate": "turbo run generate",
     "lint": "turbo run lint",
-    "test": "turbo run test",
-    "test:integration": "turbo run test:integration",
-    "test:e2e": "turbo run test:e2e",
-    "type-check": "turbo run type-check",
     "postinstall": "pnpm --filter @repo/env build && pnpm generate"
   },
   "devDependencies": {

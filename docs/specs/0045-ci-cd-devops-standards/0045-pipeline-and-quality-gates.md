@@ -48,7 +48,7 @@ jobs:
 
 The `workspaces` output is the full Turbo query result. Each called workflow parses it to get the workspace names it needs. `.github/affected-paths.yml` holds the paths that Turbo cannot derive, covering `apps/android`, `apps/pos/src-tauri`, `apps/bakery/src-tauri`, `docs/`, and `skills/`.
 
-Timeout contract: affected 5 minutes, docs metadata 5 minutes, lint 10 minutes, unit 10 minutes, native checks 20 minutes, integration 20 minutes, verify build 20 minutes, publish 30 minutes, deploy 20 minutes, health 20 minutes. Native Rust compilation from a cold cache needs the longer native checks limit.
+Timeout contract: affected 5 minutes, docs metadata 5 minutes, lint 10 minutes, unit 10 minutes, native checks 10 minutes, integration 20 minutes, verify build 20 minutes, publish 30 minutes, deploy 20 minutes, health 20 minutes.
 
 The trigger file declares `on: pull_request`, a concurrency group with `cancel-in-progress: true`, `permissions: contents: read`, and calls to `affected.yml`, `checks.yml`, and `build.yml`. The `checks.yml` workflow owns jobs named `lint`, `unit`, `integration`, and `native checks`. The `build.yml` workflow owns a job named `verify build` for pull requests and a main only job named `test e2e`. These are the status checks. All except `test e2e` are required before merge. A job that does not apply reports success with a clear reason, never a skipped check that leaves the gate ambiguous.
 

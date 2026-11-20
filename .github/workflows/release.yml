@@ -2,380 +2,594 @@ name: Release and Publish
 
 on:
   push:
-    branches: [main]
-  workflow_dispatch:
-    inputs:
-      version:
-        description: Existing version tag to retry
-        required: false
-        type: string
-      rollback_to:
-        description: Set to previous to roll back production
-        required: false
-        type: string
-      rollback_digest:
-        description: Previous digest to redeploy during a rollback
-        required: false
-        type: string
-
-concurrency:
-  group: ${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+    branches:
+      - main
 
 permissions:
-  contents: read
+  contents: write
+  packages: write
+  pull-requests: write
 
 jobs:
-  affected:
-    uses: ./.github/workflows/affected.yml
-
-  release_lint:
-    name: release lint
-    needs: affected
-    uses: ./.github/workflows/checks.yml
-    with:
-      workspaces: ${{ needs.affected.outputs.workspaces }}
-      layer: lint
-
-  release_unit:
-    name: release unit
-    needs: affected
-    uses: ./.github/workflows/checks.yml
-    with:
-      workspaces: ${{ needs.affected.outputs.workspaces }}
-      layer: unit
-
-  release_integration:
-    name: release integration
-    needs: affected
-    uses: ./.github/workflows/checks.yml
-    with:
-      workspaces: ${{ needs.affected.outputs.workspaces }}
-      layer: integration
-
-  release_native_checks:
-    name: release native checks
-    needs: affected
-    uses: ./.github/workflows/checks.yml
-    with:
-      workspaces: ${{ needs.affected.outputs.workspaces }}
-      layer: native
-
-  release_verify_build:
-    name: release verify build
-    needs: [affected, release_lint, release_unit]
-    uses: ./.github/workflows/build.yml
-    with:
-      mode: verify
-      workspaces: ${{ needs.affected.outputs.workspaces }}
-
-  test_e2e:
-    name: test e2e
-    needs: [affected, release_verify_build]
-    uses: ./.github/workflows/build.yml
-    with:
-      mode: e2e
-
-  ci_success:
-    name: ci success
-    needs:
-      [
-        release_lint,
-        release_unit,
-        release_integration,
-        release_native_checks,
-        release_verify_build,
-        test_e2e,
-      ]
+  release-management:
+    name: Release Management
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     outputs:
-      passed: ${{ steps.result.outputs.passed }}
+      published: ${{ steps.determine-published.outputs.published }}
+      hasChangesets: ${{ steps.check-changesets.outputs.hasChangesets }}
+      isPrerelease: 'false'
     steps:
-      - name: Record gate result
-        id: result
-        run: |
-          echo "passed=true" >> "$GITHUB_OUTPUT"
-          echo "All required checks passed for ${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
-
-  version:
-    name: version
-    needs: ci_success
-    if: github.event_name == 'push'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      version: ${{ steps.release_version.outputs.version }}
-      release: ${{ steps.changesets.outputs.release }}
-    steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          ref: ${{ github.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
-      - run: pnpm install --frozen-lockfile
-      - name: Detect version commit
-        id: changesets
-        env:
-          BEFORE: ${{ github.event.before }}
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Check for Pending Changesets
+        id: check-changesets
         run: |
-          if [ -z "$BEFORE" ] || [ -z "${BEFORE//0/}" ]; then
-            echo "Push has no usable base commit, no release is started"
-            echo "release=false" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          removed="$(git diff --diff-filter=D --name-only "$BEFORE" HEAD -- .changeset | grep -E '\.md$' | grep -vc 'README.md' || true)"
-          manifests="$(git diff --name-only "$BEFORE" HEAD -- package.json apps/*/package.json packages/*/package.json | wc -l)"
-          if [ "${removed:-0}" -gt 0 ] && [ "$manifests" -gt 0 ]; then
-            echo "Version commit detected from consumed changesets and updated manifests"
-            echo "release=true" >> "$GITHUB_OUTPUT"
+          COUNT=$(find .changeset -maxdepth 1 -name "*.md" ! -name "README.md" 2>/dev/null | wc -l)
+          if [ "$COUNT" -gt 0 ]; then
+            echo "hasChangesets=true" >> "$GITHUB_OUTPUT"
           else
-            echo "No Changesets version commit in this push"
-            echo "release=false" >> "$GITHUB_OUTPUT"
+            echo "hasChangesets=false" >> "$GITHUB_OUTPUT"
           fi
-      - name: Produce unique version
-        id: release_version
-        if: steps.changesets.outputs.release == 'true'
+
+      - name: Create Release Pull Request
+        id: changesets
+        uses: changesets/action@v1
+        with:
+          version: pnpm version-packages
+          title: "Version Packages"
+          commit: "chore(release): version packages"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Determine Published Status
+        id: determine-published
+        run: |
+          COMMIT_MSG=$(git log -1 --pretty=%B)
+          if [ "${{ steps.changesets.outputs.published }}" = "true" ]; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          elif echo "$COMMIT_MSG" | grep -qE "chore\(release\): version packages|Version Packages"; then
+            if [ "${{ steps.check-changesets.outputs.hasChangesets }}" = "false" ]; then
+              echo "published=true" >> "$GITHUB_OUTPUT"
+            else
+              echo "published=false" >> "$GITHUB_OUTPUT"
+            fi
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Publish NPM Packages
+        if: steps.determine-published.outputs.published == 'true'
+        continue-on-error: true
+        run: pnpm release
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  set-version:
+    name: Set Version Output
+    runs-on: ubuntu-latest
+    needs: release-management
+    if: needs.release-management.outputs.published == 'true'
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      was_bumped: ${{ steps.get-version.outputs.was_bumped }}
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Ensure Unique Version and Sync
+        id: get-version
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          pnpm version-packages || true
           node scripts/ensure-unique-version.js
 
-  build:
-    name: build artifacts
-    needs: [ci_success, version]
-    if: (needs.version.outputs.release == 'true' || (github.event_name == 'workflow_dispatch' && inputs.version != '')) && github.event.inputs.rollback_to != 'previous'
-    permissions:
-      contents: read
-      packages: write
-      id-token: write
-      attestations: write
-      artifact-metadata: write
-    uses: ./.github/workflows/build.yml
-    secrets: inherit
-    with:
-      mode: artifact
-      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.version.outputs.version }}
-      commit_sha: ${{ github.sha }}
-
-  provenance_check:
-    name: provenance check
-    needs: build
-    if: needs.build.result == 'success'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    outputs:
-      passed: ${{ steps.verify.outputs.passed }}
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with:
-          pattern: digest-*-${{ needs.build.outputs.version }}
-          path: digests
-          merge-multiple: true
-      - name: Verify image digests and attestations
-        id: verify
+      - name: Commit and Push Version Bump If Needed
+        if: steps.get-version.outputs.was_bumped == 'true'
         run: |
-          count="$(find digests -name 'digest-*.txt' | wc -l)"
-          if [ "$count" -lt 10 ]; then
-            echo "Expected ten image digests, found $count"
-            exit 1
-          fi
-          digest="$(tr -d '[:space:]' < digests/digest-api.txt)"
-          gh attestation verify "oci://ghcr.io/larrybwosi/scryme/api@${digest}" --repo "${{ github.repository }}"
-          echo "passed=true" >> "$GITHUB_OUTPUT"
-          echo "Verified $count image digests and the api provenance attestation" >> "$GITHUB_STEP_SUMMARY"
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add .
+          git commit -m "chore(release): bump version to v${{ steps.get-version.outputs.version }}"
+          git push origin ${{ github.ref_name }}
 
-  release:
-    name: release
-    needs: [ci_success, provenance_check, version]
-    if: needs.ci_success.outputs.passed == 'true' && needs.provenance_check.outputs.passed == 'true'
+  create-draft-release:
+    name: Create Draft Release
     runs-on: ubuntu-latest
-    timeout-minutes: 30
     permissions:
       contents: write
-      packages: write
-      id-token: write
-      attestations: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-      VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.version.outputs.version }}
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout Repo
+        uses: actions/checkout@v4
         with:
-          fetch-depth: 0
-          ref: ${{ github.sha }}
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
+          ref: ${{ github.ref_name }}
+
+      - name: Create GitHub Draft Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.set-version.outputs.version }}
+          IS_PRERELEASE: ${{ needs.release-management.outputs.isPrerelease }}
+        run: |
+          PRERELEASE_FLAG=""
+          if [ "$IS_PRERELEASE" = "true" ]; then
+            PRERELEASE_FLAG="--prerelease"
+          fi
+          echo "Creating draft GitHub release for $TAG_NAME..."
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Draft release $TAG_NAME already exists."
+          else
+            gh release create "$TAG_NAME" --draft --title "$TAG_NAME" --notes "Release $TAG_NAME" $PRERELEASE_FLAG
+          fi
+
+  build-packages:
+    name: Build Packages
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
           node-version: 24
-          cache: pnpm
-          registry-url: https://registry.npmjs.org
-      - run: pnpm install --frozen-lockfile
-      - name: Create tag before publish
-        run: |
-          tag="v${VERSION}"
-          if git rev-parse "$tag" > /dev/null 2>&1; then
-            echo "Tag $tag already exists"
-          else
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git tag "$tag"
-            git push origin "$tag"
-          fi
-      - name: Publish packages
-        run: |
-          if ! pnpm release; then
-            gh release edit "v${VERSION}" --notes "publish failed" || true
-            exit 1
-          fi
-      - name: Write promotion record
-        env:
-          DIGEST: ${{ needs.build.outputs.digest }}
-          REPORT: ${{ needs.build.outputs.report }}
-        run: |
-          gh release edit "v${VERSION}" --notes "version ${VERSION}
-          commit ${{ github.sha }}
-          digest ${DIGEST}
-          digests ${REPORT}
-          approver required for production
-          health pending"
-          echo "version=${VERSION}" >> "$GITHUB_STEP_SUMMARY"
-          echo "commit=${{ github.sha }}" >> "$GITHUB_STEP_SUMMARY"
-          echo "digest=${DIGEST}" >> "$GITHUB_STEP_SUMMARY"
 
-  deploy_staging:
-    name: deploy staging
-    needs: [release, build]
-    if: github.event.inputs.rollback_to != 'previous' && needs.build.result == 'success'
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/deploy.yml
-    secrets: inherit
-    with:
-      environment: staging
-      digest: ${{ needs.build.outputs.digest }}
-      report: ${{ needs.build.outputs.report }}
-      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.version.outputs.version }}
-      health_url: ${{ vars.STAGING_HEALTH_URL || 'http://localhost:3005/api/health' }}
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
 
-  deploy_production:
-    name: deploy production
-    needs: [deploy_staging, build]
-    if: github.event.inputs.rollback_to != 'previous' && needs.build.result == 'success'
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/deploy.yml
-    secrets: inherit
-    with:
-      environment: production
-      digest: ${{ needs.build.outputs.digest }}
-      report: ${{ needs.build.outputs.report }}
-      version: ${{ github.event_name == 'workflow_dispatch' && inputs.version || needs.version.outputs.version }}
-      health_url: ${{ vars.PRODUCTION_HEALTH_URL || 'http://localhost:3006/api/health' }}
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
 
-  previous_digest:
-    name: previous production digest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_to == 'previous'
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
+      - name: Build Packages
+        run: pnpm turbo build --filter="./packages/*"
+
+      - name: Upload Package Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: built-packages
+          path: packages/
+
+  publish-pos-windows:
+    name: Publish POS Windows (${{ matrix.variant }})
+    runs-on: windows-latest
     permissions:
-      contents: read
-      packages: read
-    outputs:
-      digest: ${{ steps.resolve.outputs.digest }}
-      report: ${{ steps.report.outputs.report }}
+      contents: write
+    needs: [release-management, set-version, create-draft-release, build-packages]
+    if: needs.release-management.outputs.published == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        variant: [pharmacy, retail, supermarket, restaurant]
     steps:
-      - uses: docker/login-action@v3
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
+      - name: Set OS specific args
+        id: target
+        shell: bash
+        run: |
+          echo "args=--target x86_64-pc-windows-msvc" >> $GITHUB_OUTPUT
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Build and Publish POS App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+          VITE_BUSINESS_MODE: ${{ matrix.variant }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_PUBLIC_SENTRY_DSN: ${{ secrets.VITE_PUBLIC_SENTRY_DSN || secrets.SENTRY_DSN || secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY || secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.OPENPANEL_HOST }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: ./apps/pos
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
+          releaseDraft: true
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
+          args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
+
+  publish-pos-linux:
+    name: Publish POS Linux (${{ matrix.variant }})
+    runs-on: ubuntu-22.04
+    permissions:
+      contents: write
+    needs: [release-management, set-version, create-draft-release, build-packages, publish-pos-windows]
+    if: needs.release-management.outputs.published == 'true'
+    strategy:
+      fail-fast: false
+      max-parallel: 1
+      matrix:
+        variant: [pharmacy, retail, supermarket, restaurant]
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev patchelf libfuse2 libudev-dev libusb-1.0-0-dev libpcsclite-dev pkg-config
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
+      - name: Set OS specific args
+        id: target
+        shell: bash
+        run: |
+          echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Build and Publish POS App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+          VITE_BUSINESS_MODE: ${{ matrix.variant }}
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_PUBLIC_SENTRY_DSN: ${{ secrets.VITE_PUBLIC_SENTRY_DSN || secrets.SENTRY_DSN || secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY || secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.OPENPANEL_HOST }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: ./apps/pos
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
+          releaseDraft: true
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
+          args: ${{ steps.target.outputs.args }} --config src-tauri/tauri.${{ matrix.variant }}.conf.json --features ${{ matrix.variant }}
+
+  publish-bakery:
+    name: Publish Bakery (windows-latest)
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    needs: [release-management, set-version, create-draft-release, build-packages]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
+      - name: Set OS specific args
+        id: target
+        shell: bash
+        run: |
+          if [ "${{ runner.os }}" = "Windows" ]; then
+            echo "args=--target x86_64-pc-windows-msvc" >> $GITHUB_OUTPUT
+          elif [ "${{ runner.os }}" = "macOS" ]; then
+            echo "args=--target x86_64-apple-darwin" >> $GITHUB_OUTPUT
+          else
+            echo "args=--target x86_64-unknown-linux-gnu" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Build and Publish Bakery App
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          VITE_API_URL: ${{ secrets.VITE_API_URL || secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
+          VITE_BUSINESS_MODE: bakery
+          SENTRY_DSN: ${{ secrets.SENTRY_DSN }}
+          VITE_PUBLIC_SENTRY_DSN: ${{ secrets.VITE_PUBLIC_SENTRY_DSN || secrets.SENTRY_DSN || secrets.NEXT_PUBLIC_SENTRY_DSN }}
+          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY || secrets.VITE_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY || secrets.NEXT_PUBLIC_POSTHOG_KEY }}
+          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST || secrets.NEXT_PUBLIC_POSTHOG_HOST }}
+          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID }}
+          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.OPENPANEL_HOST }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.POS_TAURI_SIGNING_PRIVATE_KEY_PASSWORD }}
+        with:
+          projectPath: ./apps/bakery
+          tagName: v${{ needs.set-version.outputs.version }}
+          releaseName: "v${{ needs.set-version.outputs.version }}"
+          releaseBody: "Release v${{ needs.set-version.outputs.version }}"
+          releaseDraft: true
+          prerelease: ${{ needs.release-management.outputs.isPrerelease }}
+          args: ${{ steps.target.outputs.args }}
+
+  publish-android:
+    name: Publish Android App
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    needs: [release-management, set-version, create-draft-release]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        working-directory: apps/android
+
+      - name: Build Release APK and Bundle
+        env:
+          ANDROID_OPENPANEL_CLIENT_ID: ${{ secrets.ANDROID_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
+          ANDROID_OPENPANEL_CLIENT_SECRET: ${{ secrets.ANDROID_OPENPANEL_CLIENT_SECRET || secrets.OPENPANEL_CLIENT_SECRET }}
+          ANDROID_OPENPANEL_HOST: ${{ secrets.ANDROID_OPENPANEL_HOST || secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
+        run: ./gradlew assembleRelease bundleRelease
+        working-directory: apps/android
+
+      - name: Upload Android Release Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: android-release-builds
+          path: |
+            apps/android/app/build/outputs/apk/release/*.apk
+            apps/android/app/build/outputs/bundle/release/*.aab
+
+      - name: Attach Android Build Artifacts to GitHub Draft Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.set-version.outputs.version }}
+        run: |
+          APK_PATH=$(find apps/android/app/build/outputs/apk/release -name "*.apk" 2>/dev/null | head -n 1)
+          AAB_PATH=$(find apps/android/app/build/outputs/bundle/release -name "*.aab" 2>/dev/null | head -n 1)
+
+          if [ -n "$APK_PATH" ]; then
+            gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || echo "Failed to upload APK to draft release"
+          fi
+          if [ -n "$AAB_PATH" ]; then
+            gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || echo "Failed to upload AAB to draft release"
+          fi
+
+  publish-crates:
+    name: Publish Rust SDK to Crates.io
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version, build-packages, create-draft-release]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Setup Java (Required for openapi-generator-cli)
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '21'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Setup Pnpm
+        uses: pnpm/action-setup@v3
+        with:
+          version: 9
+
+      - name: Install Dependencies
+        run: pnpm install --no-frozen-lockfile
+
+      - name: Download Package Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: built-packages
+          path: packages
+
+      - name: Setup Rust Toolchain
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Generate Rust SDK
+        run: pnpm --filter @scryme/sdk generate:rust
+
+      - name: Publish to Crates.io
+        continue-on-error: true
+        run: cargo publish --token ${{ secrets.CARGO_REGISTRY_TOKEN }} ${{ needs.release-management.outputs.isPrerelease == 'true' && '--allow-dirty' || '' }}
+        working-directory: packages/sdk/rust
+
+  publish-docker:
+    name: Publish Docker Images
+    runs-on: ubuntu-latest
+    needs: [release-management, set-version, create-draft-release]
+    if: needs.release-management.outputs.published == 'true'
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Sync Version
+        run: bash scripts/sync-tauri-version.sh "${{ needs.set-version.outputs.version }}"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
-      - name: Resolve previous digest
-        id: resolve
-        env:
-          OVERRIDE: ${{ inputs.rollback_digest }}
-        run: |
-          if [ -n "$OVERRIDE" ]; then
-            echo "Using the supplied rollback digest"
-            echo "digest=$OVERRIDE" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          image="ghcr.io/larrybwosi/scryme/api:deployed-production-previous"
-          docker pull "$image"
-          digest="$(docker image inspect "$image" --format '{{index .RepoDigests 0}}' | cut -d '@' -f 2)"
-          if [ -z "$digest" ]; then
-            echo "No previous production digest was recorded, supply rollback_digest"
-            exit 1
-          fi
-          echo "digest=$digest" >> "$GITHUB_OUTPUT"
-      - name: Resolve previous digest report
-        id: report
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          OVERRIDE: ${{ inputs.rollback_digest }}
-        run: |
-          if [ -n "$OVERRIDE" ]; then
-            echo "Using a supplied digest, keeping the existing images for other services"
-            echo "report=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          previous_tag="$(gh release list --limit 2 --json tagName --jq '.[1].tagName')"
-          body="$(gh release view "$previous_tag" --json body --jq .body)"
-          report="$(echo "$body" | sed -n 's/^digests //p' | head -n 1)"
-          if [ -z "$report" ]; then
-            echo "No digest report found on $previous_tag, rolling back the api only"
-            echo "report=" >> "$GITHUB_OUTPUT"
-          else
-            echo "report=$(echo "$report" | jq -c .)" >> "$GITHUB_OUTPUT"
-          fi
 
-  rollback:
-    name: rollback production
-    needs: previous_digest
-    if: github.event_name == 'workflow_dispatch' && github.event.inputs.rollback_to == 'previous'
-    permissions:
-      contents: read
-      packages: write
-    uses: ./.github/workflows/deploy.yml
-    secrets: inherit
-    with:
-      environment: production
-      digest: ${{ needs.previous_digest.outputs.digest }}
-      report: ${{ needs.previous_digest.outputs.report }}
-      version: ${{ inputs.version }}
-      rollback: true
-      health_url: ${{ vars.PRODUCTION_HEALTH_URL || 'http://localhost:3006/api/health' }}
+      - name: Build and Push Docker Images
+        uses: docker/bake-action@v5
+        with:
+          files: docker-bake.hcl
+          push: true
+        env:
+          VERSION: ${{ needs.set-version.outputs.version }}
+          NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
+          BETTER_AUTH_SECRET: ${{ secrets.BETTER_AUTH_SECRET || 'secret' }}
 
-  rollback_record:
-    name: record rollback
-    needs: rollback
-    if: needs.rollback.result == 'success'
+  create-tag:
+    name: Create Tag and Finalize Release
     runs-on: ubuntu-latest
-    timeout-minutes: 5
     permissions:
       contents: write
-    env:
-      GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+    needs: [release-management, set-version, create-draft-release, publish-pos-windows, publish-pos-linux, publish-bakery, publish-android, publish-crates, publish-docker]
+    if: needs.release-management.outputs.published == 'true'
     steps:
-      - name: Append rollback to release notes
-        env:
-          DIGEST: ${{ needs.rollback.outputs.active_digest }}
-        run: |
-          tag="$(gh release view --json tagName --jq .tagName)"
-          body="$(gh release view "$tag" --json body --jq .body)"
-          gh release edit "$tag" --notes "${body}
+      - name: Checkout Repo
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
 
-          rolled back to digest ${DIGEST}"
-          echo "Rollback recorded on $tag" >> "$GITHUB_STEP_SUMMARY"
+      - name: Download Android Release Artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: android-release-builds
+          path: android-release-builds
+          continue-on-error: true
+
+      - name: Tag Repository and Publish Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: v${{ needs.set-version.outputs.version }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          echo "Creating and pushing Git tag $TAG_NAME..."
+          if ! git rev-parse "$TAG_NAME" >/dev/null 2>&1; then
+            git tag "$TAG_NAME"
+          fi
+          git push origin "$TAG_NAME" || echo "Tag already pushed"
+
+          echo "Publishing draft release $TAG_NAME..."
+          gh release edit "$TAG_NAME" --draft=false
+
+          APK_PATH=$(find android-release-builds -name "*.apk" 2>/dev/null | head -n 1)
+          AAB_PATH=$(find android-release-builds -name "*.aab" 2>/dev/null | head -n 1)
+
+          if [ -n "$APK_PATH" ]; then
+            gh release upload "$TAG_NAME" "$APK_PATH#scryme-android-${TAG_NAME}.apk" --clobber || true
+          fi
+          if [ -n "$AAB_PATH" ]; then
+            gh release upload "$TAG_NAME" "$AAB_PATH#scryme-android-${TAG_NAME}.aab" --clobber || true
+          fi
