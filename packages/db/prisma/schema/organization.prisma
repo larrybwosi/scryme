@@ -246,6 +246,7 @@ model Organization {
   communicationThreads       CommunicationThread[]       @relation("OrgCommunicationThreads")
   communicationMessages      CommunicationMessage[]      @relation("OrgCommunicationMessages")
   whatsappTemplates          WhatsappTemplate[]          @relation("OrgWhatsappTemplates")
+  customermatesRecordStates  CustomermatesRecordState[]  @relation("OrgCustomermatesStates")
   projects                   Project[]
   tasks                      Task[]
   taskLabels                 TaskLabel[]

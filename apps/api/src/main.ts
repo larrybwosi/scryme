@@ -78,6 +78,7 @@ async function bootstrap() {
       "x-device-id",
       "x-standalone-key",
       "x-scryme-signature",
+      "x-webhook-signature",
       "x-mcp-api-key",
       "mcp-session-id",
       "Mcp-Session-Id",
@@ -141,6 +142,21 @@ async function bootstrap() {
     global: true,
     threshold: 1024, // compress responses over 1KB
   });
+
+  const fastify = app.getHttpAdapter().getInstance();
+  fastify.removeContentTypeParser("application/json");
+  fastify.addContentTypeParser(
+    "application/json",
+    { parseAs: "string" },
+    (request: any, body: string, done: (error: Error | null, value?: unknown) => void) => {
+      request.rawBody = body;
+      try {
+        done(null, JSON.parse(body));
+      } catch (error) {
+        done(error as Error);
+      }
+    },
+  );
 
   // Global Configuration
   app.setGlobalPrefix("api", {

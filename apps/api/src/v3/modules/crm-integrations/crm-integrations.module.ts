@@ -4,8 +4,11 @@ import { CommunicationController } from "./interfaces/http/communication.control
 import { WhatsappCloudApiProvider } from "./domain/whatsapp-cloud-api.provider";
 import { WhatsappService } from "./application/use-cases/whatsapp.service";
 import { WhatsappCrmController, WhatsappPublicWebhookController } from "./interfaces/http/whatsapp.controller";
+import { CustomermatesModule } from "./customermates/customermates.module";
+import { CustomermatesWritebackService } from "./customermates/application/customermates-writeback.service";
 
 @Module({
+  imports: [CustomermatesModule],
   providers: [
     CommunicationIntegrationService,
     WhatsappCloudApiProvider,
@@ -20,6 +23,7 @@ import { WhatsappCrmController, WhatsappPublicWebhookController } from "./interf
     CommunicationIntegrationService,
     WhatsappService,
     WhatsappCloudApiProvider,
+    CustomermatesWritebackService,
   ],
 })
 export class CrmIntegrationsModule implements OnModuleInit {
