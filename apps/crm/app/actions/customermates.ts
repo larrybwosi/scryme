@@ -246,7 +246,13 @@ export async function listCustomermatesFailed() {
       take: 100,
     }),
   ]);
-  return { success: true, data: { events, records } };
+  return {
+    success: true,
+    data: {
+      events: events.map((event) => ({ ...event, receivedAt: event.receivedAt.toISOString() })),
+      records,
+    },
+  };
 }
 
 export async function retryCustomermatesFailed(eventIds: string[] = []) {
