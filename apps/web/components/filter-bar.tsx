@@ -28,6 +28,7 @@ import { DateRangePicker } from "@repo/ui/components/date-range-picker";
 import type { DateRange } from "react-day-picker";
 import { format } from "date-fns";
 import { cn } from "@repo/ui/lib/utils";
+import { formatDateInput, parseDateInput } from "@/lib/utils";
 
 interface LocationOption {
   id: string;
@@ -76,9 +77,9 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
 
   const [localSearch, setLocalSearch] = useState(currentQ);
   const [dateRange, setDateRange] = useState<DateRange | undefined>(() => {
-    const from = currentStartDate ? new Date(currentStartDate) : undefined;
-    const to = currentEndDate ? new Date(currentEndDate) : undefined;
-    return { from, to };
+    const from = parseDateInput(currentStartDate);
+    const to = parseDateInput(currentEndDate);
+    return from || to ? { from, to } : undefined;
   });
 
   // Sync local search input with URL search query
@@ -88,9 +89,9 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
 
   // Sync date range with URL search queries
   useEffect(() => {
-    const from = currentStartDate ? new Date(currentStartDate) : undefined;
-    const to = currentEndDate ? new Date(currentEndDate) : undefined;
-    setDateRange({ from, to });
+    const from = parseDateInput(currentStartDate);
+    const to = parseDateInput(currentEndDate);
+    setDateRange(from || to ? { from, to } : undefined);
   }, [currentStartDate, currentEndDate]);
 
   const updateQueryParam = useCallback(
@@ -126,14 +127,17 @@ export function FilterBar({ locations = [] }: FilterBarProps) {
       const params = new URLSearchParams(searchParams.toString());
       params.delete("preset");
 
-      if (range?.from) {
-        params.set("startDate", format(range.from, "yyyy-MM-dd"));
+      const startDate = formatDateInput(range?.from);
+      const endDate = formatDateInput(range?.to);
+
+      if (startDate) {
+        params.set("startDate", startDate);
       } else {
         params.delete("startDate");
       }
 
-      if (range?.to) {
-        params.set("endDate", format(range.to, "yyyy-MM-dd"));
+      if (endDate) {
+        params.set("endDate", endDate);
       } else {
         params.delete("endDate");
       }
