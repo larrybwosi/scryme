@@ -581,12 +581,12 @@ export function Cart() {
                             {item.productName}
                           </h4>
                           <div className="text-[11px] text-muted-foreground flex flex-wrap gap-x-2 gap-y-0.5 items-center mt-0.5">
-                            {item.selectedUnit?.isCustomPrice && (
+                            {(item.selectedUnit as any)?.isCustomPrice && (
                               <Badge className="bg-emerald-600 text-white text-[9px] px-1 py-0 h-4 gap-0.5 font-bold uppercase">
                                 Custom Price
                               </Badge>
                             )}
-                            {!item.selectedUnit?.isCustomPrice && (item.selectedUnit as any)?.isBulkPrice && (
+                            {!(item.selectedUnit as any)?.isCustomPrice && (item.selectedUnit as any)?.isBulkPrice && (
                               <Badge className="bg-amber-600 text-white text-[9px] px-1 py-0 h-4 gap-0.5 font-bold uppercase">
                                 Bulk Tier
                               </Badge>

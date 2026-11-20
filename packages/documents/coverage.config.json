@@ -1,0 +1,6 @@
+{
+  "line": 25,
+  "branch": 41,
+  "changedLine": 80,
+  "note": "Baseline floors recorded during the CI migration. Raise to 60 line and 50 branch as document template tests are added."
+}

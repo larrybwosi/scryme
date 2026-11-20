@@ -54,6 +54,7 @@
     "dev": "tsup --watch",
     "test": "vitest run",
     "test:watch": "vitest",
+    "type-check": "tsc --noEmit",
     "prepublishOnly": "pnpm build"
   },
   "dependencies": {},
