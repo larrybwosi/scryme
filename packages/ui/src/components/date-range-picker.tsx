@@ -2,6 +2,7 @@
 
 import * as React from "react"
 import { CalendarIcon } from "lucide-react"
+import { isValid } from "date-fns"
 import type { DateRange } from "react-day-picker"
 
 import { cn } from "../lib/utils"
@@ -18,6 +19,14 @@ interface DatePickerWithRangeProps {
 export function DatePickerWithRange({ className, date, onDateChange }: DatePickerWithRangeProps) {
   const [selectedDate, setSelectedDate] = React.useState<DateRange | undefined>(date)
 
+  React.useEffect(() => {
+    setSelectedDate(date)
+  }, [date?.from?.getTime(), date?.to?.getTime()])
+
+  const hasRange = Boolean(
+    selectedDate?.from && isValid(selectedDate.from)
+  )
+
   const handleDateChange = (newDate: DateRange | undefined) => {
     setSelectedDate(newDate)
     onDateChange?.(newDate)
@@ -30,16 +39,16 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
           <Button
             id="date"
             variant={"outline"}
-            className={cn("justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}
+            className={cn("justify-start text-left font-normal", !hasRange && "text-muted-foreground")}
           >
             <CalendarIcon className="mr-2 h-4 w-4" />
-            {selectedDate?.from ? (
-              selectedDate.to ? (
+            {hasRange ? (
+              selectedDate?.to && isValid(selectedDate.to) ? (
                 <>
-                  {selectedDate.from.toLocaleDateString()} - {selectedDate.to.toLocaleDateString()}
+                  {selectedDate.from!.toLocaleDateString()} - {selectedDate.to.toLocaleDateString()}
                 </>
               ) : (
-                selectedDate.from.toLocaleDateString()
+                selectedDate!.from!.toLocaleDateString()
               )
             ) : (
               <span>Pick a date range</span>
@@ -50,8 +59,8 @@ export function DatePickerWithRange({ className, date, onDateChange }: DatePicke
           <Calendar
             initialFocus
             mode="range"
-            defaultMonth={selectedDate?.from}
-            selected={selectedDate}
+            defaultMonth={hasRange ? selectedDate?.from : undefined}
+            selected={hasRange ? selectedDate : undefined}
             onSelect={handleDateChange}
             numberOfMonths={2}
           />
