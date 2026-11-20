@@ -16,8 +16,7 @@ import {
   Prisma,
 } from "@repo/db/client";
 import { Decimal } from "decimal.js";
-import { getResolvedApiUrl, parseDateInput } from "@/lib/utils";
-import { endOfDay, startOfDay } from "date-fns";
+import { getResolvedApiUrl } from "@/lib/utils";
 
 async function checkPermission(allowedRoles: MemberRole[], isPageLoad = false) {
   const auth = await getServerAuth();
@@ -96,15 +95,17 @@ export async function getTransactions(params: {
     where.locationId = params.locationId;
   }
 
-  const start = parseDateInput(params.startDate);
-  const end = parseDateInput(params.endDate);
-  if (start || end) {
+  if (params.startDate || params.endDate) {
     where.createdAt = {};
-    if (start) {
-      where.createdAt.gte = startOfDay(start);
+    if (params.startDate) {
+      const start = new Date(params.startDate);
+      start.setHours(0, 0, 0, 0);
+      where.createdAt.gte = start;
     }
-    if (end) {
-      where.createdAt.lte = endOfDay(end);
+    if (params.endDate) {
+      const end = new Date(params.endDate);
+      end.setHours(23, 59, 59, 999);
+      where.createdAt.lte = end;
     }
   }
 

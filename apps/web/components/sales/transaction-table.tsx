@@ -19,7 +19,7 @@ import {
   Inbox,
   ExternalLink,
 } from "lucide-react";
-import { format, isValid } from "date-fns";
+import { format } from "date-fns";
 import { AddPaymentModal } from "./add-payment-modal";
 import {
   DropdownMenu,
@@ -89,14 +89,6 @@ function formatCurrency(value: number, currencyCode = "KES") {
     currency: currencyCode,
     maximumFractionDigits: 0,
   }).format(value);
-}
-
-function formatTransactionDate(
-  value: string | Date | null | undefined,
-  pattern: string,
-) {
-  const date = value instanceof Date ? value : new Date(value ?? "");
-  return isValid(date) ? format(date, pattern) : "—";
 }
 
 function getCleanUrl(url: string | null | undefined): string {
@@ -225,7 +217,7 @@ export function TransactionTable({
       const data = filtered.map(trx => ({
         "Order Number": trx.number,
         "Type": trx.type.replace(/_/g, " "),
-        "Date": formatTransactionDate(trx.createdAt, "yyyy-MM-dd HH:mm:ss"),
+        "Date": format(new Date(trx.createdAt), "yyyy-MM-dd HH:mm:ss"),
         "Customer": trx.customer?.name ?? trx.businessAccount?.name ?? "Walk-in Customer",
         "Customer Email": trx.customer?.email ?? "—",
         "Location": trx.location?.name ?? "—",
@@ -496,7 +488,7 @@ export function TransactionTable({
 
                       {/* Date */}
                       <td className="border-r border-border px-3 py-1.5 whitespace-nowrap text-[12px] text-muted-foreground dark:border-zinc-800">
-                        {formatTransactionDate(trx.createdAt, "MMM d, HH:mm")}
+                        {format(new Date(trx.createdAt), "MMM d, HH:mm")}
                       </td>
 
                       {/* Customer */}
