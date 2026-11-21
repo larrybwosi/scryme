@@ -1,0 +1,243 @@
+name: checks
+
+on:
+  workflow_call:
+    inputs:
+      workspaces:
+        description: JSON array of affected workspace names
+        required: true
+        type: string
+      layer:
+        description: Which check layer to run, one of lint, unit, integration, native or docs
+        required: true
+        type: string
+      docs_only:
+        description: Whether the change is limited to docs and skills
+        required: false
+        type: string
+        default: 'false'
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: lint
+    if: inputs.layer == 'lint'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-lint-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-lint-
+      - name: Validate canonical commands
+        run: node scripts/ci/check-commands.js '${{ inputs.workspaces }}'
+      - name: Lint and type check affected workspaces
+        env:
+          WORKSPACES: ${{ inputs.workspaces }}
+        run: |
+          count="$(echo "$WORKSPACES" | jq length)"
+          if [ "$count" -eq 0 ]; then
+            echo "No code workspaces affected, lint passed"
+            exit 0
+          fi
+          for ws in $(echo "$WORKSPACES" | jq -r '.[]'); do
+            pnpm turbo run lint type-check --filter="$ws"
+          done
+
+  unit:
+    name: unit
+    if: inputs.layer == 'unit'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - uses: ./.github/actions/setup
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-unit-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-unit-
+      - name: Validate canonical commands
+        run: node scripts/ci/check-commands.js '${{ inputs.workspaces }}'
+      - name: Validate flake quarantine manifest
+        run: |
+          result="$(node scripts/ci/quarantine-pattern.js)"
+          jq -r .pattern <<< "$result" > quarantine-pattern.txt
+          echo "Quarantined tests: $(jq -r .count <<< "$result")" >> "$GITHUB_STEP_SUMMARY"
+      - name: Run unit tests with coverage
+        env:
+          WORKSPACES: ${{ inputs.workspaces }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: |
+          base_ref="${BASE_SHA:-${BEFORE_SHA:-HEAD~1}}"
+          pattern="$(cat quarantine-pattern.txt)"
+          count="$(echo "$WORKSPACES" | jq length)"
+          if [ "$count" -eq 0 ]; then
+            echo "No code workspaces affected, unit passed"
+            exit 0
+          fi
+          for ws in $(echo "$WORKSPACES" | jq -r '.[]'); do
+            if pnpm --filter "$ws" exec node -e "const p=require('./package.json'); const d={...(p.devDependencies||{}),...(p.dependencies||{})}; process.exit(d['@vitest/coverage-v8']?0:1)"; then
+              args=(--coverage --coverage.reporter=json-summary --coverage.reporter=json --coverage.reporter=text)
+              if [ -n "$pattern" ]; then
+                args+=(--testNamePattern="$pattern")
+              fi
+              pnpm turbo run test --filter="$ws" -- "${args[@]}"
+              node scripts/ci/check-coverage.js "$ws" "$base_ref"
+            else
+              echo "$ws has no coverage provider, running its test layer without coverage"
+              if [ -n "$pattern" ]; then
+                pnpm turbo run test --filter="$ws" -- --testNamePattern="$pattern"
+              else
+                pnpm turbo run test --filter="$ws"
+              fi
+            fi
+          done
+
+  integration:
+    name: integration
+    if: inputs.layer == 'integration'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_DB: scryme_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+      redis:
+        image: redis:alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://postgres@localhost:5432/scryme_test
+      REDIS_URL: redis://localhost:6379
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          filter: blob:none
+      - uses: ./.github/actions/setup
+      - uses: actions/cache@v4
+        with:
+          path: .turbo
+          key: ${{ runner.os }}-turbo-integration-${{ hashFiles('pnpm-lock.yaml') }}
+          restore-keys: |
+            ${{ runner.os }}-turbo-integration-
+      - name: Check migration compatibility
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/ci/check-migrations.js "${BASE_SHA:-${BEFORE_SHA:-HEAD~1}}"
+      - name: Run integration tests for affected workspaces
+        env:
+          WORKSPACES: ${{ inputs.workspaces }}
+        run: |
+          count="$(echo "$WORKSPACES" | jq length)"
+          if [ "$count" -eq 0 ]; then
+            echo "No stateful workspaces affected, integration passed"
+            exit 0
+          fi
+          ran=0
+          for ws in $(echo "$WORKSPACES" | jq -r '.[]'); do
+            if pnpm --filter "$ws" exec node -e "const s=require('./package.json').scripts||{}; process.exit(s['test:integration']?0:1)"; then
+              pnpm --filter "$ws" test:integration
+              ran=1
+            fi
+          done
+          if [ "$ran" -eq 0 ]; then
+            echo "No affected workspace declares test:integration, integration passed"
+          fi
+
+  native_checks:
+    name: native checks
+    if: inputs.layer == 'native'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/setup
+      - uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-testDebugUnitTest-${{ hashFiles('apps/android/**/*.gradle.kts', 'apps/android/gradle/wrapper/gradle-wrapper.properties') }}
+          restore-keys: |
+            ${{ runner.os }}-gradle-testDebugUnitTest-
+      - uses: Swatinem/rust-cache@v2
+        with:
+          shared-key: test
+          workspaces: |
+            apps/pos/src-tauri -> target
+            apps/bakery/src-tauri -> target
+      - name: Install Tauri system libraries
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev libglib2.0-dev libudev-dev libpcsclite-dev libxdo-dev libssl-dev build-essential curl wget file pkg-config
+      - name: Run native checks for affected workspaces
+        env:
+          WORKSPACES: ${{ inputs.workspaces }}
+        run: |
+          count="$(echo "$WORKSPACES" | jq length)"
+          if [ "$count" -eq 0 ]; then
+            echo "No native workspaces affected, native checks passed"
+            exit 0
+          fi
+          ran=0
+          for ws in $(echo "$WORKSPACES" | jq -r '.[]'); do
+            if [ "$ws" = "android" ]; then
+              chmod +x apps/android/gradlew
+              (cd apps/android && ./gradlew lintDebug testDebugUnitTest)
+              ran=1
+            fi
+            if [ "$ws" = "pos" ]; then
+              (cd apps/pos/src-tauri && cargo test)
+              ran=1
+            fi
+            if [ "$ws" = "bakery" ]; then
+              (cd apps/bakery/src-tauri && cargo test)
+              ran=1
+            fi
+          done
+          if [ "$ran" -eq 0 ]; then
+            echo "No native workspace affected, native checks passed"
+          fi
+
+  docs_metadata:
+    name: docs metadata
+    if: inputs.layer == 'docs'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Validate docs and skills metadata
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          BEFORE_SHA: ${{ github.event.before }}
+        run: node scripts/ci/check-docs.js "${BASE_SHA:-${BEFORE_SHA:-HEAD~1}}"

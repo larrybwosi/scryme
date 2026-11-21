@@ -141,6 +141,8 @@ export default function ManageTablesPage() {
         return { icon: Ban, label: 'Occupied', color: 'text-rose-600', bg: 'bg-rose-500/10', border: 'border-rose-500', bar: 'bg-rose-500' };
       case 'reserved':
         return { icon: Clock, label: 'Reserved', color: 'text-amber-600', bg: 'bg-amber-500/10', border: 'border-amber-500', bar: 'bg-amber-500' };
+      default:
+        return { icon: Clock, label: 'Unknown', color: 'text-muted-foreground', bg: 'bg-muted', border: 'border-border', bar: 'bg-muted' };
     }
   };
 

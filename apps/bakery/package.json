@@ -9,6 +9,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "lint:backend": "cd src-tauri && cargo clippy --all-features",
+    "test": "pnpm run test:frontend",
     "test:backend": "cd src-tauri && cargo test",
     "tauri": "tauri",
     "preview": "vite preview",

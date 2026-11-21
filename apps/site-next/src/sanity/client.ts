@@ -1,7 +1,8 @@
-import { createClient, type SanityClient } from '@sanity/client'
+import { createClient } from '@sanity/client'
 import { env } from '@repo/env'
 
 const SANITY_REQUEST_TIMEOUT_MS = 2_000
+const DEFAULT_SANITY_PROJECT_ID = '25pbas6k'
 
 const rawProjectId =
   env.SANITY_PROJECT_ID ||

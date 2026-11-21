@@ -89,7 +89,7 @@ const AppRoutes = () => {
 
   if (!isConfigured || !currentLocation?.id) {
     if (import.meta.env.MODE === 'standalone') {
-      return <StandaloneSetup />;
+      return <SetupPage />;
     }
     return <SetupPage />;
   }

@@ -1,8 +1,6 @@
 name: Test
 
 on:
-  push:
-    branches: [main, dev, nextgen]
   pull_request:
     branches: [main, dev, nextgen]
 
@@ -10,559 +8,58 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
-  filter:
-    runs-on: ubuntu-latest
-    outputs:
-      pos: ${{ steps.changes.outputs.pos }}
-      pos_rust: ${{ steps.changes.outputs.pos_rust }}
-      bakery: ${{ steps.changes.outputs.bakery }}
-      bakery_rust: ${{ steps.changes.outputs.bakery_rust }}
-      android: ${{ steps.changes.outputs.android }}
-      api: ${{ steps.changes.outputs.api }}
-      crm: ${{ steps.changes.outputs.crm }}
-      web: ${{ steps.changes.outputs.web }}
-      projects: ${{ steps.changes.outputs.projects }}
-      packages: ${{ steps.changes.outputs.packages }}
-      pkg_auth: ${{ steps.changes.outputs.pkg_auth }}
-      pkg_config_eslint: ${{ steps.changes.outputs.pkg_config_eslint }}
-      pkg_config_typescript: ${{ steps.changes.outputs.pkg_config_typescript }}
-      pkg_crm: ${{ steps.changes.outputs.pkg_crm }}
-      pkg_db: ${{ steps.changes.outputs.pkg_db }}
-      pkg_documents: ${{ steps.changes.outputs.pkg_documents }}
-      pkg_env: ${{ steps.changes.outputs.pkg_env }}
-      pkg_sdk: ${{ steps.changes.outputs.pkg_sdk }}
-      pkg_shared: ${{ steps.changes.outputs.pkg_shared }}
-      pkg_ui: ${{ steps.changes.outputs.pkg_ui }}
-      workflow: ${{ steps.changes.outputs.workflow }}
-      test_workflow: ${{ steps.changes.outputs.test_workflow }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: dorny/paths-filter@v3
-        id: changes
-        with:
-          filters: |
-            pos:
-              - 'apps/pos/**'
-            pos_rust:
-              - 'apps/pos/src-tauri/**'
-            bakery:
-              - 'apps/bakery/**'
-            bakery_rust:
-              - 'apps/bakery/src-tauri/**'
-            android:
-              - 'apps/android/**'
-            api:
-              - 'apps/api/**'
-            crm:
-              - 'apps/crm/**'
-            web:
-              - 'apps/web/**'
-            projects:
-              - 'apps/projects/**'
-            packages:
-              - 'packages/**'
-            pkg_auth:
-              - 'packages/auth/**'
-            pkg_config_eslint:
-              - 'packages/config-eslint/**'
-            pkg_config_typescript:
-              - 'packages/config-typescript/**'
-            pkg_crm:
-              - 'packages/crm/**'
-            pkg_db:
-              - 'packages/db/**'
-            pkg_documents:
-              - 'packages/documents/**'
-            pkg_env:
-              - 'packages/env/**'
-            pkg_sdk:
-              - 'packages/sdk/**'
-            pkg_shared:
-              - 'packages/shared/**'
-            pkg_ui:
-              - 'packages/ui/**'
-            test_workflow:
-              - '.github/workflows/test.yml'
-            workflow:
-              - '.github/workflows/**'
-              - '!.github/workflows/test.yml'
-              - 'package.json'
-              - 'pnpm-lock.yaml'
-              - 'pnpm-workspace.yaml'
-              - 'turbo.json'
+  affected:
+    uses: ./.github/workflows/affected.yml
 
-  validation-needed:
-    needs: filter
-    runs-on: ubuntu-latest
-    outputs:
-      needed: ${{ steps.check.outputs.needed }}
-    steps:
-      - id: check
-        run: |
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.bakery }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.android }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.api }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.crm }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.web }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.projects }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.packages }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.workflow }}" == "true" ] || \
-             [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "needed=true" >> $GITHUB_OUTPUT
-          else
-            echo "needed=false" >> $GITHUB_OUTPUT
-          fi
+  lint:
+    name: lint
+    needs: affected
+    uses: ./.github/workflows/checks.yml
+    with:
+      workspaces: ${{ needs.affected.outputs.workspaces }}
+      layer: lint
 
-  android-ci:
-    needs: filter
-    if: |
-      needs.filter.outputs.android == 'true' ||
-      needs.filter.outputs.workflow == 'true' ||
-      needs.filter.outputs.test_workflow == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
+  unit:
+    name: unit
+    needs: affected
+    uses: ./.github/workflows/checks.yml
+    with:
+      workspaces: ${{ needs.affected.outputs.workspaces }}
+      layer: unit
 
-      - name: Set up JDK 17
-        uses: actions/setup-java@v4
-        with:
-          distribution: 'temurin'
-          java-version: '17'
+  integration:
+    name: integration
+    needs: affected
+    uses: ./.github/workflows/checks.yml
+    with:
+      workspaces: ${{ needs.affected.outputs.workspaces }}
+      layer: integration
 
-      - name: Setup Gradle
-        uses: gradle/actions/setup-gradle@v4
+  native_checks:
+    name: native checks
+    needs: affected
+    uses: ./.github/workflows/checks.yml
+    with:
+      workspaces: ${{ needs.affected.outputs.workspaces }}
+      layer: native
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew
-        working-directory: apps/android
+  docs_metadata:
+    name: docs metadata
+    needs: affected
+    uses: ./.github/workflows/checks.yml
+    with:
+      workspaces: ${{ needs.affected.outputs.workspaces }}
+      layer: docs
+      docs_only: ${{ needs.affected.outputs.docs_only }}
 
-      - name: Run Android Lint & Unit Tests
-        env:
-          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
-          OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
-          OPENPANEL_HOST: ${{ secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
-        run: ./gradlew lintDebug testDebugUnitTest
-        working-directory: apps/android
-
-      - name: Build Debug APK
-        env:
-          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID || secrets.NEXT_PUBLIC_OPENPANEL_CLIENT_ID || secrets.VITE_OPENPANEL_CLIENT_ID }}
-          OPENPANEL_CLIENT_SECRET: ${{ secrets.OPENPANEL_CLIENT_SECRET }}
-          OPENPANEL_HOST: ${{ secrets.OPENPANEL_HOST || secrets.NEXT_PUBLIC_OPENPANEL_HOST || secrets.VITE_OPENPANEL_HOST }}
-        run: ./gradlew assembleDebug
-        working-directory: apps/android
-
-  api-ci:
-    needs: [filter]
-    if: |
-      needs.filter.outputs.api == 'true' ||
-      needs.filter.outputs.packages == 'true' ||
-      needs.filter.outputs.workflow == 'true' ||
-      needs.filter.outputs.test_workflow == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_DB: postgres
-          POSTGRES_HOST_AUTH_METHOD: trust
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-    env:
-      NODE_OPTIONS: "--max-old-space-size=8192"
-      DATABASE_URL: postgresql://postgres@localhost:5432/postgres
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client
-        run: pnpm generate
-
-      - name: Turbo Cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-api-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-api-
-
-      - name: Build and Verify
-        run: pnpm turbo build lint type-check test --filter=api
-
-  lint-typecheck:
-    needs: [filter, validation-needed]
-    if: needs.validation-needed.outputs.needed == 'true'
-    runs-on: ubuntu-latest
-    timeout-minutes: 15
-    env:
-      NODE_OPTIONS: "--max-old-space-size=8192"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        run: pnpm generate
-
-      - name: Turbo Cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-lint-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-lint-
-
-      - name: Lint and Type Check Apps
-        run: |
-          APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.projects }}" == "true" ]; then
-            APPS_CHANGED=true
-          fi
-
-          PKG_CHANGED="${{ needs.filter.outputs.packages }}"
-          ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
-            ROOT_CHANGED=true
-          fi
-
-          if [ "$APPS_CHANGED" == "true" ] || [ "$PKG_CHANGED" == "true" ]; then
-            FILTER=""
-            if [ "${{ needs.filter.outputs.pos }}" == "true" ]; then FILTER="$FILTER --filter=pos..."; fi
-            if [ "${{ needs.filter.outputs.bakery }}" == "true" ]; then FILTER="$FILTER --filter=bakery..."; fi
-            if [ "${{ needs.filter.outputs.crm }}" == "true" ]; then FILTER="$FILTER --filter=crm..."; fi
-            if [ "${{ needs.filter.outputs.web }}" == "true" ]; then FILTER="$FILTER --filter=web..."; fi
-            if [ "${{ needs.filter.outputs.projects }}" == "true" ]; then FILTER="$FILTER --filter=projects..."; fi
-
-            if [ -n "$FILTER" ]; then
-              echo "Running lint and type-check for changed apps..."
-              pnpm turbo lint type-check $FILTER
-            else
-              echo "No changed apps to check"
-            fi
-          elif [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Root changes detected and no app/pkg changes, checking all apps..."
-            pnpm turbo lint type-check --filter="./apps/*"
-          else
-            echo "No JS/TS changes detected, skipping"
-          fi
-
-      - name: Lint and Type Check Packages
-        run: |
-          APPS_CHANGED=false
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.projects }}" == "true" ]; then
-            APPS_CHANGED=true
-          fi
-
-          PKG_CHANGED="${{ needs.filter.outputs.packages }}"
-          ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ]; then
-            ROOT_CHANGED=true
-          fi
-
-          if [ "$APPS_CHANGED" == "true" ] || [ "$PKG_CHANGED" == "true" ]; then
-            FILTER=""
-            if [ "${{ needs.filter.outputs.pkg_auth }}" == "true" ]; then FILTER="$FILTER --filter=@repo/auth..."; fi
-            if [ "${{ needs.filter.outputs.pkg_config_eslint }}" == "true" ]; then FILTER="$FILTER --filter=@repo/eslint-config..."; fi
-            if [ "${{ needs.filter.outputs.pkg_config_typescript }}" == "true" ]; then FILTER="$FILTER --filter=@repo/typescript-config..."; fi
-            if [ "${{ needs.filter.outputs.pkg_crm }}" == "true" ]; then FILTER="$FILTER --filter=@repo/crm..."; fi
-            if [ "${{ needs.filter.outputs.pkg_db }}" == "true" ]; then FILTER="$FILTER --filter=@repo/db..."; fi
-            if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ]; then FILTER="$FILTER --filter=@repo/documents..."; fi
-            if [ "${{ needs.filter.outputs.pkg_env }}" == "true" ]; then FILTER="$FILTER --filter=@repo/env..."; fi
-            if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ]; then FILTER="$FILTER --filter=@scryme/sdk..."; fi
-            if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ]; then FILTER="$FILTER --filter=@repo/shared..."; fi
-            if [ "${{ needs.filter.outputs.pkg_ui }}" == "true" ]; then FILTER="$FILTER --filter=@repo/ui..."; fi
-
-            if [ -n "$FILTER" ]; then
-              echo "Running lint and type-check for changed packages..."
-              pnpm turbo lint type-check $FILTER
-            else
-              echo "No changed packages to check"
-            fi
-          elif [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Root changes detected and no app/pkg changes, checking all packages..."
-            pnpm turbo lint type-check --filter="./packages/*"
-          fi
-        env:
-          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
-
-  rust-pos:
-    needs: filter
-    if: |
-      needs.filter.outputs.pos_rust == 'true' ||
-      needs.filter.outputs.workflow == 'true' ||
-      needs.filter.outputs.test_workflow == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: apps/pos/src-tauri
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-pos-${{ hashFiles('.github/workflows/test.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-pos-
-      - name: Install system dependencies
-        run: |
-          sudo rm -f /etc/apt/apt.conf.d/docker-clean
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
-          sudo apt-get update
-          sudo apt-get install -y \
-            libgtk-3-dev libwebkit2gtk-4.1-dev libayatana-appindicator3-dev librsvg2-dev \
-            libudev-dev libusb-1.0-0-dev libpcsclite-dev pkg-config patchelf
-      - name: Create dummy binaries
-        run: |
-          mkdir -p apps/pos/src-tauri/binaries
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-aarch64-apple-darwin
-          touch apps/pos/src-tauri/binaries/sumatrapdf-x86_64-unknown-linux-gnu
-          chmod +x apps/pos/src-tauri/binaries/*
-      - name: Lint Backend
-        run: cd apps/pos && pnpm lint:backend
-      - name: Check Backend
-        run: cd apps/pos/src-tauri && cargo check
-
-  rust-bakery:
-    needs: filter
-    if: |
-      needs.filter.outputs.bakery_rust == 'true' ||
-      needs.filter.outputs.workflow == 'true' ||
-      needs.filter.outputs.test_workflow == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy
-      - name: Rust Cache
-        uses: swatinem/rust-cache@v2
-        with:
-          workspaces: apps/bakery/src-tauri
-      - name: Cache apt packages
-        uses: actions/cache@v4
-        with:
-          path: /var/cache/apt/archives
-          key: ${{ runner.os }}-apt-bakery-${{ hashFiles('.github/workflows/test.yml') }}
-          restore-keys: |
-            ${{ runner.os }}-apt-bakery-
-      - name: Install system dependencies
-        run: |
-          sudo rm -f /etc/apt/apt.conf.d/docker-clean
-          echo 'Binary::apt::APT::Keep-Downloaded-Packages "true";' | sudo tee /etc/apt/apt.conf.d/keep-cache
-          sudo apt-get update
-          sudo apt-get install -y \
-            libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev \
-            libssl-dev libayatana-appindicator3-dev librsvg2-dev pkg-config
-      - name: Lint Backend
-        run: cd apps/bakery && pnpm lint:backend
-      - name: Test Backend
-        run: cd apps/bakery && pnpm test:backend
-
-  frontend-tests:
-    needs: [filter, validation-needed]
-    if: needs.validation-needed.outputs.needed == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Generate Prisma Client
-        run: pnpm generate
-      - name: Build Packages Dependencies
-        run: pnpm turbo build --filter="./packages/*"
-      - name: Run Tests
-        run: |
-          if [ "${{ needs.filter.outputs.pos }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running POS frontend tests..."
-            pnpm --filter pos test:frontend
-          fi
-
-          if [ "${{ needs.filter.outputs.bakery }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running Bakery frontend tests..."
-            pnpm --filter bakery test:frontend
-          fi
-
-          if [ "${{ needs.filter.outputs.projects }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running Projects tests..."
-            pnpm --filter projects test
-          fi
-
-          if [ "${{ needs.filter.outputs.crm }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running CRM tests..."
-            pnpm --filter crm test
-          fi
-
-          if [ "${{ needs.filter.outputs.pkg_documents }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running Documents package tests..."
-            pnpm --filter @repo/documents test
-          fi
-
-          if [ "${{ needs.filter.outputs.pkg_shared }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running Shared package tests..."
-            pnpm --filter @repo/shared test
-          fi
-
-          if [ "${{ needs.filter.outputs.pkg_sdk }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ] || [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            echo "Running SDK package tests..."
-            pnpm --filter @scryme/sdk test
-          fi
-        env:
-          POSTHOG_API_KEY: ${{ secrets.POSTHOG_API_KEY }}
-          VITE_PUBLIC_POSTHOG_KEY: ${{ secrets.VITE_PUBLIC_POSTHOG_KEY || secrets.POSTHOG_API_KEY }}
-          VITE_PUBLIC_POSTHOG_HOST: ${{ secrets.VITE_PUBLIC_POSTHOG_HOST }}
-          OPENPANEL_CLIENT_ID: ${{ secrets.OPENPANEL_CLIENT_ID }}
-          VITE_OPENPANEL_CLIENT_ID: ${{ secrets.VITE_OPENPANEL_CLIENT_ID || secrets.OPENPANEL_CLIENT_ID }}
-          VITE_OPENPANEL_HOST: ${{ secrets.VITE_OPENPANEL_HOST }}
-
-  e2e-tests:
-    needs: [filter]
-    if: needs.filter.outputs.pos == 'true' || (needs.filter.outputs.packages == 'true' && github.event_name == 'push') || needs.filter.outputs.workflow == 'true' || needs.filter.outputs.test_workflow == 'true'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-      - name: Cache Playwright Browsers
-        id: playwright-cache
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/ms-playwright
-          key: ${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}
-      - name: Install Playwright Browsers
-        run: pnpm --filter pos exec playwright install --with-deps
-      - name: Run E2E tests
-        run: |
-          pnpm turbo build --filter=pos...
-          pnpm --filter pos test:e2e
-        env:
-          POSTHOG_API_KEY: mock
-          SENTRY_DSN: mock
-
-  build-verify:
-    needs: [filter, lint-typecheck]
-    if: |
-      github.event_name == 'pull_request' && (
-        needs.filter.outputs.web == 'true' ||
-        needs.filter.outputs.projects == 'true' ||
-        needs.filter.outputs.packages == 'true' ||
-        needs.filter.outputs.workflow == 'true' ||
-        needs.filter.outputs.test_workflow == 'true'
-      )
-    runs-on: ubuntu-latest
-    env:
-      NODE_OPTIONS: "--max-old-space-size=8192"
-      BETTER_AUTH_SECRET: "secret"
-      NEXT_PUBLIC_API_URL: "http://localhost:3002"
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - name: Use Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: "pnpm"
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate Prisma Client
-        run: pnpm generate
-
-      - name: Turbo Cache
-        uses: actions/cache@v4
-        with:
-          path: .turbo
-          key: ${{ runner.os }}-turbo-build-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-turbo-build-
-
-      - name: Build
-        run: |
-          WEB_CHANGED=false
-          if [ "${{ needs.filter.outputs.web }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-            WEB_CHANGED=true
-          fi
-
-          ROOT_CHANGED=false
-          if [ "${{ needs.filter.outputs.workflow }}" == "true" ] || [ "${{ needs.filter.outputs.test_workflow }}" == "true" ]; then
-            ROOT_CHANGED=true
-          fi
-
-          PROJECTS_CHANGED=false
-          if [ "${{ needs.filter.outputs.projects }}" == "true" ] || [ "${{ needs.filter.outputs.packages }}" == "true" ]; then
-            PROJECTS_CHANGED=true
-          fi
-
-          if [ "$PROJECTS_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Running verification build for projects app..."
-            pnpm turbo build --filter=projects...
-          else
-            echo "No projects app changes requiring build-verify detected"
-          fi
-
-          if [ "$WEB_CHANGED" == "true" ] || [ "$ROOT_CHANGED" == "true" ]; then
-            echo "Running verification build for web app..."
-            pnpm turbo build --filter=web...
-          else
-            echo "No web app changes requiring build-verify detected"
-          fi
-
-        env:
-          DATABASE_URL: postgresql://postgres@localhost:5432/postgres
-          NODE_ENV: production
+  verify_build:
+    name: verify build
+    needs: [affected, lint, unit, integration, native_checks, docs_metadata]
+    uses: ./.github/workflows/build.yml
+    with:
+      mode: verify
+      workspaces: ${{ needs.affected.outputs.workspaces }}
