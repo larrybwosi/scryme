@@ -111,6 +111,20 @@ export function useTasks(projectId?: string) {
   });
 }
 
+export function useMyTasks(memberId?: string | null) {
+  return useQuery<Task[]>({
+    queryKey: [...QUERY_KEYS.projectTasks(undefined), "mine", memberId || "anonymous"],
+    queryFn: async () => {
+      const tasks = await ProjectsAPI.getProjectTasks();
+      if (!memberId) return [];
+      return tasks.filter((task) =>
+        task.assignees?.some((assignee) => assignee.member?.id === memberId),
+      );
+    },
+    enabled: !!memberId,
+  });
+}
+
 export function useTask(taskId: string) {
   return useQuery<Task>({
     queryKey: QUERY_KEYS.task(taskId),

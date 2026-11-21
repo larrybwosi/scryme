@@ -227,7 +227,7 @@ describe("Task detail", () => {
     render(<TaskDetailPage taskId="task-1" />);
 
     expect(screen.getByRole("heading", { name: "Task not found" })).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Back to tasks" })).toHaveAttribute(
+    expect(screen.getByRole("link", { name: "Back to my tasks" })).toHaveAttribute(
       "href",
       "/tasks",
     );

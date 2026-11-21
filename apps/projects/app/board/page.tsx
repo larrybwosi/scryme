@@ -128,11 +128,11 @@ export default function BoardPage() {
                 <span>Board</span>
               </Link>
               <Link
-                href="/tasks"
+                href="/tasks" title="My Tasks"
                 className="px-2.5 py-1 rounded text-outline hover:text-on-surface font-body-sm text-body-sm flex items-center gap-1 transition-colors"
               >
                 <Rows className="h-4 w-4" />
-                <span>List</span>
+                <span>My Tasks</span>
               </Link>
             </div>
             {canManageTasks && (

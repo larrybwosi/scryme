@@ -20,11 +20,12 @@ import {
   Search,
 } from "lucide-react";
 import {
-  useTasks,
+  useMyTasks,
   useProjects,
   useUpdateTaskStatus,
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
+import { useWorkspaceContext } from "@/lib/hooks/use-projects";
 import { Task } from "@/lib/api";
 import { CreateTaskModal } from "@/components/CreateTaskModal";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -36,7 +37,8 @@ function TasksPageContent() {
   const searchParams = useSearchParams();
   const notice = searchParams.get("notice");
 
-  const { data: tasks = [], isLoading, isError, error, refetch } = useTasks();
+  const { data: workspace } = useWorkspaceContext();
+  const { data: tasks = [], isLoading, isError, error, refetch } = useMyTasks(workspace?.memberId);
   const { data: projects = [] } = useProjects();
 
   const updateTaskStatusMutation = useUpdateTaskStatus();
@@ -109,10 +111,10 @@ function TasksPageContent() {
               tabIndex={-1}
               className="font-headline-lg text-headline-lg font-semibold tracking-tight text-on-surface outline-none"
             >
-              Enterprise Tasks & Issues
+              My Tasks
             </h1>
             <p className="mt-1 font-body-sm text-body-sm text-outline">
-              Cross system work items, workload allocation, and SLA tracking.
+              Tasks assigned to you across projects.
             </p>
           </div>
 
@@ -226,10 +228,10 @@ function TasksPageContent() {
         {!isLoading && !isError && filteredTasks.length === 0 && (
           <PageEmpty
             icon={CheckSquare}
-            title={tasks.length === 0 ? "No tasks yet" : "No tasks match these filters"}
+            title={tasks.length === 0 ? "No tasks assigned to you" : "No tasks match these filters"}
             description={
               tasks.length === 0
-                ? "Create the first task to start tracking work in this workspace."
+                ? "When tasks are assigned to you, they will appear here."
                 : "Adjust the scope, project, priority, or search filters to find work."
             }
             action={
