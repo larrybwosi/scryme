@@ -13,11 +13,16 @@ const mocks = vi.hoisted(() => ({
   useCreateTask: vi.fn(),
   useUpdateTaskStatus: vi.fn(),
   useUpdateTask: vi.fn(),
+  useDeleteTask: vi.fn(),
   useManageTaskAssignees: vi.fn(),
   useAddTaskComment: vi.fn(),
+  useMilestones: vi.fn(),
+  useSprints: vi.fn(),
+  useTaskLabels: vi.fn(),
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
   refetch: vi.fn(),
+  push: vi.fn(),
 }));
 
 vi.mock("@/lib/hooks/use-projects", () => ({
@@ -29,8 +34,12 @@ vi.mock("@/lib/hooks/use-projects", () => ({
   useCreateTask: mocks.useCreateTask,
   useUpdateTaskStatus: mocks.useUpdateTaskStatus,
   useUpdateTask: mocks.useUpdateTask,
+  useDeleteTask: mocks.useDeleteTask,
   useManageTaskAssignees: mocks.useManageTaskAssignees,
   useAddTaskComment: mocks.useAddTaskComment,
+  useMilestones: mocks.useMilestones,
+  useSprints: mocks.useSprints,
+  useTaskLabels: mocks.useTaskLabels,
 }));
 
 vi.mock("@/lib/permissions", () => ({
@@ -46,6 +55,7 @@ vi.mock("@/lib/feedback", () => ({
 
 vi.mock("next/navigation", () => ({
   useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({ push: mocks.push, replace: vi.fn(), back: vi.fn() }),
 }));
 
 vi.mock("next/link", () => ({
@@ -163,8 +173,12 @@ function setupTask(
     isPending: false,
   });
   mocks.useUpdateTask.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+  mocks.useDeleteTask.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
   mocks.useManageTaskAssignees.mockReturnValue({ mutate: vi.fn(), isPending: false });
   mocks.useAddTaskComment.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+  mocks.useMilestones.mockReturnValue({ data: [] });
+  mocks.useSprints.mockReturnValue({ data: [] });
+  mocks.useTaskLabels.mockReturnValue({ data: [] });
 
   return { statusMutateAsync };
 }
