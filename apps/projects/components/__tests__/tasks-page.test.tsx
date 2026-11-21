@@ -5,8 +5,9 @@ import userEvent from "@testing-library/user-event";
 import type { Task } from "@/lib/api";
 
 const mocks = vi.hoisted(() => ({
-  useTasks: vi.fn(),
+  useMyTasks: vi.fn(),
   useProjects: vi.fn(),
+  useWorkspaceContext: vi.fn(),
   useUpdateTaskStatus: vi.fn(),
   notifySuccess: vi.fn(),
   notifyError: vi.fn(),
@@ -14,8 +15,9 @@ const mocks = vi.hoisted(() => ({
 }));
 
 vi.mock("@/lib/hooks/use-projects", () => ({
-  useTasks: mocks.useTasks,
+  useMyTasks: mocks.useMyTasks,
   useProjects: mocks.useProjects,
+  useWorkspaceContext: mocks.useWorkspaceContext,
   useUpdateTaskStatus: mocks.useUpdateTaskStatus,
 }));
 
@@ -126,7 +128,8 @@ function mockTasks(
   const mutateAsync = overrides.mutateAsync ?? vi.fn().mockResolvedValue({});
   const refetch = overrides.refetch ?? vi.fn();
 
-  mocks.useTasks.mockReturnValue({
+  mocks.useWorkspaceContext.mockReturnValue({ data: { memberId: "member-1" } });
+  mocks.useMyTasks.mockReturnValue({
     data: overrides.data ?? [baseTask],
     isLoading: overrides.isLoading ?? false,
     isError: overrides.isError ?? false,
@@ -164,9 +167,9 @@ describe("Tasks list", () => {
     mockTasks({ data: [] });
     render(<TasksPage />);
 
-    expect(screen.getByRole("heading", { name: "No tasks yet" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "No tasks assigned to you" })).toBeInTheDocument();
     expect(
-      screen.getByText("Create the first task to start tracking work in this workspace."),
+      screen.getByText("When tasks are assigned to you, they will appear here."),
     ).toBeInTheDocument();
   });
 

@@ -5,8 +5,8 @@ import { Textarea } from "@repo/ui/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/components/ui/select";
 import Link from "next/link";
 import React, { useState } from "react";
-import { ListTodo, Check, History as HistoryIcon, CalendarCheck } from "lucide-react";
-import { useSearchParams } from "next/navigation";
+import { ListTodo, Check, History as HistoryIcon, CalendarCheck, Trash2, Copy, ExternalLink, Flag, RotateCw, Tag, Calendar, Clock3 } from "lucide-react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useTasks,
   useTask,
@@ -16,8 +16,12 @@ import {
   useCreateTask,
   useUpdateTaskStatus,
   useUpdateTask,
+  useDeleteTask,
   useManageTaskAssignees,
   useAddTaskComment,
+  useMilestones,
+  useSprints,
+  useTaskLabels,
 } from "@/lib/hooks/use-projects";
 import { usePermissions } from "@/lib/permissions";
 import { Task } from "@/lib/api";
@@ -38,6 +42,7 @@ interface TaskDetailPageProps {
 }
 
 function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const rawId = propTaskId || searchParams.get("id") || "";
 
@@ -59,10 +64,16 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
   const createSubtaskMutation = useCreateTask(task?.projectId);
   const updateTaskStatusMutation = useUpdateTaskStatus();
   const updateTaskMutation = useUpdateTask();
+  const deleteTaskMutation = useDeleteTask(task?.projectId);
   const manageAssigneesMutation = useManageTaskAssignees(activeId);
   const addCommentMutation = useAddTaskComment(activeId);
+  const { data: milestones = [] } = useMilestones(task?.projectId || "");
+  const { data: sprints = [] } = useSprints(task?.projectId || "");
+  const { data: labels = [] } = useTaskLabels(task?.projectId);
 
   const { canManageTasks } = usePermissions();
+
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
 
   const [newSubtaskTitle, setNewSubtaskTitle] = useState("");
   const [commentText, setCommentText] = useState("");
@@ -219,14 +230,37 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
     }
   };
 
+  const copyTaskId = async () => {
+    if (!task) return;
+    try {
+      await navigator.clipboard.writeText(task.taskKey || task.id);
+      notifySuccess("Task ID copied");
+    } catch {
+      notifyError(new Error("Clipboard unavailable"), "Could not copy task ID");
+    }
+  };
+
+  const handleDeleteTask = async () => {
+    if (!task) return;
+    try {
+      await deleteTaskMutation.mutateAsync(task.id);
+      notifySuccess("Task deleted");
+      router.push(task.projectId ? `/projects/${task.projectId}/issues` : "/tasks");
+    } catch (err) {
+      notifyError(err, "Could not delete task");
+    } finally {
+      setIsDeleteOpen(false);
+    }
+  };
+
   if (!activeId) {
     return (
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
         <PageError
           title="Task not found"
-          message="This item was not found. Choose a task from the list to continue."
+          message="This item was not found. Choose a task from My Tasks to continue."
           backHref="/tasks"
-          backLabel="Back to tasks"
+          backLabel="Back to my tasks"
         />
       </div>
     );
@@ -246,7 +280,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
             message={getErrorMessage(error, "This item was not found")}
             onRetry={() => refetch()}
             backHref="/tasks"
-            backLabel="Back to tasks"
+            backLabel="Back to my tasks"
           />
         </div>
       );
@@ -258,7 +292,7 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
           message={getErrorMessage(error, "Could not load task")}
           onRetry={() => refetch()}
           backHref="/tasks"
-          backLabel="Back to tasks"
+          backLabel="Back to my tasks"
         />
       </div>
     );
@@ -269,9 +303,9 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
       <div className="mx-auto w-full max-w-3xl px-4 py-8">
         <PageError
           title="Task not found"
-          message="This item was not found. Choose a task from the list to continue."
+          message="This item was not found. Choose a task from My Tasks to continue."
           backHref="/tasks"
-          backLabel="Back to tasks"
+          backLabel="Back to my tasks"
         />
       </div>
     );
@@ -285,14 +319,44 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
     <div className="flex flex-col w-full min-h-screen bg-surface text-on-surface">
       <div className="flex flex-col gap-6 p-6 max-w-6xl mx-auto w-full">
         {/* Navigation Breadcrumb */}
-        <div className="flex items-center gap-2 text-body-sm text-outline border-b border-outline-variant/30 pb-3">
-          <Link href="/tasks" className="hover:text-on-surface transition-colors">
-            Tasks
-          </Link>
-          <span>/</span>
-          <span className="font-label-code text-on-surface font-medium">
-            {task.taskKey || task.id.slice(-6).toUpperCase()}
-          </span>
+        <div className="flex items-center justify-between gap-3 border-b border-outline-variant/30 pb-3">
+          <div className="flex items-center gap-2 text-body-sm text-outline">
+            <Link href="/tasks" className="hover:text-on-surface transition-colors">
+              My Tasks
+            </Link>
+            <span>/</span>
+            {task.project?.id ? (
+              <Link href={`/projects/${task.project.id}/issues`} className="hover:text-on-surface transition-colors">
+                {task.project.name}
+              </Link>
+            ) : (
+              <span>Project</span>
+            )}
+            <span>/</span>
+            <span className="font-label-code text-on-surface font-medium">
+              {task.taskKey || task.id.slice(-6).toUpperCase()}
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => void copyTaskId()}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-outline-variant/40 bg-surface-container px-3 text-body-sm text-on-surface hover:bg-surface-container-high"
+            >
+              <Copy className="h-3.5 w-3.5" />
+              Copy ID
+            </button>
+            {canManageTasks && (
+              <button
+                type="button"
+                onClick={() => setIsDeleteOpen(true)}
+                className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-error/30 bg-error/10 px-3 text-body-sm text-error hover:bg-error/15"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Grid layout: Task Details & Inspector Sidebar */}
@@ -367,9 +431,28 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                 <h4 className="text-outline text-[11px] font-label-badge uppercase tracking-wider mb-1">
                   Description
                 </h4>
-                <p className="text-body-sm text-on-surface-variant mt-2 leading-relaxed">
+                <p className="text-body-sm text-on-surface-variant mt-2 leading-relaxed whitespace-pre-wrap">
                   {task.description || "No detailed description provided."}
                 </p>
+              </div>
+
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2">
+                <div className="rounded-lg bg-surface-container p-3 border border-outline-variant/20">
+                  <div className="text-[10px] text-outline uppercase font-label-badge">Status</div>
+                  <div className="mt-1 text-body-sm text-on-surface font-medium">{TASK_STATUS_LABELS[task.status]}</div>
+                </div>
+                <div className="rounded-lg bg-surface-container p-3 border border-outline-variant/20">
+                  <div className="text-[10px] text-outline uppercase font-label-badge">Priority</div>
+                  <div className="mt-1 text-body-sm text-on-surface font-medium">{task.priority}</div>
+                </div>
+                <div className="rounded-lg bg-surface-container p-3 border border-outline-variant/20">
+                  <div className="text-[10px] text-outline uppercase font-label-badge">Due Date</div>
+                  <div className="mt-1 text-body-sm text-on-surface font-medium">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Not set"}</div>
+                </div>
+                <div className="rounded-lg bg-surface-container p-3 border border-outline-variant/20">
+                  <div className="text-[10px] text-outline uppercase font-label-badge">Project</div>
+                  <div className="mt-1 text-body-sm text-on-surface font-medium truncate">{task.project?.name || "None"}</div>
+                </div>
               </div>
 
               {/* Subtasks Component */}
@@ -649,12 +732,36 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
                       {estimateDelta > 0 ? "+" : ""}{estimateDelta}h
                     </span>
                   </div>
-                  <Link
-                    href={`/time-tracking?taskId=${task.id}`}
-                    className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-body-sm font-medium border border-outline-variant/30 mt-2 transition-colors"
-                  >
-                    Track Time on {task.taskKey || "Task"}
-                  </Link>
+                  <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2 text-[11px] text-outline font-label-code">
+                    <div className="flex justify-between"><span>Start</span><span className="text-on-surface">{task.startDate ? new Date(task.startDate).toLocaleDateString() : "Not set"}</span></div>
+                    <div className="flex justify-between"><span>Due</span><span className="text-on-surface">{task.dueDate ? new Date(task.dueDate).toLocaleDateString() : "Not set"}</span></div>
+                    <div className="flex justify-between"><span>Created</span><span className="text-on-surface">{new Date(task.createdAt).toLocaleString()}</span></div>
+                    <div className="flex justify-between"><span>Updated</span><span className="text-on-surface">{new Date(task.updatedAt).toLocaleString()}</span></div>
+                  </div>
+                  <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2">
+                    <div className="flex items-center gap-2 text-outline text-[11px] font-label-badge uppercase"><Flag className="h-3.5 w-3.5" /> Milestone</div>
+                    <div className="text-body-sm text-on-surface">{milestones.find((m) => m.id === task.milestoneId)?.title || "No milestone"}</div>
+                    <div className="flex items-center gap-2 text-outline text-[11px] font-label-badge uppercase mt-1"><RotateCw className="h-3.5 w-3.5" /> Sprint</div>
+                    <div className="text-body-sm text-on-surface">{sprints.find((s) => s.id === task.sprintId)?.name || "No sprint"}</div>
+                    <div className="flex items-center gap-2 text-outline text-[11px] font-label-badge uppercase mt-1"><Tag className="h-3.5 w-3.5" /> Labels</div>
+                    <div className="flex flex-wrap gap-1">
+                      {(task.labels || []).length > 0 ? (task.labels || []).map((l, i) => (
+                        <span key={l.label?.id || i} className="px-1.5 py-0.5 rounded-sm border text-[10px]" style={{ borderColor: `color-mix(in srgb, ${l.label?.color || "var(--color-outline)"} 30%, transparent)`, color: l.label?.color || "var(--color-outline)" }}>
+                          {l.label?.name}
+                        </span>
+                      )) : <span className="text-body-sm text-outline">No labels</span>}
+                    </div>
+                  </div>
+                  <div className="pt-2 border-t border-outline-variant/20 flex flex-col gap-2">
+                    <Link href={`/time-tracking?taskId=${task.id}`} className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-primary text-body-sm font-medium border border-outline-variant/30 transition-colors">
+                      Track Time on {task.taskKey || "Task"}
+                    </Link>
+                    {task.project?.id && (
+                      <Link href={`/projects/${task.project.id}/issues`} className="w-full text-center py-1.5 rounded-lg bg-surface-container hover:bg-surface-container-high text-on-surface text-body-sm font-medium border border-outline-variant/30 transition-colors inline-flex items-center justify-center gap-1.5">
+                        <ExternalLink className="h-3.5 w-3.5" /> Open Project Issues
+                      </Link>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -672,6 +779,17 @@ function TaskDetailContent({ taskId: propTaskId }: TaskDetailPageProps) {
         onConfirm={() => {
           if (pendingStatus) void changeStatus(pendingStatus);
         }}
+      />
+
+      <ConfirmDialog
+        open={isDeleteOpen}
+        title="Delete this task?"
+        description={task ? `"${task.title}" will be permanently removed.` : ""}
+        confirmLabel="Delete task"
+        destructive
+        pending={deleteTaskMutation.isPending}
+        onCancel={() => setIsDeleteOpen(false)}
+        onConfirm={() => void handleDeleteTask()}
       />
 
       {/* Capacity Warning Soft Modal */}
