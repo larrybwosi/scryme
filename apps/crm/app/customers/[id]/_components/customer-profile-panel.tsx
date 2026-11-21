@@ -36,6 +36,7 @@ import useSWR from "swr";
 import { getLocations } from "../../../actions/customers";
 import { useRouter } from "next/navigation";
 import { updateCustomerLifecycleStage } from "../../../actions/customer-enterprise";
+import { getCustomermatesSource } from "@/app/actions/customermates";
 import { toast } from "sonner";
 
 interface CustomerProfilePanelProps {
@@ -90,6 +91,10 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
 
   const { data: locations = [] } = useSWR(["locations-for-select"], () =>
     getLocations(),
+  );
+  const { data: customerSource } = useSWR(
+    ["customermates-source", "CUSTOMER", customer.id],
+    () => getCustomermatesSource("CUSTOMER", customer.id),
   );
 
   const defaultBranch = locations.find(
@@ -224,6 +229,9 @@ export function CustomerProfilePanel({ customer, currency = "USD" }: CustomerPro
         <div className="flex flex-wrap gap-1.5 mb-4">
           <StatusBadge status={customer.isActive ? "Active" : "Inactive"} dot />
           <StatusBadge status={customer.customerType || "B2C"} />
+          {customerSource?.source ? (
+            <StatusBadge status={customerSource.source} />
+          ) : null}
         </div>
 
         <div className="space-y-2.5">

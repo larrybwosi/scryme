@@ -11,6 +11,8 @@ import { NotesTab } from '@/components/crm/notes-tab';
 import { FollowUpsTab } from '@/components/crm/followups-tab';
 import { ActivitiesTab } from '@/components/crm/activities-tab';
 import { format } from 'date-fns';
+import useSWR from 'swr';
+import { getCustomermatesSource } from '@/app/actions/customermates';
 
 interface DealDetailViewProps {
   deal: any;
@@ -41,6 +43,10 @@ function DetailViewInner({ deal }: DealDetailViewProps) {
   const [isEditOpen, setIsEditOpen] = useState(false);
   const searchParams = useSearchParams();
   const tab = (searchParams.get('tab') as TabId) ?? 'notes';
+  const { data: dealSource } = useSWR(
+    ['customermates-source', 'DEAL', deal.id],
+    () => getCustomermatesSource('DEAL', deal.id),
+  );
 
   const counts: Partial<Record<TabId, number>> = {
     notes: deal.notes?.length || 0,
@@ -93,6 +99,11 @@ function DetailViewInner({ deal }: DealDetailViewProps) {
                      <span className="px-2 py-0.5 bg-primary/10 text-primary text-[11px] font-bold rounded uppercase">
                         {deal.data.stage?.replace('_', ' ')}
                      </span>
+                     {dealSource?.source ? (
+                        <span className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 text-[11px] font-bold rounded uppercase">
+                           {dealSource.source}
+                        </span>
+                     ) : null}
                   </div>
                 </div>
                 <button

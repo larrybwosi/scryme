@@ -37,6 +37,7 @@ export const TENANT_MODELS = new Set<string>([
   "CrmRecord",
   "CrmRelationshipDefinition",
   "CustomRole",
+  "CustomermatesRecordState",
   "Customer",
   "CycleCountConfig",
   "DeliveryPartner",

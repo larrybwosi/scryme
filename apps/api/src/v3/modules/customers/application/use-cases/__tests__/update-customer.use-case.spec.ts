@@ -5,7 +5,7 @@ import { PrismaService } from "@/prisma/prisma.service";
 describe("UpdateCustomerUseCase", () => {
   let useCase: UpdateCustomerUseCase;
   let prisma: PrismaService;
-  let customerRepository: any;
+  let customermatesWriteback: any;
 
   beforeEach(() => {
     prisma = {
@@ -18,7 +18,12 @@ describe("UpdateCustomerUseCase", () => {
       },
     } as any;
 
-    useCase = new UpdateCustomerUseCase(prisma);
+    customermatesWriteback = {
+      assertWritable: vi.fn().mockResolvedValue(undefined),
+      enqueueFromCustomerUpdate: vi.fn().mockResolvedValue(undefined),
+    };
+
+    useCase = new UpdateCustomerUseCase(prisma, customermatesWriteback);
   });
 
   it("should update a customer successfully using updateMany for multi-tenant isolation", async () => {

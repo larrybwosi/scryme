@@ -63,8 +63,9 @@ model OrganizationIntegration {
   updatedAt DateTime @updatedAt
 
   // Back-relations for logging and mapping
-  events   IntegrationEvent[]
-  mappings ExternalMapping[]
+  events                   IntegrationEvent[]
+  mappings                 ExternalMapping[]
+  customermatesRecordStates CustomermatesRecordState[]
 
   @@unique([organizationId, integrationDefinitionId])
   @@map("organization_integration")
@@ -117,6 +118,7 @@ model IntegrationEvent {
   organizationIntegration   OrganizationIntegration @relation(fields: [organizationIntegrationId], references: [id], onDelete: Cascade)
 
   eventType       String // e.g., "orders/create", "products/update"
+  externalEventId String? // Provider event id, kept after payload cleanup as the dedupe ledger
   payload         Json // The full webhook payload
   status          IntegrationEventStatus @default(PENDING)
   processingError String? // Store error messages if processing fails
@@ -124,6 +126,7 @@ model IntegrationEvent {
   receivedAt  DateTime  @default(now())
   processedAt DateTime?
 
+  @@unique([organizationIntegrationId, externalEventId], name: "organizationIntegrationId_externalEventId")
   @@index([organizationIntegrationId, status])
   @@map("integration_event")
 }

@@ -1,0 +1,22 @@
+{
+  "name": "@repo/customermates",
+  "version": "10.2.52",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "scripts": {
+    "build": "tsc",
+    "type-check": "tsc --noEmit",
+    "test": "vitest run --passWithNoTests"
+  },
+  "dependencies": {
+    "axios": "1.21.0"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "24.13.3",
+    "typescript": "5.7.3",
+    "vitest": "4.1.11"
+  }
+}

@@ -1,0 +1,22 @@
+model CustomermatesRecordState {
+  id                        String                  @id @default(cuid())
+  organizationId            String
+  organization              Organization            @relation("OrgCustomermatesStates", fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationIntegrationId String
+  organizationIntegration   OrganizationIntegration @relation(fields: [organizationIntegrationId], references: [id], onDelete: Cascade)
+
+  typeId          String
+  recordId        String
+  externalVersion String?
+  lastChangedAt   DateTime?
+  lastSyncedAt    DateTime?
+  processingState String    @default("PENDING")
+  lastError       String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([organizationIntegrationId, typeId, recordId])
+  @@index([organizationId, processingState])
+  @@map("customermates_record_state")
+}
