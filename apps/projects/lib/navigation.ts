@@ -31,10 +31,10 @@ export const NAV_GROUPS: NavGroup[] = [
     title: "Views",
     items: [
       {
-        label: "Tasks",
+        label: "My Tasks",
         href: "/tasks",
         icon: ListTodo,
-        command: "Go to tasks",
+        command: "Go to my tasks",
         matchPrefixes: ["/tasks"],
       },
       {

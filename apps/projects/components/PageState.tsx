@@ -113,7 +113,7 @@ export function PageError({
   message,
   onRetry,
   backHref,
-  backLabel = "Back to tasks",
+  backLabel = "Back to my tasks",
 }: {
   title?: string;
   message: string;
